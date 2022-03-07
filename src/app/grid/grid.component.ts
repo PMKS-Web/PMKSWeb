@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import {Joint} from "./joint/joint";
 import {Link} from "./link/link";
 import {Force} from "./force/force";
 import {TransformMatrix} from "./transform-matrix/transform-matrix";
 import {Coord} from "./coord/coord";
+import {AppConstants} from "./app-constants/app-constants";
 
 
 // The possible states the program could be in.
@@ -41,15 +42,17 @@ enum moveModes {
   styleUrls: ['./grid.component.css']
 })
 
-export class GridComponent implements OnInit {
+export class GridComponent implements OnInit, AfterViewInit {
 
   private static SVGCanvas: SVGElement; // Reference to the SVG canvas (coordinate grid)
   private static SVGCanvasTM: SVGElement; // The transpose matrix under the SVG canvas.
+  private static SVGTransformMatrixGridSVG: SVGElement;
+  private static SVGTransformMatrixSVG: SVGElement;
   private static transformMatrix: TransformMatrix;
 
-  jointArray: Joint[];
-  linkArray: Link[];
-  forceArray: Force[];
+  jointArray!: Joint[];
+  linkArray!: Link[];
+  forceArray!: Force[];
 
   // holders
   private static linkageHolder: SVGElement;
@@ -64,146 +67,116 @@ export class GridComponent implements OnInit {
 
   private static states: states;
   private static moveModes: moveModes;
+  private static scaleFactor = 1;
 
-  private static panOffset: {
-    x: number,
-    y: number,
-  }
+  private static panOffset = {
+    x: 0,
+    y: 0
+  };
 
-  constructor() {
-    this.jointArray = [];
-    this.linkArray = [];
-    this.forceArray = [];
+  constructor() { }
+    // this.jointArray = [];
+    // this.linkArray = [];
+    // this.forceArray = [];
 
-    function createPattern(id: string, width: string, height: string, patternUnits: string) {
-      const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
-      pattern.setAttribute('id', id);
-      pattern.setAttribute('width', width);
-      pattern.setAttribute('height', height);
-      pattern.setAttribute('patternUnits', patternUnits);
-      return pattern;
-    }
-    function createPath(d: string, fill: string, stroke: string, strokeWidth: string) {
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', d);
-      path.setAttribute('fill', fill);
-      path.setAttribute('stroke', stroke);
-      path.setAttribute('stroke-width', strokeWidth);
-      return path;
-    }
-    function createRect(width: string, height: string, fill: string, x?: string, y?: string) {
-      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      if (x !== undefined) {
-        rect.setAttribute('x', x);
-      }
-      if (y !== undefined) {
-        rect.setAttribute('y', y);
-      }
-      rect.setAttribute('width', width);
-      rect.setAttribute('height', height);
-      rect.setAttribute('fill', 'url(#' + fill + ')');
-      return rect;
-    }
-    function createLine(id: string, x1: string, y1: string, x2: string, y2: string) {
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('id', id);
-      line.setAttribute('x1', x1);
-      line.setAttribute('y1', y1);
-      line.setAttribute('x2', x2);
-      line.setAttribute('y2', y2);
-      line.style.stroke = 'rgb(0,0,0)';
-      line.style.strokeWidth = '0.04px';
-      return line;
-    }
+    // function createPattern(id: string, width: string, height: string, patternUnits: string) {
+    //   const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+    //   pattern.setAttribute('id', id);
+    //   pattern.setAttribute('width', width);
+    //   pattern.setAttribute('height', height);
+    //   pattern.setAttribute('patternUnits', patternUnits);
+    //   return pattern;
+    // }
+    // function createPath(d: string, fill: string, stroke: string, strokeWidth: string) {
+    //   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    //   path.setAttribute('d', d);
+    //   path.setAttribute('fill', fill);
+    //   path.setAttribute('stroke', stroke);
+    //   path.setAttribute('stroke-width', strokeWidth);
+    //   return path;
+    // }
+    // function createRect(width: string, height: string, fill: string, x?: string, y?: string) {
+    //   const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    //   if (x !== undefined) {
+    //     rect.setAttribute('x', x);
+    //   }
+    //   if (y !== undefined) {
+    //     rect.setAttribute('y', y);
+    //   }
+    //   rect.setAttribute('width', width);
+    //   rect.setAttribute('height', height);
+    //   rect.setAttribute('fill', 'url(#' + fill + ')');
+    //   return rect;
+    // }
+    // function createLine(id: string, x1: string, y1: string, x2: string, y2: string) {
+    //   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    //   line.setAttribute('id', id);
+    //   line.setAttribute('x1', x1);
+    //   line.setAttribute('y1', y1);
+    //   line.setAttribute('x2', x2);
+    //   line.setAttribute('y2', y2);
+    //   line.style.stroke = 'rgb(0,0,0)';
+    //   line.style.strokeWidth = '0.04px';
+    //   return line;
+    // }
 
-    const SVGtransformMatrixGridSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    SVGtransformMatrixGridSVG.setAttribute('id', 'transformMatrixGrid');
+    // const SVGtransformMatrixGridSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    // SVGtransformMatrixGridSVG.setAttribute('id', 'transformMatrixGrid');
+    //
+    // const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    // const pattern1 = createPattern('smallGrid', '10', '10', 'userSpaceOnUse');
+    // const path1 = createPath('M 10 0 L 0 0 0 10', 'none', 'gray', '0.5');
+    // const pattern2 = createPattern('grid', '50', '50', 'userSpaceOnUse');
+    // const rect1 = createRect('50', '50', 'smallGrid');
+    // const path2 = createPath('M 50 0 L 0 0 0 50', 'none', 'black', '1');
+    // const rect2 = createRect('10000px', '10000px', 'grid', '-5000', '-5000');
+    // pattern1.appendChild(path1);
+    // pattern2.appendChild(rect1);
+    // pattern2.appendChild(path2);
+    // defs.appendChild(pattern1);
+    // defs.appendChild(pattern2);
+    // SVGtransformMatrixGridSVG.appendChild(defs);
+    //
+    // SVGtransformMatrixGridSVG.appendChild(rect2);
 
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const pattern1 = createPattern('smallGrid', '10', '10', 'userSpaceOnUse');
-    const path1 = createPath('M 10 0 L 0 0 0 10', 'none', 'gray', '0.5');
-    const pattern2 = createPattern('grid', '50', '50', 'userSpaceOnUse');
-    const rect1 = createRect('50', '50', 'smallGrid');
-    const path2 = createPath('M 50 0 L 0 0 0 50', 'none', 'black', '1');
-    const rect2 = createRect('10000px', '10000px', 'grid', '-5000', '-5000');
-    pattern1.appendChild(path1);
-    pattern2.appendChild(rect1);
-    pattern2.appendChild(path2);
-    defs.appendChild(pattern1);
-    defs.appendChild(pattern2);
-    SVGtransformMatrixGridSVG.appendChild(defs);
+    // const SVGtransformMatrixSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    // SVGtransformMatrixSVG.setAttribute('id', 'transformMatrix');
+    // const line1 = createLine('yAxis', '0', '-99999', '0', '99999');
+    // const line2 = createLine('xAxis', '-99999', '0', '99999', '0');
+    // SVGtransformMatrixSVG.appendChild(line1);
+    // SVGtransformMatrixSVG.appendChild(line2);
 
-    SVGtransformMatrixGridSVG.appendChild(rect2);
-
-    const SVGtransformMatrixSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    SVGtransformMatrixSVG.setAttribute('id', 'transformMatrix');
-    const line1 = createLine('yAxis', '0', '-99999', '0', '99999');
-    const line2 = createLine('xAxis', '-99999', '0', '99999', '0');
-    SVGtransformMatrixSVG.appendChild(line1);
-    SVGtransformMatrixSVG.appendChild(line2);
-
-    GridComponent.SVGCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    GridComponent.SVGCanvas.setAttribute('id', 'SVGCanvas');
-    GridComponent.SVGCanvas.style.width = '100%';
-    GridComponent.SVGCanvas.style.height = '100%';
+    // GridComponent.SVGCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    // GridComponent.SVGCanvas.setAttribute('id', 'SVGCanvas');
+    // GridComponent.SVGCanvas.style.width = '100%';
+    // GridComponent.SVGCanvas.style.height = '100%';
     // this.SVGCanvas.style.width = '90vw';
     // this.SVGCanvas.style.height = '90vh';
     // this.SVGCanvas.setAttribute('width', '1000px');
     // this.SVGCanvas.setAttribute('height', '1000px');
-    GridComponent.SVGCanvas.appendChild(SVGtransformMatrixGridSVG);
-    GridComponent.SVGCanvas.appendChild(SVGtransformMatrixSVG);
-    GridComponent.SVGCanvas.style.transform = 'scaleY(-1)';
+    // GridComponent.SVGCanvas.appendChild(SVGtransformMatrixGridSVG);
+    // GridComponent.SVGCanvas.appendChild(SVGtransformMatrixSVG);
+    // GridComponent.SVGCanvas.style.transform = 'scaleY(-1)';
 
-    document.body.appendChild(GridComponent.SVGCanvas);
+    // document.body.appendChild(GridComponent.SVGCanvas);
+  ngOnInit(): void {
+  }
 
+
+  ngAfterViewInit() {
     GridComponent.states = states.waiting;
-
-    GridComponent.panOffset = {
-      x: 0,
-      y: 0
-    };
-
-    GridComponent.transformMatrix = new TransformMatrix(1, 0, 0, SVGtransformMatrixSVG,
-      SVGtransformMatrixGridSVG, GridComponent.SVGCanvas);
-    GridComponent.linkageHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.linkageHolder.setAttribute('id', 'linkageHolder');
-    GridComponent.pathsHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.pathsHolder.setAttribute('id', 'pathsHolder');
-    GridComponent.pathsHolder.style.pointerEvents = 'none';
-    GridComponent.pathsPathPointHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.pathsPathPointHolder.setAttribute('id', 'pathsPathPointHolder');
-    GridComponent.pathsPathPointHolder.style.pointerEvents = 'none';
-    GridComponent.forcesHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.forcesHolder.setAttribute('id', 'forcesHolder');
-    GridComponent.jointLinkForceTagHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.jointLinkForceTagHolder.setAttribute('id', 'jointLinkTagHolder');
-    GridComponent.comTagHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.comTagHolder.setAttribute('id', 'comTagHolder');
-    GridComponent.pathPointHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.pathPointHolder.setAttribute('id', 'pathPointHolder');
-    GridComponent.threePositionHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.threePositionHolder.setAttribute('id', 'threePositionHolder');
-    GridComponent.tempHolder = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    GridComponent.tempHolder.setAttribute('id', 'tempHolder');
-
-    GridComponent.SVGCanvasTM = GridComponent.transformMatrix.matrixSVG;
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.linkageHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.pathsHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.pathsPathPointHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.forcesHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.jointLinkForceTagHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.comTagHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.pathPointHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.threePositionHolder);
-    GridComponent.SVGCanvasTM.appendChild(GridComponent.tempHolder);
-
-    GridComponent.transformMatrix.reset();
-
+    GridComponent.SVGTransformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
+    GridComponent.SVGTransformMatrixGridSVG = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
+    GridComponent.SVGCanvas = document.getElementById('SVGCanvas') as unknown as SVGElement
+    GridComponent.reset();
+    /*
     GridComponent.SVGCanvas.addEventListener('mousedown', function (e: MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
       const rawCoords = GridComponent.getMousePosition(e);
-      if (rawCoords === undefined) { return }
+      if (rawCoords === undefined) {
+        return
+      }
       const trueCoords = GridComponent.transformMatrix.screenToGrid(rawCoords.x, rawCoords.y);
       switch (e.button) {
         case 0: // Handle Left-Click on canvas
@@ -214,7 +187,9 @@ export class GridComponent implements OnInit {
               break;
             case states.waiting:
               const mPos = GridComponent.getMousePosition(e);
-              if (mPos === undefined) { return }
+              if (mPos === undefined) {
+                return
+              }
               GridComponent.panOffset.x = mPos.x;
               GridComponent.panOffset.y = mPos.y;
               GridComponent.states = states.panning;
@@ -248,7 +223,9 @@ export class GridComponent implements OnInit {
       e.stopPropagation();
       // Check if we are creating a link
       const rawCoord = GridComponent.getMousePosition(e);
-      if (rawCoord === undefined) { return }
+      if (rawCoord === undefined) {
+        return
+      }
       const trueCoord = GridComponent.transformMatrix.screenToGrid(rawCoord.x, rawCoord.y);
 
       GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
@@ -393,16 +370,68 @@ export class GridComponent implements OnInit {
         return;
       }
       const rawSVGCoords = GridComponent.getMousePosition(e);
-      if (rawSVGCoords === undefined) { return }
+      if (rawSVGCoords === undefined) {
+        return
+      }
       GridComponent.transformMatrix.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
     });
     // this.state = states.waiting;
 
     // this.refreshLinkage();
     // this.refreshForces();
+     */
   }
 
-  ngOnInit(): void {
+  private static screenToGrid(x: number, y: number) {
+    const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.panOffset.x);
+    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.panOffset.y);
+    return new Coord(newX, newY);
+  }
+
+  private static gridToScreen(x: number, y: number) {
+    const newX = (AppConstants.scaleFactor * x) + GridComponent.panOffset.x;
+    const newY = (AppConstants.scaleFactor * y) + GridComponent.panOffset.y;
+    return new Coord(newX, newY);
+  }
+
+  private static zoomPoint(newScale: number, pointX: number, pointY: number) {
+    const beforeScaleCoords = this.screenToGrid(pointX, pointY);
+    // Prevent zooming in or out too far
+    if ((newScale * GridComponent.scaleFactor) < AppConstants.maxZoomOut) {
+      GridComponent.scaleFactor = AppConstants.maxZoomOut;
+    } else if ((newScale * GridComponent.scaleFactor) > AppConstants.maxZoomIn) {
+      GridComponent.scaleFactor = AppConstants.maxZoomIn;
+    } else {
+      GridComponent.scaleFactor = newScale * GridComponent.scaleFactor;
+    }
+    const afterScaleCoords = this.screenToGrid(pointX, pointY);
+    GridComponent.panOffset.x = GridComponent.panOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
+    GridComponent.panOffset.y = GridComponent.panOffset.y - (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
+    GridComponent.applyMatrixToSVG();
+  }
+
+  private static applyMatrixToSVG() {
+    if (isNaN(GridComponent.panOffset.x) || isNaN(GridComponent.panOffset.y)) {
+      GridComponent.reset();
+    } else {
+      const offsetX = GridComponent.panOffset.x;
+      const offsetY = GridComponent.panOffset.y;
+      const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
+      const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
+      GridComponent.SVGTransformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
+      GridComponent.SVGTransformMatrixGridSVG.setAttributeNS(null, 'transform', gridMatrix);
+    }
+  }
+
+  private static reset() {
+    const box = GridComponent.SVGCanvas.getBoundingClientRect();
+    const width = box.width;
+    const height = box.height;
+    GridComponent.panOffset.x = (width / 2) * AppConstants.scaleFactor;
+    GridComponent.panOffset.y = (height / 2) * AppConstants.scaleFactor;
+    GridComponent.scaleFactor = 1;
+    this.zoomPoint(1 / AppConstants.scaleFactor, 0, 0);
+    this.applyMatrixToSVG();
   }
 
   private static getMousePosition(e: MouseEvent) {
