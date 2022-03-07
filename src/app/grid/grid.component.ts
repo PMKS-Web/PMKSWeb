@@ -93,197 +93,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
     GridComponent.reset();
-    GridComponent.canvasSVGElement.addEventListener('mousedown', function (e: MouseEvent) {
-      e.preventDefault();
-      e.stopPropagation();
-      const rawCoords = GridComponent.getMousePosition(e);
-      if (rawCoords === undefined) {
-        return
-      }
-      const trueCoords = GridComponent.screenToGrid(rawCoords.x, rawCoords.y);
-      switch (e.button) {
-        case 0: // Handle Left-Click on canvas
-          // GridComponent.hideMenu.emit(true); // Hide the context menu
-          const state = GridComponent.states;
-          switch (state) {
-            case states.panning:
-              break;
-            case states.waiting:
-              const mPos = GridComponent.getMousePosition(e);
-              if (mPos === undefined) {
-                return
-              }
-              GridComponent.panOffset.x = mPos.x;
-              GridComponent.panOffset.y = mPos.y;
-              GridComponent.states = states.panning;
-              break;
-            case states.creating:
-              // if (that.createMode === createModes.link) {
-              //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
-              //   that.createNewSimulator();
-              // } else if (that.createMode === createModes.force) {
-              //   that.setForceEndEndpoint(trueCoords.x, trueCoords.y);
-              //   that.createNewSimulator();
-              //   that.cancelCreation();
-              //   that.state = states.waiting;
-              // }
-              break;
-            default:
-          }
-          break;
-        case 1: // Handle Middle-Click on canvas
-          return;
-        case 2: // Handle Right-Click on canvas
-          break;
-        default:
-          return;
-      }
-    });
-    // Event handler when dragging elements
-    GridComponent.canvasSVGElement.addEventListener('mousemove', function (ev) {
-      const e = ev;
-      e.preventDefault();
-      e.stopPropagation();
-      // Check if we are creating a link
-      const rawCoord = GridComponent.getMousePosition(e);
-      if (rawCoord === undefined) {
-        return
-      }
-      // const trueCoord = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
-
-      // GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
-
-      switch (GridComponent.states) {
-        // case states.moving:
-        //   switch (GridComponent.moveMode) {
-        //     case moveModes.joint:
-        //       GridComponent.dragJoint(e, GridComponent.draggingJoint);
-        //       break;
-        //     case moveModes.forceEndpoint:
-        //       GridComponent.dragForceEndpoint(e, that.draggingEndpoint);
-        //       GridComponent.createNewSimulator();
-        //       break;
-        //     case moveModes.pathPoint:
-        //       GridComponent.dragPathPoint(e, GridComponent.draggingPathPoint);
-        //       break;
-        //     case moveModes.threePosition:
-        //       GridComponent.dragThreePosition(e, GridComponent.draggingThreePosition);
-        //       break;
-        //   }
-        //   break;
-        // case states.editing:
-        //   if (GridComponent.editingMode === shapeEditModes.move) {
-        //     const delta = {
-        //       x: trueCoord.x - GridComponent.initialMouseCoord.x,
-        //       y: trueCoord.y - GridComponent.initialMouseCoord.y
-        //     };
-        //     GridComponent.editingLink.drag(delta);
-        //     // TODO: wonder how to do this in better way...
-        //     // that.editingLink.idTag.setAttributeNS(undefined, 'x', '0');
-        //     // that.editingLink.idTag.setAttributeNS(undefined, 'y', '0');
-        //   } else if (GridComponent.editingMode === shapeEditModes.resize) {
-        //     GridComponent.editingLink.tryNewBound(trueCoord, GridComponent.editingDot);
-        //   }
-        //   break;
-
-        case states.panning:
-          GridComponent.panCanvas(rawCoord.x, rawCoord.y);
-          break;
-        // case states.creating:
-        //   if (GridComponent.createMode === createModes.link) {
-        //     const line = GridComponent.tempLink;
-        //     if (!line) { break; }
-        //     line.setAttribute('x2', `${trueCoord.x}`);
-        //     line.setAttribute('y2', `${trueCoord.y}`);
-        //   } else if (GridComponent.createMode === createModes.force) {
-        //     const startX = parseFloat(GridComponent.tempForceEndpoint.getAttribute('x'));
-        //     const startY = parseFloat(GridComponent.tempForceEndpoint.getAttribute('y'));
-        //     GridComponent.updateArrow(GridComponent.tempForce, startX, startY, trueCoord.x, trueCoord.y);
-        //   }
-        //   break;
-      }
-    });
-    // this.canvasSVGElement.addEventListener('mouseover', function (e) {});
-    GridComponent.canvasSVGElement.addEventListener('mouseup', function (e) {
-      // Deselect the selected link.
-      switch (GridComponent.states) {
-        case states.moving:
-          switch (GridComponent.moveModes) {
-            case moveModes.joint:
-              // GridComponent.endMoveJoint(GridComponent.draggingJoint);
-              // that.createNewSimulator();
-              break;
-            case moveModes.forceEndpoint:
-              // if (that.draggingEndpoint.type === ForceEndpointType.start &&
-              //   !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-              //   that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-              //   that.createNewSimulator();
-              // }
-              // that.endDragForceEndpoint(that.draggingEndpoint);
-              // that.createNewSimulator();
-              break;
-            case moveModes.pathPoint:
-              // that.endMovePathPoint(that.draggingPathPoint);
-              break;
-            case moveModes.threePosition:
-              // that.endMoveThreePosition(that.draggingThreePosition);
-              break;
-          }
-          // if (that.moveMode === moveModes.joint) {
-          //   that.endMoveJoint(that.draggingJoint);
-          // } else {
-          //   if (that.draggingEndpoint.type === ForceEndpointType.start &&
-          //     !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-          //     that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-          //   }
-          //   that.endDragForceEndpoint(that.draggingEndpoint);
-          // }
-          break;
-        case states.panning:
-          GridComponent.states = states.waiting;
-          break;
-        case states.creating:
-          break;
-        case states.editing:
-          GridComponent.states = states.waiting;
-          // GridComponent.editingLink.cacheBounds();
-          break;
-      }
-    });
-    // this.canvasSVGElement.addEventListener('contextmenu', function (e) {
-    //   e.preventDefault();
-    //   e.stopPropagation();
-    //   if (that.animationMode()) {
-    //     IndiFuncs.showErrorNotification('stop the animation before making changes');
-    //     return;
-    //   }
-    //   if (that.isEditing) { return; }
-    //
-    //   if (that.state === states.creating) {
-    //     that.cancelCreation();
-    //     that.state = states.waiting;
-    //   } else {
-    //     that.recordMousePosition(e);
-    //     const screenCoords = new Coord(e.clientX, e.clientY);
-    //     switch (that.synthesis) {
-    //       case 'none':
-    //         that.showMenuEmit(screenCoords, contextSelector.canvasNoSyn);
-    //         break;
-    //       case 'three_pos':
-    //         that.showMenuEmit(screenCoords, contextSelector.canvasThreePositionSyn);
-    //         break;
-    //       case 'path_point':
-    //         that.showMenuEmit(screenCoords, contextSelector.canvasPathPointSyn);
-    //         break;
-    //       default:
-    //         break;
-    //     }
-    //   }
-    // });
-    // this.state = states.waiting;
-
-    // this.refreshLinkage();
-    // this.refreshForces();
   }
 
   private static screenToGrid(x: number, y: number) {
@@ -426,5 +235,158 @@ export class GridComponent implements OnInit, AfterViewInit {
       return
     }
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
+  }
+  mouseDown($event: MouseEvent) {
+    $event.preventDefault();
+    $event.stopPropagation();
+    const rawCoords = GridComponent.getMousePosition($event);
+    if (rawCoords === undefined) {
+      return
+    }
+    const trueCoords = GridComponent.screenToGrid(rawCoords.x, rawCoords.y);
+    switch ($event.button) {
+      case 0: // Handle Left-Click on canvas
+        // GridComponent.hideMenu.emit(true); // Hide the context menu
+        const state = GridComponent.states;
+        switch (state) {
+          case states.panning:
+            break;
+          case states.waiting:
+            const mPos = GridComponent.getMousePosition($event);
+            if (mPos === undefined) {
+              return
+            }
+            GridComponent.panOffset.x = mPos.x;
+            GridComponent.panOffset.y = mPos.y;
+            GridComponent.states = states.panning;
+            break;
+          case states.creating:
+            // if (that.createMode === createModes.link) {
+            //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
+            //   that.createNewSimulator();
+            // } else if (that.createMode === createModes.force) {
+            //   that.setForceEndEndpoint(trueCoords.x, trueCoords.y);
+            //   that.createNewSimulator();
+            //   that.cancelCreation();
+            //   that.state = states.waiting;
+            // }
+            break;
+          default:
+        }
+        break;
+      case 1: // Handle Middle-Click on canvas
+        return;
+      case 2: // Handle Right-Click on canvas
+        break;
+      default:
+        return;
+    }
+  }
+  mouseUp($event: MouseEvent) {
+    switch (GridComponent.states) {
+      case states.moving:
+        switch (GridComponent.moveModes) {
+          case moveModes.joint:
+            // GridComponent.endMoveJoint(GridComponent.draggingJoint);
+            // that.createNewSimulator();
+            break;
+          case moveModes.forceEndpoint:
+            // if (that.draggingEndpoint.type === ForceEndpointType.start &&
+            //   !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
+            //   that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
+            //   that.createNewSimulator();
+            // }
+            // that.endDragForceEndpoint(that.draggingEndpoint);
+            // that.createNewSimulator();
+            break;
+          case moveModes.pathPoint:
+            // that.endMovePathPoint(that.draggingPathPoint);
+            break;
+          case moveModes.threePosition:
+            // that.endMoveThreePosition(that.draggingThreePosition);
+            break;
+        }
+        // if (that.moveMode === moveModes.joint) {
+        //   that.endMoveJoint(that.draggingJoint);
+        // } else {
+        //   if (that.draggingEndpoint.type === ForceEndpointType.start &&
+        //     !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
+        //     that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
+        //   }
+        //   that.endDragForceEndpoint(that.draggingEndpoint);
+        // }
+        break;
+      case states.panning:
+        GridComponent.states = states.waiting;
+        break;
+      case states.creating:
+        break;
+      case states.editing:
+        GridComponent.states = states.waiting;
+        // GridComponent.editingLink.cacheBounds();
+        break;
+    }
+  }
+  mouseMove($event: MouseEvent) {
+    $event.preventDefault();
+    $event.stopPropagation();
+    // Check if we are creating a link
+    const rawCoord = GridComponent.getMousePosition($event);
+    if (rawCoord === undefined) {
+      return
+    }
+    // const trueCoord = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
+
+    // GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
+
+    switch (GridComponent.states) {
+      // case states.moving:
+      //   switch (GridComponent.moveMode) {
+      //     case moveModes.joint:
+      //       GridComponent.dragJoint(e, GridComponent.draggingJoint);
+      //       break;
+      //     case moveModes.forceEndpoint:
+      //       GridComponent.dragForceEndpoint(e, that.draggingEndpoint);
+      //       GridComponent.createNewSimulator();
+      //       break;
+      //     case moveModes.pathPoint:
+      //       GridComponent.dragPathPoint(e, GridComponent.draggingPathPoint);
+      //       break;
+      //     case moveModes.threePosition:
+      //       GridComponent.dragThreePosition(e, GridComponent.draggingThreePosition);
+      //       break;
+      //   }
+      //   break;
+      // case states.editing:
+      //   if (GridComponent.editingMode === shapeEditModes.move) {
+      //     const delta = {
+      //       x: trueCoord.x - GridComponent.initialMouseCoord.x,
+      //       y: trueCoord.y - GridComponent.initialMouseCoord.y
+      //     };
+      //     GridComponent.editingLink.drag(delta);
+      //     // TODO: wonder how to do this in better way...
+      //     // that.editingLink.idTag.setAttributeNS(undefined, 'x', '0');
+      //     // that.editingLink.idTag.setAttributeNS(undefined, 'y', '0');
+      //   } else if (GridComponent.editingMode === shapeEditModes.resize) {
+      //     GridComponent.editingLink.tryNewBound(trueCoord, GridComponent.editingDot);
+      //   }
+      //   break;
+
+      case states.panning:
+        GridComponent.panCanvas(rawCoord.x, rawCoord.y);
+        break;
+      // case states.creating:
+      //   if (GridComponent.createMode === createModes.link) {
+      //     const line = GridComponent.tempLink;
+      //     if (!line) { break; }
+      //     line.setAttribute('x2', `${trueCoord.x}`);
+      //     line.setAttribute('y2', `${trueCoord.y}`);
+      //   } else if (GridComponent.createMode === createModes.force) {
+      //     const startX = parseFloat(GridComponent.tempForceEndpoint.getAttribute('x'));
+      //     const startY = parseFloat(GridComponent.tempForceEndpoint.getAttribute('y'));
+      //     GridComponent.updateArrow(GridComponent.tempForce, startX, startY, trueCoord.x, trueCoord.y);
+      //   }
+      //   break;
+    }
   }
 }

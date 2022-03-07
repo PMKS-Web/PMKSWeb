@@ -1,4 +1,6 @@
-<svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)" style="transform: scaleY(-1)">
+<svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)" (mousedown)="mouseDown($event)"
+     (mouseup)="mouseUp($event)" (mousemove)="mouseMove($event)"
+     style="transform: scaleY(-1)">
   <g id="transformMatrixGrid">
     <defs>
       <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
