@@ -69,13 +69,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     x: 0,
     y: 0
   };
+  private static gridOffset = {
+    x: 0,
+    y: 0
+  }
 
   constructor() { }
 
   ngOnInit(): void {
   }
-
-
   ngAfterViewInit() {
     GridComponent.states = states.waiting;
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
@@ -89,8 +91,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
     GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
+    GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
     GridComponent.reset();
-    /*
     GridComponent.canvasSVGElement.addEventListener('mousedown', function (e: MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
@@ -98,7 +100,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       if (rawCoords === undefined) {
         return
       }
-      const trueCoords = GridComponent.transformMatrix.screenToGrid(rawCoords.x, rawCoords.y);
+      const trueCoords = GridComponent.screenToGrid(rawCoords.x, rawCoords.y);
       switch (e.button) {
         case 0: // Handle Left-Click on canvas
           // GridComponent.hideMenu.emit(true); // Hide the context menu
@@ -147,9 +149,9 @@ export class GridComponent implements OnInit, AfterViewInit {
       if (rawCoord === undefined) {
         return
       }
-      const trueCoord = GridComponent.transformMatrix.screenToGrid(rawCoord.x, rawCoord.y);
+      // const trueCoord = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
 
-      GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
+      // GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
 
       switch (GridComponent.states) {
         // case states.moving:
@@ -282,17 +284,16 @@ export class GridComponent implements OnInit, AfterViewInit {
 
     // this.refreshLinkage();
     // this.refreshForces();
-     */
   }
 
   private static screenToGrid(x: number, y: number) {
-    const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.panOffset.x);
-    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.panOffset.y);
+    const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
+    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
-    const newX = (AppConstants.scaleFactor * x) + GridComponent.panOffset.x;
-    const newY = (AppConstants.scaleFactor * y) + GridComponent.panOffset.y;
+    const newX = (AppConstants.scaleFactor * x) + GridComponent.gridOffset.x;
+    const newY = (AppConstants.scaleFactor * y) + GridComponent.gridOffset.y;
     return new Coord(newX, newY);
   }
   private static zoomPoint(newScale: number, pointX: number, pointY: number) {
@@ -306,16 +307,16 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.scaleFactor = newScale * GridComponent.scaleFactor;
     }
     const afterScaleCoords = this.screenToGrid(pointX, pointY);
-    GridComponent.panOffset.x = GridComponent.panOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
-    GridComponent.panOffset.y = GridComponent.panOffset.y - (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
+    GridComponent.gridOffset.x = GridComponent.gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
+    GridComponent.gridOffset.y = GridComponent.gridOffset.y - (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
   private static applyMatrixToSVG() {
-    if (isNaN(GridComponent.panOffset.x) || isNaN(GridComponent.panOffset.y)) {
+    if (isNaN(GridComponent.gridOffset.x) || isNaN(GridComponent.gridOffset.y)) {
       GridComponent.reset();
     } else {
-      const offsetX = GridComponent.panOffset.x;
-      const offsetY = GridComponent.panOffset.y;
+      const offsetX = GridComponent.gridOffset.x;
+      const offsetY = GridComponent.gridOffset.y;
       const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
       const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
       GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
@@ -326,10 +327,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
     const height = box.height;
-    GridComponent.panOffset.x = (width / 2) * AppConstants.scaleFactor;
-    GridComponent.panOffset.y = (height / 2) * AppConstants.scaleFactor;
+    GridComponent.gridOffset.x = (width / 2) * AppConstants.scaleFactor;
+    GridComponent.gridOffset.y = (height / 2) * AppConstants.scaleFactor;
     GridComponent.scaleFactor = 1;
     this.zoomPoint(1 / AppConstants.scaleFactor, 0, 0);
+    this.applyMatrixToSVG();
+  }
+  private static panSVG(dx: number, dy: number) {
+    const newOffsetX = this.gridOffset.x - dx;
+    const newOffsetY = this.gridOffset.y - dy;
+    this.gridOffset.x = newOffsetX;
+    this.gridOffset.y = newOffsetY;
     this.applyMatrixToSVG();
   }
 
@@ -361,45 +369,45 @@ export class GridComponent implements OnInit, AfterViewInit {
     return Math.round(num * tens) / tens;
   }
 
-  private static updateXYPos(x: number, y: number) {
-    const xPos = document.getElementById('xPos');
-    const yPos = document.getElementById('yPos');
-    if (xPos && yPos) {
-      xPos.innerText = GridComponent.roundNumber(x, 0).toString();
-      yPos.innerText = GridComponent.roundNumber(y, 0).toString();
-    }
-  }
-
-  // private static panCanvas(x: number, y: number) {
-  //   const offsetX = GridComponent.panOffset.x - x;
-  //   const offsetY = GridComponent.panOffset.y - y;
-  //   GridComponent.panOffset.x = x;
-  //   GridComponent.panOffset.y = y;
-  //   const box = GridComponent.canvasSVGElement.getBoundingClientRect();
-  //   const width = box.right - box.left;
-  //   const height = box.bottom - box.top;
-  //   let correctedPan = false;
-  //   // Cause panning outside the defined area to pan the user back in.
-  //   if (GridComponent.transformMatrix.screenToGrid(offsetX, 0).x < -100) {
-  //     GridComponent.transformMatrix.panSVG(Math.abs(offsetX), 0);
-  //     correctedPan = true;
-  //   }
-  //   if (this.transformMatrix.screenToGrid(width + offsetX, 0).x > 100) {
-  //     GridComponent.transformMatrix.panSVG(-Math.abs(offsetX), 0);
-  //     correctedPan = true;
-  //   }
-  //   if (GridComponent.transformMatrix.screenToGrid(0, offsetY).y < -100) {
-  //     GridComponent.transformMatrix.panSVG(0, Math.abs(offsetY));
-  //     correctedPan = true;
-  //   }
-  //   if (GridComponent.transformMatrix.screenToGrid(0, height + offsetY).y > 100) {
-  //     GridComponent.transformMatrix.panSVG(0, -Math.abs(offsetY));
-  //     correctedPan = true;
-  //   }
-  //   if (!correctedPan) {
-  //     GridComponent.transformMatrix.panSVG(offsetX, offsetY);
+  // private static updateXYPos(x: number, y: number) {
+  //   const xPos = document.getElementById('xPos');
+  //   const yPos = document.getElementById('yPos');
+  //   if (xPos && yPos) {
+  //     xPos.innerText = GridComponent.roundNumber(x, 0).toString();
+  //     yPos.innerText = GridComponent.roundNumber(y, 0).toString();
   //   }
   // }
+
+  private static panCanvas(x: number, y: number) {
+    const offsetX = this.panOffset.x - x;
+    const offsetY = this.panOffset.y - y;
+    this.panOffset.x = x;
+    this.panOffset.y = y;
+    const box = GridComponent.canvasSVGElement.getBoundingClientRect();
+    const width = box.width;
+    const height = box.height;
+    let correctedPan = false;
+    // Cause panning outside the defined area to pan the user back in.
+    if (GridComponent.screenToGrid(offsetX, 0).x < -100) {
+      GridComponent.panSVG(Math.abs(offsetX), 0);
+      correctedPan = true;
+    }
+    if (this.screenToGrid(width + offsetX, 0).x > 100) {
+      GridComponent.panSVG(-Math.abs(offsetX), 0);
+      correctedPan = true;
+    }
+    if (GridComponent.screenToGrid(0, offsetY).y < -100) {
+      GridComponent.panSVG(0, Math.abs(offsetY));
+      correctedPan = true;
+    }
+    if (GridComponent.screenToGrid(0, height + offsetY).y > 100) {
+      GridComponent.panSVG(0, -Math.abs(offsetY));
+      correctedPan = true;
+    }
+    if (!correctedPan) {
+      GridComponent.panSVG(offsetX, offsetY);
+    }
+  }
 
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
