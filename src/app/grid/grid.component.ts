@@ -75,90 +75,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   };
 
   constructor() { }
-    // this.jointArray = [];
-    // this.linkArray = [];
-    // this.forceArray = [];
 
-    // function createPattern(id: string, width: string, height: string, patternUnits: string) {
-    //   const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
-    //   pattern.setAttribute('id', id);
-    //   pattern.setAttribute('width', width);
-    //   pattern.setAttribute('height', height);
-    //   pattern.setAttribute('patternUnits', patternUnits);
-    //   return pattern;
-    // }
-    // function createPath(d: string, fill: string, stroke: string, strokeWidth: string) {
-    //   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    //   path.setAttribute('d', d);
-    //   path.setAttribute('fill', fill);
-    //   path.setAttribute('stroke', stroke);
-    //   path.setAttribute('stroke-width', strokeWidth);
-    //   return path;
-    // }
-    // function createRect(width: string, height: string, fill: string, x?: string, y?: string) {
-    //   const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    //   if (x !== undefined) {
-    //     rect.setAttribute('x', x);
-    //   }
-    //   if (y !== undefined) {
-    //     rect.setAttribute('y', y);
-    //   }
-    //   rect.setAttribute('width', width);
-    //   rect.setAttribute('height', height);
-    //   rect.setAttribute('fill', 'url(#' + fill + ')');
-    //   return rect;
-    // }
-    // function createLine(id: string, x1: string, y1: string, x2: string, y2: string) {
-    //   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    //   line.setAttribute('id', id);
-    //   line.setAttribute('x1', x1);
-    //   line.setAttribute('y1', y1);
-    //   line.setAttribute('x2', x2);
-    //   line.setAttribute('y2', y2);
-    //   line.style.stroke = 'rgb(0,0,0)';
-    //   line.style.strokeWidth = '0.04px';
-    //   return line;
-    // }
-
-    // const SVGtransformMatrixGridSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    // SVGtransformMatrixGridSVG.setAttribute('id', 'transformMatrixGrid');
-    //
-    // const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    // const pattern1 = createPattern('smallGrid', '10', '10', 'userSpaceOnUse');
-    // const path1 = createPath('M 10 0 L 0 0 0 10', 'none', 'gray', '0.5');
-    // const pattern2 = createPattern('grid', '50', '50', 'userSpaceOnUse');
-    // const rect1 = createRect('50', '50', 'smallGrid');
-    // const path2 = createPath('M 50 0 L 0 0 0 50', 'none', 'black', '1');
-    // const rect2 = createRect('10000px', '10000px', 'grid', '-5000', '-5000');
-    // pattern1.appendChild(path1);
-    // pattern2.appendChild(rect1);
-    // pattern2.appendChild(path2);
-    // defs.appendChild(pattern1);
-    // defs.appendChild(pattern2);
-    // SVGtransformMatrixGridSVG.appendChild(defs);
-    //
-    // SVGtransformMatrixGridSVG.appendChild(rect2);
-
-    // const SVGtransformMatrixSVG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    // SVGtransformMatrixSVG.setAttribute('id', 'transformMatrix');
-    // const line1 = createLine('yAxis', '0', '-99999', '0', '99999');
-    // const line2 = createLine('xAxis', '-99999', '0', '99999', '0');
-    // SVGtransformMatrixSVG.appendChild(line1);
-    // SVGtransformMatrixSVG.appendChild(line2);
-
-    // GridComponent.SVGCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    // GridComponent.SVGCanvas.setAttribute('id', 'SVGCanvas');
-    // GridComponent.SVGCanvas.style.width = '100%';
-    // GridComponent.SVGCanvas.style.height = '100%';
-    // this.SVGCanvas.style.width = '90vw';
-    // this.SVGCanvas.style.height = '90vh';
-    // this.SVGCanvas.setAttribute('width', '1000px');
-    // this.SVGCanvas.setAttribute('height', '1000px');
-    // GridComponent.SVGCanvas.appendChild(SVGtransformMatrixGridSVG);
-    // GridComponent.SVGCanvas.appendChild(SVGtransformMatrixSVG);
-    // GridComponent.SVGCanvas.style.transform = 'scaleY(-1)';
-
-    // document.body.appendChild(GridComponent.SVGCanvas);
   ngOnInit(): void {
   }
 
@@ -387,13 +304,11 @@ export class GridComponent implements OnInit, AfterViewInit {
     const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.panOffset.y);
     return new Coord(newX, newY);
   }
-
   private static gridToScreen(x: number, y: number) {
     const newX = (AppConstants.scaleFactor * x) + GridComponent.panOffset.x;
     const newY = (AppConstants.scaleFactor * y) + GridComponent.panOffset.y;
     return new Coord(newX, newY);
   }
-
   private static zoomPoint(newScale: number, pointX: number, pointY: number) {
     const beforeScaleCoords = this.screenToGrid(pointX, pointY);
     // Prevent zooming in or out too far
@@ -409,7 +324,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.panOffset.y = GridComponent.panOffset.y - (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
-
   private static applyMatrixToSVG() {
     if (isNaN(GridComponent.panOffset.x) || isNaN(GridComponent.panOffset.y)) {
       GridComponent.reset();
@@ -422,7 +336,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.SVGTransformMatrixGridSVG.setAttributeNS(null, 'transform', gridMatrix);
     }
   }
-
   private static reset() {
     const box = GridComponent.SVGCanvas.getBoundingClientRect();
     const width = box.width;
@@ -433,6 +346,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.zoomPoint(1 / AppConstants.scaleFactor, 0, 0);
     this.applyMatrixToSVG();
   }
+
 
   private static getMousePosition(e: MouseEvent) {
     const svg = GridComponent.SVGCanvas as SVGGraphicsElement;
@@ -499,5 +413,24 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (!correctedPan) {
       GridComponent.transformMatrix.panSVG(offsetX, offsetY);
     }
+  }
+
+  scrollGrid($event: WheelEvent) {
+    $event.preventDefault();
+    $event.stopPropagation();
+    // GridComponent.hideMenu.emit(true); // Hide the context menu
+    let wheelAmount = $event.deltaY;
+    if (wheelAmount > 0) {
+      wheelAmount = 20 / 21;
+    } else if (wheelAmount < 0) {
+      wheelAmount = 21 / 20;
+    } else {
+      return;
+    }
+    const rawSVGCoords = GridComponent.getMousePosition($event);
+    if (rawSVGCoords === undefined) {
+      return
+    }
+    GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
   }
 }
