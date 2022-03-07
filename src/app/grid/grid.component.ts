@@ -2,7 +2,6 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import {Joint} from "./joint/joint";
 import {Link} from "./link/link";
 import {Force} from "./force/force";
-import {TransformMatrix} from "./transform-matrix/transform-matrix";
 import {Coord} from "./coord/coord";
 import {AppConstants} from "./app-constants/app-constants";
 
@@ -44,26 +43,23 @@ enum moveModes {
 
 export class GridComponent implements OnInit, AfterViewInit {
 
-  private static SVGCanvas: SVGElement; // Reference to the SVG canvas (coordinate grid)
-  private static SVGCanvasTM: SVGElement; // The transpose matrix under the SVG canvas.
-  private static SVGTransformMatrixGridSVG: SVGElement;
-  private static SVGTransformMatrixSVG: SVGElement;
-  private static transformMatrix: TransformMatrix;
-
   jointArray!: Joint[];
   linkArray!: Link[];
   forceArray!: Force[];
 
   // holders
-  private static linkageHolder: SVGElement;
-  private static pathsHolder: SVGElement;
-  private static pathsPathPointHolder: SVGElement;
-  private static forcesHolder: SVGElement;
-  private static jointLinkForceTagHolder: SVGElement;
-  private static comTagHolder: SVGElement;
-  private static pathPointHolder: SVGElement;
-  private static threePositionHolder: SVGElement;
-  private static tempHolder: SVGElement;
+  private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
+  private static transformMatrixGridSVGElement: SVGElement;
+  private static transformMatrixSVG: SVGElement;
+  private static linkageHolderSVG: SVGElement;
+  private static pathsHolderSVG: SVGElement;
+  private static pathsPathPointHolderSVG: SVGElement;
+  private static forcesHolderSVG: SVGElement;
+  private static jointLinkForceTagHolderSVG: SVGElement;
+  private static comTagHolderSVG: SVGElement;
+  private static pathPointHolderSVG: SVGElement;
+  private static threePositionHolderSVG: SVGElement;
+  private static tempHolderSVG: SVGElement;
 
   private static states: states;
   private static moveModes: moveModes;
@@ -82,12 +78,20 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     GridComponent.states = states.waiting;
-    GridComponent.SVGTransformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
-    GridComponent.SVGTransformMatrixGridSVG = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
-    GridComponent.SVGCanvas = document.getElementById('SVGCanvas') as unknown as SVGElement
+    GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
+    GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
+    GridComponent.linkageHolderSVG = document.getElementById('linkageHolder') as unknown as SVGElement;
+    GridComponent.pathsHolderSVG = document.getElementById('pathsHolder') as unknown as SVGElement;
+    GridComponent.pathsPathPointHolderSVG = document.getElementById('pathsPathPointHolder') as unknown as SVGElement;
+    GridComponent.forcesHolderSVG = document.getElementById('forcesHolder') as unknown as SVGElement;
+    GridComponent.jointLinkForceTagHolderSVG = document.getElementById('jointLinkForcesTagHolder') as unknown as SVGElement;
+    GridComponent.comTagHolderSVG = document.getElementById('comTagHolder') as unknown as SVGElement;
+    GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
+    GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
+    GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
     GridComponent.reset();
     /*
-    GridComponent.SVGCanvas.addEventListener('mousedown', function (e: MouseEvent) {
+    GridComponent.canvasSVGElement.addEventListener('mousedown', function (e: MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
       const rawCoords = GridComponent.getMousePosition(e);
@@ -134,7 +138,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     // Event handler when dragging elements
-    GridComponent.SVGCanvas.addEventListener('mousemove', function (ev) {
+    GridComponent.canvasSVGElement.addEventListener('mousemove', function (ev) {
       const e = ev;
       e.preventDefault();
       e.stopPropagation();
@@ -197,8 +201,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         //   break;
       }
     });
-    // this.SVGCanvas.addEventListener('mouseover', function (e) {});
-    GridComponent.SVGCanvas.addEventListener('mouseup', function (e) {
+    // this.canvasSVGElement.addEventListener('mouseover', function (e) {});
+    GridComponent.canvasSVGElement.addEventListener('mouseup', function (e) {
       // Deselect the selected link.
       switch (GridComponent.states) {
         case states.moving:
@@ -244,7 +248,7 @@ export class GridComponent implements OnInit, AfterViewInit {
           break;
       }
     });
-    // this.SVGCanvas.addEventListener('contextmenu', function (e) {
+    // this.canvasSVGElement.addEventListener('contextmenu', function (e) {
     //   e.preventDefault();
     //   e.stopPropagation();
     //   if (that.animationMode()) {
@@ -274,24 +278,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     //     }
     //   }
     // });
-    GridComponent.SVGCanvas.addEventListener('wheel', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      // GridComponent.hideMenu.emit(true); // Hide the context menu
-      let wheelAmount = e.deltaY;
-      if (wheelAmount > 0) {
-        wheelAmount = 20 / 21;
-      } else if (wheelAmount < 0) {
-        wheelAmount = 21 / 20;
-      } else {
-        return;
-      }
-      const rawSVGCoords = GridComponent.getMousePosition(e);
-      if (rawSVGCoords === undefined) {
-        return
-      }
-      GridComponent.transformMatrix.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
-    });
     // this.state = states.waiting;
 
     // this.refreshLinkage();
@@ -332,12 +318,12 @@ export class GridComponent implements OnInit, AfterViewInit {
       const offsetY = GridComponent.panOffset.y;
       const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
       const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
-      GridComponent.SVGTransformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
-      GridComponent.SVGTransformMatrixGridSVG.setAttributeNS(null, 'transform', gridMatrix);
+      GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
+      GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
     }
   }
   private static reset() {
-    const box = GridComponent.SVGCanvas.getBoundingClientRect();
+    const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
     const height = box.height;
     GridComponent.panOffset.x = (width / 2) * AppConstants.scaleFactor;
@@ -349,7 +335,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
 
   private static getMousePosition(e: MouseEvent) {
-    const svg = GridComponent.SVGCanvas as SVGGraphicsElement;
+    const svg = GridComponent.canvasSVGElement as SVGGraphicsElement;
     const CTM = svg.getScreenCTM();
     // if (e.touches) { e = e.touches[0]; }
     const box = svg.getBoundingClientRect();
@@ -384,36 +370,36 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private static panCanvas(x: number, y: number) {
-    const offsetX = GridComponent.panOffset.x - x;
-    const offsetY = GridComponent.panOffset.y - y;
-    GridComponent.panOffset.x = x;
-    GridComponent.panOffset.y = y;
-    const box = GridComponent.SVGCanvas.getBoundingClientRect();
-    const width = box.right - box.left;
-    const height = box.bottom - box.top;
-    let correctedPan = false;
-    // Cause panning outside the defined area to pan the user back in.
-    if (GridComponent.transformMatrix.screenToGrid(offsetX, 0).x < -100) {
-      GridComponent.transformMatrix.panSVG(Math.abs(offsetX), 0);
-      correctedPan = true;
-    }
-    if (this.transformMatrix.screenToGrid(width + offsetX, 0).x > 100) {
-      GridComponent.transformMatrix.panSVG(-Math.abs(offsetX), 0);
-      correctedPan = true;
-    }
-    if (GridComponent.transformMatrix.screenToGrid(0, offsetY).y < -100) {
-      GridComponent.transformMatrix.panSVG(0, Math.abs(offsetY));
-      correctedPan = true;
-    }
-    if (GridComponent.transformMatrix.screenToGrid(0, height + offsetY).y > 100) {
-      GridComponent.transformMatrix.panSVG(0, -Math.abs(offsetY));
-      correctedPan = true;
-    }
-    if (!correctedPan) {
-      GridComponent.transformMatrix.panSVG(offsetX, offsetY);
-    }
-  }
+  // private static panCanvas(x: number, y: number) {
+  //   const offsetX = GridComponent.panOffset.x - x;
+  //   const offsetY = GridComponent.panOffset.y - y;
+  //   GridComponent.panOffset.x = x;
+  //   GridComponent.panOffset.y = y;
+  //   const box = GridComponent.canvasSVGElement.getBoundingClientRect();
+  //   const width = box.right - box.left;
+  //   const height = box.bottom - box.top;
+  //   let correctedPan = false;
+  //   // Cause panning outside the defined area to pan the user back in.
+  //   if (GridComponent.transformMatrix.screenToGrid(offsetX, 0).x < -100) {
+  //     GridComponent.transformMatrix.panSVG(Math.abs(offsetX), 0);
+  //     correctedPan = true;
+  //   }
+  //   if (this.transformMatrix.screenToGrid(width + offsetX, 0).x > 100) {
+  //     GridComponent.transformMatrix.panSVG(-Math.abs(offsetX), 0);
+  //     correctedPan = true;
+  //   }
+  //   if (GridComponent.transformMatrix.screenToGrid(0, offsetY).y < -100) {
+  //     GridComponent.transformMatrix.panSVG(0, Math.abs(offsetY));
+  //     correctedPan = true;
+  //   }
+  //   if (GridComponent.transformMatrix.screenToGrid(0, height + offsetY).y > 100) {
+  //     GridComponent.transformMatrix.panSVG(0, -Math.abs(offsetY));
+  //     correctedPan = true;
+  //   }
+  //   if (!correctedPan) {
+  //     GridComponent.transformMatrix.panSVG(offsetX, offsetY);
+  //   }
+  // }
 
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
