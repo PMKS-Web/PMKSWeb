@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 
 @Component({
   selector: 'app-context-menu',
@@ -9,7 +9,22 @@ export class ContextMenuComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit(): void {
+  ngOnInit(): void {}
+
+  // https://www.youtube.com/watch?v=sKjBwz_x6Ss
+  @ViewChild('menu') menu!: ElementRef
+  contextMenu(e: any) {
+    e.preventDefault();
+    this.menu.nativeElement.style.display = 'block';
+    this.menu.nativeElement.style.top = e.pageY + 'px';
+    this.menu.nativeElement.style.left = e.pageX + 'px';
   }
 
+  disappearContext() {
+    this.menu.nativeElement.style.display = 'none';
+  }
+
+  stopPropagation(e: any) {
+    e.stopPropagation();
+  }
 }

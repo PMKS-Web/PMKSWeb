@@ -380,21 +380,22 @@ export class GridComponent implements OnInit {
     //     }
     //   }
     // });
-    // this.SVGCanvas.addEventListener('wheel', function (e) {
-    //   e.preventDefault();
-    //   e.stopPropagation();
-    //   that.hideMenu.emit(true); // Hide the context menu
-    //   let wheelAmount = e.deltaY;
-    //   if (wheelAmount > 0) {
-    //     wheelAmount = 20 / 21;
-    //   } else if (wheelAmount < 0) {
-    //     wheelAmount = 21 / 20;
-    //   } else {
-    //     return;
-    //   }
-    //   const rawSVGCoords = StaticFuncs.getMousePosition(e);
-    //   that.transformMatrix.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
-    // });
+    GridComponent.SVGCanvas.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // GridComponent.hideMenu.emit(true); // Hide the context menu
+      let wheelAmount = e.deltaY;
+      if (wheelAmount > 0) {
+        wheelAmount = 20 / 21;
+      } else if (wheelAmount < 0) {
+        wheelAmount = 21 / 20;
+      } else {
+        return;
+      }
+      const rawSVGCoords = GridComponent.getMousePosition(e);
+      if (rawSVGCoords === undefined) { return }
+      GridComponent.transformMatrix.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
+    });
     // this.state = states.waiting;
 
     // this.refreshLinkage();
@@ -405,8 +406,6 @@ export class GridComponent implements OnInit {
   }
 
   private static getMousePosition(e: MouseEvent) {
-    // const canvasGET = document.getElementById('SVGCanvas') as unknown;
-    // const svg = canvasGET as SVGGraphicsElement;
     const svg = GridComponent.SVGCanvas as SVGGraphicsElement;
     const CTM = svg.getScreenCTM();
     // if (e.touches) { e = e.touches[0]; }

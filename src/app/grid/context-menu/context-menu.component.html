@@ -1,1 +1,7 @@
-<p>context-menu works!</p>
+<div class="grid-menu" (contextmenu)="contextMenu($event)" (click)="disappearContext()">
+  <div class="customContext" (click)="stopPropagation($event)" #menu>
+    <ul>
+      <li>Add Joint</li>
+    </ul>
+  </div>
+</div>

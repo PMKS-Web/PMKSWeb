@@ -1,0 +1,27 @@
+.customContext{
+  position: fixed;
+  background: #111;
+  width: 150px;
+  z-index: 10000000;
+  display: none
+}
+
+.customContext ul {
+  padding: 0;
+  margin: 0;
+}
+
+.customContext ul li{
+  list-style-type: none;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgb(46, 46, 46);
+  color: #555;
+  width: 100%;
+  cursor: pointer;
+  transition: 0.2s all;
+}
+
+.customContext ul li{
+  background: rgb(46, 46, 46);
+  color: #fff;
+}
