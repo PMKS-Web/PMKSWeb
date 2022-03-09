@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
 import {Joint} from "./joint/joint";
 import {Link} from "./link/link";
 import {Force} from "./force/force";
@@ -60,6 +60,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static pathPointHolderSVG: SVGElement;
   private static threePositionHolderSVG: SVGElement;
   private static tempHolderSVG: SVGElement;
+  private static contextMenuAddJointSVG: SVGElement;
 
   private static states: states;
   private static moveModes: moveModes;
@@ -92,6 +93,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
+    GridComponent.contextMenuAddJointSVG = document.getElementById('menuEntryAddJoint') as unknown as SVGElement;
     GridComponent.reset();
   }
 
@@ -388,5 +390,42 @@ export class GridComponent implements OnInit, AfterViewInit {
       //   }
       //   break;
     }
+  }
+
+  @ViewChild('menu') menu!: ElementRef
+  contextMenu($event: MouseEvent) {
+    $event.preventDefault();
+    $event.stopPropagation();
+
+    const rawCoord = GridComponent.getMousePosition($event);
+    if  (rawCoord === undefined) { return }
+
+    const offsetX = rawCoord.x;
+    const offsetY = rawCoord.y;
+
+    // this.menu.nativeElement.style.display = 'block';
+    GridComponent.contextMenuAddJointSVG.style.display = 'block';
+    GridComponent.contextMenuAddJointSVG.children[0].setAttribute('x', offsetX.toString());
+    GridComponent.contextMenuAddJointSVG.children[0].setAttribute('y', offsetY.toString());
+    GridComponent.contextMenuAddJointSVG.children[1].setAttribute('x', offsetX.toString());
+    GridComponent.contextMenuAddJointSVG.children[1].setAttribute('y', offsetY.toString());
+  }
+
+  disappearContext($event: MouseEvent) {
+    GridComponent.contextMenuAddJointSVG.style.display = 'none';
+  }
+
+  stopPropagation($event: MouseEvent) {
+    $event.stopPropagation();
+  }
+
+  RectMouseOver($event: MouseEvent) {
+    GridComponent.contextMenuAddJointSVG.children[0].setAttribute('style',
+      'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+  }
+
+  RectMouseOut($event: MouseEvent) {
+    GridComponent.contextMenuAddJointSVG.children[0].setAttribute('style',
+      'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
   }
 }
