@@ -94,6 +94,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
     GridComponent.contextMenuAddJointSVG = document.getElementById('menuEntryAddJoint') as unknown as SVGElement;
+    GridComponent.contextMenuAddJointSVG.style.display = 'none';
     GridComponent.reset();
   }
 
@@ -146,7 +147,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   private static panSVG(dx: number, dy: number) {
     const newOffsetX = this.gridOffset.x - dx;
-    const newOffsetY = this.gridOffset.y - dy;
+    const newOffsetY = this.gridOffset.y + dy;
     this.gridOffset.x = newOffsetX;
     this.gridOffset.y = newOffsetY;
     this.applyMatrixToSVG();
@@ -397,11 +398,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     $event.preventDefault();
     $event.stopPropagation();
 
-    const rawCoord = GridComponent.getMousePosition($event);
-    if  (rawCoord === undefined) { return }
-
-    const offsetX = rawCoord.x;
-    const offsetY = rawCoord.y;
+    // const rawCoord = GridComponent.getMousePosition($event);
+    // if  (rawCoord === undefined) { return }
+    //
+    // const offsetX = rawCoord.x;
+    // const offsetY = rawCoord.y;
+    const offsetX = $event.clientX;
+    const offsetY = $event.clientY;
 
     // this.menu.nativeElement.style.display = 'block';
     GridComponent.contextMenuAddJointSVG.style.display = 'block';
