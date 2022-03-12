@@ -16,7 +16,13 @@
   <g id="transformMatrix">
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
-    <g id="linkageHolder"></g>
+    <g id="linkageHolder" *ngFor="let joint of joints">
+      <svg [attr.x]="joint.x" [attr.y]="joint.y" width="10" height="10" style="overflow: visible" cursor="move">
+        <circle id="joint_{{joint.id}}_ring" [attr.r]="(joint.r * 7 / 5)" [attr.cx]="0" [attr.cy]="0" fill="black"/>
+        <circle id="joint_{{joint.id}}" [attr.r]="joint.r" [attr.cx]="0" [attr.cy]="0" fill="gray" stroke="#00000000"
+                [attr.stroke-width]="(joint.r * 2)"/>
+      </svg>
+    </g>
     <g id="pathsHolder"></g>
     <g id="pathsPathPointHolder"></g>
     <g id="forcesHolder"></g>
@@ -26,7 +32,7 @@
     <g id="threePositionHolder"></g>
     <g id="tempHolder"></g>
   </g>
-  <g class="context-menu" (click)="stopPropagation($event)" style="cursor: pointer" #menu>
+  <g class="context-menu" (click)="addJoint($event)" style="cursor: pointer" #menu>
     <g class="menu-entry" id="menuEntryAddJoint" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">
       <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Joint</text>

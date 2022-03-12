@@ -1,9 +1,7 @@
 import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
-import {Joint} from "./joint/joint";
-import {Link} from "./link/link";
-import {Force} from "./force/force";
 import {Coord} from "./coord/coord";
 import {AppConstants} from "./app-constants/app-constants";
+import {Joint} from "../../model/joint";
 
 
 // The possible states the program could be in.
@@ -38,14 +36,15 @@ enum moveModes {
 @Component({
   selector: 'app-grid',
   templateUrl: './grid.component.html',
-  styleUrls: ['./grid.component.css']
+  styleUrls: ['./grid.component.css'],
 })
 
 export class GridComponent implements OnInit, AfterViewInit {
 
-  jointArray!: Joint[];
-  linkArray!: Link[];
-  forceArray!: Force[];
+  // private static jointArray: Joint[];
+  // private static linkArray: Link[];
+  // private static forceArray: Force[];
+  joints: Joint[] = [];
 
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -96,6 +95,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddJointSVG = document.getElementById('menuEntryAddJoint') as unknown as SVGElement;
     GridComponent.contextMenuAddJointSVG.style.display = 'none';
     GridComponent.reset();
+    // GridComponent.jointArray = [];
   }
 
   private static screenToGrid(x: number, y: number) {
@@ -418,8 +418,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddJointSVG.style.display = 'none';
   }
 
-  stopPropagation($event: MouseEvent) {
-    $event.stopPropagation();
+  addJoint($event: MouseEvent) {
+    // $event.stopPropagation();
+    GridComponent.contextMenuAddJointSVG.style.display = 'none';
+    const screenX = Number(GridComponent.contextMenuAddJointSVG.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddJointSVG.children[0].getAttribute('y'));
+    const gridCoord = GridComponent.screenToGrid(screenX, screenY);
+    const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
+    this.joints.push(newJoint);
+    // GridComponent.jointArray.push(newJoint);
   }
 
   RectMouseOver($event: MouseEvent) {
