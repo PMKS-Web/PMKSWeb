@@ -1,7 +1,6 @@
 <svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)" (mousedown)="mouseDown($event)"
-     (mouseup)="mouseUp($event)" (mousemove)="mouseMove($event)" (contextmenu)="contextMenu($event); false"
-     (click)="disappearContext($event)">
-  <g id="transformMatrixGrid">
+     (mouseup)="mouseUp($event)" (mousemove)="mouseMove($event)">
+  <g id="transformMatrixGrid" (contextmenu)="contextMenuAddTracerJoint($event); false" (click)="disappearContext($event)">
     <defs>
       <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5" />
@@ -16,7 +15,7 @@
   <g id="transformMatrix">
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
-    <g id="linkageHolder" *ngFor="let joint of joints">
+    <g id="linkageHolder" *ngFor="let joint of joints" (contextmenu)="contextMenuAddGround($event); false" (click)="disappearContext($event)">
       <svg [attr.x]="joint.x" [attr.y]="joint.y" width="10" height="10" style="overflow: visible" cursor="move">
         <circle id="joint_{{joint.id}}_ring" [attr.r]="(joint.r * 7 / 5)" [attr.cx]="0" [attr.cy]="0" fill="black"/>
         <circle id="joint_{{joint.id}}" [attr.r]="joint.r" [attr.cx]="0" [attr.cy]="0" fill="gray" stroke="#00000000"
@@ -32,10 +31,24 @@
     <g id="threePositionHolder"></g>
     <g id="tempHolder"></g>
   </g>
-  <g class="context-menu" (click)="addJoint($event)" style="cursor: pointer" #menu>
+  <g class="context-menu-canvas" (click)="addJoint($event)" style="cursor: pointer" #menuCanvas>
     <g class="menu-entry" id="menuEntryAddJoint" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">
       <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Joint</text>
     </g>
+  </g>
+  <g class="context-menu-joint" (click)="addGround($event)" style="cursor: pointer" #menuJoint>
+    <g class="menu-entry" id="menuEntryCreateGround" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">
+      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Ground</text>
+    </g>
+<!--    <g class="menu-entry" id="menuEntryCreateGround" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">-->
+<!--      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>-->
+<!--      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>-->
+<!--    </g>-->
+<!--    <g class="menu-entry" id="menuEntryCreateSlider" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">-->
+<!--      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>-->
+<!--      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Slider</text>-->
+<!--    </g>-->
   </g>
 </svg>
