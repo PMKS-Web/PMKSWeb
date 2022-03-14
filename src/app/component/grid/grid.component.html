@@ -35,18 +35,34 @@
     <g id="comTagHolder"></g>
     <g id="pathPointHolder"></g>
     <g id="threePositionHolder"></g>
-    <g id="tempHolder"></g>
+    <g id="tempHolder">
+      <g id="jointTemp" style="transform: scaleY(-1)">
+        <line stroke="black" stroke-width="0.02" stroke-opacity="0.5" style="pointer-events: none"></line>
+        <svg height="10" width="10" style="overflow: visible" cursor="move">
+          <circle r="0.14" cx="0%" cy="0%" fill="black" fill-opacity="0.5" stroke-opacity="0.5"> </circle>
+          <circle r="0.1" cx="0%" cy="0%" fill="gray" stroke="#00000000" stroke-width="0.2"> </circle>
+        </svg>
+      </g>
+      <g id="forceTemp" opacity="0.5" style="pointer-events: none">
+        <path stroke-width="0.2" stroke="yellow" stroke-opacity="0"></path>
+        <path stroke-width="0.4" stroke="black"></path>
+        <path fill="black"></path>
+      </g>
+      <svg>
+
+      </svg>
+    </g>
   </g>
   <g class="context-menu-canvas" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddJoint" (click)="addJoint($event)"
+    <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="addLink($event)"
        (mouseout)="RectMouseOut($event, 'grid')"
        (mouseover)="RectMouseOver($event, 'grid')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Tracer Point</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
   </g>
   <g class="context-menu-joint" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddLink" (click)="addGround($event)"
+    <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="addLink($event)"
        (mouseout)="RectMouseOut($event, 'addLink')"
        (mouseover)="RectMouseOver($event, 'addLink')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
