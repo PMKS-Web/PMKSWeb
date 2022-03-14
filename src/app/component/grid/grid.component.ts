@@ -289,11 +289,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (rawSVGCoords === undefined) {
       return
     }
-    // const x = rawSVGCoords.x + GridComponent.gridOffset.x;
-    // const y = rawSVGCoords.y - GridComponent.gridOffset.y;
     const x = rawSVGCoords.x;
-    // TODO: Be sure that y is adjusted properly
-    const y = rawSVGCoords.y;
+    const y = rawSVGCoords.y * -1;
     GridComponent.zoomPoint(wheelAmount, x, y);
   }
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any) {
