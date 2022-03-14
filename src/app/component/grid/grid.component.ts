@@ -600,6 +600,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     const coord = GridComponent.screenToGrid(screenX, screenY);
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x1', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y1', coord.y.toString());
+    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', coord.x.toString());
+    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', coord.y.toString());
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('x', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('y', coord.y.toString());
     GridComponent.gridStates = gridStates.creating;
