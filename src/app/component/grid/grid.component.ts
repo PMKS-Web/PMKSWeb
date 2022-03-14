@@ -145,7 +145,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static screenToGrid(x: number, y: number) {
     const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
-    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
+    const newY = (1 / GridComponent.scaleFactor) * (y + GridComponent.gridOffset.y);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
@@ -165,20 +165,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     const afterScaleCoords = this.screenToGrid(pointX, pointY);
     GridComponent.gridOffset.x = GridComponent.gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
-    GridComponent.gridOffset.y = GridComponent.gridOffset.y - (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
+    GridComponent.gridOffset.y = GridComponent.gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
   private static applyMatrixToSVG() {
-    if (isNaN(GridComponent.gridOffset.x) || isNaN(GridComponent.gridOffset.y)) {
-      GridComponent.reset();
-    } else {
-      const offsetX = GridComponent.gridOffset.x;
-      const offsetY = GridComponent.gridOffset.y;
-      const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
-      const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
-      GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
-      GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
-    }
+    const offsetX = GridComponent.gridOffset.x;
+    const offsetY = GridComponent.gridOffset.y;
+    const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
+    const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
+    GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
+    GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
