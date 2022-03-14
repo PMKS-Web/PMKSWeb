@@ -1,16 +1,23 @@
 import {AppConstants} from "../component/grid/app-constants/app-constants";
+import {Link} from "./link";
 
 export class Joint {
   private _id: string;
   private _x: number;
   private _y: number;
   private _r: number;
+  private _type: string;
+  private _ground: boolean;
+  private _links: Link[];
 
   constructor(id: string, x: number, y: number) {
     this._id = id;
     this._x = x;
     this._y = y;
     this._r = 5 * AppConstants.scaleFactor;
+    this._type = 'R';
+    this._ground = false;
+    this._links = [];
   }
 
   get id(): string {

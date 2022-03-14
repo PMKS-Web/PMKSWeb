@@ -324,8 +324,24 @@ export class GridComponent implements OnInit, AfterViewInit {
                   const y1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y1'));
                   const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
                   const y2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y2'));
-                  const joint1 = new Joint('a', x1, y1);
-                  const joint2 = new Joint('b', x2, y2);
+                  let lastLetter = '';
+                  let joint1ID: string;
+                  let joint2ID: string;
+                  this.joints.forEach(j => {
+                    if (j.id > lastLetter) {
+                      lastLetter = j.id;
+                    }
+                  });
+                  if (lastLetter === '') {
+                    joint1ID = 'a';
+                    joint2ID = 'b';
+                  } else {
+                    joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+                    joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
+                  }
+                  // const joint1ID = String.fromCharCode(c.charCodeAt(0) + 1);
+                  const joint1 = new Joint(joint1ID, x1, y1);
+                  const joint2 = new Joint(joint2ID, x2, y2);
                   this.joints.push(joint1);
                   this.joints.push(joint2);
                   GridComponent.gridStates = gridStates.waiting;
@@ -592,11 +608,22 @@ export class GridComponent implements OnInit, AfterViewInit {
     const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
-  addLink($event: MouseEvent) {
+  addLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext($event);
-    GridComponent.contextMenuAddGroundSVG.style.display = 'none';
-    const screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
-    const screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
+    let screenX: number;
+    let screenY: number;
+    switch (gridOrJoint) {
+      case 'grid':
+        screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
+        screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
+        break;
+      case 'joint':
+        screenX = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('x'));
+        screenY = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('y'));
+        break;
+      default:
+        return;
+    }
     const coord = GridComponent.screenToGrid(screenX, screenY);
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x1', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y1', coord.y.toString());
