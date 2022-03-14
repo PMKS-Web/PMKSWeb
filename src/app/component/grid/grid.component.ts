@@ -608,6 +608,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.creating;
     GridComponent.jointStates = jointStates.creating;
     GridComponent.tempHolderSVG.style.display = 'block';
+    // push code...
   }
 
   RectMouseOver($event: MouseEvent, menuType: string) {
