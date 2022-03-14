@@ -2,10 +2,12 @@ import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/
 import {Coord} from "./coord/coord";
 import {AppConstants} from "./app-constants/app-constants";
 import {Joint} from "../../model/joint";
+import {switchMapTo} from "rxjs";
+import {core} from "@angular/compiler";
 
 
 // The possible states the program could be in.
-enum states {
+enum gridStates {
   init,
   waiting,
   creating,
@@ -15,6 +17,40 @@ enum states {
   editing,
   processing
 }
+
+enum jointStates {
+  init,
+  waiting,
+  creating,
+  moving,
+  panning,
+  zooming,
+  editing,
+  processing
+}
+
+enum linkStates {
+  init,
+  waiting,
+  creating,
+  moving,
+  panning,
+  zooming,
+  editing,
+  processing
+}
+
+enum forceStates {
+  init,
+  waiting,
+  creating,
+  moving,
+  panning,
+  zooming,
+  editing,
+  processing
+}
+
 
 enum shapeEditModes {
   move,
@@ -62,7 +98,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuAddTracerJointSVG: SVGElement;
   private static contextMenuAddGroundJointSVG: SVGElement;
 
-  private static states: states;
+  private static gridStates: gridStates;
+  private static jointStates: jointStates;
+  private static linkStates: linkStates;
+  private static forceStates: forceStates;
   private static moveModes: moveModes;
   private static scaleFactor = 1;
 
@@ -80,7 +119,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
   }
   ngAfterViewInit() {
-    GridComponent.states = states.waiting;
+    GridComponent.gridStates = gridStates.waiting;
+    GridComponent.jointStates = jointStates.waiting;
+    GridComponent.linkStates = linkStates.waiting;
+    GridComponent.forceStates = forceStates.waiting;
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
     GridComponent.linkageHolderSVG = document.getElementById('linkageHolder') as unknown as SVGElement;
@@ -242,7 +284,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
   }
-  mouseDown($event: MouseEvent) {
+  mouseDown($event: MouseEvent, typeChosen: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
     const rawCoords = GridComponent.getMousePosition($event);
@@ -252,88 +294,127 @@ export class GridComponent implements OnInit, AfterViewInit {
     const trueCoords = GridComponent.screenToGrid(rawCoords.x, rawCoords.y);
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // GridComponent.hideMenu.emit(true); // Hide the context menu
-        const state = GridComponent.states;
-        switch (state) {
-          case states.panning:
-            break;
-          case states.waiting:
-            const mPos = GridComponent.getMousePosition($event);
-            if (mPos === undefined) {
-              return
+        switch (typeChosen) {
+          case 'grid':
+            switch (GridComponent.gridStates) {
+              case gridStates.panning:
+                break;
+              case gridStates.waiting:
+                const mPos = GridComponent.getMousePosition($event);
+                if (mPos === undefined) {
+                  return
+                }
+                GridComponent.panOffset.x = mPos.x;
+                GridComponent.panOffset.y = mPos.y;
+                GridComponent.gridStates = gridStates.panning;
+                break;
+              case gridStates.creating:
+                // if (that.createMode === createModes.link) {
+                //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
+                //   that.createNewSimulator();
+                // } else if (that.createMode === createModes.force) {
+                //   that.setForceEndEndpoint(trueCoords.x, trueCoords.y);
+                //   that.createNewSimulator();
+                //   that.cancelCreation();
+                //   that.state = gridStates.waiting;
+                // }
+                break;
+              default:
             }
-            GridComponent.panOffset.x = mPos.x;
-            GridComponent.panOffset.y = mPos.y;
-            GridComponent.states = states.panning;
             break;
-          case states.creating:
-            // if (that.createMode === createModes.link) {
-            //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
-            //   that.createNewSimulator();
-            // } else if (that.createMode === createModes.force) {
-            //   that.setForceEndEndpoint(trueCoords.x, trueCoords.y);
-            //   that.createNewSimulator();
-            //   that.cancelCreation();
-            //   that.state = states.waiting;
-            // }
+          case 'joint':
+            switch (GridComponent.jointStates) {
+              case jointStates.waiting:
+                const mPos = GridComponent.getMousePosition($event);
+                if (mPos === undefined) {
+                  return
+                }
+                // GridComponent.panOffset.x = mPos.x;
+                // GridComponent.panOffset.y = mPos.y;
+                GridComponent.jointStates = jointStates.panning;
+                break;
+              case jointStates.panning:
+                break;
+            }
             break;
-          default:
+
+          case 'link':
+            break;
+          case 'force':
+            break;
         }
         break;
-      case 1: // Handle Middle-Click on canvas
+      case 1: // Middle-Click
         return;
-      case 2: // Handle Right-Click on canvas
+      case 2: // Right-Click
         break;
       default:
         return;
     }
   }
-  mouseUp($event: MouseEvent) {
-    switch (GridComponent.states) {
-      case states.moving:
-        switch (GridComponent.moveModes) {
-          case moveModes.joint:
-            // GridComponent.endMoveJoint(GridComponent.draggingJoint);
-            // that.createNewSimulator();
-            break;
-          case moveModes.forceEndpoint:
-            // if (that.draggingEndpoint.type === ForceEndpointType.start &&
-            //   !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-            //   that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-            //   that.createNewSimulator();
+  mouseUp($event: MouseEvent, typeChosen: string, thing?: any) {
+    switch (typeChosen) {
+      case 'grid':
+        switch (GridComponent.gridStates) {
+          case gridStates.moving:
+            switch (GridComponent.moveModes) {
+              case moveModes.joint:
+                // GridComponent.endMoveJoint(GridComponent.draggingJoint);
+                // that.createNewSimulator();
+                break;
+              case moveModes.forceEndpoint:
+                // if (that.draggingEndpoint.type === ForceEndpointType.start &&
+                //   !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
+                //   that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
+                //   that.createNewSimulator();
+                // }
+                // that.endDragForceEndpoint(that.draggingEndpoint);
+                // that.createNewSimulator();
+                break;
+              case moveModes.pathPoint:
+                // that.endMovePathPoint(that.draggingPathPoint);
+                break;
+              case moveModes.threePosition:
+                // that.endMoveThreePosition(that.draggingThreePosition);
+                break;
+            }
+            // if (that.moveMode === moveModes.joint) {
+            //   that.endMoveJoint(that.draggingJoint);
+            // } else {
+            //   if (that.draggingEndpoint.type === ForceEndpointType.start &&
+            //     !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
+            //     that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
+            //   }
+            //   that.endDragForceEndpoint(that.draggingEndpoint);
             // }
-            // that.endDragForceEndpoint(that.draggingEndpoint);
-            // that.createNewSimulator();
             break;
-          case moveModes.pathPoint:
-            // that.endMovePathPoint(that.draggingPathPoint);
+          case gridStates.panning:
+            GridComponent.gridStates = gridStates.waiting;
             break;
-          case moveModes.threePosition:
-            // that.endMoveThreePosition(that.draggingThreePosition);
+          case gridStates.creating:
+            break;
+          case gridStates.editing:
+            GridComponent.gridStates = gridStates.waiting;
+            // GridComponent.editingLink.cacheBounds();
             break;
         }
-        // if (that.moveMode === moveModes.joint) {
-        //   that.endMoveJoint(that.draggingJoint);
-        // } else {
-        //   if (that.draggingEndpoint.type === ForceEndpointType.start &&
-        //     !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-        //     that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-        //   }
-        //   that.endDragForceEndpoint(that.draggingEndpoint);
-        // }
         break;
-      case states.panning:
-        GridComponent.states = states.waiting;
+      case 'joint':
+        switch (GridComponent.jointStates) {
+          case jointStates.waiting:
+            break;
+          case jointStates.panning:
+            GridComponent.jointStates = jointStates.waiting;
+            break;
+        }
         break;
-      case states.creating:
+      case 'link':
         break;
-      case states.editing:
-        GridComponent.states = states.waiting;
-        // GridComponent.editingLink.cacheBounds();
+      case 'force':
         break;
     }
   }
-  mouseMove($event: MouseEvent) {
+  mouseMove($event: MouseEvent, typeChosen: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
     // Check if we are creating a link
@@ -344,55 +425,79 @@ export class GridComponent implements OnInit, AfterViewInit {
     // const trueCoord = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
 
     // GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
+    switch (typeChosen) {
+      case 'grid':
+        switch (GridComponent.gridStates) {
+          // case gridStates.moving:
+          //   switch (GridComponent.moveMode) {
+          //     case moveModes.joint:
+          //       GridComponent.dragJoint(e, GridComponent.draggingJoint);
+          //       break;
+          //     case moveModes.forceEndpoint:
+          //       GridComponent.dragForceEndpoint(e, that.draggingEndpoint);
+          //       GridComponent.createNewSimulator();
+          //       break;
+          //     case moveModes.pathPoint:
+          //       GridComponent.dragPathPoint(e, GridComponent.draggingPathPoint);
+          //       break;
+          //     case moveModes.threePosition:
+          //       GridComponent.dragThreePosition(e, GridComponent.draggingThreePosition);
+          //       break;
+          //   }
+          //   break;
+          // case gridStates.editing:
+          //   if (GridComponent.editingMode === shapeEditModes.move) {
+          //     const delta = {
+          //       x: trueCoord.x - GridComponent.initialMouseCoord.x,
+          //       y: trueCoord.y - GridComponent.initialMouseCoord.y
+          //     };
+          //     GridComponent.editingLink.drag(delta);
+          //     // TODO: wonder how to do this in better way...
+          //     // that.editingLink.idTag.setAttributeNS(undefined, 'x', '0');
+          //     // that.editingLink.idTag.setAttributeNS(undefined, 'y', '0');
+          //   } else if (GridComponent.editingMode === shapeEditModes.resize) {
+          //     GridComponent.editingLink.tryNewBound(trueCoord, GridComponent.editingDot);
+          //   }
+          //   break;
 
-    switch (GridComponent.states) {
-      // case states.moving:
-      //   switch (GridComponent.moveMode) {
-      //     case moveModes.joint:
-      //       GridComponent.dragJoint(e, GridComponent.draggingJoint);
-      //       break;
-      //     case moveModes.forceEndpoint:
-      //       GridComponent.dragForceEndpoint(e, that.draggingEndpoint);
-      //       GridComponent.createNewSimulator();
-      //       break;
-      //     case moveModes.pathPoint:
-      //       GridComponent.dragPathPoint(e, GridComponent.draggingPathPoint);
-      //       break;
-      //     case moveModes.threePosition:
-      //       GridComponent.dragThreePosition(e, GridComponent.draggingThreePosition);
-      //       break;
-      //   }
-      //   break;
-      // case states.editing:
-      //   if (GridComponent.editingMode === shapeEditModes.move) {
-      //     const delta = {
-      //       x: trueCoord.x - GridComponent.initialMouseCoord.x,
-      //       y: trueCoord.y - GridComponent.initialMouseCoord.y
-      //     };
-      //     GridComponent.editingLink.drag(delta);
-      //     // TODO: wonder how to do this in better way...
-      //     // that.editingLink.idTag.setAttributeNS(undefined, 'x', '0');
-      //     // that.editingLink.idTag.setAttributeNS(undefined, 'y', '0');
-      //   } else if (GridComponent.editingMode === shapeEditModes.resize) {
-      //     GridComponent.editingLink.tryNewBound(trueCoord, GridComponent.editingDot);
-      //   }
-      //   break;
-
-      case states.panning:
-        GridComponent.panCanvas(rawCoord.x, rawCoord.y);
+          case gridStates.panning:
+            GridComponent.panCanvas(rawCoord.x, rawCoord.y);
+            break;
+          // case gridStates.creating:
+          //   if (GridComponent.createMode === createModes.link) {
+          //     const line = GridComponent.tempLink;
+          //     if (!line) { break; }
+          //     line.setAttribute('x2', `${trueCoord.x}`);
+          //     line.setAttribute('y2', `${trueCoord.y}`);
+          //   } else if (GridComponent.createMode === createModes.force) {
+          //     const startX = parseFloat(GridComponent.tempForceEndpoint.getAttribute('x'));
+          //     const startY = parseFloat(GridComponent.tempForceEndpoint.getAttribute('y'));
+          //     GridComponent.updateArrow(GridComponent.tempForce, startX, startY, trueCoord.x, trueCoord.y);
+          //   }
+          //   break;
+        }
         break;
-      // case states.creating:
-      //   if (GridComponent.createMode === createModes.link) {
-      //     const line = GridComponent.tempLink;
-      //     if (!line) { break; }
-      //     line.setAttribute('x2', `${trueCoord.x}`);
-      //     line.setAttribute('y2', `${trueCoord.y}`);
-      //   } else if (GridComponent.createMode === createModes.force) {
-      //     const startX = parseFloat(GridComponent.tempForceEndpoint.getAttribute('x'));
-      //     const startY = parseFloat(GridComponent.tempForceEndpoint.getAttribute('y'));
-      //     GridComponent.updateArrow(GridComponent.tempForce, startX, startY, trueCoord.x, trueCoord.y);
-      //   }
-      //   break;
+      case 'joint':
+        const joint = thing;
+        switch (GridComponent.jointStates) {
+          case jointStates.panning:
+            const coord2 = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
+            const xVal = GridComponent.panOffset.x - rawCoord.x;
+            const yVal = GridComponent.panOffset.y - rawCoord.y;
+            const coord = GridComponent.screenToGrid(xVal, yVal);
+            joint.x = coord2.x;
+            joint.y = coord.y;
+            // joint.x = coord.x;
+            // joint.y = coord.y;
+            break;
+          case jointStates.waiting:
+            break;
+        }
+        break;
+      case 'link':
+        break;
+      case 'force':
+        break;
     }
   }
 
