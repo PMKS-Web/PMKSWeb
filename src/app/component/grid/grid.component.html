@@ -16,7 +16,7 @@
   <g id="transformMatrix">
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
-    <g id="linkageHolder">
+    <g id="linkageHolder" style="transform: scaleY(-1)">
       <svg  *ngFor="let joint of joints" (contextmenu)="contextMenuAddGround($event); false"
             (click)="disappearContext($event)" [attr.x]="joint.x" [attr.y]="joint.y"
             (mousedown)="mouseDown($event, 'joint', joint)"

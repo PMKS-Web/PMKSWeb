@@ -145,7 +145,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static screenToGrid(x: number, y: number) {
     const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
-    const newY = (1 / GridComponent.scaleFactor) * (y + GridComponent.gridOffset.y);
+    // const newY = (1 / GridComponent.scaleFactor) * (y + GridComponent.gridOffset.y);
+    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
@@ -541,8 +542,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddTracerJointSVG.style.display = 'none';
     const screenX = Number(GridComponent.contextMenuAddTracerJointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerJointSVG.children[0].getAttribute('y'));
-    const gridCoord = GridComponent.screenToGrid(screenX, screenY);
-    const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
+    const ummCoord = GridComponent.screenToGrid(screenX, screenY);
+    // const goodX = screenX - GridComponent.gridOffset.x;
+    // const goodY = screenY - GridComponent.gridOffset.y;
+    // const gridCoord = GridComponent.screenToGrid(goodX, goodY);
+    // const gridPanCoord = GridComponent.panOffset;
+    // const gridOffsetCoord = GridComponent.gridOffset;
+    // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
+    // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
+    const newJoint = new Joint('a', ummCoord.x, ummCoord.y * -1);
     this.joints.push(newJoint);
     // GridComponent.jointArray.push(newJoint);
   }
