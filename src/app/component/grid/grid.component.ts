@@ -146,7 +146,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static screenToGrid(x: number, y: number) {
     const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
     // const newY = (1 / GridComponent.scaleFactor) * (y + GridComponent.gridOffset.y);
-    const newY = (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
+    const newY = -1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
@@ -279,7 +279,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (rawSVGCoords === undefined) {
       return
     }
-    GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y);
+    // const x = rawSVGCoords.x + GridComponent.gridOffset.x;
+    // const y = rawSVGCoords.y - GridComponent.gridOffset.y;
+    const x = rawSVGCoords.x;
+    // TODO: Be sure that y is adjusted properly
+    const y = rawSVGCoords.y;
+    GridComponent.zoomPoint(wheelAmount, x, y);
   }
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any) {
     $event.preventDefault();
@@ -542,7 +547,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddTracerJointSVG.style.display = 'none';
     const screenX = Number(GridComponent.contextMenuAddTracerJointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerJointSVG.children[0].getAttribute('y'));
+    // const ummCoordX = screenX - GridComponent.gridOffset.x;
+    // const ummCoordY = screenY - GridComponent.gridOffset.y;
     const ummCoord = GridComponent.screenToGrid(screenX, screenY);
+    // const ummCoordX = GridComponent.gridOffset.x - screenX;
+    // const ummCoordY = GridComponent.gridOffset.y - screenY;
+    // const ummCoord = GridComponent.screenToGrid(ummCoordX, ummCoordY)
+    // const ummCoord = GridComponent.screenToGrid(screenX, screenY);
     // const goodX = screenX - GridComponent.gridOffset.x;
     // const goodY = screenY - GridComponent.gridOffset.y;
     // const gridCoord = GridComponent.screenToGrid(goodX, goodY);
@@ -550,7 +561,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // const gridOffsetCoord = GridComponent.gridOffset;
     // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
     // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
-    const newJoint = new Joint('a', ummCoord.x, ummCoord.y * -1);
+    const newJoint = new Joint('a', ummCoord.x, ummCoord.y);
     this.joints.push(newJoint);
     // GridComponent.jointArray.push(newJoint);
   }
