@@ -510,9 +510,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  @ViewChild('menuCanvas') menuCanvas!: ElementRef
-  @ViewChild('menuJoint') menuJoint!: ElementRef
-  contextMenu($event: MouseEvent, desiredMenu: string) {
+  contextMenu($event: MouseEvent, desiredMenu: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
     this.disappearContext($event);
@@ -529,6 +527,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.contextMenuAddTracerPointSVG.children[1].setAttribute('y', offsetY.toString());
         break;
       case 'joint':
+        const joint = thing;
         GridComponent.contextMenuAddGroundSVG.style.display = 'block';
         GridComponent.contextMenuAddLinkSVG.style.display = 'block';
 
@@ -556,46 +555,68 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   addJoint($event: MouseEvent) {
-    // $event.stopPropagation();
-    GridComponent.contextMenuAddTracerPointSVG.style.display = 'none';
+    this.disappearContext($event);
     const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
-    // const ummCoordX = screenX - GridComponent.gridOffset.x;
-    // const ummCoordY = screenY - GridComponent.gridOffset.y;
-    const ummCoord = GridComponent.screenToGrid(screenX, screenY);
-    // const ummCoordX = GridComponent.gridOffset.x - screenX;
-    // const ummCoordY = GridComponent.gridOffset.y - screenY;
-    // const ummCoord = GridComponent.screenToGrid(ummCoordX, ummCoordY)
-    // const ummCoord = GridComponent.screenToGrid(screenX, screenY);
-    // const goodX = screenX - GridComponent.gridOffset.x;
-    // const goodY = screenY - GridComponent.gridOffset.y;
-    // const gridCoord = GridComponent.screenToGrid(goodX, goodY);
-    // const gridPanCoord = GridComponent.panOffset;
-    // const gridOffsetCoord = GridComponent.gridOffset;
-    // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
-    // const newJoint = new Joint('a', gridCoord.x, gridCoord.y);
-    const newJoint = new Joint('a', ummCoord.x, ummCoord.y);
+    const coord = GridComponent.screenToGrid(screenX, screenY);
+    const newJoint = new Joint('a', coord.x, coord.y);
     this.joints.push(newJoint);
-    // GridComponent.jointArray.push(newJoint);
   }
 
   addGround($event: MouseEvent) {
-    GridComponent.contextMenuAddGroundSVG.style.display = 'none';
+    this.disappearContext($event);
     const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
+    const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
   addLink($event: MouseEvent) {
-
+    this.disappearContext($event);
+    GridComponent.contextMenuAddGroundSVG.style.display = 'none';
+    const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
+    const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
-  RectMouseOver($event: MouseEvent) {
-    GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('style',
-      'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+  RectMouseOver($event: MouseEvent, menuType: string) {
+    switch (menuType) {
+      case 'grid':
+        GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addLink':
+        GridComponent.contextMenuAddLinkSVG.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addGround':
+        GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'link':
+        break;
+      case 'force':
+        break;
+    }
   }
 
-  RectMouseOut($event: MouseEvent) {
-    GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('style',
-      'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+  RectMouseOut($event: MouseEvent, menuType: string) {
+    switch (menuType) {
+      case 'grid':
+        GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addLink':
+        GridComponent.contextMenuAddLinkSVG.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addGround':
+        GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'link':
+        break;
+      case 'force':
+        break;
+    }
   }
 }

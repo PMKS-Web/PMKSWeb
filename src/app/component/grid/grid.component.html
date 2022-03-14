@@ -17,7 +17,7 @@
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <g id="linkageHolder" style="transform: scaleY(-1)">
-      <svg  *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint'); false"
+      <svg  *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
             (click)="disappearContext($event)" [attr.x]="joint.x" [attr.y]="joint.y"
             (mousedown)="mouseDown($event, 'joint', joint)"
             (mouseup)="mouseUp($event, 'joint', joint)"
@@ -37,20 +37,25 @@
     <g id="threePositionHolder"></g>
     <g id="tempHolder"></g>
   </g>
-  <g class="context-menu-canvas" (click)="addJoint($event)" style="cursor: pointer" #menuCanvas>
-    <g class="menu-entry" id="menuEntryAddJoint" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">
-      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Joint</text>
+  <g class="context-menu-canvas" style="cursor: pointer">
+    <g class="menu-entry" id="menuEntryAddJoint" (click)="addJoint($event)"
+       (mouseout)="RectMouseOut($event, 'grid')"
+       (mouseover)="RectMouseOver($event, 'grid')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Tracer Point</text>
     </g>
   </g>
-  <g class="context-menu-joint" (click)="addGround($event)" style="cursor: pointer" #menuJoint>
-    <g class="menu-entry" id="menuEntryAddLink" (mouseout)="RectMouseOut($event)"
-       (mouseover)="RectMouseOver($event)">
-      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+  <g class="context-menu-joint" style="cursor: pointer">
+    <g class="menu-entry" id="menuEntryAddLink" (click)="addGround($event)"
+       (mouseout)="RectMouseOut($event, 'addLink')"
+       (mouseover)="RectMouseOver($event, 'addLink')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryCreateGround" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">
-      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryCreateGround" (click)="addLink($event)"
+       (mouseout)="RectMouseOut($event, 'addGround')"
+       (mouseover)="RectMouseOver($event, 'addGround')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" style="fill: steelblue; font-size: 13px">Add Ground</text>
     </g>
 <!--    <g class="menu-entry" id="menuEntryCreateSlider" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">-->
