@@ -137,6 +137,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
     GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
+    GridComponent.tempHolderSVG.style.display = 'none';
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
 
 
@@ -319,7 +320,17 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
-                  // TODO: add logic to incorporate the next joint
+                  const x1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x1'));
+                  const y1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y1'));
+                  const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
+                  const y2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y2'));
+                  const joint1 = new Joint('a', x1, y1);
+                  const joint2 = new Joint('b', x2, y2);
+                  this.joints.push(joint1);
+                  this.joints.push(joint2);
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.jointStates = jointStates.waiting;
+                  GridComponent.tempHolderSVG.style.display='none';
                 }
                 // if (that.createMode === createModes.link) {
                 //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
@@ -596,6 +607,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('y', coord.y.toString());
     GridComponent.gridStates = gridStates.creating;
     GridComponent.jointStates = jointStates.creating;
+    GridComponent.tempHolderSVG.style.display = 'block';
   }
 
   RectMouseOver($event: MouseEvent, menuType: string) {
