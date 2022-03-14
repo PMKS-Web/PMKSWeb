@@ -598,9 +598,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     const screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
-    // const joint = new Joint('a', coord.x, coord.y);
-    // this.joints.push(joint);
-    // GridComponent.tempHolderSVG.children[0]
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x1', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y1', coord.y.toString());
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('x', coord.x.toString());
@@ -608,7 +605,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.creating;
     GridComponent.jointStates = jointStates.creating;
     GridComponent.tempHolderSVG.style.display = 'block';
-    // push code...
   }
 
   RectMouseOver($event: MouseEvent, menuType: string) {
