@@ -683,9 +683,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   createGround($event: MouseEvent) {
     this.disappearContext($event);
     GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
-    // const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
-    // const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
-    // const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
   createSlider($event: MouseEvent) {
@@ -697,9 +694,23 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteJoint($event: MouseEvent) {
     this.disappearContext($event);
-    const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
-    const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
-    const coord = GridComponent.screenToGrid(screenX, screenY);
+    const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+    // TODO: Check later to see if deleting joints also deletes links. Check when links are created
+    GridComponent.selectedJoint.links.forEach(l => {
+      if (l.joints.length < 3) {
+        for (let curJointIndex = 0; jointIndex < l.joints.length; curJointIndex++) {
+          const cur_joint = l.joints[curJointIndex];
+          const curLinkIndex = l.joints[curJointIndex].links[0].id === l.id ? 0 : 1;
+          cur_joint.links.splice(curLinkIndex, 1);
+        }
+        const linkIndex = this.links.findIndex(li => li.id === l.id);
+        this.links.splice(linkIndex, 1);
+      }
+    });
+    this.joints.splice(jointIndex, 1);
+    // const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
+    // const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
+    // const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
   createLink($event: MouseEvent, gridOrJoint: string) {
