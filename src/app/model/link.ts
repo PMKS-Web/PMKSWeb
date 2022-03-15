@@ -53,7 +53,7 @@ export class Link {
     this._joints = joints;
     this._shape = Shape.line;
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
-    this._bound = this.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[0].x, joints[0].y), Shape.line);
+    this._bound = this.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = this.getPointsFromBounds(this._bound, this._shape);
   }
 
