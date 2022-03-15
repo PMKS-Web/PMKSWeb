@@ -66,7 +66,22 @@
     </g>
     <g id="pathsHolder"></g>
     <g id="pathsPathPointHolder"></g>
-    <g id="forcesHolder"></g>
+    <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of forces"
+       (contextmenu)="contextMenu($event, 'force', force); false"
+       (click)="disappearContext($event)"
+       (mousedown)="mouseDown($event, 'force', force)"
+       (mouseup)="mouseUp($event, 'force', force)"
+       (mousemove)="mouseMove($event, 'force', force)">
+      <g [attr.id]="force.id">
+        <path stroke="yellow" stroke-width="0.2"></path>
+        <path stroke="black" stroke-width="0.04"></path>
+        <path fill="black"></path>
+      </g>
+      <svg height="10" width="10" style="overflow: visible">
+        <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+        <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+      </svg>
+    </g>
     <g id="jointLinkForcesTagHolder"></g>
     <g id="comTagHolder"></g>
     <g id="pathPointHolder"></g>

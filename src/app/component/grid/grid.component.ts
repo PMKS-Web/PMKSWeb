@@ -5,6 +5,7 @@ import {Joint} from "../../model/joint";
 import {switchMapTo} from "rxjs";
 import {core} from "@angular/compiler";
 import {Link, Shape} from "../../model/link";
+import {Force} from "../../model/force";
 
 
 // The possible states the program could be in.
@@ -83,6 +84,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // private static forceArray: Force[];
   joints: Joint[] = [];
   links: Link[] = [];
+  forces: Force[] = [];
 
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -130,7 +132,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // remove this if this is possible
   private static selectedJoint: Joint;
   private static selectedLink: Link;
-  // private static selectedForce: Force;
+  private static selectedForce: Force;
 
 
   constructor() { }
@@ -855,11 +857,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   createForce($event: MouseEvent) {
-
+    this.disappearContext($event);
   }
 
   editShape($event: MouseEvent) {
-
+    this.disappearContext($event);
   }
 
   deleteLink($event: MouseEvent) {
