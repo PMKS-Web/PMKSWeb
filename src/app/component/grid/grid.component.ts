@@ -625,11 +625,11 @@ export class GridComponent implements OnInit, AfterViewInit {
         const joint = thing;
         GridComponent.selectedJoint = joint;
         if (joint.links.length === 2) {
-          GridComponent.contextMenuAddGroundSVG.style.display = 'block';
-          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 15).toString());
+          GridComponent.contextMenuDeleteJointSVG.style.display = 'block';
+          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('y', offsetY.toString());
+          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('y', (offsetY + 15).toString());
         } else {
           GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'block';
           GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
@@ -667,6 +667,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddLinkOntoGridSVG.style.display = 'none';
     GridComponent.contextMenuAddGroundSVG.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'none';
+    GridComponent.contextMenuAddSliderSVG.style.display = 'none';
+    GridComponent.contextMenuDeleteJointSVG.style.display = 'none';
   }
 
   addJoint($event: MouseEvent) {
@@ -743,6 +745,14 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('style',
           'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
         break;
+      case 'addSlider':
+        GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteJoint':
+        GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
       case 'link':
         break;
       case 'force':
@@ -762,6 +772,14 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'addGround':
         GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addSlider':
+        GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteJoint':
+        GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('style',
           'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
         break;
       case 'link':
