@@ -364,10 +364,10 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'joint':
             switch (GridComponent.jointStates) {
               case jointStates.waiting:
-                const mPos = GridComponent.getMousePosition($event);
-                if (mPos === undefined) {
-                  return
-                }
+                // const mPos = GridComponent.getMousePosition($event);
+                // if (mPos === undefined) {
+                //   return
+                // }
                 // GridComponent.panOffset.x = mPos.x;
                 // GridComponent.panOffset.y = mPos.y;
                 GridComponent.jointStates = jointStates.panning;
@@ -456,14 +456,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   mouseMove($event: MouseEvent, typeChosen: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
-    // Check if we are creating a link
     const rawCoord = GridComponent.getMousePosition($event);
-    if (rawCoord === undefined) {
-      return
-    }
+    if (rawCoord === undefined) { return }
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
 
-    // GridComponent.updateXYPos(trueCoord.x, trueCoord.y);
     switch (typeChosen) {
       case 'grid':
         switch (GridComponent.gridStates) {
@@ -500,13 +496,40 @@ export class GridComponent implements OnInit, AfterViewInit {
           //   break;
 
           case gridStates.panning:
-            GridComponent.panCanvas(rawCoord.x, rawCoord.y);
+            const offsetX = GridComponent.panOffset.x - rawCoord.x;
+            const offsetY = GridComponent.panOffset.y - rawCoord.y;
+            GridComponent.panOffset.x = rawCoord.x;
+            GridComponent.panOffset.y = rawCoord.y;
+            const box = GridComponent.canvasSVGElement.getBoundingClientRect();
+            const width = box.width;
+            const height = box.height;
+            let correctedPan = false;
+            // Cause panning outside the defined area to pan the user back in.
+            if (GridComponent.screenToGrid(offsetX, 0).x < -100) {
+              GridComponent.panSVG(Math.abs(offsetX), 0);
+              correctedPan = true;
+            }
+            if (GridComponent.screenToGrid(width + offsetX, 0).x > 100) {
+              GridComponent.panSVG(-Math.abs(offsetX), 0);
+              correctedPan = true;
+            }
+            if (GridComponent.screenToGrid(0, offsetY).y < -100) {
+              GridComponent.panSVG(0, Math.abs(offsetY));
+              correctedPan = true;
+            }
+            if (GridComponent.screenToGrid(0, height + offsetY).y > 100) {
+              GridComponent.panSVG(0, -Math.abs(offsetY));
+              correctedPan = true;
+            }
+            if (!correctedPan) {
+              GridComponent.panSVG(offsetX, offsetY);
+            }
+            // GridComponent.panCanvas(rawCoord.x, rawCoord.y);
             break;
           case gridStates.creating:
             if (GridComponent.jointStates === jointStates.creating) {
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', trueCoord.x.toString());
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
-              // TODO: Add a line showcasing the next link
             } else if (GridComponent.forceStates === forceStates.creating) {
               // TODO: Add a line showcasing force
             }
