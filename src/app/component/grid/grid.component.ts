@@ -101,7 +101,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuAddLinkOntoGridSVG: SVGElement;
   private static contextMenuAddLinkOntoJointSVG: SVGElement;
   private static contextMenuAddGroundSVG: SVGElement;
+  private static contextMenuAddSliderSVG: SVGElement
+  private static contextMenuDeleteJointSVG: SVGElement
   private static contextMenuAddTracerPointSVG: SVGElement
+
 
   private static gridStates: gridStates;
   private static jointStates: jointStates;
@@ -134,6 +137,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
     GridComponent.forceStates = forceStates.waiting;
+    // See later if we can have the style.display = 'none' to be set within html instead of here
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
     GridComponent.linkageHolderSVG = document.getElementById('linkageHolder') as unknown as SVGElement;
@@ -153,6 +157,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddLinkOntoGridSVG.style.display = 'none';
     GridComponent.contextMenuAddGroundSVG = document.getElementById('menuEntryCreateGround') as unknown as SVGElement;
     GridComponent.contextMenuAddGroundSVG.style.display = 'none';
+    GridComponent.contextMenuAddSliderSVG = document.getElementById('menuEntryCreateSlider') as unknown as SVGElement;
+    GridComponent.contextMenuAddSliderSVG.style.display = 'none';
+    GridComponent.contextMenuDeleteJointSVG = document.getElementById('menuEntryDeleteJoint') as unknown as SVGElement;
+    GridComponent.contextMenuDeleteJointSVG.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoJointSVG = document.getElementById('menuEntryAddLinkOnJoint') as unknown as SVGElement;
     GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'none';
     // GridComponent.contextMenuAddTracerPointSVG = document.getElementById('') as unknown as SVGElement;
@@ -634,6 +642,18 @@ export class GridComponent implements OnInit, AfterViewInit {
           GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', (offsetY + 20).toString());
           GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
           GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 35).toString());
+
+          GridComponent.contextMenuAddSliderSVG.style.display = 'block';
+          GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('y', (offsetY + 40).toString());
+          GridComponent.contextMenuAddSliderSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddSliderSVG.children[1].setAttribute('y', (offsetY + 55).toString());
+
+          GridComponent.contextMenuDeleteJointSVG.style.display = 'block';
+          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('y', (offsetY + 60).toString());
+          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('y', (offsetY + 75).toString());
         }
         break;
       case 'link':
@@ -658,14 +678,28 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.joints.push(newJoint);
   }
 
-  addGround($event: MouseEvent) {
+  createGround($event: MouseEvent) {
     this.disappearContext($event);
     const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
-  addLink($event: MouseEvent, gridOrJoint: string) {
+  createSlider($event: MouseEvent) {
+    this.disappearContext($event);
+    const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
+    const coord = GridComponent.screenToGrid(screenX, screenY);
+  }
+
+  deleteJoint($event: MouseEvent) {
+    this.disappearContext($event);
+    const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
+    const coord = GridComponent.screenToGrid(screenX, screenY);
+  }
+
+  createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext($event);
     let screenX: number;
     let screenY: number;

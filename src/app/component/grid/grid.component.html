@@ -54,7 +54,7 @@
     </g>
   </g>
   <g class="context-menu-canvas" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="addLink($event, 'grid')"
+    <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="createLink($event, 'grid')"
        (mouseout)="RectMouseOut($event, 'grid')"
        (mouseover)="RectMouseOver($event, 'grid')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
@@ -62,21 +62,29 @@
     </g>
   </g>
   <g class="context-menu-joint" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="addLink($event, 'joint')"
+    <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="createLink($event, 'joint')"
        (mouseout)="RectMouseOut($event, 'addLink')"
        (mouseover)="RectMouseOver($event, 'addLink')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryCreateGround" (click)="addGround($event)"
+    <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround($event)"
        (mouseout)="RectMouseOut($event, 'addGround')"
        (mouseover)="RectMouseOver($event, 'addGround')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
-      <text x="400" y="400" dx="15" style="fill: steelblue; font-size: 13px">Add Ground</text>
+      <text x="400" y="400" dx="15" style="fill: steelblue; font-size: 13px">Create Ground</text>
     </g>
-<!--    <g class="menu-entry" id="menuEntryCreateSlider" (mouseout)="RectMouseOut($event)" (mouseover)="RectMouseOver($event)">-->
-<!--      <rect x="400" y="400" width="90" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>-->
-<!--      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Slider</text>-->
-<!--    </g>-->
+    <g class="menu-entry" id="menuEntryCreateSlider" (click)="createSlider($event)"
+       (mouseout)="RectMouseOut($event, 'addSlider')"
+       (mouseover)="RectMouseOver($event, 'addSlider')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" style="fill: steelblue; font-size: 13px">Create Slider</text>
+    </g>
+    <g class="menu-entry" id="menuEntryDeleteJoint" (click)="deleteJoint($event)"
+       (mouseout)="RectMouseOut($event, 'deleteJoint')"
+       (mouseover)="RectMouseOver($event, 'deleteJoint')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" style="fill: steelblue; font-size: 13px">Delete Joint</text>
+    </g>
   </g>
 </svg>
