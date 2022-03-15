@@ -1,9 +1,7 @@
-import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {Coord} from "./coord/coord";
 import {AppConstants} from "./app-constants/app-constants";
 import {Joint} from "../../model/joint";
-import {switchMapTo} from "rxjs";
-import {core} from "@angular/compiler";
 import {Link, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 
@@ -184,17 +182,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuDeleteLink.style.display = 'none';
 
     GridComponent.reset();
-    // GridComponent.jointArray = [];
   }
 
   private static screenToGrid(x: number, y: number) {
     const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
-    // const newY = (1 / GridComponent.scaleFactor) * (y + GridComponent.gridOffset.y);
     const newY = -1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
-    // This is correct logic
     const newX = (AppConstants.scaleFactor * x) + GridComponent.gridOffset.x;
     const newY = (AppConstants.scaleFactor * y) + GridComponent.gridOffset.y;
     return new Coord(newX, newY);
@@ -753,8 +748,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'grid':
         screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
         screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
-        GridComponent.linkStates = linkStates.creating;
         coord = GridComponent.screenToGrid(screenX, screenY);
+        GridComponent.linkStates = linkStates.creating;
         break;
       case 'joint':
         coord.x = GridComponent.selectedJoint.x;
@@ -858,6 +853,28 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createForce($event: MouseEvent) {
     this.disappearContext($event);
+    let screenX: number;
+    let screenY: number;
+    let coord: Coord;
+    if (GridComponent.selectedForce.link.shape === Shape.line) {
+      screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+      screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+      coord = GridComponent.screenToGrid(screenX, screenY);
+    } else {
+      screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+      screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+      coord = GridComponent.screenToGrid(screenX, screenY);
+    }
+    // TODO: Figure out logic how to show force onto link
+    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('x1', coord.x.toString());
+    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('y1', coord.y.toString());
+    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('x2', coord.x.toString());
+    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('y2', coord.y.toString());
+    // GridComponent.tempHolderSVG.children[1].children[1].setAttribute('x', coord.x.toString());
+    // GridComponent.tempHolderSVG.children[1].children[1].setAttribute('y', coord.y.toString());
+    GridComponent.forceStates = forceStates.creating;
+    GridComponent.gridStates = gridStates.creating;
+    GridComponent.tempHolderSVG.style.display = 'block';
   }
 
   editShape($event: MouseEvent) {
