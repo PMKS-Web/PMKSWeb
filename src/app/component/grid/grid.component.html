@@ -1,6 +1,6 @@
 <svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)">
   <g id="transformMatrixGrid" (contextmenu)="contextMenu($event, 'grid'); false"
-     (click)="disappearContext($event)" (mousedown)="mouseDown($event, 'grid')"
+     (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
      (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')">
     <defs>
       <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -18,14 +18,14 @@
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <g id="linkageHolder" style="transform: scaleY(-1)">
       <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
-            (click)="disappearContext($event)"
+            (click)="disappearContext()"
             (mousedown)="mouseDown($event, 'link', link)"
             (mouseup)="mouseUp($event, 'link', link)"
             (mousemove)="mouseMove($event, 'link', link)"
       [attr.d]="link.d" [attr.id]="link.id" [attr.fill]="link.fill" style="opacity: 0.8"></path>
       <!-- SVG for creating Joints -->
       <svg *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
-           (click)="disappearContext($event)" [attr.x]="joint.x" [attr.y]="joint.y"
+           (click)="disappearContext()" [attr.x]="joint.x" [attr.y]="joint.y"
            (mousedown)="mouseDown($event, 'joint', joint)"
            (mouseup)="mouseUp($event, 'joint', joint)"
            (mousemove)="mouseMove($event, 'joint', joint)"
@@ -68,7 +68,7 @@
     <g id="pathsPathPointHolder"></g>
     <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of forces"
        (contextmenu)="contextMenu($event, 'force', force); false"
-       (click)="disappearContext($event)"
+       (click)="disappearContext()"
        (mousedown)="mouseDown($event, 'force', force)"
        (mouseup)="mouseUp($event, 'force', force)"
        (mousemove)="mouseMove($event, 'force', force)">
@@ -115,7 +115,7 @@
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround($event)"
+    <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround()"
        (mouseout)="RectMouseOut($event, 'addGround')"
        (mouseover)="RectMouseOver($event, 'addGround')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
@@ -141,19 +141,19 @@
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Attach Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce($event)"
+    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce()"
        (mouseout)="RectMouseOut($event, 'addForce')"
        (mouseover)="RectMouseOver($event, 'addForce')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Attach Force</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddTracerPoint" (click)="addJoint($event)"
+    <g class="menu-entry" id="menuEntryAddTracerPoint" (click)="addJoint()"
        (mouseout)="RectMouseOut($event, 'addTracer')"
        (mouseover)="RectMouseOver($event, 'addTracer')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Attach Tracer Point</text>
     </g>
-    <g class="menu-entry" id="menuEntryEditShape" (click)="editShape($event)"
+    <g class="menu-entry" id="menuEntryEditShape" (click)="editShape()"
        (mouseout)="RectMouseOut($event, 'editShape')"
        (mouseover)="RectMouseOver($event, 'editShape')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>

@@ -8,47 +8,32 @@ import {Force} from "../../model/force";
 
 // The possible states the program could be in.
 enum gridStates {
-  init,
   waiting,
   creating,
   moving,
   panning,
-  zooming,
-  editing,
-  processing
+  editing, // TODO: Is this used?
 }
 
 enum jointStates {
-  init,
   waiting,
   creating,
-  moving,
+  moving, // TODO: I think use this function?
   panning,
-  zooming,
-  editing,
-  processing
 }
 
 enum linkStates {
-  init,
   waiting,
   creating,
   moving,
-  panning,
-  zooming,
-  editing,
-  processing
 }
 
 enum forceStates {
-  init,
   waiting,
   creating,
   moving,
   panning,
-  zooming,
   editing,
-  processing
 }
 
 
@@ -470,38 +455,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     switch (typeChosen) {
       case 'grid':
         switch (GridComponent.gridStates) {
-          // case gridStates.moving:
-          //   switch (GridComponent.moveMode) {
-          //     case moveModes.joint:
-          //       GridComponent.dragJoint(e, GridComponent.draggingJoint);
-          //       break;
-          //     case moveModes.forceEndpoint:
-          //       GridComponent.dragForceEndpoint(e, that.draggingEndpoint);
-          //       GridComponent.createNewSimulator();
-          //       break;
-          //     case moveModes.pathPoint:
-          //       GridComponent.dragPathPoint(e, GridComponent.draggingPathPoint);
-          //       break;
-          //     case moveModes.threePosition:
-          //       GridComponent.dragThreePosition(e, GridComponent.draggingThreePosition);
-          //       break;
-          //   }
-          //   break;
-          // case gridStates.editing:
-          //   if (GridComponent.editingMode === shapeEditModes.move) {
-          //     const delta = {
-          //       x: trueCoord.x - GridComponent.initialMouseCoord.x,
-          //       y: trueCoord.y - GridComponent.initialMouseCoord.y
-          //     };
-          //     GridComponent.editingLink.drag(delta);
-          //     // TODO: wonder how to do this in better way...
-          //     // that.editingLink.idTag.setAttributeNS(undefined, 'x', '0');
-          //     // that.editingLink.idTag.setAttributeNS(undefined, 'y', '0');
-          //   } else if (GridComponent.editingMode === shapeEditModes.resize) {
-          //     GridComponent.editingLink.tryNewBound(trueCoord, GridComponent.editingDot);
-          //   }
-          //   break;
-
+          case gridStates.moving:
+            break;
           case gridStates.panning:
             const offsetX = GridComponent.panOffset.x - rawCoord.x;
             const offsetY = GridComponent.panOffset.y - rawCoord.y;
@@ -537,20 +492,8 @@ export class GridComponent implements OnInit, AfterViewInit {
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', trueCoord.x.toString());
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
             } else if (GridComponent.forceStates === forceStates.creating) {
-              // TODO: Add a line showcasing force
+              // TODO: Add logic showcasing arrow for force
             }
-          // case gridStates.creating:
-          //   if (GridComponent.createMode === createModes.link) {
-          //     const line = GridComponent.tempLink;
-          //     if (!line) { break; }
-          //     line.setAttribute('x2', `${trueCoord.x}`);
-          //     line.setAttribute('y2', `${trueCoord.y}`);
-          //   } else if (GridComponent.createMode === createModes.force) {
-          //     const startX = parseFloat(GridComponent.tempForceEndpoint.getAttribute('x'));
-          //     const startY = parseFloat(GridComponent.tempForceEndpoint.getAttribute('y'));
-          //     GridComponent.updateArrow(GridComponent.tempForce, startX, startY, trueCoord.x, trueCoord.y);
-          //   }
-          //   break;
         }
         break;
       case 'joint':
@@ -578,7 +521,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   contextMenu($event: MouseEvent, desiredMenu: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
-    this.disappearContext($event);
+    this.disappearContext();
     const offsetX = $event.clientX;
     const offsetY = $event.clientY;
 
@@ -685,7 +628,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  disappearContext($event: MouseEvent) {
+  disappearContext() {
     GridComponent.contextMenuAddLinkOntoGridSVG.style.display = 'none';
     GridComponent.contextMenuAddGroundSVG.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'none';
@@ -699,8 +642,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   }
 
-  addJoint($event: MouseEvent) {
-    this.disappearContext($event);
+  addJoint() {
+    this.disappearContext();
     const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
@@ -708,18 +651,18 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.joints.push(newJoint);
   }
 
-  createGround($event: MouseEvent) {
-    this.disappearContext($event);
+  createGround() {
+    this.disappearContext();
     GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
   }
 
   createSlider($event: MouseEvent) {
-    this.disappearContext($event);
+    this.disappearContext();
     GridComponent.selectedJoint.type = 'P';
   }
 
   deleteJoint($event: MouseEvent) {
-    this.disappearContext($event);
+    this.disappearContext();
     const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
     // TODO: Check later to see if deleting joints also deletes links. Check when links are created
     GridComponent.selectedJoint.links.forEach(l => {
@@ -740,7 +683,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   createLink($event: MouseEvent, gridOrJoint: string) {
-    this.disappearContext($event);
+    this.disappearContext();
     let screenX: number;
     let screenY: number;
     let coord = new Coord(0, 0);
@@ -851,8 +794,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  createForce($event: MouseEvent) {
-    this.disappearContext($event);
+  createForce() {
+    this.disappearContext();
     let screenX: number;
     let screenY: number;
     let coord: Coord;
@@ -877,12 +820,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.tempHolderSVG.style.display = 'block';
   }
 
-  editShape($event: MouseEvent) {
-    this.disappearContext($event);
+  editShape() {
+    this.disappearContext();
   }
 
   deleteLink($event: MouseEvent) {
-    this.disappearContext($event);
+    this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
   }
