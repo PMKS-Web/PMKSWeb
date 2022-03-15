@@ -340,9 +340,9 @@ export class GridComponent implements OnInit, AfterViewInit {
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                   const joint2 = new Joint(joint2ID, x2, y2);
-                  const link = new Link(this.joints[0].id + joint2ID, [this.joints[1], joint2]);
+                  const link = new Link(this.joints[0].id + joint2ID, [GridComponent.selectedJoint, joint2]);
+                  GridComponent.selectedJoint.links.push(link);
                   joint2.links.push(link);
-                  this.joints[1].links.push(link);
                   this.joints.push(joint2);
                   this.links.push(link);
                   GridComponent.gridStates = gridStates.waiting;
@@ -678,7 +678,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         coord = GridComponent.screenToGrid(screenX, screenY);
         break;
       case 'joint':
-        // TODO: Change this logic to get the position of the joint rather than of the context menu
         coord.x = GridComponent.selectedJoint.x;
         coord.y = GridComponent.selectedJoint.y;
         GridComponent.jointStates = jointStates.creating;
