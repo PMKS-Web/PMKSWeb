@@ -687,9 +687,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createSlider($event: MouseEvent) {
     this.disappearContext($event);
-    const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
-    const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
-    const coord = GridComponent.screenToGrid(screenX, screenY);
+    GridComponent.selectedJoint.type = 'P';
   }
 
   deleteJoint($event: MouseEvent) {
