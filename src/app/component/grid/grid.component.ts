@@ -119,6 +119,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     y: 0
   };
 
+  // remove this if this is possible
+  private static selectedJoint: Joint;
+  private static selectedLink: Link;
+  // private static selectedForce: Force;
+
+
   constructor() { }
 
   ngOnInit(): void {
@@ -163,6 +169,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
+    // This is correct logic
     const newX = (AppConstants.scaleFactor * x) + GridComponent.gridOffset.x;
     const newY = (AppConstants.scaleFactor * y) + GridComponent.gridOffset.y;
     return new Coord(newX, newY);
@@ -608,6 +615,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'joint':
         const joint = thing;
+        GridComponent.selectedJoint = joint;
         if (joint.links.length === 2) {
           GridComponent.contextMenuAddGroundSVG.style.display = 'block';
           GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
@@ -661,22 +669,23 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext($event);
     let screenX: number;
     let screenY: number;
+    let coord = new Coord(0, 0);
     switch (gridOrJoint) {
       case 'grid':
         screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
         screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
         GridComponent.linkStates = linkStates.creating;
+        coord = GridComponent.screenToGrid(screenX, screenY);
         break;
       case 'joint':
         // TODO: Change this logic to get the position of the joint rather than of the context menu
-        screenX = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('x'));
-        screenY = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('y'));
+        coord.x = GridComponent.selectedJoint.x;
+        coord.y = GridComponent.selectedJoint.y;
         GridComponent.jointStates = jointStates.creating;
         break;
       default:
         return;
     }
-    const coord = GridComponent.screenToGrid(screenX, screenY);
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x1', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y1', coord.y.toString());
     GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', coord.x.toString());
