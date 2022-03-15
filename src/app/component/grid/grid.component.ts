@@ -631,6 +631,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'link':
         const link = thing;
+        GridComponent.selectedLink = link;
         if (link.shape === Shape.line) {
           GridComponent.contextMenuAddForce.style.display = 'block';
           GridComponent.contextMenuAddForce.children[0].setAttribute('x', offsetX.toString());
@@ -859,5 +860,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   editShape($event: MouseEvent) {
 
+  }
+
+  deleteLink($event: MouseEvent) {
+    this.disappearContext($event);
+    const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
+    this.links.splice(linkIndex, 1);
   }
 }
