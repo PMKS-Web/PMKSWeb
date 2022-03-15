@@ -17,12 +17,19 @@
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
     <g id="linkageHolder" style="transform: scaleY(-1)">
-      <svg  *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
-            (click)="disappearContext($event)" [attr.x]="joint.x" [attr.y]="joint.y"
-            (mousedown)="mouseDown($event, 'joint', joint)"
-            (mouseup)="mouseUp($event, 'joint', joint)"
-            (mousemove)="mouseMove($event, 'joint', joint)"
-            width="10" height="10" style="overflow: visible" cursor="move">
+      <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
+            (click)="disappearContext($event)"
+            (mousedown)="mouseDown($event, 'link', link)"
+            (mouseup)="mouseUp($event, 'link', link)"
+            (mousemove)="mouseMove($event, 'link', link)"
+      [attr.d]="link.d" [attr.id]="link.id" [attr.fill]="link.fill" style="opacity: 0.8"></path>
+      <!-- SVG for creating Joints -->
+      <svg *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
+           (click)="disappearContext($event)" [attr.x]="joint.x" [attr.y]="joint.y"
+           (mousedown)="mouseDown($event, 'joint', joint)"
+           (mouseup)="mouseUp($event, 'joint', joint)"
+           (mousemove)="mouseMove($event, 'joint', joint)"
+           width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
         <circle *ngIf="joint.ground === false && joint.type !== 'P'" id="joint_{{joint.id}}_ring"
                 [attr.r]="(joint.r * 7 / 5)" [attr.cx]="0" [attr.cy]="0" fill="black"/>
@@ -34,7 +41,7 @@
         <path *ngIf="joint.type === 'P'" d="M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
          L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
           -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z" stroke="black"
-        stroke-width="0.04" fill-opacity="0"></path>
+              stroke-width="0.04" fill-opacity="0"></path>
         <!-- condition for ground joint -->
         <circle *ngIf="joint.ground === true"
                 r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
@@ -55,7 +62,6 @@
         <path *ngIf="joint.ground === true"
               d="M -0.225 -0.15 L -0.15 0.15 L 0.15 0.15 L 0.225 -0.15" stroke="black" stroke-width="0.05"
               fill="transparent"></path>
-
       </svg>
     </g>
     <g id="pathsHolder"></g>
