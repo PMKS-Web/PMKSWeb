@@ -4,6 +4,7 @@ import {AppConstants} from "./app-constants/app-constants";
 import {Joint} from "../../model/joint";
 import {switchMapTo} from "rxjs";
 import {core} from "@angular/compiler";
+import {Link} from "../../model/link";
 
 
 // The possible states the program could be in.
@@ -81,6 +82,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // private static linkArray: Link[];
   // private static forceArray: Force[];
   joints: Joint[] = [];
+  links: Link[] = [];
 
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -320,6 +322,26 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
+                  const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
+                  const y2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y2'));
+                  let lastLetter = '';
+                  let joint2ID: string;
+                  this.joints.forEach(j => {
+                    if (j.id > lastLetter) {
+                      lastLetter = j.id;
+                    }
+                  });
+                  joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+                  const joint2 = new Joint(joint2ID, x2, y2);
+                  const link = new Link(this.joints[0].id + joint2ID, [this.joints[1], joint2]);
+                  joint2.links.push(link);
+                  this.joints[1].links.push(link);
+                  this.joints.push(joint2);
+                  this.links.push(link);
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.jointStates = jointStates.waiting;
+                  GridComponent.tempHolderSVG.style.display='none';
+                } else if (GridComponent.linkStates === linkStates.creating) {
                   const x1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x1'));
                   const y1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y1'));
                   const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
@@ -342,10 +364,14 @@ export class GridComponent implements OnInit, AfterViewInit {
                   // const joint1ID = String.fromCharCode(c.charCodeAt(0) + 1);
                   const joint1 = new Joint(joint1ID, x1, y1);
                   const joint2 = new Joint(joint2ID, x2, y2);
+                  const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
+                  joint1.links.push(link);
+                  joint2.links.push(link);
                   this.joints.push(joint1);
                   this.joints.push(joint2);
+                  this.links.push(link);
                   GridComponent.gridStates = gridStates.waiting;
-                  GridComponent.jointStates = jointStates.waiting;
+                  GridComponent.linkStates = linkStates.waiting;
                   GridComponent.tempHolderSVG.style.display='none';
                 }
                 // if (that.createMode === createModes.link) {
@@ -524,10 +550,9 @@ export class GridComponent implements OnInit, AfterViewInit {
             if (!correctedPan) {
               GridComponent.panSVG(offsetX, offsetY);
             }
-            // GridComponent.panCanvas(rawCoord.x, rawCoord.y);
             break;
           case gridStates.creating:
-            if (GridComponent.jointStates === jointStates.creating) {
+            if (GridComponent.jointStates === jointStates.creating || GridComponent.linkStates === linkStates.creating) {
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', trueCoord.x.toString());
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
             } else if (GridComponent.forceStates === forceStates.creating) {
@@ -551,14 +576,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         const joint = thing;
         switch (GridComponent.jointStates) {
           case jointStates.panning:
-            const coord2 = GridComponent.screenToGrid(rawCoord.x, rawCoord.y);
-            const xVal = GridComponent.panOffset.x - rawCoord.x;
-            const yVal = GridComponent.panOffset.y - rawCoord.y;
-            const coord = GridComponent.screenToGrid(xVal, yVal);
-            joint.x = coord2.x;
-            joint.y = coord.y;
-            // joint.x = coord.x;
-            // joint.y = coord.y;
+            joint.x = trueCoord.x;
+            joint.y = trueCoord.y;
             break;
           case jointStates.waiting:
             break;
@@ -589,18 +608,25 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'joint':
         const joint = thing;
-        GridComponent.contextMenuAddGroundSVG.style.display = 'block';
-        GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'block';
+        if (joint.links.length === 2) {
+          GridComponent.contextMenuAddGroundSVG.style.display = 'block';
+          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', offsetY.toString());
+          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 15).toString());
+        } else {
+          GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'block';
+          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('y', offsetY.toString());
+          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('y', offsetY.toString());
 
-        GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('y', offsetY.toString());
-        GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('y', offsetY.toString());
-
-        GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', (offsetY + 20).toString());
-        GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 35).toString());
+          GridComponent.contextMenuAddGroundSVG.style.display = 'block';
+          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', (offsetY + 20).toString());
+          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
+          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 35).toString());
+        }
         break;
       case 'link':
         break;
@@ -639,10 +665,13 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'grid':
         screenX = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('x'));
         screenY = Number(GridComponent.contextMenuAddLinkOntoGridSVG.children[0].getAttribute('y'));
+        GridComponent.linkStates = linkStates.creating;
         break;
       case 'joint':
+        // TODO: Change this logic to get the position of the joint rather than of the context menu
         screenX = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('x'));
         screenY = Number(GridComponent.contextMenuAddLinkOntoJointSVG.children[0].getAttribute('y'));
+        GridComponent.jointStates = jointStates.creating;
         break;
       default:
         return;
@@ -655,7 +684,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('x', coord.x.toString());
     GridComponent.tempHolderSVG.children[0].children[1].setAttribute('y', coord.y.toString());
     GridComponent.gridStates = gridStates.creating;
-    GridComponent.jointStates = jointStates.creating;
     GridComponent.tempHolderSVG.style.display = 'block';
   }
 

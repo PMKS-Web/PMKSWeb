@@ -51,4 +51,28 @@ export class Joint {
   set r(value: number) {
     this._r = value;
   }
+
+  get type(): string {
+    return this._type;
+  }
+
+  set type(value: string) {
+    this._type = value;
+  }
+
+  get ground(): boolean {
+    return this._ground;
+  }
+
+  set ground(value: boolean) {
+    this._ground = value;
+  }
+
+  get links(): Link[] {
+    return this._links;
+  }
+
+  set links(value: Link[]) {
+    this._links = value;
+  }
 }
