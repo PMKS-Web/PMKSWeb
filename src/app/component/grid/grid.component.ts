@@ -4,7 +4,7 @@ import {AppConstants} from "./app-constants/app-constants";
 import {Joint} from "../../model/joint";
 import {switchMapTo} from "rxjs";
 import {core} from "@angular/compiler";
-import {Link} from "../../model/link";
+import {Link, Shape} from "../../model/link";
 
 
 // The possible states the program could be in.
@@ -251,46 +251,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     return Math.round(num * tens) / tens;
   }
 
-  // private static updateXYPos(x: number, y: number) {
-  //   const xPos = document.getElementById('xPos');
-  //   const yPos = document.getElementById('yPos');
-  //   if (xPos && yPos) {
-  //     xPos.innerText = GridComponent.roundNumber(x, 0).toString();
-  //     yPos.innerText = GridComponent.roundNumber(y, 0).toString();
-  //   }
-  // }
-
-  private static panCanvas(x: number, y: number) {
-    const offsetX = this.panOffset.x - x;
-    const offsetY = this.panOffset.y - y;
-    this.panOffset.x = x;
-    this.panOffset.y = y;
-    const box = GridComponent.canvasSVGElement.getBoundingClientRect();
-    const width = box.width;
-    const height = box.height;
-    let correctedPan = false;
-    // Cause panning outside the defined area to pan the user back in.
-    if (GridComponent.screenToGrid(offsetX, 0).x < -100) {
-      GridComponent.panSVG(Math.abs(offsetX), 0);
-      correctedPan = true;
-    }
-    if (this.screenToGrid(width + offsetX, 0).x > 100) {
-      GridComponent.panSVG(-Math.abs(offsetX), 0);
-      correctedPan = true;
-    }
-    if (GridComponent.screenToGrid(0, offsetY).y < -100) {
-      GridComponent.panSVG(0, Math.abs(offsetY));
-      correctedPan = true;
-    }
-    if (GridComponent.screenToGrid(0, height + offsetY).y > 100) {
-      GridComponent.panSVG(0, -Math.abs(offsetY));
-      correctedPan = true;
-    }
-    if (!correctedPan) {
-      GridComponent.panSVG(offsetX, offsetY);
-    }
-  }
-
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -405,12 +365,6 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'joint':
             switch (GridComponent.jointStates) {
               case jointStates.waiting:
-                // const mPos = GridComponent.getMousePosition($event);
-                // if (mPos === undefined) {
-                //   return
-                // }
-                // GridComponent.panOffset.x = mPos.x;
-                // GridComponent.panOffset.y = mPos.y;
                 GridComponent.jointStates = jointStates.panning;
                 break;
               case jointStates.panning:
@@ -588,11 +542,15 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'joint':
-        const joint = thing;
+        const joint = thing as Joint;
         switch (GridComponent.jointStates) {
           case jointStates.panning:
             joint.x = trueCoord.x;
             joint.y = trueCoord.y;
+            joint.links.forEach(l => {
+              l.bound = Link.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+              l.d = Link.getPointsFromBounds(l.bound, l.shape);
+            });
             break;
           case jointStates.waiting:
             break;

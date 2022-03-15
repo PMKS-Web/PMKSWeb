@@ -53,8 +53,8 @@ export class Link {
     this._joints = joints;
     this._shape = Shape.line;
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
-    this._bound = this.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
-    this._d = this.getPointsFromBounds(this._bound, this._shape);
+    this._bound = Link.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
+    this._d = Link.getPointsFromBounds(this._bound, this._shape);
   }
 
   get id(): string {
@@ -105,7 +105,7 @@ export class Link {
     this._fill = value;
   }
 
-  private getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
+  static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
     switch (shape) {
       case Shape.line: {
         const x1 = coord1.x;
@@ -139,7 +139,7 @@ export class Link {
     }
   }
 
-  private getPointsFromBounds(bound: Bound, shape: Shape) {
+  static getPointsFromBounds(bound: Bound, shape: Shape) {
     let points: Coord[];
     switch (shape) {
       case Shape.line: {
