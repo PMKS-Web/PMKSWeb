@@ -492,6 +492,7 @@ export class GridComponent implements OnInit, AfterViewInit {
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', trueCoord.x.toString());
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
             } else if (GridComponent.forceStates === forceStates.creating) {
+              this.createForce($event);
               // TODO: Add logic showcasing arrow for force
             }
         }
