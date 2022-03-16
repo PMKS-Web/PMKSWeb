@@ -73,11 +73,15 @@
        (mouseup)="mouseUp($event, 'force', force)"
        (mousemove)="mouseMove($event, 'force', force)">
       <g [attr.id]="force.id">
-        <path stroke="yellow" stroke-width="0.2"></path>
-        <path stroke="black" stroke-width="0.04"></path>
-        <path fill="black"></path>
+        <path [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
+        <path [attr.d]="force.forceLine" stroke="black" stroke-width="0.04"></path>
+        <path [attr.d]="force.forceArrow" fill="black"></path>
       </g>
-      <svg height="10" width="10" style="overflow: visible">
+      <svg [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10" style="overflow: visible">
+        <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+        <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+      </svg>
+      <svg [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10" style="overflow: visible">
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
