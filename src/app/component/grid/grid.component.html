@@ -94,8 +94,8 @@
           <circle r="0.1" cx="0%" cy="0%" fill="gray" stroke="#00000000" stroke-width="0.2"> </circle>
         </svg>
       </g>
-      <g id="forceTemp" opacity="0.5" style="pointer-events: none">
-        <path stroke-width="0.4" stroke="black"></path>
+      <g id="forceTemp" opacity="0.5" style="pointer-events: none; transform: scaleY(-1)">
+        <path stroke-width="0.04" stroke="black"></path>
         <path fill="black"></path>
       </g>
     </g>
@@ -141,7 +141,7 @@
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Attach Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce()"
+    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce($event)"
        (mouseout)="RectMouseOut($event, 'addForce')"
        (mouseover)="RectMouseOver($event, 'addForce')">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>

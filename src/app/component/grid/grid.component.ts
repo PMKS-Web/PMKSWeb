@@ -794,27 +794,42 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  createForce() {
+  createForce($event: MouseEvent) {
     this.disappearContext();
-    let screenX: number;
-    let screenY: number;
-    let coord: Coord;
-    if (GridComponent.selectedForce.link.shape === Shape.line) {
-      screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
-      screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
-      coord = GridComponent.screenToGrid(screenX, screenY);
+    let startCoord: Coord;
+    if (GridComponent.selectedLink.shape === Shape.line) {
+      const screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+      const screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+      startCoord = GridComponent.screenToGrid(screenX, screenY);
     } else {
-      screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
-      screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
-      coord = GridComponent.screenToGrid(screenX, screenY);
+      const screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+      const screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+      startCoord = GridComponent.screenToGrid(screenX, screenY);
     }
+    const mouseRawPos = GridComponent.getMousePosition($event);
+    if (mouseRawPos === undefined) { return }
+    const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // TODO: Figure out logic how to show force onto link
-    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('x1', coord.x.toString());
-    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('y1', coord.y.toString());
-    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('x2', coord.x.toString());
-    // GridComponent.tempHolderSVG.children[1].children[0].setAttribute('y2', coord.y.toString());
-    // GridComponent.tempHolderSVG.children[1].children[1].setAttribute('x', coord.x.toString());
-    // GridComponent.tempHolderSVG.children[1].children[1].setAttribute('y', coord.y.toString());
+    // `M ${startX} ${startY} L ${endX} ${endY} Z`
+    GridComponent.tempHolderSVG.children[1].children[0].setAttribute('d',
+      'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L '
+      + mousePos.x.toString() + ' ' + mousePos.y.toString() + ' Z');
+
+    // triangle (pointer) of the arrow
+    const angle = Math.atan2(mousePos.y - startCoord.y, mousePos.x - startCoord.x);
+    const a1 = angle - Math.PI / 6;
+    const a2 = angle + Math.PI / 6;
+    const triLen = 12 * AppConstants.scaleFactor;
+    const dx1 = Math.cos(a1) * triLen;
+    const dy1 = Math.sin(a1) * triLen;
+    const dx2 = Math.cos(a2) * triLen;
+    const dy2 = Math.sin(a2) * triLen;
+    // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
+
+    GridComponent.tempHolderSVG.children[1].children[1].setAttribute('d',
+    'M ' + mousePos.x.toString() + ' ' + mousePos.y.toString() +
+      ' L ' + (mousePos.x - dx1).toString() + ' ' + (mousePos.y - dy1).toString() +
+      ' L ' + (mousePos.x - dx2).toString() + ' ' + (mousePos.y - dy2).toString() + ' Z');
     GridComponent.forceStates = forceStates.creating;
     GridComponent.gridStates = gridStates.creating;
     GridComponent.tempHolderSVG.style.display = 'block';
