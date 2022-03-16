@@ -130,7 +130,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
     GridComponent.forceStates = forceStates.waiting;
-    // See later if we can have the style.display = 'none' to be set within html instead of here
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
     GridComponent.linkageHolderSVG = document.getElementById('linkageHolder') as unknown as SVGElement;
@@ -142,39 +141,24 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
     GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
     GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
-    GridComponent.tempHolderSVG.style.display = 'none';
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
 
 
     GridComponent.contextMenuAddLinkOntoGridSVG = document.getElementById('menuEntryAddLinkOnGrid') as unknown as SVGElement;
-    GridComponent.contextMenuAddLinkOntoGridSVG.style.display = 'none';
-
     GridComponent.contextMenuAddGroundSVG = document.getElementById('menuEntryCreateGround') as unknown as SVGElement;
-    GridComponent.contextMenuAddGroundSVG.style.display = 'none';
     GridComponent.contextMenuAddSliderSVG = document.getElementById('menuEntryCreateSlider') as unknown as SVGElement;
-    GridComponent.contextMenuAddSliderSVG.style.display = 'none';
     GridComponent.contextMenuDeleteJointSVG = document.getElementById('menuEntryDeleteJoint') as unknown as SVGElement;
-    GridComponent.contextMenuDeleteJointSVG.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoJointSVG = document.getElementById('menuEntryAddLinkOnJoint') as unknown as SVGElement;
-    GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'none';
 
     GridComponent.contextMenuAddLinkOntoLink = document.getElementById('menuEntryAddLinkOnLink') as unknown as SVGElement;
-    GridComponent.contextMenuAddLinkOntoLink.style.display = 'none';
     GridComponent.contextMenuAddTracerPointSVG = document.getElementById('menuEntryAddTracerPoint') as unknown as SVGElement;
-    GridComponent.contextMenuAddTracerPointSVG.style.display = 'none';
     GridComponent.contextMenuAddForce = document.getElementById('menuEntryAddForce') as unknown as SVGElement;
-    GridComponent.contextMenuAddForce.style.display = 'none';
     GridComponent.contextMenuEditShape = document.getElementById('menuEntryEditShape') as unknown as SVGElement;
-    GridComponent.contextMenuEditShape.style.display = 'none';
     GridComponent.contextMenuDeleteLink = document.getElementById('menuEntryDeleteLink') as unknown as SVGElement;
-    GridComponent.contextMenuDeleteLink.style.display = 'none';
 
     GridComponent.contextMenuChangeForceDirection = document.getElementById('menuEntryChangeForceDirection') as unknown as SVGElement;
-    GridComponent.contextMenuChangeForceDirection.style.display = 'none';
     GridComponent.contextMenuChangeForceLocal = document.getElementById('menuEntryChangeForceLocal') as unknown as SVGElement;
-    GridComponent.contextMenuChangeForceLocal.style.display = 'none';
     GridComponent.contextMenuDeleteForce = document.getElementById('menuEntryDeleteForce') as unknown as SVGElement;
-    GridComponent.contextMenuDeleteForce.style.display = 'none';
 
     GridComponent.reset();
   }
