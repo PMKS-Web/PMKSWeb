@@ -81,4 +81,19 @@ export class Force {
   set forceArrow(value: string) {
     this._forceArrow = value;
   }
+  static createForceArrow(startCoord: Coord, endCoord: Coord) {
+    const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
+    const a1 = angle - Math.PI / 6;
+    const a2 = angle + Math.PI / 6;
+    const triLen = 12 * AppConstants.scaleFactor;
+    const dx1 = Math.cos(a1) * triLen;
+    const dy1 = Math.sin(a1) * triLen;
+    const dx2 = Math.cos(a2) * triLen;
+    const dy2 = Math.sin(a2) * triLen;
+
+    // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
+    return 'M ' + endCoord.x.toString() + ' ' + endCoord.y.toString() +
+      ' L ' + (endCoord.x - dx1).toString() + ' ' + (endCoord.y - dy1).toString() +
+      ' L ' + (endCoord.x - dx2).toString() + ' ' + (endCoord.y - dy2).toString() + ' Z';
+  }
 }
