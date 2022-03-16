@@ -9,6 +9,7 @@ export class Force {
   private _endCoord: Coord;
   private _forceLine: string;
   private _forceArrow: string;
+  private _arrowOutward: boolean = true;
 
   constructor(id: string, link: Link, startCoord: Coord, endCoord: Coord) {
     this._id = id;
@@ -17,6 +18,27 @@ export class Force {
     this._endCoord = endCoord;
     this._forceLine = Force.createForceLine(startCoord, endCoord);
     this._forceArrow = Force.createForceArrow(startCoord, endCoord);
+  }
+
+  static createForceLine(startCoord: Coord, endCoord: Coord) {
+    return 'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L '
+      + endCoord.x.toString() + ' ' + endCoord.y.toString() + ' Z';
+  }
+
+  static createForceArrow(startCoord: Coord, endCoord: Coord) {
+    const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
+    const a1 = angle - Math.PI / 6;
+    const a2 = angle + Math.PI / 6;
+    const triLen = 12 * AppConstants.scaleFactor;
+    const dx1 = Math.cos(a1) * triLen;
+    const dy1 = Math.sin(a1) * triLen;
+    const dx2 = Math.cos(a2) * triLen;
+    const dy2 = Math.sin(a2) * triLen;
+
+    // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
+    return 'M ' + endCoord.x.toString() + ' ' + endCoord.y.toString() +
+      ' L ' + (endCoord.x - dx1).toString() + ' ' + (endCoord.y - dy1).toString() +
+      ' L ' + (endCoord.x - dx2).toString() + ' ' + (endCoord.y - dy2).toString() + ' Z';
   }
 
   get id(): string {
@@ -67,24 +89,11 @@ export class Force {
     this._forceArrow = value;
   }
 
-  static createForceLine(startCoord: Coord, endCoord: Coord) {
-    return 'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L '
-    + endCoord.x.toString() + ' ' + endCoord.y.toString() + ' Z';
+  get arrowOutward(): boolean {
+    return this._arrowOutward;
   }
 
-  static createForceArrow(startCoord: Coord, endCoord: Coord) {
-    const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
-    const a1 = angle - Math.PI / 6;
-    const a2 = angle + Math.PI / 6;
-    const triLen = 12 * AppConstants.scaleFactor;
-    const dx1 = Math.cos(a1) * triLen;
-    const dy1 = Math.sin(a1) * triLen;
-    const dx2 = Math.cos(a2) * triLen;
-    const dy2 = Math.sin(a2) * triLen;
-
-    // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
-    return 'M ' + endCoord.x.toString() + ' ' + endCoord.y.toString() +
-      ' L ' + (endCoord.x - dx1).toString() + ' ' + (endCoord.y - dy1).toString() +
-      ' L ' + (endCoord.x - dx2).toString() + ' ' + (endCoord.y - dy2).toString() + ' Z';
+  set arrowOutward(value: boolean) {
+    this._arrowOutward = value;
   }
 }

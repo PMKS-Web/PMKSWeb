@@ -818,11 +818,19 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   changeForceDirection($event: MouseEvent) {
-
+    this.disappearContext();
+    GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
+    if (GridComponent.selectedForce.arrowOutward) {
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
+        GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+    } else {
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
+        GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
+    }
   }
 
   changeForceLocal($event: MouseEvent) {
-
+    this.disappearContext();
   }
 
   deleteForce($event: MouseEvent) {
