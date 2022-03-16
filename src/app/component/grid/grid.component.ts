@@ -462,6 +462,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'link':
         break;
       case 'force':
+        switch (GridComponent.forceStates) {
+          case forceStates.panning:
+            GridComponent.forceStates = forceStates.waiting;
+        }
         break;
     }
   }
