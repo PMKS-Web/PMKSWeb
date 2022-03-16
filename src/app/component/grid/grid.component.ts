@@ -101,7 +101,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
 
-
   private static gridStates: gridStates = gridStates.waiting;
   private static jointStates: jointStates = jointStates.waiting;
   private static linkStates: linkStates = linkStates.waiting;
@@ -811,13 +810,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
   }
 
-  deleteLink($event: MouseEvent) {
+  deleteLink() {
     this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
   }
 
-  changeForceDirection($event: MouseEvent) {
+  changeForceDirection() {
     this.disappearContext();
     GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
     if (GridComponent.selectedForce.arrowOutward) {
@@ -829,11 +828,11 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  changeForceLocal($event: MouseEvent) {
+  changeForceLocal() {
     this.disappearContext();
   }
 
-  deleteForce($event: MouseEvent) {
+  deleteForce() {
     this.disappearContext();
     const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
     this.forces.splice(forceIndex, 1);

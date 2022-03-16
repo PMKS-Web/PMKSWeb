@@ -165,7 +165,7 @@
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Edit Shape</text>
     </g>
-    <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink($event)"
+    <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink()"
        (mouseout)="RectMouseOut($event, 'deleteLink')"
        (mouseover)="RectMouseOver($event, 'deleteLink')" style="display: none">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
@@ -173,19 +173,19 @@
     </g>
   </g>
   <g class="context-menu-force" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection($event)"
+    <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection()"
        (mouseout)="RectMouseOut($event, 'changeForceDirection')"
        (mouseover)="RectMouseOver($event, 'changeForceDirection')" style="display: none">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Switch Force Direction</text>
     </g>
-    <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal($event)"
+    <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal()"
        (mouseout)="RectMouseOut($event, 'changeForceLocal')"
        (mouseover)="RectMouseOver($event, 'changeForceLocal')" style="display: none">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Change Force Local</text>
     </g>
-    <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce($event)"
+    <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce()"
        (mouseout)="RectMouseOut($event, 'deleteForce')"
        (mouseover)="RectMouseOver($event, 'deleteForce')" style="display: none">
       <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
