@@ -931,6 +931,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   deleteForce($event: MouseEvent) {
-
+    this.disappearContext();
+    const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
+    this.forces.splice(forceIndex, 1);
   }
 }
