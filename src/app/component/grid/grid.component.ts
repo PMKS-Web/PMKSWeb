@@ -196,6 +196,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
+  // TODO: Once the Gird Toolbar (Animation Bar) is created, reuse this function
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
@@ -542,123 +543,51 @@ export class GridComponent implements OnInit, AfterViewInit {
 
     switch (desiredMenu) {
       case 'grid':
-        // this.menu.nativeElement.style.display = 'block';
-        GridComponent.contextMenuAddLinkOntoGridSVG.style.display = 'block';
-        GridComponent.contextMenuAddLinkOntoGridSVG.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddLinkOntoGridSVG.children[0].setAttribute('y', offsetY.toString());
-        GridComponent.contextMenuAddLinkOntoGridSVG.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuAddLinkOntoGridSVG.children[1].setAttribute('y', offsetY.toString());
+        this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoGridSVG, offsetX, offsetY, 0, 0);
         break;
       case 'joint':
         const joint = thing;
         GridComponent.selectedJoint = joint;
         if (joint.links.length === 2) {
-          GridComponent.contextMenuDeleteJointSVG.style.display = 'block';
-          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('y', (offsetY + 15).toString());
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteJointSVG, offsetX, offsetY, 0, 15);
         } else {
-          GridComponent.contextMenuAddLinkOntoJointSVG.style.display = 'block';
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('y', offsetY.toString());
-
-          GridComponent.contextMenuAddGroundSVG.style.display = 'block';
-          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddGroundSVG.children[0].setAttribute('y', (offsetY + 20).toString());
-          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddGroundSVG.children[1].setAttribute('y', (offsetY + 35).toString());
-
-          GridComponent.contextMenuAddSliderSVG.style.display = 'block';
-          GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddSliderSVG.children[0].setAttribute('y', (offsetY + 40).toString());
-          GridComponent.contextMenuAddSliderSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddSliderSVG.children[1].setAttribute('y', (offsetY + 55).toString());
-
-          GridComponent.contextMenuDeleteJointSVG.style.display = 'block';
-          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteJointSVG.children[0].setAttribute('y', (offsetY + 60).toString());
-          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteJointSVG.children[1].setAttribute('y', (offsetY + 75).toString());
+          this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJointSVG, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuAddGroundSVG, offsetX, offsetY, 20, 35);
+          this.showcaseContextMenu(GridComponent.contextMenuAddSliderSVG, offsetX, offsetY, 40, 55);
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteJointSVG, offsetX, offsetY, 60, 75);
         }
         break;
       case 'link':
         const link = thing;
         GridComponent.selectedLink = link;
         if (link.shape === Shape.line) {
-          GridComponent.contextMenuAddForce.style.display = 'block';
-          GridComponent.contextMenuAddForce.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddForce.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddForce.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddForce.children[1].setAttribute('y', (offsetY + 15).toString());
-
-          GridComponent.contextMenuEditShape.style.display = 'block';
-          GridComponent.contextMenuEditShape.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuEditShape.children[0].setAttribute('y', (offsetY + 20).toString());
-          GridComponent.contextMenuEditShape.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuEditShape.children[1].setAttribute('y', (offsetY + 35).toString());
-
-          GridComponent.contextMenuDeleteLink.style.display = 'block';
-          GridComponent.contextMenuDeleteLink.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteLink.children[0].setAttribute('y', (offsetY + 40).toString());
-          GridComponent.contextMenuDeleteLink.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteLink.children[1].setAttribute('y', (offsetY + 55).toString());
+          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 15);
+          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 20, 35);
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 40, 55);
         } else {
-          GridComponent.contextMenuAddLinkOntoLink.style.display = 'block';
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddLinkOntoJointSVG.children[1].setAttribute('y', offsetY.toString());
-
-          GridComponent.contextMenuAddTracerPointSVG.style.display = 'block';
-          GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddTracerPointSVG.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddTracerPointSVG.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddTracerPointSVG.children[1].setAttribute('y', offsetY.toString());
-
-          GridComponent.contextMenuAddForce.style.display = 'block';
-          GridComponent.contextMenuAddForce.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddForce.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuAddForce.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuAddForce.children[1].setAttribute('y', offsetY.toString());
-
-          GridComponent.contextMenuEditShape.style.display = 'block';
-          GridComponent.contextMenuEditShape.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuEditShape.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuEditShape.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuEditShape.children[1].setAttribute('y', offsetY.toString());
-
-          GridComponent.contextMenuDeleteLink.style.display = 'block';
-          GridComponent.contextMenuDeleteLink.children[0].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteLink.children[0].setAttribute('y', offsetY.toString());
-          GridComponent.contextMenuDeleteLink.children[1].setAttribute('x', offsetX.toString());
-          GridComponent.contextMenuDeleteLink.children[1].setAttribute('y', offsetY.toString());
+          this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoLink, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuAddTracerPointSVG, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 0, 0);
         }
         break;
       case 'force':
         const force = thing;
         GridComponent.selectedForce = force;
-        GridComponent.contextMenuChangeForceDirection.style.display = 'block';
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('y', offsetY.toString());
-        GridComponent.contextMenuChangeForceDirection.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuChangeForceDirection.children[1].setAttribute('y', offsetY.toString());
-
-        GridComponent.contextMenuChangeForceLocal.style.display = 'block';
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('y', (offsetY + 20).toString());
-        GridComponent.contextMenuChangeForceLocal.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuChangeForceLocal.children[1].setAttribute('y', (offsetY + 20).toString());
-
-        GridComponent.contextMenuDeleteForce.style.display = 'block';
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('y', (offsetY + 40).toString());
-        GridComponent.contextMenuDeleteForce.children[1].setAttribute('x', offsetX.toString());
-        GridComponent.contextMenuDeleteForce.children[1].setAttribute('y', (offsetY + 40).toString());
+        this.showcaseContextMenu(GridComponent.contextMenuChangeForceDirection, offsetX, offsetY, 0, 0);
+        this.showcaseContextMenu(GridComponent.contextMenuChangeForceLocal, offsetX, offsetY, 20, 20);
+        this.showcaseContextMenu(GridComponent.contextMenuDeleteForce, offsetX, offsetY, 40, 40);
         break;
     }
+  }
+  showcaseContextMenu(contextMenu: SVGElement, offsetX: number, offsetY: number,
+                      boxIncrement: number, textIncrement: number) {
+    contextMenu.style.display = 'block'
+    contextMenu.children[0].setAttribute('x', offsetX.toString());
+    contextMenu.children[0].setAttribute('y', (offsetY + boxIncrement).toString());
+    contextMenu.children[1].setAttribute('x', offsetX.toString());
+    contextMenu.children[1].setAttribute('y', (offsetY + textIncrement).toString());
   }
 
   disappearContext() {
