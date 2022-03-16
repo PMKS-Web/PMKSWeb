@@ -93,6 +93,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuAddForce: SVGElement;
   private static contextMenuEditShape: SVGElement;
   private static contextMenuDeleteLink: SVGElement;
+  private static contextMenuChangeForceDirection: SVGElement;
+  private static contextMenuChangeForceLocal: SVGElement;
+  private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
 
 
@@ -165,6 +168,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuEditShape.style.display = 'none';
     GridComponent.contextMenuDeleteLink = document.getElementById('menuEntryDeleteLink') as unknown as SVGElement;
     GridComponent.contextMenuDeleteLink.style.display = 'none';
+
+    GridComponent.contextMenuChangeForceDirection = document.getElementById('menuEntryChangeForceDirection') as unknown as SVGElement;
+    GridComponent.contextMenuChangeForceDirection.style.display = 'none';
+    GridComponent.contextMenuChangeForceLocal = document.getElementById('menuEntryChangeForceLocal') as unknown as SVGElement;
+    GridComponent.contextMenuChangeForceLocal.style.display = 'none';
+    GridComponent.contextMenuDeleteForce = document.getElementById('menuEntryDeleteForce') as unknown as SVGElement;
+    GridComponent.contextMenuDeleteForce.style.display = 'none';
 
     GridComponent.reset();
   }
@@ -612,7 +622,6 @@ export class GridComponent implements OnInit, AfterViewInit {
           GridComponent.contextMenuDeleteLink.children[1].setAttribute('x', offsetX.toString());
           GridComponent.contextMenuDeleteLink.children[1].setAttribute('y', (offsetY + 55).toString());
         } else {
-          // TODO: Add logic for this condition later
           GridComponent.contextMenuAddLinkOntoLink.style.display = 'block';
           GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('x', offsetX.toString());
           GridComponent.contextMenuAddLinkOntoJointSVG.children[0].setAttribute('y', offsetY.toString());
@@ -645,6 +654,25 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'force':
+        const force = thing;
+        GridComponent.selectedForce = force;
+        GridComponent.contextMenuChangeForceDirection.style.display = 'block';
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('y', offsetY.toString());
+        GridComponent.contextMenuChangeForceDirection.children[1].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuChangeForceDirection.children[1].setAttribute('y', offsetY.toString());
+
+        GridComponent.contextMenuChangeForceLocal.style.display = 'block';
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('y', (offsetY + 20).toString());
+        GridComponent.contextMenuChangeForceLocal.children[1].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuChangeForceLocal.children[1].setAttribute('y', (offsetY + 20).toString());
+
+        GridComponent.contextMenuDeleteForce.style.display = 'block';
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('y', (offsetY + 40).toString());
+        GridComponent.contextMenuDeleteForce.children[1].setAttribute('x', offsetX.toString());
+        GridComponent.contextMenuDeleteForce.children[1].setAttribute('y', (offsetY + 40).toString());
         break;
     }
   }
@@ -660,7 +688,9 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddTracerPointSVG.style.display = 'none';
     GridComponent.contextMenuEditShape.style.display = 'none';
     GridComponent.contextMenuDeleteLink.style.display = 'none';
-
+    GridComponent.contextMenuChangeForceDirection.style.display = 'none';
+    GridComponent.contextMenuChangeForceLocal.style.display = 'none';
+    GridComponent.contextMenuDeleteForce.style.display = 'none';
   }
 
   addJoint() {
@@ -774,6 +804,18 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
           'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
         break;
+      case 'changeForceDirection':
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceLocal':
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteForce':
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
     }
   }
 
@@ -813,6 +855,18 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'deleteLink':
         GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceDirection':
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceLocal':
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteForce':
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
           'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
         break;
     }
@@ -866,5 +920,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
+  }
+
+  changeForceDirection($event: MouseEvent) {
+
+  }
+
+  changeForceLocal($event: MouseEvent) {
+
+  }
+
+  deleteForce($event: MouseEvent) {
+
   }
 }

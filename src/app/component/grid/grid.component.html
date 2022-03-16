@@ -170,4 +170,24 @@
       <text x="400" y="400" dx="15" dy="0" style="fill: steelblue; font-size: 13px">Delete Link</text>
     </g>
   </g>
+  <g class="context-menu-force" style="cursor: pointer">
+    <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection($event)"
+       (mouseout)="RectMouseOut($event, 'changeForceDirection')"
+       (mouseover)="RectMouseOver($event, 'changeForceDirection')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Switch Force Direction</text>
+    </g>
+    <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal($event)"
+       (mouseout)="RectMouseOut($event, 'changeForceLocal')"
+       (mouseover)="RectMouseOver($event, 'changeForceLocal')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Change Force Local</text>
+    </g>
+    <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce($event)"
+       (mouseout)="RectMouseOut($event, 'deleteForce')"
+       (mouseover)="RectMouseOver($event, 'deleteForce')">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Force</text>
+    </g>
+  </g>
 </svg>
