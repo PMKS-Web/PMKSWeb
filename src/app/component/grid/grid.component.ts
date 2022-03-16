@@ -800,9 +800,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) { return }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
-    GridComponent.tempHolderSVG.children[1].children[0].setAttribute('d',
-      'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L '
-      + mousePos.x.toString() + ' ' + mousePos.y.toString() + ' Z');
+    GridComponent.tempHolderSVG.children[1].children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
     GridComponent.tempHolderSVG.children[1].children[1].setAttribute('d', Force.createForceArrow(startCoord, mousePos));
     GridComponent.forceStates = forceStates.creating;
     GridComponent.gridStates = gridStates.creating;
