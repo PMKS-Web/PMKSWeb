@@ -344,7 +344,27 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.links.push(link);
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
-                  GridComponent.tempHolderSVG.style.display='none';
+                  GridComponent.tempHolderSVG.style.display = 'none';
+                } else if (GridComponent.forceStates === forceStates.creating) {
+                   let startCoord = new Coord(0, 0);
+                   let screenX: number;
+                   let screenY: number;
+                   if (GridComponent.selectedLink.shape === Shape.line) {
+                     screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+                     screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+                   } else {
+                     screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+                     screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+                   }
+                   startCoord = GridComponent.screenToGrid(screenX, screenY);
+                   const endCoordRaw = GridComponent.getMousePosition($event);
+                   if (endCoordRaw === undefined) { return }
+                   const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
+                  const force = new Force('F' + '1', GridComponent.selectedLink, startCoord, endCoord);
+                  this.forces.push(force);
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.forceStates = forceStates.waiting;
+                  GridComponent.tempHolderSVG.style.display = 'none';
                 }
                 // if (that.createMode === createModes.link) {
                 //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
