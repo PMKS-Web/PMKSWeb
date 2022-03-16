@@ -121,6 +121,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static selectedJoint: Joint;
   private static selectedLink: Link;
   private static selectedForce: Force;
+  private static selectedForceEndPoint: string;
 
 
   constructor() { }
@@ -262,7 +263,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const y = rawSVGCoords.y * -1;
     GridComponent.zoomPoint(wheelAmount, x, y);
   }
-  mouseDown($event: MouseEvent, typeChosen: string, thing?: any) {
+  mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
     const rawCoords = GridComponent.getMousePosition($event);
@@ -327,7 +328,6 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                     joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
                   }
-                  // const joint1ID = String.fromCharCode(c.charCodeAt(0) + 1);
                   const joint1 = new Joint(joint1ID, x1, y1);
                   const joint2 = new Joint(joint2ID, x2, y2);
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
@@ -386,6 +386,12 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'link':
             break;
           case 'force':
+            switch (GridComponent.forceStates) {
+              case forceStates.waiting:
+                if (forcePoint === undefined) { return }
+                GridComponent.forceStates = forceStates.panning;
+                GridComponent.selectedForceEndPoint = forcePoint;
+            }
             break;
         }
         break;
@@ -507,7 +513,6 @@ export class GridComponent implements OnInit, AfterViewInit {
               GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
             } else if (GridComponent.forceStates === forceStates.creating) {
               this.createForce($event);
-              // TODO: Add logic showcasing arrow for force
             }
         }
         break;
@@ -518,7 +523,9 @@ export class GridComponent implements OnInit, AfterViewInit {
             joint.x = trueCoord.x;
             joint.y = trueCoord.y;
             joint.links.forEach(l => {
-              l.bound = Link.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+              l.bound = Link.getBounds(
+                new Coord(l.joints[0].x, l.joints[0].y),
+                new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
               l.d = Link.getPointsFromBounds(l.bound, l.shape);
             });
             break;
@@ -529,6 +536,41 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'link':
         break;
       case 'force':
+        const force = thing as Force;
+        switch (GridComponent.forceStates) {
+          case forceStates.panning:
+            if (GridComponent.selectedForceEndPoint === 'startPoint') {
+              force.startCoord.x = trueCoord.x;
+              force.startCoord.y = trueCoord.y;
+            } else {
+              force.endCoord.x = trueCoord.x;
+              force.endCoord.y = trueCoord.y;
+            }
+            force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
+            if (force.arrowOutward) {
+              force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
+            } else {
+              force.forceArrow = Force.createForceArrow(force.endCoord, force.startCoord);
+            }
+            break;
+            // if (GridComponent.selectedForceEndPoint === 'startPoint') {
+            //   GridComponent.selectedForce.startCoord.x = trueCoord.x;
+            //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
+            // } else {
+            //   GridComponent.selectedForce.endCoord.x = trueCoord.x;
+            //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
+            // }
+            // GridComponent.selectedForce.forceLine = Force.createForceLine(
+            //   GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+            // if (GridComponent.selectedForce.arrowOutward) {
+            //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
+            //     GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+            // } else {
+            //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
+            //     GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
+            // }
+            // break;
+        }
         break;
     }
   }

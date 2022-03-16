@@ -68,21 +68,24 @@
     <g id="pathsPathPointHolder"></g>
     <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of forces"
        (contextmenu)="contextMenu($event, 'force', force); false"
-       (click)="disappearContext()"
-       (mousedown)="mouseDown($event, 'force', force)"
-       (mouseup)="mouseUp($event, 'force', force)"
-       (mousemove)="mouseMove($event, 'force', force)">
+       (click)="disappearContext()">
       <g [attr.id]="force.id">
         <path [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
         <path [attr.d]="force.forceLine" stroke="black" stroke-width="0.04"></path>
         <path [attr.d]="force.forceArrow" fill="black"></path>
       </g>
-      <svg [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
+      <svg id="startForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
+           (mouseup)="mouseUp($event, 'force', force)"
+           (mousemove)="mouseMove($event, 'force', force)"
+           [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
-      <svg [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
+      <svg id="endForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'endPoint')"
+           (mouseup)="mouseUp($event, 'force', force)"
+           (mousemove)="mouseMove($event, 'force', force)"
+           [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
