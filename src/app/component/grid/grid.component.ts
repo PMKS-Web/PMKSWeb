@@ -340,22 +340,23 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.tempHolderSVG.style.display = 'none';
                 } else if (GridComponent.forceStates === forceStates.creating) {
-                   let startCoord = new Coord(0, 0);
-                   let screenX: number;
-                   let screenY: number;
-                   if (GridComponent.selectedLink.shape === Shape.line) {
-                     screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
-                     screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
-                   } else {
-                     screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
-                     screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
-                   }
-                   startCoord = GridComponent.screenToGrid(screenX, screenY);
-                   const endCoordRaw = GridComponent.getMousePosition($event);
-                   if (endCoordRaw === undefined) { return }
-                   const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
+                  let startCoord = new Coord(0, 0);
+                  let screenX: number;
+                  let screenY: number;
+                  if (GridComponent.selectedLink.shape === Shape.line) {
+                    screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+                    screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+                  } else {
+                    screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+                    screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+                  }
+                  startCoord = GridComponent.screenToGrid(screenX, screenY);
+                  const endCoordRaw = GridComponent.getMousePosition($event);
+                  if (endCoordRaw === undefined) { return }
+                  const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                   const force = new Force('F' + '1', GridComponent.selectedLink, startCoord, endCoord);
                   this.forces.push(force);
+                  GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
                   GridComponent.tempHolderSVG.style.display = 'none';
@@ -527,10 +528,17 @@ export class GridComponent implements OnInit, AfterViewInit {
             joint.x = trueCoord.x;
             joint.y = trueCoord.y;
             joint.links.forEach(l => {
+              // TODO: delete this if this is not needed (verify this)
+              const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
+              l.joints[jointIndex].x = trueCoord.x;
+              l.joints[jointIndex].y = trueCoord.y;
               l.bound = Link.getBounds(
                 new Coord(l.joints[0].x, l.joints[0].y),
                 new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
               l.d = Link.getPointsFromBounds(l.bound, l.shape);
+              l.forces.forEach(f => {
+                // TODO: adjust the location of force endpoints and update the line and arrow
+              });
             });
             break;
           case jointStates.waiting:
@@ -557,23 +565,23 @@ export class GridComponent implements OnInit, AfterViewInit {
               force.forceArrow = Force.createForceArrow(force.endCoord, force.startCoord);
             }
             break;
-            // if (GridComponent.selectedForceEndPoint === 'startPoint') {
-            //   GridComponent.selectedForce.startCoord.x = trueCoord.x;
-            //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
-            // } else {
-            //   GridComponent.selectedForce.endCoord.x = trueCoord.x;
-            //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
-            // }
-            // GridComponent.selectedForce.forceLine = Force.createForceLine(
-            //   GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
-            // if (GridComponent.selectedForce.arrowOutward) {
-            //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
-            //     GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
-            // } else {
-            //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
-            //     GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
-            // }
-            // break;
+          // if (GridComponent.selectedForceEndPoint === 'startPoint') {
+          //   GridComponent.selectedForce.startCoord.x = trueCoord.x;
+          //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
+          // } else {
+          //   GridComponent.selectedForce.endCoord.x = trueCoord.x;
+          //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
+          // }
+          // GridComponent.selectedForce.forceLine = Force.createForceLine(
+          //   GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+          // if (GridComponent.selectedForce.arrowOutward) {
+          //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
+          //     GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+          // } else {
+          //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
+          //     GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
+          // }
+          // break;
         }
         break;
     }
@@ -876,6 +884,14 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   changeForceLocal() {
     this.disappearContext();
+    GridComponent.selectedForce.local = !GridComponent.selectedForce.local;
+    if (GridComponent.selectedForce.local) {
+      GridComponent.selectedForce.stroke = 'blue';
+      GridComponent.selectedForce.fill = 'blue';
+    } else {
+      GridComponent.selectedForce.stroke = 'black';
+      GridComponent.selectedForce.fill = 'black';
+    }
   }
 
   deleteForce() {

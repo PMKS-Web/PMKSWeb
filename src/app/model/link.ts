@@ -2,6 +2,7 @@ import {Joint} from "./joint";
 import {Coord} from "../component/grid/coord/coord";
 import {GridComponent} from "../component/grid/grid.component";
 import {AppConstants} from "../component/grid/app-constants/app-constants";
+import {Force} from "./force";
 
 export enum Shape {
   line = 'line',
@@ -47,6 +48,7 @@ export class Link {
   private _shape: Shape;
   private _bound: Bound;
   private _d: string
+  private _forces: Force[] = [];
 
   constructor(id: string, joints: Joint[]) {
     this._id = id;
@@ -55,54 +57,6 @@ export class Link {
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
     this._bound = Link.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = Link.getPointsFromBounds(this._bound, this._shape);
-  }
-
-  get id(): string {
-    return this._id;
-  }
-
-  set id(value: string) {
-    this._id = value;
-  }
-
-  get joints(): Joint[] {
-    return this._joints;
-  }
-
-  set joints(value: Joint[]) {
-    this._joints = value;
-  }
-
-  get shape(): Shape {
-    return this._shape;
-  }
-
-  set shape(value: Shape) {
-    this._shape = value;
-  }
-
-  get bound(): Bound {
-    return this._bound;
-  }
-
-  set bound(value: Bound) {
-    this._bound = value;
-  }
-
-  get d(): string {
-    return this._d;
-  }
-
-  set d(value: string) {
-    this._d = value;
-  }
-
-  get fill(): string {
-    return this._fill;
-  }
-
-  set fill(value: string) {
-    this._fill = value;
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
@@ -294,5 +248,61 @@ export class Link {
 
     pathString += `Z`;
     return pathString;
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
+  }
+
+  get joints(): Joint[] {
+    return this._joints;
+  }
+
+  set joints(value: Joint[]) {
+    this._joints = value;
+  }
+
+  get shape(): Shape {
+    return this._shape;
+  }
+
+  set shape(value: Shape) {
+    this._shape = value;
+  }
+
+  get bound(): Bound {
+    return this._bound;
+  }
+
+  set bound(value: Bound) {
+    this._bound = value;
+  }
+
+  get d(): string {
+    return this._d;
+  }
+
+  set d(value: string) {
+    this._d = value;
+  }
+
+  get fill(): string {
+    return this._fill;
+  }
+
+  set fill(value: string) {
+    this._fill = value;
+  }
+
+  get forces(): Force[] {
+    return this._forces;
+  }
+
+  set forces(value: Force[]) {
+    this._forces = value;
   }
 }

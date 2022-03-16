@@ -71,8 +71,8 @@
        (click)="disappearContext()">
       <g [attr.id]="force.id">
         <path [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
-        <path [attr.d]="force.forceLine" stroke="black" stroke-width="0.04"></path>
-        <path [attr.d]="force.forceArrow" fill="black"></path>
+        <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
+        <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
       </g>
       <svg id="startForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
            (mouseup)="mouseUp($event, 'force', force)"

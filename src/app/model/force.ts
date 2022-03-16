@@ -10,6 +10,9 @@ export class Force {
   private _forceLine: string;
   private _forceArrow: string;
   private _arrowOutward: boolean = true;
+  private _local: boolean = false;
+  private _stroke: string = 'black';
+  private _fill: string = 'black';
 
   constructor(id: string, link: Link, startCoord: Coord, endCoord: Coord) {
     this._id = id;
@@ -95,5 +98,29 @@ export class Force {
 
   set arrowOutward(value: boolean) {
     this._arrowOutward = value;
+  }
+
+  get local(): boolean {
+    return this._local;
+  }
+
+  set local(value: boolean) {
+    this._local = value;
+  }
+
+  get stroke(): string {
+    return this._stroke;
+  }
+
+  set stroke(value: string) {
+    this._stroke = value;
+  }
+
+  get fill(): string {
+    return this._fill;
+  }
+
+  set fill(value: string) {
+    this._fill = value;
   }
 }
