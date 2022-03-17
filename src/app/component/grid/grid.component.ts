@@ -464,40 +464,13 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'grid':
         switch (GridComponent.gridStates) {
           case gridStates.dragging:
-            if (GridComponent.jointStates === jointStates.dragging) { // user is dragging a joint
-              const joint = GridComponent.selectedJoint
-              joint.x = trueCoord.x;
-              joint.y = trueCoord.y;
-              joint.links.forEach(l => {
-                // TODO: delete this if this is not needed (verify this)
-                const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
-                l.joints[jointIndex].x = trueCoord.x;
-                l.joints[jointIndex].y = trueCoord.y;
-                l.bound = Link.getBounds(
-                  new Coord(l.joints[0].x, l.joints[0].y),
-                  new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-                l.d = Link.getPointsFromBounds(l.bound, l.shape);
-                l.forces.forEach(f => {
-                  // TODO: adjust the location of force endpoints and update the line and arrow
-                });
-              });
+            // These conditions are thrown when dragging an object but mouse is on top of the grid
+            if (GridComponent.jointStates === jointStates.dragging) {
+              GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
-
+              // TODO: Add logic when dragging a link within edit shape mode
             } else if (GridComponent.forceStates === forceStates.dragging) { // user is dragging a force
-              const force = GridComponent.selectedForce
-              if (GridComponent.selectedForceEndPoint === 'startPoint') {
-                force.startCoord.x = trueCoord.x;
-                force.startCoord.y = trueCoord.y;
-              } else {
-                force.endCoord.x = trueCoord.x;
-                force.endCoord.y = trueCoord.y;
-              }
-              force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
-              if (force.arrowOutward) {
-                force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
-              } else {
-                force.forceArrow = Force.createForceArrow(force.endCoord, force.startCoord);
-              }
+              GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
             } else { // user is dragging the grid
               const offsetX = GridComponent.panOffset.x - rawCoord.x;
               const offsetY = GridComponent.panOffset.y - rawCoord.y;
@@ -539,24 +512,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'joint':
-        const joint = thing as Joint;
+        let joint = thing as Joint;
         switch (GridComponent.jointStates) {
           case jointStates.dragging:
-            joint.x = trueCoord.x;
-            joint.y = trueCoord.y;
-            joint.links.forEach(l => {
-              // TODO: delete this if this is not needed (verify this)
-              const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
-              l.joints[jointIndex].x = trueCoord.x;
-              l.joints[jointIndex].y = trueCoord.y;
-              l.bound = Link.getBounds(
-                new Coord(l.joints[0].x, l.joints[0].y),
-                new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-              l.d = Link.getPointsFromBounds(l.bound, l.shape);
-              l.forces.forEach(f => {
-                // TODO: adjust the location of force endpoints and update the line and arrow
-              });
-            });
+            joint = GridComponent.dragJoint(joint, trueCoord);
             break;
           case jointStates.waiting:
             break;
@@ -565,22 +524,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'link':
         break;
       case 'force':
-        const force = thing as Force;
+        let force = thing as Force;
         switch (GridComponent.forceStates) {
           case forceStates.dragging:
-            if (GridComponent.selectedForceEndPoint === 'startPoint') {
-              force.startCoord.x = trueCoord.x;
-              force.startCoord.y = trueCoord.y;
-            } else {
-              force.endCoord.x = trueCoord.x;
-              force.endCoord.y = trueCoord.y;
-            }
-            force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
-            if (force.arrowOutward) {
-              force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
-            } else {
-              force.forceArrow = Force.createForceArrow(force.endCoord, force.startCoord);
-            }
+            force = GridComponent.dragForce(force, trueCoord);
             break;
         }
         break;
@@ -898,5 +845,40 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
     this.forces.splice(forceIndex, 1);
+  }
+
+  private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
+    selectedJoint.x = trueCoord.x;
+    selectedJoint.y = trueCoord.y;
+    selectedJoint.links.forEach(l => {
+      // TODO: delete this if this is not needed (verify this)
+      const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
+      l.joints[jointIndex].x = trueCoord.x;
+      l.joints[jointIndex].y = trueCoord.y;
+      l.bound = Link.getBounds(
+        new Coord(l.joints[0].x, l.joints[0].y),
+        new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+      l.d = Link.getPointsFromBounds(l.bound, l.shape);
+      l.forces.forEach(f => {
+        // TODO: adjust the location of force endpoints and update the line and arrow
+      });
+    });
+    return selectedJoint
+  }
+  private static dragForce(selectedForce: Force, trueCoord: Coord) {
+    if (GridComponent.selectedForceEndPoint === 'startPoint') {
+      selectedForce.startCoord.x = trueCoord.x;
+      selectedForce.startCoord.y = trueCoord.y;
+    } else {
+      selectedForce.endCoord.x = trueCoord.x;
+      selectedForce.endCoord.y = trueCoord.y;
+    }
+    selectedForce.forceLine = Force.createForceLine(selectedForce.startCoord, selectedForce.endCoord);
+    if (selectedForce.arrowOutward) {
+      selectedForce.forceArrow = Force.createForceArrow(selectedForce.startCoord, selectedForce.endCoord);
+    } else {
+      selectedForce.forceArrow = Force.createForceArrow(selectedForce.endCoord, selectedForce.startCoord);
+    }
+    return selectedForce;
   }
 }
