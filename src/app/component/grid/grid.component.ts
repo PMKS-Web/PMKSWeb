@@ -10,30 +10,25 @@ import {Force} from "../../model/force";
 enum gridStates {
   waiting,
   creating,
-  moving,
-  panning,
-  editing, // TODO: Is this used?
+  dragging,
 }
 
 enum jointStates {
   waiting,
   creating,
-  moving, // TODO: I think use this function?
-  panning,
+  dragging,
 }
 
 enum linkStates {
   waiting,
+  dragging,
   creating,
-  moving,
 }
 
 enum forceStates {
   waiting,
   creating,
-  moving,
-  panning,
-  editing,
+  dragging,
 }
 
 
@@ -196,7 +191,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
-  // TODO: Once the Gird Toolbar (Animation Bar) is created, reuse this function
+  // TODO: Once the Grid Toolbar (Animation Bar) is created, reuse this function
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
@@ -246,7 +241,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
     $event.stopPropagation();
-    // GridComponent.hideMenu.emit(true); // Hide the context menu
     let wheelAmount = $event.deltaY;
     if (wheelAmount > 0) {
       wheelAmount = 20 / 21;
@@ -259,9 +253,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (rawSVGCoords === undefined) {
       return
     }
-    const x = rawSVGCoords.x;
-    const y = rawSVGCoords.y * -1;
-    GridComponent.zoomPoint(wheelAmount, x, y);
+    GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
@@ -276,8 +268,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
-              case gridStates.panning:
-                break;
               case gridStates.waiting:
                 const mPos = GridComponent.getMousePosition($event);
                 if (mPos === undefined) {
@@ -285,7 +275,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 GridComponent.panOffset.x = mPos.x;
                 GridComponent.panOffset.y = mPos.y;
-                GridComponent.gridStates = gridStates.panning;
+                GridComponent.gridStates = gridStates.dragging;
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
@@ -377,20 +367,22 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'joint':
             switch (GridComponent.jointStates) {
               case jointStates.waiting:
-                GridComponent.jointStates = jointStates.panning;
-                break;
-              case jointStates.panning:
+                GridComponent.jointStates = jointStates.dragging;
                 break;
             }
             break;
-
           case 'link':
+            switch (GridComponent.linkStates) {
+              case linkStates.waiting:
+                GridComponent.linkStates = linkStates.dragging
+                break;
+            }
             break;
           case 'force':
             switch (GridComponent.forceStates) {
               case forceStates.waiting:
                 if (forcePoint === undefined) { return }
-                GridComponent.forceStates = forceStates.panning;
+                GridComponent.forceStates = forceStates.dragging;
                 GridComponent.selectedForceEndPoint = forcePoint;
             }
             break;
@@ -400,62 +392,47 @@ export class GridComponent implements OnInit, AfterViewInit {
         return;
       case 2: // Right-Click
         break;
-      default:
-        return;
     }
   }
   mouseUp($event: MouseEvent, typeChosen: string, thing?: any) {
     switch (typeChosen) {
       case 'grid':
         switch (GridComponent.gridStates) {
-          case gridStates.moving:
+          case gridStates.creating:
+            // TODO: Believe put in logic to update TSL but not yet. Also, set GridComponent.thing = thing.waiting
             switch (GridComponent.moveModes) {
               case moveModes.joint:
-                // GridComponent.endMoveJoint(GridComponent.draggingJoint);
-                // that.createNewSimulator();
+                GridComponent.jointStates = jointStates.waiting;
                 break;
               case moveModes.forceEndpoint:
-                // if (that.draggingEndpoint.type === ForceEndpointType.start &&
-                //   !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-                //   that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-                //   that.createNewSimulator();
-                // }
-                // that.endDragForceEndpoint(that.draggingEndpoint);
-                // that.createNewSimulator();
+                GridComponent.forceStates = forceStates.waiting;
                 break;
               case moveModes.pathPoint:
-                // that.endMovePathPoint(that.draggingPathPoint);
                 break;
               case moveModes.threePosition:
-                // that.endMoveThreePosition(that.draggingThreePosition);
                 break;
             }
-            // if (that.moveMode === moveModes.joint) {
-            //   that.endMoveJoint(that.draggingJoint);
-            // } else {
-            //   if (that.draggingEndpoint.type === ForceEndpointType.start &&
-            //     !that.draggingEndpoint.force.link.checkCoordInLink(that.draggingEndpoint)) {
-            //     that.draggingEndpoint.relocate(that.initialEndpointCoord.x, that.initialEndpointCoord.y);
-            //   }
-            //   that.endDragForceEndpoint(that.draggingEndpoint);
-            // }
             break;
-          case gridStates.panning:
+          case gridStates.dragging:
+            switch (GridComponent.moveModes) {
+              case moveModes.joint:
+                GridComponent.jointStates = jointStates.waiting;
+                break;
+              case moveModes.forceEndpoint:
+                GridComponent.forceStates = forceStates.waiting;
+                break;
+              case moveModes.pathPoint:
+                break;
+              case moveModes.threePosition:
+                break;
+            }
             GridComponent.gridStates = gridStates.waiting;
-            break;
-          case gridStates.creating:
-            break;
-          case gridStates.editing:
-            GridComponent.gridStates = gridStates.waiting;
-            // GridComponent.editingLink.cacheBounds();
             break;
         }
         break;
       case 'joint':
         switch (GridComponent.jointStates) {
-          case jointStates.waiting:
-            break;
-          case jointStates.panning:
+          case jointStates.dragging:
             GridComponent.jointStates = jointStates.waiting;
             break;
         }
@@ -464,7 +441,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'force':
         switch (GridComponent.forceStates) {
-          case forceStates.panning:
+          case forceStates.dragging:
             GridComponent.forceStates = forceStates.waiting;
         }
         break;
@@ -480,9 +457,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     switch (typeChosen) {
       case 'grid':
         switch (GridComponent.gridStates) {
-          case gridStates.moving:
-            break;
-          case gridStates.panning:
+          case gridStates.dragging:
             const offsetX = GridComponent.panOffset.x - rawCoord.x;
             const offsetY = GridComponent.panOffset.y - rawCoord.y;
             GridComponent.panOffset.x = rawCoord.x;
@@ -524,7 +499,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'joint':
         const joint = thing as Joint;
         switch (GridComponent.jointStates) {
-          case jointStates.panning:
+          case jointStates.dragging:
             joint.x = trueCoord.x;
             joint.y = trueCoord.y;
             joint.links.forEach(l => {
@@ -550,7 +525,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'force':
         const force = thing as Force;
         switch (GridComponent.forceStates) {
-          case forceStates.panning:
+          case forceStates.dragging:
             if (GridComponent.selectedForceEndPoint === 'startPoint') {
               force.startCoord.x = trueCoord.x;
               force.startCoord.y = trueCoord.y;
@@ -565,23 +540,6 @@ export class GridComponent implements OnInit, AfterViewInit {
               force.forceArrow = Force.createForceArrow(force.endCoord, force.startCoord);
             }
             break;
-          // if (GridComponent.selectedForceEndPoint === 'startPoint') {
-          //   GridComponent.selectedForce.startCoord.x = trueCoord.x;
-          //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
-          // } else {
-          //   GridComponent.selectedForce.endCoord.x = trueCoord.x;
-          //   GridComponent.selectedForce.endCoord.y = trueCoord.y;
-          // }
-          // GridComponent.selectedForce.forceLine = Force.createForceLine(
-          //   GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
-          // if (GridComponent.selectedForce.arrowOutward) {
-          //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
-          //     GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
-          // } else {
-          //   GridComponent.selectedForce.forceLine = Force.createForceArrow(
-          //     GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
-          // }
-          // break;
         }
         break;
     }
