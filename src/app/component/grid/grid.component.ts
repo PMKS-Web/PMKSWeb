@@ -626,7 +626,9 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createSlider() {
     this.disappearContext();
-    GridComponent.selectedJoint.type = 'P';
+    // TODO: Sliders are ground joints. However, we prob don't want to showcase ground. So probably need to update this
+    // TODO: Within the HTML document
+    GridComponent.selectedJoint.type = GridComponent.selectedJoint.type === 'P' ? 'R' : 'P';
   }
 
   deleteJoint() {
@@ -673,6 +675,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) { return }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
+    // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
+    // TODO: having to call setAttribute and have HTML update for you automatically
     GridComponent.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
     GridComponent.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
     GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', mousePos.x.toString());
