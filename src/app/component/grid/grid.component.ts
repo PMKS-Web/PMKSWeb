@@ -76,7 +76,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static comTagHolderSVG: SVGElement;
   private static pathPointHolderSVG: SVGElement;
   private static threePositionHolderSVG: SVGElement;
-  private static tempHolderSVG: SVGElement;
+  private static jointTempHolderSVG: SVGElement;
+  private static forceTempHolderSVG: SVGElement;
 
   private static contextMenuAddLinkOntoGrid: SVGElement;
 
@@ -134,7 +135,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.comTagHolderSVG = document.getElementById('comTagHolder') as unknown as SVGElement;
     GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
     GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
-    GridComponent.tempHolderSVG = document.getElementById('tempHolder') as unknown as SVGElement;
+    GridComponent.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
+    GridComponent.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
 
     // context Menu for Grid
@@ -279,8 +281,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
-                  const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
-                  const y2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y2'));
+                  const x2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2'));
+                  const y2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2'));
                   let lastLetter = '';
                   let joint2ID: string;
                   this.joints.forEach(j => {
@@ -297,12 +299,12 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.links.push(link);
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
-                  GridComponent.tempHolderSVG.style.display='none';
+                  GridComponent.jointTempHolderSVG.style.display='none';
                 } else if (GridComponent.linkStates === linkStates.creating) {
-                  const x1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x1'));
-                  const y1 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y1'));
-                  const x2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('x2'));
-                  const y2 = Number(GridComponent.tempHolderSVG.children[0].children[0].getAttribute('y2'));
+                  const x1 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1'));
+                  const y1 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1'));
+                  const x2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2'));
+                  const y2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2'));
                   let lastLetter = '';
                   let joint1ID: string;
                   let joint2ID: string;
@@ -328,7 +330,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.links.push(link);
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
-                  GridComponent.tempHolderSVG.style.display = 'none';
+                  GridComponent.jointTempHolderSVG.style.display = 'none';
                 } else if (GridComponent.forceStates === forceStates.creating) {
                   let startCoord = new Coord(0, 0);
                   let screenX: number;
@@ -349,7 +351,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
-                  GridComponent.tempHolderSVG.style.display = 'none';
+                  GridComponent.forceTempHolderSVG.style.display = 'none';
                 }
                 // if (that.createMode === createModes.link) {
                 //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
@@ -465,6 +467,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (GridComponent.gridStates) {
           case gridStates.dragging:
             // These conditions are thrown when dragging an object but mouse is on top of the grid
+            // TODO: Rather than to have these if, else if, else if, else,
+            // TODO: Have the gridStates also include dragGrid, dragJoint, dragLink, and dragForce
             if (GridComponent.jointStates === jointStates.dragging) {
               GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
@@ -504,8 +508,8 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
           case gridStates.creating:
             if (GridComponent.jointStates === jointStates.creating || GridComponent.linkStates === linkStates.creating) {
-              GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', trueCoord.x.toString());
-              GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', trueCoord.y.toString());
+              GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+              GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
             } else if (GridComponent.forceStates === forceStates.creating) {
               this.createForce($event);
             }
@@ -669,14 +673,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) { return }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
-    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x1', startCoord.x.toString());
-    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y1', startCoord.y.toString());
-    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('x2', mousePos.x.toString());
-    GridComponent.tempHolderSVG.children[0].children[0].setAttribute('y2', mousePos.y.toString());
-    GridComponent.tempHolderSVG.children[0].children[1].setAttribute('x', startCoord.x.toString());
-    GridComponent.tempHolderSVG.children[0].children[1].setAttribute('y', startCoord.y.toString());
+    GridComponent.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
+    GridComponent.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
+    GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', mousePos.x.toString());
+    GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', mousePos.y.toString());
+    GridComponent.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
+    GridComponent.jointTempHolderSVG.children[1].setAttribute('y', startCoord.y.toString());
     GridComponent.gridStates = gridStates.creating;
-    GridComponent.tempHolderSVG.style.display = 'block';
+    GridComponent.jointTempHolderSVG.style.display = 'block';
   }
 
   RectMouseOver($event: MouseEvent, menuType: string) {
@@ -800,11 +804,11 @@ export class GridComponent implements OnInit, AfterViewInit {
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) { return }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
-    GridComponent.tempHolderSVG.children[1].children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
-    GridComponent.tempHolderSVG.children[1].children[1].setAttribute('d', Force.createForceArrow(startCoord, mousePos));
+    GridComponent.forceTempHolderSVG.children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
+    GridComponent.forceTempHolderSVG.children[1].setAttribute('d', Force.createForceArrow(startCoord, mousePos));
     GridComponent.forceStates = forceStates.creating;
     GridComponent.gridStates = gridStates.creating;
-    GridComponent.tempHolderSVG.style.display = 'block';
+    GridComponent.forceTempHolderSVG.style.display = 'block';
   }
 
   editShape() {
