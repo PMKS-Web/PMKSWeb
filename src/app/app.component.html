@@ -1,1 +1,5 @@
-<app-grid></app-grid>
+<app-grid #gridComponent></app-grid>
+<app-linkage-table
+[joints]="gridComponent.joints"
+[links]="gridComponent.links"
+[forces]="gridComponent.forces"></app-linkage-table>

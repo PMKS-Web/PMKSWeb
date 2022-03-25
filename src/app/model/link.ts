@@ -49,6 +49,8 @@ export class Link {
   private _bound: Bound;
   private _d: string
   private _forces: Force[] = [];
+  private _mass: number = 1;
+  private _massMoI: number = 1;
 
   constructor(id: string, joints: Joint[]) {
     this._id = id;
@@ -304,5 +306,21 @@ export class Link {
 
   set forces(value: Force[]) {
     this._forces = value;
+  }
+
+  get mass(): number {
+    return this._mass;
+  }
+
+  set mass(value: number) {
+    this._mass = value;
+  }
+
+  get massMoI(): number {
+    return this._massMoI;
+  }
+
+  set massMoI(value: number) {
+    this._massMoI = value;
   }
 }

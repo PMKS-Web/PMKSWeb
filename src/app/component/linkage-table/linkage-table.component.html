@@ -1,0 +1,118 @@
+<button class="secondaryButtons" id="showTable"
+        style="position: absolute; top: 95px; left: 10px; z-index: 1000;
+         font-size: 17px; width: 8em;">Hide table</button>
+<div id="linkageTable" class="linkageTable">
+  <div class="linkageTableTabsContainer">
+    <div class="buttonContainer">
+      <button (click)="setTab(0)"> Joints </button>
+      <button (click)="setTab(1)"> Links </button>
+      <button (click)="setTab(2)"> Forces </button>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 0">
+      <table style="border: 1px solid">
+        <tr style="border: 1px solid">
+          <th style="border: 1px solid">ID</th>
+          <th style="border: 1px solid">Type</th>
+          <th style="border: 1px solid">Linked To</th>
+          <th style="border: 1px solid">Dist From Joint</th>
+          <th style="border: 1px solid">x</th>
+          <th style="border: 1px solid">y</th>
+          <th style="border: 1px solid">angle</th>
+        </tr>
+        <tr style="border: 1px solid" *ngFor="let joint of joints">
+          <!--                <td class="joint-table-item">-->
+          <!--                  <select type="radio" id="jointRadioButtons" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
+          <!--                  </select>-->
+          <!--                  <input *ngIf="jointArray[indexOfElement].grounded == true" type="radio" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
+          <!--                  <input *ngIf="jointArray[indexOfElement].grounded == false" type="hidden">-->
+          <!--                  <input type="radio" id="jointRadioButtons" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
+          <!--                </td>-->
+          <td style="border: 1px solid">
+            {{joint.id}}
+          </td>
+          <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
+          <!-- <td>{{row[1]}}</td>  --> <!-- joint type -->
+          <td style="border: 1px solid">
+            {{joint.type}}
+          </td>
+          <td style="border: 1px solid">
+            {{joint.id}} <!-- should be connected to -->
+          </td>
+          <td style="border: 1px solid">
+            1
+          </td>
+          <td style="border: 1px solid">
+            {{joint.x}}
+          </td>
+          <td style="border: 1px solid">
+            {{joint.y}}
+          </td>
+          <td style="border: 1px solid">
+            0
+          </td>
+          <!--                <td class="joint-table-item">-->
+          <!--                  <input type="button" value="Delete" (click)="deleteJoint(indexOfElement)">-->
+          <!--                </td>-->
+        </tr>
+        <!--            </div>-->
+      </table>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 1">
+      <table style="border: 1px solid">
+        <!--Link Table Header row-->
+        <tr style="border: 1px solid">
+          <th style="border: 1px solid">ID</th>
+          <th style="border: 1px solid">Mass</th>
+          <th style="border: 1px solid">MoI</th>
+        </tr>
+        <tr style="border: 1px solid" *ngFor="let link of links">
+          <td style="border: 1px solid">
+            {{link.id}}
+          </td>
+          <td style="border: 1px solid">
+            {{link.mass}}
+          </td>
+          <td style="border: 1px solid">
+            {{link.massMoI}}
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 2">
+      <table style="border: 1px solid">
+        <tr style="border: 1px solid">
+          <th style="border: 1px solid">On Link</th>
+          <th style="border: 1px solid">ID</th>
+          <th style="border: 1px solid">Angle</th>
+          <th>X-Mag</th>
+          <th>Y-Mag</th>
+          <th>X-Pos</th>
+          <th>Y-Pos</th>
+        </tr>
+        <tr>
+          <td>
+            AB
+          </td>
+          <td>
+            F1
+          </td>
+          <td>
+            90
+          </td>
+          <td>
+            0
+          </td>
+          <td>
+            1
+          </td>
+          <td>
+            1
+          </td>
+          <td>
+            1
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>

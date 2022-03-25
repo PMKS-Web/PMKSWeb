@@ -291,7 +291,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                     }
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-                  const joint2 = new Joint(joint2ID, x2, y2);
+                  const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
                   const link = new Link(this.joints[0].id + joint2ID, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
                   joint2.links.push(link);
@@ -320,8 +320,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                     joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
                   }
-                  const joint1 = new Joint(joint1ID, x1, y1);
-                  const joint2 = new Joint(joint2ID, x2, y2);
+                  const joint1 = new Joint(joint1ID, this.roundNumber(x1, 3), this.roundNumber(y1, 3));
+                  const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
                   joint1.links.push(link);
                   joint2.links.push(link);
@@ -615,7 +615,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
-    const newJoint = new Joint('a', coord.x, coord.y);
+    const newJoint = new Joint('a', this.roundNumber(coord.x, 3), this.roundNumber(coord.y, 3));
     this.joints.push(newJoint);
   }
 
@@ -888,5 +888,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       selectedForce.forceArrow = Force.createForceArrow(selectedForce.endCoord, selectedForce.startCoord);
     }
     return selectedForce;
+  }
+
+  roundNumber(num: number, scale: number): number {
+    const tens = Math.pow(10, scale);
+    return Math.round(num * tens) / tens;
   }
 }

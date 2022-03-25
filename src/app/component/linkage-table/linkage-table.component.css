@@ -1,0 +1,46 @@
+.linkageTable{
+  visibility: visible;
+  position: absolute;
+  top: 130px;
+  left: 10px;
+  opacity: 1;
+  overflow: hidden;
+  width: 500px;
+  border: 1px solid;
+}
+.linkageTableTabsContainer{
+  width: 520px;
+  height: 400px;
+}
+.linkageTableTabsContainer .buttonContainer{
+  height: 10%;
+}
+.linkageTableTabsContainer .buttonContainer button{
+  width: 33%;
+  height: 100%;
+  cursor: pointer;
+  float: left;
+  border: 1px solid;
+  /*outline: none;*/
+  padding: 10px;
+  /*font-family: Arial;*/
+  /*font-size: 24px;*/
+  font-weight: lighter;
+  text-align: center;
+  font-size: 20px;
+  background-color: #eee;
+}
+.tabContainer .buttonContainer button:hover {
+  background-color: #b52e31;
+}
+.tabContainer .tabPanel{
+  height: 85%;
+  background-color: gray;
+  color: white;
+  text-align: center;
+  padding-top: 105px;
+  box-sizing: border-box;
+  font-family: Arial, serif;
+  font-size: 22px;
+  display: none;
+}
