@@ -28,7 +28,7 @@
   font-weight: lighter;
   text-align: center;
   font-size: 20px;
-  background-color: #eee;
+  background-color: white;
   color: gray;
 }
 .tabContainer .buttonContainer button:hover {
@@ -36,7 +36,7 @@
 }
 .tabContainer .tabPanel{
   height: 85%;
-  background-color: gray;
+  background-color: white;
   color: white;
   text-align: center;
   padding-top: 105px;

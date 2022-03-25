@@ -4,9 +4,9 @@
 <div id="linkageTable" class="linkageTable">
   <div class="linkageTableTabsContainer">
     <div class="buttonContainer">
-      <button (click)="setTab(0)" style="color: black; background-color: gray"> Joints </button>
-      <button (click)="setTab(1)"> Links </button>
-      <button (click)="setTab(2)"> Forces </button>
+      <button id="jointButton" (click)="setTab(0)" style="color: black; background-color: gray"> Joints </button>
+      <button id="linkButton" (click)="setTab(1)"> Links </button>
+      <button id="forceButton" (click)="setTab(2)"> Forces </button>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 0">
       <table style="border: 1px solid">
