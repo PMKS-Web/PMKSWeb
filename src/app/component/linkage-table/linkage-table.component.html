@@ -36,10 +36,18 @@
             {{joint.type}}
           </td>
           <td style="border: 1px solid">
-            {{joint.id}} <!-- should be connected to -->
+            <table *ngFor="let conJoints of joint.connectedJoints">
+              <td style="border: 1px solid">
+                {{conJoints.id}}
+              </td>
+            </table>
           </td>
           <td style="border: 1px solid">
-            1
+            <table *ngFor="let conJoints of joint.connectedJoints">
+              <td style="border: 1px solid">
+                {{conJoints.id}}
+              </td>
+            </table>
           </td>
           <td style="border: 1px solid">
             {{joint.x}}
@@ -84,32 +92,32 @@
           <th style="border: 1px solid">On Link</th>
           <th style="border: 1px solid">ID</th>
           <th style="border: 1px solid">Angle</th>
-          <th>X-Mag</th>
-          <th>Y-Mag</th>
-          <th>X-Pos</th>
-          <th>Y-Pos</th>
+          <th style="border: 1px solid">X-Mag</th>
+          <th style="border: 1px solid">Y-Mag</th>
+          <th style="border: 1px solid">X-Pos</th>
+          <th style="border: 1px solid">Y-Pos</th>
         </tr>
-        <tr>
+        <tr *ngFor="let force of forces">
           <td>
-            AB
+            {{force.link.id}}
           </td>
           <td>
-            F1
+            {{force.id}}
           </td>
           <td>
             90
           </td>
           <td>
-            0
+            {{force.xMag}}
           </td>
           <td>
-            1
+            {{force.yMag}}
           </td>
           <td>
-            1
+            {{force.startCoord.x}}
           </td>
           <td>
-            1
+            {{force.startCoord.y}}
           </td>
         </tr>
       </table>

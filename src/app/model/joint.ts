@@ -6,18 +6,16 @@ export class Joint {
   private _x: number;
   private _y: number;
   private _r: number;
-  private _type: string;
-  private _ground: boolean;
-  private _links: Link[];
+  private _type: string = 'R';
+  private _ground: boolean = false;
+  private _links: Link[] = [];
+  private _connectedJoints: Joint[] = [];
 
   constructor(id: string, x: number, y: number) {
     this._id = id;
     this._x = x;
     this._y = y;
     this._r = 5 * AppConstants.scaleFactor;
-    this._type = 'R';
-    this._ground = false;
-    this._links = [];
   }
 
   get id(): string {
@@ -74,5 +72,13 @@ export class Joint {
 
   set links(value: Link[]) {
     this._links = value;
+  }
+
+  get connectedJoints(): Joint[] {
+    return this._connectedJoints;
+  }
+
+  set connectedJoints(value: Joint[]) {
+    this._connectedJoints = value;
   }
 }

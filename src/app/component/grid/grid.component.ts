@@ -292,8 +292,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                   const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
-                  const link = new Link(this.joints[0].id + joint2ID, [GridComponent.selectedJoint, joint2]);
+                  const link = new Link(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
+                  GridComponent.selectedJoint.connectedJoints.push(joint2);
+                  joint2.connectedJoints.push(GridComponent.selectedJoint);
                   joint2.links.push(link);
                   this.joints.push(joint2);
                   this.links.push(link);
@@ -323,6 +325,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                   const joint1 = new Joint(joint1ID, this.roundNumber(x1, 3), this.roundNumber(y1, 3));
                   const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
+                  joint1.connectedJoints.push(joint2);
+                  joint2.connectedJoints.push(joint1);
                   joint1.links.push(link);
                   joint2.links.push(link);
                   this.joints.push(joint1);
@@ -526,6 +530,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'link':
+        // TODO: Have to take into consideration when clicking on a joint and having dragged the joint on top of the link
         break;
       case 'force':
         let force = thing as Force;
@@ -856,13 +861,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
-    selectedJoint.x = trueCoord.x;
-    selectedJoint.y = trueCoord.y;
+    // TODO: have the round Number be integrated within function for determining trueCoord
+    selectedJoint.x = this.roundNumber(trueCoord.x, 3);
+    selectedJoint.y = this.roundNumber(trueCoord.y, 3);
     selectedJoint.links.forEach(l => {
       // TODO: delete this if this is not needed (verify this)
       const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
-      l.joints[jointIndex].x = trueCoord.x;
-      l.joints[jointIndex].y = trueCoord.y;
+      l.joints[jointIndex].x = this.roundNumber(trueCoord.x, 3);
+      l.joints[jointIndex].y = this.roundNumber(trueCoord.y, 3);
       l.bound = Link.getBounds(
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);

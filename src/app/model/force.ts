@@ -13,6 +13,8 @@ export class Force {
   private _local: boolean = false;
   private _stroke: string = 'black';
   private _fill: string = 'black';
+  private _xMag: number = 1;
+  private _yMag: number = 1;
 
   constructor(id: string, link: Link, startCoord: Coord, endCoord: Coord) {
     this._id = id;
@@ -122,5 +124,21 @@ export class Force {
 
   set fill(value: string) {
     this._fill = value;
+  }
+
+  get xMag(): number {
+    return this._xMag;
+  }
+
+  set xMag(value: number) {
+    this._xMag = value;
+  }
+
+  get yMag(): number {
+    return this._yMag;
+  }
+
+  set yMag(value: number) {
+    this._yMag = value;
   }
 }
