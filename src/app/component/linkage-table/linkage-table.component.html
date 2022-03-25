@@ -43,9 +43,9 @@
             </table>
           </td>
           <td style="border: 1px solid">
-            <table *ngFor="let conJoints of joint.connectedJoints">
+            <table *ngFor="let conJoint of joint.connectedJoints">
               <td style="border: 1px solid">
-                {{conJoints.id}}
+                {{distFromJoint(conJoint, joint)}}
               </td>
             </table>
           </td>

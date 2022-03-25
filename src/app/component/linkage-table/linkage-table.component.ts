@@ -60,6 +60,16 @@ export class LinkageTableComponent implements OnInit {
     // LinkageTableComponent.selectedTab = $event.index;
   }
 
+  distFromJoint(joint1: Joint, joint2: Joint) {
+    return this.roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x , 2) +
+      Math.pow(joint1.y - joint2.y, 2)), 3);
+  }
+
+  roundNumber(num: number, scale: number): number {
+    const tens = Math.pow(10, scale);
+    return Math.round(num * tens) / tens;
+  }
+
   // showLinks() {
   //
   // }
