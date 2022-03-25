@@ -639,13 +639,12 @@ export class GridComponent implements OnInit, AfterViewInit {
   deleteJoint() {
     this.disappearContext();
     const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
-    // TODO: Check later to see if deleting joints also deletes links. Check when links are created
     GridComponent.selectedJoint.links.forEach(l => {
+      // TODO: Fix this logic
       if (l.joints.length < 3) {
-        for (let curJointIndex = 0; jointIndex < l.joints.length; curJointIndex++) {
-          const cur_joint = l.joints[curJointIndex];
+        for (let curJointIndex = 0; curJointIndex < l.joints.length; curJointIndex++) {
           const curLinkIndex = l.joints[curJointIndex].links[0].id === l.id ? 0 : 1;
-          cur_joint.links.splice(curLinkIndex, 1);
+          this.joints[jointIndex].links.splice(curLinkIndex, 1);
         }
         const linkIndex = this.links.findIndex(li => li.id === l.id);
         this.links.splice(linkIndex, 1);
