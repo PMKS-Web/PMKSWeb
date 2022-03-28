@@ -161,8 +161,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static screenToGrid(x: number, y: number) {
-    const newX = (1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x);
-    const newY = -1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y);
+    const newX = this.roundNumber((1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x), 3);
+    const newY = this.roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y), 3);
     return new Coord(newX, newY);
   }
   private static gridToScreen(x: number, y: number) {
@@ -281,8 +281,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
-                  const x2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2'));
-                  const y2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2'));
+                  const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
+                  const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
                   let lastLetter = '';
                   let joint2ID: string;
                   this.joints.forEach(j => {
@@ -291,7 +291,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                     }
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-                  const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
+                  const joint2 = new Joint(joint2ID, x2, y2);
                   const link = new Link(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
                   GridComponent.selectedJoint.connectedJoints.push(joint2);
@@ -303,10 +303,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display='none';
                 } else if (GridComponent.linkStates === linkStates.creating) {
-                  const x1 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1'));
-                  const y1 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1'));
-                  const x2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2'));
-                  const y2 = Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2'));
+                  const x1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
+                  const y1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
+                  const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
+                  const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
                   let lastLetter = '';
                   let joint1ID: string;
                   let joint2ID: string;
@@ -322,8 +322,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                     joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
                   }
-                  const joint1 = new Joint(joint1ID, this.roundNumber(x1, 3), this.roundNumber(y1, 3));
-                  const joint2 = new Joint(joint2ID, this.roundNumber(x2, 3), this.roundNumber(y2, 3));
+                  const joint1 = new Joint(joint1ID, x1,  y1);
+                  const joint2 = new Joint(joint2ID, x2, y2);
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
                   joint1.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(joint1);
@@ -478,6 +478,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
               // TODO: Add logic when dragging a link within edit shape mode
             } else if (GridComponent.forceStates === forceStates.dragging) { // user is dragging a force
+              // TODO: Add logic to drag force properly within the grid
               GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
             } else { // user is dragging the grid
               const offsetX = GridComponent.panOffset.x - rawCoord.x;
@@ -620,7 +621,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
-    const newJoint = new Joint('a', this.roundNumber(coord.x, 3), this.roundNumber(coord.y, 3));
+    const newJoint = new Joint('a', coord.x, coord.y);
     this.joints.push(newJoint);
   }
 
@@ -888,6 +889,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         const jointTwo = selectedForce.link.joints[1];
         const smallestX = jointOne.x < jointTwo.x ? jointOne.x : jointTwo.x;
         const biggestX = jointOne.x > jointTwo.x ? jointOne.x : jointTwo.x;
+        // TODO: Check to see whether these roundNumbers here are necessary or not
         if (smallestX > trueCoord.x) {
           selectedForce.startCoord.x = this.roundNumber(smallestX, 3);
         } else if (biggestX < trueCoord.x) {
