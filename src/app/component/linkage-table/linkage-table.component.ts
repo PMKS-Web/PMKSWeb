@@ -1,7 +1,8 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
-import {Link} from "../../model/link";
+import {Link, Shape} from "../../model/link";
 import {Joint} from "../../model/joint";
+import {Coord} from "../grid/coord/coord";
 
 @Component({
   selector: 'app-linkage-table',
@@ -82,9 +83,35 @@ export class LinkageTableComponent implements OnInit {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
         joint.x = Number($event.target.value);
+        joint.links.forEach(l => {
+          // TODO: delete this if this is not needed (verify this)
+          const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
+          l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
+          l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
+          l.bound = Link.getBounds(
+            new Coord(l.joints[0].x, l.joints[0].y),
+            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.d = Link.getPointsFromBounds(l.bound, l.shape);
+          l.forces.forEach(f => {
+            // TODO: adjust the location of force endpoints and update the line and arrow
+          });
+        });
         break;
       case 'y':
         joint.y = Number($event.target.value);
+        joint.links.forEach(l => {
+          // TODO: delete this if this is not needed (verify this)
+          const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
+          l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
+          l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
+          l.bound = Link.getBounds(
+            new Coord(l.joints[0].x, l.joints[0].y),
+            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.d = Link.getPointsFromBounds(l.bound, l.shape);
+          l.forces.forEach(f => {
+            // TODO: adjust the location of force endpoints and update the line and arrow
+          });
+        });
         break;
       case 'id':
         // TODO: Be sure to change the link's ID
