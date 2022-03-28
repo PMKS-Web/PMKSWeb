@@ -37,7 +37,7 @@ export class LinkageTableComponent implements OnInit {
           'color: black; background-color: gray');
         LinkageTableComponent.linkButton.setAttribute('style',
           'color: gray; background-color: white');
-        LinkageTableComponent.forceButton.children[0].setAttribute('style',
+        LinkageTableComponent.forceButton.setAttribute('style',
           'color: gray; background-color: white');
         break;
       case 1:
@@ -77,4 +77,60 @@ export class LinkageTableComponent implements OnInit {
   // showForces() {
   //
   // }
+  changeJointProp($event: any, joint: Joint, jointProp: string) {
+    switch (jointProp) {
+      // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
+      case 'x':
+        joint.x = Number($event.target.value);
+        break;
+      case 'y':
+        joint.y = Number($event.target.value);
+        break;
+      case 'id':
+        // TODO: Be sure to change the link's ID
+        joint.id = $event.target.value;
+        break;
+      case 'angle':
+        joint.angle = $event.target.value;
+    }
+  }
+
+  mouseOver(number: number) {
+    if (this.selectedTab === number) {
+      return;
+    }
+    switch (number) {
+      case 0:
+        LinkageTableComponent.jointButton.setAttribute('style',
+          'background-color: lightgray');
+        break;
+      case 1:
+        LinkageTableComponent.linkButton.setAttribute('style',
+          'background-color: lightgray');
+        break;
+      case 2:
+        LinkageTableComponent.forceButton.setAttribute('style',
+          'background-color: lightgray');
+        break;
+    }
+  }
+  mouseOut(number: number) {
+    if (this.selectedTab === number) {
+      return;
+    }
+    switch (number) {
+      case 0:
+        LinkageTableComponent.jointButton.setAttribute('style',
+          'background-color: white');
+        break;
+      case 1:
+        LinkageTableComponent.linkButton.setAttribute('style',
+          'background-color: white');
+        break;
+      case 2:
+        LinkageTableComponent.forceButton.setAttribute('style',
+          'background-color: white');
+        break;
+    }
+  }
 }

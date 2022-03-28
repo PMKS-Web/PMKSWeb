@@ -4,44 +4,57 @@
   top: 130px;
   left: 10px;
   opacity: 1;
-  overflow: hidden;
-  width: 500px;
+  /*overflow: hidden;*/
   border: 1px solid;
+  display: grid;
+  overflow: visible;
+  background-color: white;
 }
-.linkageTableTabsContainer{
-  width: 520px;
-  height: 400px;
-}
-.linkageTableTabsContainer .buttonContainer{
+.linkageTable .buttonContainer{
   height: 10%;
 }
-.linkageTableTabsContainer .buttonContainer button{
+.linkageTable .buttonContainer button{
   width: 33%;
-  height: 100%;
+  /*height: 100%;*/
   cursor: pointer;
   float: left;
   border: 1px solid;
   /*outline: none;*/
   padding: 10px;
-  /*font-family: Arial;*/
-  /*font-size: 24px;*/
+  font-family: "Times New Roman", Times, serif;
   font-weight: lighter;
   text-align: center;
-  font-size: 20px;
+  font-size: 24px;
   background-color: white;
   color: gray;
 }
-.tabContainer .buttonContainer button:hover {
-  background-color: #b52e31;
-}
-.tabContainer .tabPanel{
-  height: 85%;
-  background-color: white;
-  color: white;
+/*.linkageTable .buttonContainer button:hover {*/
+/*  background-color: lightgray;*/
+/*}*/
+/*.linkageTable .buttonContainer button:out-of-range {*/
+/*  background-color: aquamarine;*/
+/*}*/
+/*this kinda works but not really.... Delete if not needed*/
+/*.linkageTable .buttonContainer button:hover {*/
+/*  background-color: #b52e31;*/
+/*}*/
+/*.tabContainer .tabPanel{*/
+/*  height: 85%;*/
+/*  background-color: white;*/
+/*  color: white;*/
+/*  !*text-align: center;*!*/
+/*  padding-top: 105px;*/
+/*  box-sizing: border-box;*/
+/*  !*font-family: "Times New Roman", Times, serif;*!*/
+/*  !*font-size: 22px;*!*/
+/*  display: none;*/
+/*  !*border: 1px solid;*!*/
+/*}*/
+.linkageTable .tabPanel tr,th,td, input{
+  border: 1px solid;
   text-align: center;
-  padding-top: 105px;
+  /*need box-sizing??*/
   box-sizing: border-box;
-  font-family: Arial, serif;
+  font-family: "Times New Roman", Times, serif;
   font-size: 22px;
-  display: none;
 }

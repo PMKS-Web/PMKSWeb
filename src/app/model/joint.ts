@@ -10,6 +10,9 @@ export class Joint {
   private _ground: boolean = false;
   private _links: Link[] = [];
   private _connectedJoints: Joint[] = [];
+  private _angle: number = 0;
+  // TODO: Similar to Instant centers, have Joint, then Revolute Joints and Prismatic Joint class rather than having
+  // TODO: type since rev should not have angle property
 
   constructor(id: string, x: number, y: number) {
     this._id = id;
@@ -80,5 +83,13 @@ export class Joint {
 
   set connectedJoints(value: Joint[]) {
     this._connectedJoints = value;
+  }
+
+  get angle(): number {
+    return this._angle;
+  }
+
+  set angle(value: number) {
+    this._angle = value;
   }
 }
