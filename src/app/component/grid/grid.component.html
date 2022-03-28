@@ -102,7 +102,13 @@
         <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
-    <g id="forceTagHolder"></g>
+    <g id="forceTagHolder">
+      <svg *ngFor="let force of forces" [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
+      [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1"
+      [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{force.id}}
+        <text style="font-size: 0.7px; text-anchor: middle"> {{force.id}}</text>
+      </svg>
+    </g>
     <g id="comTagHolder"></g>
     <g id="pathPointHolder"></g>
     <g id="threePositionHolder"></g>
