@@ -28,13 +28,13 @@
       <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
             (click)="disappearContext()"
             (mousedown)="mouseDown($event, 'link', link)"
-            (mousemove)="mouseMove($event, 'link', link)"
+            (mousemove)="mouseMove($event, 'link')"
             [attr.d]="link.d" [attr.id]="link.id" [attr.fill]="link.fill" style="opacity: 0.8"></path>
       <!-- SVG for creating Joints -->
       <svg *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
            (click)="disappearContext()" [attr.x]="joint.x" [attr.y]="joint.y"
            (mousedown)="mouseDown($event, 'joint', joint)"
-           (mousemove)="mouseMove($event, 'joint', joint)"
+           (mousemove)="mouseMove($event, 'joint')"
            width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
         <circle *ngIf="joint.ground === false && joint.type !== 'P'" id="joint_{{joint.id}}_ring"
@@ -81,14 +81,14 @@
         <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
       </g>
       <svg id="startForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
-           (mousemove)="mouseMove($event, 'force', force)"
+           (mousemove)="mouseMove($event, 'force')"
            [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
       <svg id="endForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'endPoint')"
-           (mousemove)="mouseMove($event, 'force', force)"
+           (mousemove)="mouseMove($event, 'force')"
            [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>

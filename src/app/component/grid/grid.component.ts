@@ -256,6 +256,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
+  mouseUp() {
+    GridComponent.gridStates = gridStates.waiting;
+    GridComponent.jointStates = jointStates.waiting;
+    GridComponent.linkStates = linkStates.waiting;
+    GridComponent.forceStates = forceStates.waiting;
+  }
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -404,13 +410,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
-  mouseUp() {
-    GridComponent.gridStates = gridStates.waiting;
-    GridComponent.jointStates = jointStates.waiting;
-    GridComponent.linkStates = linkStates.waiting;
-    GridComponent.forceStates = forceStates.waiting;
-  }
-  mouseMove($event: MouseEvent, typeChosen: string, thing?: any) {
+  mouseMove($event: MouseEvent, typeChosen: string) {
     $event.preventDefault();
     $event.stopPropagation();
     const rawCoord = GridComponent.getMousePosition($event);
@@ -472,10 +472,9 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'joint':
-        let joint = thing as Joint;
         switch (GridComponent.jointStates) {
           case jointStates.dragging:
-            joint = GridComponent.dragJoint(joint, trueCoord);
+            GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
             break;
           case jointStates.waiting:
             break;
@@ -485,10 +484,9 @@ export class GridComponent implements OnInit, AfterViewInit {
         // TODO: Have to take into consideration when clicking on a joint and having dragged the joint on top of the link
         break;
       case 'force':
-        let force = thing as Force;
         switch (GridComponent.forceStates) {
           case forceStates.dragging:
-            force = GridComponent.dragForce(force, trueCoord);
+            GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
             break;
         }
         break;
