@@ -1,6 +1,6 @@
 import {Link} from "./link";
-import {Coord} from "../component/grid/coord/coord";
-import {AppConstants} from "../component/grid/app-constants/app-constants";
+import {Coord} from "./coord";
+import {AppConstants} from "./app-constants";
 
 export class Force {
   private _id: string

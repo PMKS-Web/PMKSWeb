@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, OnInit} from '@angular/core';
-import {Coord} from "./coord/coord";
-import {AppConstants} from "./app-constants/app-constants";
+import {Coord} from "../../model/coord";
+import {AppConstants} from "../../model/app-constants";
 import {Joint} from "../../model/joint";
 import {Link, Shape} from "../../model/link";
 import {Force} from "../../model/force";
@@ -257,6 +257,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
   mouseUp() {
+    // TODO check for condition when a state was not waiting. If it was not waiting, then update the simulator
     GridComponent.gridStates = gridStates.waiting;
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
@@ -876,12 +877,4 @@ export class GridComponent implements OnInit, AfterViewInit {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
   }
-
-  // mouseOver($event: any, force: Force) {
-  //
-  // }
-  //
-  // mouseOut($event: any, force: Force) {
-  //   GridComponent.selectedForce
-  // }
 }

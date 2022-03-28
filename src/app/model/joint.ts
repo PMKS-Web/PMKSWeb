@@ -1,4 +1,4 @@
-import {AppConstants} from "../component/grid/app-constants/app-constants";
+import {AppConstants} from "./app-constants";
 import {Link} from "./link";
 
 export class Joint {

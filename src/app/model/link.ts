@@ -1,6 +1,6 @@
 import {Joint} from "./joint";
-import {Coord} from "../component/grid/coord/coord";
-import {AppConstants} from "../component/grid/app-constants/app-constants";
+import {Coord} from "./coord";
+import {AppConstants} from "./app-constants";
 import {Force} from "./force";
 
 export enum Shape {

@@ -2,7 +2,7 @@ import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
 import {Link, Shape} from "../../model/link";
 import {Joint} from "../../model/joint";
-import {Coord} from "../grid/coord/coord";
+import {Coord} from "../../model/coord";
 
 @Component({
   selector: 'app-linkage-table',
