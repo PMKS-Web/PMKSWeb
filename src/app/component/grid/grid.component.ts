@@ -883,8 +883,25 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
     if (GridComponent.selectedForceEndPoint === 'startPoint') {
-      selectedForce.startCoord.x = trueCoord.x;
-      selectedForce.startCoord.y = trueCoord.y;
+      if (selectedForce.link.shape === 'line') {
+        const jointOne = selectedForce.link.joints[0];
+        const jointTwo = selectedForce.link.joints[1];
+        const smallestX = jointOne.x < jointTwo.x ? jointOne.x : jointTwo.x;
+        const biggestX = jointOne.x > jointTwo.x ? jointOne.x : jointTwo.x;
+        if (smallestX > trueCoord.x) {
+          selectedForce.startCoord.x = this.roundNumber(smallestX, 3);
+        } else if (biggestX < trueCoord.x) {
+          selectedForce.startCoord.x = this.roundNumber(biggestX, 3);
+        } else {
+          selectedForce.startCoord.x = this.roundNumber(trueCoord.x, 3);
+        }
+        const slope = (jointTwo.y - jointOne.y ) / (jointTwo.x - jointOne.x);
+        const b = jointOne.y;
+        selectedForce.startCoord.y = this.roundNumber(jointOne.y + (selectedForce.startCoord.x - jointOne.x) * slope, 3);
+      } else {
+        selectedForce.startCoord.x = trueCoord.x;
+        selectedForce.startCoord.y = trueCoord.y;
+      }
     } else {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;

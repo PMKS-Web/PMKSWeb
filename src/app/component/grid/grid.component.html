@@ -112,14 +112,6 @@
     </g>
     <g id="comTagHolder" style="transform: scaleY(-1)">
       <svg *ngFor="let link of links" style="overflow: visible" width="-1.23" height="-2.61">
-<!--        const coords1 = 'M' + c_x + ' ' + c_y + ' ' + c_x_n + ' ' + c_y + ' ' +-->
-<!--        'A0.25 0.25 0 0 0 ' + c_x + ' ' + c_y_p;-->
-<!--        const coords2 = 'M' + c_x + ' ' + c_y + ' ' + c_x + ' ' + c_y_p + ' ' +-->
-<!--        'A0.25 0.25 0 0 0 ' + c_x_p + ' ' +  c_y;-->
-<!--        const coords3 = 'M' + c_x + ' ' + c_y + ' ' + c_x_p + ' ' + c_y + ' ' +-->
-<!--        'A0.25 0.25 0 0 0 ' + c_x + ' ' + c_y_n;-->
-<!--        const coords4 = 'M' + c_x + ' ' + c_y + ' ' + c_x + ' ' + c_y_n + ' ' +-->
-<!--        'A0.25 0.25 0 0 0 ' + c_x_n + ' ' +  c_y;-->
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
               [attr.d]="link.CoM_d1"></path>
         <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"
@@ -140,8 +132,8 @@
       </svg>
     </g>
     <g id="forceTempHolder" opacity="0.5" style="display: none; pointer-events: none; transform: scaleY(-1)">
-      <path stroke-width="0.04" stroke="black"></path>
-      <path fill="black"></path>
+      <path stroke-width="0.04" stroke="black" d=""></path>
+      <path fill="black" d=""></path>
     </g>
   </g>
   <g class="context-menu-canvas" style="cursor: pointer">
