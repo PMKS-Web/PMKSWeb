@@ -16,6 +16,7 @@
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 0">
       <table id="jointTable">
+        <thead>
         <tr>
           <th>ID</th>
           <th>Type</th>
@@ -25,6 +26,8 @@
           <th>y</th>
           <th>angle</th>
         </tr>
+        </thead>
+        <tbody>
         <tr *ngFor="let joint of joints">
           <!--                <td class="joint-table-item">-->
           <!--                  <select type="radio" id="jointRadioButtons" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
@@ -70,17 +73,20 @@
           <!--                  <input type="button" value="Delete" (click)="deleteJoint(indexOfElement)">-->
           <!--                </td>-->
         </tr>
-        <!--            </div>-->
+        </tbody>
       </table>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 1">
       <table id="linkTable" style="border: 1px solid">
+        <thead>
         <!--Link Table Header row-->
         <tr style="border: 1px solid">
           <th style="border: 1px solid">ID</th>
           <th style="border: 1px solid">Mass</th>
           <th style="border: 1px solid">MoI</th>
         </tr>
+        </thead>
+        <tbody>
         <tr style="border: 1px solid" *ngFor="let link of links">
           <td style="border: 1px solid">
             {{link.id}}
@@ -92,10 +98,13 @@
             {{link.massMoI}}
           </td>
         </tr>
+        </tbody>
+        <tfoot></tfoot>
       </table>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 2">
       <table id="forceTable" style="border: 1px solid">
+        <thead>
         <tr style="border: 1px solid">
           <th style="border: 1px solid">On Link</th>
           <th style="border: 1px solid">ID</th>
@@ -105,6 +114,8 @@
           <th style="border: 1px solid">X-Pos</th>
           <th style="border: 1px solid">Y-Pos</th>
         </tr>
+        </thead>
+        <tbody>
         <tr *ngFor="let force of forces">
           <td>
             {{force.link.id}}
@@ -128,6 +139,9 @@
             {{force.startCoord.y}}
           </td>
         </tr>
+        </tbody>
+        <tfoot>
+        </tfoot>
       </table>
     </div>
 </div>
