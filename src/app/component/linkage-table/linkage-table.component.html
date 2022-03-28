@@ -44,30 +44,30 @@
           <td>
             {{joint.type}}
           </td>
-          <td style="border: 1px solid; width: 10px">
+          <td>
             <table *ngFor="let conJoints of joint.connectedJoints">
-              <td style="border: 1px solid">
+              <td style="border: none">
                 {{conJoints.id}}
               </td>
             </table>
           </td>
-          <td style="border: 1px solid; width: 10px">
+          <td>
             <table *ngFor="let conJoint of joint.connectedJoints">
-              <td style="border: 1px solid; width: 10px">
+              <td style="border: none">
                 {{distFromJoint(conJoint, joint)}}
               </td>
             </table>
           </td>
-          <td style="border: 1px solid; border-spacing: 2px; width: 10px">
+          <td>
             <input type="text" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
           </td>
-          <td style="border: 1px solid; width: 10px">
+          <td>
             <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
           </td>
-          <td style="border: 1px solid; width: 10px" *ngIf="joint.type === 'P'">
+          <td *ngIf="joint.type === 'P'">
             <input type="text" value="{{joint.angle}}" (change)="changeJointProp($event, joint, 'angle')">
           </td>
-          <td style="border: 1px solid; width: 10px" *ngIf="joint.type !== 'P'">
+          <td *ngIf="joint.type !== 'P'">
           </td>
           <!--                <td class="joint-table-item">-->
           <!--                  <input type="button" value="Delete" (click)="deleteJoint(indexOfElement)">-->
@@ -77,24 +77,24 @@
       </table>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 1">
-      <table id="linkTable" style="border: 1px solid">
+      <table id="linkTable">
         <thead>
         <!--Link Table Header row-->
-        <tr style="border: 1px solid">
-          <th style="border: 1px solid">ID</th>
-          <th style="border: 1px solid">Mass</th>
-          <th style="border: 1px solid">MoI</th>
+        <tr>
+          <th>ID</th>
+          <th>Mass</th>
+          <th>MoI</th>
         </tr>
         </thead>
         <tbody>
-        <tr style="border: 1px solid" *ngFor="let link of links">
-          <td style="border: 1px solid">
+        <tr *ngFor="let link of links">
+          <td>
             {{link.id}}
           </td>
-          <td style="border: 1px solid">
+          <td>
             {{link.mass}}
           </td>
-          <td style="border: 1px solid">
+          <td>
             {{link.massMoI}}
           </td>
         </tr>
@@ -103,16 +103,16 @@
       </table>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 2">
-      <table id="forceTable" style="border: 1px solid">
+      <table id="forceTable">
         <thead>
-        <tr style="border: 1px solid">
-          <th style="border: 1px solid">On Link</th>
-          <th style="border: 1px solid">ID</th>
-          <th style="border: 1px solid">Angle</th>
-          <th style="border: 1px solid">X-Mag</th>
-          <th style="border: 1px solid">Y-Mag</th>
-          <th style="border: 1px solid">X-Pos</th>
-          <th style="border: 1px solid">Y-Pos</th>
+        <tr>
+          <th>On Link</th>
+          <th>ID</th>
+          <th>Angle</th>
+          <th>X-Mag</th>
+          <th>Y-Mag</th>
+          <th>X-Pos</th>
+          <th>Y-Pos</th>
         </tr>
         </thead>
         <tbody>

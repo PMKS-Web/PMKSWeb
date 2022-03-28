@@ -57,12 +57,15 @@ th,td{
   /*need box-sizing??*/
   box-sizing: border-box;
   font-family: "Times New Roman", Times, serif;
-  font-size: 22px;
+  font-size: 16px;
   border-collapse: collapse;
 }
 th{
-  background-color: gray;
+  background-color: #AAAAAA;
 }
 table {
   border-collapse: collapse;
+}
+input{
+  width: 50px;
 }
