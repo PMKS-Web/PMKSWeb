@@ -53,6 +53,10 @@ export class Link {
   private _massMoI: number = 1;
   private _CoMX: number;
   private _CoMY: number;
+  private _CoM_d1: string = '';
+  private _CoM_d2: string = '';
+  private _CoM_d3: string = '';
+  private _CoM_d4: string = '';
 
   constructor(id: string, joints: Joint[]) {
     this._id = id;
@@ -64,6 +68,15 @@ export class Link {
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     this._CoMX = this.determineCenterOfMass(joints, 'x');
     this._CoMY = this.determineCenterOfMass(joints, 'y');
+    this.updateCoMDs();
+    // this._CoM_d1 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX - 0.25) + ' ' + this.CoMY + ' ' +
+    //   'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY + 0.25);
+    // this._CoM_d2 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY + 0.25) + ' ' +
+    //   'A0.25 0.25 0 0 0 ' + (this.CoMX + 0.25) + ' ' +  this.CoMY;
+    // this._CoM_d3 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX + 0.25)  + ' ' + this.CoMY + ' ' +
+    //   'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY - 0.25);
+    // this._CoM_d4 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY - 0.25) + ' ' +
+    //   'A0.25 0.25 0 0 0 ' + (this.CoMX - 0.25)  + ' ' +  this.CoMY;
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
@@ -355,5 +368,48 @@ export class Link {
 
   set CoMY(value: number) {
     this._CoMY = value;
+  }
+
+  get CoM_d1(): string {
+    return this._CoM_d1;
+  }
+
+  set CoM_d1(value: string) {
+    this._CoM_d1 = value;
+  }
+
+  get CoM_d2(): string {
+    return this._CoM_d2;
+  }
+
+  set CoM_d2(value: string) {
+    this._CoM_d2 = value;
+  }
+
+  get CoM_d3(): string {
+    return this._CoM_d3;
+  }
+
+  set CoM_d3(value: string) {
+    this._CoM_d3 = value;
+  }
+
+  get CoM_d4(): string {
+    return this._CoM_d4;
+  }
+
+  set CoM_d4(value: string) {
+    this._CoM_d4 = value;
+  }
+
+  updateCoMDs() {
+    this._CoM_d1 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX - 0.25) + ' ' + this.CoMY + ' ' +
+      'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY + 0.25);
+    this._CoM_d2 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY + 0.25) + ' ' +
+      'A0.25 0.25 0 0 0 ' + (this.CoMX + 0.25) + ' ' +  this.CoMY;
+    this._CoM_d3 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX + 0.25)  + ' ' + this.CoMY + ' ' +
+      'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY - 0.25);
+    this._CoM_d4 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY - 0.25) + ' ' +
+      'A0.25 0.25 0 0 0 ' + (this.CoMX - 0.25)  + ' ' +  this.CoMY;
   }
 }

@@ -93,23 +93,43 @@
     </g>
     <g id="jointTagHolder"></g>
     <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
-    [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{joint.id}}
+    [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
       <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
     </svg>
     <g id="linkTagHolder">
       <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
-           [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{link.id}}
+           [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
     <g id="forceTagHolder">
       <svg *ngFor="let force of forces" [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
       [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1"
-      [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{force.id}}
+      [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
+        <!-- should font-size have px??? -->
         <text style="font-size: 0.7px; text-anchor: middle"> {{force.id}}</text>
       </svg>
     </g>
-    <g id="comTagHolder"></g>
+    <g id="comTagHolder" style="transform: scaleY(-1)">
+      <svg *ngFor="let link of links" style="overflow: visible" width="-1.23" height="-2.61">
+<!--        const coords1 = 'M' + c_x + ' ' + c_y + ' ' + c_x_n + ' ' + c_y + ' ' +-->
+<!--        'A0.25 0.25 0 0 0 ' + c_x + ' ' + c_y_p;-->
+<!--        const coords2 = 'M' + c_x + ' ' + c_y + ' ' + c_x + ' ' + c_y_p + ' ' +-->
+<!--        'A0.25 0.25 0 0 0 ' + c_x_p + ' ' +  c_y;-->
+<!--        const coords3 = 'M' + c_x + ' ' + c_y + ' ' + c_x_p + ' ' + c_y + ' ' +-->
+<!--        'A0.25 0.25 0 0 0 ' + c_x + ' ' + c_y_n;-->
+<!--        const coords4 = 'M' + c_x + ' ' + c_y + ' ' + c_x + ' ' + c_y_n + ' ' +-->
+<!--        'A0.25 0.25 0 0 0 ' + c_x_n + ' ' +  c_y;-->
+        <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
+              [attr.d]="link.CoM_d1"></path>
+        <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"
+              [attr.d]="link.CoM_d2"></path>
+        <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
+              [attr.d]="link.CoM_d3"></path>
+        <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"
+              [attr.d]="link.CoM_d4"></path>
+      </svg>
+    </g>
     <g id="pathPointHolder"></g>
     <g id="threePositionHolder"></g>
     <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
