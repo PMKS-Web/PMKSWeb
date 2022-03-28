@@ -14,8 +14,16 @@
     <rect x="-5000" y="-5000" width="10000px" height="10000px" fill="url(#grid)" />
   </g>
   <g id="transformMatrix">
-    <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
-    <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px" />
+    <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px"
+          (contextmenu)="contextMenu($event, 'grid'); false"
+          (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
+          (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')"
+    />
+    <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px"
+          (contextmenu)="contextMenu($event, 'grid'); false"
+          (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
+          (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')"
+    />
     <g id="linkageHolder" style="transform: scaleY(-1)">
       <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
             (click)="disappearContext()"
@@ -91,18 +99,21 @@
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
     </g>
+    <!--TODO: Add case when dragging anything above the jointTagHolder -->
     <g id="jointTagHolder">
       <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
       </svg>
     </g>
+    <!--TODO: Add case when dragging anything above the linkTagHolder -->
     <g id="linkTagHolder">
       <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
+    <!--TODO: Add case when dragging anything above the forceTagHolder -->
     <g id="forceTagHolder">
       <svg *ngFor="let force of forces" [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
       [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1"
@@ -111,6 +122,7 @@
         <text style="font-size: 0.7px; text-anchor: middle"> {{force.id}}</text>
       </svg>
     </g>
+    <!--TODO: Add case when dragging anything above the comTagHolder -->
     <g id="comTagHolder" style="transform: scaleY(-1)">
       <svg *ngFor="let link of links" style="overflow: visible" width="-1.23" height="-2.61">
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
