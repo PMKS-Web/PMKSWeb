@@ -21,7 +21,6 @@ export class LinkageTableComponent implements OnInit {
   private static forceButton: SVGElement;
 
   selectedTab: number = 0;
-  // private static selectedTab: number = 0;
   constructor() { }
 
   ngOnInit(): void {}
@@ -75,13 +74,6 @@ export class LinkageTableComponent implements OnInit {
     return Math.round(num * tens) / tens;
   }
 
-  // showLinks() {
-  //
-  // }
-  //
-  // showForces() {
-  //
-  // }
   changeJointProp($event: any, joint: Joint, jointProp: string) {
     switch (jointProp) {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
@@ -129,6 +121,41 @@ export class LinkageTableComponent implements OnInit {
         joint.angle = $event.target.value;
     }
   }
+  changeLinkProp($event: any, link: Link, linkProp: string) {
+    switch (linkProp) {
+      case 'mass':
+        link.mass = $event.target.value;
+        break;
+      case 'massMoI':
+        link.massMoI = $event.target.value;
+        break;
+      case 'CoMX':
+        link.CoMX = $event.target.value;
+        break;
+      case 'CoMY':
+        link.CoMY = $event.target.value;
+        break;
+    }
+  }
+  changeForceProp($event: any, force: Force, forceProp: string) {
+    switch (forceProp) {
+      case 'id':
+        force.id = $event.target.value;
+        break;
+      case 'xPos':
+        force.startCoord.x = $event.target.value;
+        break;
+      case 'yPos':
+        force.startCoord.y = $event.target.value;
+        break;
+      case 'xMag':
+        force.xMag = $event.target.value;
+        break;
+      case 'yMag':
+        force.yMag = $event.target.value;
+        break;
+    }
+  }
 
   mouseOver(number: number) {
     if (this.selectedTab === number) {
@@ -169,50 +196,13 @@ export class LinkageTableComponent implements OnInit {
     }
   }
 
-  linkageVisability() {
+  linkageVisibility() {
     if (LinkageTableComponent.linkageTable.style.visibility === 'visible') {
       LinkageTableComponent.linkageTable.style.visibility = 'hidden';
       LinkageTableComponent.visibilityButton.innerHTML = 'Show table';
     } else {
       LinkageTableComponent.linkageTable.style.visibility = 'visible';
       LinkageTableComponent.visibilityButton.innerHTML = 'Hide table';
-    }
-  }
-
-  changeLinkProp($event: any, link: Link, linkProp: string) {
-    switch (linkProp) {
-      case 'mass':
-        link.mass = $event.target.value;
-        break;
-      case 'massMoI':
-        link.massMoI = $event.target.value;
-        break;
-      case 'CoMX':
-        link.CoMX = $event.target.value;
-        break;
-      case 'CoMY':
-        link.CoMY = $event.target.value;
-        break;
-    }
-  }
-
-  changeForceProp($event: any, force: Force, forceProp: string) {
-    switch (forceProp) {
-      case 'id':
-        force.id = $event.target.value;
-        break;
-      case 'xPos':
-        force.startCoord.x = $event.target.value;
-        break;
-      case 'yPos':
-        force.startCoord.y = $event.target.value;
-        break;
-      case 'xMag':
-        force.xMag = $event.target.value;
-        break;
-      case 'yMag':
-        force.yMag = $event.target.value;
-        break;
     }
   }
 }

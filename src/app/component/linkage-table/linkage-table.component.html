@@ -1,6 +1,6 @@
 <button class="secondaryButtons" id="showTable"
         style="position: absolute; top: 95px; left: 10px; z-index: 1000;
-         font-size: 17px; width: 8em;" (click)="linkageVisability()">Hide table</button>
+         font-size: 17px; width: 8em;" (click)="linkageVisibility()">Hide table</button>
 <div id="linkageTable" class="linkageTable" style="visibility: visible">
     <div class="buttonContainer">
       <button id="jointButton" (click)="setTab(0)"
@@ -45,14 +45,14 @@
             {{joint.type}}
           </td>
           <td>
-            <table *ngFor="let conJoints of joint.connectedJoints">
+            <table *ngFor="let conJoints of joint.connectedJoints" style="margin:auto; width:50%">
               <td style="border: none">
                 {{conJoints.id}}
               </td>
             </table>
           </td>
           <td>
-            <table *ngFor="let conJoint of joint.connectedJoints">
+            <table *ngFor="let conJoint of joint.connectedJoints" style="margin:auto; width:50%">
               <td style="border: none">
                 {{distFromJoint(conJoint, joint)}}
               </td>
