@@ -179,8 +179,8 @@ export class LinkageTableComponent implements OnInit {
     }
   }
 
-  changeLinkProp($event: any, link: Link, jointProp: string) {
-    switch (jointProp) {
+  changeLinkProp($event: any, link: Link, linkProp: string) {
+    switch (linkProp) {
       case 'mass':
         link.mass = $event.target.value;
         break;
@@ -192,6 +192,26 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'CoMY':
         link.CoMY = $event.target.value;
+        break;
+    }
+  }
+
+  changeForceProp($event: any, force: Force, forceProp: string) {
+    switch (forceProp) {
+      case 'id':
+        force.id = $event.target.value;
+        break;
+      case 'xPos':
+        force.startCoord.x = $event.target.value;
+        break;
+      case 'yPos':
+        force.startCoord.y = $event.target.value;
+        break;
+      case 'xMag':
+        force.xMag = $event.target.value;
+        break;
+      case 'yMag':
+        force.yMag = $event.target.value;
         break;
     }
   }

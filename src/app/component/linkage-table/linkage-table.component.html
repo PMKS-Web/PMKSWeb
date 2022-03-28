@@ -129,22 +129,22 @@
             {{force.link.id}}
           </td>
           <td>
-            {{force.id}}
+            <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
           </td>
           <td>
-            90
+<!--            <input type="text" value="{{force.angle}}"--> ?
           </td>
           <td>
-            {{force.xMag}}
+            <input type="text" value="{{force.xMag}}" (change)="changeForceProp($event, force, 'xMag')">
           </td>
           <td>
-            {{force.yMag}}
+            <input type="text" value="{{force.yMag}}" (change)="changeForceProp($event, force, 'yMag')">
           </td>
           <td>
-            {{force.startCoord.x}}
+            <input type="text" value="{{force.startCoord.x}}" (change)="changeForceProp($event, force, 'xPos')">
           </td>
           <td>
-            {{force.startCoord.y}}
+            <input type="text" value="{{force.startCoord.y}}" (change)="changeForceProp($event, force, 'yPos')">
           </td>
         </tr>
         </tbody>
