@@ -96,7 +96,12 @@
     [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{joint.id}}
       <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
     </svg>
-    <g id="linkTagHolder"></g>
+    <g id="linkTagHolder">
+      <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
+           [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle"> {{link.id}}
+        <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
+      </svg>
+    </g>
     <g id="forceTagHolder"></g>
     <g id="comTagHolder"></g>
     <g id="pathPointHolder"></g>

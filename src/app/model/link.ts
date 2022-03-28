@@ -51,6 +51,8 @@ export class Link {
   private _forces: Force[] = [];
   private _mass: number = 1;
   private _massMoI: number = 1;
+  private _CoMX: number;
+  private _CoMY: number;
 
   constructor(id: string, joints: Joint[]) {
     this._id = id;
@@ -59,6 +61,9 @@ export class Link {
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
     this._bound = Link.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = Link.getPointsFromBounds(this._bound, this._shape);
+    // TODO: When you insert a joint onto a link, be sure to utilize this function call
+    this._CoMX = this.determineCenterOfMass(joints, 'x');
+    this._CoMY = this.determineCenterOfMass(joints, 'y');
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
@@ -252,6 +257,18 @@ export class Link {
     return pathString;
   }
 
+  determineCenterOfMass(joints: Joint[], xOrY: string) {
+    let com = 0;
+    joints.forEach(j => {
+      if (xOrY === 'x') {
+        com += j.x;
+      } else {
+        com += j.y;
+      }
+    });
+    return com / joints.length;
+  }
+
   get id(): string {
     return this._id;
   }
@@ -322,5 +339,21 @@ export class Link {
 
   set massMoI(value: number) {
     this._massMoI = value;
+  }
+
+  get CoMX(): number {
+    return this._CoMX;
+  }
+
+  set CoMX(value: number) {
+    this._CoMX = value;
+  }
+
+  get CoMY(): number {
+    return this._CoMY;
+  }
+
+  set CoMY(value: number) {
+    this._CoMY = value;
   }
 }

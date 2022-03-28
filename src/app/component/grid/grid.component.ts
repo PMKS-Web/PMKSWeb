@@ -872,6 +872,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
       l.d = Link.getPointsFromBounds(l.bound, l.shape);
+      l.CoMX = l.determineCenterOfMass(l.joints, 'x');
+      l.CoMY = l.determineCenterOfMass(l.joints, 'y');
       l.forces.forEach(f => {
         // TODO: adjust the location of force endpoints and update the line and arrow
       });
