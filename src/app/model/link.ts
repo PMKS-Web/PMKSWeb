@@ -1,6 +1,5 @@
 import {Joint} from "./joint";
 import {Coord} from "../component/grid/coord/coord";
-import {GridComponent} from "../component/grid/grid.component";
 import {AppConstants} from "../component/grid/app-constants/app-constants";
 import {Force} from "./force";
 

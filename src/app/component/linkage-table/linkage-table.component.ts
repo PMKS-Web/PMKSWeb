@@ -14,6 +14,8 @@ export class LinkageTableComponent implements OnInit {
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
 
+  private static linkageTable: SVGElement;
+  private static visabilityButton: SVGElement;
   private static jointButton: SVGElement;
   private static linkButton: SVGElement;
   private static forceButton: SVGElement;
@@ -25,6 +27,8 @@ export class LinkageTableComponent implements OnInit {
   ngOnInit(): void {}
 
   ngAfterViewInit() {
+    LinkageTableComponent.linkageTable = document.getElementById('linkageTable') as unknown as SVGElement;
+    LinkageTableComponent.visabilityButton = document.getElementById('showTable') as unknown as SVGElement;
     LinkageTableComponent.jointButton = document.getElementById('jointButton') as unknown as SVGElement;
     LinkageTableComponent.linkButton = document.getElementById('linkButton') as unknown as SVGElement;
     LinkageTableComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
@@ -162,6 +166,16 @@ export class LinkageTableComponent implements OnInit {
         LinkageTableComponent.forceButton.setAttribute('style',
           'background-color: white');
         break;
+    }
+  }
+
+  linkageVisability() {
+    if (LinkageTableComponent.linkageTable.style.visibility === 'visible') {
+      LinkageTableComponent.linkageTable.style.visibility = 'hidden';
+      LinkageTableComponent.visabilityButton.innerHTML = 'Show table';
+    } else {
+      LinkageTableComponent.linkageTable.style.visibility = 'visible';
+      LinkageTableComponent.visabilityButton.innerHTML = 'Hide table';
     }
   }
 }

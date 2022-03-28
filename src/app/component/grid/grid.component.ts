@@ -31,7 +31,6 @@ enum forceStates {
   dragging,
 }
 
-
 enum shapeEditModes {
   move,
   resize
@@ -449,6 +448,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'link':
+        //TODO: be sure to include scenario when you are dragging a joint and you lift mouse when mouse is on top of link
         break;
       case 'force':
         switch (GridComponent.forceStates) {

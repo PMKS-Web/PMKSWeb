@@ -91,11 +91,12 @@
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
     </g>
-    <g id="jointTagHolder"></g>
-    <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
-    [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
-      <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
-    </svg>
+    <g id="jointTagHolder">
+      <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
+           [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
+        <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
+      </svg>
+    </g>
     <g id="linkTagHolder">
       <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
