@@ -178,4 +178,21 @@ export class LinkageTableComponent implements OnInit {
       LinkageTableComponent.visabilityButton.innerHTML = 'Hide table';
     }
   }
+
+  changeLinkProp($event: any, link: Link, jointProp: string) {
+    switch (jointProp) {
+      case 'mass':
+        link.mass = $event.target.value;
+        break;
+      case 'massMoI':
+        link.massMoI = $event.target.value;
+        break;
+      case 'CoMX':
+        link.CoMX = $event.target.value;
+        break;
+      case 'CoMY':
+        link.CoMY = $event.target.value;
+        break;
+    }
+  }
 }

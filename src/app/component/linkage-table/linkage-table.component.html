@@ -84,6 +84,8 @@
           <th>ID</th>
           <th>Mass</th>
           <th>MoI</th>
+          <th>X CoM</th>
+          <th>Y CoM</th>
         </tr>
         </thead>
         <tbody>
@@ -92,10 +94,16 @@
             {{link.id}}
           </td>
           <td>
-            {{link.mass}}
+            <input type="text" value="{{link.mass}}" (change)="changeLinkProp($event, link, 'mass')">
           </td>
           <td>
-            {{link.massMoI}}
+            <input type="text" value="{{link.massMoI}}" (change)="changeLinkProp($event, link, 'massMoI')">
+          </td>
+          <td>
+            <input type="text" value="{{link.CoMX}}" (change)="changeLinkProp($event, link, 'CoMX')">
+          </td>
+          <td>
+            <input type="text" value="{{link.CoMY}}" (change)="changeLinkProp($event, link, 'CoMY')">
           </td>
         </tr>
         </tbody>
