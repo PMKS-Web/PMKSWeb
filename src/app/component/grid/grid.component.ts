@@ -922,4 +922,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
   }
+
+  // mouseOver($event: any, force: Force) {
+  //
+  // }
+  //
+  // mouseOut($event: any, force: Force) {
+  //   GridComponent.selectedForce
+  // }
 }

@@ -77,8 +77,8 @@
     <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of forces"
        (contextmenu)="contextMenu($event, 'force', force); false"
        (click)="disappearContext()">
-      <g [attr.id]="force.id">
-        <path [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
+      <g [attr.id]="force.id" (mouseover)="force.showHighlight = true" (mouseout)="force.showHighlight = false">
+        <path *ngIf="force.showHighlight" [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
         <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
         <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
       </g>

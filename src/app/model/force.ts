@@ -15,6 +15,7 @@ export class Force {
   private _fill: string = 'black';
   private _xMag: number = 1;
   private _yMag: number = 1;
+  private _showHighlight: boolean = false;
 
   constructor(id: string, link: Link, startCoord: Coord, endCoord: Coord) {
     this._id = id;
@@ -140,5 +141,13 @@ export class Force {
 
   set yMag(value: number) {
     this._yMag = value;
+  }
+
+  get showHighlight(): boolean {
+    return this._showHighlight;
+  }
+
+  set showHighlight(value: boolean) {
+    this._showHighlight = value;
   }
 }
