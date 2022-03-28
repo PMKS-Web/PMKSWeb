@@ -590,20 +590,26 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
     GridComponent.selectedJoint.links.forEach(l => {
-      // TODO: Fix this logic
       if (l.joints.length < 3) {
-        for (let curJointIndex = 0; curJointIndex < l.joints.length; curJointIndex++) {
-          const curLinkIndex = l.joints[curJointIndex].links[0].id === l.id ? 0 : 1;
-          this.joints[jointIndex].links.splice(curLinkIndex, 1);
-        }
-        const linkIndex = this.links.findIndex(li => li.id === l.id);
-        this.links.splice(linkIndex, 1);
+        // delete forces on link
+        l.forces.forEach(f => {
+          const forceIndex = this.forces.findIndex(fo => fo.id === f.id);
+          this.forces.splice(forceIndex, 1);
+        });
+        // go to other connected joint and remove this link from its connectedLinks and joint from connectedJoint
+        // There may be an easier way to do this but this logic works :P
+        const desiredJointID = l.joints[0].id === GridComponent.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
+        const desiredJointIndex = this.joints.findIndex(j => j.id === desiredJointID);
+        const deleteJointIndex = this.joints[desiredJointIndex].connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+        this.joints[desiredJointIndex].connectedJoints.splice(deleteJointIndex, 1);
+        const deleteLinkIndex = this.joints[desiredJointIndex].links.findIndex(li => li.id === l.id);
+        this.joints[desiredJointIndex].links.splice(deleteLinkIndex,  1);
+        // remove link from links
+        const deleteLinkIndex2 = this.links.findIndex(li => li.id === l.id);
+        this.links.splice(deleteLinkIndex2, 1);
       }
     });
     this.joints.splice(jointIndex, 1);
-    // const screenX = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('x'));
-    // const screenY = Number(GridComponent.contextMenuAddTracerPointSVG.children[0].getAttribute('y'));
-    // const coord = GridComponent.screenToGrid(screenX, screenY);
   }
 
   createLink($event: MouseEvent, gridOrJoint: string) {
