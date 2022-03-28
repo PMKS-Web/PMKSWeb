@@ -1,7 +1,7 @@
-<svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)">
+<svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)" (mouseup)="mouseUp()">
   <g id="transformMatrixGrid" (contextmenu)="contextMenu($event, 'grid'); false"
      (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
-     (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')">
+     (mousemove)="mouseMove($event, 'grid')">
     <defs>
       <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
         <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5" />
@@ -17,25 +17,23 @@
     <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px"
           (contextmenu)="contextMenu($event, 'grid'); false"
           (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
-          (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')"
+          (mousemove)="mouseMove($event, 'grid')"
     />
     <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px"
           (contextmenu)="contextMenu($event, 'grid'); false"
           (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
-          (mouseup)="mouseUp($event, 'grid')" (mousemove)="mouseMove($event, 'grid')"
+          (mousemove)="mouseMove($event, 'grid')"
     />
     <g id="linkageHolder" style="transform: scaleY(-1)">
       <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
             (click)="disappearContext()"
             (mousedown)="mouseDown($event, 'link', link)"
-            (mouseup)="mouseUp($event, 'link', link)"
             (mousemove)="mouseMove($event, 'link', link)"
             [attr.d]="link.d" [attr.id]="link.id" [attr.fill]="link.fill" style="opacity: 0.8"></path>
       <!-- SVG for creating Joints -->
       <svg *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
            (click)="disappearContext()" [attr.x]="joint.x" [attr.y]="joint.y"
            (mousedown)="mouseDown($event, 'joint', joint)"
-           (mouseup)="mouseUp($event, 'joint', joint)"
            (mousemove)="mouseMove($event, 'joint', joint)"
            width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
@@ -83,7 +81,6 @@
         <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
       </g>
       <svg id="startForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
-           (mouseup)="mouseUp($event, 'force', force)"
            (mousemove)="mouseMove($event, 'force', force)"
            [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
@@ -91,7 +88,6 @@
         <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
       </svg>
       <svg id="endForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'endPoint')"
-           (mouseup)="mouseUp($event, 'force', force)"
            (mousemove)="mouseMove($event, 'force', force)"
            [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
            style="overflow: visible; cursor: move">
@@ -124,7 +120,7 @@
     </g>
     <!--TODO: Add case when dragging anything above the comTagHolder -->
     <g id="comTagHolder" style="transform: scaleY(-1)">
-      <svg *ngFor="let link of links" style="overflow: visible" width="-1.23" height="-2.61">
+      <svg *ngFor="let link of links" style="overflow: visible" width="1.23" height="2.61">
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
               [attr.d]="link.CoM_d1"></path>
         <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"

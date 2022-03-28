@@ -404,61 +404,11 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
-  mouseUp($event: MouseEvent, typeChosen: string, thing?: any) {
-    switch (typeChosen) {
-      case 'grid':
-        switch (GridComponent.gridStates) {
-          case gridStates.creating:
-            // TODO: Believe put in logic to update TSL but not yet. Also, set GridComponent.thing = thing.waiting
-            switch (GridComponent.moveModes) {
-              case moveModes.joint:
-                GridComponent.jointStates = jointStates.waiting;
-                break;
-              case moveModes.forceEndpoint:
-                GridComponent.forceStates = forceStates.waiting;
-                break;
-              case moveModes.pathPoint:
-                break;
-              case moveModes.threePosition:
-                break;
-            }
-            break;
-          case gridStates.dragging:
-            switch (GridComponent.moveModes) {
-              case moveModes.joint:
-                GridComponent.jointStates = jointStates.waiting;
-                break;
-              case moveModes.forceEndpoint:
-                GridComponent.forceStates = forceStates.waiting;
-                break;
-              case moveModes.pathPoint:
-                break;
-              case moveModes.threePosition:
-                break;
-            }
-            GridComponent.gridStates = gridStates.waiting;
-            break;
-        }
-        break;
-      case 'joint':
-        switch (GridComponent.jointStates) {
-          case jointStates.dragging:
-            GridComponent.jointStates = jointStates.waiting;
-            GridComponent.gridStates = gridStates.waiting;
-            break;
-        }
-        break;
-      case 'link':
-        //TODO: be sure to include scenario when you are dragging a joint and you lift mouse when mouse is on top of link
-        break;
-      case 'force':
-        switch (GridComponent.forceStates) {
-          case forceStates.dragging:
-            GridComponent.forceStates = forceStates.waiting;
-            GridComponent.gridStates = gridStates.waiting;
-        }
-        break;
-    }
+  mouseUp() {
+    GridComponent.gridStates = gridStates.waiting;
+    GridComponent.jointStates = jointStates.waiting;
+    GridComponent.linkStates = linkStates.waiting;
+    GridComponent.forceStates = forceStates.waiting;
   }
   mouseMove($event: MouseEvent, typeChosen: string, thing?: any) {
     $event.preventDefault();
