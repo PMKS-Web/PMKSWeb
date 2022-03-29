@@ -56,6 +56,7 @@ enum moveModes {
 
 export class GridComponent implements OnInit, AfterViewInit {
 
+  // TODO: Don't forget about viewChild if you need it!
   // private static jointArray: Joint[];
   // private static linkArray: Link[];
   // private static forceArray: Force[];

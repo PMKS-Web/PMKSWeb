@@ -1,0 +1,88 @@
+<nav class="dropDownMenu" id="dropDownMenu"
+     style="position: absolute; top: 0; left: 0; z-index: 1000;
+         font-size: 17px">
+  <ul>
+    <li>PMKS+
+    </li>
+    <li> (0,0)
+    </li>
+    <li>File
+      <ul class="dropdown1">
+        <li>Save</li>
+        <li>Copy URL</li>
+        <li>Combine URLs</li>
+      </ul>
+    </li>
+    <li>Table
+      <ul class="dropdown2">
+        <li>Mechanisms</li>
+        <li>Path Points</li>
+        <li>Two/Three Position Links</li>
+      </ul>
+    </li>
+    <li>Analysis
+      <ul class="dropdown3">
+        <li>Loops</li>
+        <li>Force</li>
+        <li>Stress</li>
+        <li>Kinematics</li>
+      </ul>
+    </li>
+    <li>Animate
+      <ul class="dropdown4">
+        <li>Loops</li>
+        <li>Force</li>
+        <li>Stress</li>
+        <li>Kinematics</li>
+      </ul>
+    </li>
+    <li>Synthesis
+      <ul class="dropdown5">
+        <li>Path</li>
+        <li>Motion</li>
+      </ul>
+    </li>
+    <li>Settings
+      <ul class="dropdown6">
+        <li>Gravity</li>
+        <li>Units</li>
+      </ul>
+    </li>
+    <li>Help
+      <ul class="dropdown7">
+        <li>PMKS Website</li>
+        <li>Example Mechanisms</li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+
+<div id="animationBar" style="position: absolute; bottom: 10px; z-index: 1000; font-size: 17px">
+  <div id="currentPos" class="tooltip">
+    <label id="xPos" class="coordinateDisplay">0</label>
+    <label id="curPosComma" class="coordinateDisplay">,</label>
+    <label id="yPos" class="coordinateDisplay">0</label>
+<!--    <span class="tooltiptext">Position</span>-->
+  </div>
+  <div id="dofWrapper" class="tooltip">
+    <label id="btnDOF">DOF </label>
+<!--    <span class="tooltiptext">Degrees of freedom</span>-->
+  </div>
+  <div id="animationBtns">
+    <button id="counterclockwise" class="tooltip">
+      <span class="tooltiptext">Change Direction</span>
+    </button>
+    <button id="mediumspeed" class="tooltip">
+      <span class="tooltiptext">Change Speed</span>
+    </button>
+    <button class="tooltip" id="playBtn">
+      <span class="tooltiptext">Play Animation</span>
+    </button>
+    <button class="tooltip" id="stopBtn">
+      <span class="tooltiptext">Reset Animation</span>
+    </button>
+  </div>
+  <div id="slidecontainer">
+    <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">
+  </div>
+</div>

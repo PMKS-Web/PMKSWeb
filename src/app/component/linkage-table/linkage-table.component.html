@@ -29,13 +29,6 @@
         </thead>
         <tbody>
         <tr *ngFor="let joint of joints">
-          <!--                <td class="joint-table-item">-->
-          <!--                  <select type="radio" id="jointRadioButtons" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
-          <!--                  </select>-->
-          <!--                  <input *ngIf="jointArray[indexOfElement].grounded == true" type="radio" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
-          <!--                  <input *ngIf="jointArray[indexOfElement].grounded == false" type="hidden">-->
-          <!--                  <input type="radio" id="jointRadioButtons" [checked]="inputTable[indexOfElement]" (change)="changeInput(indexOfElement)">-->
-          <!--                </td>-->
           <td>
             <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
           </td>
@@ -69,9 +62,6 @@
           </td>
           <td *ngIf="joint.type !== 'P'">
           </td>
-          <!--                <td class="joint-table-item">-->
-          <!--                  <input type="button" value="Delete" (click)="deleteJoint(indexOfElement)">-->
-          <!--                </td>-->
         </tr>
         </tbody>
       </table>
@@ -79,7 +69,6 @@
     <div class="tabPanel" *ngIf="selectedTab === 1">
       <table id="linkTable">
         <thead>
-        <!--Link Table Header row-->
         <tr>
           <th>ID</th>
           <th>Mass</th>

@@ -1,0 +1,38 @@
+ul{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline;
+  background: #AAAAAA;
+}
+ul li{
+  float: left;
+}
+
+ul.dropdown1 li{
+  display: none;
+}
+
+ul.dropdown2 li{
+  display: none;
+}
+
+ul.dropdown3 li{
+  display: none;
+}
+
+ul.dropdown4 li{
+  display: none;
+}
+
+ul.dropdown5 li{
+  display: none;
+}
+
+ul.dropdown6 li{
+  display: none;
+}
+
+ul.dropdown7 li{
+  display: none;
+}
