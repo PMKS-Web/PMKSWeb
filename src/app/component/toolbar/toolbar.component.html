@@ -4,15 +4,15 @@
   <img src="assets/PMKS_logo.png" style="height: 60px; width: 200px">
   <label class="DOF">(0,0)</label>
   <div>
-    <button class="fileButton" (click)="setTab('file')">File</button>
-    <button class="tableButton" (click)="showTable()">Table
+    <button class="fileButton" (click)="setTab('file')" style="height: 60px">File</button>
+    <button class="tableButton" (click)="showTable()" style="height: 60px">Table
 <!--      <span class="tableButtonIcon"></span>-->
     </button>
-    <button class="analysisButton" (click)="setTab('analysis')">Analysis</button>
-    <button class="animateButton" (click)="setTab('animate')">Animate</button>
-    <button class="synthesisButton" (click)="setTab('synthesis')">Synthesis</button>
-    <button class="settingsButton" (click)="setTab('settings')">Settings</button>
-    <button class="helpButton" (click)="setTab('help')">Help</button>
+    <button class="analysisButton" (click)="setTab('analysis')" style="height: 60px">Analysis</button>
+    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>
+    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>
+    <button class="settingsButton" (click)="setTab('settings')" style="height: 60px">Settings</button>
+    <button class="helpButton" (click)="setTab('help')" style="height: 60px">Help</button>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'file'">
     <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
@@ -36,7 +36,7 @@
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'animate'">
     <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-        <div id="animationBtns">
+        <div id="animationBtns" style="float: left">
           <button id="counterclockwise" class="tooltip">
             <span class="tooltiptext">Change Direction</span>
           </button>
@@ -50,7 +50,7 @@
             <span class="tooltiptext">Reset Animation</span>
           </button>
         </div>
-        <div id="slidecontainer">
+        <div id="slidecontainer" style="float:left;">
           <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">
         </div>
     </nav>
