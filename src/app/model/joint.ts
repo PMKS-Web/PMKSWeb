@@ -6,6 +6,7 @@ export class Joint {
   private _x: number;
   private _y: number;
   private _r: number;
+  private _input: boolean = false;
   private _type: string = 'R';
   private _ground: boolean = false;
   private _links: Link[] = [];
@@ -91,5 +92,13 @@ export class Joint {
 
   set angle(value: number) {
     this._angle = value;
+  }
+
+  get input(): boolean {
+    return this._input;
+  }
+
+  set input(value: boolean) {
+    this._input = value;
   }
 }

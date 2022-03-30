@@ -81,6 +81,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static contextMenuAddLinkOntoGrid: SVGElement;
 
+  private static contextMenuAddInputJoint: SVGElement;
   private static contextMenuAddLinkOntoJoint: SVGElement;
   private static contextMenuAddGround: SVGElement;
   private static contextMenuAddSlider: SVGElement;
@@ -146,6 +147,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddSlider = document.getElementById('menuEntryCreateSlider') as unknown as SVGElement;
     GridComponent.contextMenuDeleteJoint = document.getElementById('menuEntryDeleteJoint') as unknown as SVGElement;
     GridComponent.contextMenuAddLinkOntoJoint = document.getElementById('menuEntryAddLinkOnJoint') as unknown as SVGElement;
+    GridComponent.contextMenuAddInputJoint = document.getElementById('menuEntryAddInput') as unknown as SVGElement;
     // context Menu for Link
     GridComponent.contextMenuAddLinkOntoLink = document.getElementById('menuEntryAddLinkOnLink') as unknown as SVGElement;
     GridComponent.contextMenuAddTracerPoint = document.getElementById('menuEntryAddTracerPoint') as unknown as SVGElement;
@@ -509,28 +511,104 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'joint':
         const joint = thing;
         GridComponent.selectedJoint = joint;
-        if (joint.links.length === 2) {
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 0, 15);
-        } else {
-          this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 35);
-          this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 55);
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 75);
+        switch (joint.links.length) {
+          case 0:
+            switch (joint.type) {
+              case 'R':
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
+                if (joint.ground) {
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
+                  if (joint.input) {
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input'
+                  } else {
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input'
+                  }
+                  this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 20, 20);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 40, 40);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 60, 60);
+                  this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 80, 80);
+                } else {
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Add Ground';
+                  this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 0, 0);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 40);
+                  this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
+                }
+                break;
+              case 'P':
+                if (GridComponent.selectedJoint.input) {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
+                } else {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
+                }
+                GridComponent.contextMenuAddGround.children[1].innerHTML = 'Add Ground';
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Remove Slider';
+                this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
+                this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 20, 20);
+                this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 40, 40);
+                this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 60, 60);
+                this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 80, 80);
+                break;
+            }
+
+            break;
+          case 1:
+            switch (joint.type) {
+              case 'R':
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
+                if (joint.ground) {
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
+                  if (joint.input) {
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input'
+                  } else {
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input'
+                  }
+                  this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 40);
+                  this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
+                } else {
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Add Ground';
+                  this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 0, 0);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
+                  this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 40);
+                  this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
+                }
+                break;
+              case 'P':
+                if (GridComponent.selectedJoint.input) {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
+                } else {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
+                }
+                GridComponent.contextMenuAddGround.children[1].innerHTML = 'Add Ground';
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Remove Slider';
+                this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
+                this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
+                this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 40);
+                this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
+                break;
+            }
+            break;
+          default:
+            this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 0, 0);
+            break;
         }
         break;
       case 'link':
         const link = thing;
         GridComponent.selectedLink = link;
         if (link.shape === Shape.line) {
-          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 15);
-          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 20, 35);
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 40, 55);
+          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 20, 20);
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 40, 40);
         } else {
           this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoLink, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuAddTracerPoint, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 0, 0);
+          this.showcaseContextMenu(GridComponent.contextMenuAddTracerPoint, offsetX, offsetY, 20, 20);
+          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 40, 40);
+          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 60, 60);
+          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 80, 80);
         }
         break;
       case 'force':
@@ -552,6 +630,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   disappearContext() {
+    GridComponent.contextMenuAddInputJoint.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoGrid.style.display = 'none';
     GridComponent.contextMenuAddGround.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoJoint.style.display = 'none';
@@ -579,6 +658,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   createGround() {
     this.disappearContext();
     GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
+    if (GridComponent.selectedJoint.ground) {
+      GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground';
+    } else {
+      GridComponent.contextMenuAddGround.children[1].innerHTML = 'Create Ground';
+    }
   }
 
   createSlider() {
@@ -650,10 +734,19 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   createInput($event: MouseEvent) {
     this.disappearContext();
+    // TODO: Adjust this logic when there are multiple mechanisms created
+    this.joints.forEach(j => {
+      j.input = false;
+    });
+    GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
   }
 
   RectMouseOver($event: MouseEvent, menuType: string) {
     switch (menuType) {
+      case 'addInput':
+        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
       case 'grid':
         GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
           'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
@@ -704,9 +797,12 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
-
   RectMouseOut($event: MouseEvent, menuType: string) {
     switch (menuType) {
+      case 'addInput':
+        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
       case 'grid':
         GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
           'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
