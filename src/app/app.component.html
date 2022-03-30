@@ -1,9 +1,11 @@
 <app-grid #gridComponent></app-grid>
-<app-linkage-table
+<app-linkage-table #linkageTableComponent
 [joints]="gridComponent.joints"
 [links]="gridComponent.links"
 [forces]="gridComponent.forces"></app-linkage-table>
 <app-toolbar
   [joints]="gridComponent.joints"
   [links]="gridComponent.links"
-  [forces]="gridComponent.forces"></app-toolbar>
+  [forces]="gridComponent.forces"
+  (showcaseTable)="linkageTableComponent.linkageVisibility()"
+></app-toolbar>

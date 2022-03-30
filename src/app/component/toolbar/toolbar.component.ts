@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint} from "../../model/joint";
 import {Link} from "../../model/link";
 import {Force} from "../../model/force";
@@ -13,10 +13,13 @@ export class ToolbarComponent implements OnInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
-
+  @Output() showcaseTable = new EventEmitter();
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  showTable() {
+    this.showcaseTable.emit();
+  }
 }

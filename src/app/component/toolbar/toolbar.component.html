@@ -1,60 +1,69 @@
 <nav class="dropDownMenu" id="dropDownMenu"
      style="position: absolute; top: 0; left: 0; z-index: 1000;
          font-size: 17px">
-  <ul>
-    <li>PMKS+
-    </li>
-    <li> (0,0)
-    </li>
-    <li>File
-      <ul class="dropdown1">
-        <li>Save</li>
-        <li>Copy URL</li>
-        <li>Combine URLs</li>
-      </ul>
-    </li>
-    <li>Table
-      <ul class="dropdown2">
-        <li>Mechanisms</li>
-        <li>Path Points</li>
-        <li>Two/Three Position Links</li>
-      </ul>
-    </li>
-    <li>Analysis
-      <ul class="dropdown3">
-        <li>Loops</li>
-        <li>Force</li>
-        <li>Stress</li>
-        <li>Kinematics</li>
-      </ul>
-    </li>
-    <li>Animate
-      <ul class="dropdown4">
-        <li>Loops</li>
-        <li>Force</li>
-        <li>Stress</li>
-        <li>Kinematics</li>
-      </ul>
-    </li>
-    <li>Synthesis
-      <ul class="dropdown5">
-        <li>Path</li>
-        <li>Motion</li>
-      </ul>
-    </li>
-    <li>Settings
-      <ul class="dropdown6">
-        <li>Gravity</li>
-        <li>Units</li>
-      </ul>
-    </li>
-    <li>Help
-      <ul class="dropdown7">
-        <li>PMKS Website</li>
-        <li>Example Mechanisms</li>
-      </ul>
-    </li>
-  </ul>
+  <img src="assets/PMKS_logo.png" style="height: 90px; width: 200px">
+  <label class="DOF">(0,0)</label>
+  <div>
+    <button class="fileButton">File</button>
+    <button class="tableButton" (click)="showTable()">Table
+<!--      <span class="tableButtonIcon"></span>-->
+    </button>
+    <button class="analysisButton">Analysis</button>
+    <button class="animateButton">Animate</button>
+    <button class="synthesisButton">Synthesis</button>
+    <button class="settingsButton">Settings</button>
+    <button class="helpButton">Help</button>
+  </div>
+<!--  <ul>-->
+<!--    <li>File-->
+<!--      <ul class="dropdown1">-->
+<!--        <li>Save</li>-->
+<!--        <li>Copy URL</li>-->
+<!--        <li>Combine URLs</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Table-->
+<!--      <ul class="dropdown2">-->
+<!--        <li>Mechanisms</li>-->
+<!--        <li>Path Points</li>-->
+<!--        <li>Two/Three Position Links</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Analysis-->
+<!--      <ul class="dropdown3">-->
+<!--        <li>Loops</li>-->
+<!--        <li>Force</li>-->
+<!--        <li>Stress</li>-->
+<!--        <li>Kinematics</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Animate-->
+<!--      <ul class="dropdown4">-->
+<!--        <li>Loops</li>-->
+<!--        <li>Force</li>-->
+<!--        <li>Stress</li>-->
+<!--        <li>Kinematics</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Synthesis-->
+<!--      <ul class="dropdown5">-->
+<!--        <li>Path</li>-->
+<!--        <li>Motion</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Settings-->
+<!--      <ul class="dropdown6">-->
+<!--        <li>Gravity</li>-->
+<!--        <li>Units</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--    <li>Help-->
+<!--      <ul class="dropdown7">-->
+<!--        <li>PMKS Website</li>-->
+<!--        <li>Example Mechanisms</li>-->
+<!--      </ul>-->
+<!--    </li>-->
+<!--  </ul>-->
 </nav>
 
 <div id="animationBar" style="position: absolute; bottom: 10px; z-index: 1000; font-size: 17px">

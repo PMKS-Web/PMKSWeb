@@ -154,6 +154,10 @@
     </g>
   </g>
   <g class="context-menu-joint" style="cursor: pointer">
+    <g class="menu-entry" id="menuEntryAddInputOnGround" (click)="createInput($event)" style="display: none">
+      <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Input</text>
+    </g>
     <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="createLink($event, 'joint')"
        (mouseout)="RectMouseOut($event, 'addLink')"
        (mouseover)="RectMouseOver($event, 'addLink')" style="display: none">
