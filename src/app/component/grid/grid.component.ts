@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
 import {Joint} from "../../model/joint";
@@ -196,6 +196,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
   // TODO: Once the Grid Toolbar (Animation Bar) is created, reuse this function
+  @Input() showIdTags: boolean = true;
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;

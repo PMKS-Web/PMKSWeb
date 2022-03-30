@@ -98,21 +98,21 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the jointTagHolder -->
-    <g id="jointTagHolder">
+    <g id="jointTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
-    <g id="linkTagHolder">
+    <g id="linkTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the forceTagHolder -->
-    <g id="forceTagHolder">
+    <g id="forceTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let force of forces" [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
       [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1"
       [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">

@@ -1,9 +1,10 @@
-<app-grid #gridComponent></app-grid>
+<app-grid #gridComponent
+[showIdTags]="toolbarComponent.showIdTags"></app-grid>
 <app-linkage-table #linkageTableComponent
 [joints]="gridComponent.joints"
 [links]="gridComponent.links"
 [forces]="gridComponent.forces"></app-linkage-table>
-<app-toolbar
+<app-toolbar #toolbarComponent
   [joints]="gridComponent.joints"
   [links]="gridComponent.links"
   [forces]="gridComponent.forces"
