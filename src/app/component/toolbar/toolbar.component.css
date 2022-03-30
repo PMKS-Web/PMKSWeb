@@ -38,7 +38,7 @@
 /*}*/
 nav{
   background: white;
-  height: 85px;
+  height: 60px;
   width: 100%;
 }
 nav div {
@@ -46,7 +46,7 @@ nav div {
 }
 nav div button{
   display: inline-block;
-  line-height: 80px;
+  line-height: 60px;
   margin: 0 20px;
 }
 

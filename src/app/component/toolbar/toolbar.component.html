@@ -1,18 +1,84 @@
 <nav class="dropDownMenu" id="dropDownMenu"
      style="position: absolute; top: 0; left: 0; z-index: 1000;
          font-size: 17px">
-  <img src="assets/PMKS_logo.png" style="height: 90px; width: 200px">
+  <img src="assets/PMKS_logo.png" style="height: 60px; width: 200px">
   <label class="DOF">(0,0)</label>
   <div>
-    <button class="fileButton">File</button>
+    <button class="fileButton" (click)="setTab('file')">File</button>
     <button class="tableButton" (click)="showTable()">Table
 <!--      <span class="tableButtonIcon"></span>-->
     </button>
-    <button class="analysisButton">Analysis</button>
-    <button class="animateButton">Animate</button>
-    <button class="synthesisButton">Synthesis</button>
-    <button class="settingsButton">Settings</button>
-    <button class="helpButton">Help</button>
+    <button class="analysisButton" (click)="setTab('analysis')">Analysis</button>
+    <button class="animateButton" (click)="setTab('animate')">Animate</button>
+    <button class="synthesisButton" (click)="setTab('synthesis')">Synthesis</button>
+    <button class="settingsButton" (click)="setTab('settings')">Settings</button>
+    <button class="helpButton" (click)="setTab('help')">Help</button>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'file'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div>
+        <button>Open</button>
+        <button>Save</button>
+        <button>Copy</button>
+        <button>Merge</button>
+      </div>
+    </nav>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'analysis'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div>
+        <button>Loops</button>
+        <button>Force</button>
+        <button>Stress</button>
+        <button>Kinematics</button>
+      </div>
+    </nav>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'animate'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+        <div id="animationBtns">
+          <button id="counterclockwise" class="tooltip">
+            <span class="tooltiptext">Change Direction</span>
+          </button>
+          <button id="mediumspeed" class="tooltip">
+            <span class="tooltiptext">Change Speed</span>
+          </button>
+          <button class="tooltip" id="playBtn">
+            <span class="tooltiptext">Play Animation</span>
+          </button>
+          <button class="tooltip" id="stopBtn">
+            <span class="tooltiptext">Reset Animation</span>
+          </button>
+        </div>
+        <div id="slidecontainer">
+          <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">
+        </div>
+    </nav>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div>
+        <button>None</button>
+        <button>2/3-Position</button>
+        <button>Path</button>
+      </div>
+    </nav>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'settings'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div>
+        <button>Gravity</button>
+        <button>Units</button>
+      </div>
+    </nav>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 'help'">
+    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div>
+        <button>About</button>
+        <button>Examples</button>
+      </div>
+    </nav>
   </div>
 <!--  <ul>-->
 <!--    <li>File-->
@@ -66,32 +132,32 @@
 <!--  </ul>-->
 </nav>
 
-<div id="animationBar" style="position: absolute; bottom: 10px; z-index: 1000; font-size: 17px">
-  <div id="currentPos" class="tooltip">
-    <label id="xPos" class="coordinateDisplay">0</label>
-    <label id="curPosComma" class="coordinateDisplay">,</label>
-    <label id="yPos" class="coordinateDisplay">0</label>
-<!--    <span class="tooltiptext">Position</span>-->
-  </div>
-  <div id="dofWrapper" class="tooltip">
-    <label id="btnDOF">DOF </label>
-<!--    <span class="tooltiptext">Degrees of freedom</span>-->
-  </div>
-  <div id="animationBtns">
-    <button id="counterclockwise" class="tooltip">
-      <span class="tooltiptext">Change Direction</span>
-    </button>
-    <button id="mediumspeed" class="tooltip">
-      <span class="tooltiptext">Change Speed</span>
-    </button>
-    <button class="tooltip" id="playBtn">
-      <span class="tooltiptext">Play Animation</span>
-    </button>
-    <button class="tooltip" id="stopBtn">
-      <span class="tooltiptext">Reset Animation</span>
-    </button>
-  </div>
-  <div id="slidecontainer">
-    <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">
-  </div>
-</div>
+<!--<div id="animationBar" style="position: absolute; bottom: 10px; z-index: 1000; font-size: 17px">-->
+<!--  <div id="currentPos" class="tooltip">-->
+<!--    <label id="xPos" class="coordinateDisplay">0</label>-->
+<!--    <label id="curPosComma" class="coordinateDisplay">,</label>-->
+<!--    <label id="yPos" class="coordinateDisplay">0</label>-->
+<!--&lt;!&ndash;    <span class="tooltiptext">Position</span>&ndash;&gt;-->
+<!--  </div>-->
+<!--  <div id="dofWrapper" class="tooltip">-->
+<!--    <label id="btnDOF">DOF </label>-->
+<!--&lt;!&ndash;    <span class="tooltiptext">Degrees of freedom</span>&ndash;&gt;-->
+<!--  </div>-->
+<!--  <div id="animationBtns">-->
+<!--    <button id="counterclockwise" class="tooltip">-->
+<!--      <span class="tooltiptext">Change Direction</span>-->
+<!--    </button>-->
+<!--    <button id="mediumspeed" class="tooltip">-->
+<!--      <span class="tooltiptext">Change Speed</span>-->
+<!--    </button>-->
+<!--    <button class="tooltip" id="playBtn">-->
+<!--      <span class="tooltiptext">Play Animation</span>-->
+<!--    </button>-->
+<!--    <button class="tooltip" id="stopBtn">-->
+<!--      <span class="tooltiptext">Reset Animation</span>-->
+<!--    </button>-->
+<!--  </div>-->
+<!--  <div id="slidecontainer">-->
+<!--    <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">-->
+<!--  </div>-->
+<!--</div>-->

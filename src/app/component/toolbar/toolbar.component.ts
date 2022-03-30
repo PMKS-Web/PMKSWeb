@@ -14,6 +14,7 @@ export class ToolbarComponent implements OnInit {
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
   @Output() showcaseTable = new EventEmitter();
+  selectedTab: string = 'none';
   constructor() { }
 
   ngOnInit(): void {
@@ -21,5 +22,13 @@ export class ToolbarComponent implements OnInit {
 
   showTable() {
     this.showcaseTable.emit();
+  }
+
+  setTab(analysis: string) {
+    if (this.selectedTab === analysis) {
+      this.selectedTab = 'none';
+    } else {
+      this.selectedTab = analysis;
+    }
   }
 }
