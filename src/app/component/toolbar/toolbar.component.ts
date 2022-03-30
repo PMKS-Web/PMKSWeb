@@ -16,6 +16,7 @@ export class ToolbarComponent implements OnInit {
   @Output() showcaseTable = new EventEmitter();
   selectedTab: string = 'none';
   showIdTags: boolean = true;
+  showCoMTags: boolean = true;
   constructor() { }
 
   ngOnInit(): void {
@@ -35,5 +36,9 @@ export class ToolbarComponent implements OnInit {
 
   changeIdTag() {
     this.showIdTags = !this.showIdTags;
+  }
+
+  changeCoMTag() {
+    this.showCoMTags = !this.showCoMTags;
   }
 }

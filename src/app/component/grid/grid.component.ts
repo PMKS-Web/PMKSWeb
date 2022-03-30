@@ -197,6 +197,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   // TODO: Once the Grid Toolbar (Animation Bar) is created, reuse this function
   @Input() showIdTags: boolean = true;
+  @Input() showCoMTags: boolean = true;
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
