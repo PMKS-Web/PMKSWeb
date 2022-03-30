@@ -657,11 +657,10 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createGround() {
     this.disappearContext();
-    GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
-    if (GridComponent.selectedJoint.ground) {
-      GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground';
+    if (GridComponent.selectedJoint.type === 'P') {
+      GridComponent.selectedJoint.type = 'R'
     } else {
-      GridComponent.contextMenuAddGround.children[1].innerHTML = 'Create Ground';
+      GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
   }
 
@@ -670,6 +669,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Sliders are ground joints. However, we prob don't want to showcase ground. So probably need to update this
     // TODO: Within the HTML document
     GridComponent.selectedJoint.type = GridComponent.selectedJoint.type === 'P' ? 'R' : 'P';
+    GridComponent.selectedJoint.ground = GridComponent.selectedJoint.type === 'P';
   }
 
   deleteJoint() {

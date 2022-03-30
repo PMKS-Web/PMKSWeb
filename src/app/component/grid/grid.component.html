@@ -24,6 +24,7 @@
           (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
           (mousemove)="mouseMove($event, 'grid')"
     />
+    <!-- TODO: instead of linkage Holder, have joint holder and link holder -->
     <g id="linkageHolder" style="transform: scaleY(-1)">
       <path *ngFor="let link of links" (contextmenu)="contextMenu($event, 'link', link); false"
             (click)="disappearContext()"
@@ -37,35 +38,36 @@
            (mousemove)="mouseMove($event, 'joint')"
            width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
-        <circle *ngIf="joint.ground === false && joint.type !== 'P'" id="joint_{{joint.id}}_ring"
+        <circle *ngIf="joint.ground === false" id="joint_{{joint.id}}_ring"
                 [attr.r]="(joint.r * 7 / 5)" [attr.cx]="0" [attr.cy]="0" fill="black"/>
-        <circle *ngIf="joint.ground === false && joint.type !== 'P'" id="joint_{{joint.id}}"
+        <circle *ngIf="joint.ground === false" id="joint_{{joint.id}}"
                 [attr.r]="joint.r" [attr.cx]="0" [attr.cy]="0" fill="gray" stroke="#00000000"
                 [attr.stroke-width]="(joint.r * 2)"/>
         <!-- condition for slider crank -->
-        <circle *ngIf="joint.type === 'P'" r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
+        <circle *ngIf="joint.type === 'P' && joint.ground === true" r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
         <path *ngIf="joint.type === 'P'" d="M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
          L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
           -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z" stroke="black"
               stroke-width="0.04" fill-opacity="0"></path>
         <!-- condition for ground joint -->
-        <circle *ngIf="joint.ground === true"
+        <!-- TODO: Make all of this within one g container -->
+        <circle *ngIf="joint.ground === true && joint.type === 'R'"
                 r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="-0.15" y1="-0.15" x2="-0.225" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="-0.075" y1="-0.15" x2="-0.15" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="0" y1="-0.15" x2="-0.075" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="0.075" y1="-0.15" x2="0" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="0.15" y1="-0.15" x2="0.075" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="0.225" y1="-0.15" x2="0.15" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true"
+        <line *ngIf="joint.ground === true && joint.type === 'R'"
               x1="-0.3" y1="-0.15" x2="0.3" y2="-0.15" stroke="black" stroke-width="0.05"></line>
-        <path *ngIf="joint.ground === true"
+        <path *ngIf="joint.ground === true && joint.type === 'R'"
               d="M -0.225 -0.15 L -0.15 0.15 L 0.15 0.15 L 0.225 -0.15" stroke="black" stroke-width="0.05"
               fill="transparent"></path>
       </svg>
@@ -145,6 +147,7 @@
       <path fill="black" d=""></path>
     </g>
   </g>
+  <!-- TODO: Set all of the context menu within one g container-->
   <g class="context-menu-canvas" style="cursor: pointer">
     <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="createLink($event, 'grid')"
        (mouseout)="RectMouseOut($event, 'grid')"
