@@ -57,8 +57,8 @@ enum moveModes {
 })
 
 export class GridComponent implements OnInit, AfterViewInit {
-  @Input() showIdTags: boolean = true;
-  @Input() showCoMTags: boolean = true;
+  @Input() showIdTags: boolean = false;
+  @Input() showCoMTags: boolean = false;
   @Input() unit: string = 'cm';
   @Input() gravity: boolean = false;
   joints: Joint[] = [];

@@ -15,8 +15,8 @@ export class ToolbarComponent implements OnInit {
   @Input() forces: Force[] = [];
   @Output() showcaseTable = new EventEmitter();
   selectedTab: string = 'none';
-  showIdTags: boolean = true;
-  showCoMTags: boolean = true;
+  showIdTags: boolean = false;
+  showCoMTags: boolean = false;
   unit: string = 'cm';
   gravity: boolean = false;
   constructor() { }
