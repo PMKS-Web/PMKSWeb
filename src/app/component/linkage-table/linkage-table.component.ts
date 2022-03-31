@@ -33,6 +33,7 @@ export class LinkageTableComponent implements OnInit {
 
   setTab(tabNum: number) {
     this.selectedTab = tabNum;
+    // TODO: If possible, put this as hover within css
     switch (tabNum) {
       case 0:
         LinkageTableComponent.jointButton.setAttribute('style',
@@ -215,6 +216,7 @@ export class LinkageTableComponent implements OnInit {
   }
 
   getJointAngle(joint: Joint) {
+    // joint will always be a prismatic joint
     const j = joint as PrisJoint;
     return j.angle;
   }

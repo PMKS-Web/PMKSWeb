@@ -6,16 +6,21 @@ export class Joint {
   private _x: number;
   private _y: number;
   private _r: number;
-  private _input: boolean = false;
-  private _ground: boolean = false;
-  private _links: Link[] = [];
-  private _connectedJoints: Joint[] = [];
+  private _input: boolean;
+  private _ground: boolean;
+  private _links: Link[];
+  private _connectedJoints: Joint[];
 
-  constructor(id: string, x: number, y: number) {
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
+              connectedJoints: Joint[] = []) {
     this._id = id;
     this._x = x;
     this._y = y;
     this._r = 5 * AppConstants.scaleFactor;
+    this._input = input;
+    this._ground = ground;
+    this._links = links;
+    this._connectedJoints = connectedJoints;
   }
 
   get id(): string {
@@ -84,16 +89,18 @@ export class Joint {
 }
 
 export class RevJoint extends Joint {
-  constructor(id: string, x: number, y: number) {
-    super(id, x, y);
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
+              connectedJoints: Joint[] = []) {
+    super(id, x, y, input, ground, links, connectedJoints);
   }
 }
 
 export class PrisJoint extends Joint {
   private _angle: number = 0;
 
-  constructor(id: string, x: number, y: number) {
-    super(id, x, y);
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
+              connectedJoints: Joint[] = []) {
+    super(id, x, y, input, ground, links, connectedJoints);
   }
 
   get angle(): number {

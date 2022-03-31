@@ -329,7 +329,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                     joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
                   }
-                  const joint1 = new RevJoint(joint1ID, x1,  y1);
+                  const joint1 = new RevJoint(joint1ID, x1, y1);
                   const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
                   joint1.connectedJoints.push(joint2);
@@ -774,7 +774,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   createGround() {
     this.disappearContext();
     if (GridComponent.selectedJoint instanceof PrisJoint) {
-      GridComponent.selectedJoint as RevJoint;
+      let joint = GridComponent.selectedJoint as RevJoint;
+      joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
+      const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
+      this.joints[selectedJointIndex] = joint;
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
@@ -782,9 +785,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   createSlider() {
     this.disappearContext();
-    GridComponent.selectedJoint = GridComponent.selectedJoint instanceof PrisJoint ?
-      GridComponent.selectedJoint as RevJoint : GridComponent.selectedJoint as PrisJoint;
-    GridComponent.selectedJoint.ground = GridComponent.selectedJoint instanceof PrisJoint;
+    let joint = GridComponent.selectedJoint;
+    joint = joint instanceof PrisJoint ?
+      new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints) :
+      new PrisJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
+    joint.ground = joint instanceof PrisJoint;
+    const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
+    this.joints[selectedJointIndex] = joint;
+    GridComponent.selectedJoint = joint;
     this.updateMechanism();
   }
   deleteJoint() {
@@ -976,6 +984,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     return selectedForce;
   }
 
+  // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   private static roundNumber(num: number, scale: number): number {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
@@ -984,7 +993,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
   }
-  // TODO: Figure out how to only have one typeOfJoint and not also have this within linkageTable
+  // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   typeOfJoint(joint: Joint) {
     switch(joint.constructor) {
       case RevJoint:
