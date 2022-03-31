@@ -4,7 +4,7 @@ import {AppConstants} from "../../model/app-constants";
 import {Joint} from "../../model/joint";
 import {Link, Shape} from "../../model/link";
 import {Force} from "../../model/force";
-import {Simulator} from "../../model/simulator/simulator";
+import {Mechanism} from "../../model/mechanism/mechanism";
 
 
 // The possible states the program could be in.
@@ -64,7 +64,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   joints: Joint[] = [];
   links: Link[] = [];
   forces: Force[] = [];
-  simulators: Simulator[] = [];
+  mechanisms: Mechanism[] = [];
 
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -258,7 +258,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   mouseUp() {
-    // TODO check for condition when a state was not waiting. If it was not waiting, then update the simulator
+    // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
     GridComponent.gridStates = gridStates.waiting;
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
@@ -306,7 +306,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   joint2.links.push(link);
                   this.joints.push(joint2);
                   this.links.push(link);
-                  this.createNewSimulator();
+                  this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display='none';
@@ -340,7 +340,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.joints.push(joint1);
                   this.joints.push(joint2);
                   this.links.push(link);
-                  this.createNewSimulator();
+                  this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -362,7 +362,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   // TODO: Be sure the force added is at correct position for binary link
                   const force = new Force('F' + '1', GridComponent.selectedLink, startCoord, endCoord);
                   this.forces.push(force);
-                  this.createNewSimulator();
+                  this.updateMechanism();
                   GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
@@ -431,14 +431,14 @@ export class GridComponent implements OnInit, AfterViewInit {
             // TODO: Have the gridStates also include dragGrid, dragJoint, dragLink, and dragForce
             if (GridComponent.jointStates === jointStates.dragging) {
               GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
-              this.createNewSimulator();
+              this.updateMechanism();
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
               // TODO: Add logic when dragging a link within edit shape mode
-              this.createNewSimulator();
+              this.updateMechanism();
             } else if (GridComponent.forceStates === forceStates.dragging) { // user is dragging a force
               // TODO: Add logic to drag force properly within the grid
               GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
-              this.createNewSimulator();
+              this.updateMechanism();
             } else { // user is dragging the grid
               const offsetX = GridComponent.panOffset.x - rawCoord.x;
               const offsetY = GridComponent.panOffset.y - rawCoord.y;
@@ -483,7 +483,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (GridComponent.jointStates) {
           case jointStates.dragging:
             GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
-            this.createNewSimulator();
+            this.updateMechanism();
             break;
           case jointStates.waiting:
             break;
@@ -496,7 +496,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (GridComponent.forceStates) {
           case forceStates.dragging:
             GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
-            this.createNewSimulator();
+            this.updateMechanism();
             break;
         }
         break;
@@ -770,7 +770,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const coord = GridComponent.screenToGrid(screenX, screenY);
     const newJoint = new Joint('a', coord.x, coord.y);
     this.joints.push(newJoint);
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   createGround() {
     this.disappearContext();
@@ -779,7 +779,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   createSlider() {
     this.disappearContext();
@@ -787,7 +787,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Within the HTML document
     GridComponent.selectedJoint.type = GridComponent.selectedJoint.type === 'P' ? 'R' : 'P';
     GridComponent.selectedJoint.ground = GridComponent.selectedJoint.type === 'P';
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   deleteJoint() {
     this.disappearContext();
@@ -813,7 +813,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     this.joints.splice(jointIndex, 1);
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext();
@@ -853,7 +853,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     // TODO: Adjust this logic when there are multiple mechanisms created
     GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   createForce($event: MouseEvent) {
     this.disappearContext();
@@ -883,7 +883,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   changeForceDirection() {
     this.disappearContext();
@@ -895,7 +895,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.forceArrow = Force.createForceArrow(
         GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
     }
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   changeForceLocal() {
     this.disappearContext();
@@ -907,18 +907,19 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.stroke = 'black';
       GridComponent.selectedForce.fill = 'black';
     }
-    this.createNewSimulator();
+    this.updateMechanism();
   }
   deleteForce() {
     this.disappearContext();
     const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
     this.forces.splice(forceIndex, 1);
-    this.createNewSimulator();
+    this.updateMechanism();
   }
 
-  createNewSimulator() {
-    this.simulators = [];
-    this.simulators.push(new Simulator(this.joints, this.links, this.forces, this.gravity, this.unit));
+  updateMechanism() {
+    this.mechanisms = [];
+    // TODO: Determine logic later once everything else is determined
+    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.gravity, this.unit));
   }
   private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
