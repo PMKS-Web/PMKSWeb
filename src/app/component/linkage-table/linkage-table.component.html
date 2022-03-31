@@ -80,16 +80,16 @@
             {{link.id}}
           </td>
           <td>
-            <input type="text" value="{{link.mass}}" (change)="changeLinkProp($event, link, 'mass')">
+            <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
           </td>
           <td>
-            <input type="text" value="{{link.massMoI}}" (change)="changeLinkProp($event, link, 'massMoI')">
+            <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
           </td>
           <td>
-            <input type="text" value="{{link.CoMX}}" (change)="changeLinkProp($event, link, 'CoMX')">
+            <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
           </td>
           <td>
-            <input type="text" value="{{link.CoMY}}" (change)="changeLinkProp($event, link, 'CoMY')">
+            <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
           </td>
         </tr>
         </tbody>

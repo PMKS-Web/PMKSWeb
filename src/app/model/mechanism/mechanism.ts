@@ -1,13 +1,34 @@
 import {Joint, PrisJoint, RevJoint} from "../joint";
-import {Link} from "../link";
+import {ImagLink, Link, RealLink} from "../link";
 import {Force} from "../force";
+import {LoopSolver} from "./loop-solver";
+import {PositionSolver} from "./position-solver";
+import {IcSolver} from "./ic-solver";
+import {InstantCenter} from "../instant-center";
 
 export class Mechanism {
-  constructor(joints: Joint[], links: Link[], forces: Force[], gravity: boolean, unit: string) {
+  private _internalTriangleSimLinkMap = new Map<string, number[]>();
+  private _joints: Joint[];
+  private _links: Link[];
+  private _forces: Force[];
+  private _gravity: boolean;
+  private _unit: string
+  private _requiredLoops: string[] = [];
+  private _allLoops: string[] = [];
+
+  constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[], gravity: boolean, unit: string) {
+    this._joints = joints;
+    this._links = links;
+    this._forces = forces;
+    this._gravity = gravity;
+    this._unit = unit;
     const dof = this.determineDegreesOfFreedom(joints, links);
     const inputJointIndex = joints.findIndex(j => j.input);
     if (dof === 1 && inputJointIndex !== -1) {
-      this.findFullMovementPos(joints, links, forces, gravity, unit, 10);
+      [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
+      // this.findFullMovementPos(joints, links, forces, ics, gravity, unit, 10);
+    } else {
+      Mechanism.setMechanismInvalid();
     }
   }
 
@@ -65,7 +86,161 @@ export class Mechanism {
     return (3 * (N - 1)) - (2 * J1) - J2;
   }
 
-  private findFullMovementPos(joints: Joint[], links: Link[], forces: Force[], gravity: boolean, unit: string, inputAngularVelocity: number) {
-    // TODO: Add all this logic later once joints, links, and instant centers are accounted properly
+  // private findFullMovementPos(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
+  //                             gravity: boolean, unit: string, inputAngularVelocity: number) {
+  //   // TODO: Add all this logic later once joints, links, and instant centers are accounted properly
+  //   this._internalTriangleSimLinkMap = new Map<string, number[]>();
+  //   const jointIDToJointIndexMap = new Map<string, number>();
+  //   joints.forEach((j, i) => {
+  //     jointIDToJointIndexMap.set(j.id, i);
+  //   });
+  //   // determine center of mass for link
+  //   links.forEach((l, i) => {
+  //     if (l instanceof ImagLink) {
+  //       return;
+  //     }
+  //     const link = l as RealLink;
+  //     const joint1 = l.joints[0];
+  //     const joint2 = l.joints[1];
+  //     const a = Math.sqrt(Math.pow(joint2.x - link.CoMX, 2) + Math.pow(joint2.y - link.CoMY, 2));
+  //     const b = Math.sqrt(Math.pow(joint1.x - link.CoMX, 2) + Math.pow(joint1.y - link.CoMY, 2));
+  //     const c = Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2));
+  //     link.internal_CoM_angle = Math.acos( (Math.pow(b, 2) + (Math.pow(c, 2)) - (Math.pow(a, 2))) / (2 * b * c));
+  //     if (isNaN(link.internal_CoM_angle)) {
+  //       const angle1 = Math.atan2(link.CoMY - joint1.y, link.CoMX - joint1.x);
+  //       const angle2 = Math.atan2(link.CoMY - joint2.y, link.CoMX - joint2.x);
+  //       link.internal_CoM_angle = Math.abs(angle1 - angle2);
+  //     }
+  //     link.internal_distance = b;
+  //   });
+  //   let increment = 0;
+  //   let simForward = true;
+  //   let falseTwice = 0;
+  //   let inputAngVelDirection = inputAngularVelocity > 0;
+  //   let currentTimeStamp = 0;
+  //   const timeIncrement = 1;
+  //   const inputJoint = joints.find(j => j.input);
+  //   if (inputJoint === undefined) {return}
+  //   const desiredJoint = inputJoint.connectedJoints[0];
+  //   const startingPositionX = desiredJoint.x;
+  //   const startingPositionY = desiredJoint.y;
+  //   const TOLERANCE = 0.008;
+  //   let xDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
+  //   let yDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
+  //   // TODO: Put within the mechanism valid joint, link, force, ic positions
+  //   PositionSolver.resetStaticVariables();
+  //   // determine order in which joints are determined
+  //   PositionSolver.determineJointOrder(joints, links);
+  //   while (!simForward || currentTimeStamp === 0 || xDiff > TOLERANCE || yDiff > TOLERANCE) {
+  //     // maybe instead of using simForward, just put in angular Velocity and use that value
+  //     const [desiredMap, possible] = PositionSolver.determinePositionAnalysis(joints, links, inputAngVelDirection);
+  //     if (possible) {
+  //       for (const entry of desiredMap.entries()) {
+  //         const joint_index = jointIDToJointIndexMap.get(entry[0]);
+  //         if (joint_index === undefined) {return}
+  //         const joint = joints[joint_index];
+  //         // const joint = this.SimulationJoints.find(j => j.id === entry[0]);
+  //         joint.x = entry[1][0];
+  //         joint.y = entry[1][1];
+  //       }
+  //       falseTwice = 0;
+  //       currentTimeStamp += timeIncrement;
+  //       // TODO: Create own function to determine this. Probably just utilize tracer joint logic
+  //       // const ffs = this.calculateForces(this.SimulationLinks, this.SimulationForces);
+  //       // increment++;
+  //       // adjust for linkAngle (for center of mass)
+  //       // TODO: arguments passed in has to come from mechanism ICs and not from IC
+  //       const determined_ics = IcSolver.determineICPositions(ics, joints);
+  //       links.forEach(l => {
+  //         if (l instanceof RealLink) {
+  //           l.determineCoM(l);
+  //           // this.determineLinkCoMLocations(links);
+  //         }
+  //       })
+  //     } else {
+  //       if ((!simForward && increment === 0) || (falseTwice === 2)) {
+  //         Mechanism.setMechanismInvalid();
+  //         return;
+  //       }
+  //       falseTwice += 1;
+  //       simForward = !simForward;
+  //       inputAngularVelocity = inputAngularVelocity * -1;
+  //       inputAngVelDirection = !inputAngVelDirection;
+  //     }
+  //     xDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
+  //     yDiff = Math.abs(startingPositionY - (Math.round(desiredJoint.y * 100) / 100));
+  //     if (increment === 750) {
+  //       Mechanism.setMechanismInvalid();
+  //       return;
+  //     }
+  //   }
+  // }
+
+  get internalTriangleSimLinkMap(): Map<string, number[]> {
+    return this._internalTriangleSimLinkMap;
+  }
+
+  set internalTriangleSimLinkMap(value: Map<string, number[]>) {
+    this._internalTriangleSimLinkMap = value;
+  }
+
+  get joints(): Joint[] {
+    return this._joints;
+  }
+
+  set joints(value: Joint[]) {
+    this._joints = value;
+  }
+
+  get links(): Link[] {
+    return this._links;
+  }
+
+  set links(value: Link[]) {
+    this._links = value;
+  }
+
+  get forces(): Force[] {
+    return this._forces;
+  }
+
+  set forces(value: Force[]) {
+    this._forces = value;
+  }
+
+  get gravity(): boolean {
+    return this._gravity;
+  }
+
+  set gravity(value: boolean) {
+    this._gravity = value;
+  }
+
+  get unit(): string {
+    return this._unit;
+  }
+
+  set unit(value: string) {
+    this._unit = value;
+  }
+
+  get requiredLoops(): string[] {
+    return this._requiredLoops;
+  }
+
+  set requiredLoops(value: string[]) {
+    this._requiredLoops = value;
+  }
+
+  get allLoops(): string[] {
+    return this._allLoops;
+  }
+
+  set allLoops(value: string[]) {
+    this._allLoops = value;
+  }
+
+  private static setMechanismInvalid() {
+    // TODO: Set all of the joints, links, force, instant center positions as empty
   }
 }

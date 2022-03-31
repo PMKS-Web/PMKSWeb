@@ -1,6 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
-import {Link, Shape} from "../../model/link";
+import {ImagLink, Link, RealLink, Shape} from "../../model/link";
 import {Joint, PrisJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
 
@@ -78,17 +78,19 @@ export class LinkageTableComponent implements OnInit {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
         joint.x = Number($event.target.value);
-        joint.links.forEach(l => {
+        joint.links.forEach(li => {
+          if (li instanceof ImagLink) {return}
+          const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
           l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
           l.CoMX = l.determineCenterOfMass(l.joints, 'x');
           l.CoMY = l.determineCenterOfMass(l.joints, 'y');
-          l.bound = Link.getBounds(
+          l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          l.d = Link.getPointsFromBounds(l.bound, l.shape);
+          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
           l.forces.forEach(f => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -96,17 +98,19 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'y':
         joint.y = Number($event.target.value);
-        joint.links.forEach(l => {
+        joint.links.forEach(li => {
+          if (li instanceof ImagLink) {return}
+          const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
           l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
           l.CoMX = l.determineCenterOfMass(l.joints, 'x');
           l.CoMY = l.determineCenterOfMass(l.joints, 'y');
-          l.bound = Link.getBounds(
+          l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          l.d = Link.getPointsFromBounds(l.bound, l.shape);
+          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
           l.forces.forEach(f => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -122,18 +126,20 @@ export class LinkageTableComponent implements OnInit {
     }
   }
   changeLinkProp($event: any, link: Link, linkProp: string) {
+    if (link instanceof ImagLink) {return }
+    const l = link as RealLink;
     switch (linkProp) {
       case 'mass':
-        link.mass = $event.target.value;
+        l.mass = $event.target.value;
         break;
       case 'massMoI':
-        link.massMoI = $event.target.value;
+        l.massMoI = $event.target.value;
         break;
       case 'CoMX':
-        link.CoMX = $event.target.value;
+        l.CoMX = $event.target.value;
         break;
       case 'CoMY':
-        link.CoMY = $event.target.value;
+        l.CoMY = $event.target.value;
         break;
     }
   }
@@ -214,10 +220,37 @@ export class LinkageTableComponent implements OnInit {
           return '?'
     }
   }
+  typeofLink(link: Link) {
+    switch (link.constructor) {
+      case RealLink:
+        return 'R';
+      case ImagLink:
+        return 'P';
+      default:
+        return '?'
+    }
+  }
 
   getJointAngle(joint: Joint) {
     // joint will always be a prismatic joint
     const j = joint as PrisJoint;
     return j.angle;
+  }
+
+  getLinkProp(l: Link, propType: string) {
+    if (l instanceof ImagLink) {return}
+    const link = l as RealLink;
+    switch (propType) {
+      case 'mass':
+        return link.mass;
+      case 'massMoI':
+        return link.massMoI;
+      case 'CoMX':
+        return link.CoMX;
+      case 'CoMY':
+        return link.CoMY;
+      default:
+        return '?';
+    }
   }
 }

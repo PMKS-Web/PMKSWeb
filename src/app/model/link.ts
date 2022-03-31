@@ -42,8 +42,32 @@ export enum editorID {
 
 export class Link {
   private _id: string;
-  private _fill: string;
   private _joints: Joint[];
+
+  constructor(id: string, joints: Joint[]) {
+    this._id = id;
+    this._joints = joints;
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
+  }
+
+  get joints(): Joint[] {
+    return this._joints;
+  }
+
+  set joints(value: Joint[]) {
+    this._joints = value;
+  }
+}
+
+export class RealLink extends Link {
+  private _fill: string;
   private _shape: Shape;
   private _bound: Bound;
   private _d: string
@@ -58,24 +82,15 @@ export class Link {
   private _CoM_d4: string = '';
 
   constructor(id: string, joints: Joint[]) {
-    this._id = id;
-    this._joints = joints;
+    super(id, joints);
     this._shape = Shape.line;
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
-    this._bound = Link.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
-    this._d = Link.getPointsFromBounds(this._bound, this._shape);
+    this._bound = RealLink.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
+    this._d = RealLink.getPointsFromBounds(this._bound, this._shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     this._CoMX = this.determineCenterOfMass(joints, 'x');
     this._CoMY = this.determineCenterOfMass(joints, 'y');
     this.updateCoMDs();
-    // this._CoM_d1 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX - 0.25) + ' ' + this.CoMY + ' ' +
-    //   'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY + 0.25);
-    // this._CoM_d2 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY + 0.25) + ' ' +
-    //   'A0.25 0.25 0 0 0 ' + (this.CoMX + 0.25) + ' ' +  this.CoMY;
-    // this._CoM_d3 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX + 0.25)  + ' ' + this.CoMY + ' ' +
-    //   'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY - 0.25);
-    // this._CoM_d4 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY - 0.25) + ' ' +
-    //   'A0.25 0.25 0 0 0 ' + (this.CoMX - 0.25)  + ' ' +  this.CoMY;
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
@@ -281,22 +296,6 @@ export class Link {
     return com / joints.length;
   }
 
-  get id(): string {
-    return this._id;
-  }
-
-  set id(value: string) {
-    this._id = value;
-  }
-
-  get joints(): Joint[] {
-    return this._joints;
-  }
-
-  set joints(value: Joint[]) {
-    this._joints = value;
-  }
-
   get shape(): Shape {
     return this._shape;
   }
@@ -410,5 +409,12 @@ export class Link {
       'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY - 0.25);
     this._CoM_d4 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY - 0.25) + ' ' +
       'A0.25 0.25 0 0 0 ' + (this.CoMX - 0.25)  + ' ' +  this.CoMY;
+  }
+
+}
+
+export class ImagLink extends Link {
+  constructor(id: string, joints: Joint[]) {
+    super(id, joints);
   }
 }

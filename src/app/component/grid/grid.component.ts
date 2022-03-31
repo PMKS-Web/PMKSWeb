@@ -1,10 +1,11 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
-import {Joint, RevJoint, PrisJoint} from "../../model/joint";
-import {Link, Shape} from "../../model/link";
+import {Joint, RevJoint, PrisJoint, ImagJoint} from "../../model/joint";
+import {ImagLink, Link, RealLink, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
+import {InstantCenter} from "../../model/instant-center";
 
 
 // The possible states the program could be in.
@@ -63,6 +64,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   joints: Joint[] = [];
   links: Link[] = [];
   forces: Force[] = [];
+  ics: InstantCenter[] = [];
   mechanisms: Mechanism[] = [];
 
   // holders
@@ -117,11 +119,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   // remove this if this is possible
   private static selectedJoint: Joint;
-  private static selectedLink: Link;
+  private static selectedLink: RealLink;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
 
-
+// TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
   constructor() { }
 
   ngOnInit(): void {
@@ -298,7 +300,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                   const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new Link(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
+                  const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
                   GridComponent.selectedJoint.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(GridComponent.selectedJoint);
@@ -331,7 +333,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   }
                   const joint1 = new RevJoint(joint1ID, x1, y1);
                   const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
+                  const link = new RealLink(joint1ID + joint2ID, [joint1, joint2]);
                   joint1.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(joint1);
                   joint1.links.push(link);
@@ -793,12 +795,18 @@ export class GridComponent implements OnInit, AfterViewInit {
     const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
     this.joints[selectedJointIndex] = joint;
     GridComponent.selectedJoint = joint;
+    if (this.joints.findIndex(j => j.input) !== -1) {
+      // TODO: Add imag joint and link
+    }
     this.updateMechanism();
   }
   deleteJoint() {
     this.disappearContext();
     const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
-    GridComponent.selectedJoint.links.forEach(l => {
+    GridComponent.selectedJoint.links.forEach(li => {
+      // TODO: May wanna check this to be sure...
+      if (li instanceof ImagLink) {return}
+      const l = li as RealLink;
       if (l.joints.length < 3) {
         // delete forces on link
         l.forces.forEach(f => {
@@ -859,6 +867,40 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     // TODO: Adjust this logic when there are multiple mechanisms created
     GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
+    if (GridComponent.selectedJoint.input) {
+      const imagJoints: Joint[] = [];
+      const imagLinks: Link[] = [];
+      this.joints.forEach(j => {
+        if (j instanceof ImagJoint) {
+          // TODO: Add logic to add ImagJoint and ImagLink
+        }
+      });
+      imagJoints.forEach(j => {
+        this.joints.push(j);
+      });
+      imagLinks.forEach(l => {
+        this.links.push(l);
+      });
+    } else {
+      // TODO: Figure out how to change any to number
+      const jointIndicesRemove: any[] = [];
+      const linkIndicesRemove: any[] = [];
+      this.joints.forEach((j, j_index) => {
+        if (j instanceof ImagJoint) {
+          jointIndicesRemove.push(j_index);
+        }
+      });
+      this.links.forEach((l, l_index) => {
+        // TODO: Add the logic for ImagLink
+        if (l.joints.length > 100) {
+        // if (l instanceof ImagLink) {
+          linkIndicesRemove.push(l_index);
+        }
+      });
+      // TODO: Check to see if pop works as intended
+      this.joints.splice(jointIndicesRemove.pop(), 1);
+      this.links.splice(linkIndicesRemove.pop(), 1);
+    }
     this.updateMechanism();
   }
   createForce($event: MouseEvent) {
@@ -925,21 +967,23 @@ export class GridComponent implements OnInit, AfterViewInit {
   updateMechanism() {
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
-    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.gravity, this.unit));
+    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, this.gravity, this.unit));
   }
   private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = this.roundNumber(trueCoord.x, 3);
     selectedJoint.y = this.roundNumber(trueCoord.y, 3);
-    selectedJoint.links.forEach(l => {
+    selectedJoint.links.forEach(li => {
+      if (li instanceof ImagLink) {return}
+      const l = li as RealLink;
       // TODO: delete this if this is not needed (verify this)
       const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
       l.joints[jointIndex].x = this.roundNumber(trueCoord.x, 3);
       l.joints[jointIndex].y = this.roundNumber(trueCoord.y, 3);
-      l.bound = Link.getBounds(
+      l.bound = RealLink.getBounds(
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-      l.d = Link.getPointsFromBounds(l.bound, l.shape);
+      l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
       l.CoMX = l.determineCenterOfMass(l.joints, 'x');
       l.CoMY = l.determineCenterOfMass(l.joints, 'y');
       l.updateCoMDs();
@@ -1002,6 +1046,36 @@ export class GridComponent implements OnInit, AfterViewInit {
         return 'P';
       default:
         return '?'
+    }
+  }
+  // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
+  getLinkProp(l: Link, propType: string) {
+    if (l instanceof ImagLink) {return}
+    const link = l as RealLink;
+    switch (propType) {
+      case 'mass':
+        return link.mass;
+      case 'massMoI':
+        return link.massMoI;
+      case 'CoMX':
+        return link.CoMX;
+      case 'CoMY':
+        // TODO: Implement logic to not have -1?
+        return link.CoMY * -1;
+      case 'd':
+        return link.d;
+      case 'fill':
+        return link.fill;
+      case 'CoM_d1':
+        return link.CoM_d1;
+      case 'CoM_d2':
+        return link.CoM_d2;
+      case 'CoM_d3':
+        return link.CoM_d3;
+      case 'CoM_d4':
+        return link.CoM_d4;
+      default:
+        return '?';
     }
   }
 }

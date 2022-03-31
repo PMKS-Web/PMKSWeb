@@ -30,7 +30,7 @@
             (click)="disappearContext()"
             (mousedown)="mouseDown($event, 'link', link)"
             (mousemove)="mouseMove($event, 'link')"
-            [attr.d]="link.d" [attr.id]="link.id" [attr.fill]="link.fill" style="opacity: 0.8"></path>
+            [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8"></path>
       <!-- SVG for creating Joints -->
       <svg *ngFor="let joint of joints" (contextmenu)="contextMenu($event, 'joint', joint); false"
            (click)="disappearContext()" [attr.x]="joint.x" [attr.y]="joint.y"
@@ -108,8 +108,8 @@
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
     <g id="linkTagHolder" *ngIf="showIdTags">
-      <svg *ngFor="let link of links" [attr.x]="link.CoMX" [attr.y]="link.CoMY * -1"
-           [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
+      <svg *ngFor="let link of links" [attr.x]="getLinkProp(link, 'CoMX')"
+           [attr.y]="getLinkProp(link, 'CoMY')" [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
@@ -126,13 +126,13 @@
     <g id="comTagHolder" style="transform: scaleY(-1)" *ngIf="showCoMTags">
       <svg *ngFor="let link of links" style="overflow: visible" width="1.23" height="2.61">
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
-              [attr.d]="link.CoM_d1"></path>
+              [attr.d]="getLinkProp(link, 'CoM_d1')"></path>
         <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"
-              [attr.d]="link.CoM_d2"></path>
+              [attr.d]="getLinkProp(link, 'CoM_d2')"></path>
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
-              [attr.d]="link.CoM_d3"></path>
+              [attr.d]="getLinkProp(link, 'CoM_d3')"></path>
         <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0"
-              [attr.d]="link.CoM_d4"></path>
+              [attr.d]="getLinkProp(link, 'CoM_d4')"></path>
       </svg>
     </g>
     <g id="pathPointHolder"></g>

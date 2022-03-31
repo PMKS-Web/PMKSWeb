@@ -1,7 +1,7 @@
-import { InstantCenters } from './instant-centers';
+import { InstantCenter } from './instant-center';
 
 describe('InstantCenters', () => {
   it('should create an instance', () => {
-    expect(new InstantCenters()).toBeTruthy();
+    expect(new InstantCenter()).toBeTruthy();
   });
 });

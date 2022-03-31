@@ -1,10 +1,10 @@
-import {Link} from "./link";
+import {Link, RealLink} from "./link";
 import {Coord} from "./coord";
 import {AppConstants} from "./app-constants";
 
 export class Force {
   private _id: string
-  private _link: Link;
+  private _link: RealLink;
   private _startCoord: Coord;
   private _endCoord: Coord;
   private _forceLine: string;
@@ -17,7 +17,7 @@ export class Force {
   private _yMag: number = 1;
   private _showHighlight: boolean = false;
 
-  constructor(id: string, link: Link, startCoord: Coord, endCoord: Coord) {
+  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord) {
     this._id = id;
     this._link = link;
     this._startCoord = startCoord;
@@ -55,11 +55,11 @@ export class Force {
     this._id = value;
   }
 
-  get link(): Link {
+  get link(): RealLink {
     return this._link;
   }
 
-  set link(value: Link) {
+  set link(value: RealLink) {
     this._link = value;
   }
 

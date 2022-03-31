@@ -111,3 +111,10 @@ export class PrisJoint extends Joint {
     this._angle = value;
   }
 }
+
+export class ImagJoint extends Joint {
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
+              connectedJoints: Joint[] = []) {
+    super(id, x, y, input, ground, links, connectedJoints);
+  }
+}
