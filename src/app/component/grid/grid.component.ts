@@ -4,6 +4,7 @@ import {AppConstants} from "../../model/app-constants";
 import {Joint} from "../../model/joint";
 import {Link, Shape} from "../../model/link";
 import {Force} from "../../model/force";
+import {Simulator} from "../../model/simulator/simulator";
 
 
 // The possible states the program could be in.
@@ -55,14 +56,15 @@ enum moveModes {
 })
 
 export class GridComponent implements OnInit, AfterViewInit {
-
-  // TODO: Don't forget about viewChild if you need it!
-  // private static jointArray: Joint[];
-  // private static linkArray: Link[];
-  // private static forceArray: Force[];
+  // TODO: Put updateSimulator whenever dragging, deleting, creating, anything
+  @Input() showIdTags: boolean = true;
+  @Input() showCoMTags: boolean = true;
+  @Input() unit: string = 'cm';
+  @Input() gravity: boolean = false;
   joints: Joint[] = [];
   links: Link[] = [];
   forces: Force[] = [];
+  simulators: Simulator[] = [];
 
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -196,8 +198,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
   // TODO: Once the Grid Toolbar (Animation Bar) is created, reuse this function
-  @Input() showIdTags: boolean = true;
-  @Input() showCoMTags: boolean = true;
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
@@ -239,11 +239,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     return new Coord(newX, newY);
   }
 
-  private static roundNumber(num: number, scale: number): number {
-    const tens = Math.pow(10, scale);
-    return Math.round(num * tens) / tens;
-  }
-
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -261,6 +256,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
+
   mouseUp() {
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the simulator
     GridComponent.gridStates = gridStates.waiting;
@@ -310,6 +306,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   joint2.links.push(link);
                   this.joints.push(joint2);
                   this.links.push(link);
+                  this.createNewSimulator();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display='none';
@@ -343,6 +340,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.joints.push(joint1);
                   this.joints.push(joint2);
                   this.links.push(link);
+                  this.createNewSimulator();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -364,6 +362,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   // TODO: Be sure the force added is at correct position for binary link
                   const force = new Force('F' + '1', GridComponent.selectedLink, startCoord, endCoord);
                   this.forces.push(force);
+                  this.createNewSimulator();
                   GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
@@ -432,11 +431,14 @@ export class GridComponent implements OnInit, AfterViewInit {
             // TODO: Have the gridStates also include dragGrid, dragJoint, dragLink, and dragForce
             if (GridComponent.jointStates === jointStates.dragging) {
               GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
+              this.createNewSimulator();
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
               // TODO: Add logic when dragging a link within edit shape mode
+              this.createNewSimulator();
             } else if (GridComponent.forceStates === forceStates.dragging) { // user is dragging a force
               // TODO: Add logic to drag force properly within the grid
               GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
+              this.createNewSimulator();
             } else { // user is dragging the grid
               const offsetX = GridComponent.panOffset.x - rawCoord.x;
               const offsetY = GridComponent.panOffset.y - rawCoord.y;
@@ -481,6 +483,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (GridComponent.jointStates) {
           case jointStates.dragging:
             GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
+            this.createNewSimulator();
             break;
           case jointStates.waiting:
             break;
@@ -493,12 +496,141 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (GridComponent.forceStates) {
           case forceStates.dragging:
             GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
+            this.createNewSimulator();
             break;
         }
         break;
     }
   }
+  RectMouseOver($event: MouseEvent, menuType: string) {
+    switch (menuType) {
+      case 'addInput':
+        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'grid':
+        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addLink':
+        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addGround':
+        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addSlider':
+        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteJoint':
+        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addForce':
+        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'addTracer':
+        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'editShape':
+        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteLink':
+        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceDirection':
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceLocal':
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteForce':
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
+    }
+  }
+  RectMouseOut($event: MouseEvent, menuType: string) {
+    switch (menuType) {
+      case 'addInput':
+        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'grid':
+        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addLink':
+        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addGround':
+        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addSlider':
+        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteJoint':
+        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addForce':
+        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'addTracer':
+        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'editShape':
+        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteLink':
+        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceDirection':
+        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'changeForceLocal':
+        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'deleteForce':
+        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+    }
+  }
 
+  disappearContext() {
+    GridComponent.contextMenuAddInputJoint.style.display = 'none';
+    GridComponent.contextMenuAddLinkOntoGrid.style.display = 'none';
+    GridComponent.contextMenuAddGround.style.display = 'none';
+    GridComponent.contextMenuAddLinkOntoJoint.style.display = 'none';
+    GridComponent.contextMenuAddSlider.style.display = 'none';
+    GridComponent.contextMenuDeleteJoint.style.display = 'none';
+    GridComponent.contextMenuAddLinkOntoLink.style.display = 'none';
+    GridComponent.contextMenuAddForce.style.display = 'none';
+    GridComponent.contextMenuAddTracerPoint.style.display = 'none';
+    GridComponent.contextMenuEditShape.style.display = 'none';
+    GridComponent.contextMenuDeleteLink.style.display = 'none';
+    GridComponent.contextMenuChangeForceDirection.style.display = 'none';
+    GridComponent.contextMenuChangeForceLocal.style.display = 'none';
+    GridComponent.contextMenuDeleteForce.style.display = 'none';
+  }
   contextMenu($event: MouseEvent, desiredMenu: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -631,23 +763,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     contextMenu.children[1].setAttribute('y', (offsetY + textIncrement).toString());
   }
 
-  disappearContext() {
-    GridComponent.contextMenuAddInputJoint.style.display = 'none';
-    GridComponent.contextMenuAddLinkOntoGrid.style.display = 'none';
-    GridComponent.contextMenuAddGround.style.display = 'none';
-    GridComponent.contextMenuAddLinkOntoJoint.style.display = 'none';
-    GridComponent.contextMenuAddSlider.style.display = 'none';
-    GridComponent.contextMenuDeleteJoint.style.display = 'none';
-    GridComponent.contextMenuAddLinkOntoLink.style.display = 'none';
-    GridComponent.contextMenuAddForce.style.display = 'none';
-    GridComponent.contextMenuAddTracerPoint.style.display = 'none';
-    GridComponent.contextMenuEditShape.style.display = 'none';
-    GridComponent.contextMenuDeleteLink.style.display = 'none';
-    GridComponent.contextMenuChangeForceDirection.style.display = 'none';
-    GridComponent.contextMenuChangeForceLocal.style.display = 'none';
-    GridComponent.contextMenuDeleteForce.style.display = 'none';
-  }
-
   addJoint() {
     this.disappearContext();
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
@@ -655,8 +770,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     const coord = GridComponent.screenToGrid(screenX, screenY);
     const newJoint = new Joint('a', coord.x, coord.y);
     this.joints.push(newJoint);
+    this.createNewSimulator();
   }
-
   createGround() {
     this.disappearContext();
     if (GridComponent.selectedJoint.type === 'P') {
@@ -664,16 +779,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
+    this.createNewSimulator();
   }
-
   createSlider() {
     this.disappearContext();
     // TODO: Sliders are ground joints. However, we prob don't want to showcase ground. So probably need to update this
     // TODO: Within the HTML document
     GridComponent.selectedJoint.type = GridComponent.selectedJoint.type === 'P' ? 'R' : 'P';
     GridComponent.selectedJoint.ground = GridComponent.selectedJoint.type === 'P';
+    this.createNewSimulator();
   }
-
   deleteJoint() {
     this.disappearContext();
     const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
@@ -698,8 +813,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     this.joints.splice(jointIndex, 1);
+    this.createNewSimulator();
   }
-
   createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext();
     let startX: number;
@@ -737,125 +852,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   createInput($event: MouseEvent) {
     this.disappearContext();
     // TODO: Adjust this logic when there are multiple mechanisms created
-    this.joints.forEach(j => {
-      j.input = false;
-    });
     GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
+    this.createNewSimulator();
   }
-
-  RectMouseOver($event: MouseEvent, menuType: string) {
-    switch (menuType) {
-      case 'addInput':
-        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'grid':
-        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addLink':
-        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addGround':
-        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addSlider':
-        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteJoint':
-        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addForce':
-        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addTracer':
-        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'editShape':
-        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteLink':
-        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceDirection':
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceLocal':
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteForce':
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-    }
-  }
-  RectMouseOut($event: MouseEvent, menuType: string) {
-    switch (menuType) {
-      case 'addInput':
-        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'grid':
-        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addLink':
-        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addGround':
-        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addSlider':
-        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteJoint':
-        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addForce':
-        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addTracer':
-        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'editShape':
-        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteLink':
-        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceDirection':
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceLocal':
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteForce':
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-    }
-  }
-
   createForce($event: MouseEvent) {
     this.disappearContext();
     let startCoord: Coord;
@@ -877,17 +876,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.creating;
     GridComponent.forceTempHolderSVG.style.display = 'block';
   }
-
   editShape() {
     this.disappearContext();
   }
-
   deleteLink() {
     this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
+    this.createNewSimulator();
   }
-
   changeForceDirection() {
     this.disappearContext();
     GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
@@ -898,8 +895,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.forceArrow = Force.createForceArrow(
         GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
     }
+    this.createNewSimulator();
   }
-
   changeForceLocal() {
     this.disappearContext();
     GridComponent.selectedForce.local = !GridComponent.selectedForce.local;
@@ -910,14 +907,19 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.stroke = 'black';
       GridComponent.selectedForce.fill = 'black';
     }
+    this.createNewSimulator();
   }
-
   deleteForce() {
     this.disappearContext();
     const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
     this.forces.splice(forceIndex, 1);
+    this.createNewSimulator();
   }
 
+  createNewSimulator() {
+    this.simulators = [];
+    this.simulators.push(new Simulator(this.joints, this.links, this.forces, this.gravity, this.unit));
+  }
   private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = this.roundNumber(trueCoord.x, 3);
@@ -975,6 +977,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     return selectedForce;
   }
 
+  private static roundNumber(num: number, scale: number): number {
+    const tens = Math.pow(10, scale);
+    return Math.round(num * tens) / tens;
+  }
   roundNumber(num: number, scale: number): number {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;

@@ -17,6 +17,8 @@ export class ToolbarComponent implements OnInit {
   selectedTab: string = 'none';
   showIdTags: boolean = true;
   showCoMTags: boolean = true;
+  unit: string = 'cm';
+  gravity: boolean = false;
   constructor() { }
 
   ngOnInit(): void {
