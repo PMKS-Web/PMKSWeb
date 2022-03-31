@@ -1,4 +1,4 @@
-import {Joint} from "../joint";
+import {Joint, PrisJoint, RevJoint} from "../joint";
 import {Link} from "../link";
 import {Force} from "../force";
 
@@ -37,8 +37,8 @@ export class Mechanism {
       // if (j instanceof ImagJoint) {
       //   return;
       // }
-      switch (j.type) {
-        case 'R':
+      switch (j.constructor) {
+        case RevJoint:
           if (j.ground) {
             J1 += j.links.length;
             if (groundNotFound) {
@@ -49,7 +49,7 @@ export class Mechanism {
             J1 += j.links.length - 1;
           }
           break;
-        case 'P':
+        case PrisJoint:
           // N++;
           J1 += j.links.length;
           // J2++;

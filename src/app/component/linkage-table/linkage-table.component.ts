@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
 import {Link, Shape} from "../../model/link";
-import {Joint} from "../../model/joint";
+import {Joint, PrisJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
 
 @Component({
@@ -116,7 +116,8 @@ export class LinkageTableComponent implements OnInit {
         joint.id = $event.target.value;
         break;
       case 'angle':
-        joint.angle = $event.target.value;
+        const j = joint as PrisJoint;
+        j.angle = $event.target.value;
     }
   }
   changeLinkProp($event: any, link: Link, linkProp: string) {
@@ -200,5 +201,21 @@ export class LinkageTableComponent implements OnInit {
     } else {
       LinkageTableComponent.linkageTable.style.visibility = 'visible';
     }
+  }
+
+  typeOfJoint(joint: Joint) {
+    switch(joint.constructor) {
+      case RevJoint:
+        return 'R';
+      case PrisJoint:
+        return 'P';
+      default:
+          return '?'
+    }
+  }
+
+  getJointAngle(joint: Joint) {
+    const j = joint as PrisJoint;
+    return j.angle;
   }
 }

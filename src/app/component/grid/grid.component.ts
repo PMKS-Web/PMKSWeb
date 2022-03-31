@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
-import {Joint} from "../../model/joint";
+import {Joint, RevJoint, PrisJoint} from "../../model/joint";
 import {Link, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
@@ -56,7 +56,6 @@ enum moveModes {
 })
 
 export class GridComponent implements OnInit, AfterViewInit {
-  // TODO: Put updateSimulator whenever dragging, deleting, creating, anything
   @Input() showIdTags: boolean = true;
   @Input() showCoMTags: boolean = true;
   @Input() unit: string = 'cm';
@@ -298,7 +297,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                     }
                   });
                   joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-                  const joint2 = new Joint(joint2ID, x2, y2);
+                  const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new Link(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
                   GridComponent.selectedJoint.connectedJoints.push(joint2);
@@ -330,8 +329,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
                     joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
                   }
-                  const joint1 = new Joint(joint1ID, x1,  y1);
-                  const joint2 = new Joint(joint2ID, x2, y2);
+                  const joint1 = new RevJoint(joint1ID, x1,  y1);
+                  const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new Link(joint1ID + joint2ID, [joint1, joint2]);
                   joint1.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(joint1);
@@ -647,8 +646,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedJoint = joint;
         switch (joint.links.length) {
           case 0:
-            switch (joint.type) {
-              case 'R':
+            switch (joint.constructor) {
+              case RevJoint:
                 GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
                 if (joint.ground) {
                   GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
@@ -670,7 +669,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
                 }
                 break;
-              case 'P':
+              case PrisJoint:
                 if (GridComponent.selectedJoint.input) {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                 } else {
@@ -688,8 +687,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
             break;
           case 1:
-            switch (joint.type) {
-              case 'R':
+            switch (joint.constructor) {
+              case RevJoint:
                 GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
                 if (joint.ground) {
                   GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
@@ -710,7 +709,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
                 }
                 break;
-              case 'P':
+              case PrisJoint:
                 if (GridComponent.selectedJoint.input) {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                 } else {
@@ -768,14 +767,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
-    const newJoint = new Joint('a', coord.x, coord.y);
+    const newJoint = new RevJoint('a', coord.x, coord.y);
     this.joints.push(newJoint);
     this.updateMechanism();
   }
   createGround() {
     this.disappearContext();
-    if (GridComponent.selectedJoint.type === 'P') {
-      GridComponent.selectedJoint.type = 'R'
+    if (GridComponent.selectedJoint instanceof PrisJoint) {
+      GridComponent.selectedJoint as RevJoint;
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
@@ -783,10 +782,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
   createSlider() {
     this.disappearContext();
-    // TODO: Sliders are ground joints. However, we prob don't want to showcase ground. So probably need to update this
-    // TODO: Within the HTML document
-    GridComponent.selectedJoint.type = GridComponent.selectedJoint.type === 'P' ? 'R' : 'P';
-    GridComponent.selectedJoint.ground = GridComponent.selectedJoint.type === 'P';
+    GridComponent.selectedJoint = GridComponent.selectedJoint instanceof PrisJoint ?
+      GridComponent.selectedJoint as RevJoint : GridComponent.selectedJoint as PrisJoint;
+    GridComponent.selectedJoint.ground = GridComponent.selectedJoint instanceof PrisJoint;
     this.updateMechanism();
   }
   deleteJoint() {
@@ -985,5 +983,16 @@ export class GridComponent implements OnInit, AfterViewInit {
   roundNumber(num: number, scale: number): number {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
+  }
+  // TODO: Figure out how to only have one typeOfJoint and not also have this within linkageTable
+  typeOfJoint(joint: Joint) {
+    switch(joint.constructor) {
+      case RevJoint:
+        return 'R';
+      case PrisJoint:
+        return 'P';
+      default:
+        return '?'
+    }
   }
 }

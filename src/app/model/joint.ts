@@ -7,13 +7,9 @@ export class Joint {
   private _y: number;
   private _r: number;
   private _input: boolean = false;
-  private _type: string = 'R';
   private _ground: boolean = false;
   private _links: Link[] = [];
   private _connectedJoints: Joint[] = [];
-  private _angle: number = 0;
-  // TODO: Similar to Instant centers, have Joint, then Revolute Joints and Prismatic Joint class rather than having
-  // TODO: type since rev should not have angle property
 
   constructor(id: string, x: number, y: number) {
     this._id = id;
@@ -54,14 +50,6 @@ export class Joint {
     this._r = value;
   }
 
-  get type(): string {
-    return this._type;
-  }
-
-  set type(value: string) {
-    this._type = value;
-  }
-
   get ground(): boolean {
     return this._ground;
   }
@@ -86,19 +74,33 @@ export class Joint {
     this._connectedJoints = value;
   }
 
-  get angle(): number {
-    return this._angle;
-  }
-
-  set angle(value: number) {
-    this._angle = value;
-  }
-
   get input(): boolean {
     return this._input;
   }
 
   set input(value: boolean) {
     this._input = value;
+  }
+}
+
+export class RevJoint extends Joint {
+  constructor(id: string, x: number, y: number) {
+    super(id, x, y);
+  }
+}
+
+export class PrisJoint extends Joint {
+  private _angle: number = 0;
+
+  constructor(id: string, x: number, y: number) {
+    super(id, x, y);
+  }
+
+  get angle(): number {
+    return this._angle;
+  }
+
+  set angle(value: number) {
+    this._angle = value;
   }
 }

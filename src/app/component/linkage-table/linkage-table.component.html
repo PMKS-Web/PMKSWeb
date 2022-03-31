@@ -54,10 +54,10 @@
           <td>
             <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
           </td>
-          <td *ngIf="joint.type === 'P'">
-            <input type="text" value="{{joint.angle}}" (change)="changeJointProp($event, joint, 'angle')">
+          <td *ngIf="typeOfJoint(joint) === 'P'">
+            <input type="text" value="{{getJointAngle(joint)}}" (change)="changeJointProp($event, joint, 'angle')">
           </td>
-          <td *ngIf="joint.type !== 'P'">
+          <td *ngIf="typeOfJoint(joint) !== 'P'">
           </td>
         </tr>
         </tbody>

@@ -44,32 +44,32 @@
                 [attr.r]="joint.r" [attr.cx]="0" [attr.cy]="0" fill="gray" stroke="#00000000"
                 [attr.stroke-width]="(joint.r * 2)"/>
         <!-- condition for slider crank -->
-        <circle *ngIf="joint.type === 'P' && joint.ground === true" r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
-        <path *ngIf="joint.type === 'P'" d="M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
+        <circle *ngIf="typeOfJoint(joint) === 'P' && joint.ground === true" r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
+        <path *ngIf="typeOfJoint(joint) === 'P'" d="M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
          L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
           -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z" stroke="black"
               stroke-width="0.04" fill-opacity="0"></path>
         <!-- condition for ground joint -->
         <!-- TODO: Make all of this within one g container -->
-        <circle *ngIf="joint.ground && joint.type === 'R' && !joint.input"
+        <circle *ngIf="joint.ground && typeOfJoint(joint) === 'R' && !joint.input"
                 r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
-        <circle *ngIf="joint.ground && joint.type === 'R' && joint.input"
+        <circle *ngIf="joint.ground && typeOfJoint(joint) === 'R' && joint.input"
                 r="0.06667" cx="0%" cy="0%" fill="green" stroke="#00000000" stroke-width="0.2"></circle>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="-0.15" y1="-0.15" x2="-0.225" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="-0.075" y1="-0.15" x2="-0.15" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="0" y1="-0.15" x2="-0.075" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="0.075" y1="-0.15" x2="0" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="0.15" y1="-0.15" x2="0.075" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="0.225" y1="-0.15" x2="0.15" y2="-0.225" stroke="black" stroke-width="0.03"></line>
-        <line *ngIf="joint.ground === true && joint.type === 'R'"
+        <line *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               x1="-0.3" y1="-0.15" x2="0.3" y2="-0.15" stroke="black" stroke-width="0.05"></line>
-        <path *ngIf="joint.ground === true && joint.type === 'R'"
+        <path *ngIf="joint.ground === true && typeOfJoint(joint) === 'R'"
               d="M -0.225 -0.15 L -0.15 0.15 L 0.15 0.15 L 0.225 -0.15" stroke="black" stroke-width="0.05"
               fill="transparent"></path>
       </svg>
