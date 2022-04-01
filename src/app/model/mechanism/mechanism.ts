@@ -44,7 +44,10 @@ export class Mechanism {
     let J1 = 0;
     const J2 = 0;
     let groundNotFound = true;
-    joints.forEach(l => {
+    links.forEach(l => {
+      if (l instanceof ImagLink) {
+        return;
+      }
       N++;
       // TODO: Account for this case later
       // if (this.determineParallelLinkage(l)) {
