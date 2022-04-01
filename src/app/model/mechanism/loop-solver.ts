@@ -88,10 +88,7 @@ export class LoopSolver {
     }
     // 3rd: Go through sorted array and add new loops to requiredLoops
     for (let i = 0; i < two_d_array.length; i++) {
-      two_d_array[i].forEach(loop => {
-        if (typeof loop === "number") {
-          return;
-        }
+      const loop = two_d_array[i][0];
         let noFoundLink = true;
         for (let index = 0; index < loop[0].length - 2; index++) {
           if (joints_to_link_determined.has(loop[index] + loop[index + 1])) {
@@ -109,13 +106,12 @@ export class LoopSolver {
         if (!noFoundLink) {
           requiredLoops.push(loop);
         }
-      });
       if (links_known_count === links_num) {
         return [allLoops, requiredLoops];
       }
     }
     // should not be here... (if we expect the code to actually utilize this
-    const error = 'ruh-roh';
+    const error = 'ruh-roh, check this out...';
     return [allLoops, requiredLoops];
   }
 
