@@ -1033,7 +1033,18 @@ export class GridComponent implements OnInit, AfterViewInit {
       case PrisJoint:
         return 'P';
       case ImagJoint:
-        return 'i'
+        return 'I'
+      default:
+        return '?'
+    }
+  }
+  // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
+  typeOfLink(link: Link) {
+    switch (link.constructor) {
+      case RealLink:
+        return 'R';
+      case ImagLink:
+        return 'I';
       default:
         return '?'
     }

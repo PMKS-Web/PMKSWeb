@@ -104,14 +104,14 @@
     <g id="jointTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
-        <text style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
+        <text *ngIf="typeOfJoint(joint) !== 'I'" style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
     <g id="linkTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let link of links" [attr.x]="getLinkProp(link, 'CoMX')"
            [attr.y]="getLinkProp(link, 'CoMY')" [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
-        <text style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
+        <text *ngIf="typeOfLink(link) !== 'I'" style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the forceTagHolder -->
