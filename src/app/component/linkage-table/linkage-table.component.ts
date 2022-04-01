@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
 import {ImagLink, Link, RealLink, Shape} from "../../model/link";
-import {Joint, PrisJoint, RevJoint} from "../../model/joint";
+import {ImagJoint, Joint, PrisJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
 
 @Component({
@@ -216,6 +216,8 @@ export class LinkageTableComponent implements OnInit {
         return 'R';
       case PrisJoint:
         return 'P';
+      case ImagJoint:
+        return 'I';
       default:
           return '?'
     }
@@ -225,7 +227,7 @@ export class LinkageTableComponent implements OnInit {
       case RealLink:
         return 'R';
       case ImagLink:
-        return 'P';
+        return 'I';
       default:
         return '?'
     }

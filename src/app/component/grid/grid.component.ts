@@ -291,14 +291,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 if (GridComponent.jointStates === jointStates.creating) {
                   const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
                   const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  let lastLetter = '';
-                  let joint2ID: string;
-                  this.joints.forEach(j => {
-                    if (j.id > lastLetter) {
-                      lastLetter = j.id;
-                    }
-                  });
-                  joint2ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
+                  const joint2ID =  this.determineNextLetter();
                   const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
@@ -310,27 +303,14 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
-                  GridComponent.jointTempHolderSVG.style.display='none';
+                  GridComponent.jointTempHolderSVG.style.display = 'none';
                 } else if (GridComponent.linkStates === linkStates.creating) {
                   const x1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
                   const y1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
                   const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
                   const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  let lastLetter = '';
-                  let joint1ID: string;
-                  let joint2ID: string;
-                  this.joints.forEach(j => {
-                    if (j.id > lastLetter) {
-                      lastLetter = j.id;
-                    }
-                  });
-                  if (lastLetter === '') {
-                    joint1ID = 'a';
-                    joint2ID = 'b';
-                  } else {
-                    joint1ID = String.fromCharCode(lastLetter.charCodeAt(0) + 1);
-                    joint2ID = String.fromCharCode(joint1ID.charCodeAt(0) + 1);
-                  }
+                  const joint1ID = this.determineNextLetter();
+                  const joint2ID = this.determineNextLetter();
                   const joint1 = new RevJoint(joint1ID, x1, y1);
                   const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new RealLink(joint1ID + joint2ID, [joint1, joint2]);
@@ -416,6 +396,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+  // TODO: Be sure to adjust the position of the ImagJoint when dragging a joint that is a prismatic joint
   mouseMove($event: MouseEvent, typeChosen: string) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -795,8 +776,36 @@ export class GridComponent implements OnInit, AfterViewInit {
     const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
     this.joints[selectedJointIndex] = joint;
     GridComponent.selectedJoint = joint;
-    if (this.joints.findIndex(j => j.input) !== -1) {
-      // TODO: Add imag joint and link
+    if (this.joints.findIndex(j => j.input) !== -1 && joint instanceof PrisJoint) {
+      const imagJointId = this.determineNextLetter();
+      const inputJoint = this.joints.find(jt => jt.input);
+      if (inputJoint === undefined) {return}
+      const radToDeg = 180 / Math.PI;
+      let coord: Coord;
+      if (joint.angle % (180 * radToDeg) === 0) {
+        coord = new Coord(inputJoint.x, joint.y);
+      } else if (joint.angle % (90 * radToDeg) === 0) {
+        coord = new Coord(joint.x, inputJoint.y);
+      } else {
+        const m1 = Math.cos(joint.angle);
+        const m2 = Math.cos(90 - joint.angle);
+        const b1 = joint.y;
+        const b2 = inputJoint.y;
+        const x = (b2 - b1) / (m1 - m2);
+        const y = m1 * x + b1;
+        coord = new Coord(x, y);
+      }
+      const imagJoint = new ImagJoint(imagJointId, coord.x, coord.y, joint.input, true, [], [joint]);
+      this.joints.push(imagJoint);
+      joint.connectedJoints.push(imagJoint);
+      const linkJoints = [];
+      linkJoints.push(joint);
+      linkJoints.push(imagJoint);
+      const linkID = joint.id + imagJoint.id;
+      const imagLink = new ImagLink(linkID, linkJoints);
+      this.links.push(imagLink);
+      joint.links.push(imagLink);
+      imagJoint.links.push(imagLink);
     }
     this.updateMechanism();
   }
@@ -893,7 +902,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       this.links.forEach((l, l_index) => {
         // TODO: Add the logic for ImagLink
         if (l.joints.length > 100) {
-        // if (l instanceof ImagLink) {
+          // if (l instanceof ImagLink) {
           linkIndicesRemove.push(l_index);
         }
       });
@@ -1044,6 +1053,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         return 'R';
       case PrisJoint:
         return 'P';
+      case ImagJoint:
+        return 'i'
       default:
         return '?'
     }
@@ -1077,5 +1088,18 @@ export class GridComponent implements OnInit, AfterViewInit {
       default:
         return '?';
     }
+  }
+
+  private determineNextLetter() {
+    let lastLetter = '';
+    if (this.joints.length === 0) {
+      return 'a';
+    }
+    this.joints.forEach(j => {
+      if (j.id > lastLetter) {
+        lastLetter = j.id;
+      }
+    });
+    return String.fromCharCode(lastLetter.charCodeAt(0) + 1);
   }
 }
