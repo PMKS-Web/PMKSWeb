@@ -707,8 +707,24 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
             }
             break;
-          default:
-            this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 0, 0);
+          default: // I think default will always be 2
+            switch (joint.constructor) {
+              case PrisJoint:
+                if (GridComponent.selectedJoint.input) {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
+                } else {
+                  GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
+                }
+                GridComponent.contextMenuAddGround.children[1].innerHTML = 'Add Ground';
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Remove Slider';
+                this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
+                this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
+                this.showcaseContextMenu(GridComponent.contextMenuAddSlider, offsetX, offsetY, 40, 40);
+                this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 60, 60);
+                break;
+              case RevJoint:
+                this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 0, 0);
+            }
             break;
         }
         break;
@@ -758,6 +774,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     if (GridComponent.selectedJoint instanceof PrisJoint) {
       let joint = GridComponent.selectedJoint as RevJoint;
+      // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
       joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
       const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
       this.joints[selectedJointIndex] = joint;
@@ -770,6 +787,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     let joint = GridComponent.selectedJoint;
     joint = joint instanceof PrisJoint ?
+      // TODO: Be sure to add/remove connected joints and links that are ImagJoint and ImagLinks
       new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints) :
       new PrisJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
     joint.ground = joint instanceof PrisJoint;
@@ -863,7 +881,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
       });
       this.links.forEach((l, l_index) => {
-          if (l instanceof ImagLink) {
+        if (l instanceof ImagLink) {
           linkIndicesRemove.push(l_index);
         }
       });
