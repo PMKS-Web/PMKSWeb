@@ -67,6 +67,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   ics: InstantCenter[] = [];
   mechanisms: Mechanism[] = [];
 
+  screenCoord: string = '';
+
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
   private static transformMatrixGridSVGElement: SVGElement;
@@ -420,6 +422,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       return
     }
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
+    this.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
 
     switch (typeChosen) {
       case 'grid':

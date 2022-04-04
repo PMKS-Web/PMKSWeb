@@ -1,15 +1,15 @@
 <app-grid #gridComponent
-[showIdTags]="toolbarComponent.showIdTags"
-[showCoMTags]="toolbarComponent.showCoMTags"
-[gravity]="toolbarComponent.gravity"
-[unit]="toolbarComponent.unit"></app-grid>
+          [showIdTags]="toolbarComponent.showIdTags"
+          [showCoMTags]="toolbarComponent.showCoMTags"
+          [gravity]="toolbarComponent.gravity"
+          [unit]="toolbarComponent.unit"></app-grid>
 <app-linkage-table #linkageTableComponent
-[joints]="gridComponent.joints"
-[links]="gridComponent.links"
-[forces]="gridComponent.forces"></app-linkage-table>
+                   [joints]="gridComponent.joints"
+                   [links]="gridComponent.links"
+                   [forces]="gridComponent.forces"></app-linkage-table>
 <app-toolbar #toolbarComponent
-  [joints]="gridComponent.joints"
-  [links]="gridComponent.links"
-  [forces]="gridComponent.forces"
-  (showcaseTable)="linkageTableComponent.linkageVisibility()"
-></app-toolbar>
+             [joints]="gridComponent.joints"
+             [links]="gridComponent.links"
+             [forces]="gridComponent.forces"
+             [screenCoord]="gridComponent.screenCoord"
+             (showcaseTable)="linkageTableComponent.linkageVisibility()"></app-toolbar>

@@ -13,6 +13,7 @@ export class ToolbarComponent implements OnInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
+  @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   selectedTab: string = 'none';
   showIdTags: boolean = false;
