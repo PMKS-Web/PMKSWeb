@@ -185,38 +185,40 @@ export class PositionSolver {
     });
   }
 
-  static determinePositionAnalysis(simJoints: Joint[], simLinks: Link[], angVelDir: boolean): [Map<string, Array<number>>, boolean] {
+  static determinePositionAnalysis(joints: Joint[], links: Link[], angVelDir: boolean): [Map<string, Array<number>>, boolean] {
     let counter = 1;
     let max_counter = 0;
-    simJoints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
-      if (!j.ground && !(j instanceof ImagJoint)) {
-        max_counter++;
-      }
-    });
+    // TODO: joint does not have ground. Be sure to already know this number
+    max_counter = 2;
+    // joints.forEach(j => {
+    //   if (!(j instanceof RealJoint)) {return}
+    //   if (!j.ground && !(j instanceof ImagJoint)) {
+    //     max_counter++;
+    //   }
+    // });
     while (counter <= max_counter) {
       const joint_id = this.jointNumOrderSolverMap.get(counter)!;
-      const joint = simJoints.find(j => j.id === joint_id)!;
+      const joint = joints.find(j => j.id === joint_id)!;
       const connected_joint_indices = this.desiredConnectedJointIndicesMap.get(joint_id)!;
       const desired_analysis = this.desiredAnalysisJointMap.get(joint_id)!;
       let possible: boolean = true; // Doesn't need to be defined
       switch (desired_analysis) {
         case 'incrementRevInput':
-          this.incrementRevInput(simJoints[connected_joint_indices[0]], joint as RevJoint, angVelDir);
+          this.incrementRevInput(joints[connected_joint_indices[0]], joint, angVelDir);
           possible = true;
           break;
         case 'incrementPrisInput':
-          this.incrementPrisInput(simJoints[connected_joint_indices[0]], joint as PrisJoint, angVelDir);
+          this.incrementPrisInput(joints[connected_joint_indices[0]], joint, angVelDir);
           possible = true;
           break;
         case 'twoCircleIntersectionPoints':
-          possible = this.twoCircleIntersectionPoints(simJoints[connected_joint_indices[0]], simJoints[connected_joint_indices[1]], joint as RevJoint);
+          possible = this.twoCircleIntersectionPoints(joints[connected_joint_indices[0]], joints[connected_joint_indices[1]], joint);
           break;
         case 'circleLineIntersectionPoints':
-          possible = this.circleLineIntersectionPoints(simJoints[connected_joint_indices[0]], simJoints[connected_joint_indices[1]], joint as PrisJoint);
+          possible = this.circleLineIntersectionPoints(joints[connected_joint_indices[0]], joints[connected_joint_indices[1]], joint);
           break;
         case 'determineTracerJoint':
-          this.determineTracerJoint(simJoints[connected_joint_indices[0]], simJoints[connected_joint_indices[1]], joint as RevJoint);
+          this.determineTracerJoint(joints[connected_joint_indices[0]], joints[connected_joint_indices[1]], joint);
           possible = true;
           break;
       }
@@ -228,7 +230,7 @@ export class PositionSolver {
     return [this.jointMapPositions, true];
   }
 
-  private static incrementRevInput(inputJoint: Joint, unknownJoint: RevJoint, angVelDir: boolean) {
+  private static incrementRevInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
     const r = this.jointDistMap.get(inputJoint.id + ',' + unknownJoint.id)!;
     const increment = angVelDir ? Math.PI / 180.0 : -Math.PI / 180.0;
     const angle = Math.atan2(unknownJoint.y - inputJoint.y, unknownJoint.x - inputJoint.x);
@@ -238,10 +240,13 @@ export class PositionSolver {
     this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
   }
 
-  private static incrementPrisInput(inputJoint: Joint, unknownJoint: PrisJoint, angVelDir: boolean) {
+  private static incrementPrisInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
     const increment = angVelDir ? 0.1 : -0.1; // 0.01 : -0.01;
-    const xIncrement = increment * Math.cos(unknownJoint.angle);
-    const yIncrement = increment * Math.sin(unknownJoint.angle);
+    // TODO: Have a map to get unknownJoint.angle
+    // const xIncrement = increment * Math.cos(unknownJoint.angle);
+    // const yIncrement = increment * Math.sin(unknownJoint.angle);
+    const xIncrement = increment * Math.cos(0);
+    const yIncrement = increment * Math.sin(0);
     const x = unknownJoint.x + xIncrement;
     const y = unknownJoint.y + yIncrement;
     this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
@@ -333,7 +338,7 @@ export class PositionSolver {
   }
 
 // https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
-  private static circleLineIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: PrisJoint) {
+  private static circleLineIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: Joint) {
     if (!this.desiredIndexWithinPosAnalysisMap.has(unknownJoint.id)) {
       this.desiredIndexWithinPosAnalysisMap.set(unknownJoint.id, this.determineDesiredIndexCircleLineIntersection(j1, j2, unknownJoint));
     }
@@ -390,7 +395,7 @@ export class PositionSolver {
     return true;
   }
 
-  private static determineDesiredIndexCircleLineIntersection(j1: Joint, j2: Joint, unknownJoint: PrisJoint) {
+  private static determineDesiredIndexCircleLineIntersection(j1: Joint, j2: Joint, unknownJoint: Joint) {
     const [a, b, c, _] = this.circleLineIntersectionMethod(j1, j2, unknownJoint);
     // const x_1 = Math.abs((-b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
     // const x_2 = Math.abs((-b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
@@ -411,7 +416,7 @@ export class PositionSolver {
     return intersection1Diff < intersection2Diff ? 0 : 1;
   }
 
-  private static circleLineIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: PrisJoint) {
+  private static circleLineIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: Joint) {
     // circle: (x - h)^2 + (y - k)^2 = r^2
     // line: y = m * x + n
     // r: circle radius

@@ -41,13 +41,16 @@ export class Mechanism {
 
   constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[], gravity: boolean, unit: string) {
     joints.forEach(j => {
-      this._joints[0].push(j as Joint);
+      this._joints[0].push(new Joint (j.id, j.x, j.y));
     });
     links.forEach(l => {
-      this._links[0].push(l as RealLink);
+      this._links[0].push(new Link (l.id, l.joints));
     });
     forces.forEach(f => {
-      this._forces[0].push(f);
+      // this._forces[0].push(f);
+    });
+    ics.forEach(ic => {
+    //
     });
     this._gravity = gravity;
     this._unit = unit;
@@ -129,25 +132,6 @@ export class Mechanism {
     joints.forEach((j, i) => {
       jointIDToJointIndexMap.set(j.id, i);
     });
-    // determine center of mass for link
-    // links.forEach((l, i) => {
-    //   if (l instanceof ImagLink) {
-    //     return;
-    //   }
-    //   const link = l as RealLink;
-    //   const joint1 = l.joints[0];
-    //   const joint2 = l.joints[1];
-    //   const a = Math.sqrt(Math.pow(joint2.x - link.CoMX, 2) + Math.pow(joint2.y - link.CoMY, 2));
-    //   const b = Math.sqrt(Math.pow(joint1.x - link.CoMX, 2) + Math.pow(joint1.y - link.CoMY, 2));
-    //   const c = Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2));
-    //   link.internal_CoM_angle = Math.acos( (Math.pow(b, 2) + (Math.pow(c, 2)) - (Math.pow(a, 2))) / (2 * b * c));
-    //   if (isNaN(link.internal_CoM_angle)) {
-    //     const angle1 = Math.atan2(link.CoMY - joint1.y, link.CoMX - joint1.x);
-    //     const angle2 = Math.atan2(link.CoMY - joint2.y, link.CoMX - joint2.x);
-    //     link.internal_CoM_angle = Math.abs(angle1 - angle2);
-    //   }
-    //   link.internal_distance = b;
-    // });
     let increment = 0;
     let simForward = true;
     let falseTwice = 0;
@@ -157,9 +141,11 @@ export class Mechanism {
     const inputJoint = joints.find(j => {
       if (!(j instanceof RealJoint)) {return}
       return j.input;
-    }) as RealJoint;
+    });
     if (inputJoint === undefined) {return}
+    if (!(inputJoint instanceof RealJoint)) {return}
     const desiredJoint = inputJoint.connectedJoints[0];
+    const desiredJointIndex = this._joints[0].findIndex(jt => jt.id === desiredJoint.id);
     const startingPositionX = desiredJoint.x;
     const startingPositionY = desiredJoint.y;
     const TOLERANCE = 0.008;
@@ -178,20 +164,25 @@ export class Mechanism {
         this._joints.push([]);
         this._links.push([]);
         this._forces.push([]);
-        for (const entry of desiredMap.entries()) {
-          const joint_index = jointIDToJointIndexMap.get(entry[0]);
-          if (joint_index === undefined) {return}
-          const joint = joints[joint_index];
-          // const joint = this.SimulationJoints.find(j => j.id === entry[0]);
-          joint.x = entry[1][0];
-          joint.y = entry[1][1];
-          this._joints[currentTimeStamp + 1].push(joint as Joint);
-        }
+        joints.forEach(j => {
+          const coord = desiredMap.get(j.id);
+          if (coord === undefined) {return}
+          this._joints[currentTimeStamp + 1].push(new Joint (j.id, coord[0], coord[1]));
+        });
+        // for (const entry of desiredMap.entries()) {
+        //   const joint_index = jointIDToJointIndexMap.get(entry[0]);
+        //   if (joint_index === undefined) {return}
+        //   const joint = joints[joint_index];
+        //   // const joint = this.SimulationJoints.find(j => j.id === entry[0]);
+        //   joint.x = entry[1][0];
+        //   joint.y = entry[1][1];
+        //   this._joints[currentTimeStamp + 1].push(joint as Joint);
+        // }
         falseTwice = 0;
         currentTimeStamp += timeIncrement;
         // TODO: Create own function to determine this. Probably just utilize tracer joint logic
         // const ffs = this.calculateForces(this.SimulationLinks, this.SimulationForces);
-        // increment++;
+        increment++;
         // adjust for linkAngle (for center of mass)
         // TODO: arguments passed in has to come from mechanism ICs and not from IC
         // const determined_ics = IcSolver.determineICPositions(ics, joints);
@@ -213,9 +204,12 @@ export class Mechanism {
         inputAngularVelocity = inputAngularVelocity * -1;
         inputAngVelDirection = !inputAngVelDirection;
       }
-      xDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
-      yDiff = Math.abs(startingPositionY - (Math.round(desiredJoint.y * 100) / 100));
+      xDiff = Math.abs(startingPositionX - (Math.round(this._joints[currentTimeStamp][desiredJointIndex].x * 100) / 100));
+      yDiff = Math.abs(startingPositionY - (Math.round(this._joints[currentTimeStamp][desiredJointIndex].y * 100) / 100));
+      // xDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
+      // yDiff = Math.abs(startingPositionY - (Math.round(desiredJoint.y * 100) / 100));
       if (increment === 750) {
+      // if (currentTimeStamp === 750) {
         this.setMechanismInvalid();
         return;
       }
