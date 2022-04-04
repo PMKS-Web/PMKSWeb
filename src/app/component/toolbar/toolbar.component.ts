@@ -2,6 +2,8 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint} from "../../model/joint";
 import {Link} from "../../model/link";
 import {Force} from "../../model/force";
+import {interval} from "rxjs";
+import {GridComponent} from "../grid/grid.component";
 
 @Component({
   selector: 'app-toolbar',
@@ -20,6 +22,7 @@ export class ToolbarComponent implements OnInit {
   showCoMTags: boolean = false;
   unit: string = 'cm';
   gravity: boolean = false;
+  animate: boolean = false;
   constructor() { }
 
   ngOnInit(): void {
@@ -43,5 +46,21 @@ export class ToolbarComponent implements OnInit {
 
   changeCoMTag() {
     this.showCoMTags = !this.showCoMTags;
+  }
+
+  animateMechanism() {
+    console.log('animateMechanism');
+
+    this.animate = !this.animate;
+    if (this.animate) {
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          // console.log("this is the first message")
+          document.getElementById('slider')!.setAttribute('value', i.toString());
+        }, 100 * i);
+      }
+    } else {
+      document.getElementById('slider')!.setAttribute('value','0');
+    }
   }
 }
