@@ -1221,4 +1221,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     return joint.input;
   }
+
+  animate() {
+    for (let i = 0; i < this.mechanisms[0].joints.length; i++) {
+      setTimeout(() => {
+        this.joints.forEach((j, j_index) => {
+          j.x = this.mechanisms[0].joints[i][j_index].x;
+          j.y = this.mechanisms[0].joints[i][j_index].y;
+        });
+      }, 10 * i);
+    }
+  }
 }

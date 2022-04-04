@@ -12,4 +12,5 @@
              [links]="gridComponent.links"
              [forces]="gridComponent.forces"
              [screenCoord]="gridComponent.screenCoord"
-             (showcaseTable)="linkageTableComponent.linkageVisibility()"></app-toolbar>
+             (showcaseTable)="linkageTableComponent.linkageVisibility()"
+             (animateGridEmitter)="gridComponent.animate()"></app-toolbar>

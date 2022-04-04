@@ -17,6 +17,7 @@ export class ToolbarComponent implements OnInit {
   @Input() forces: Force[] = [];
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
+  @Output() animateGridEmitter = new EventEmitter();
   selectedTab: string = 'none';
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
@@ -53,11 +54,15 @@ export class ToolbarComponent implements OnInit {
 
     this.animate = !this.animate;
     if (this.animate) {
+      this.animateGridEmitter.emit();
+      // for (let i = 0; i < 360; i++) {
       for (let i = 0; i < 100; i++) {
         setTimeout(() => {
           // console.log("this is the first message")
           document.getElementById('slider')!.setAttribute('value', i.toString());
-        }, 100 * i);
+          console.log(i.toString());
+
+        }, 10 * i);
       }
     } else {
       document.getElementById('slider')!.setAttribute('value','0');
