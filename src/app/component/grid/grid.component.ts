@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
-import {Joint, RevJoint, PrisJoint, ImagJoint} from "../../model/joint";
+import {Joint, RevJoint, PrisJoint, ImagJoint, RealJoint} from "../../model/joint";
 import {ImagLink, Link, RealLink, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
@@ -118,16 +118,18 @@ export class GridComponent implements OnInit, AfterViewInit {
   };
 
   // remove this if this is possible
-  private static selectedJoint: Joint;
+  private static selectedJoint: RealJoint;
   private static selectedLink: RealLink;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor() { }
+  constructor() {
+  }
 
   ngOnInit(): void {
   }
+
   ngAfterViewInit() {
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
@@ -170,11 +172,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     const newY = this.roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y), 3);
     return new Coord(newX, newY);
   }
+
   private static gridToScreen(x: number, y: number) {
     const newX = (AppConstants.scaleFactor * x) + GridComponent.gridOffset.x;
     const newY = (AppConstants.scaleFactor * y) + GridComponent.gridOffset.y;
     return new Coord(newX, newY);
   }
+
   private static zoomPoint(newScale: number, pointX: number, pointY: number) {
     const beforeScaleCoords = this.screenToGrid(pointX, pointY);
     // Prevent zooming in or out too far
@@ -190,6 +194,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridOffset.y = GridComponent.gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
+
   private static applyMatrixToSVG() {
     const offsetX = GridComponent.gridOffset.x;
     const offsetY = GridComponent.gridOffset.y;
@@ -198,6 +203,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
+
   // TODO: Once the Grid Toolbar (Animation Bar) is created, reuse this function
   private static reset() {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
@@ -209,6 +215,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.zoomPoint(1 / AppConstants.scaleFactor, 0, 0);
     this.applyMatrixToSVG();
   }
+
   private static panSVG(dx: number, dy: number) {
     const newOffsetX = this.gridOffset.x - dx;
     const newOffsetY = this.gridOffset.y + dy;
@@ -225,7 +232,9 @@ export class GridComponent implements OnInit, AfterViewInit {
     const box = svg.getBoundingClientRect();
     // const width = box.right - box.left;
     const height = box.bottom - box.top;
-    if (CTM === null ) { return }
+    if (CTM === null) {
+      return
+    }
     const newX = GridComponent.roundNumber((e.clientX - CTM.e) / CTM.a, 0);
     let newY: number;
     // NOTE: CTM.f is the svg.ClientHeight + height of rest of elements. In Firefox, clientHeight does not work (returns 0) so we need to
@@ -265,6 +274,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.linkStates = linkStates.waiting;
     GridComponent.forceStates = forceStates.waiting;
   }
+
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -291,7 +301,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 if (GridComponent.jointStates === jointStates.creating) {
                   const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
                   const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  const joint2ID =  this.determineNextLetter();
+                  const joint2ID = this.determineNextLetter();
                   const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                   GridComponent.selectedJoint.links.push(link);
@@ -338,7 +348,9 @@ export class GridComponent implements OnInit, AfterViewInit {
                   }
                   startCoord = GridComponent.screenToGrid(screenX, screenY);
                   const endCoordRaw = GridComponent.getMousePosition($event);
-                  if (endCoordRaw === undefined) { return }
+                  if (endCoordRaw === undefined) {
+                    return
+                  }
                   const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                   // TODO: Be sure the force added is at correct position for binary link
                   const force = new Force('F' + '1', GridComponent.selectedLink, startCoord, endCoord);
@@ -367,7 +379,7 @@ export class GridComponent implements OnInit, AfterViewInit {
               case jointStates.waiting:
                 GridComponent.gridStates = gridStates.dragging;
                 GridComponent.jointStates = jointStates.dragging;
-                GridComponent.selectedJoint = thing as Joint;
+                GridComponent.selectedJoint = thing as RealJoint;
                 break;
             }
             break;
@@ -381,7 +393,9 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'force':
             switch (GridComponent.forceStates) {
               case forceStates.waiting:
-                if (forcePoint === undefined) { return }
+                if (forcePoint === undefined) {
+                  return
+                }
                 GridComponent.gridStates = gridStates.dragging;
                 GridComponent.forceStates = forceStates.dragging;
                 GridComponent.selectedForceEndPoint = forcePoint;
@@ -396,12 +410,15 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+
   // TODO: Be sure to adjust the position of the ImagJoint when dragging a joint that is a prismatic joint
   mouseMove($event: MouseEvent, typeChosen: string) {
     $event.preventDefault();
     $event.stopPropagation();
     const rawCoord = GridComponent.getMousePosition($event);
-    if (rawCoord === undefined) { return }
+    if (rawCoord === undefined) {
+      return
+    }
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
 
     switch (typeChosen) {
@@ -484,6 +501,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+
   RectMouseOver($event: MouseEvent, menuType: string) {
     switch (menuType) {
       case 'addInput':
@@ -540,6 +558,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+
   RectMouseOut($event: MouseEvent, menuType: string) {
     switch (menuType) {
       case 'addInput':
@@ -613,6 +632,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuChangeForceLocal.style.display = 'none';
     GridComponent.contextMenuDeleteForce.style.display = 'none';
   }
+
   contextMenu($event: MouseEvent, desiredMenu: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -752,6 +772,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+
   showcaseContextMenu(contextMenu: SVGElement, offsetX: number, offsetY: number,
                       boxIncrement: number, textIncrement: number) {
     contextMenu.style.display = 'block'
@@ -770,19 +791,21 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.joints.push(newJoint);
     this.updateMechanism();
   }
+
   createGround() {
     this.disappearContext();
     if (GridComponent.selectedJoint instanceof PrisJoint) {
       let joint = GridComponent.selectedJoint as RevJoint;
       // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
       joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-      const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
+      const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
       this.joints[selectedJointIndex] = joint;
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
     this.updateMechanism();
   }
+
   createSlider() {
     this.disappearContext();
     let joint = GridComponent.selectedJoint;
@@ -791,35 +814,45 @@ export class GridComponent implements OnInit, AfterViewInit {
       new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints) :
       new PrisJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
     joint.ground = joint instanceof PrisJoint;
-    const selectedJointIndex = this.joints.findIndex(j => j.id === GridComponent.selectedJoint.id);
+    const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
     this.joints[selectedJointIndex] = joint;
     GridComponent.selectedJoint = joint;
-    if (this.joints.findIndex(j => j.input) !== -1 && joint instanceof PrisJoint) {
+    // TODO: Have a method to check for input joint
+    if (joint instanceof PrisJoint && this.findInputJointIndex() !== -1) {
       this.createImagJointAndLinks(joint);
     }
     this.updateMechanism();
   }
+
   deleteJoint() {
     this.disappearContext();
-    const jointIndex = this.joints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
-    GridComponent.selectedJoint.links.forEach(li => {
+    const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
+    GridComponent.selectedJoint.links.forEach(l => {
       // TODO: May wanna check this to be sure...
-      if (li instanceof ImagLink) {return}
-      const l = li as RealLink;
+      if (l instanceof ImagLink) {
+        return
+      }
       if (l.joints.length < 3) {
+        // TODO: Utilize this same logic when you delete ImagJoint and ImagLink
+        // TODO: this.deleteJointFromConnectedJoints(delJoint);
+        // TODO: this.deleteLinkFromConnectedLinks(delLink);
         // delete forces on link
-        l.forces.forEach(f => {
-          const forceIndex = this.forces.findIndex(fo => fo.id === f.id);
-          this.forces.splice(forceIndex, 1);
-        });
+        if (l instanceof RealLink) {
+          l.forces.forEach(f => {
+            const forceIndex = this.forces.findIndex(fo => fo.id === f.id);
+            this.forces.splice(forceIndex, 1);
+          });
+        }
         // go to other connected joint and remove this link from its connectedLinks and joint from connectedJoint
         // There may be an easier way to do this but this logic works :P
         const desiredJointID = l.joints[0].id === GridComponent.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
-        const desiredJointIndex = this.joints.findIndex(j => j.id === desiredJointID);
-        const deleteJointIndex = this.joints[desiredJointIndex].connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
-        this.joints[desiredJointIndex].connectedJoints.splice(deleteJointIndex, 1);
-        const deleteLinkIndex = this.joints[desiredJointIndex].links.findIndex(li => li.id === l.id);
-        this.joints[desiredJointIndex].links.splice(deleteLinkIndex,  1);
+        const desiredJointIndex = this.findJointIDIndex(desiredJointID, this.joints);
+        const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (this.joints[desiredJointIndex] as RealJoint).connectedJoints);
+        (this.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
+        const deleteLinkIndex = (this.joints[desiredJointIndex] as RealJoint).links.findIndex(lin => {
+          if (!(lin instanceof RealLink)) {return}
+          return lin.id === l.id});
+        (this.joints[desiredJointIndex] as RealJoint).links.splice(deleteLinkIndex, 1);
         // remove link from links
         const deleteLinkIndex2 = this.links.findIndex(li => li.id === l.id);
         this.links.splice(deleteLinkIndex2, 1);
@@ -828,6 +861,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.joints.splice(jointIndex, 1);
     this.updateMechanism();
   }
+
   createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext();
     let startX: number;
@@ -849,7 +883,9 @@ export class GridComponent implements OnInit, AfterViewInit {
         return;
     }
     const mouseRawPos = GridComponent.getMousePosition($event);
-    if (mouseRawPos === undefined) { return }
+    if (mouseRawPos === undefined) {
+      return
+    }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
     // TODO: having to call setAttribute and have HTML update for you automatically
@@ -862,6 +898,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.creating;
     GridComponent.jointTempHolderSVG.style.display = 'block';
   }
+
   createInput($event: MouseEvent) {
     this.disappearContext();
     // TODO: Adjust this logic when there are multiple mechanisms created
@@ -891,6 +928,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     this.updateMechanism();
   }
+
   createForce($event: MouseEvent) {
     this.disappearContext();
     let startCoord: Coord;
@@ -904,7 +942,9 @@ export class GridComponent implements OnInit, AfterViewInit {
       startCoord = GridComponent.screenToGrid(screenX, screenY);
     }
     const mouseRawPos = GridComponent.getMousePosition($event);
-    if (mouseRawPos === undefined) { return }
+    if (mouseRawPos === undefined) {
+      return
+    }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     GridComponent.forceTempHolderSVG.children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
     GridComponent.forceTempHolderSVG.children[1].setAttribute('d', Force.createForceArrow(startCoord, mousePos));
@@ -912,15 +952,18 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.creating;
     GridComponent.forceTempHolderSVG.style.display = 'block';
   }
+
   editShape() {
     this.disappearContext();
   }
+
   deleteLink() {
     this.disappearContext();
     const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     this.links.splice(linkIndex, 1);
     this.updateMechanism();
   }
+
   changeForceDirection() {
     this.disappearContext();
     GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
@@ -933,6 +976,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     this.updateMechanism();
   }
+
   changeForceLocal() {
     this.disappearContext();
     GridComponent.selectedForce.local = !GridComponent.selectedForce.local;
@@ -945,6 +989,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     this.updateMechanism();
   }
+
   deleteForce() {
     this.disappearContext();
     const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
@@ -957,13 +1002,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Determine logic later once everything else is determined
     this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, this.gravity, this.unit));
   }
-  private static dragJoint(selectedJoint: Joint, trueCoord: Coord) {
+
+  private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = this.roundNumber(trueCoord.x, 3);
     selectedJoint.y = this.roundNumber(trueCoord.y, 3);
-    selectedJoint.links.forEach(li => {
-      if (li instanceof ImagLink) {return}
-      const l = li as RealLink;
+    selectedJoint.links.forEach(l => {
+      if (!(l instanceof RealLink)) {return}
       // TODO: delete this if this is not needed (verify this)
       const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
       l.joints[jointIndex].x = this.roundNumber(trueCoord.x, 3);
@@ -981,6 +1026,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
     return selectedJoint
   }
+
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
     if (GridComponent.selectedForceEndPoint === 'startPoint') {
       if (selectedForce.link.shape === 'line') {
@@ -996,7 +1042,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         } else {
           selectedForce.startCoord.x = this.roundNumber(trueCoord.x, 3);
         }
-        const slope = (jointTwo.y - jointOne.y ) / (jointTwo.x - jointOne.x);
+        const slope = (jointTwo.y - jointOne.y) / (jointTwo.x - jointOne.x);
         const b = jointOne.y;
         selectedForce.startCoord.y = this.roundNumber(jointOne.y + (selectedForce.startCoord.x - jointOne.x) * slope, 3);
       } else {
@@ -1021,13 +1067,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
   }
+
   roundNumber(num: number, scale: number): number {
     const tens = Math.pow(10, scale);
     return Math.round(num * tens) / tens;
   }
+
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   typeOfJoint(joint: Joint) {
-    switch(joint.constructor) {
+    switch (joint.constructor) {
       case RevJoint:
         return 'R';
       case PrisJoint:
@@ -1038,6 +1086,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         return '?'
     }
   }
+
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   typeOfLink(link: Link) {
     switch (link.constructor) {
@@ -1049,9 +1098,12 @@ export class GridComponent implements OnInit, AfterViewInit {
         return '?'
     }
   }
+
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   getLinkProp(l: Link, propType: string) {
-    if (l instanceof ImagLink) {return}
+    if (l instanceof ImagLink) {
+      return
+    }
     const link = l as RealLink;
     switch (propType) {
       case 'mass':
@@ -1100,8 +1152,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private createImagJointAndLinks(joint: PrisJoint) {
     const imagJointId = this.determineNextLetter();
-    const inputJoint = this.joints.find(jt => jt.input);
-    if (inputJoint === undefined) {return}
+    const inputJointIndex = this.findInputJointIndex();
+    const inputJoint = this.joints[inputJointIndex];
+    if (inputJoint === undefined) {
+      return
+    }
     const radToDeg = 180 / Math.PI;
     let coord: Coord;
     if (joint.angle % (180 * radToDeg) === 0) {
@@ -1117,7 +1172,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       const y = m1 * x + b1;
       coord = new Coord(x, y);
     }
-    const imagJoint = new ImagJoint(imagJointId, coord.x, coord.y, joint.input, true, [], [joint]);
+    const imagJoint = new ImagJoint(imagJointId, coord.x, coord.y);
     this.joints.push(imagJoint);
     joint.connectedJoints.push(imagJoint);
     const linkJoints = [];
@@ -1127,6 +1182,40 @@ export class GridComponent implements OnInit, AfterViewInit {
     const imagLink = new ImagLink(linkID, linkJoints);
     this.links.push(imagLink);
     joint.links.push(imagLink);
-    imagJoint.links.push(imagLink);
+  }
+
+  private findInputJointIndex() {
+    return this.joints.findIndex(j => {
+      if (j instanceof ImagJoint) {
+        return
+      }
+      const joint = j as RealJoint;
+      joint.input
+    });
+  }
+
+  private findJointIDIndex(id: string, joints: Joint[]) {
+    return joints.findIndex(j => j.id === id);
+  }
+
+  getGround(joint: Joint) {
+    if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {
+      return
+    }
+    return joint.ground;
+  }
+
+  getJointR(joint: Joint) {
+    if (!(joint instanceof RevJoint)) {
+      return 0
+    }
+    return joint.r;
+  }
+
+  getInput(joint: Joint) {
+    if (!(joint instanceof RevJoint || joint instanceof PrisJoint)) {
+      return
+    }
+    return joint.input;
   }
 }

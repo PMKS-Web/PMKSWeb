@@ -5,22 +5,11 @@ export class Joint {
   private _id: string;
   private _x: number;
   private _y: number;
-  private _r: number;
-  private _input: boolean;
-  private _ground: boolean;
-  private _links: Link[];
-  private _connectedJoints: Joint[];
 
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
-              connectedJoints: Joint[] = []) {
+  constructor(id: string, x: number, y: number) {
     this._id = id;
     this._x = x;
     this._y = y;
-    this._r = 5 * AppConstants.scaleFactor;
-    this._input = input;
-    this._ground = ground;
-    this._links = links;
-    this._connectedJoints = connectedJoints;
   }
 
   get id(): string {
@@ -45,6 +34,23 @@ export class Joint {
 
   set y(value: number) {
     this._y = value;
+  }
+}
+
+export class RealJoint extends Joint {
+  // TODO: Does the r only need to be on RevJoints?
+  private _r: number = 5 * AppConstants.scaleFactor;
+  private _input: boolean;
+  private _ground: boolean;
+  private _links: Link[];
+  private _connectedJoints: Joint[];
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
+              connectedJoints: Joint[] = []) {
+    super(id, x, y);
+    this._input = input;
+    this._ground = ground;
+    this._links = links;
+    this._connectedJoints = connectedJoints;
   }
 
   get r(): number {
@@ -88,14 +94,21 @@ export class Joint {
   }
 }
 
-export class RevJoint extends Joint {
+export class ImagJoint extends Joint {
+
+  constructor(id: string, x: number, y: number) {
+    super(id, x, y);
+  }
+}
+
+export class RevJoint extends RealJoint {
   constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
               connectedJoints: Joint[] = []) {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 }
 
-export class PrisJoint extends Joint {
+export class PrisJoint extends RealJoint {
   private _angle: number = 0;
 
   constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
@@ -109,12 +122,5 @@ export class PrisJoint extends Joint {
 
   set angle(value: number) {
     this._angle = value;
-  }
-}
-
-export class ImagJoint extends Joint {
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
-              connectedJoints: Joint[] = []) {
-    super(id, x, y, input, ground, links, connectedJoints);
   }
 }

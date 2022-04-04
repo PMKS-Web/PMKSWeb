@@ -1,7 +1,7 @@
 import {Joint, PrisJoint, RevJoint} from "../joint";
 import {ImagLink, Link, RealLink} from "../link";
 import {Force} from "../force";
-import {LoopSolver} from "./loop-solver";
+// import {LoopSolver} from "./loop-solver";
 import {PositionSolver} from "./position-solver";
 import {IcSolver} from "./ic-solver";
 import {InstantCenter} from "../instant-center";
@@ -22,14 +22,14 @@ export class Mechanism {
     this._forces = forces;
     this._gravity = gravity;
     this._unit = unit;
-    const dof = this.determineDegreesOfFreedom(joints, links);
-    const inputJointIndex = joints.findIndex(j => j.input);
-    if (dof === 1 && inputJointIndex !== -1) {
-      [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
-      // this.findFullMovementPos(joints, links, forces, ics, gravity, unit, 10);
-    } else {
-      Mechanism.setMechanismInvalid();
-    }
+    // const dof = this.determineDegreesOfFreedom(joints, links);
+    // const inputJointIndex = joints.findIndex(j => j.input);
+    // if (dof === 1 && inputJointIndex !== -1) {
+    //   [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
+    //   this.findFullMovementPos(joints, links, forces, ics, gravity, unit, 10);
+    // } else {
+    //   Mechanism.setMechanismInvalid();
+    // }
   }
 
   /**
@@ -39,55 +39,55 @@ export class Mechanism {
    2.determine number of ground joints
    3.determine number of slider joints
    */
-  determineDegreesOfFreedom(joints: Joint[], links: Link[]) {
-    let N = 0; // start with 1 to account for ground link
-    let J1 = 0;
-    const J2 = 0;
-    let groundNotFound = true;
-    links.forEach(l => {
-      if (l instanceof ImagLink) {
-        return;
-      }
-      N++;
-      // TODO: Account for this case later
-      // if (this.determineParallelLinkage(l)) {
-      //   N -= l.joints.length - 2;
-      //   J1 -= (l.joints.length - 2) * 2;
-      // }
-    });
-
-    joints.forEach(j => {
-      // TODO: Account for this instance later
-      // if (j instanceof ImagJoint) {
-      //   return;
-      // }
-      switch (j.constructor) {
-        case RevJoint:
-          if (j.ground) {
-            J1 += j.links.length;
-            if (groundNotFound) {
-              N++;
-              groundNotFound = false;
-            }
-          } else {
-            J1 += j.links.length - 1;
-          }
-          break;
-        case PrisJoint:
-          // N++;
-          J1 += j.links.length;
-          // J2++;
-          break;
-      }
-    });
-    // TODO: Check later to see if this is needed...
-    // this.realLinks = N;
-    // this.realJoints = J1;
-    if (groundNotFound) {
-      return NaN;
-    }
-    return (3 * (N - 1)) - (2 * J1) - J2;
-  }
+  // determineDegreesOfFreedom(joints: Joint[], links: Link[]) {
+  //   let N = 0; // start with 1 to account for ground link
+  //   let J1 = 0;
+  //   const J2 = 0;
+  //   let groundNotFound = true;
+  //   links.forEach(l => {
+  //     if (l instanceof ImagLink) {
+  //       return;
+  //     }
+  //     N++;
+  //     // TODO: Account for this case later
+  //     // if (this.determineParallelLinkage(l)) {
+  //     //   N -= l.joints.length - 2;
+  //     //   J1 -= (l.joints.length - 2) * 2;
+  //     // }
+  //   });
+  //
+  //   joints.forEach(j => {
+  //     // TODO: Account for this instance later
+  //     // if (j instanceof ImagJoint) {
+  //     //   return;
+  //     // }
+  //     switch (j.constructor) {
+  //       case RevJoint:
+  //         if (j.ground) {
+  //           J1 += j.links.length;
+  //           if (groundNotFound) {
+  //             N++;
+  //             groundNotFound = false;
+  //           }
+  //         } else {
+  //           J1 += j.links.length - 1;
+  //         }
+  //         break;
+  //       case PrisJoint:
+  //         // N++;
+  //         J1 += j.links.length;
+  //         // J2++;
+  //         break;
+  //     }
+  //   });
+  //   // TODO: Check later to see if this is needed...
+  //   // this.realLinks = N;
+  //   // this.realJoints = J1;
+  //   if (groundNotFound) {
+  //     return NaN;
+  //   }
+  //   return (3 * (N - 1)) - (2 * J1) - J2;
+  // }
 
   // private findFullMovementPos(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
   //                             gravity: boolean, unit: string, inputAngularVelocity: number) {

@@ -1,141 +1,141 @@
 <div id="linkageTable" class="linkageTable" style="visibility: visible">
-    <div class="buttonContainer">
-      <button id="jointButton" (click)="setTab(0)"
-              (mouseover)="mouseOver(0)"
-              (mouseout)="mouseOut(0)"
-              style="color: black; background-color: gray"> Joints </button>
-      <button id="linkButton" (click)="setTab(1)"
-              (mouseover)="mouseOver(1)"
-              (mouseout)="mouseOut(1)"> Links </button>
-      <button id="forceButton" (click)="setTab(2)"
-              (mouseover)="mouseOver(2)"
-              (mouseout)="mouseOut(2)"> Forces </button>
-    </div>
-    <div class="tabPanel" *ngIf="selectedTab === 0">
-      <table id="jointTable">
-        <thead>
-        <tr>
-          <th>ID</th>
-<!--          <th>Type</th>-->
-          <th>Linked To</th>
-          <th>Dist From Joint</th>
-          <th>x</th>
-          <th>y</th>
-          <th>angle</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let joint of joints">
-          <td *ngIf="typeOfJoint(joint) !== 'I'">
-            <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
-          </td>
-          <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
-          <!-- <td>{{row[1]}}</td>  --> <!-- joint type -->
-<!--          <td>-->
-<!--            {{joint.type}}-->
-<!--          </td>-->
-          <td *ngIf="typeOfJoint(joint) !== 'I'">
-            <table *ngFor="let conJoints of joint.connectedJoints" style="margin:auto; width:50%">
-              <td style="border: none" *ngIf="typeOfJoint(conJoints) !== 'I'">
-                {{conJoints.id}}
-              </td>
-            </table>
-          </td>
-          <td *ngIf="typeOfJoint(joint) !== 'I'">
-            <table *ngFor="let conJoint of joint.connectedJoints" style="margin:auto; width:50%">
-              <td style="border: none" *ngIf="typeOfJoint(conJoint) !== 'I'">
-                {{distFromJoint(conJoint, joint)}}
-              </td>
-            </table>
-          </td>
-          <td *ngIf="typeOfJoint(joint) !== 'I'">
-            <input type="text" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
-          </td>
-          <td *ngIf="typeOfJoint(joint) !== 'I'">
-            <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
-          </td>
-          <td *ngIf="typeOfJoint(joint) === 'P'">
-            <input type="text" value="{{getJointAngle(joint)}}" (change)="changeJointProp($event, joint, 'angle')">
-          </td>
-          <td *ngIf="typeOfJoint(joint) === 'R'">
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="tabPanel" *ngIf="selectedTab === 1">
-      <table id="linkTable">
-        <thead>
-        <tr>
-          <th>ID</th>
-          <th>Mass</th>
-          <th>MoI</th>
-          <th>X CoM</th>
-          <th>Y CoM</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let link of links">
-          <td *ngIf="typeofLink(link) !== 'I'">
-            {{link.id}}
-          </td>
-          <td *ngIf="typeofLink(link) !== 'I'">
-            <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
-          </td>
-          <td *ngIf="typeofLink(link) !== 'I'">
-            <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
-          </td>
-          <td *ngIf="typeofLink(link) !== 'I'">
-            <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
-          </td>
-          <td *ngIf="typeofLink(link) !== 'I'">
-            <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
-          </td>
-        </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
-    </div>
-    <div class="tabPanel" *ngIf="selectedTab === 2">
-      <table id="forceTable">
-        <thead>
-        <tr>
-          <th>On Link</th>
-          <th>ID</th>
-          <th>Angle</th>
-          <th>X-Mag</th>
-          <th>Y-Mag</th>
-          <th>X-Pos</th>
-          <th>Y-Pos</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let force of forces">
-          <td>
-            {{force.link.id}}
-          </td>
-          <td>
-            <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
-          </td>
-          <td>
-<!--            <input type="text" value="{{force.angle}}"--> ?
-          </td>
-          <td>
-            <input type="text" value="{{force.xMag}}" (change)="changeForceProp($event, force, 'xMag')">
-          </td>
-          <td>
-            <input type="text" value="{{force.yMag}}" (change)="changeForceProp($event, force, 'yMag')">
-          </td>
-          <td>
-            <input type="text" value="{{force.startCoord.x}}" (change)="changeForceProp($event, force, 'xPos')">
-          </td>
-          <td>
-            <input type="text" value="{{force.startCoord.y}}" (change)="changeForceProp($event, force, 'yPos')">
-          </td>
-        </tr>
-        </tbody>
-        <tfoot>
-        </tfoot>
-      </table>
-    </div>
+  <div class="buttonContainer">
+    <button id="jointButton" (click)="setTab(0)"
+            (mouseover)="mouseOver(0)"
+            (mouseout)="mouseOut(0)"
+            style="color: black; background-color: gray"> Joints </button>
+    <button id="linkButton" (click)="setTab(1)"
+            (mouseover)="mouseOver(1)"
+            (mouseout)="mouseOut(1)"> Links </button>
+    <button id="forceButton" (click)="setTab(2)"
+            (mouseover)="mouseOver(2)"
+            (mouseout)="mouseOut(2)"> Forces </button>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 0">
+    <table id="jointTable">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <!--          <th>Type</th>-->
+        <th>Linked To</th>
+        <th>Dist From Joint</th>
+        <th>x</th>
+        <th>y</th>
+        <th>angle</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let joint of joints">
+        <td *ngIf="typeOfJoint(joint) !== 'I'">
+          <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
+        </td>
+        <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
+        <!-- <td>{{row[1]}}</td>  --> <!-- joint type -->
+        <!--          <td>-->
+        <!--            {{joint.type}}-->
+        <!--          </td>-->
+        <td *ngIf="typeOfJoint(joint) !== 'I'">
+          <table *ngFor="let conJoints of connectedJoints(joint)" style="margin:auto; width:50%">
+            <td style="border: none" *ngIf="typeOfJoint(conJoints) !== 'I'">
+              {{conJoints.id}}
+            </td>
+          </table>
+        </td>
+        <td *ngIf="typeOfJoint(joint) === 'R'">
+          <table *ngFor="let conJoint of connectedJoints(joint)" style="margin:auto; width:50%">
+            <td style="border: none" *ngIf="typeOfJoint(conJoint) !== 'I'">
+              {{distFromJoint(conJoint, joint)}}
+            </td>
+          </table>
+        </td>
+        <td *ngIf="typeOfJoint(joint) !== 'I'">
+          <input type="text" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
+        </td>
+        <td *ngIf="typeOfJoint(joint) !== 'I'">
+          <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
+        </td>
+        <td *ngIf="typeOfJoint(joint) === 'P'">
+          <input type="text" value="{{getJointAngle(joint)}}" (change)="changeJointProp($event, joint, 'angle')">
+        </td>
+        <td *ngIf="typeOfJoint(joint) === 'R'">
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 1">
+    <table id="linkTable">
+      <thead>
+      <tr>
+        <th>ID</th>
+        <th>Mass</th>
+        <th>MoI</th>
+        <th>X CoM</th>
+        <th>Y CoM</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let link of links">
+        <td *ngIf="typeofLink(link) !== 'I'">
+          {{link.id}}
+        </td>
+        <td *ngIf="typeofLink(link) !== 'I'">
+          <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
+        </td>
+        <td *ngIf="typeofLink(link) !== 'I'">
+          <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
+        </td>
+        <td *ngIf="typeofLink(link) !== 'I'">
+          <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
+        </td>
+        <td *ngIf="typeofLink(link) !== 'I'">
+          <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
+        </td>
+      </tr>
+      </tbody>
+      <tfoot></tfoot>
+    </table>
+  </div>
+  <div class="tabPanel" *ngIf="selectedTab === 2">
+    <table id="forceTable">
+      <thead>
+      <tr>
+        <th>On Link</th>
+        <th>ID</th>
+        <th>Angle</th>
+        <th>X-Mag</th>
+        <th>Y-Mag</th>
+        <th>X-Pos</th>
+        <th>Y-Pos</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let force of forces">
+        <td>
+          {{force.link.id}}
+        </td>
+        <td>
+          <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
+        </td>
+        <td>
+          <!--            <input type="text" value="{{force.angle}}"--> ?
+        </td>
+        <td>
+          <input type="text" value="{{force.xMag}}" (change)="changeForceProp($event, force, 'xMag')">
+        </td>
+        <td>
+          <input type="text" value="{{force.yMag}}" (change)="changeForceProp($event, force, 'yMag')">
+        </td>
+        <td>
+          <input type="text" value="{{force.startCoord.x}}" (change)="changeForceProp($event, force, 'xPos')">
+        </td>
+        <td>
+          <input type="text" value="{{force.startCoord.y}}" (change)="changeForceProp($event, force, 'yPos')">
+        </td>
+      </tr>
+      </tbody>
+      <tfoot>
+      </tfoot>
+    </table>
+  </div>
 </div>

@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Force} from "../../model/force";
 import {ImagLink, Link, RealLink, Shape} from "../../model/link";
-import {ImagJoint, Joint, PrisJoint, RevJoint} from "../../model/joint";
+import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
 
 @Component({
@@ -74,6 +74,7 @@ export class LinkageTableComponent implements OnInit {
   }
 
   changeJointProp($event: any, joint: Joint, jointProp: string) {
+    if (!(joint instanceof RealJoint)) {return}
     switch (jointProp) {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
@@ -126,20 +127,19 @@ export class LinkageTableComponent implements OnInit {
     }
   }
   changeLinkProp($event: any, link: Link, linkProp: string) {
-    if (link instanceof ImagLink) {return }
-    const l = link as RealLink;
+    if (!(link instanceof RealLink)) {return}
     switch (linkProp) {
       case 'mass':
-        l.mass = $event.target.value;
+        link.mass = $event.target.value;
         break;
       case 'massMoI':
-        l.massMoI = $event.target.value;
+        link.massMoI = $event.target.value;
         break;
       case 'CoMX':
-        l.CoMX = $event.target.value;
+        link.CoMX = $event.target.value;
         break;
       case 'CoMY':
-        l.CoMY = $event.target.value;
+        link.CoMY = $event.target.value;
         break;
     }
   }
@@ -212,15 +212,18 @@ export class LinkageTableComponent implements OnInit {
 
   typeOfJoint(joint: Joint) {
     switch(joint.constructor) {
+      case Joint:
+        return '?';
+      case RealJoint:
+        return '?';
+      case ImagJoint:
+        return 'I';
       case RevJoint:
         return 'R';
       case PrisJoint:
         return 'P';
-      case ImagJoint:
-        return 'I';
-      default:
-          return '?'
     }
+    return '?';
   }
   typeofLink(link: Link) {
     switch (link.constructor) {
@@ -228,15 +231,14 @@ export class LinkageTableComponent implements OnInit {
         return 'R';
       case ImagLink:
         return 'I';
-      default:
-        return '?'
     }
+    return '?'
   }
 
   getJointAngle(joint: Joint) {
+    if (!(joint instanceof PrisJoint)) {return}
     // joint will always be a prismatic joint
-    const j = joint as PrisJoint;
-    return j.angle;
+    return joint.angle;
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -254,5 +256,10 @@ export class LinkageTableComponent implements OnInit {
       default:
         return '?';
     }
+  }
+
+  connectedJoints(joint: Joint) {
+    if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {return}
+    return joint.connectedJoints;
   }
 }
