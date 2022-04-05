@@ -124,7 +124,7 @@ export class Mechanism {
     let yDiff = Math.abs(startingPositionY - (Math.round(desiredJoint.y * 100) / 100));
 
     while (!simForward || currentTimeStamp === 0 || xDiff > TOLERANCE || yDiff > TOLERANCE) {
-      const [desiredMap, possible] = PositionSolver.determinePositionAnalysis(this._joints[currentTimeStamp],
+      const possible = PositionSolver.determinePositionAnalysis(this._joints[currentTimeStamp],
         this._links[currentTimeStamp], max_counter, inputAngVelDirection);
       if (possible) {
         this._joints.push([]);
@@ -132,13 +132,20 @@ export class Mechanism {
         this._forces.push([]);
         // Joint order matters at the moment
         this.joints[0].forEach(j => {
-          const jointCoord = desiredMap.get(j.id);
+          const jointCoord = PositionSolver.jointMapPositions.get(j.id);
           if (jointCoord === undefined) {return}
           this._joints[currentTimeStamp + 1].push(new Joint(j.id, jointCoord[0], jointCoord[1]));
         });
-        for (const entry of desiredMap.entries()) {
-          this._joints[currentTimeStamp + 1].push(new Joint (entry[0], entry[1][0], entry[1][1]));
-        }
+        this.links[0].forEach(l => {
+          const connectedJoints: Joint[] = [];
+          // TODO: think of possible way to reduce this if there is time
+          l.joints.forEach(j => {
+            const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
+            if (joint === undefined) {return}
+            connectedJoints.push(joint);
+          });
+          this._links[currentTimeStamp + 1].push(new RealLink(l.id, connectedJoints));
+        });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {
         //     l.determineCenterOfMass(l.joints, 'x');
@@ -188,6 +195,8 @@ export class Mechanism {
     this.joints = [[]];
     this.links = [[]];
     this.forces = [[]];
+    this.allLoops = [];
+    this.requiredLoops = [];
   }
 
 

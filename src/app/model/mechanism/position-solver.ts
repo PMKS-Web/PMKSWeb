@@ -187,7 +187,7 @@ export class PositionSolver {
     });
   }
 
-  static determinePositionAnalysis(joints: Joint[], links: Link[], max_counter: number, angVelDir: boolean): [Map<string, Array<number>>, boolean] {
+  static determinePositionAnalysis(joints: Joint[], links: Link[], max_counter: number, angVelDir: boolean): boolean {
     let counter = 1;
     while (counter <= max_counter) {
       const joint_id = this.jointNumOrderSolverMap.get(counter)!;
@@ -216,11 +216,11 @@ export class PositionSolver {
           break;
       }
       if (!possible) {
-        return [this.jointMapPositions, false];
+        return false;
       }
       counter++;
     }
-    return [this.jointMapPositions, true];
+    return true;
   }
 
   private static incrementRevInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
@@ -463,17 +463,7 @@ export class PositionSolver {
   private static determineTracerJoint(lastJoint: Joint, joint_with_neighboring_ground: Joint, unknown_joint: Joint) {
     let r1, r2, r3, internal_angle: number;
     if (!this.internalTriangleValuesMap.has(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)) {
-      // TODO: Once r's are determined, delete all of these below
-      // const a_x = lastJoint.xInitial;
-      // const a_y = lastJoint.yInitial;
-      // const b_x = joint_with_neighboring_ground.xInitial;
-      // const b_y = joint_with_neighboring_ground.yInitial;
-      // const c_x = unknown_joint.xInitial;
-      // const c_y = unknown_joint.yInitial;
       // TODO: Have map for determining r1, r2, r3
-      // r1 = Math.sqrt(Math.pow(c_x - a_x, 2) + Math.pow(c_y - a_y, 2));
-      // r2 = Math.sqrt(Math.pow(c_x - b_x, 2) + Math.pow(c_y - b_y, 2));
-      // r3 = Math.sqrt(Math.pow(a_x - b_x, 2) + Math.pow(a_y - b_y, 2));
       r1 = this.jointDistMap.get(unknown_joint.id + ',' + lastJoint.id)!;
       r2 = this.jointDistMap.get(unknown_joint.id + ',' + joint_with_neighboring_ground.id)!;
       r3 = this.jointDistMap.get(lastJoint.id  + ',' + joint_with_neighboring_ground.id)!;
