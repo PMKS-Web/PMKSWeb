@@ -108,20 +108,20 @@ export class RealLink extends Link {
         const xChange = Math.cos(rotation) * dist;
 
         return {
-          b1: {x: x1 + xChange, y: y1},
-          b2: {x: x1, y: y1},
-          b3: {x: x2 - xChange, y: y2},
-          b4: {x: x2, y: y2},
-          arrow: {x: 0, y: 0}
+          b1: new Coord(x1 + xChange, y1),
+          b2: new Coord(x1, y1),
+          b3: new Coord(x2 - xChange, y2),
+          b4: new Coord(x2, y2),
+          arrow: new Coord(0, 0)
         };
       }
       default: {
         return {
-          b1: {x: 0, y: 0},
-          b2: {x: 0, y: 0},
-          b3: {x: 0, y: 0},
-          b4: {x: 0, y: 0},
-          arrow: {x: 0, y: 0}
+          b1: new Coord(0, 0),
+          b2: new Coord(0, 0),
+          b3: new Coord(0, 0),
+          b4: new Coord(0, 0),
+          arrow: new Coord(0, 0)
         };
       }
     }
@@ -147,10 +147,10 @@ export class RealLink extends Link {
         const yChange = Math.cos(rotation) * width;
 
         // Create endpoints of SVG's
-        const p1 = { x: x1 - xChange - yChange, y: y1 + yChange - xChange };
-        const p2 = { x: x1 + xChange - yChange, y: y1 - yChange - xChange };
-        const p3 = { x: x2 + xChange + yChange, y: y2 - yChange + xChange };
-        const p4 = { x: x2 - xChange + yChange, y: y2 + yChange + xChange };
+        const p1 = new Coord(x1 - xChange - yChange, y1 + yChange - xChange);
+        const p2 = new Coord(x1 + xChange - yChange, y1 - yChange - xChange);
+        const p3 = new Coord(x2 + xChange + yChange, y2 - yChange + xChange);
+        const p4 = new Coord(x2 - xChange + yChange, y2 + yChange + xChange);
         points = [p1, p2, p3, p4];
         break;
         // return [p1, p2, p3, p4];

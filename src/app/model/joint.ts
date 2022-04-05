@@ -1,15 +1,13 @@
 import {AppConstants} from "./app-constants";
 import {Link} from "./link";
+import {Coord} from "./coord";
 
-export class Joint {
+export class Joint  extends Coord{
   private _id: string;
-  private _x: number;
-  private _y: number;
 
   constructor(id: string, x: number, y: number) {
+    super(x, y);
     this._id = id;
-    this._x = x;
-    this._y = y;
   }
 
   get id(): string {
@@ -18,22 +16,6 @@ export class Joint {
 
   set id(value: string) {
     this._id = value;
-  }
-
-  get x(): number {
-    return this._x;
-  }
-
-  set x(value: number) {
-    this._x = value;
-  }
-
-  get y(): number {
-    return this._y;
-  }
-
-  set y(value: number) {
-    this._y = value;
   }
 }
 
