@@ -94,8 +94,6 @@ export class Mechanism {
     return (3 * (N - 1)) - (2 * J1) - J2;
   }
 
-  // private findFullMovementPos(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
-  //                             gravity: boolean, unit: string, inputAngularVelocity: number) {
   private findFullMovementPos() {
     let inputAngularVelocity = 10;
     let simForward = true;
@@ -129,24 +127,24 @@ export class Mechanism {
       if (possible) {
         this._joints.push([]);
         this._links.push([]);
-        this._forces.push([]);
+        // this._forces.push([]);
         // Joint order matters at the moment
         this.joints[0].forEach(j => {
           const jointCoord = PositionSolver.jointMapPositions.get(j.id);
           if (jointCoord === undefined) {return}
           this._joints[currentTimeStamp + 1].push(new Joint(j.id, jointCoord[0], jointCoord[1]));
         });
-        // TODO: Redo the logic here. Cannot recreate the same link since Angular will not be able to intrinsically connect joints together as before
-        // this.links[0].forEach(l => {
-        //   const connectedJoints: Joint[] = [];
-        //   // TODO: think of possible way to reduce this if there is time
-        //   l.joints.forEach(j => {
-        //     const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
-        //     if (joint === undefined) {return}
-        //     connectedJoints.push(joint);
-        //   });
-        //   // this._links[currentTimeStamp + 1].push(new RealLink(l.id, connectedJoints));
-        // });
+        // TODO: Redo the logic here
+        this.links[0].forEach(l => {
+          const connectedJoints: Joint[] = [];
+          // TODO: think of possible way to reduce this if there is time
+          l.joints.forEach(j => {
+            const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
+            if (joint === undefined) {return}
+            connectedJoints.push(joint);
+          });
+          this._links[currentTimeStamp + 1].push(new RealLink(l.id, connectedJoints));
+        });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {
         //     l.determineCenterOfMass(l.joints, 'x');

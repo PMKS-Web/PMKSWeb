@@ -82,8 +82,7 @@ export class LinkageTableComponent implements OnInit {
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
-          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
-          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+          l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
@@ -102,8 +101,7 @@ export class LinkageTableComponent implements OnInit {
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
-          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
-          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+          l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
@@ -132,10 +130,10 @@ export class LinkageTableComponent implements OnInit {
         link.massMoI = $event.target.value;
         break;
       case 'CoMX':
-        link.CoMX = $event.target.value;
+        link.CoM.x = $event.target.value;
         break;
       case 'CoMY':
-        link.CoMY = $event.target.value;
+        link.CoM.y = $event.target.value;
         break;
     }
   }
@@ -246,9 +244,9 @@ export class LinkageTableComponent implements OnInit {
       case 'massMoI':
         return link.massMoI;
       case 'CoMX':
-        return link.CoMX;
+        return link.CoM.x;
       case 'CoMY':
-        return link.CoMY;
+        return link.CoM.y;
       default:
         return '?';
     }

@@ -1022,8 +1022,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
       l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-      l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
-      l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+      l.CoM = RealLink.determineCenterOfMass(l.joints);
       l.updateCoMDs();
       l.forces.forEach(f => {
         // TODO: adjust the location of force endpoints and update the line and arrow
@@ -1105,10 +1104,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'massMoI':
         return link.massMoI;
       case 'CoMX':
-        return link.CoMX;
+        return link.CoM.x;
       case 'CoMY':
         // TODO: Implement logic to not have -1?
-        return link.CoMY * -1;
+        return link.CoM.y * -1;
       case 'd':
         return link.d;
       case 'fill':
@@ -1222,15 +1221,27 @@ export class GridComponent implements OnInit, AfterViewInit {
           j.x = this.mechanisms[0].joints[positionNum][j_index].x;
           j.y = this.mechanisms[0].joints[positionNum][j_index].y;
         });
-        // TODO: Be sure the link color stays the same XD
         this.links.forEach((l, l_index) => {
           if (!(l instanceof RealLink)) {return}
-          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          // TODO: When you insert a joint onto a link, be sure to utilize this function call
-          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
-          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+          const link = this.mechanisms[0].links[positionNum][l_index];
+          if (!(link instanceof RealLink)) {return}
+          l.bound = link.bound;
+          l.d = link.d;
+          l.CoM = link.CoM;
           l.updateCoMDs();
+          // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          // l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
+          // l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+          // l.updateCoMDs();
+        });
+        this.forces.forEach(f => {
+          // f.startCoord.x = 0;
+          // f.startCoord.y = 0;
+          // f.endCoord.x = 0;
+          // f.endCoord.y = 0;
+          // f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+          // f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
         });
         // this.links = this.mechanisms[0].links[positionNum];
         // this.links.forEach((l, l_index) => {
@@ -1243,7 +1254,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
         // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
         // });
-      }, 10 * positionNum);
+      }, 5 * positionNum);
     }
     // this.animate();
   }

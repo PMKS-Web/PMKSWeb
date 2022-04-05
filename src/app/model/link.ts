@@ -74,8 +74,7 @@ export class RealLink extends Link {
   private _forces: Force[] = [];
   private _mass: number = 1;
   private _massMoI: number = 1;
-  private _CoMX: number;
-  private _CoMY: number;
+  private _CoM: Coord;
   private _CoM_d1: string = '';
   private _CoM_d2: string = '';
   private _CoM_d3: string = '';
@@ -88,8 +87,7 @@ export class RealLink extends Link {
     this._bound = RealLink.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = RealLink.getPointsFromBounds(this._bound, this._shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
-    this._CoMX = RealLink.determineCenterOfMass(joints, 'x');
-    this._CoMY = RealLink.determineCenterOfMass(joints, 'y');
+    this._CoM = RealLink.determineCenterOfMass(joints);
     this.updateCoMDs();
   }
 
@@ -284,16 +282,14 @@ export class RealLink extends Link {
     return pathString;
   }
 
-  static determineCenterOfMass(joints: Joint[], xOrY: string) {
-    let com = 0;
+  static determineCenterOfMass(joints: Joint[]) {
+    let com_x = 0;
+    let com_y = 0;
     joints.forEach(j => {
-      if (xOrY === 'x') {
-        com += j.x;
-      } else {
-        com += j.y;
-      }
-    });
-    return com / joints.length;
+        com_x += j.x;
+        com_y += j.y;
+      });
+    return new Coord(com_x / joints.length, com_y / joints.length);
   }
 
   get shape(): Shape {
@@ -352,21 +348,14 @@ export class RealLink extends Link {
     this._massMoI = value;
   }
 
-  get CoMX(): number {
-    return this._CoMX;
+  get CoM(): Coord {
+    return this._CoM;
   }
 
-  set CoMX(value: number) {
-    this._CoMX = value;
+  set CoM(value: Coord) {
+    this._CoM = value;
   }
 
-  get CoMY(): number {
-    return this._CoMY;
-  }
-
-  set CoMY(value: number) {
-    this._CoMY = value;
-  }
 
   get CoM_d1(): string {
     return this._CoM_d1;
@@ -401,14 +390,14 @@ export class RealLink extends Link {
   }
 
   updateCoMDs() {
-    this._CoM_d1 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX - 0.25) + ' ' + this.CoMY + ' ' +
-      'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY + 0.25);
-    this._CoM_d2 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY + 0.25) + ' ' +
-      'A0.25 0.25 0 0 0 ' + (this.CoMX + 0.25) + ' ' +  this.CoMY;
-    this._CoM_d3 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + (this.CoMX + 0.25)  + ' ' + this.CoMY + ' ' +
-      'A0.25 0.25 0 0 0 ' + this.CoMX + ' ' + (this.CoMY - 0.25);
-    this._CoM_d4 = 'M' + this.CoMX + ' ' + this.CoMY + ' ' + this.CoMX + ' ' + (this.CoMY - 0.25) + ' ' +
-      'A0.25 0.25 0 0 0 ' + (this.CoMX - 0.25)  + ' ' +  this.CoMY;
+    this._CoM_d1 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y + ' ' +
+      'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y + 0.25);
+    this._CoM_d2 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y + 0.25) + ' ' +
+      'A0.25 0.25 0 0 0 ' + (this.CoM.x + 0.25) + ' ' +  this.CoM.y;
+    this._CoM_d3 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x + 0.25)  + ' ' + this.CoM.y + ' ' +
+      'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y - 0.25);
+    this._CoM_d4 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y - 0.25) + ' ' +
+      'A0.25 0.25 0 0 0 ' + (this.CoM.x - 0.25)  + ' ' +  this.CoM.y;
   }
 
 }

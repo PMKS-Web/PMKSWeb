@@ -2,7 +2,7 @@ import {AppConstants} from "./app-constants";
 import {Link} from "./link";
 import {Coord} from "./coord";
 
-export class Joint  extends Coord{
+export class Joint  extends Coord {
   private _id: string;
 
   constructor(id: string, x: number, y: number) {
