@@ -2,13 +2,12 @@ import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
 import {Link} from "../link";
 
 export class LoopSolver {
-  static determineLoops(simJoints: Joint[], simLinks: Link[]): [string[], string[]] {
+  static determineLoops(joints: Joint[], links: Link[]): [string[], string[]] {
     let allLoops: string[] = [];
     let requiredLoops: string[] = [];
     const groundJoints: Joint[] = [];
-    simJoints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
-      if (!j.ground) {return}
+    joints.forEach(j => {
+      if (!(j instanceof RealJoint) || (!j.ground)) {return}
       if (j.input || j.connectedJoints.findIndex(jt => {
         if (!(jt instanceof RealJoint)) {return}
         jt.input}) !== -1) {
@@ -32,7 +31,7 @@ export class LoopSolver {
       });
     }
     // See if all links are determined within requiredLoops
-    const links_num = simLinks.length;
+    const links_num = links.length;
     let links_known_count = 0;
     const links_determined_map = new Map<number, number>();
     const joints_to_link_determined = new Map<string, number>();
@@ -42,7 +41,7 @@ export class LoopSolver {
       let currLinkIndex: number;
       for (let i = 0; i < loop.length - 2; i++) {
         if (!joints_to_link_determined.has(loop[i] + loop[i + 1])) {
-          const link_index = simLinks.findIndex(cur_link => cur_link.id.includes(loop[i]) && cur_link.id.includes(loop[i + 1]));
+          const link_index = links.findIndex(cur_link => cur_link.id.includes(loop[i]) && cur_link.id.includes(loop[i + 1]));
           joints_to_link_determined.set(loop[i] + loop[i + 1], link_index);
         }
         if (i === 0) {
@@ -98,7 +97,7 @@ export class LoopSolver {
         if (joints_to_link_determined.has(loop[index] + loop[index + 1])) {
           continue;
         }
-        const link_index = simLinks.findIndex(cur_link => cur_link.id.includes(loop[index]) && cur_link.id.includes(loop[index + 1]));
+        const link_index = links.findIndex(cur_link => cur_link.id.includes(loop[index]) && cur_link.id.includes(loop[index + 1]));
         joints_to_link_determined.set(loop[index] + loop[index + 1], 1); // doesn't matter what the second number is
         if (links_determined_map.has(link_index)) {
           continue;

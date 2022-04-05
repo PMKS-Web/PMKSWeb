@@ -7,8 +7,8 @@ export class PositionSolver {
   static desiredJointGroundIndexMap = new Map<string, number>();
   static unknownJointsIndicesMap = new Map<string, number[]>();
   static desiredLinkIndexMap = new Map<string, number>();
+  static jointNumOrderSolverMap = new Map<number, string>();
   private static internalTriangleValuesMap = new Map<string, number[]>();
-  private static jointNumOrderSolverMap = new Map<number, string>();
   private static desiredConnectedJointIndicesMap = new Map<string, number[]>();
   private static desiredAnalysisJointMap = new Map<string, string>();
   private static jointDistMap = new Map<string, number>();
@@ -32,59 +32,60 @@ export class PositionSolver {
     this.b_Map = new Map<string, number>();
   }
 
-  static determineJointOrder(simJoints: Joint[], simLinks: Link[]) {
+  static determineJointOrder(joints: Joint[], links: Link[]) {
     const knownJointsIds: string[] =  [];
     let orderNum = 1;
     // pre-condition: Save all the joints as initial Values
-    simJoints.forEach(j => {
+    joints.forEach(j => {
       this.initialJointPosMap.set(j.id, [j.x, j.y]);
     });
 
     // 1st: store all ground joints as known joints
-    simJoints.forEach(joint => {
-      if (!(joint instanceof RealJoint)) {return}
-      if (joint.ground) {
-        knownJointsIds.push(joint.id);
+    joints.forEach(j => {
+      if (!(j instanceof RealJoint)) {return}
+      if (j.ground) {
+        knownJointsIds.push(j.id);
       }
     });
     // 2nd: determine joints that neighbor the input joint
-    const inputJointIndex = simJoints.findIndex(j => {
+    const inputJointIndex = joints.findIndex(j => {
       if (!(j instanceof RealJoint)) {return}
       return j.input;});
-    const inputJoint = simJoints[inputJointIndex];
+    const inputJoint = joints[inputJointIndex];
     if (!(inputJoint instanceof RealJoint)) {return}
     const tracer_joints: Joint[] = [];
-    inputJoint.connectedJoints.forEach(joint => {
-      if (!(joint instanceof RealJoint)) {return}
-      if (joint.ground) {
+    inputJoint.connectedJoints.forEach(j => {
+      if (!(j instanceof RealJoint)) {return}
+      if (j.ground) {
         return;
       }
       // store the solved number
-      this.jointNumOrderSolverMap.set(orderNum++, joint.id);
+      this.jointNumOrderSolverMap.set(orderNum++, j.id);
       // store desired joints as input joint and current_joint
       // const currentJointIndex = simJoints.findIndex(jt => jt.id === current_joint.id);
-      this.desiredConnectedJointIndicesMap.set(joint.id, [inputJointIndex]);
+      this.desiredConnectedJointIndicesMap.set(j.id, [inputJointIndex]);
       // store the solve type from the input solver
       switch (inputJoint.constructor) {
         case RevJoint: {
-          this.desiredAnalysisJointMap.set(joint.id, 'incrementRevInput');
-          this.jointDistMap.set(inputJoint.id + ',' + joint.id, this.euclideanDistance(inputJoint.x, inputJoint.y, joint.x, joint.y));
+          this.desiredAnalysisJointMap.set(j.id, 'incrementRevInput');
+          this.jointDistMap.set(inputJoint.id + ',' + j.id, this.euclideanDistance(inputJoint.x, inputJoint.y, j.x, j.y));
           break;
         }
         case PrisJoint: {
-          this.desiredAnalysisJointMap.set(joint.id, 'incrementPrisInput');
+          this.desiredAnalysisJointMap.set(j.id, 'incrementPrisInput');
           break;
         }
       }
-      knownJointsIds.push(joint.id);
-      tracer_joints.push(joint);
+      knownJointsIds.push(j.id);
+      tracer_joints.push(j);
     });
     tracer_joints.forEach(j => {
       if (!(j instanceof RealJoint)) {return}
-      orderNum = this.detJointOrder(simJoints, simLinks, j, orderNum, knownJointsIds);
+      orderNum = this.detJointOrder(joints, links, j, orderNum, knownJointsIds);
     });
   }
 
+  // TODO: Change the names from simJoints, simLinks to just joints and links
   static detJointOrder(simJoints: Joint[], simLinks: Link[], prev_joint: RealJoint, orderNum: number, knownJointArray: string[]) {
     prev_joint.connectedJoints.forEach(cur_joint => {
       if (!(cur_joint instanceof RealJoint)) {return}
@@ -185,17 +186,8 @@ export class PositionSolver {
     });
   }
 
-  static determinePositionAnalysis(joints: Joint[], links: Link[], angVelDir: boolean): [Map<string, Array<number>>, boolean] {
+  static determinePositionAnalysis(joints: Joint[], links: Link[], max_counter: number, angVelDir: boolean): [Map<string, Array<number>>, boolean] {
     let counter = 1;
-    let max_counter = 0;
-    // TODO: joint does not have ground. Be sure to already know this number
-    max_counter = 2;
-    // joints.forEach(j => {
-    //   if (!(j instanceof RealJoint)) {return}
-    //   if (!j.ground && !(j instanceof ImagJoint)) {
-    //     max_counter++;
-    //   }
-    // });
     while (counter <= max_counter) {
       const joint_id = this.jointNumOrderSolverMap.get(counter)!;
       const joint = joints.find(j => j.id === joint_id)!;
