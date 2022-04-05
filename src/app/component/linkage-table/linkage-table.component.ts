@@ -3,6 +3,7 @@ import {Force} from "../../model/force";
 import {ImagLink, Link, RealLink, Shape} from "../../model/link";
 import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
+import {roundNumber} from "../../model/utils";
 
 @Component({
   selector: 'app-linkage-table',
@@ -64,13 +65,8 @@ export class LinkageTableComponent implements OnInit {
   }
 
   distFromJoint(joint1: Joint, joint2: Joint) {
-    return this.roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x , 2) +
+    return roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x , 2) +
       Math.pow(joint1.y - joint2.y, 2)), 3);
-  }
-
-  roundNumber(num: number, scale: number): number {
-    const tens = Math.pow(10, scale);
-    return Math.round(num * tens) / tens;
   }
 
   changeJointProp($event: any, joint: Joint, jointProp: string) {
@@ -84,8 +80,8 @@ export class LinkageTableComponent implements OnInit {
           const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
-          l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
-          l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
+          l.joints[jointIndex].x = roundNumber(joint.x, 3);
+          l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoMX = l.determineCenterOfMass(l.joints, 'x');
           l.CoMY = l.determineCenterOfMass(l.joints, 'y');
           l.bound = RealLink.getBounds(
@@ -104,8 +100,8 @@ export class LinkageTableComponent implements OnInit {
           const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
-          l.joints[jointIndex].x = this.roundNumber(joint.x, 3);
-          l.joints[jointIndex].y = this.roundNumber(joint.y, 3);
+          l.joints[jointIndex].x = roundNumber(joint.x, 3);
+          l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoMX = l.determineCenterOfMass(l.joints, 'x');
           l.CoMY = l.determineCenterOfMass(l.joints, 'y');
           l.bound = RealLink.getBounds(

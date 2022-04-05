@@ -1,5 +1,6 @@
 import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
 import {Link} from "../link";
+import {roundNumber} from "../utils";
 
 export class PositionSolver {
   static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
@@ -228,8 +229,8 @@ export class PositionSolver {
     const angle = Math.atan2(unknownJoint.y - inputJoint.y, unknownJoint.x - inputJoint.x);
     const x = Math.cos(angle + increment) * r + inputJoint.x;
     const y = Math.sin(angle + increment) * r + inputJoint.y;
-    this.jointMapPositions.set(inputJoint.id, [this.roundToHundredThousandth(inputJoint.x), this.roundToHundredThousandth(inputJoint.y)]);
-    this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
+    this.jointMapPositions.set(inputJoint.id, [roundNumber(inputJoint.x, 3), roundNumber(inputJoint.y, 3)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
   }
 
   private static incrementPrisInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
@@ -241,7 +242,7 @@ export class PositionSolver {
     const yIncrement = increment * Math.sin(0);
     const x = unknownJoint.x + xIncrement;
     const y = unknownJoint.y + yIncrement;
-    this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
   }
 
 // https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
@@ -258,7 +259,7 @@ export class PositionSolver {
     }
     const x = sols[desiredIndex][0];
     const y = sols[desiredIndex][1];
-    this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
     return true;
   }
 
@@ -383,7 +384,7 @@ export class PositionSolver {
       }
     }
     // const y = Math.tan(unknownJoint.angle) * unknownJoint.x + unknownJoint.y;
-    this.jointMapPositions.set(unknownJoint.id, [this.roundToHundredThousandth(x), this.roundToHundredThousandth(y)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
     return true;
   }
 
@@ -453,9 +454,10 @@ export class PositionSolver {
     return [a, b, c, d];
   }
 
-  private static roundToHundredThousandth(num: number) {
-    return Math.round(num * 10000) / 10000;
-  }
+  // TODO: Get rid of this and utilize roundNumber
+  // private static roundToHundredThousandth(num: number) {
+  //   return Math.round(num * 10000) / 10000;
+  // }
 
 // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
   private static determineTracerJoint(lastJoint: Joint, joint_with_neighboring_ground: Joint, unknown_joint: Joint) {
@@ -529,7 +531,7 @@ export class PositionSolver {
       x_calc = x_calc2;
       y_calc = y_calc2;
     }
-    this.jointMapPositions.set(unknown_joint.id, [this.roundToHundredThousandth(x_calc), this.roundToHundredThousandth(y_calc)]);
+    this.jointMapPositions.set(unknown_joint.id, [roundNumber(x_calc, 3), roundNumber(y_calc, 3)]);
   }
   private static euclideanDistance(x1: number, y1: number, x2: number, y2: number) {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));

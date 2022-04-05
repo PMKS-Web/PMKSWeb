@@ -6,6 +6,7 @@ import {ImagLink, Link, RealLink, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
+import {roundNumber} from "../../model/utils";
 
 
 // The possible states the program could be in.
@@ -171,8 +172,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static screenToGrid(x: number, y: number) {
-    const newX = this.roundNumber((1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x), 3);
-    const newY = this.roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y), 3);
+    const newX = roundNumber((1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x), 3);
+    const newY = roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y), 3);
     return new Coord(newX, newY);
   }
 
@@ -238,14 +239,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (CTM === null) {
       return
     }
-    const newX = GridComponent.roundNumber((e.clientX - CTM.e) / CTM.a, 0);
+    const newX = roundNumber((e.clientX - CTM.e) / CTM.a, 0);
     let newY: number;
     // NOTE: CTM.f is the svg.ClientHeight + height of rest of elements. In Firefox, clientHeight does not work (returns 0) so we need to
     // manually detect and add it.
     if (svg.clientHeight === 0) {
-      newY = GridComponent.roundNumber((e.clientY - (CTM.f + height)) / -Math.abs(CTM.d), 0);
+      newY = roundNumber((e.clientY - (CTM.f + height)) / -Math.abs(CTM.d), 0);
     } else {
-      newY = GridComponent.roundNumber((e.clientY - CTM.f) / -Math.abs(CTM.d), 0);
+      newY = roundNumber((e.clientY - CTM.f) / -Math.abs(CTM.d), 0);
     }
     // NOTE: The CTM returns different values per browser. In Firefox & Safari it is 1 and in Chrome/Edge it is -1.
     // By putting a -Math.Abs() to it we are standardizing it at -1
@@ -302,8 +303,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
-                  const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
-                  const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
+                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
+                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
                   const joint2ID = this.determineNextLetter();
                   const joint2 = new RevJoint(joint2ID, x2, y2);
                   const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
@@ -318,10 +319,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
                 } else if (GridComponent.linkStates === linkStates.creating) {
-                  const x1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
-                  const y1 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
-                  const x2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
-                  const y2 = this.roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
+                  const x1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
+                  const y1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
+                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
+                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
                   const joint1ID = this.determineNextLetter();
                   const joint2ID = this.determineNextLetter([joint1ID]);
                   const joint1 = new RevJoint(joint1ID, x1, y1);
@@ -1009,14 +1010,14 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
-    selectedJoint.x = this.roundNumber(trueCoord.x, 3);
-    selectedJoint.y = this.roundNumber(trueCoord.y, 3);
+    selectedJoint.x = roundNumber(trueCoord.x, 3);
+    selectedJoint.y = roundNumber(trueCoord.y, 3);
     selectedJoint.links.forEach(l => {
       if (!(l instanceof RealLink)) {return}
       // TODO: delete this if this is not needed (verify this)
       const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
-      l.joints[jointIndex].x = this.roundNumber(trueCoord.x, 3);
-      l.joints[jointIndex].y = this.roundNumber(trueCoord.y, 3);
+      l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+      l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
       l.bound = RealLink.getBounds(
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
@@ -1040,15 +1041,15 @@ export class GridComponent implements OnInit, AfterViewInit {
         const biggestX = jointOne.x > jointTwo.x ? jointOne.x : jointTwo.x;
         // TODO: Check to see whether these roundNumbers here are necessary or not
         if (smallestX > trueCoord.x) {
-          selectedForce.startCoord.x = this.roundNumber(smallestX, 3);
+          selectedForce.startCoord.x = roundNumber(smallestX, 3);
         } else if (biggestX < trueCoord.x) {
-          selectedForce.startCoord.x = this.roundNumber(biggestX, 3);
+          selectedForce.startCoord.x = roundNumber(biggestX, 3);
         } else {
-          selectedForce.startCoord.x = this.roundNumber(trueCoord.x, 3);
+          selectedForce.startCoord.x = roundNumber(trueCoord.x, 3);
         }
         const slope = (jointTwo.y - jointOne.y) / (jointTwo.x - jointOne.x);
         const b = jointOne.y;
-        selectedForce.startCoord.y = this.roundNumber(jointOne.y + (selectedForce.startCoord.x - jointOne.x) * slope, 3);
+        selectedForce.startCoord.y = roundNumber(jointOne.y + (selectedForce.startCoord.x - jointOne.x) * slope, 3);
       } else {
         selectedForce.startCoord.x = trueCoord.x;
         selectedForce.startCoord.y = trueCoord.y;
@@ -1064,17 +1065,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       selectedForce.forceArrow = Force.createForceArrow(selectedForce.endCoord, selectedForce.startCoord);
     }
     return selectedForce;
-  }
-
-  // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
-  private static roundNumber(num: number, scale: number): number {
-    const tens = Math.pow(10, scale);
-    return Math.round(num * tens) / tens;
-  }
-
-  roundNumber(num: number, scale: number): number {
-    const tens = Math.pow(10, scale);
-    return Math.round(num * tens) / tens;
   }
 
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
