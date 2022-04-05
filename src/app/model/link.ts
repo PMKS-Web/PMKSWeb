@@ -88,8 +88,8 @@ export class RealLink extends Link {
     this._bound = RealLink.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = RealLink.getPointsFromBounds(this._bound, this._shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
-    this._CoMX = this.determineCenterOfMass(joints, 'x');
-    this._CoMY = this.determineCenterOfMass(joints, 'y');
+    this._CoMX = RealLink.determineCenterOfMass(joints, 'x');
+    this._CoMY = RealLink.determineCenterOfMass(joints, 'y');
     this.updateCoMDs();
   }
 
@@ -284,7 +284,7 @@ export class RealLink extends Link {
     return pathString;
   }
 
-  determineCenterOfMass(joints: Joint[], xOrY: string) {
+  static determineCenterOfMass(joints: Joint[], xOrY: string) {
     let com = 0;
     joints.forEach(j => {
       if (xOrY === 'x') {

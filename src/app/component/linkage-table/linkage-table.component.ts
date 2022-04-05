@@ -82,8 +82,8 @@ export class LinkageTableComponent implements OnInit {
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
-          l.CoMX = l.determineCenterOfMass(l.joints, 'x');
-          l.CoMY = l.determineCenterOfMass(l.joints, 'y');
+          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
+          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
           l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
@@ -102,8 +102,8 @@ export class LinkageTableComponent implements OnInit {
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
-          l.CoMX = l.determineCenterOfMass(l.joints, 'x');
-          l.CoMY = l.determineCenterOfMass(l.joints, 'y');
+          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
+          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
           l.bound = RealLink.getBounds(
             new Coord(l.joints[0].x, l.joints[0].y),
             new Coord(l.joints[1].x, l.joints[1].y), Shape.line);

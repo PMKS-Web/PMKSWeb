@@ -1022,8 +1022,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         new Coord(l.joints[0].x, l.joints[0].y),
         new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
       l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-      l.CoMX = l.determineCenterOfMass(l.joints, 'x');
-      l.CoMY = l.determineCenterOfMass(l.joints, 'y');
+      l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
+      l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
       l.updateCoMDs();
       l.forces.forEach(f => {
         // TODO: adjust the location of force endpoints and update the line and arrow
@@ -1223,7 +1223,16 @@ export class GridComponent implements OnInit, AfterViewInit {
           j.y = this.mechanisms[0].joints[positionNum][j_index].y;
         });
         // TODO: Be sure the link color stays the same XD
-        this.links = this.mechanisms[0].links[positionNum];
+        this.links.forEach((l, l_index) => {
+          if (!(l instanceof RealLink)) {return}
+          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          // TODO: When you insert a joint onto a link, be sure to utilize this function call
+          l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
+          l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
+          l.updateCoMDs();
+        });
+        // this.links = this.mechanisms[0].links[positionNum];
         // this.links.forEach((l, l_index) => {
         // if (!(l instanceof RealLink)) {return}
         // l.joints.forEach(j => {
