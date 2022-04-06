@@ -4,6 +4,8 @@ import {Link} from "../../model/link";
 import {Force} from "../../model/force";
 import {interval} from "rxjs";
 import {GridComponent} from "../grid/grid.component";
+import {Mechanism} from "../../model/mechanism/mechanism";
+import {ForceSolver} from "../../model/mechanism/force-solver";
 
 @Component({
   selector: 'app-toolbar',
@@ -15,6 +17,7 @@ export class ToolbarComponent implements OnInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
+  @Input() mechanisms: Mechanism[] = [];
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
@@ -30,6 +33,8 @@ export class ToolbarComponent implements OnInit {
   }
 
   showTable() {
+    // TODO: If possible, don't have this as an emitter. Have the linkage table have an input here that determines the value,
+    // TODO: that is either if it updates automoatically or if NgUpdates is needed
     this.showcaseTable.emit();
   }
 
@@ -67,5 +72,10 @@ export class ToolbarComponent implements OnInit {
     } else {
       document.getElementById('slider')!.setAttribute('value','0');
     }
+  }
+
+  determineForceAnalysis() {
+    ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+    ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
   }
 }

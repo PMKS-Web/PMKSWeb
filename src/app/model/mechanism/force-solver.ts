@@ -17,11 +17,8 @@ export class ForceSolver {
   static jointIDToUnknownArrayIndexMap = new Map<string, number>();
   static linkIDToUnknownArrayIndexMap = new Map<string, number>();
   static unknownVariableTorque: number;
-  // static A_matrix = Array<Array<string>>();
   static A_matrix: Array<Array<number>> = [];
-  // TODO: Determine whether B_matrix is Array<Array<number>> or just Array<number>
   static B_matrix: Array<Array<number>> = [];
-  // static B_matrix = Array<string>();
   static desiredLoopLetters: Array<Array<string>>;
   static inputLinkIndex: number;
 
