@@ -151,8 +151,11 @@ export class Mechanism {
         this.forces[0].forEach(f => {
           const link = this._links[currentTimeStamp + 1].find(l => l.id === f.link.id);
           if (link === undefined || (!(link instanceof RealLink))) {return}
+          // TODO: Don't have forceMagnitudeMap within Position Solver
           this._forces[currentTimeStamp + 1].push(new Force(
-            f.id, link, PositionSolver.forcePositionMap.get(f.id + 'start')!, PositionSolver.forcePositionMap.get(f.id + 'end')!, f.local, f.arrowOutward));
+            f.id, link, PositionSolver.forcePositionMap.get(f.id + 'start')!,
+            PositionSolver.forcePositionMap.get(f.id + 'end')!, f.local, f.arrowOutward,
+            PositionSolver.forceMagnitudeMap.get(f.id + 'x'), PositionSolver.forceMagnitudeMap.get(f.id + 'x')));
         });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {

@@ -1245,6 +1245,8 @@ export class GridComponent implements OnInit, AfterViewInit {
           f.local = this.mechanisms[0].forces[positionNum][f_index].local;
           f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
           f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+          f.xMag = this.mechanisms[0].forces[positionNum][f_index].xMag;
+          f.yMag = this.mechanisms[0].forces[positionNum][f_index].yMag;
         });
         // this.links = this.mechanisms[0].links[positionNum];
         // this.links.forEach((l, l_index) => {

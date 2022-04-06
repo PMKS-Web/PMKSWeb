@@ -20,6 +20,7 @@ export class PositionSolver {
   private static m_Map = new Map<string, number>();
   private static b_Map = new Map<string, number>();
   static forcePositionMap = new Map<string, Coord>();
+  static forceMagnitudeMap = new Map<string, number>();
 
   static resetStaticVariables() {
     this.desiredIndexWithinPosAnalysisMap = new Map<string, number>();
@@ -231,8 +232,17 @@ export class PositionSolver {
         const x_calc = f.endCoord.x + (this.forcePositionMap.get(f.id + 'start')!.x - f.startCoord.x);
         const y_calc = f.endCoord.y + (this.forcePositionMap.get(f.id + 'start')!.y - f.startCoord.y);
         this.forcePositionMap.set(f.id + 'end', new Coord(roundNumber(x_calc, 3), roundNumber(y_calc, 3)));
+        this.forceMagnitudeMap.set(f.id + 'x', f.xMag);
+        this.forceMagnitudeMap.set(f.id + 'y', f.yMag);
       } else {
         this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+        // TODO: Check this later... I think the user has to make sure the angle is correct and the values are correct
+        const absMag = Math.sqrt(Math.pow(f.xMag, 2) + Math.pow(f.yMag , 2));
+        const startCoord = this.forcePositionMap.get(f.id + 'start')!;
+        const endCoord = this.forcePositionMap.get(f.id + 'end')!;
+        const angle = Math.tan((startCoord.y - endCoord.y) / (startCoord.x - endCoord.x ));
+        this.forceMagnitudeMap.set(f.id + 'x', Math.cos(angle) * absMag);
+        this.forceMagnitudeMap.set(f.id + 'y', Math.cos(angle) * absMag);
       }
     });
     return true;

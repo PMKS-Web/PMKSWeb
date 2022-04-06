@@ -13,11 +13,11 @@ export class Force {
   private _local: boolean;
   private _stroke: string = 'black';
   private _fill: string = 'black';
-  private _xMag: number = 1;
-  private _yMag: number = 1;
+  private _xMag: number;
+  private _yMag: number;
   private _showHighlight: boolean = false;
 
-  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord, local: boolean = false, arrowOutward: boolean = true) {
+  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord, local: boolean = false, arrowOutward: boolean = true, xMag: number = 1, yMag: number = 1) {
     // TODO: Have to have local argument since some forces can be created that are local or global
     this._id = id;
     this._link = link;
@@ -27,6 +27,8 @@ export class Force {
     this._forceArrow = Force.createForceArrow(startCoord, endCoord);
     this._local = local;
     this._arrowOutward = arrowOutward;
+    this._xMag = xMag;
+    this._yMag = yMag;
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
