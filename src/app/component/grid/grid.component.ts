@@ -1235,13 +1235,14 @@ export class GridComponent implements OnInit, AfterViewInit {
           // l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
           // l.updateCoMDs();
         });
-        this.forces.forEach(f => {
-          // f.startCoord.x = 0;
-          // f.startCoord.y = 0;
-          // f.endCoord.x = 0;
-          // f.endCoord.y = 0;
-          // f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-          // f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+        this.forces.forEach((f, f_index) => {
+          // TODO: Check to see if you can switch the coords. But most likely you cannot and have to change values
+          f.startCoord.x = this.mechanisms[0].forces[positionNum][f_index].startCoord.x;
+          f.startCoord.y = this.mechanisms[0].forces[positionNum][f_index].startCoord.y;
+          f.endCoord.x = this.mechanisms[0].forces[positionNum][f_index].endCoord.x;
+          f.endCoord.y = this.mechanisms[0].forces[positionNum][f_index].endCoord.y;
+          f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+          f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
         });
         // this.links = this.mechanisms[0].links[positionNum];
         // this.links.forEach((l, l_index) => {

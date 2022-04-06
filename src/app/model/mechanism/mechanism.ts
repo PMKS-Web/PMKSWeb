@@ -6,6 +6,7 @@ import {PositionSolver} from "./position-solver";
 import {IcSolver} from "./ic-solver";
 import {InstantCenter} from "../instant-center";
 import {LoopSolver} from "./loop-solver";
+import {Coord} from "../coord";
 
 export class Mechanism {
   private _joints: Joint[][] = [[]];
@@ -13,6 +14,7 @@ export class Mechanism {
   private _forces: Force[][] = [[]];
   private _ics: InstantCenter[][] = [[]];
   private _internalTriangleSimLinkMap = new Map<string, number[]>();
+
   private _gravity: boolean;
   private _unit: string
   private _requiredLoops: string[] = [];
@@ -111,6 +113,7 @@ export class Mechanism {
 
     PositionSolver.resetStaticVariables();
     PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
+    PositionSolver.setUpSolvingForces(this.forces[0]);
 
     const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1);
     const desiredJointIndex =this.joints[0].findIndex(j => j.id === desiredJointID);
@@ -123,11 +126,11 @@ export class Mechanism {
 
     while (!simForward || currentTimeStamp === 0 || xDiff > TOLERANCE || yDiff > TOLERANCE) {
       const possible = PositionSolver.determinePositionAnalysis(this._joints[currentTimeStamp],
-        this._links[currentTimeStamp], max_counter, inputAngVelDirection);
+        this._links[currentTimeStamp], this._forces[currentTimeStamp], max_counter, inputAngVelDirection);
       if (possible) {
         this._joints.push([]);
         this._links.push([]);
-        // this._forces.push([]);
+        this._forces.push([]);
         // Joint order matters at the moment
         this.joints[0].forEach(j => {
           const jointCoord = PositionSolver.jointMapPositions.get(j.id);
@@ -144,6 +147,12 @@ export class Mechanism {
             connectedJoints.push(joint);
           });
           this._links[currentTimeStamp + 1].push(new RealLink(l.id, connectedJoints));
+        });
+        this.forces[0].forEach(f => {
+          const link = this._links[currentTimeStamp + 1].find(l => l.id === f.link.id);
+          if (link === undefined || (!(link instanceof RealLink))) {return}
+          this._forces[currentTimeStamp + 1].push(new Force(
+            f.id, link, PositionSolver.forcePositionMap.get(f.id + 'start')!, PositionSolver.forcePositionMap.get(f.id + 'end')!));
         });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {
