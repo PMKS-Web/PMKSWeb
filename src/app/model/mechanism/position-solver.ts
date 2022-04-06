@@ -240,6 +240,7 @@ export class PositionSolver {
         const absMag = Math.sqrt(Math.pow(f.xMag, 2) + Math.pow(f.yMag , 2));
         const startCoord = this.forcePositionMap.get(f.id + 'start')!;
         const endCoord = this.forcePositionMap.get(f.id + 'end')!;
+        // TODO: Be sure this function is put within utils
         const angle = Math.tan((startCoord.y - endCoord.y) / (startCoord.x - endCoord.x ));
         this.forceMagnitudeMap.set(f.id + 'x', Math.cos(angle) * absMag);
         this.forceMagnitudeMap.set(f.id + 'y', Math.cos(angle) * absMag);
