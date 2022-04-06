@@ -226,7 +226,14 @@ export class PositionSolver {
     }
     forces.forEach(f => {
       this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
-      this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+      // Logic is backwards
+      if (!f.local) {
+        const x_calc = f.endCoord.x + (this.forcePositionMap.get(f.id + 'start')!.x - f.startCoord.x);
+        const y_calc = f.endCoord.y + (this.forcePositionMap.get(f.id + 'start')!.y - f.startCoord.y);
+        this.forcePositionMap.set(f.id + 'end', new Coord(roundNumber(x_calc, 3), roundNumber(y_calc, 3)));
+      } else {
+        this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+      }
     });
     return true;
   }
@@ -608,8 +615,6 @@ export class PositionSolver {
     }
     const dist1 = this.euclideanDistance(x_calc1, y_calc1, prevJoint_x, prevJoint_y);
     const dist2 = this.euclideanDistance(x_calc2, y_calc2, prevJoint_x, prevJoint_y);
-    // const dist1 = Math.abs(Math.pow(x_calc1 - prevJoint_x, 2) + Math.pow(y_calc1 - prevJoint_y, 2));
-    // const dist2 = Math.abs(Math.pow(x_calc2 - prevJoint_x, 2) + Math.pow(y_calc2 - prevJoint_y, 2));
     if (dist1 < dist2) {
       x_calc = x_calc1;
       y_calc = y_calc1;
@@ -620,6 +625,7 @@ export class PositionSolver {
     this.forcePositionMap.set(force.id + startOrEnd, new Coord(roundNumber(x_calc, 3), roundNumber(y_calc, 3)));
   }
 
+  // TODO: Put this within Utils class
   private static euclideanDistance(x1: number, y1: number, x2: number, y2: number) {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
   }
