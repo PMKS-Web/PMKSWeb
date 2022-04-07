@@ -75,7 +75,22 @@ export class ToolbarComponent implements OnInit {
   }
 
   determineForceAnalysis() {
-    ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-    ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+    // ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+    // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+  }
+
+  popUpAnalysis(analysisType: string) {
+    switch (analysisType) {
+      case 'loop':
+        break;
+      case 'force':
+        ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+        ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+        break;
+      case 'stress':
+        break;
+      case 'kinematic':
+        break;
+    }
   }
 }
