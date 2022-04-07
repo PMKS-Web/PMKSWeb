@@ -3,7 +3,7 @@ import {ImagLink, Link, RealLink} from "../link";
 import {Force} from "../force";
 // import {LoopSolver} from "./loop-solver";
 import {PositionSolver} from "./position-solver";
-import {IcSolver} from "./ic-solver";
+// import {IcSolver} from "./ic-solver";
 import {InstantCenter} from "../instant-center";
 import {LoopSolver} from "./loop-solver";
 import {Coord} from "../coord";

@@ -216,3 +216,7 @@ export function matLinearSystem(A: Array<Array<number>>, B: Array<Array<number>>
   const inv_A = matInverse(A);
   return matProduct(inv_A, B);
 }
+
+export function crossProduct(A: Array<number>, B: Array<number>) {
+  return [(A[1] * B[2] - A[2] * B[1]), -1 * (A[0] * B[2] - A[2] * B[0]), (A[0] * B[1] - A[1] * B[0])];
+}
