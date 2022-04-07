@@ -253,6 +253,7 @@ export class ForceSolver {
     this.A_matrix[this.inputLinkIndex][this.unknownVariableNum - 1] += 1;
   }
 
+  // TODO: Put this within Utils
   static determineMoment(joint1: Joint, joint2X: number, joint2Y: number, xMag: number, yMag: number): number[] {
     const xDist = joint2X - joint1.x;
     const yDist = joint2Y - joint1.y;
