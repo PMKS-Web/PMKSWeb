@@ -1,7 +1,69 @@
 <div id="analysisPopup" class="ontop">
   <div class="popupAnalysis">
     <div>
-      <button class="closeAnalysis" (click)="closeAnalysis()"></button>
+      <div class="buttonContainer">
+        <button class="closeAnalysis" (click)="closeAnalysis()"
+        (mouseover)="mouseOver(99999)"
+        (mouseout)="mouseOut(99999)"></button>
+        <button id="exportButton" (click)="setTab(0)"
+                (mouseover)="mouseOver(0)"
+                (mouseout)="mouseOut(0)"
+                style="color: black; background-color: gray"> Joints </button>
+        <button id="showPlotsButton" (click)="setTab(1)"
+                (mouseover)="mouseOver(1)"
+                (mouseout)="mouseOut(1)"> Links </button>
+        <button id="showEqsButton" (click)="setTab(2)"
+                (mouseover)="mouseOver(2)"
+                (mouseout)="mouseOut(2)"> Forces </button>
+      </div>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 0">
+      <table id="exportTable">
+        <thead>
+        <tr>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 1">
+      <table id="plotTable">
+        <thead>
+        <tr>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+    <div class="tabPanel" *ngIf="selectedTab === 2">
+      <table id="showEqsTable">
+        <thead>
+        <tr>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>
+          </td>
+        </tr>
+        </tbody>
+        <tfoot></tfoot>
+      </table>
     </div>
   </div>
 </div>
