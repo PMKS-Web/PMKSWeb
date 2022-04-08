@@ -74,15 +74,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   // holders
   private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
   private static transformMatrixGridSVGElement: SVGElement;
-  private static transformMatrixSVG: SVGElement;
-  private static linkageHolderSVG: SVGElement;
+  private static transformMatrixSVG: HTMLElement;
   private static pathsHolderSVG: SVGElement;
   private static pathsPathPointHolderSVG: SVGElement;
-  private static forcesHolderSVG: SVGElement;
-  private static jointLinkForceTagHolderSVG: SVGElement;
-  private static comTagHolderSVG: SVGElement;
-  private static pathPointHolderSVG: SVGElement;
-  private static threePositionHolderSVG: SVGElement;
   private static jointTempHolderSVG: SVGElement;
   private static forceTempHolderSVG: SVGElement;
 
@@ -135,16 +129,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
+    GridComponent.transformMatrixSVG = <HTMLElement> document.getElementById('transformMatrix');
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
-    GridComponent.linkageHolderSVG = document.getElementById('linkageHolder') as unknown as SVGElement;
     GridComponent.pathsHolderSVG = document.getElementById('pathsHolder') as unknown as SVGElement;
     GridComponent.pathsPathPointHolderSVG = document.getElementById('pathsPathPointHolder') as unknown as SVGElement;
-    GridComponent.forcesHolderSVG = document.getElementById('forcesHolder') as unknown as SVGElement;
-    GridComponent.jointLinkForceTagHolderSVG = document.getElementById('jointLinkForcesTagHolder') as unknown as SVGElement;
-    GridComponent.comTagHolderSVG = document.getElementById('comTagHolder') as unknown as SVGElement;
-    GridComponent.pathPointHolderSVG = document.getElementById('pathPointHolder') as unknown as SVGElement;
-    GridComponent.threePositionHolderSVG = document.getElementById('threePositionHolder') as unknown as SVGElement;
     GridComponent.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
     GridComponent.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
