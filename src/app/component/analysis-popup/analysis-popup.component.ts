@@ -1,4 +1,7 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
+import {Joint} from "../../model/joint";
+import {Link} from "../../model/link";
+import {Force} from "../../model/force";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -6,6 +9,10 @@ import {AfterViewInit, Component, OnInit} from '@angular/core';
   styleUrls: ['./analysis-popup.component.css']
 })
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
+  @Input() joints: Joint[] = [];
+  @Input() links: Link[] = [];
+  @Input() forces: Force[] = [];
+
   private static popUpWindow: SVGElement;
   private static exportButton: SVGElement;
   private static showPlotsButton: SVGElement;
@@ -13,6 +20,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   selectedTab: number = 0;
   selectedAnalysis: string = '';
 
+  // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
   staticForcesCheck: boolean = false;
   staticTorqueCheck: boolean = false;

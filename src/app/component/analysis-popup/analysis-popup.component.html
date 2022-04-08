@@ -167,20 +167,24 @@
       </table>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 2">
-      <table id="showEqsTable">
-        <thead>
-        <tr>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>
-          </td>
-        </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
+      <div *ngIf="selectedAnalysis === 'loop'">
+
+      </div>
+      <div *ngIf="selectedAnalysis === 'force'">
+        <div *ngFor="let link of links">
+          <input type="checkbox">
+          <label>Link {{link.id}}</label>
+        </div>
+      </div>
+      <div *ngIf="selectedAnalysis === 'stress'">
+
+      </div>
+      <div *ngIf="selectedAnalysis === 'kinematic'">
+
+      </div>
+      <div *ngIf="selectedAnalysis === 'ic'">
+
+      </div>
     </div>
   </div>
 </div>

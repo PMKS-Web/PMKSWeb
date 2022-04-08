@@ -17,5 +17,7 @@
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
              (animateGridEmitter)="gridComponent.animate()"
              (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
-<app-analysis-popup #analysisPopupComponent>
-</app-analysis-popup>
+<app-analysis-popup #analysisPopupComponent
+                    [joints]="gridComponent.joints"
+                    [links]="gridComponent.links"
+                    [forces]="gridComponent.forces"></app-analysis-popup>

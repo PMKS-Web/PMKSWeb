@@ -1,5 +1,3 @@
-import {lusolve} from "mathjs";
-
 export class Utils {
 }
 
