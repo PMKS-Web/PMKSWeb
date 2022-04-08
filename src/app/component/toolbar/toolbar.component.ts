@@ -82,11 +82,12 @@ export class ToolbarComponent implements OnInit {
 
   popUpAnalysis(analysisType: string) {
     switch (analysisType) {
+      // TODO: add logic for determining each logic and determine whether analysis can be done
       case 'loop':
         break;
       case 'force':
-        ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+        // ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+        // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
         break;
       case 'stress':
         break;

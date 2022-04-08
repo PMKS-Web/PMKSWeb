@@ -20,4 +20,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   showAnalysis() {
     AnalysisPopupComponent.popUpWindow.style.display='block';
   }
+
+  closeAnalysis() {
+    AnalysisPopupComponent.popUpWindow.style.display='none';
+  }
 }
