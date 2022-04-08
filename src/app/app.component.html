@@ -16,6 +16,6 @@
              [screenCoord]="gridComponent.screenCoord"
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
              (animateGridEmitter)="gridComponent.animate()"
-             (showAnalysisPopup)="analysisPopupComponent.showAnalysis()"></app-toolbar>
+             (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
 <app-analysis-popup #analysisPopupComponent>
 </app-analysis-popup>

@@ -8,30 +8,99 @@
         <button id="exportButton" (click)="setTab(0)"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)"
-                style="color: black; background-color: gray"> Joints </button>
+                style="color: black; background-color: gray"> Export </button>
         <button id="showPlotsButton" (click)="setTab(1)"
                 (mouseover)="mouseOver(1)"
-                (mouseout)="mouseOut(1)"> Links </button>
+                (mouseout)="mouseOut(1)"> Plots Charts</button>
         <button id="showEqsButton" (click)="setTab(2)"
                 (mouseover)="mouseOver(2)"
-                (mouseout)="mouseOut(2)"> Forces </button>
+                (mouseout)="mouseOut(2)"> Show Eqns </button>
       </div>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 0">
-      <table id="exportTable">
-        <thead>
-        <tr>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>
-          </td>
-        </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
+      <div *ngIf="selectedAnalysis === 'loop'">
+        <div>
+          <input type="checkbox">
+          <label>
+            Required Loops
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            All Loops
+          </label>
+        </div>
+      </div>
+      <div *ngIf="selectedAnalysis === 'force'">
+        <div>
+          <input type="checkbox">
+          <label>
+            Forces
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Torque
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Force Positions
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Joint Positions
+          </label>
+        </div>
+      </div>
+      <div *ngIf="selectedAnalysis === 'stress'">
+
+      </div>
+      <div *ngIf="selectedAnalysis === 'kinematic'">
+        <div>
+          <input type="checkbox">
+          <label>
+            Linear Kinematics at Joint
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Linear Kinematics at Link (Center of Mass)
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Angular Kinematics at Link
+          </label>
+        </div>
+      </div>
+      <div *ngIf="selectedAnalysis === 'ic'">
+        <div>
+          <input type="checkbox">
+          <label>
+            Position of ICs
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Linear Kinematics at Joint
+          </label>
+        </div>
+        <div>
+          <input type="checkbox">
+          <label>
+            Angular Kinematics at Link
+          </label>
+        </div>
+      </div>
     </div>
     <div class="tabPanel" *ngIf="selectedTab === 1">
       <table id="plotTable">

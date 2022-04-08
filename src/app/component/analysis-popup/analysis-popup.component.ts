@@ -11,6 +11,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   private static showPlotsButton: SVGElement;
   private static showEqsButton: SVGElement;
   selectedTab: number = 0;
+  selectedAnalysis: string = '';
 
   constructor() { }
 
@@ -24,8 +25,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     AnalysisPopupComponent.showEqsButton = document.getElementById('showEqsButton') as unknown as SVGElement;
   }
 
-  showAnalysis() {
+  showAnalysis($event: string) {
     AnalysisPopupComponent.popUpWindow.style.display='block';
+    this.selectedAnalysis = $event;
   }
 
   closeAnalysis() {
