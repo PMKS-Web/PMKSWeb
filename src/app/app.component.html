@@ -15,4 +15,7 @@
              [mechanisms]="gridComponent.mechanisms"
              [screenCoord]="gridComponent.screenCoord"
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
-             (animateGridEmitter)="gridComponent.animate()"></app-toolbar>
+             (animateGridEmitter)="gridComponent.animate()"
+             (showAnalysisPopup)="analysisPopupComponent.showAnalysis()"></app-toolbar>
+<app-analysis-popup #analysisPopupComponent>
+</app-analysis-popup>

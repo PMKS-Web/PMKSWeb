@@ -21,6 +21,7 @@ export class ToolbarComponent implements OnInit {
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
+  @Output() showAnalysisPopup = new EventEmitter();
   selectedTab: string = 'none';
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
@@ -91,6 +92,9 @@ export class ToolbarComponent implements OnInit {
         break;
       case 'kinematic':
         break;
+      default:
+        return
     }
+    this.showAnalysisPopup.emit();
   }
 }

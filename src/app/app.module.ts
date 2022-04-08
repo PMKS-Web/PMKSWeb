@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { GridComponent } from './component/grid/grid.component';
 import { LinkageTableComponent } from './component/linkage-table/linkage-table.component';
 import { ToolbarComponent } from './component/toolbar/toolbar.component';
+import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
 
 @NgModule({
   declarations: [
@@ -12,6 +13,7 @@ import { ToolbarComponent } from './component/toolbar/toolbar.component';
     GridComponent,
     LinkageTableComponent,
     ToolbarComponent,
+    AnalysisPopupComponent,
   ],
   imports: [
     BrowserModule
