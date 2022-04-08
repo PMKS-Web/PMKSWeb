@@ -3,8 +3,8 @@
     <div>
       <div class="buttonContainer">
         <button class="closeAnalysis" (click)="closeAnalysis()"
-        (mouseover)="mouseOver(99999)"
-        (mouseout)="mouseOut(99999)"></button>
+                (mouseover)="mouseOver(99999)"
+                (mouseout)="mouseOut(99999)"></button>
         <button id="exportButton" (click)="setTab(0)"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)"
@@ -20,13 +20,13 @@
     <div class="tabPanel" *ngIf="selectedTab === 0">
       <div *ngIf="selectedAnalysis === 'loop'">
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck">
           <label>
             Required Loops
           </label>
         </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="allLoopCheck" (change)="setOption($event)" [checked]="allLoopCheck">
           <label>
             All Loops
           </label>
@@ -34,51 +34,87 @@
       </div>
       <div *ngIf="selectedAnalysis === 'force'">
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck">
           <label>
             Forces
           </label>
         </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="staticTorqueCheck" (change)="setOption($event)" [checked]="staticTorqueCheck">
           <label>
             Torque
           </label>
         </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="staticForcePositionsCheck" (change)="setOption($event)" [checked]="staticForcePositionsCheck">
           <label>
             Force Positions
           </label>
         </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="staticJointPositionsCheck" (change)="setOption($event)" [checked]="staticJointPositionsCheck">
           <label>
             Joint Positions
           </label>
         </div>
       </div>
       <div *ngIf="selectedAnalysis === 'stress'">
-
+        <!-- TODO: Do this once this is determined -->
       </div>
       <div *ngIf="selectedAnalysis === 'kinematic'">
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck">
           <label>
             Linear Kinematics at Joint
           </label>
         </div>
+        <div *ngIf="this.linKinJointCheck">
+          <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos">
+          <label>Position</label>
+        </div>
+        <div *ngIf="this.linKinJointCheck">
+          <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel">
+          <label>Velocity</label>
+        </div>
+        <div *ngIf="this.linKinJointCheck">
+          <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc">
+          <label>Acceleration</label>
+        </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck">
           <label>
             Linear Kinematics at Link (Center of Mass)
           </label>
         </div>
+        <div *ngIf="this.linKinLinkCheck">
+          <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos">
+          <label>Position</label>
+        </div>
+        <div *ngIf="this.linKinLinkCheck">
+          <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel">
+          <label>Velocity</label>
+        </div>
+        <div *ngIf="this.linKinLinkCheck">
+          <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc">
+          <label>Acceleration</label>
+        </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck">
           <label>
             Angular Kinematics at Link
           </label>
+        </div>
+        <div *ngIf="this.angKinLinkCheck">
+          <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos">
+          <label>Position</label>
+        </div>
+        <div *ngIf="this.angKinLinkCheck">
+          <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel">
+          <label>Velocity</label>
+        </div>
+        <div *ngIf="this.angKinLinkCheck">
+          <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc">
+          <label>Acceleration</label>
         </div>
       </div>
       <div *ngIf="selectedAnalysis === 'ic'">
@@ -89,16 +125,28 @@
           </label>
         </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck">
           <label>
             Linear Kinematics at Joint
           </label>
         </div>
+        <div *ngIf="this.linKinJointICCheck">
+          <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos">
+          <label>Position</label>
+        </div>
+        <div *ngIf="this.linKinJointICCheck">
+          <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel">
+          <label>Velocity</label>
+        </div>
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]=angKinLinkICCheck>
           <label>
             Angular Kinematics at Link
           </label>
+        </div>
+        <div *ngIf="this.angKinLinkICCheck">
+          <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">
+          <label>Velocity</label>
         </div>
       </div>
     </div>
