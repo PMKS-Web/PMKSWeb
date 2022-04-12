@@ -7,6 +7,9 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AnimationBarComponent implements OnInit {
 
+  showIdTags: boolean = false;
+  showCoMTags: boolean = false;
+
   constructor() { }
 
   ngOnInit(): void {
@@ -33,11 +36,11 @@ export class AnimationBarComponent implements OnInit {
   }
 
   showCenterOfMass() {
-
+    this.showCoMTags = !this.showCoMTags;
   }
 
   onShowIDPressed() {
-
+    this.showIdTags = !this.showIdTags;
   }
 
   onZoomInPressed() {

@@ -23,8 +23,8 @@ export class ToolbarComponent implements OnInit {
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
   selectedTab: string = 'none';
-  showIdTags: boolean = false;
-  showCoMTags: boolean = false;
+  // showIdTags: boolean = false;
+  // showCoMTags: boolean = false;
   unit: string = 'cm';
   gravity: boolean = false;
   animate: boolean = false;
@@ -48,11 +48,11 @@ export class ToolbarComponent implements OnInit {
   }
 
   changeIdTag() {
-    this.showIdTags = !this.showIdTags;
+    // this.showIdTags = !this.showIdTags;
   }
 
   changeCoMTag() {
-    this.showCoMTags = !this.showCoMTags;
+    // this.showCoMTags = !this.showCoMTags;
   }
 
   animateMechanism() {
