@@ -2,15 +2,15 @@
      style="position: absolute; top: 0; left: 0; z-index: 1000;
          font-size: 17px">
   <img src="assets/PMKS_logo.png" style="height: 60px; width: 150px">
-  <label class="DOF">{{screenCoord}}</label>
+<!--  <label class="DOF">{{screenCoord}}</label>-->
   <div>
     <button class="fileButton" (click)="setTab('file')" style="height: 60px">File</button>
-    <button class="tableButton" (click)="showTable()" style="height: 60px">Table
-      <!--      <span class="tableButtonIcon"></span>-->
-    </button>
+<!--    <button class="tableButton" (click)="showTable()" style="height: 60px">Table-->
+<!--      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;-->
+<!--    </button>-->
     <button class="analysisButton" (click)="setTab('analysis')" style="height: 60px">Analysis</button>
-    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>
-    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>
+<!--    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>-->
+<!--    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>-->
     <button class="settingsButton" (click)="setTab('settings')" style="height: 60px">Settings</button>
     <button class="helpButton" (click)="setTab('help')" style="height: 60px">Help</button>
   </div>
@@ -35,36 +35,36 @@
       </div>
     </nav>
   </div>
-  <div class="tabPanel" *ngIf="selectedTab === 'animate'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div id="animationBtns" style="float: left">
-        <button id="counterclockwise" class="tooltip">
-          <span class="tooltiptext">Change Direction</span>
-        </button>
-        <button id="mediumspeed" class="tooltip">
-          <span class="tooltiptext">Change Speed</span>
-        </button>
-        <button class="tooltip" id="playBtn" (click)="animateMechanism()">
-          <span class="tooltiptext">Play Animation</span>
-        </button>
-        <button class="tooltip" id="stopBtn">
-          <span class="tooltiptext">Reset Animation</span>
-        </button>
-      </div>
-      <div id="slidecontainer" style="float:left;">
-        <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">
-      </div>
-    </nav>
-  </div>
-  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div>
-        <button>None</button>
-        <button>2/3-Position</button>
-        <button>Path</button>
-      </div>
-    </nav>
-  </div>
+<!--  <div class="tabPanel" *ngIf="selectedTab === 'animate'">-->
+<!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
+<!--      <div id="animationBtns" style="float: left">-->
+<!--        <button id="counterclockwise" class="tooltip">-->
+<!--          <span class="tooltiptext">Change Direction</span>-->
+<!--        </button>-->
+<!--        <button id="mediumspeed" class="tooltip">-->
+<!--          <span class="tooltiptext">Change Speed</span>-->
+<!--        </button>-->
+<!--        <button class="tooltip" id="playBtn" (click)="animateMechanism()">-->
+<!--          <span class="tooltiptext">Play Animation</span>-->
+<!--        </button>-->
+<!--        <button class="tooltip" id="stopBtn">-->
+<!--          <span class="tooltiptext">Reset Animation</span>-->
+<!--        </button>-->
+<!--      </div>-->
+<!--      <div id="slidecontainer" style="float:left;">-->
+<!--        <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">-->
+<!--      </div>-->
+<!--    </nav>-->
+<!--  </div>-->
+<!--  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">-->
+<!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
+<!--      <div>-->
+<!--        <button>None</button>-->
+<!--        <button>2/3-Position</button>-->
+<!--        <button>Path</button>-->
+<!--      </div>-->
+<!--    </nav>-->
+<!--  </div>-->
   <div class="tabPanel" *ngIf="selectedTab === 'settings'">
     <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
       <div>
