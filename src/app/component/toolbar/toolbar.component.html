@@ -1,7 +1,7 @@
 <nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 80px; position: absolute; top: 0">
 <!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
 <!--         font-size: 17px">-->
-  <img src="assets/PMKS_logo.png" style="height: 80px; width: 200px">
+  <img src="assets/PMKS_logo.png">
 <!--  <label class="DOF">{{screenCoord}}</label>-->
   <div style="width: 640px; border: 0 solid #000000; background-color: #D1D1D1; color: black;
    position: relative; height: 100%;">
@@ -16,7 +16,7 @@
     <button class=" helpButton" (click)="setTab('help')" style="height: 34px; width: 160px; font-size: 24px; font-family: Arial, sans-serif">Help</button>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'file'">
-    <nav class="tabcontent" style="position: absolute; top: 35px; left: 200px; z-index: 1000; font-size: 17px">
+    <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: max-content">
         <button class="secondaryButtons">Open</button>
         <button class="secondaryButtons">Save</button>
@@ -26,7 +26,7 @@
     </nav>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'analysis'">
-    <nav class="tabcontent" style="position: absolute; top: 35px; left: 200px; z-index: 1000; font-size: 17px">
+    <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: max-content">
         <button class="secondaryButtons" (click)="popUpAnalysis('loop')">Loops</button>
         <button class="secondaryButtons" (click)="popUpAnalysis('force')">Force</button>
@@ -67,7 +67,7 @@
 <!--    </nav>-->
 <!--  </div>-->
   <div class="tabPanel" *ngIf="selectedTab === 'settings'">
-    <nav class="tabcontent" style="position: absolute; top: 35px; left: 200px; z-index: 1000; font-size: 17px">
+    <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: max-content">
         <button class="secondaryButtons">Gravity</button>
         <button class="secondaryButtons">Units</button>
@@ -78,7 +78,7 @@
     </nav>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'help'">
-    <nav class="tabcontent" style="position: absolute; top: 35px; left: 200px; z-index: 1000; font-size: 17px">
+    <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: max-content">
         <button class="secondaryButtons">About</button>
         <button class="secondaryButtons">Examples</button>
