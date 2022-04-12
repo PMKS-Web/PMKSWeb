@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {switchMapTo} from "rxjs";
 
 @Component({
@@ -7,7 +7,8 @@ import {switchMapTo} from "rxjs";
   styleUrls: ['./animation-bar.component.css']
 })
 export class AnimationBarComponent implements OnInit {
-
+  @Input() screenCoord: string = '';
+  @Input() dof: string = '';
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
   direction: string = 'ccw';

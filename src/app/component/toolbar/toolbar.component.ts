@@ -18,11 +18,12 @@ export class ToolbarComponent implements OnInit {
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
   @Input() mechanisms: Mechanism[] = [];
+  // TODO: Use screen Coord within toolbar if you can get to this stage of project
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
-  selectedTab: string = 'none';
+  selectedTab: string = 'file';
   // showIdTags: boolean = false;
   // showCoMTags: boolean = false;
   unit: string = 'cm';
@@ -40,11 +41,13 @@ export class ToolbarComponent implements OnInit {
   }
 
   setTab(analysis: string) {
-    if (this.selectedTab === analysis) {
-      this.selectedTab = 'none';
-    } else {
-      this.selectedTab = analysis;
-    }
+    // TODO: Maybe have this logic later???
+    // if (this.selectedTab === analysis) {
+    //   this.selectedTab = 'none';
+    // } else {
+    //   this.selectedTab = analysis;
+    // }
+    this.selectedTab = analysis
   }
 
   changeIdTag() {
