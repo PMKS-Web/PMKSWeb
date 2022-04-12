@@ -255,10 +255,11 @@ div{
 /* Style the tab content (and add height:100% for full page content) */
 .tabcontent {
   /*height: 95%;*/
-  height: 60px;
-  width: auto;
+  height: 46px;
+  width: 640px;
+  /*width: auto;*/
   background-color: #D9F2EF;
-  border: 1px solid black;
+  border: 0 solid black;
   color: black;
   text-align: left;
   font-size: 12px;
@@ -466,6 +467,7 @@ div{
   padding:6px 24px;
   text-decoration:none;
   text-shadow:0px 1px 0px #ffffff;
+  margin: 8px 7px;
   outline: none;
 }
 .secondaryButtons:hover {
