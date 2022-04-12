@@ -99,6 +99,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
 
+  static get gridOffset(): { x: number; y: number } {
+    return this._gridOffset;
+  }
+
   private static gridStates: gridStates = gridStates.waiting;
   private static jointStates: jointStates = jointStates.waiting;
   private static linkStates: linkStates = linkStates.waiting;
@@ -110,7 +114,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     x: 0,
     y: 0
   };
-  private static gridOffset = {
+  private static _gridOffset = {
     x: 0,
     y: 0
   };
@@ -160,14 +164,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static screenToGrid(x: number, y: number) {
-    const newX = roundNumber((1 / GridComponent.scaleFactor) * (x - GridComponent.gridOffset.x), 3);
-    const newY = roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent.gridOffset.y), 3);
+    const newX = roundNumber((1 / GridComponent.scaleFactor) * (x - GridComponent._gridOffset.x), 3);
+    const newY = roundNumber(-1 * (1 / GridComponent.scaleFactor) * (y - GridComponent._gridOffset.y), 3);
     return new Coord(newX, newY);
   }
 
   private static gridToScreen(x: number, y: number) {
-    const newX = (AppConstants.scaleFactor * x) + GridComponent.gridOffset.x;
-    const newY = (AppConstants.scaleFactor * y) + GridComponent.gridOffset.y;
+    const newX = (AppConstants.scaleFactor * x) + GridComponent._gridOffset.x;
+    const newY = (AppConstants.scaleFactor * y) + GridComponent._gridOffset.y;
     return new Coord(newX, newY);
   }
 
@@ -182,14 +186,15 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.scaleFactor = newScale * GridComponent.scaleFactor;
     }
     const afterScaleCoords = this.screenToGrid(pointX, pointY);
-    GridComponent.gridOffset.x = GridComponent.gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
-    GridComponent.gridOffset.y = GridComponent.gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
+    GridComponent._gridOffset.x = GridComponent._gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
+    GridComponent._gridOffset.y = GridComponent._gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
 
+  // TODO: Maybe see if there is a way to put this within HTML
   private static applyMatrixToSVG() {
-    const offsetX = GridComponent.gridOffset.x;
-    const offsetY = GridComponent.gridOffset.y;
+    const offsetX = GridComponent._gridOffset.x;
+    const offsetY = GridComponent._gridOffset.y;
     const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
     const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
     GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
@@ -201,18 +206,18 @@ export class GridComponent implements OnInit, AfterViewInit {
     const box = GridComponent.canvasSVGElement.getBoundingClientRect();
     const width = box.width;
     const height = box.height;
-    GridComponent.gridOffset.x = (width / 2) * AppConstants.scaleFactor;
-    GridComponent.gridOffset.y = (height / 2) * AppConstants.scaleFactor;
+    GridComponent._gridOffset.x = (width / 2) * AppConstants.scaleFactor;
+    GridComponent._gridOffset.y = (height / 2) * AppConstants.scaleFactor;
     GridComponent.scaleFactor = 1;
     this.zoomPoint(1 / AppConstants.scaleFactor, 0, 0);
     this.applyMatrixToSVG();
   }
 
   private static panSVG(dx: number, dy: number) {
-    const newOffsetX = this.gridOffset.x - dx;
-    const newOffsetY = this.gridOffset.y + dy;
-    this.gridOffset.x = newOffsetX;
-    this.gridOffset.y = newOffsetY;
+    const newOffsetX = this._gridOffset.x - dx;
+    const newOffsetY = this._gridOffset.y + dy;
+    this._gridOffset.x = newOffsetX;
+    this._gridOffset.y = newOffsetY;
     this.applyMatrixToSVG();
   }
 
@@ -1250,5 +1255,12 @@ export class GridComponent implements OnInit, AfterViewInit {
       }, 5 * positionNum);
     }
     // this.animate();
+  }
+// TODO: Is there a way to work and not have this?? Review again using getters and setters?
+  gridOffset() {
+    return GridComponent.gridOffset;
+  }
+  scaleFactor() {
+    return GridComponent.scaleFactor;
   }
 }

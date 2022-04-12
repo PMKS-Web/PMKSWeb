@@ -20,4 +20,9 @@
 <app-analysis-popup #analysisPopupComponent
                     [joints]="gridComponent.joints"
                     [links]="gridComponent.links"
-                    [forces]="gridComponent.forces"></app-analysis-popup>
+                    [forces]="gridComponent.forces"
+                    [gridOffset]="gridComponent.gridOffset()"
+[scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
+<app-animation-bar #animationBarComponent>
+
+</app-animation-bar>

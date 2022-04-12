@@ -1,7 +1,8 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
-import {Joint} from "../../model/joint";
-import {Link} from "../../model/link";
+import {Joint, RealJoint} from "../../model/joint";
+import {ImagLink, Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
+import {GridComponent} from "../grid/grid.component";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -12,7 +13,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
-
+  @Input() gridOffset: { x: number, y: number } = {x: 0, y: 0};
+  @Input() scaleFactor: number = 50;
   private static popUpWindow: SVGElement;
   private static exportButton: SVGElement;
   private static showPlotsButton: SVGElement;
@@ -80,7 +82,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   allLoopCheck: boolean = false;
   requiredLoopCheck: boolean = false;
 
-  constructor() { }
+  constructor() {
+  }
 
   ngOnInit(): void {
   }
@@ -93,12 +96,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   }
 
   showAnalysis($event: string) {
-    AnalysisPopupComponent.popUpWindow.style.display='block';
+    AnalysisPopupComponent.popUpWindow.style.display = 'block';
     this.selectedAnalysis = $event;
   }
 
   closeAnalysis() {
-    AnalysisPopupComponent.popUpWindow.style.display='none';
+    AnalysisPopupComponent.popUpWindow.style.display = 'none';
   }
 
 
@@ -279,6 +282,47 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'requiredLoopCheck':
         this.requiredLoopCheck = !this.requiredLoopCheck;
         break;
+    }
+  }
+
+  getLinkProp(link: Link, propType: string) {
+    // if (l instanceof ImagLink) {
+    //   return
+    // }
+    if (!(link instanceof RealLink)) {return}
+    // const link = l as RealLink;
+    switch (propType) {
+      case 'd':
+        return link.d;
+      case 'fill':
+        return link.fill;
+      case 'style':
+        let left = link.bound.b1.x;
+        let bot = link.bound.b1.y;
+        // TODO: Figure out way to simplify this later
+        if (link.bound.b2.x < left) {
+          left = link.bound.b2.x;
+        }
+        if (link.bound.b3.x < left) {
+          left = link.bound.b3.x;
+        }
+        if (link.bound.b4.x < left) {
+          left = link.bound.b4.x;
+        }
+        if (link.bound.b2.y < bot) {
+          bot = link.bound.b2.y;
+        }
+        if (link.bound.b3.y < bot) {
+          bot = link.bound.b3.y;
+        }
+        if (link.bound.b4.y < bot) {
+          bot = link.bound.b4.y;
+        }
+        const center_cord = (this.scaleFactor * left) + this.gridOffset.x;
+        return 'transform: scale(' + this.scaleFactor + ') scaleY(-1) translate(' +
+          (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  ')';
+      default:
+        return '?';
     }
   }
 }
