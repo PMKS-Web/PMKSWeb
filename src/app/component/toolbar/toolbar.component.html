@@ -1,37 +1,38 @@
-<nav class="dropDownMenu" id="dropDownMenu"
-     style="position: absolute; top: 0; left: 0; z-index: 1000;
-         font-size: 17px">
-  <img src="assets/PMKS_logo.png" style="height: 60px; width: 150px">
+<nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 85px; position: absolute; top: 0">
+<!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
+<!--         font-size: 17px">-->
+  <img src="assets/PMKS_logo.png" style="height: 80px; width: 200px">
 <!--  <label class="DOF">{{screenCoord}}</label>-->
-  <div>
-    <button class="fileButton" (click)="setTab('file')" style="height: 60px">File</button>
+  <div style="width: max-content; border: 0 solid #000000; background-color: #D1D1D1; color: black;
+   position: relative; height: 100%;">
+    <button class="fileButton" (click)="setTab('file')" style="height: 34px">File</button>
 <!--    <button class="tableButton" (click)="showTable()" style="height: 60px">Table-->
 <!--      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;-->
 <!--    </button>-->
-    <button class="analysisButton" (click)="setTab('analysis')" style="height: 60px">Analysis</button>
+    <button class="analysisButton" (click)="setTab('analysis')" style="height: 34px">Analysis</button>
 <!--    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>-->
 <!--    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>-->
-    <button class="settingsButton" (click)="setTab('settings')" style="height: 60px">Settings</button>
-    <button class="helpButton" (click)="setTab('help')" style="height: 60px">Help</button>
+    <button class="settingsButton" (click)="setTab('settings')" style="height: 34px">Settings</button>
+    <button class=" helpButton" (click)="setTab('help')" style="height: 34px">Help</button>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'file'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div>
-        <button>Open</button>
-        <button>Save</button>
-        <button>Copy</button>
-        <button>Merge</button>
+    <nav class="tabcontent" style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div style="width: max-content">
+        <button class="secondaryButtons">Open</button>
+        <button class="secondaryButtons">Save</button>
+        <button class="secondaryButtons">Copy</button>
+        <button class="secondaryButtons">Merge</button>
       </div>
     </nav>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'analysis'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div>
-        <button (click)="popUpAnalysis('loop')">Loops</button>
-        <button (click)="popUpAnalysis('force')">Force</button>
-        <button (click)="popUpAnalysis('stress')">Stress</button>
-        <button (click)="popUpAnalysis('kinematic')">Kinematic</button>
-        <button (click)="popUpAnalysis('ic')">Instant Center</button>
+    <nav class="tabcontent" style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div style="width: max-content">
+        <button class="secondaryButtons" (click)="popUpAnalysis('loop')">Loops</button>
+        <button class="secondaryButtons" (click)="popUpAnalysis('force')">Force</button>
+        <button class="secondaryButtons" (click)="popUpAnalysis('stress')">Stress</button>
+        <button class="secondaryButtons" (click)="popUpAnalysis('kinematic')">Kinematic</button>
+        <button class="secondaryButtons" (click)="popUpAnalysis('ic')">Instant Center</button>
       </div>
     </nav>
   </div>
@@ -66,21 +67,21 @@
 <!--    </nav>-->
 <!--  </div>-->
   <div class="tabPanel" *ngIf="selectedTab === 'settings'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div>
-        <button>Gravity</button>
-        <button>Units</button>
-        <button (click)="changeIdTag()">ID Tags</button>
-        <button (click)="changeCoMTag()">CoM</button>
-        <button>ICs</button>
+    <nav class="tabcontent" style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div style="width: max-content">
+        <button class="secondaryButtons">Gravity</button>
+        <button class="secondaryButtons">Units</button>
+        <button class="secondaryButtons" (click)="changeIdTag()">ID Tags</button>
+        <button class="secondaryButtons" (click)="changeCoMTag()">CoM</button>
+        <button class="secondaryButtons">ICs</button>
       </div>
     </nav>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'help'">
-    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
-      <div>
-        <button>About</button>
-        <button>Examples</button>
+    <nav class="tabcontent" style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">
+      <div style="width: max-content">
+        <button class="secondaryButtons">About</button>
+        <button class="secondaryButtons">Examples</button>
       </div>
     </nav>
   </div>
