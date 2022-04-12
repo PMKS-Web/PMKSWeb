@@ -11,10 +11,19 @@
     <span class="tooltiptext">Degrees of freedom</span>
   </div>
   <div id="animationBtns">
-    <button id="counterclockwise" class="tooltip" (click)="onDirectionChange()">
+    <button id="counterclockwise" class="tooltip" (click)="onDirectionChange()" *ngIf="direction === 'ccw'">
       <span class="tooltiptext">Change Direction</span>
     </button>
-    <button id="mediumspeed" class="tooltip" (click)="onSpeedChange()">
+    <button id="clockwise" class="tooltip" (click)="onDirectionChange()" *ngIf="direction === 'cw'">
+      <span class="tooltiptext">Change Direction</span>
+    </button>
+    <button id="slowspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="speed === 'slow'">
+      <span class="tooltiptext">Change Speed</span>
+    </button>
+    <button id="mediumspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="speed === 'medium'">
+      <span class="tooltiptext">Change Speed</span>
+    </button>
+    <button id="fastspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="speed === 'fast'">
       <span class="tooltiptext">Change Speed</span>
     </button>
     <button class="tooltip" id="playBtn" (click)="startAnimation()">
