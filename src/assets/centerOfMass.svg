@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!--https://stackoverflow.com/questions/32750613/svg-draw-a-circle-with-4-sectors/49226211-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" viewBox="0 0 512.00 512.00" enable-background="new 0 0 512.00 512.00" xml:space="preserve">
+  <ellipse fill="#ACACAC" fill-opacity="1" stroke-width="5" stroke-linejoin="round" stroke="#000000" stroke-opacity="1" cx="256" cy="256" rx="256" ry="256"/>
+  <ellipse fill="#ACACAC" fill-opacity="1" stroke-width="5" stroke-linejoin="round" stroke="#000000" stroke-opacity="1" cx="256" cy="256" rx="200" ry="200"/>
+  <g transform="translate(256,256)" stroke="#00000">
+<!--    <path d="M0 0 -200 0A200 200 0 0 0 0 200Z" fill="#FFFFFF"/>-->
+    <path d="M0 0  -200 0A200 200 0 0 1 0 -200Z" fill="#000000"/>
+    <path d="M0 0  200 0A200 200 0 0 1 0 200Z" fill="#000000"/>
+
+<!--    <path d="M0 0 0 200A200 200 0 0 1 -200 0Z" fill="#000000"/>-->
+<!--    <path d="M0 0 0-200A200 200 0 0 1 200 0Z" fill="#000000"/>-->
+<!--    <path d="M0 0 -200 0A200 200 0 0 0 0 200Z" fill="#FFFFFF"/>-->
+<!--    <path d="M0 0  200 0A200 200 0 0 0 0 -200Z" fill="#FFFFFF"/>-->
+
+<!--    <path d="M0 0 0 200A200 200 0 0 1 -200 0Z" fill="#000000"/>-->
+<!--    <path d="M0 0 0-200A200 200 0 0 1 200 0Z" fill="#000000"/>-->
+  </g>
+</svg>
