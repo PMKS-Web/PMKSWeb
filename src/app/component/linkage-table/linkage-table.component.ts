@@ -19,6 +19,7 @@ export class LinkageTableComponent implements OnInit {
   private static jointButton: SVGElement;
   private static linkButton: SVGElement;
   private static forceButton: SVGElement;
+  private static showLinkageTableButton: SVGElement;
 
   selectedTab: number = 0;
   constructor() { }
@@ -30,6 +31,7 @@ export class LinkageTableComponent implements OnInit {
     LinkageTableComponent.jointButton = document.getElementById('jointButton') as unknown as SVGElement;
     LinkageTableComponent.linkButton = document.getElementById('linkButton') as unknown as SVGElement;
     LinkageTableComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
+    LinkageTableComponent.showLinkageTableButton = document.getElementById('showTable') as unknown as SVGElement;
   }
 
   setTab(tabNum: number) {
@@ -199,8 +201,10 @@ export class LinkageTableComponent implements OnInit {
   linkageVisibility() {
     if (LinkageTableComponent.linkageTable.style.visibility === 'visible') {
       LinkageTableComponent.linkageTable.style.visibility = 'hidden';
+      LinkageTableComponent.showLinkageTableButton.textContent = 'Show Table'
     } else {
       LinkageTableComponent.linkageTable.style.visibility = 'visible';
+      LinkageTableComponent.showLinkageTableButton.textContent = 'Hide Table'
     }
   }
 
