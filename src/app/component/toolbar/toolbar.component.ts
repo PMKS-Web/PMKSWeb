@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint} from "../../model/joint";
 import {Link} from "../../model/link";
 import {Force} from "../../model/force";
@@ -12,7 +12,7 @@ import {ForceSolver} from "../../model/mechanism/force-solver";
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.css']
 })
-export class ToolbarComponent implements OnInit {
+export class ToolbarComponent implements OnInit, AfterViewInit {
 
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
@@ -29,9 +29,22 @@ export class ToolbarComponent implements OnInit {
   unit: string = 'cm';
   gravity: boolean = false;
   animate: boolean = false;
+
+  private static fileButton: SVGElement;
+  private static analysisButton: SVGElement;
+  private static settingsButton: SVGElement;
+  private static helpButton: SVGElement;
+
   constructor() { }
 
   ngOnInit(): void {
+  }
+
+  ngAfterViewInit() {
+    ToolbarComponent.fileButton = document.getElementById('fileButton') as unknown as SVGElement;
+    ToolbarComponent.analysisButton = document.getElementById('analysisButton') as unknown as SVGElement;
+    ToolbarComponent.settingsButton = document.getElementById('settingsButton') as unknown as SVGElement;
+    ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
   showTable() {
@@ -48,6 +61,64 @@ export class ToolbarComponent implements OnInit {
     //   this.selectedTab = analysis;
     // }
     this.selectedTab = analysis
+    switch (analysis) {
+      case 'file':
+        ToolbarComponent.fileButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+        ToolbarComponent.analysisButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.settingsButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.helpButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        break;
+      case 'analysis':
+        ToolbarComponent.fileButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.analysisButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+        ToolbarComponent.settingsButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.helpButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        break;
+      case 'settings':
+        ToolbarComponent.fileButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.analysisButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.settingsButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+        ToolbarComponent.helpButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        break;
+      case 'help':
+        ToolbarComponent.fileButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.analysisButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.settingsButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+        ToolbarComponent.helpButton.setAttribute('style',
+          'height: 34px; width: 160px; font-size: 24px;\n' +
+          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+        break;
+    }
   }
 
   changeIdTag() {

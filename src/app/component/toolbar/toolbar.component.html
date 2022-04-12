@@ -5,18 +5,18 @@
 <!--  <label class="DOF">{{screenCoord}}</label>-->
   <div style="width: 640px; border: 1px solid black; background-color: #D1D1D1; color: black;
    position: relative; height: 100%;">
-    <button class="fileButton" (click)="setTab('file')" style="height: 34px; width: 160px; font-size: 24px;
-     font-family: Arial, sans-serif; cursor: pointer">File</button>
+    <button id="fileButton" class="fileButton" (click)="setTab('file')" style="height: 34px; width: 160px; font-size: 24px;
+     font-family: Arial, sans-serif; cursor: pointer; color: black; background-color: gray">File</button>
 <!--    <button class="tableButton" (click)="showTable()" style="height: 60px">Table-->
 <!--      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;-->
 <!--    </button>-->
-    <button class="analysisButton" (click)="setTab('analysis')" style="height: 34px; width: 160px; font-size: 24px;
+    <button id="analysisButton" class="analysisButton" (click)="setTab('analysis')" style="height: 34px; width: 160px; font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer">Analysis</button>
 <!--    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>-->
 <!--    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>-->
-    <button class="settingsButton" (click)="setTab('settings')" style="height: 34px; width: 160px;  font-size: 24px;
+    <button id="settingsButton" class="settingsButton" (click)="setTab('settings')" style="height: 34px; width: 160px;  font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer">Settings</button>
-    <button class=" helpButton" (click)="setTab('help')" style="height: 34px; width: 160px; font-size: 24px;
+    <button id="helpButton" class=" helpButton" (click)="setTab('help')" style="height: 34px; width: 160px; font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer">Help</button>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 'file'">
