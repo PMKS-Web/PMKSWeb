@@ -7,6 +7,7 @@ import { LinkageTableComponent } from './component/linkage-table/linkage-table.c
 import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
 import { AnimationBarComponent} from "./component/animation-bar/animation-bar.component";
+import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import { AnimationBarComponent} from "./component/animation-bar/animation-bar.co
     ToolbarComponent,
     AnalysisPopupComponent,
     AnimationBarComponent,
+    ShapeSelectorComponent,
   ],
   imports: [
     BrowserModule

@@ -98,6 +98,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuChangeForceLocal: SVGElement;
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
+  showcaseShapeSelector: boolean = false;
 
   static get gridOffset(): { x: number; y: number } {
     return this._gridOffset;
@@ -953,6 +954,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   editShape() {
     this.disappearContext();
+    // TODO: Add logic to showcase different link shapes to create
+    this.showcaseShapeSelector = !this.showcaseShapeSelector;
   }
 
   deleteLink() {

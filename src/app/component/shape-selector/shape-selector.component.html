@@ -1,0 +1,12 @@
+<div id="shape-selector" *ngIf="showcaseShapeSelector">
+  <p id="shape-selector-title">Select shapes</p>
+  <div id="shape-selector-wrapper">
+    <table id="shape-selector-table">
+    </table>
+  </div>
+  <div id="button-wrapper">
+    <button class="secondary-buttons" (click)="save()">Save</button>
+    <button class="secondary-buttons" (click)="cancel()">Cancel</button>
+    <button class="secondary-buttons" (click)="revert()">Revert</button>
+  </div>
+</div>
