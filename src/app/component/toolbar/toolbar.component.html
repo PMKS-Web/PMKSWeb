@@ -22,10 +22,14 @@
   <div class="tabPanel" *ngIf="selectedTab === 'file'">
     <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: 640px; border: 1px solid black">
-        <button class="secondaryButtons">Open</button>
-        <button class="secondaryButtons">Save</button>
-        <button class="secondaryButtons">Copy</button>
-        <button class="secondaryButtons">Merge</button>
+        <!-- label instead of button but this works -->
+        <label class="secondaryButtons">Open
+          <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
+                 (change)="upload($event)">
+        </label>
+        <button class="secondaryButtons" (click)="downloadLinkage()">Save</button>
+        <button class="secondaryButtons" (click)="copyURL()">Copy</button>
+        <button class="secondaryButtons" (click)="merge()">Merge</button>
       </div>
     </nav>
   </div>
@@ -86,7 +90,8 @@
     <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: 640px; border: 1px solid black">
         <button class="secondaryButtons">About</button>
-        <button class="secondaryButtons">Examples</button>
+        <button class="secondaryButtons">Section Info</button>
+        <button class="secondaryButtons">Templates</button>
       </div>
     </nav>
   </div>
