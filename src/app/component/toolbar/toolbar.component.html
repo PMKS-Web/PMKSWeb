@@ -1,19 +1,19 @@
 <nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 80px; position: absolute; top: 0">
-<!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
-<!--         font-size: 17px">-->
+  <!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
+  <!--         font-size: 17px">-->
   <img src="assets/PMKS_logo.png" onClick="window.location.reload()" style="cursor: pointer">
-<!--  <label class="DOF">{{screenCoord}}</label>-->
+  <!--  <label class="DOF">{{screenCoord}}</label>-->
   <div style="width: 640px; border: 1px solid black; background-color: #D1D1D1; color: black;
    position: relative; height: 100%;">
     <button id="fileButton" class="fileButton" (click)="setTab('file')" style="height: 34px; width: 160px; font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer; color: black; background-color: gray">File</button>
-<!--    <button class="tableButton" (click)="showTable()" style="height: 60px">Table-->
-<!--      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;-->
-<!--    </button>-->
+    <!--    <button class="tableButton" (click)="showTable()" style="height: 60px">Table-->
+    <!--      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;-->
+    <!--    </button>-->
     <button id="analysisButton" class="analysisButton" (click)="setTab('analysis')" style="height: 34px; width: 160px; font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer; color: gray; background-color: white">Analysis</button>
-<!--    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>-->
-<!--    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>-->
+    <!--    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>-->
+    <!--    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>-->
     <button id="settingsButton" class="settingsButton" (click)="setTab('settings')" style="height: 34px; width: 160px;  font-size: 24px;
      font-family: Arial, sans-serif; cursor: pointer; color: gray; background-color: white">Settings</button>
     <button id="helpButton" class=" helpButton" (click)="setTab('help')" style="height: 34px; width: 160px; font-size: 24px;
@@ -44,45 +44,79 @@
       </div>
     </nav>
   </div>
-<!--  <div class="tabPanel" *ngIf="selectedTab === 'animate'">-->
-<!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
-<!--      <div id="animationBtns" style="float: left">-->
-<!--        <button id="counterclockwise" class="tooltip">-->
-<!--          <span class="tooltiptext">Change Direction</span>-->
-<!--        </button>-->
-<!--        <button id="mediumspeed" class="tooltip">-->
-<!--          <span class="tooltiptext">Change Speed</span>-->
-<!--        </button>-->
-<!--        <button class="tooltip" id="playBtn" (click)="animateMechanism()">-->
-<!--          <span class="tooltiptext">Play Animation</span>-->
-<!--        </button>-->
-<!--        <button class="tooltip" id="stopBtn">-->
-<!--          <span class="tooltiptext">Reset Animation</span>-->
-<!--        </button>-->
-<!--      </div>-->
-<!--      <div id="slidecontainer" style="float:left;">-->
-<!--        <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">-->
-<!--      </div>-->
-<!--    </nav>-->
-<!--  </div>-->
-<!--  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">-->
-<!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
-<!--      <div>-->
-<!--        <button>None</button>-->
-<!--        <button>2/3-Position</button>-->
-<!--        <button>Path</button>-->
-<!--      </div>-->
-<!--    </nav>-->
-<!--  </div>-->
+  <!--  <div class="tabPanel" *ngIf="selectedTab === 'animate'">-->
+  <!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
+  <!--      <div id="animationBtns" style="float: left">-->
+  <!--        <button id="counterclockwise" class="tooltip">-->
+  <!--          <span class="tooltiptext">Change Direction</span>-->
+  <!--        </button>-->
+  <!--        <button id="mediumspeed" class="tooltip">-->
+  <!--          <span class="tooltiptext">Change Speed</span>-->
+  <!--        </button>-->
+  <!--        <button class="tooltip" id="playBtn" (click)="animateMechanism()">-->
+  <!--          <span class="tooltiptext">Play Animation</span>-->
+  <!--        </button>-->
+  <!--        <button class="tooltip" id="stopBtn">-->
+  <!--          <span class="tooltiptext">Reset Animation</span>-->
+  <!--        </button>-->
+  <!--      </div>-->
+  <!--      <div id="slidecontainer" style="float:left;">-->
+  <!--        <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">-->
+  <!--      </div>-->
+  <!--    </nav>-->
+  <!--  </div>-->
+  <!--  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">-->
+  <!--    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">-->
+  <!--      <div>-->
+  <!--        <button>None</button>-->
+  <!--        <button>2/3-Position</button>-->
+  <!--        <button>Path</button>-->
+  <!--      </div>-->
+  <!--    </nav>-->
+  <!--  </div>-->
+  <!-- TODO: ERROR MESSAGE SHOWING SOMEWHERE HERE... LOOK FOR ALTERNATIVE SOLUTION OR FIND BUG AND FIX -->
   <div class="tabPanel" *ngIf="selectedTab === 'settings'">
     <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
-      <div style="width: 640px; border: 1px solid black">
-        <!-- TODO: Input Speed -->
-        <button class="secondaryButtons">Gravity</button>
-        <button class="secondaryButtons">Units</button>
-<!--        <button class="secondaryButtons" (click)="changeIdTag()">ID Tags</button>-->
-<!--        <button class="secondaryButtons" (click)="changeCoMTag()">CoM</button>-->
-<!--        <button class="secondaryButtons">ICs</button>-->
+      <!-- TODO: Input Speed -->
+      <div id="settings" class="tabcontent">
+        <div class="input-text">
+          Input Speed (RPM):
+        </div>
+        <div class="input-textbox">
+          <input type="text" value="{{inputAngularVelocity}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
+        </div>
+        <div class="input-direction">
+          <label>
+            <input type="radio" name="direction" value="{{clockwise}}" [checked]="clockwise" (change)="setClockwise($event)">
+            cw<br>
+          </label>
+          <label>
+            <input type="radio" name="direction" value="{{!clockwise}}" [checked]="!clockwise" (change)="setCounterClockwise($event)">
+            ccw
+          </label>
+        </div>
+        <div class="gravity-toggle">
+          <label>
+            <input type="radio" name="gravityToggle" value="gravity" [checked]="gravity" (change)="setGravity($event)">
+            Gravity On
+          </label>
+          <label>
+            <input type="radio" name="gravityToggle" value="gravityOff" [checked]="!gravity" (change)="setGravityOff($event)">
+            Gravity Off<br>
+          </label>
+        </div>
+        <div class="select-units">
+          <label>
+            Units
+            <select name="selectedUnit"
+                    [(ngModel)]="unit.selectedUnit" (ngModelChange)="changeUnit(unit.selectedUnit)">
+              <option *ngFor="let unit of units" [value]="unit.id">{{unit.label}}</option>
+            </select>
+          </label>
+        </div>
+        <!--        <button class="secondaryButtons" (click)="changeIdTag()">ID Tags</button>-->
+        <!--        <button class="secondaryButtons" (click)="changeCoMTag()">CoM</button>-->
+        <!--        <button class="secondaryButtons">ICs</button>-->
       </div>
     </nav>
   </div>

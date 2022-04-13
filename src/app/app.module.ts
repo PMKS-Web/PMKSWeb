@@ -8,6 +8,7 @@ import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
 import { AnimationBarComponent} from "./component/animation-bar/animation-bar.component";
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
+import {FormsModule} from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -19,9 +20,10 @@ import { ShapeSelectorComponent } from './component/shape-selector/shape-selecto
     AnimationBarComponent,
     ShapeSelectorComponent,
   ],
-  imports: [
-    BrowserModule
-  ],
+    imports: [
+        BrowserModule,
+        FormsModule
+    ],
   providers: [
 
   ],

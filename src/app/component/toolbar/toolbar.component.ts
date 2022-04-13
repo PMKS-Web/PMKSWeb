@@ -21,10 +21,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
+  inputAngularVelocity: number = 10;
   selectedTab: string = 'file';
   // showIdTags: boolean = false;
   // showCoMTags: boolean = false;
-  unit: string = 'cm';
+  // unit: string = 'cm';
+  clockwise: boolean = false;
   gravity: boolean = false;
   animate: boolean = false;
 
@@ -32,6 +34,22 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   private static analysisButton: SVGElement;
   private static settingsButton: SVGElement;
   private static helpButton: SVGElement;
+
+
+  unit = {
+    // selectedUnit: 'Metric'
+    selectedUnit: 'cm'
+  };
+
+  units = [
+    {id: 'cm', label: 'cm'},
+    {id: 'm', label: 'm'},
+    // { id: 'km', label: 'km'},
+    // { id: 'in', label: 'in'},
+    // { id: 'ft', label: 'ft'}
+    // { id: 'Metric', label: 'Metric'},
+    // { id: 'English', label: 'English'}
+  ];
 
   constructor() { }
 
@@ -190,7 +208,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   copyURL() {
     const content = this.generateExportURL(this.joints, this.links, this.forces, [],
-      [], 10, true, this.gravity, this.unit);
+      [], 10, true, this.gravity, this.unit.selectedUnit);
     const url = this.getURL();
     const dataURLString = `${url}?${content}`;
     const dataURL = encodeURI(dataURLString);
@@ -215,7 +233,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(this.joints, this.links, this.forces, [],
-      [], 10, true, this.gravity, this.unit);
+      [], 10, true, this.gravity, this.unit.selectedUnit);
 
     const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
     const fileName = `PMKS+_${new Date().toISOString()}.csv`;
@@ -453,5 +471,29 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     //
     // return result;
     return '';
+  }
+
+  setClockwise($event: Event) {
+
+  }
+
+  setInputMagnitudeAngVel($event: KeyboardEvent) {
+
+  }
+
+  setCounterClockwise($event: Event) {
+
+  }
+
+  setGravity($event: Event) {
+
+  }
+
+  setGravityOff($event: Event) {
+
+  }
+
+  changeUnit(selectedUnit: string) {
+      this.unit.selectedUnit = selectedUnit;
   }
 }
