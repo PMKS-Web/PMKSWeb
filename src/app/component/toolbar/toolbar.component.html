@@ -87,21 +87,21 @@
         </div>
         <div class="input-direction">
           <label>
-            <input type="radio" name="direction" value="{{clockwise}}" [checked]="clockwise" (change)="setClockwise($event)">
+            <input type="radio" name="direction" [checked]="clockwise" (change)="setClockwise()">
             cw<br>
           </label>
           <label>
-            <input type="radio" name="direction" value="{{!clockwise}}" [checked]="!clockwise" (change)="setCounterClockwise($event)">
+            <input type="radio" name="direction" [checked]="!clockwise" (change)="setCounterClockwise()">
             ccw
           </label>
         </div>
         <div class="gravity-toggle">
           <label>
-            <input type="radio" name="gravityToggle" value="gravity" [checked]="gravity" (change)="setGravity($event)">
+            <input type="radio" name="gg" [checked]="gravity" (change)="setGravity()">
             Gravity On
           </label>
           <label>
-            <input type="radio" name="gravityToggle" value="gravityOff" [checked]="!gravity" (change)="setGravityOff($event)">
+            <input type="radio" name="gg" [checked]="!gravity" (change)="setGravityOff()">
             Gravity Off<br>
           </label>
         </div>

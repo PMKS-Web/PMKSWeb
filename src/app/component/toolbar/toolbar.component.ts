@@ -240,17 +240,17 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // if (navigator.msSaveBlob) { // IE 10+
     //   navigator.msSaveBlob(blob, fileName);
     // } else {
-      const link = document.createElement('a');
-      if (link.download !== undefined) { // feature detection
-        // Browsers that support HTML5 download attribute
-        // fake an <a> to click on
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // feature detection
+      // Browsers that support HTML5 download attribute
+      // fake an <a> to click on
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       // }
     }
   }
@@ -473,27 +473,27 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     return '';
   }
 
-  setClockwise($event: Event) {
-
+  setInputMagnitudeAngVel($event: any) {
+    this.inputAngularVelocity = $event.target.value
   }
 
-  setInputMagnitudeAngVel($event: KeyboardEvent) {
-
+  setClockwise() {
+    this.clockwise = true;
   }
 
-  setCounterClockwise($event: Event) {
-
+  setCounterClockwise() {
+    this.clockwise = false;
   }
 
-  setGravity($event: Event) {
-
+  setGravity() {
+    this.gravity = true;
   }
 
-  setGravityOff($event: Event) {
-
+  setGravityOff() {
+    this.gravity = false;
   }
 
   changeUnit(selectedUnit: string) {
-      this.unit.selectedUnit = selectedUnit;
+    this.unit.selectedUnit = selectedUnit;
   }
 }
