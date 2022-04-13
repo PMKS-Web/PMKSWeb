@@ -290,15 +290,18 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     //   return
     // }
     if (!(link instanceof RealLink)) {return}
+    let left: number;
+    let bot: number;
+    let center_cord: number;
     // const link = l as RealLink;
     switch (propType) {
       case 'd':
         return link.d;
       case 'fill':
         return link.fill;
-      case 'style':
-        let left = link.bound.b1.x;
-        let bot = link.bound.b1.y;
+      case 'translate':
+        left = link.bound.b1.x;
+        bot = link.bound.b1.y;
         // TODO: Figure out way to simplify this later
         if (link.bound.b2.x < left) {
           left = link.bound.b2.x;
@@ -318,9 +321,34 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         if (link.bound.b4.y < bot) {
           bot = link.bound.b4.y;
         }
-        const center_cord = (this.scaleFactor * left) + this.gridOffset.x;
-        return 'transform: scale(' + this.scaleFactor + ') scaleY(-1) translate(' +
-          (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  ')';
+        center_cord = (this.scaleFactor * left) + this.gridOffset.x;
+        return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  ')';
+      case 'scale':
+        return 'scale(' + this.scaleFactor + ')'
+      case 'transform':
+        left = link.bound.b1.x;
+        bot = link.bound.b1.y;
+        // TODO: Figure out way to simplify this later
+        if (link.bound.b2.x < left) {
+          left = link.bound.b2.x;
+        }
+        if (link.bound.b3.x < left) {
+          left = link.bound.b3.x;
+        }
+        if (link.bound.b4.x < left) {
+          left = link.bound.b4.x;
+        }
+        if (link.bound.b2.y < bot) {
+          bot = link.bound.b2.y;
+        }
+        if (link.bound.b3.y < bot) {
+          bot = link.bound.b3.y;
+        }
+        if (link.bound.b4.y < bot) {
+          bot = link.bound.b4.y;
+        }
+        center_cord = (this.scaleFactor * left) + this.gridOffset.x;
+        return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  '), scale(' + this.scaleFactor + ')'
       default:
         return '?';
     }
