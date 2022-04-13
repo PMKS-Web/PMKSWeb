@@ -176,11 +176,15 @@
           <label>Link {{link.id}}</label>
           <svg style="height: 500px; width: 250px; transform: scaleY(-1);display: block;">
             <!-- TODO: Make sure scale works accordingly -->
-            <g id="linkHolder" [attr.transform]="getLinkProp(link, 'transform')">
+            <g [attr.transform]="getLinkProp(link, 'transform')">
               <path
-                    [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
-                    [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
+                [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
+                [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
               </path>
+              <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')"
+                      [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
+              <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
+                      [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
             </g>
           </svg>
         </div>

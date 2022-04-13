@@ -353,4 +353,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return '?';
     }
   }
+
+  getJointProp(joint: any, propType: string) {
+    // TODO: Make sure joint is of type Joint and not any
+    if (joint === undefined) {
+      return 0;
+    }
+    switch (propType) {
+      case 'ring':
+        if (!(joint instanceof RealJoint)) {return}
+        return joint.r;
+      case 'r':
+        if (!(joint instanceof RealJoint)) {return}
+        return joint.r * 7 / 5;
+      default:
+        return;
+    }
+  }
 }
