@@ -1266,4 +1266,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   scaleFactor() {
     return GridComponent.scaleFactor;
   }
+
+  saveEdit() {
+    this.showcaseShapeSelector = false;
+  }
+  revertEdit() {
+    this.showcaseShapeSelector = false;
+  }
+  cancelEdit() {
+    this.showcaseShapeSelector = false;
+  }
 }

@@ -27,5 +27,8 @@
                    [screenCoord]="gridComponent.screenCoord">
 </app-animation-bar>
 <app-shape-selector #shapeSelectorComponent
-                    [showcaseShapeSelector]="gridComponent.showcaseShapeSelector">
+                    [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"
+(saveEdit)="gridComponent.saveEdit()"
+(revertEdit)="gridComponent.revertEdit()"
+(cancelEdit)="gridComponent.cancelEdit()">
 </app-shape-selector>
