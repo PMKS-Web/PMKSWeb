@@ -72,7 +72,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   screenCoord: string = '';
 
   // holders
-  private static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
+  static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
   private static transformMatrixGridSVGElement: SVGElement;
   private static transformMatrixSVG: HTMLElement;
   private static pathsHolderSVG: SVGElement;
@@ -109,13 +109,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static linkStates: linkStates = linkStates.waiting;
   private static forceStates: forceStates = forceStates.waiting;
   private static moveModes: moveModes;
-  private static scaleFactor = 1;
+  static scaleFactor = 1;
 
   private static panOffset = {
     x: 0,
     y: 0
   };
-  private static _gridOffset = {
+  // TODO: Make getters and setters
+  static _gridOffset = {
     x: 0,
     y: 0
   };

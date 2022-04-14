@@ -174,9 +174,11 @@
         <div *ngFor="let link of links">
           <input type="checkbox">
           <label>Link {{link.id}}</label>
-          <svg style="height: 500px; width: 250px; transform: scaleY(-1);display: block;">
+          <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
+               style="transform: scaleY(-1);display: block; margin: auto">
             <!-- TODO: Make sure scale works accordingly -->
-            <g [attr.transform]="getLinkProp(link, 'transform')">
+            <g [attr.transform]="getLinkProp(link, 'transform')"
+               [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')" style="display: block; margin: auto">
               <path
                 [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
                 [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
@@ -185,7 +187,8 @@
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
               <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
-              <text *ngFor="let joint of link.joints" [attr.x]="joint.x" [attr.y]="joint.y" style="font-size: 1px; text-anchor: middle; transform: scaleY(-1)">{{joint.id}}</text>
+              <text *ngFor="let joint of link.joints" [attr.x]="joint.x" [attr.y]="joint.y" style="font-size: 1px;
+               text-anchor: middle; transform: scaleY(-1)">{{joint.id}}</text>
             </g>
           </svg>
         </div>
