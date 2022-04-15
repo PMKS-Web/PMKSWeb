@@ -24,11 +24,12 @@
                     [gridOffset]="gridComponent.gridOffset()"
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
 <app-animation-bar #animationBarComponent
-                   [screenCoord]="gridComponent.screenCoord">
+                   [screenCoord]="gridComponent.screenCoord"
+                   (animateGridEmitter)="gridComponent.animate()">
 </app-animation-bar>
 <app-shape-selector #shapeSelectorComponent
                     [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"
-(saveEdit)="gridComponent.saveEdit()"
-(revertEdit)="gridComponent.revertEdit()"
-(cancelEdit)="gridComponent.cancelEdit()">
+                    (saveEdit)="gridComponent.saveEdit()"
+                    (revertEdit)="gridComponent.revertEdit()"
+                    (cancelEdit)="gridComponent.cancelEdit()">
 </app-shape-selector>
