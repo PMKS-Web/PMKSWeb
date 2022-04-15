@@ -3,7 +3,7 @@
           [showCoMTags]="animationBarComponent.showCoMTags"
           [gravity]="toolbarComponent.gravity"
           [unit]="toolbarComponent.unit.selectedUnit"
-          [runAnimation]="toolbarComponent.animate"></app-grid>
+          [runAnimation]="animationBarComponent.animate"></app-grid>
 <app-linkage-table #linkageTableComponent
                    [joints]="gridComponent.joints"
                    [links]="gridComponent.links"
@@ -15,7 +15,8 @@
              [mechanisms]="gridComponent.mechanisms"
              [screenCoord]="gridComponent.screenCoord"
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
-             (animateGridEmitter)="gridComponent.animate()"
+             (animateGridEmitter)="gridComponent.animate(0, $event)"
+             (dontAnimateGridEmitter)="gridComponent.noAnimate()"
              (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
 <app-analysis-popup #analysisPopupComponent
                     [joints]="gridComponent.joints"
@@ -25,7 +26,7 @@
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
 <app-animation-bar #animationBarComponent
                    [screenCoord]="gridComponent.screenCoord"
-                   (animateGridEmitter)="gridComponent.animate()">
+                   (animateGridEmitter)="gridComponent.animate(0, $event)">
 </app-animation-bar>
 <app-shape-selector #shapeSelectorComponent
                     [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"

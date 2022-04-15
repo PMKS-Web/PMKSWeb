@@ -9,7 +9,7 @@ import {switchMapTo} from "rxjs";
 export class AnimationBarComponent implements OnInit {
   @Input() screenCoord: string = '';
   @Input() dof: string = '';
-  @Output() animateGridEmitter = new EventEmitter();
+  @Output() animateGridEmitter = new EventEmitter<boolean>();
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
   direction: string = 'ccw';
@@ -45,20 +45,7 @@ export class AnimationBarComponent implements OnInit {
 
   startAnimation() {
     this.animate = !this.animate;
-    if (this.animate) {
-      this.animateGridEmitter.emit();
-      // for (let i = 0; i < 360; i++) {
-      for (let i = 0; i < 100; i++) {
-        setTimeout(() => {
-          // console.log("this is the first message")
-          document.getElementById('slider')!.setAttribute('value', i.toString());
-          console.log(i.toString());
-
-        }, 10 * i);
-      }
-    } else {
-      document.getElementById('slider')!.setAttribute('value','0');
-    }
+    this.animateGridEmitter.emit(this.animate);
   }
 
   stopAnimation() {

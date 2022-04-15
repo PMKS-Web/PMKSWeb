@@ -1224,58 +1224,48 @@ export class GridComponent implements OnInit, AfterViewInit {
     return joint.input;
   }
 
-  animate() {
-    // if (!this.runAnimation) {return}
-    for (let positionNum = 0; positionNum < this.mechanisms[0].joints.length; positionNum++) {
-      setTimeout(() => {
-        // TODO: with this current logic, this.joints has to exactly match. Should this be for all cases??
-        this.joints.forEach((j, j_index) => {
-          j.x = this.mechanisms[0].joints[positionNum][j_index].x;
-          j.y = this.mechanisms[0].joints[positionNum][j_index].y;
-        });
-        this.links.forEach((l, l_index) => {
-          if (!(l instanceof RealLink)) {return}
-          const link = this.mechanisms[0].links[positionNum][l_index];
-          if (!(link instanceof RealLink)) {return}
-          l.bound = link.bound;
-          l.d = link.d;
-          l.CoM = link.CoM;
-          l.updateCoMDs();
-          // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          // l.CoMX = RealLink.determineCenterOfMass(l.joints, 'x');
-          // l.CoMY = RealLink.determineCenterOfMass(l.joints, 'y');
-          // l.updateCoMDs();
-        });
-        this.forces.forEach((f, f_index) => {
-          // TODO: Check to see if you can switch the coords. But most likely you cannot and have to change values
-          f.startCoord.x = this.mechanisms[0].forces[positionNum][f_index].startCoord.x;
-          f.startCoord.y = this.mechanisms[0].forces[positionNum][f_index].startCoord.y;
-          f.endCoord.x = this.mechanisms[0].forces[positionNum][f_index].endCoord.x;
-          f.endCoord.y = this.mechanisms[0].forces[positionNum][f_index].endCoord.y;
-          // TODO: Local should not change this but putting this here...
-          f.local = this.mechanisms[0].forces[positionNum][f_index].local;
-          f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-          f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
-          f.xMag = this.mechanisms[0].forces[positionNum][f_index].xMag;
-          f.yMag = this.mechanisms[0].forces[positionNum][f_index].yMag;
-        });
-        // this.links = this.mechanisms[0].links[positionNum];
-        // this.links.forEach((l, l_index) => {
-        // if (!(l instanceof RealLink)) {return}
-        // l.joints.forEach(j => {
-        //   const jointIndex = this.joints.findIndex(jt => jt.id === j.id);
-        //   j.x = this.joints[jointIndex].x;
-        //   j.y = this.joints[jointIndex].y;
-        // });
-        // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-        // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-        // });
-      }, 5 * positionNum);
-    }
-    // this.animate();
+  noAnimate() {
+    clearTimeout(0);
   }
-// TODO: Is there a way to work and not have this?? Review again using getters and setters?
+
+  animate(progress: number, animationState?: boolean) {
+    if (animationState !== undefined) {
+      this.runAnimation = animationState;
+    }
+    if (!this.runAnimation) {return}
+    this.joints.forEach((j, j_index) => {
+      j.x = this.mechanisms[0].joints[progress][j_index].x;
+      j.y = this.mechanisms[0].joints[progress][j_index].y;
+    });
+    this.links.forEach((l, l_index) => {
+      if (!(l instanceof RealLink)) {return}
+      const link = this.mechanisms[0].links[progress][l_index];
+      if (!(link instanceof RealLink)) {return}
+      l.bound = link.bound;
+      l.d = link.d;
+      l.CoM = link.CoM;
+      l.updateCoMDs();
+    });
+    this.forces.forEach((f, f_index) => {
+      f.startCoord.x = this.mechanisms[0].forces[progress][f_index].startCoord.x;
+      f.startCoord.y = this.mechanisms[0].forces[progress][f_index].startCoord.y;
+      f.endCoord.x = this.mechanisms[0].forces[progress][f_index].endCoord.x;
+      f.endCoord.y = this.mechanisms[0].forces[progress][f_index].endCoord.y;
+      f.local = this.mechanisms[0].forces[progress][f_index].local;
+      f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+      f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+      f.xMag = this.mechanisms[0].forces[progress][f_index].xMag;
+      f.yMag = this.mechanisms[0].forces[progress][f_index].yMag;
+    });
+    progress++;
+    if (progress === this.mechanisms[0].joints.length) {
+      progress = 0;
+    }
+    setTimeout(() => {
+      this.animate(progress);
+    }, 10 / 3);
+  }
+
   gridOffset() {
     return GridComponent.gridOffset;
   }

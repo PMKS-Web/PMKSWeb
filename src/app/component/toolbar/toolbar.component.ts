@@ -20,6 +20,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
+  @Output() dontAnimateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
   inputAngularVelocity: number = 10;
   selectedTab: string = 'file';
@@ -161,6 +162,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         }, 10 * i);
       }
     } else {
+      this.dontAnimateGridEmitter.emit();
       document.getElementById('slider')!.setAttribute('value','0');
     }
   }
