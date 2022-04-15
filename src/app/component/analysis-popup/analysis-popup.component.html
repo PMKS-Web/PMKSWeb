@@ -31,6 +31,11 @@
             All Loops
           </label>
         </div>
+        <div>
+          <button class="secondaryButtons" (click)="exportExcel('loops')">Export
+            Data on the Selected Analysis
+          </button>
+        </div>
       </div>
       <div *ngIf="selectedAnalysis === 'force'">
         <div>
@@ -56,6 +61,11 @@
           <label>
             Joint Positions
           </label>
+        </div>
+        <div>
+          <button class="secondaryButtons" (click)="exportExcel('static')">Export
+            Data on the Selected Analysis
+          </button>
         </div>
       </div>
       <div *ngIf="selectedAnalysis === 'stress'">
@@ -116,6 +126,11 @@
           <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc">
           <label>Acceleration</label>
         </div>
+        <div>
+          <button class="secondaryButtons" (click)="exportExcel('kinematics')">Export
+            Data on the Selected Analysis
+          </button>
+        </div>
       </div>
       <div *ngIf="selectedAnalysis === 'ic'">
         <div>
@@ -147,6 +162,11 @@
         <div *ngIf="this.angKinLinkICCheck">
           <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">
           <label>Velocity</label>
+        </div>
+        <div>
+          <button class="secondaryButtons" (click)="exportExcel('ics')">Export
+            Data on the Selected Analysis
+          </button>
         </div>
       </div>
     </div>

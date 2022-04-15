@@ -3,6 +3,8 @@ import {Joint, RealJoint} from "../../model/joint";
 import {ImagLink, Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {GridComponent} from "../grid/grid.component";
+import * as XLSX from 'xlsx';
+import {DatePipe} from "@angular/common";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -81,6 +83,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   allLoopCheck: boolean = false;
   requiredLoopCheck: boolean = false;
+
+  analysis: Array<Array<string>> = [];
+  titleRow: Array<string> = [];
 
   constructor() {
   }
@@ -429,5 +434,396 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       default:
         return;
     }
+  }
+
+  exportExcel(analysisType: string): void {
+    // first, determine what information will not be put within the table
+    const includeMapIndex = new Map<number, boolean>();
+    includeMapIndex.set(0, true); // time step number should be included
+    let sub_increment: number;
+    let condition: boolean;
+    let increment = 1;
+    switch (analysisType) {
+      case 'loops':
+        increment = 0;
+        this.requiredLoopCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.allLoopCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        break;
+      case 'statics':
+        // determine whether to export force
+        while (increment < (1 + (this.joints.length * 2))) {
+          this.staticForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        }
+        // determine whether to export torque
+        this.staticTorqueCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // determine whether to leave space in between analyses
+        ((this.staticForcesCheck || this.staticTorqueCheck) &&
+          (this.staticForcePositionsCheck || this.staticJointPositionsCheck)) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // determine whether to export force positions
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 +
+          (this.forces.length * 2))) {
+          this.staticForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        }
+        // determine whether to leave space in between analyses
+        (this.staticForcePositionsCheck && this.staticJointPositionsCheck) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // determine whether to export joint positions
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 +
+          (this.forces.length * 2) + 1 + (this.joints.length * 2))) {
+          this.staticJointPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        }
+        break;
+      case 'dynamics':
+        // check whether to put the internal force analysis occurring at joints
+        while (increment < (1 + (this.joints.length * 2))) {
+          this.dynamicForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        }
+        // check whether to put the torque analysis occurring for mechanism
+        this.dynamicTorqueCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // check whether to put space between analyses
+        (this.dynamicForcesCheck || this.dynamicTorqueCheck) && (this.dynamicForcePositionsCheck || this.dynamicJointKinematicsCheck ||
+          this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // check whether to put force positions
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2))) {
+          this.dynamicForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        }
+        // check whether to put space between analyses
+        (this.dynamicForcePositionsCheck && (this.dynamicJointKinematicsCheck ||
+          this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+
+        sub_increment = 0;
+        // check whether linear kinematics for joints (p,v,a) have been asked for
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
+          (this.joints.length * 6))) {
+          if (this.dynamicJointKinematicsCheck) {
+            switch (sub_increment % 6) {
+              case 0:
+                condition = this.dynamicLinKinJointPos;
+                break;
+              case 1:
+                condition = this.dynamicLinKinJointPos;
+                break;
+              case 2:
+                condition = this.dynamicLinKinJointVel;
+                break;
+              case 3:
+                condition = this.dynamicLinKinJointVel;
+                break;
+              case 4:
+                condition = this.dynamicLinKinJointAcc;
+                break;
+              case 5:
+                condition = this.dynamicLinKinJointAcc;
+                break;
+              default:
+                return;
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+          sub_increment++;
+        }
+        // check whether to add another space or not between analyses
+        (this.dynamicJointKinematicsCheck && (this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // check whether linear kinematics for links have been asked for
+        sub_increment = 0;
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
+          (this.joints.length * 6) + 1 + (this.links.length * 6))) {
+          if (this.dynamicLinkKinematicsCheck) {
+            switch (sub_increment % 6) {
+              case 0:
+                condition = this.dynamicLinKinLinkPos;
+                break;
+              case 1:
+                condition = this.dynamicLinKinLinkPos;
+                break;
+              case 2:
+                condition = this.dynamicLinKinLinkVel;
+                break;
+              case 3:
+                condition = this.dynamicLinKinLinkVel;
+                break;
+              case 4:
+                condition = this.dynamicLinKinLinkAcc;
+                break;
+              case 5:
+                condition = this.dynamicLinKinLinkAcc;
+                break;
+              default:
+                return
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+          sub_increment++;
+        }
+        // account for empty space
+        (this.dynamicLinkKinematicsCheck && this.dynamicAngLinkCheck) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        sub_increment = 0;
+        // check whether angular kinematics have been asked for
+        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
+          (this.joints.length * 6) + 1 + (this.links.length * 6) + 1 + (this.links.length * 3))) {
+          if (this.dynamicAngLinkCheck) {
+            switch (sub_increment % 3) {
+              case 0:
+                condition = this.dynamicAngKinLinkPos;
+                break;
+              case 1:
+                condition = this.dynamicAngKinLinkVel;
+                break;
+              case 2:
+                condition = this.dynamicAngKinLinkAcc;
+                break;
+              default:
+                return
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+          sub_increment++;
+        }
+        break;
+      case 'kinematics_loops':
+        // check whether linear kinematics for joints have been asked for
+        while (increment < (1 + (this.joints.length * 6))) {
+          if (this.linKinJointCheck) {
+            switch (increment % 6) {
+              case 0:
+                condition = this.linKinJointAcc;
+                break;
+              case 1:
+                condition = this.linKinJointPos;
+                break;
+              case 2:
+                condition = this.linKinJointPos;
+                break;
+              case 3:
+                condition = this.linKinJointVel;
+                break;
+              case 4:
+                condition = this.linKinJointVel;
+                break;
+              case 5:
+                condition = this.linKinJointAcc;
+                break;
+              default:
+                return
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+        }
+        // check whether to add another space or not between analyses
+        (this.linKinJointCheck && (this.linKinLinkCheck || this.dynamicAngLinkCheck)) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // check whether linear kinematics for links have been asked for
+        while (increment < (1 + (this.joints.length * 6) + 1 + (this.links.length * 6))) {
+          if (this.linKinLinkCheck) {
+            switch (increment % 6) {
+              case 0:
+                condition = this.linKinLinkAcc;
+                break;
+              case 1:
+                condition = this.linKinLinkAcc;
+                break;
+              case 2:
+                condition = this.linKinLinkPos;
+                break;
+              case 3:
+                condition = this.linKinLinkPos;
+                break;
+              case 4:
+                condition = this.linKinLinkVel;
+                break;
+              case 5:
+                condition = this.linKinLinkVel;
+                break;
+              default:
+                return
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+        }
+        // account for empty space
+        (this.linKinLinkCheck && this.dynamicAngLinkCheck) ?
+          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        // check whether angular kinematics have been asked for
+        sub_increment = 0;
+        while (increment < (1 + (this.joints.length * 6) + 1 + (this.links.length * 6) + 1 + (this.links.length * 3))) {
+          if (this.dynamicAngLinkCheck) {
+            switch (sub_increment % 3) {
+              case 0:
+                condition = this.angKinLinkPos;
+                break;
+              case 1:
+                condition = this.angKinLinkVel;
+                break;
+              case 2:
+                condition = this.angKinLinkAcc;
+                break;
+              default:
+                return
+            }
+            includeMapIndex.set(increment++, condition);
+          } else {
+            includeMapIndex.set(increment++, false);
+          }
+          sub_increment++;
+        }
+        break;
+//       case 'kinematics_ic':
+//
+//         // check whether to export position of ICs
+//         while (increment < (1 + (this.icArray.length * 2))) {
+//           this.icPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment, false);
+//         }
+//         // check whether to put space in between analyses
+//         (this.icPositionsCheck && (this.linKinJointICCheck || this.angKinLinkICCheck)) ?
+//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+//         // check whether linear kinematics for joints have been asked for
+//         sub_increment = 0;
+//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2))) {
+//           if (this.linKinJointICCheck) {
+//             switch (sub_increment % 4) {
+//               case 0:
+//                 condition = this.linKinJointICPos;
+//                 break;
+//               case 1:
+//                 condition = this.linKinJointICPos;
+//                 break;
+//               case 2:
+//                 condition = this.linKinJointICVel;
+//                 break;
+//               case 3:
+//                 condition = this.linKinJointICVel;
+//                 break;
+//             }
+//             includeMapIndex.set(increment++, condition);
+//           } else {
+//             includeMapIndex.set(increment++, false);
+//           }
+//           sub_increment++;
+//         }
+// // check whether to add another space or not between analyses
+//         (this.linKinJointICCheck && this.angKinLinkICCheck) ?
+//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+// // check Kin Lin Velocities
+//         sub_increment = 0;
+//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2) + 1 + (this.linkArray.length * 2))) {
+//           if (this.angKinLinkICCheck) {
+//             switch (sub_increment % 2) {
+//               // TODO: Be sure to account for angular displacement
+//               // case 0:
+//               //   condition = this.angKinLinkICPos
+//               case 0:
+//                 condition = this.angKinLinkICVel;
+//                 break;
+//               case 1:
+//                 condition = this.angKinLinkICVel;
+//                 break;
+//             }
+//             includeMapIndex.set(increment++, condition);
+//           } else {
+//             includeMapIndex.set(increment++, false);
+//           }
+//           sub_increment++;
+//         }
+//         break;
+
+
+
+
+
+
+
+
+//           (this.linKinJointICCheck && this.linKinJointICVel) ?
+//             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+//         }
+// // account for empty space
+//         ((this.linKinLinkCheck && this.linKinLinkICVel) && (this.angKinLinkICCheck)) ?
+//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+// // check whether angular kinematics have been asked for
+//
+//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.icArray.length * 2) + 1
+//           + (this.linkArray.length * 2))) {
+//           (this.angKinLinkICCheck && this.angKinLinkICVel) ?
+//             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+//         }
+//         break;
+    }
+    // const tbl = document.getElementById('Excel-Table');
+    const tbl = document.createElement('div');
+    // while (tbl.firstChild) {
+    //   tbl.removeChild(tbl.lastChild);
+    // }
+    const table = document.createElement('table'); /*Create `table` element*/
+    const rows = this.analysis.length;
+    let cols: number;
+    if (this.analysis.length === 0) {
+      cols = 0;
+    } else {
+      cols = this.analysis[0].length;
+    }
+    // const cols = this.analysis[0].length;
+    const statTitle = document.createElement('tr');
+    for (let i = 0; i < cols; i++) {
+      // have a map here to check whether to consider this element or not
+      if (!includeMapIndex.get(i)) {
+        continue;
+      }
+      const td = document.createElement('td');
+      const cellText = document.createTextNode('\t' + this.titleRow[i]);
+      td.appendChild(cellText);
+      statTitle.appendChild(td);
+    }
+    table.appendChild(statTitle);
+    for (let i = 0; i < rows; i++) {
+      const tr = document.createElement('tr');                 /*Create `tr` element*/
+      for (let j = 0; j < cols; j++) {
+        // have a map here to check whether to consider this element or not
+        if (!includeMapIndex.get(j)) {
+          continue;
+        }
+        const arr = this.analysis[i][j];
+        const td = document.createElement('td');             /*Create `td` element*/
+        const cellText = document.createTextNode('\t' + arr.toString());   /*Create text for `td` element*/
+        td.appendChild(cellText);                          /*Append text to `td` element*/
+        tr.appendChild(td);                                /*Append `td` to `tr` element*/
+      }
+      table.appendChild(tr);                                 /*Append `tr` to `table` element*/
+    }
+    tbl.appendChild(table);
+    // /* table id is passed over here */
+    // const element = document.getElementById('StaticExcel-Table');
+    // const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(tbl);
+
+
+    /* generate workbook and add the worksheet */
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+    const date = Date.now();
+    const datepipe: DatePipe = new DatePipe('en-US');
+    const formattedDate = datepipe.transform(date, 'dd-MMM HH:mm:ss');
+
+    const fileName = analysisType + 'Joints Links' + formattedDate + '.xlsx'
+    // this.fileName = analysisType + this.numJointsAndLinks[0] + 'Joints' + this.numJointsAndLinks[1] + 'Links' +
+    //   formattedDate + '.xlsx';
+    /* save to file*/
+    XLSX.writeFile(wb, fileName);
+    // XLSX.writeFile(wb, this.fileName);
   }
 }
