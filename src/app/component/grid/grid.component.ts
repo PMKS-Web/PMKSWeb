@@ -123,7 +123,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   // remove this if this is possible
   private static selectedJoint: RealJoint;
-  private static selectedLink: RealLink;
+  static selectedLink: RealLink;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
 

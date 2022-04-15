@@ -92,6 +92,7 @@ export class RealLink extends Link {
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
+    // let bound: Bound;
     switch (shape) {
       case Shape.line: {
         const x1 = coord1.x;
@@ -113,6 +114,128 @@ export class RealLink extends Link {
           arrow: new Coord(0, 0)
         };
       }
+      case Shape.bar: {
+        return this.getRectBoundsByRatio(coord1, coord2, 0);
+        // bound = this.applyPadding(coord1, coord2, bound,
+        //   {
+        //     padding: SVGSettings.jointRadius * 2
+        //   }
+        // );
+      }
+      case Shape.eTriangle: {
+        const angle = Math.PI / 6;
+        return this.getRectBoundsByRatio(coord1, coord2, Math.cos(angle));
+        // const leftRightPad = SVGSettings.jointRadius * 2 / Math.tan(angle);
+        // const topBotPad = leftRightPad / 2 * Math.sqrt(3);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
+        //   {
+        //     offset: {
+        //       b1: { x: -leftRightPad, y: SVGSettings.jointRadius * 2 },
+        //       b2: { x: leftRightPad, y: SVGSettings.jointRadius * 2 },
+        //       b3: { x: leftRightPad, y: SVGSettings.jointRadius * 2 - topBotPad * 2 },
+        //       b4: { x: -leftRightPad, y: SVGSettings.jointRadius * 2 - topBotPad * 2 }
+        //     }
+        //   }
+        // );
+      }
+      case Shape.rTriangle: {
+        const angle = Math.PI / 8;
+        return this.getRectBoundsByRatio(coord1, coord2, 1);
+        // const leftRightPad = SVGSettings.jointRadius * 2 / Math.tan(angle);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
+        //   {
+        //     offset: {
+        //       b1: { x: -SVGSettings.jointRadius * 2, y: SVGSettings.jointRadius * 2 },
+        //       b2: { x: leftRightPad, y: SVGSettings.jointRadius * 2 },
+        //       b3: { x: leftRightPad, y: -leftRightPad },
+        //       b4: { x: -SVGSettings.jointRadius * 2, y: -leftRightPad }
+        //     }
+        //   }
+        // );
+      }
+      case Shape.rectangle: {
+        return this.getRectBoundsByRatio(coord1, coord2, 1 / 2);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        break;
+      }
+      case Shape.square: {
+        return this.getRectBoundsByRatio(coord1, coord2, 1);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        break;
+      }
+      case Shape.circle: {
+        return this.getRectBoundsByRatio(coord1, coord2, 1);
+        // const dx = bounds.b2.x - bounds.b1.x;
+        // const dy = bounds.b2.y - bounds.b1.y;
+        // const r = Math.sqrt(dx * dx + dy * dy) / AppConstants.scaleFactor;
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
+        //   {
+        //     offset: {
+        //       b1: { x: -r, y: r },
+        //       b2: { x: 0, y: r },
+        //       b3: { x: 0, y: 0 },
+        //       b4: { x: -r, y: 0 }
+        //     },
+        //     padding: SVGSettings.jointRadius * 2
+        //   }
+        // );
+        break;
+      }
+      case Shape.cShape: {
+        return this.getRectBoundsByRatio(coord1, coord2, 2 / 3);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        break;
+      }
+      case Shape.tShape: {
+        return this.getRectBoundsByRatio(coord1, coord2, 1);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        break;
+      }
+      case Shape.lShape: {
+        return this.getRectBoundsByRatio(coord1, coord2, 2 / 3);
+        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        break;
+      }
+      // case Shape.horizontalLine: {
+      //   this.getRectBoundsByRatio(coord1, coord2, 0);
+      //   // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.verticalLine: {
+      //   return this.getRectBoundsByRatio(coord1, coord2, 0);
+      //   // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.slantedLineForward: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 0);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.slantedLineBackward: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 0);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.beanShape: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 1);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.eightShape: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 1);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.infinityShape: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 1);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
+      // case Shape.customShape: {
+      //   bounds = this.getRectBoundsByRatio(refCoord1, refCoord2, 1);
+      //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+      //   break;
+      // }
       default: {
         return {
           b1: new Coord(0, 0),
@@ -152,6 +275,86 @@ export class RealLink extends Link {
         points = [p1, p2, p3, p4];
         break;
         // return [p1, p2, p3, p4];
+      }
+      case Shape.bar: {
+        points = [bound.b1, bound.b2, bound.b3, bound.b4];
+        break;
+      }
+      case Shape.eTriangle: {
+        const b1 = bound.b1;
+        const b2 = bound.b2;
+        const b3 = bound.b3;
+        const b4 = bound.b4;
+        const p3 = new Coord((b3.x - b4.x) / 2 + b4.x, (b3.y - b4.y) / 2 + b4.y);
+        points = [b1, b2, p3];
+        break;
+      }
+      case Shape.rTriangle: {
+        const b1 = bound.b1;
+        const b2 = bound.b2;
+        const b4 = bound.b4;
+        points = [b1, b2, b4];
+        break;
+      }
+      case Shape.rectangle: {
+        points = [bound.b1, bound.b2, bound.b3, bound.b4];
+        break;
+      }
+      case Shape.square: {
+        points = [bound.b1, bound.b2, bound.b3, bound.b4];
+        break;
+      }
+      case Shape.circle: {
+        points = [bound.b1, bound.b2, bound.b3, bound.b4];
+        break;
+      }
+      case Shape.cShape: {
+        // const widthRatio = 1 / SVGSettings.widthRatio;
+        // TODO: Check to see if this number can change
+        const widthRatio = 5;
+        const dx = bound.b2.x - bound.b1.x;
+        const dy = bound.b2.y - bound.b1.y;
+        const angle = Math.atan2(dy, dx);
+        const width = Math.sqrt(dx * dx + dy * dy);
+        const cx = Math.cos(angle) * width / widthRatio;
+        const cy = Math.sin(angle) * width / widthRatio;
+        const low2 = new Coord(bound.b3.x - cx, bound.b3.y - cy);
+        const low1 = new Coord(bound.b4.x + cx, bound.b4.y + cy);
+        const high2 = new Coord(bound.b2.x - cx + cy, bound.b2.y - cy - cx);
+        const high1 = new Coord(bound.b1.x + cx + cy, bound.b1.y + cy - cx);
+        points = [bound.b1, bound.b2, bound.b3, low2, high2, high1, low1, bound.b4];
+        break;
+      }
+      case Shape.tShape: {
+        const widthRatio = 5
+        const dx = bound.b2.x - bound.b1.x;
+        const dy = bound.b2.y - bound.b1.y;
+        const angle = Math.atan2(dy, dx);
+        const width = Math.sqrt(dx * dx + dy * dy);
+        const cx = Math.cos(angle) * width / widthRatio;
+        const cy = Math.sin(angle) * width / widthRatio;
+        const high4 = new Coord(bound.b2.x + cy, bound.b2.y - cx);
+        const high3 = new Coord(high4.x - cx * (widthRatio - 1) / 2, high4.y - cy * (widthRatio - 1) / 2);
+        const low2 = new Coord(bound.b3.x - cx * (widthRatio - 1) / 2, bound.b3.y - cy * (widthRatio - 1) / 2);
+        const low1 = new Coord(bound.b4.x + cx * (widthRatio - 1) / 2, bound.b4.y + cy * (widthRatio - 1) / 2);
+        const high1 = new Coord(bound.b1.x + cy, bound.b1.y - cx);
+        const high2 = new Coord(high1.x + cx * (widthRatio - 1) / 2, high1.y + cy * (widthRatio - 1) / 2);
+        points = [bound.b1, bound.b2, high4, high3, low2, low1, high2, high1];
+        break;
+      }
+      case Shape.lShape: {
+        const widthRatio = 5
+        const dx = bound.b2.x - bound.b1.x;
+        const dy = bound.b2.y - bound.b1.y;
+        const angle = Math.atan2(dy, dx);
+        const width = Math.sqrt(dx * dx + dy * dy);
+        const cx = Math.cos(angle) * width / widthRatio;
+        const cy = Math.sin(angle) * width / widthRatio;
+        const high2 = new Coord(bound.b2.x + cy, bound.b2.y - cx);
+        const high1 = new Coord(high2.x - cx * (widthRatio - 1), high2.y - cy * (widthRatio - 1));
+        const low1 = new Coord(bound.b4.x + cx, bound.b4.y + cy);
+        points = [bound.b1, bound.b2, high2, high1, low1, bound.b4];
+        break;
       }
       default: {
         return '';
@@ -285,11 +488,40 @@ export class RealLink extends Link {
   static determineCenterOfMass(joints: Joint[]) {
     let com_x = 0;
     let com_y = 0;
+    // TODO: Logic isn't exactly right but can change this once other logic is fully finished
     joints.forEach(j => {
         com_x += j.x;
         com_y += j.y;
       });
     return new Coord(com_x / joints.length, com_y / joints.length);
+  }
+
+  getRectBoundsByRatio(refCoord1: Coord, refCoord2: Coord, ratio: number) {
+    const x1 = refCoord1.x;
+    const y1 = refCoord1.y;
+    const x2 = refCoord2.x;
+    const y2 = refCoord2.y;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const rotation = Math.atan2(dy, dx);
+
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distBound = ratio * dist; // Math.cos(Math.PI / 6) * dist;
+    const xChangeBound = Math.sin(rotation) * distBound;
+    const yChangeBound = Math.cos(rotation) * distBound;
+
+    const xVal = (x1 + x2 + x1 + x2 + xChangeBound + xChangeBound) / 4;
+    const yVal = (y1 + y2 + y2 - yChangeBound + y1 - yChangeBound) / 4;
+
+    return {
+      b1: {x: x1, y: y1},
+      b2: {x: x2, y: y2},
+      b3: {x: x2 + xChangeBound, y: y2 - yChangeBound},
+      b4: {x: x1 + xChangeBound, y: y1 - yChangeBound},
+      arrow: {x: xVal, y: yVal}
+      // arrow: {x: 1, y: 1}
+      // arrow: {x: 0, y: 0}
+    };
   }
 
   get shape(): Shape {
@@ -400,6 +632,58 @@ export class RealLink extends Link {
       'A0.25 0.25 0 0 0 ' + (this.CoM.x - 0.25)  + ' ' +  this.CoM.y;
   }
 
+  static getRectBoundsByRatio(refCoord1: Coord, refCoord2: Coord, ratio: number) {
+    const x1 = refCoord1.x;
+    const y1 = refCoord1.y;
+    const x2 = refCoord2.x;
+    const y2 = refCoord2.y;
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const rotation = Math.atan2(dy, dx);
+
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const distBound = ratio * dist; // Math.cos(Math.PI / 6) * dist;
+    const xChangeBound = Math.sin(rotation) * distBound;
+    const yChangeBound = Math.cos(rotation) * distBound;
+
+    const xVal = (x1 + x2 + x1 + x2 + xChangeBound + xChangeBound) / 4;
+    const yVal = (y1 + y2 + y2 - yChangeBound + y1 - yChangeBound) / 4;
+
+    return {
+      b1: new Coord(x1, y1),
+      b2: new Coord(x2, y2),
+      b3: new Coord(x2 + xChangeBound,  y2 - yChangeBound),
+      b4: new Coord(x1 + xChangeBound, y1 - yChangeBound),
+      arrow: new Coord(xVal, yVal)
+      // arrow: {x: 1, y: 1}
+      // arrow: {x: 0, y: 0}
+    };
+  }
+
+  // static applyPadding(refCoord1: Coord, refCoord2: Coord, bounds: Bound, paddingOptions: PaddingOptions): Bound {
+  //   const originalRC = SVGFuncs.getBoundsRelativeCoords(refCoord1, refCoord2, bounds);
+  //   if (paddingOptions.offset) {
+  //     const keyArray = [editorID.b1, editorID.b2, editorID.b3, editorID.b4, editorID.arrow];
+  //     keyArray.forEach(key => {
+  //       const val = paddingOptions.offset[key];
+  //       if (!val) { return; }
+  //       originalRC[key].x += val.x * AppConstants.scaleFactor;
+  //       originalRC[key].y += val.y * AppConstants.scaleFactor;
+  //     });
+  //   }
+  //   if (paddingOptions.padding) {
+  //     originalRC.b1.x -= paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b1.y += paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b2.x += paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b2.y += paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b3.x += paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b3.y -= paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b4.x -= paddingOptions.padding * AppConstants.scaleFactor;
+  //     originalRC.b4.y -= paddingOptions.padding * AppConstants.scaleFactor;
+  //     // do i have to put info about arrow as well??
+  //   }
+  //   return SVGFuncs.getBoundsByRelativeCoords(refCoord1, refCoord2, originalRC);
+  // }
 }
 
 export class ImagLink extends Link {
