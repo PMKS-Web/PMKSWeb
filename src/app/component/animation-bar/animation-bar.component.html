@@ -26,7 +26,10 @@
     <button id="fastspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="speed === 'fast'">
       <span class="tooltiptext">Change Speed</span>
     </button>
-    <button class="tooltip" id="playBtn" (click)="startAnimation()">
+    <button class="tooltip" id="playBtn" (click)="startAnimation()" *ngIf="!this.animate">
+      <span class="tooltiptext">Play Animation</span>
+    </button>
+    <button class="tooltip" id="pauseBtn" (click)="startAnimation()" *ngIf="this.animate">
       <span class="tooltiptext">Play Animation</span>
     </button>
     <button class="tooltip" id="stopBtn" (click)="stopAnimation()">
