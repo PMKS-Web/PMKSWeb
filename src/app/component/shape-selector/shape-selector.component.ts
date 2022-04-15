@@ -11,6 +11,16 @@ export class ShapeSelectorComponent implements OnInit {
   @Output() saveEdit = new EventEmitter();
   @Output() cancelEdit = new EventEmitter();
   @Output() revertEdit = new EventEmitter();
+  shapes:string[] = ['../../assets/shapes/line.svg',
+    '../../assets/shapes/bar.svg',
+    '../../assets/shapes/eTriangle.svg',
+    '../../assets/shapes/rTriangle.svg',
+    '../../assets/shapes/rectangle.svg',
+    '../../assets/shapes/square.svg',
+    '../../assets/shapes/circle.svg',
+    '../../assets/shapes/cShape.svg',
+    '../../assets/shapes/tShape.svg',
+    '../../assets/shapes/lShape.svg'];
 
   constructor() { }
 

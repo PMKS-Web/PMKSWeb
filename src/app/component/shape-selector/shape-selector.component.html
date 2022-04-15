@@ -2,6 +2,11 @@
   <p id="shape-selector-title">Select shapes</p>
   <div id="shape-selector-wrapper">
     <table id="shape-selector-table">
+      <tr *ngFor="let shape of shapes">
+        <td style="height: 120px; border-bottom: 1px solid black; text-align: center;" class="shape-on-wrapper">
+          <img src="{{shape}}">
+        </td>
+      </tr>
     </table>
   </div>
   <div id="button-wrapper">

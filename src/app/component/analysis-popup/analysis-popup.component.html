@@ -183,6 +183,7 @@
                 [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
                 [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
               </path>
+              <!-- TODO: Determine logic when the link shape is too big to showcase -->
               <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')"
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
               <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
