@@ -516,6 +516,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
           'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
         break;
+      case 'attachLink':
+        GridComponent.contextMenuAddLinkOntoLink.children[0].setAttribute('style',
+          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
+        break;
       case 'addGround':
         GridComponent.contextMenuAddGround.children[0].setAttribute('style',
           'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
@@ -571,6 +575,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'addLink':
         GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
+          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
+        break;
+      case 'attachLink':
+        GridComponent.contextMenuAddLinkOntoLink.children[0].setAttribute('style',
           'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
         break;
       case 'addGround':
@@ -878,6 +886,13 @@ export class GridComponent implements OnInit, AfterViewInit {
         startCoord.x = GridComponent.selectedJoint.x;
         startCoord.y = GridComponent.selectedJoint.y;
         GridComponent.jointStates = jointStates.creating;
+        break;
+      case 'link':
+        // TODO: Create logic for attaching a link onto a link
+        startX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+        startY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+        startCoord = GridComponent.screenToGrid(startX, startY);
+        GridComponent.linkStates = linkStates.creating;
         break;
       default:
         return;
