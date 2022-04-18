@@ -208,8 +208,10 @@
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
               <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
-              <text *ngFor="let joint of link.joints" [attr.x]="joint.x" [attr.y]="joint.y" style="font-size: 1px;
-               text-anchor: middle; transform: scaleY(-1)">{{joint.id}}</text>
+              <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3" style="font-size: 1px;
+               text-anchor: middle; overflow: visible;">
+                <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
+              </svg>
             </g>
           </svg>
         </div>
