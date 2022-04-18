@@ -13,11 +13,12 @@ export class Force {
   private _local: boolean;
   private _stroke: string = 'black';
   private _fill: string = 'black';
-  private _xMag: number;
-  private _yMag: number;
+  private _mag: number;
+  private _angle: number;
+
   private _showHighlight: boolean = false;
 
-  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord, local: boolean = false, arrowOutward: boolean = true, xMag: number = 1, yMag: number = 1) {
+  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord, local: boolean = false, arrowOutward: boolean = true, mag: number = 1) {
     // TODO: Have to have local argument since some forces can be created that are local or global
     this._id = id;
     this._link = link;
@@ -27,8 +28,12 @@ export class Force {
     this._forceArrow = Force.createForceArrow(startCoord, endCoord);
     this._local = local;
     this._arrowOutward = arrowOutward;
-    this._xMag = xMag;
-    this._yMag = yMag;
+    this._mag = mag;
+    this._angle = Force.updateAngle(this.startCoord, this.endCoord);
+  }
+
+  static updateAngle(startCoord: Coord, endCoord: Coord) {
+    return Math.atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x)  * 180 / Math.PI;;
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
@@ -132,20 +137,12 @@ export class Force {
     this._fill = value;
   }
 
-  get xMag(): number {
-    return this._xMag;
+  get mag(): number {
+    return this._mag;
   }
 
-  set xMag(value: number) {
-    this._xMag = value;
-  }
-
-  get yMag(): number {
-    return this._yMag;
-  }
-
-  set yMag(value: number) {
-    this._yMag = value;
+  set mag(value: number) {
+    this._mag = value;
   }
 
   get showHighlight(): boolean {
@@ -154,5 +151,13 @@ export class Force {
 
   set showHighlight(value: boolean) {
     this._showHighlight = value;
+  }
+
+  get angle(): number {
+    return this._angle;
+  }
+
+  set angle(value: number) {
+    this._angle = value;
   }
 }

@@ -106,8 +106,7 @@
         <th>On Link</th>
         <th>ID</th>
         <th>Angle</th>
-        <th>X-Mag</th>
-        <th>Y-Mag</th>
+        <th>Mag</th>
         <th>X-Pos</th>
         <th>Y-Pos</th>
       </tr>
@@ -121,13 +120,10 @@
           <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
         </td>
         <td>
-          <!--            <input type="text" value="{{force.angle}}"--> ?
+          <input type="text" value="{{force.angle}}" (change)="changeForceProp($event, force, 'angle')">
         </td>
         <td>
-          <input type="text" value="{{force.xMag}}" (change)="changeForceProp($event, force, 'xMag')">
-        </td>
-        <td>
-          <input type="text" value="{{force.yMag}}" (change)="changeForceProp($event, force, 'yMag')">
+          <input type="text" value="{{force.mag}}" (change)="changeForceProp($event, force, 'mag')">
         </td>
         <td>
           <input type="text" value="{{force.startCoord.x}}" (change)="changeForceProp($event, force, 'xPos')">

@@ -1045,6 +1045,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
+    // TODO: Determine how to optimize this so screen is more fluid
     if (GridComponent.selectedForceEndPoint === 'startPoint') {
       if (selectedForce.link.shape === 'line') {
         const jointOne = selectedForce.link.joints[0];
@@ -1076,6 +1077,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     } else {
       selectedForce.forceArrow = Force.createForceArrow(selectedForce.endCoord, selectedForce.startCoord);
     }
+    selectedForce.angle = Force.updateAngle(selectedForce.startCoord, selectedForce.endCoord);
     return selectedForce;
   }
 
@@ -1235,33 +1237,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (animationState !== undefined) {
       this.runAnimation = animationState;
     }
-    // if (!this.runAnimation) {
-    //   this.joints.forEach((j, j_index) => {
-    //     j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
-    //     j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
-    //   });
-    //   this.links.forEach((l, l_index) => {
-    //     if (!(l instanceof RealLink)) {return}
-    //     const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
-    //     if (!(link instanceof RealLink)) {return}
-    //     l.bound = link.bound;
-    //     l.d = link.d;
-    //     l.CoM = link.CoM;
-    //     l.updateCoMDs();
-    //   });
-    //   this.forces.forEach((f, f_index) => {
-    //     f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
-    //     f.startCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
-    //     f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
-    //     f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
-    //     f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
-    //     f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-    //     f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
-    //     f.xMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].xMag;
-    //     f.yMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].yMag;
-    //   });
-    //   return;
-    // }
+
     this.joints.forEach((j, j_index) => {
       j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
       j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
@@ -1281,10 +1257,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
       f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
       f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
+      f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
+      f.angle = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
       f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
-      f.xMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].xMag;
-      f.yMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].yMag;
     });
     if (!this.runAnimation) {
       return

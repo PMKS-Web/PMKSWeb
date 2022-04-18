@@ -42,8 +42,6 @@ export class Mechanism {
         default:
           break;
       }
-
-
     });
     links.forEach(l => {
       switch (l.constructor) {
@@ -56,9 +54,8 @@ export class Mechanism {
       }
     });
     forces.forEach(f =>{
-      this._forces[0].push(new Force(f.id, f.link, f.startCoord, f.endCoord, f.local, f.arrowOutward, f.xMag, f.yMag));
+      this._forces[0].push(new Force(f.id, f.link, f.startCoord, f.endCoord, f.local, f.arrowOutward, f.mag));
     });
-
     // joints.forEach(j => { this._joints[0].push(j); });
     // links.forEach(l => { this._links[0].push(l); });
     // forces.forEach(f => { this._forces[0].push(f); });
@@ -193,7 +190,7 @@ export class Mechanism {
           this._forces[currentTimeStamp + 1].push(new Force(
             f.id, link, PositionSolver.forcePositionMap.get(f.id + 'start')!,
             PositionSolver.forcePositionMap.get(f.id + 'end')!, f.local, f.arrowOutward,
-            PositionSolver.forceMagnitudeMap.get(f.id + 'x'), PositionSolver.forceMagnitudeMap.get(f.id + 'x')));
+            PositionSolver.forceMagnitudeMap.get(f.id + 'x')));
         });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {

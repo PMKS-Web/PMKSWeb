@@ -19,6 +19,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   // TODO: Use screen Coord within toolbar if you can get to this stage of project
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
+  // TODO: Use animategridemitter within toolbar if you can get to this stage of project
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
   inputAngularVelocity: number = 10;

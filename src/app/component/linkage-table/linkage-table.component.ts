@@ -150,13 +150,18 @@ export class LinkageTableComponent implements OnInit {
       case 'yPos':
         force.startCoord.y = $event.target.value;
         break;
-      case 'xMag':
-        force.xMag = $event.target.value;
+      case 'mag':
+        force.mag = $event.target.value;
         break;
-      case 'yMag':
-        force.yMag = $event.target.value;
+      case 'angle':
+        force.angle = $event.target.value;
+        // TODO: Within commonClass, have radToDeg and degToRad
+        force.endCoord.x = Math.cos(force.angle * Math.PI / 180) * force.mag + force.startCoord.x;
+        force.endCoord.y = Math.sin(force.angle * Math.PI / 180) * force.mag + force.startCoord.y;
         break;
     }
+    force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
+    force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
   }
 
   mouseOver(number: number) {
