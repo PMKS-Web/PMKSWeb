@@ -21,10 +21,48 @@ export class Mechanism {
   private _allLoops: string[] = [];
 
   constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[], gravity: boolean, unit: string) {
-    joints.forEach(j => { this._joints[0].push(j); });
-    links.forEach(l => { this._links[0].push(l); });
-    forces.forEach(f => { this._forces[0].push(f); });
-    ics.forEach(ic => { this._ics[0].push(ic); });
+    // this._joints.push([]);
+    // this._links.push([]);
+    // this._forces.push([]);
+
+    joints.forEach(j => {
+      switch (j.constructor) {
+        case RealJoint:
+          if (!(j instanceof RealJoint)) {return}
+          this._joints[0].push(new RealJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
+          break;
+        case RevJoint:
+          if (!(j instanceof RevJoint)) {return}
+          this._joints[0].push(new RevJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
+          break;
+        case PrisJoint:
+          if (!(j instanceof PrisJoint)) {return}
+          this._joints[0].push(new PrisJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
+          break;
+        default:
+          break;
+      }
+
+
+    });
+    links.forEach(l => {
+      switch (l.constructor) {
+        case RealLink:
+          if (!(l instanceof RealLink)) {return}
+          this._links[0].push(new RealLink(l.id, l.joints));
+          break;
+        case ImagLink:
+          break;
+      }
+    });
+    forces.forEach(f =>{
+      this._forces[0].push(new Force(f.id, f.link, f.startCoord, f.endCoord, f.local, f.arrowOutward, f.xMag, f.yMag));
+    });
+
+    // joints.forEach(j => { this._joints[0].push(j); });
+    // links.forEach(l => { this._links[0].push(l); });
+    // forces.forEach(f => { this._forces[0].push(f); });
+    // ics.forEach(ic => { this._ics[0].push(ic); });
     this._gravity = gravity;
     this._unit = unit;
     const dof = this.determineDegreesOfFreedom();

@@ -20,7 +20,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
   @Output() animateGridEmitter = new EventEmitter();
-  @Output() dontAnimateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
   inputAngularVelocity: number = 10;
   selectedTab: string = 'file';
@@ -148,23 +147,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   animateMechanism() {
     console.log('animateMechanism');
-
     this.animate = !this.animate;
-    if (this.animate) {
-      this.animateGridEmitter.emit();
-      // for (let i = 0; i < 360; i++) {
-      for (let i = 0; i < 100; i++) {
-        setTimeout(() => {
-          // console.log("this is the first message")
-          document.getElementById('slider')!.setAttribute('value', i.toString());
-          console.log(i.toString());
-
-        }, 10 * i);
-      }
-    } else {
-      this.dontAnimateGridEmitter.emit();
-      document.getElementById('slider')!.setAttribute('value','0');
-    }
   }
 
   determineForceAnalysis() {

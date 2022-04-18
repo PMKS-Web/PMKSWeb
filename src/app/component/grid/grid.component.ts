@@ -63,6 +63,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   @Input() unit: string = 'cm';
   @Input() gravity: boolean = false;
   @Input() runAnimation: boolean = true;
+  mechanismTimeStep: number = 0;
   joints: Joint[] = [];
   links: Link[] = [];
   forces: Force[] = [];
@@ -1228,18 +1229,46 @@ export class GridComponent implements OnInit, AfterViewInit {
     clearTimeout(0);
   }
 
-  animate(progress: number, animationState?: boolean) {
+  animate(e: [progress: number, animationState?: boolean]) {
+    this.mechanismTimeStep = e[0];
+    const animationState = e[1];
     if (animationState !== undefined) {
       this.runAnimation = animationState;
     }
-    if (!this.runAnimation) {return}
+    // if (!this.runAnimation) {
+    //   this.joints.forEach((j, j_index) => {
+    //     j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
+    //     j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
+    //   });
+    //   this.links.forEach((l, l_index) => {
+    //     if (!(l instanceof RealLink)) {return}
+    //     const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
+    //     if (!(link instanceof RealLink)) {return}
+    //     l.bound = link.bound;
+    //     l.d = link.d;
+    //     l.CoM = link.CoM;
+    //     l.updateCoMDs();
+    //   });
+    //   this.forces.forEach((f, f_index) => {
+    //     f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
+    //     f.startCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
+    //     f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
+    //     f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
+    //     f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
+    //     f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+    //     f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+    //     f.xMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].xMag;
+    //     f.yMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].yMag;
+    //   });
+    //   return;
+    // }
     this.joints.forEach((j, j_index) => {
-      j.x = this.mechanisms[0].joints[progress][j_index].x;
-      j.y = this.mechanisms[0].joints[progress][j_index].y;
+      j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
+      j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
     });
     this.links.forEach((l, l_index) => {
       if (!(l instanceof RealLink)) {return}
-      const link = this.mechanisms[0].links[progress][l_index];
+      const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
       if (!(link instanceof RealLink)) {return}
       l.bound = link.bound;
       l.d = link.d;
@@ -1247,22 +1276,26 @@ export class GridComponent implements OnInit, AfterViewInit {
       l.updateCoMDs();
     });
     this.forces.forEach((f, f_index) => {
-      f.startCoord.x = this.mechanisms[0].forces[progress][f_index].startCoord.x;
-      f.startCoord.y = this.mechanisms[0].forces[progress][f_index].startCoord.y;
-      f.endCoord.x = this.mechanisms[0].forces[progress][f_index].endCoord.x;
-      f.endCoord.y = this.mechanisms[0].forces[progress][f_index].endCoord.y;
-      f.local = this.mechanisms[0].forces[progress][f_index].local;
+      f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
+      f.startCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
+      f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
+      f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
+      f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
       f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
-      f.xMag = this.mechanisms[0].forces[progress][f_index].xMag;
-      f.yMag = this.mechanisms[0].forces[progress][f_index].yMag;
+      f.xMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].xMag;
+      f.yMag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].yMag;
     });
-    progress++;
-    if (progress === this.mechanisms[0].joints.length) {
-      progress = 0;
+    if (!this.runAnimation) {
+      return
+    }
+
+    this.mechanismTimeStep++;
+    if (this.mechanismTimeStep === this.mechanisms[0].joints.length) {
+      this.mechanismTimeStep = 0;
     }
     setTimeout(() => {
-      this.animate(progress);
+      this.animate([this.mechanismTimeStep]);
     }, 10 / 3);
   }
 

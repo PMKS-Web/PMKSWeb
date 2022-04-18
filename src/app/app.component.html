@@ -15,8 +15,7 @@
              [mechanisms]="gridComponent.mechanisms"
              [screenCoord]="gridComponent.screenCoord"
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
-             (animateGridEmitter)="gridComponent.animate(0, $event)"
-             (dontAnimateGridEmitter)="gridComponent.noAnimate()"
+             (animateGridEmitter)="gridComponent.animate($event)"
              (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
 <app-analysis-popup #analysisPopupComponent
                     [joints]="gridComponent.joints"
@@ -26,7 +25,8 @@
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
 <app-animation-bar #animationBarComponent
                    [screenCoord]="gridComponent.screenCoord"
-                   (animateGridEmitter)="gridComponent.animate(0, $event)">
+                   [mechanismTimeSteps]="gridComponent.mechanismTimeStep"
+                   (animateGridEmitter)="gridComponent.animate($event)">
 </app-animation-bar>
 <app-shape-selector #shapeSelectorComponent
                     [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"

@@ -1,5 +1,6 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {switchMapTo} from "rxjs";
+import {Mechanism} from "../../model/mechanism/mechanism";
 
 @Component({
   selector: 'app-animation-bar',
@@ -9,7 +10,8 @@ import {switchMapTo} from "rxjs";
 export class AnimationBarComponent implements OnInit {
   @Input() screenCoord: string = '';
   @Input() dof: string = '';
-  @Output() animateGridEmitter = new EventEmitter<boolean>();
+  @Input() mechanismTimeSteps: number = 0;
+  @Output() animateGridEmitter = new EventEmitter<[number, boolean]>();
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
   direction: string = 'ccw';
@@ -43,13 +45,22 @@ export class AnimationBarComponent implements OnInit {
     }
   }
 
-  startAnimation() {
-    this.animate = !this.animate;
-    this.animateGridEmitter.emit(this.animate);
-  }
-
-  stopAnimation() {
-
+  startAnimation(state: string) {
+    switch (state) {
+      case 'play':
+        this.animate = false;
+        this.animateGridEmitter.emit([this.mechanismTimeSteps, this.animate]);
+        break;
+      case 'pause':
+        this.animate = true;
+        this.animateGridEmitter.emit([this.mechanismTimeSteps, this.animate]);
+        break;
+      case 'stop':
+        this.animate = false;
+        // TODO: Why is this 1 and not zero? Why is the first position within mechanism incorrect?
+        this.animateGridEmitter.emit([0, this.animate]);
+        break;
+    }
   }
 
   setAnim() {
