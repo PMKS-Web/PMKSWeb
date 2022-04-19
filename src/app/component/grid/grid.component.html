@@ -75,7 +75,7 @@
               fill="transparent"></path>
       </svg>
     </g>
-    <g id="pathsHolder">
+    <g id="pathsHolder" *ngIf="selectedJoint !== undefined">
       <path *ngFor="let joint of joints" [attr.d]="getJointPath(joint)" stroke="green"
             fill="none" stroke-width="0.04" style="transform: scaleY(-1)"></path>
     </g>
