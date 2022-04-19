@@ -80,6 +80,7 @@ export class RealLink extends Link {
   private _CoM_d3: string = '';
   private _CoM_d4: string = '';
 
+  // TODO: Have an optional argument of forces
   constructor(id: string, joints: Joint[]) {
     super(id, joints);
     this._shape = Shape.line;

@@ -65,7 +65,10 @@ export class ForceSolver {
   }
 
   private static determineArraysForce(simJoints: Joint[], simLinks: Link[], analysisType: string, gravity: boolean, unit: string) {
+    // This should be initialization code done outside of this class, somewhat to have logic be cleaner and easier to follow
     if (this.unknownVariableNum === undefined) {
+      let realLinkCount = 0;
+      let imagLinkCount = 0;
       let realJointCount = 0;
       simJoints.forEach(j => {
         if (!(j instanceof RealJoint)) {return}
@@ -79,9 +82,7 @@ export class ForceSolver {
         }
       });
       this.unknownVariableNum = (realJointCount * 2) + 1;
-    }
 
-    if (this.jointPositiveForceXLinkMap.size === 0) {
       simJoints.forEach(j => {
         if (!(j instanceof RealJoint)) {return}
         if (j.links.length < 2 && !j.ground) {
@@ -89,6 +90,36 @@ export class ForceSolver {
         }
         this.jointPositiveForceXLinkMap.set(j.id, j.links[0].id);
         this.jointPositiveForceYLinkMap.set(j.id, j.links[0].id);
+      });
+
+      let unknown_variable_index = 0;
+      simJoints.forEach((joint, joint_index) => {
+        const joint_id = simJoints[joint_index].id;
+        this.jointIdToJointIndexMap.set(joint_id, joint_index);
+        if (this.jointIDToUsedBooleanMap.get(joint_id)) {
+          this.jointIDToUnknownArrayIndexMap.set(joint_id, 2 * unknown_variable_index);
+          unknown_variable_index++;
+        }
+      });
+      this.desiredLoopLetters.forEach(letters => {
+        const joint1 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(0))!];
+        const joint2 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(1))!];
+        this.loopLettersToLinkIndexMap.set(letters[0].charAt(0) + letters[0].charAt(1),
+          simLinks.findIndex(l => l.id.includes(letters[0].charAt(0)) && l.id.includes(letters[0].charAt(1))));
+        const link = simLinks[this.loopLettersToLinkIndexMap.get(letters[0].charAt(0) + letters[0].charAt(1))!];
+        this.linkToFixedPositionMap.set(link.id, link.id);
+        // commented out this part. Possibly this can be solved by utilizing initializing maps refresh
+        // if (!this.linkIDToUnknownArrayIndexMap.has(link.id)) {
+        this.linkIDToUnknownArrayIndexMap.set(link.id, 3 * realLinkCount + imagLinkCount);
+        if (!(joint1 instanceof RealJoint) || !(joint2 instanceof RealJoint))  {return}
+        if (joint1.input || joint2.input) {
+          this.inputLinkIndex = 3 * realLinkCount + imagLinkCount + 2;
+        }
+        if (link instanceof ImagLink) {
+          imagLinkCount++;
+        } else {
+          realLinkCount++;
+        }
       });
     }
 
@@ -108,17 +139,6 @@ export class ForceSolver {
       this.B_matrix.push([0]);
     }
 
-    if (this.jointIDToUnknownArrayIndexMap.size === 0) {
-      let unknown_variable_index = 0;
-      simJoints.forEach((joint, joint_index) => {
-        const joint_id = simJoints[joint_index].id;
-        this.jointIdToJointIndexMap.set(joint_id, joint_index);
-        if (this.jointIDToUsedBooleanMap.get(joint_id)) {
-          this.jointIDToUnknownArrayIndexMap.set(joint_id, 2 * unknown_variable_index);
-          unknown_variable_index++;
-        }
-      });
-    }
     let realLinkCount = 0;
     let imagLinkCount = 0;
     let distance_conversion = 1; // kg
@@ -128,18 +148,11 @@ export class ForceSolver {
       distance_conversion = 1 / 100;
       mass_conversion = 1 / 1000;
     }
+
     this.desiredLoopLetters.forEach(letters => {
       const joint1 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(0))!];
       const joint2 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(1))!];
-      if (!this.loopLettersToLinkIndexMap.has(letters[0].charAt(0) + letters[0].charAt(1))) {
-        this.loopLettersToLinkIndexMap.set(letters[0].charAt(0) + letters[0].charAt(1),
-          simLinks.findIndex(l => l.id.includes(letters[0].charAt(0)) && l.id.includes(letters[0].charAt(1))));
-      }
       const link = simLinks[this.loopLettersToLinkIndexMap.get(letters[0].charAt(0) + letters[0].charAt(1))!];
-      // TODO: Utilize Map to determine the fixed joint
-      if (!this.linkToFixedPositionMap.has(link.id)) {
-        this.linkToFixedPositionMap.set(link.id, link.id);
-      }
       let fixedJoint: any;
       if (this.linkToFixedPositionMap.get(link.id)!.length > 1) {
         const linkID = this.linkToFixedPositionMap.get(link.id);
@@ -150,14 +163,6 @@ export class ForceSolver {
         const jointID = this.linkToFixedPositionMap.get(link.id);
         fixedJoint = simJoints.find(j => j.id === jointID);
       }
-      // commented out this part. Possibly this can be solved by utilizing initializing maps refresh
-      // if (!this.linkIDToUnknownArrayIndexMap.has(link.id)) {
-      this.linkIDToUnknownArrayIndexMap.set(link.id, 3 * realLinkCount + imagLinkCount);
-      if (!(joint1 instanceof RealJoint) || !(joint2 instanceof RealJoint))  {return}
-      if (joint1.input || joint2.input) {
-        this.inputLinkIndex = 3 * realLinkCount + imagLinkCount + 2;
-      }
-      // }
       link.joints.forEach(j => {
         if (this.jointIDToTracerBooleanMap.get(j.id)) {
           return;
@@ -237,9 +242,10 @@ export class ForceSolver {
             break;
           }
           link.forces.forEach(f => {
-            const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y, f.xMag, f.yMag);
-            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += (f.xMag * -1);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (f.yMag * -1);
+            const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y,
+              f.mag * Math.cos(f.angle * Math.PI / 180), f.mag * Math.sin(f.angle * Math.PI / 180));
+            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += (f.mag * Math.cos(f.angle * Math.PI / 180) * -1);
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (f.mag * Math.sin(f.angle * Math.PI / 180) * -1);
             this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[1] * -1 * distance_conversion);
             this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[0] * -1 * distance_conversion);
           });

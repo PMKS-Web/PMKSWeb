@@ -1,4 +1,4 @@
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
+import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
 import {ImagLink, Link, RealLink} from "../link";
 import {Force} from "../force";
 // import {LoopSolver} from "./loop-solver";
@@ -7,6 +7,9 @@ import {PositionSolver} from "./position-solver";
 import {InstantCenter} from "../instant-center";
 import {LoopSolver} from "./loop-solver";
 import {Coord} from "../coord";
+import {KinematicsSolver} from "./kinematic-solver";
+import {ForceSolver} from "./force-solver";
+import {roundNumber} from "../utils";
 
 export class Mechanism {
   private _joints: Joint[][] = [[]];
@@ -47,7 +50,9 @@ export class Mechanism {
       switch (l.constructor) {
         case RealLink:
           if (!(l instanceof RealLink)) {return}
-          this._links[0].push(new RealLink(l.id, l.joints));
+          const newLink = new RealLink(l.id, l.joints);
+          newLink.forces = l.forces;
+          this._links[0].push(newLink);
           break;
         case ImagLink:
           break;
@@ -174,6 +179,7 @@ export class Mechanism {
         });
         // TODO: Redo the logic here
         this.links[0].forEach(l => {
+          if (!(l instanceof RealLink)) {return}
           const connectedJoints: Joint[] = [];
           // TODO: think of possible way to reduce this if there is time
           l.joints.forEach(j => {
@@ -181,8 +187,11 @@ export class Mechanism {
             if (joint === undefined) {return}
             connectedJoints.push(joint);
           });
-          this._links[currentTimeStamp + 1].push(new RealLink(l.id, connectedJoints));
+          const pushLink = new RealLink(l.id, connectedJoints);
+          pushLink.forces = l.forces;
+          this._links[currentTimeStamp + 1].push(pushLink);
         });
+        // TODO: If forces are a part of links, is all of this info needed? Or just the positions?
         this.forces[0].forEach(f => {
           const link = this._links[currentTimeStamp + 1].find(l => l.id === f.link.id);
           if (link === undefined || (!(link instanceof RealLink))) {return}
@@ -315,5 +324,305 @@ export class Mechanism {
 
   set ics(value: InstantCenter[][]) {
     this._ics = value;
+  }
+
+  forceTitleRow(analysisType: string) {
+    const forceTitleRow = new Array<string>();
+    forceTitleRow.push('Current Time');
+    let posUnit: string;
+    let velUnit: string;
+    let accUnit: string;
+    let forceUnit: string;
+    let torqueUnit: string;
+    const angPosUnit = 'deg';
+    const angVelUnit = 'rad/s';
+    const angAccUnit = 'rad/s^2';
+    switch (this._unit) {
+      case 'cm':
+        posUnit = 'cm';
+        velUnit = 'cm/s';
+        accUnit = 'cm/s^2';
+        forceUnit = 'N';
+        torqueUnit = 'N*m';
+        break;
+      case 'm':
+        posUnit = 'm';
+        velUnit = 'm/s';
+        accUnit = 'm/s^2';
+        forceUnit = 'N';
+        torqueUnit = 'N*m';
+        break;
+      default:
+        return
+      // case 'km':
+      //   posUnit = 'km';
+      //   forceUnit = 'N';
+      //   torqueUnit = 'N*km';
+      //   accUnit = 'km/s^2';
+      //   break;
+      // case 'in':
+      //   posUnit = 'in';
+      //   forceUnit = 'lbf';
+      //   torqueUnit = 'lbf*in';
+      //   accUnit = 'in/s^2';
+      //   break;
+      // case 'ft':
+      //   posUnit = 'ft';
+      //   forceUnit = 'lbf';
+      //   torqueUnit = 'lbf*ft';
+      //   accUnit = 'ft/s^2';
+      //   break;
+    }
+    // switch (this._unit) {
+    //   case 'Metric':
+    //     posUnit = 'cm';
+    //     forceUnit = 'N';
+    //     torqueUnit = 'N*cm';
+    //     accUnit = 'cm/s^2';
+    //     break;
+    //   case 'English':
+    //     posUnit = 'ft';
+    //     forceUnit = 'lbm*ft/s^2';
+    //     torqueUnit = 'lbm*ft^2/s^2';
+    //     accUnit = 'in/s^2';
+    //     break;
+    // }
+    if (analysisType === 'dynamics') {
+      // determine kinematic analysis
+      KinematicsSolver.requiredLoops = this.requiredLoops;
+      // KinematicsSolver.determineKinematics(this.joints, this.links, this.posTSL.TSL[0].angular_velocity);
+    }
+    ForceSolver.determineDesiredLoopLettersForce(this._requiredLoops);
+    ForceSolver.determineForceAnalysis(this.joints[0], this.links[0], analysisType, this.gravity, this.unit);
+    for (const entry of ForceSolver.jointIdToJointIndexMap.entries()) {
+      forceTitleRow.push('Joint ' + entry[0] + ' Force ' + ' x ' + '(' + forceUnit + ')');
+      forceTitleRow.push('Joint ' + entry[0] + ' Force ' + ' y ' + '(' + forceUnit + ')');
+    }
+    forceTitleRow.push('Torque ' + torqueUnit);
+    forceTitleRow.push(' ');
+    this.forces[0].forEach(f => {
+      forceTitleRow.push('Force ' + f.id + ' x ' + '(' + posUnit + ')');
+      forceTitleRow.push('Force ' + f.id + ' y ' + '(' + posUnit + ')');
+    });
+    forceTitleRow.push(' ');
+    switch (analysisType) {
+      case 'statics':
+        this.joints[0].forEach(j => {
+          forceTitleRow.push('Joint ' + j.id + ' x ' + '(' + posUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' y ' + '(' + posUnit + ')');
+        });
+        break;
+      case 'dynamics':
+        this.joints[0].forEach(j => {
+          if (j instanceof ImagJoint) {
+            return;
+          }
+          forceTitleRow.push('Joint ' + j.id + ' x ' + '(' + posUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' y ' + '(' + posUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' Vel x ' + '(' + velUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' Vel y ' + '(' + velUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' Acc x ' + '(' + accUnit + ')');
+          forceTitleRow.push('Joint ' + j.id + ' Acc y' + '(' + accUnit + ')');
+        });
+        forceTitleRow.push(' ');
+        this.links[0].forEach(l => {
+          if (l instanceof ImagLink) {
+            return;
+          }
+          forceTitleRow.push('Link ' + l.id + ' CoM x ' + posUnit);
+          forceTitleRow.push('Link ' + l.id + ' CoM y ' + posUnit);
+          forceTitleRow.push('Link ' + l.id + ' CoM Vel x ' + velUnit);
+          forceTitleRow.push('Link ' + l.id + ' CoM Vel y ' + velUnit);
+          forceTitleRow.push('Link ' + l.id + ' CoM Acc x ' + accUnit);
+          forceTitleRow.push('Link ' + l.id + ' CoM Acc y ' + accUnit);
+        });
+        forceTitleRow.push(' ');
+        this.links[0].forEach(l => {
+          if (l instanceof ImagLink) {
+            return;
+          }
+          // forceTitleRow.push('Link ' + l.id + ' angPos ' + angAccUnit);
+          forceTitleRow.push('Link ' + l.id + ' angPos ' + angPosUnit);
+          forceTitleRow.push('Link ' + l.id + ' angVel ' + angVelUnit);
+          forceTitleRow.push('Link ' + l.id + ' angAcc ' + angAccUnit);
+        });
+        break;
+    }
+
+    // this.SimulationLinks.forEach(l => {
+    //   if (l instanceof ImagLink) {
+    //     return;
+    //   }
+    //   forceTitleRow.push('Link ' + l.id + ' CoM x ' + posUnit);
+    //   forceTitleRow.push('Link ' + l.id + ' CoM y ' + posUnit);
+    // });
+
+    return forceTitleRow;
+  }
+
+  forceAnalysis(analysisType: string) {
+    const forceAnalysis = new Array<Array<string>>();
+    let forceUnitConversion: number;
+    let torqueUnitConversion: number;
+    let posUnitConversion: number;
+    let velUnitConversion: number;
+    let accUnitConversion: number;
+    switch (this._unit) {
+      case 'cm':
+        forceUnitConversion = 1; // convert from newtons -> newton
+        torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+        posUnitConversion = 1;
+        velUnitConversion = 1;
+        accUnitConversion = 1; // cm/s^2
+        break;
+      case 'm':
+        forceUnitConversion = 1; // convert from newtons -> newton
+        torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+        posUnitConversion = 1;
+        velUnitConversion = 1;
+        accUnitConversion = 1; // cm/s^2
+        break;
+      // case 'km':
+      //   forceUnitConversion = 1; // convert from newtons -> newton
+      //   torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+      //   accUnitConversion = 1; // cm/s^2
+      //   break;
+      // case 'in':
+      //   forceUnitConversion = 1; // convert from newtons -> newton
+      //   torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+      //   accUnitConversion = 1; // cm/s^2
+      //   break;
+      // case 'ft':
+      //   forceUnitConversion = 1; // convert from newtons -> newton
+      //   torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+      //   accUnitConversion = 1; // cm/s^2
+      //   break;
+    }
+    // switch (this._unit) {
+    //   case 'Metric':
+    //     forceUnitConversion = 1; // convert from newtons -> newton
+    //     torqueUnitConversion = 1; // convert from newton_meter -> newton_centimeter
+    //     accUnitConversion = 1; // cm/s^2
+    //     break;
+    //   case 'English':
+    //     forceUnitConversion = 0.2248089431; // convert from newton ->
+    //     torqueUnitConversion = 0.73756214728 ; // convert from newton_meter ->
+    //     // change this since conversion is starting at cm instead of m
+    //     accUnitConversion = 3.2808399;
+    //     break;
+    // }
+    // ForceSolver.resetStaticVariables();
+    // Go through each step within the mechanism
+    this.joints.forEach((_, index) => {
+      // this.insertNewJointPos(tsl);
+      const force_row = Array<string>();
+      // const A_row = Array<Array<string>>(); // unknown array
+      // const B_row = Array<string>(); // known array
+      force_row.push((index * 10 * Math.PI / 180).toString());
+      // force_row.push((index * tsl.angular_velocity * Math.PI / 180).toString());
+      if (analysisType === 'dynamics') {
+        // determine kinematic analysis
+        KinematicsSolver.requiredLoops = this.requiredLoops;
+        KinematicsSolver.determineKinematics(this.joints[index], this.links[index], 10);
+      }
+      ForceSolver.determineForceAnalysis(this.joints[index], this.links[index], analysisType, this.gravity, this.unit);
+      for (let simJointIndex = 0; simJointIndex < this.joints[index].length; simJointIndex++) {
+        const joint_id = this.joints[index][simJointIndex].id;
+        force_row.push(roundNumber(ForceSolver.unknownVariableForcesMap.get(joint_id)![0] * forceUnitConversion, 3).toString());
+        force_row.push(roundNumber(ForceSolver.unknownVariableForcesMap.get(joint_id)![1] * forceUnitConversion, 3).toString());
+      }
+      force_row.push(roundNumber(ForceSolver.unknownVariableTorque * torqueUnitConversion, 3).toString());
+      force_row.push(' ');
+      // this.SimulationJoints.forEach(j => {
+      //   // force_row.push('(' + j.x.toString() + ',' + j.y.toString() + ')');
+      //   force_row.push(j.x.toString());
+      //   force_row.push(j.y.toString());
+      // });
+      // force_row.push(' ');
+      // this.SimulationLinks.forEach(l => {
+      //   if (l instanceof ImagLink) {
+      //     return;
+      //   }
+      //   const cur_link = l as RealLink;
+      //   force_row.push(Simulator.roundToHundredThousandth(cur_link.CoM_x).toString());
+      //   force_row.push(Simulator.roundToHundredThousandth(cur_link.CoM_y).toString());
+      //   // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.linkCoMMap.get(l.id)[0]).toString());
+      //   // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.linkCoMMap.get(l.id)[1]).toString());
+      //   // force_row.push('(' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[0] * accUnitConversion) +
+      //   //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[1] * accUnitConversion) + ')');
+      // });
+      this.forces[index].forEach(f => {
+        force_row.push(roundNumber(f.startCoord.x, 3).toString());
+        force_row.push(roundNumber(f.startCoord.y, 3).toString());
+        // force_row.push(Simulator.roundToHundredThousandth(f.xLocOfForceOnLink).toString());
+        // force_row.push(Simulator.roundToHundredThousandth(f.yLocOfForceOnLink).toString());
+      });
+      force_row.push(' ');
+      switch (analysisType) {
+        case 'statics':
+          this.joints[index].forEach(j => {
+            if (j instanceof ImagJoint) {
+              return;
+            }
+            force_row.push(roundNumber(j.x, 3).toString());
+            force_row.push(roundNumber(j.y, 3).toString());
+            // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[0] * accUnitConversion).toString());
+            // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[1] * accUnitConversion).toString());
+          });
+          // force_row.push(' ');
+          // this.SimulationLinks.forEach(l => {
+          //   if (l instanceof ImagLink) {
+          //     return;
+          //   }
+          // force_row.push(Simulator.roundToHundredThousandth())
+          // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.linkCoMMap.get(l.id)[0] * accUnitConversion).toString());
+          // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.linkCoMMap.get(l.id)[1] * accUnitConversion).toString());
+          // });
+          // force_row.push(' ');
+          break;
+        case 'dynamics':
+          this.joints[index].forEach(j => {
+            if (j instanceof ImagJoint) {
+              return;
+            }
+            force_row.push(roundNumber(j.x,3).toString());
+            force_row.push(roundNumber(j.y,3).toString());
+            // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[0] * accUnitConversion).toString());
+            // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[1] * accUnitConversion).toString());
+            force_row.push(roundNumber(KinematicsSolver.jointVelMap.get(j.id)![0] * velUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.jointVelMap.get(j.id)![1] * velUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.jointAccMap.get(j.id)![0] * accUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.jointAccMap.get(j.id)![1] * accUnitConversion, 3).toString());
+            // force_row.push('(' + Simulator.roundToHundredThousandth(KinematicsSolver.jointAccMap.get(j.id)[0] * accUnitConversion) +
+            //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.jointAccMap.get(j.id)[1] * accUnitConversion) + ')');
+          });
+          force_row.push(' ');
+          this.links[index].forEach(l => {
+            if (l instanceof ImagLink) {
+              return;
+            }
+            force_row.push(roundNumber(KinematicsSolver.linkCoMMap.get(l.id)![0] * posUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkCoMMap.get(l.id)![1] * posUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkVelMap.get(l.id)![0] * velUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkVelMap.get(l.id)![1] * velUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkAccMap.get(l.id)![0] * accUnitConversion, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkAccMap.get(l.id)![1] * accUnitConversion, 3).toString());
+            // force_row.push('(' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[0] * accUnitConversion) +
+            //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[1] * accUnitConversion) + ')');
+          });
+          force_row.push(' ');
+          this.links[index].forEach(l => {
+            if (l instanceof ImagLink) {
+              return;
+            }
+            force_row.push(roundNumber(KinematicsSolver.linkAngPosMap.get(l.id)!, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkAngVelMap.get(l.id)!, 3).toString());
+            force_row.push(roundNumber(KinematicsSolver.linkAngAccMap.get(l.id)!, 3).toString());
+          });
+          break;
+      }
+      forceAnalysis.push(force_row);
+    });
+    return forceAnalysis;
   }
 }

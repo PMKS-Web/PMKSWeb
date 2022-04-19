@@ -5,6 +5,8 @@ import {Force} from "../../model/force";
 import {GridComponent} from "../grid/grid.component";
 import * as XLSX from 'xlsx';
 import {DatePipe} from "@angular/common";
+import {ForceSolver} from "../../model/mechanism/force-solver";
+import {Mechanism} from "../../model/mechanism/mechanism";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -15,6 +17,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
+  @Input() mechanisms: Mechanism[] = [];
+  @Input() gravity: boolean = false;
+  @Input() unit: string = '';
   @Input() gridOffset: { x: number, y: number } = {x: 0, y: 0};
   @Input() scaleFactor: number = 50;
   private static popUpWindow: SVGElement;
@@ -451,6 +456,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       case 'statics':
         // determine whether to export force
+        ForceSolver.resetVariables();
+        ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+        ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity,
+          this.unit);
+        this.titleRow = this.mechanisms[0].forceTitleRow(analysisType)!;
+        this.analysis = this.mechanisms[0].forceAnalysis(analysisType)!;
         while (increment < (1 + (this.joints.length * 2))) {
           this.staticForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }

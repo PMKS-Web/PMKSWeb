@@ -4,6 +4,7 @@ import {Link} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {roundNumber} from "../../model/utils";
+import {ForceSolver} from "../../model/mechanism/force-solver";
 
 @Component({
   selector: 'app-toolbar',
@@ -163,7 +164,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         break;
       case 'force':
         // ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-        // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+        // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity,
+        //   this.unit.selectedUnit);
         break;
       case 'stress':
         break;
