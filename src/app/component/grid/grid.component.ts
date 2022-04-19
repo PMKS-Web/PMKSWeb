@@ -1291,4 +1291,16 @@ export class GridComponent implements OnInit, AfterViewInit {
   cancelEdit() {
     this.showcaseShapeSelector = false;
   }
+
+  getJointPath(joint: Joint) {
+    if (this.mechanisms[0].joints[0].length === 0) {return ''}
+    let string = 'M'
+    const jointIndex = this.joints.findIndex(j => j.id === joint.id);
+    string += this.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + this.mechanisms[0].joints[0][jointIndex].y.toString()
+    for (let j_index = 1; j_index < this.mechanisms[0].joints.length; j_index++) {
+      string += 'L' + this.mechanisms[0].joints[j_index][jointIndex].x.toString() + ' , '
+        + this.mechanisms[0].joints[j_index][jointIndex].y.toString();
+    }
+    return string;
+  }
 }

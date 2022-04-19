@@ -75,7 +75,10 @@
               fill="transparent"></path>
       </svg>
     </g>
-    <g id="pathsHolder"></g>
+    <g id="pathsHolder">
+      <path *ngFor="let joint of joints" [attr.d]="getJointPath(joint)" stroke="green"
+            fill="none" stroke-width="0.04" style="transform: scaleY(-1)"></path>
+    </g>
     <g id="pathsPathPointHolder"></g>
     <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of forces"
        (contextmenu)="contextMenu($event, 'force', force); false"
