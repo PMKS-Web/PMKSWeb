@@ -20,6 +20,7 @@ export class Mechanism {
 
   private _gravity: boolean;
   private _unit: string
+  private _dof: number;
   private _requiredLoops: string[] = [];
   private _allLoops: string[] = [];
 
@@ -67,9 +68,9 @@ export class Mechanism {
     // ics.forEach(ic => { this._ics[0].push(ic); });
     this._gravity = gravity;
     this._unit = unit;
-    const dof = this.determineDegreesOfFreedom();
+    this._dof = this.determineDegreesOfFreedom();
     // no index found for input Joint
-    if (dof === 1 && joints.findIndex(j => { if (!(j instanceof RealJoint)) {return} return j.input}) !== -1) {
+    if (this._dof === 1 && joints.findIndex(j => { if (!(j instanceof RealJoint)) {return} return j.input}) !== -1) {
       [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
       this.findFullMovementPos();
     } else {
@@ -261,6 +262,14 @@ export class Mechanism {
 
   set internalTriangleSimLinkMap(value: Map<string, number[]>) {
     this._internalTriangleSimLinkMap = value;
+  }
+
+  get dof(): number {
+    return this._dof;
+  }
+
+  set dof(value: number) {
+    this._dof = value;
   }
 
   get gravity(): boolean {

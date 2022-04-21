@@ -57,7 +57,6 @@ export class AnimationBarComponent implements OnInit {
         break;
       case 'stop':
         this.animate = false;
-        // TODO: Why is this 1 and not zero? Why is the first position within mechanism incorrect?
         this.animateGridEmitter.emit([0, this.animate]);
         break;
     }

@@ -123,7 +123,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   };
 
   // remove this if this is possible
-  selectedJoint: RealJoint | undefined;
+  private static selectedJoint: RealJoint;
   static selectedLink: RealLink;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
@@ -270,14 +270,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   mouseUp() {
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
     GridComponent.gridStates = gridStates.waiting;
-    // if (!(GridComponent.linkStates === linkStates.creating)) {
-    //   this.selectedJoint = undefined;
-    // }
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
     GridComponent.forceStates = forceStates.waiting;
-    // this.selectedJoint = undefined;
-    // this.selectedJoint = undefined;
+    this.showPathHolder = false;
   }
 
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
@@ -304,15 +300,14 @@ export class GridComponent implements OnInit, AfterViewInit {
                 break;
               case gridStates.creating:
                 if (GridComponent.jointStates === jointStates.creating) {
-                  if (this.selectedJoint === undefined) {return}
                   const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
                   const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
                   const joint2ID = this.determineNextLetter();
                   const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new RealLink(this.selectedJoint.id + joint2.id, [this.selectedJoint, joint2]);
-                  this.selectedJoint.links.push(link);
-                  this.selectedJoint.connectedJoints.push(joint2);
-                  joint2.connectedJoints.push(this.selectedJoint);
+                  const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
+                  GridComponent.selectedJoint.links.push(link);
+                  GridComponent.selectedJoint.connectedJoints.push(joint2);
+                  joint2.connectedJoints.push(GridComponent.selectedJoint);
                   joint2.links.push(link);
                   this.joints.push(joint2);
                   this.links.push(link);
@@ -385,7 +380,7 @@ export class GridComponent implements OnInit, AfterViewInit {
               case jointStates.waiting:
                 GridComponent.gridStates = gridStates.dragging;
                 GridComponent.jointStates = jointStates.dragging;
-                this.selectedJoint = thing as RealJoint;
+                GridComponent.selectedJoint = thing as RealJoint;
                 break;
             }
             break;
@@ -436,8 +431,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             // TODO: Rather than to have these if, else if, else if, else,
             // TODO: Have the gridStates also include dragGrid, dragJoint, dragLink, and dragForce
             if (GridComponent.jointStates === jointStates.dragging) {
-              if (this.selectedJoint === undefined) {return}
-              this.selectedJoint = GridComponent.dragJoint(this.selectedJoint, trueCoord);
+              GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
               this.updateMechanism();
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
               // TODO: Add logic when dragging a link within edit shape mode
@@ -489,8 +483,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'joint':
         switch (GridComponent.jointStates) {
           case jointStates.dragging:
-            if (this.selectedJoint === undefined) {return}
-            this.selectedJoint = GridComponent.dragJoint(this.selectedJoint, trueCoord);
+            GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
             this.updateMechanism();
             break;
           case jointStates.waiting:
@@ -663,7 +656,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'joint':
         const joint = thing;
-        this.selectedJoint = joint;
+        GridComponent.selectedJoint = joint;
         switch (joint.links.length) {
           case 0:
             switch (joint.constructor) {
@@ -690,8 +683,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 break;
               case PrisJoint:
-                if (this.selectedJoint === undefined) {return}
-                if (this.selectedJoint.input) {
+                if (GridComponent.selectedJoint.input) {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                 } else {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
@@ -731,8 +723,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 break;
               case PrisJoint:
-                if (this.selectedJoint === undefined) {return}
-                if (this.selectedJoint.input) {
+                if (GridComponent.selectedJoint.input) {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                 } else {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
@@ -749,8 +740,7 @@ export class GridComponent implements OnInit, AfterViewInit {
           default: // I think default will always be 2
             switch (joint.constructor) {
               case PrisJoint:
-                if (this.selectedJoint === undefined) {return}
-                if (this.selectedJoint.input) {
+                if (GridComponent.selectedJoint.input) {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                 } else {
                   GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
@@ -814,31 +804,29 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createGround() {
     this.disappearContext();
-    if (this.selectedJoint === undefined) {return}
-    if (this.selectedJoint instanceof PrisJoint) {
-      let joint = this.selectedJoint as RevJoint;
+    if (GridComponent.selectedJoint instanceof PrisJoint) {
+      let joint = GridComponent.selectedJoint as RevJoint;
       // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
       joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-      const selectedJointIndex = this.findJointIDIndex(this.selectedJoint.id, this.joints);
+      const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
       this.joints[selectedJointIndex] = joint;
     } else {
-      this.selectedJoint.ground = !this.selectedJoint.ground;
+      GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
     this.updateMechanism();
   }
 
   createSlider() {
     this.disappearContext();
-    if (this.selectedJoint === undefined) {return}
-    let joint = this.selectedJoint;
+    let joint = GridComponent.selectedJoint;
     joint = joint instanceof PrisJoint ?
       // TODO: Be sure to add/remove connected joints and links that are ImagJoint and ImagLinks
       new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints) :
       new PrisJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
     joint.ground = joint instanceof PrisJoint;
-    const selectedJointIndex = this.findJointIDIndex(this.selectedJoint.id, this.joints);
+    const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
     this.joints[selectedJointIndex] = joint;
-    this.selectedJoint = joint;
+    GridComponent.selectedJoint = joint;
     // TODO: Have a method to check for input joint
     if (joint instanceof PrisJoint && this.findInputJointIndex() !== -1) {
       this.createImagJointAndLinks(joint);
@@ -848,9 +836,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteJoint() {
     this.disappearContext();
-    if (this.selectedJoint === undefined) {return}
-    const jointIndex = this.findJointIDIndex(this.selectedJoint.id, this.joints);
-    this.selectedJoint.links.forEach(l => {
+    const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
+    GridComponent.selectedJoint.links.forEach(l => {
       // TODO: May wanna check this to be sure...
       if (l instanceof ImagLink) {
         return
@@ -868,10 +855,9 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         // go to other connected joint and remove this link from its connectedLinks and joint from connectedJoint
         // There may be an easier way to do this but this logic works :P
-        if (this.selectedJoint === undefined) {return}
-        const desiredJointID = l.joints[0].id === this.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
+        const desiredJointID = l.joints[0].id === GridComponent.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
         const desiredJointIndex = this.findJointIDIndex(desiredJointID, this.joints);
-        const deleteJointIndex = this.findJointIDIndex(this.selectedJoint.id, (this.joints[desiredJointIndex] as RealJoint).connectedJoints);
+        const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (this.joints[desiredJointIndex] as RealJoint).connectedJoints);
         (this.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
         const deleteLinkIndex = (this.joints[desiredJointIndex] as RealJoint).links.findIndex(lin => {
           if (!(lin instanceof RealLink)) {return}
@@ -883,7 +869,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     this.joints.splice(jointIndex, 1);
-    this.selectedJoint = undefined;
     this.updateMechanism();
   }
 
@@ -900,9 +885,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.linkStates = linkStates.creating;
         break;
       case 'joint':
-        if (this.selectedJoint === undefined) {return}
-        startCoord.x = this.selectedJoint.x;
-        startCoord.y = this.selectedJoint.y;
+        startCoord.x = GridComponent.selectedJoint.x;
+        startCoord.y = GridComponent.selectedJoint.y;
         GridComponent.jointStates = jointStates.creating;
         break;
       case 'link':
@@ -934,10 +918,9 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createInput($event: MouseEvent) {
     this.disappearContext();
-    if (this.selectedJoint === undefined) {return}
     // TODO: Adjust this logic when there are multiple mechanisms created
-    this.selectedJoint.input = !this.selectedJoint.input;
-    if (this.selectedJoint.input) {
+    GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
+    if (GridComponent.selectedJoint.input) {
       this.joints.forEach(j => {
         if (j instanceof PrisJoint) {
           this.createImagJointAndLinks(j);
@@ -961,7 +944,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       this.links.splice(linkIndicesRemove.pop()!, 1);
     }
     this.updateMechanism();
-    this.selectedJoint = undefined;
   }
 
   createForce($event: MouseEvent) {
@@ -1038,6 +1020,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, this.gravity, this.unit));
+    // TODO: put this logic somewhere when joint is being dragged
+    this.showPathHolder = this.mechanisms[0].dof === 1;
   }
 
   private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
@@ -1127,6 +1111,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
+  showPathHolder: boolean = false;
   getLinkProp(l: Link, propType: string) {
     if (l instanceof ImagLink) {
       return
