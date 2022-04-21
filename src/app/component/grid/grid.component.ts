@@ -506,11 +506,11 @@ export class GridComponent implements OnInit, AfterViewInit {
             }
             break;
           case gridStates.creating:
-            if (GridComponent.jointStates === jointStates.creating || GridComponent.linkStates === linkStates.creating) {
-              GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
-              GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
-            } else if (GridComponent.forceStates === forceStates.creating) {
+            if (GridComponent.forceStates === forceStates.creating) {
               this.createForce($event);
+            } else { // for jointStates.creating, linkStates.creating (When add link from grid, joint, or another link)
+                GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+                GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
             }
         }
         break;
