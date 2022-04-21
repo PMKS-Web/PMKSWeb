@@ -316,6 +316,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
                 } else if (GridComponent.linkStates === linkStates.creating) {
+                  // TODO: set context Link as a part of joint 1 or joint 2
                   const x1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
                   const y1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
                   const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
@@ -329,9 +330,18 @@ export class GridComponent implements OnInit, AfterViewInit {
                   joint2.connectedJoints.push(joint1);
                   joint1.links.push(link);
                   joint2.links.push(link);
+                  // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
+                  GridComponent.selectedLink.joints.forEach(j => {
+                    if (!(j instanceof RealJoint)) {return}
+                    j.connectedJoints.push(joint1);
+                    joint1.connectedJoints.push(j);
+                  });
+                  joint1.links.push(GridComponent.selectedLink);
+                  GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
                   this.joints.push(joint1);
                   this.joints.push(joint2);
                   this.links.push(link);
+
                   this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
@@ -361,6 +371,27 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
                   GridComponent.forceTempHolderSVG.style.display = 'none';
+                } else {
+                  const x1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
+                  const y1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
+                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
+                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
+                  const joint1ID = this.determineNextLetter();
+                  const joint2ID = this.determineNextLetter([joint1ID]);
+                  const joint1 = new RevJoint(joint1ID, x1, y1);
+                  const joint2 = new RevJoint(joint2ID, x2, y2);
+                  const link = new RealLink(joint1ID + joint2ID, [joint1, joint2]);
+                  joint1.connectedJoints.push(joint2);
+                  joint2.connectedJoints.push(joint1);
+                  joint1.links.push(link);
+                  joint2.links.push(link);
+                  this.joints.push(joint1);
+                  this.joints.push(joint2);
+                  this.links.push(link);
+                  this.updateMechanism();
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.linkStates = linkStates.waiting;
+                  GridComponent.jointTempHolderSVG.style.display = 'none';
                 }
                 // if (that.createMode === createModes.link) {
                 //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
@@ -888,7 +919,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         startX = Number(GridComponent.contextMenuAddLinkOntoGrid.children[0].getAttribute('x'));
         startY = Number(GridComponent.contextMenuAddLinkOntoGrid.children[0].getAttribute('y'));
         startCoord = GridComponent.screenToGrid(startX, startY);
-        GridComponent.linkStates = linkStates.creating;
         break;
       case 'joint':
         startCoord.x = GridComponent.selectedJoint.x;
