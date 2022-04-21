@@ -498,6 +498,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case 'link':
         // TODO: Have to take into consideration when clicking on a joint and having dragged the joint on top of the link
+        // TODO: Same logic except when dragging a force on top of a link
         break;
       case 'force':
         switch (GridComponent.forceStates) {
@@ -703,7 +704,6 @@ export class GridComponent implements OnInit, AfterViewInit {
                 this.showcaseContextMenu(GridComponent.contextMenuDeleteJoint, offsetX, offsetY, 80, 80);
                 break;
             }
-
             break;
           case 1:
             switch (joint.constructor) {
@@ -926,29 +926,47 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     // TODO: Adjust this logic when there are multiple mechanisms created
     GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
-    if (GridComponent.selectedJoint.input) {
-      this.joints.forEach(j => {
-        if (j instanceof PrisJoint) {
-          this.createImagJointAndLinks(j);
-        }
+    let jointsTraveled = ''.concat(GridComponent.selectedJoint.id);
+    GridComponent.selectedJoint.connectedJoints.forEach(j => {
+      jointsTraveled = checkConnectedJoints(j, jointsTraveled)
+    });
+    function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
+      if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {return jointsTraveled}
+      j.input = false;
+      jointsTraveled = jointsTraveled.concat(j.id);
+      j.connectedJoints.forEach(jt => {
+        jointsTraveled = checkConnectedJoints(jt, jointsTraveled);
       });
-    } else {
-      const jointIndicesRemove: number[] = [];
-      const linkIndicesRemove: number[] = [];
-      this.joints.forEach((j, j_index) => {
-        if (j instanceof ImagJoint) {
-          jointIndicesRemove.push(j_index);
-        }
-      });
-      this.links.forEach((l, l_index) => {
-        if (l instanceof ImagLink) {
-          linkIndicesRemove.push(l_index);
-        }
-      });
-      // TODO: Go through neighboring joints of ImagJoints joints and ImagLinks links and remove itself from list ...
-      this.joints.splice(jointIndicesRemove.pop()!, 1);
-      this.links.splice(linkIndicesRemove.pop()!, 1);
+      return jointsTraveled;
     }
+    // TODO: Set this logic somewhere else
+    // if (GridComponent.selectedJoint.input) {
+    //   this.joints.forEach(j => {
+    //     // This logic belongs somewhere where you change rev Joint to pris Joint
+    //     if (j instanceof PrisJoint) {
+    //       this.createImagJointAndLinks(j);
+    //     }
+    //   });
+    // } else {
+    //   const jointIndicesRemove: number[] = [];
+    //   const linkIndicesRemove: number[] = [];
+    //   this.joints.forEach((j, j_index) => {
+    //     if (j instanceof ImagJoint) {
+    //       jointIndicesRemove.push(j_index);
+    //     }
+    //   });
+    //   this.links.forEach((l, l_index) => {
+    //     if (l instanceof ImagLink) {
+    //       linkIndicesRemove.push(l_index);
+    //     }
+    //   });
+    //   // TODO: Go through neighboring joints of ImagJoints joints and ImagLinks links and remove itself from list ... Verify this logic
+    //   // TODO: This belongs when you either change the prismatic joint to rev joint or delete the joint.
+    //   if (jointIndicesRemove.length !== 0) {
+    //     this.joints.splice(jointIndicesRemove.pop()!, 1);
+    //     this.links.splice(linkIndicesRemove.pop()!, 1);
+    //   }
+    // }
     this.updateMechanism();
   }
 

@@ -44,7 +44,7 @@
             </td>
           </table>
         </td>
-        <td *ngIf="typeOfJoint(joint) === 'R'">
+        <td *ngIf="typeOfJoint(joint) !== 'I'">
           <table *ngFor="let conJoint of connectedJoints(joint)" style="margin:auto; width:50%">
             <td style="border: none" *ngIf="typeOfJoint(conJoint) !== 'I'">
               {{distFromJoint(conJoint, joint)}}
