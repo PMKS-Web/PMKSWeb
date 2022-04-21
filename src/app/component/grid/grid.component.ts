@@ -433,6 +433,9 @@ export class GridComponent implements OnInit, AfterViewInit {
             if (GridComponent.jointStates === jointStates.dragging) {
               GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
               this.updateMechanism();
+              if (this.mechanisms[0].joints[0].length !== 0) {
+                this.showPathHolder = this.mechanisms[0].dof === 1;
+              }
             } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
               // TODO: Add logic when dragging a link within edit shape mode
               this.updateMechanism();
@@ -485,6 +488,9 @@ export class GridComponent implements OnInit, AfterViewInit {
           case jointStates.dragging:
             GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
             this.updateMechanism();
+            if (this.mechanisms[0].joints[0].length !== 0) {
+              this.showPathHolder = this.mechanisms[0].dof === 1;
+            }
             break;
           case jointStates.waiting:
             break;
@@ -1021,7 +1027,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Determine logic later once everything else is determined
     this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, this.gravity, this.unit));
     // TODO: put this logic somewhere when joint is being dragged
-    this.showPathHolder = this.mechanisms[0].dof === 1;
   }
 
   private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
@@ -1238,6 +1243,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   animate(e: [progress: number, animationState?: boolean]) {
     this.mechanismTimeStep = e[0];
     const animationState = e[1];
+    this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
     if (animationState !== undefined) {
       this.runAnimation = animationState;
     }
