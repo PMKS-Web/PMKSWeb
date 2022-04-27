@@ -199,7 +199,8 @@
                  style="transform: scaleY(-1);display: block; margin: auto">
               <!-- TODO: Make sure scale works accordingly -->
               <g [attr.transform]="getLinkProp(link, 'transform')"
-                 [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')" style="display: block; margin: auto">
+                 [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
+                 style="display: block; margin: auto">
                 <path
                   [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
                   [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
@@ -216,10 +217,10 @@
               </g>
             </svg>
             <div *ngFor="let joint of link.joints">
-              <input type="checkbox">
+              <input type="checkbox" (click)="updateTable()">
               <label>Direction of Force {{joint.id}}x</label>
               <br>
-              <input type="checkbox">
+              <input type="checkbox" (click)="updateTable()">
               <label>Direction of Force {{joint.id}}y</label>
               <br>
             </div>

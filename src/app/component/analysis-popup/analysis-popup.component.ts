@@ -407,10 +407,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // TODO: Each screen width and height are different. Be sure to pull screens dimensions
         // const x_dist = link_center_x + dist_from_center_x + (link_width / 2);
         // const y_dist = link_center_y + dist_from_center_y + (link_height / 2);
-        const x_dist = link_center_x + (link_width / 2);
-        const y_dist = link_center_y + (link_height / 2);
+        const x_dist = link_center_x + (link_width / 2) + 25;
+        const y_dist = link_center_y + (link_height / 2) + 30;
         // // const x_dist = 0;
         // const y_dist = 0;
+        // TODO: Be sure to account for the force that is added on the link as well
 
         return 'translate(' + (x_dist) + ' ' + (y_dist) +  '), scale(' + this.scaleFactor + ')'
         // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
@@ -418,11 +419,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'height':
         top = link.bound.b1.y;
         bot = link.bound.b3.y;
-        return (Math.abs(top - bot) * this.scaleFactor) + (this.scaleFactor * 2 / 5);
+        return (Math.abs(top - bot) * this.scaleFactor) + (this.scaleFactor * 2 / 5) + 60;
       case 'width':
         left = link.bound.b1.x;
         right = link.bound.b2.x;
-        return (Math.abs(right - left) * (this.scaleFactor)) + (this.scaleFactor * 2 / 5);
+        return (Math.abs(right - left) * (this.scaleFactor)) + (this.scaleFactor * 2 / 5) + 50;
       default:
         return '?';
     }
