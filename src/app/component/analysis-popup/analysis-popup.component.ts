@@ -114,6 +114,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     AnalysisPopupComponent.popUpWindow.style.display = 'none';
   }
 
+  updateTable() {
+
+  }
+
 
   setTab(tabNum: number) {
     this.selectedTab = tabNum;
@@ -836,5 +840,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     /* save to file*/
     XLSX.writeFile(wb, fileName);
     // XLSX.writeFile(wb, this.fileName);
+  }
+
+  forceSelectedCheckbox(link: Link) {
+    const element = document.getElementById('checkbox_' + link.id)! as any;
+    return element.checked;
   }
 }
