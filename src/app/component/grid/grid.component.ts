@@ -868,10 +868,11 @@ export class GridComponent implements OnInit, AfterViewInit {
           connectedJoints.push(j);
         }});
       const prisJoint = new PrisJoint(prismaticJointId, selJoint.x, selJoint.y, selJoint.input, true,
-        selJoint.links, connectedJoints);
+        [], connectedJoints);
       GridComponent.selectedJoint.connectedJoints.push(prisJoint);
       const piston = new Piston(selJoint.id + prisJoint.id, [selJoint, prisJoint]);
       prisJoint.links.push(piston);
+      GridComponent.selectedJoint.links.push(piston);
       this.joints.push(prisJoint);
       this.links.push(piston);
     } else { // delete Prismatic Joint
@@ -1092,22 +1093,53 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 3);
     selectedJoint.y = roundNumber(trueCoord.y, 3);
-    selectedJoint.links.forEach(l => {
-      if (!(l instanceof RealLink)) {return}
-      // TODO: delete this if this is not needed (verify this)
-      const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
-      l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-      l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-      l.bound = RealLink.getBounds(
-        new Coord(l.joints[0].x, l.joints[0].y),
-        new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-      l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-      l.CoM = RealLink.determineCenterOfMass(l.joints);
-      l.updateCoMDs();
-      l.forces.forEach(f => {
-        // TODO: adjust the location of force endpoints and update the line and arrow
-      });
-    });
+    switch (selectedJoint.constructor) {
+      case RevJoint:
+        selectedJoint.links.forEach(l => {
+          if (!(l instanceof RealLink)) { return }
+          // TODO: delete this if this is not needed (verify this)
+          const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
+          l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+          l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+          l.bound = RealLink.getBounds(
+            new Coord(l.joints[0].x, l.joints[0].y),
+            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          l.CoM = RealLink.determineCenterOfMass(l.joints);
+          l.updateCoMDs();
+          l.forces.forEach(f => {
+            // TODO: adjust the location of force endpoints and update the line and arrow
+          });
+        });
+        break;
+      case PrisJoint:
+        selectedJoint.connectedJoints.forEach(j => {
+          if (!(j instanceof RealJoint)) {return}
+          if (j.ground) {return}
+          j.x = selectedJoint.x;
+          j.y = selectedJoint.y;
+
+          j.links.forEach(l => {
+            if (!(l instanceof RealLink)) {
+              return
+            }
+            // TODO: delete this if this is not needed (verify this)
+            const jointIndex = l.joints.findIndex(jt => jt.id === j.id);
+            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+            l.bound = RealLink.getBounds(
+              new Coord(l.joints[0].x, l.joints[0].y),
+              new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+            l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+            l.CoM = RealLink.determineCenterOfMass(l.joints);
+            l.updateCoMDs();
+            l.forces.forEach(f => {
+              // TODO: adjust the location of force endpoints and update the line and arrow
+            });
+          });
+        });
+        break;
+    }
     return selectedJoint
   }
 

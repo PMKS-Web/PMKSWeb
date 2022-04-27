@@ -124,7 +124,7 @@ export class Mechanism {
         case PrisJoint:
           if (!(j instanceof  PrisJoint)) {return}
           // N++;
-          J1 += j.links.length - 1;
+          J1 += j.links.length;
           break;
       }
     });
