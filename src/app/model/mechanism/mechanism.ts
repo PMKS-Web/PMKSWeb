@@ -207,7 +207,7 @@ export class Mechanism {
           pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
           // TODO: When you insert a joint onto a link, be sure to utilize this function call
           pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
-          pushLink.forces = pushLink.forces;
+          pushLink.forces = l.forces;
           this._links[currentTimeStamp + 1].push(pushLink);
         });
         // TODO: If forces are a part of links, is all of this info needed? Or just the positions?

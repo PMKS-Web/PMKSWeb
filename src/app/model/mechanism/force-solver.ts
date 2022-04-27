@@ -241,6 +241,7 @@ export class ForceSolver {
             realLinkCount++;
             break;
           }
+          // TODO: Be sure force is updated within link
           link.forces.forEach(f => {
             const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y,
               f.mag * Math.cos(f.angle * Math.PI / 180), f.mag * Math.sin(f.angle * Math.PI / 180));
