@@ -8,6 +8,7 @@ import {DatePipe} from "@angular/common";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {style} from "@angular/animations";
+import {Coord} from "../../model/coord";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -457,6 +458,44 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return joint.r * 7 / 5;
       default:
         return;
+    }
+  }
+
+  getForceLine(joint: Joint, dir: string, xOrY: string) {
+    switch (dir) {
+      case 'pos':
+        if (xOrY === 'x') {
+          return Force.createForceLine(joint, new Coord(joint.x + 0.7, joint.y));
+        } else {
+          return Force.createForceLine(joint, new Coord(joint.x, joint.y + 0.7));
+        }
+      case 'neg':
+        if (xOrY === 'x') {
+          return Force.createForceLine(joint, new Coord(joint.x - 0.7, joint.y));
+        } else {
+          return Force.createForceLine(joint, new Coord(joint.x, joint.y - 0.7));
+        }
+      default:
+        return
+    }
+  }
+
+  getForceArrow(joint: Joint, dir: string, xOrY: string) {
+    switch (dir) {
+      case 'pos':
+        if (xOrY === 'x') {
+          return Force.createForceArrow(joint, new Coord(joint.x + 0.7, joint.y));
+        } else {
+          return Force.createForceArrow(joint, new Coord(joint.x, joint.y + 0.7));
+        }
+      case 'neg':
+        if (xOrY === 'x') {
+          return Force.createForceArrow(joint, new Coord(joint.x - 0.7, joint.y));
+        } else {
+          return Force.createForceArrow(joint, new Coord(joint.x, joint.y - 0.7));
+        }
+      default:
+        return
     }
   }
 

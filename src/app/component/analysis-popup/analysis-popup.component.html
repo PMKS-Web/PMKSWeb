@@ -214,6 +214,17 @@
                text-anchor: middle; overflow: visible;">
                   <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
                 </svg>
+                <g *ngFor="let joint of link.joints">
+                  <!-- TODO: Have ngIf for when condition met -->
+                  <path [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
+                  </path>
+                  <path [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                  </path>
+                  <path [attr.d]="getForceArrow(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
+                  </path>
+                  <path [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                  </path>
+                </g>
               </g>
             </svg>
             <div *ngFor="let joint of link.joints">
