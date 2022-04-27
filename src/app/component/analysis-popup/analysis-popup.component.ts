@@ -123,9 +123,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         const styleString = element.getAttribute('style')!;
         const heightIndex = styleString.indexOf('height');
         if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
-        element.setAttribute('style', 'overflow: scroll; height: 500px');
+          element.setAttribute('style', 'overflow: scroll; height: 500px');
         } else {
-        element.setAttribute('style', 'overflow: scroll; height: 50px');
+          element.setAttribute('style', 'overflow: scroll; height: 50px');
         }
         break;
       default:
@@ -161,6 +161,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           'color: gray; background-color: white');
         AnalysisPopupComponent.showEqsButton.setAttribute('style',
           'color: black; background-color: gray');
+        switch (this.selectedAnalysis) {
+          case 'loop':
+            break;
+          case 'force':
+            ForceSolver.resetVariables();
+            ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
+            ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
+            break;
+          case 'kinematic':
+            break;
+          case 'stress':
+            break;
+          case 'ics':
+            break;
+        }
         break;
     }
   }
@@ -330,7 +345,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return link.d;
       case 'fill':
         return link.fill;
-        // translate not used, can delete
+      // translate not used, can delete
       case 'translate':
         left = link.bound.b1.x;
         bot = link.bound.b1.y;
@@ -429,7 +444,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // TODO: Be sure to account for the force that is added on the link as well
 
         return 'translate(' + (x_dist) + ' ' + (y_dist) +  '), scale(' + this.scaleFactor + ')'
-        // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
+      // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
       // return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  '), scale(' + this.scaleFactor + ')'
       case 'height':
         top = link.bound.b1.y;
@@ -899,5 +914,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   forceSelectedCheckbox(link: Link) {
     const element = document.getElementById('checkbox_' + link.id)! as any;
     return element.checked;
+  }
+
+  getForceAssumption(link: Link, joint: Joint, xOrY: string) {
+    if (xOrY === 'x') {
+      if (ForceSolver.jointPositiveForceXLinkMap.get(joint.id) === link.id) {
+        return 1;
+      } else {
+        return -1;
+      }
+    } else {
+      if (ForceSolver.jointPositiveForceYLinkMap.get(joint.id) === link.id) {
+        return 1;
+      } else {
+        return -1;
+      }
+    }
   }
 }
