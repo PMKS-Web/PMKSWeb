@@ -14,6 +14,7 @@ export class ShapeSelectorComponent implements OnInit {
   @Output() saveEdit = new EventEmitter();
   @Output() cancelEdit = new EventEmitter();
   @Output() revertEdit = new EventEmitter();
+  @Output() updateMechanismEmitter = new EventEmitter();
   shapes: Shape[] = [Shape.line,
     Shape.bar,
     Shape.eTriangle,
@@ -78,5 +79,6 @@ export class ShapeSelectorComponent implements OnInit {
     GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
+    this.updateMechanismEmitter.emit();
   }
 }

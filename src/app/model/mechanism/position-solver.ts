@@ -1,4 +1,4 @@
-import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
+import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
 import {Link} from "../link";
 import {roundNumber} from "../utils";
 import {Force} from "../force";
@@ -49,22 +49,22 @@ export class PositionSolver {
     // 1st: store all ground joints as known joints
     joints.forEach(j => {
       if (!(j instanceof RealJoint)) {return}
-      if (j.ground) {
-        knownJointsIds.push(j.id);
-      }
+      if (!(j.ground)) {return}
+      knownJointsIds.push(j.id);
     });
     // 2nd: determine joints that neighbor the input joint
     const inputJointIndex = joints.findIndex(j => {
       if (!(j instanceof RealJoint)) {return}
-      return j.input;});
+      return j.input;
+    });
     const inputJoint = joints[inputJointIndex];
     if (!(inputJoint instanceof RealJoint)) {return}
     const tracer_joints: Joint[] = [];
     inputJoint.connectedJoints.forEach(j => {
       if (!(j instanceof RealJoint)) {return}
-      if (j.ground) {
-        return;
-      }
+      // if (j.ground && j.constructor !== PrisJoint) {
+      //   return;
+      // }
       // store the solved number
       this.jointNumOrderSolverMap.set(orderNum++, j.id);
       // store desired joints as input joint and current_joint
@@ -92,93 +92,90 @@ export class PositionSolver {
   }
 
   // TODO: Change the names from simJoints, simLinks to just joints and links
-  static detJointOrder(simJoints: Joint[], simLinks: Link[], prev_joint: RealJoint, orderNum: number, knownJointArray: string[]) {
-    prev_joint.connectedJoints.forEach(cur_joint => {
-      if (!(cur_joint instanceof RealJoint)) {return}
+  static detJointOrder(joints: Joint[], links: Link[], prevJoint: RealJoint, orderNum: number, knownJointArray: string[]) {
+    prevJoint.connectedJoints.forEach(cur_joint => {
+      if (!(cur_joint instanceof RealJoint)) {
+        return
+      }
       // TODO: Within future, have a method to determine the index based on list of joints and desired ID
       if (knownJointArray.findIndex(j_id => j_id === cur_joint.id) !== -1) {
         return;
       }
-      const prev_joint_index = simJoints.findIndex(j => j.id === prev_joint.id);
-      // let desired_joint_type = 'R';
-      // if (prev_joint.jointType === 'P' || cur_joint.jointType === 'P') {
-      //   desired_joint_type = 'P';
-      // }
-      switch (cur_joint.constructor) {
-        case RevJoint:
-          const known_joint = this.findKnownJoint(cur_joint, prev_joint, knownJointArray);
-          if (known_joint === undefined) {
+      const prev_joint_index = joints.findIndex(j => j.id === prevJoint.id);
+      let connectedToSlider = false;
+      cur_joint.connectedJoints.forEach(j => {
+        if (j.constructor === PrisJoint) {
+          connectedToSlider = true;
+        }
+      });
+      if (connectedToSlider) {
+        const sliderJoint = cur_joint.connectedJoints.find(j => j.constructor === PrisJoint);
+        if (sliderJoint === undefined) {return}
+        if (!(sliderJoint instanceof PrisJoint)) {return}
+        const sliderJointIndex = joints.findIndex(j => j.id === sliderJoint.id);
+        this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index, sliderJointIndex]);
+        this.desiredAnalysisJointMap.set(cur_joint.id, 'circleLineIntersectionPoints');
+        this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
+        this.jointDistMap.set(cur_joint.id + ',' + prevJoint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y));
+        this.m_Map.set(cur_joint.id, Math.tan(sliderJoint.angle));
+        this.b_Map.set(cur_joint.id, cur_joint.y - this.m_Map.get(cur_joint.id)! * cur_joint.x);
+      } else {
+        const known_joint = this.findKnownJoint(cur_joint, prevJoint, knownJointArray);
+        if (known_joint === undefined) {
+          return;
+        }
+        knownJointArray.push(cur_joint.id);
+        const known_joint_index = joints.findIndex(j => j.id === known_joint.id);
+        this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index, known_joint_index]);
+        this.desiredAnalysisJointMap.set(cur_joint.id, 'twoCircleIntersectionPoints');
+        this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
+        this.jointDistMap.set(cur_joint.id + ',' + prevJoint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y));
+        this.jointDistMap.set(cur_joint.id + ',' + known_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, known_joint.x, known_joint.y));
+        const desiredTracerJoints = [];
+        desiredTracerJoints.push(cur_joint);
+        cur_joint.connectedJoints.forEach(tracer_joint => {
+          if (!(tracer_joint instanceof RevJoint)) {
+            return
+          }
+          const cur_joint_index = joints.findIndex(j => j.id === cur_joint.id);
+          if (tracer_joint instanceof PrisJoint) {
+            this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index]);
+            this.desiredAnalysisJointMap.set(tracer_joint.id, 'circleLineIntersectionPoints');
+            this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
+            this.jointDistMap.set(tracer_joint.id + ',' + tracer_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y));
+            this.m_Map.set(tracer_joint.id, Math.tan(tracer_joint.angle));
+            this.b_Map.set(tracer_joint.id, tracer_joint.y - this.m_Map.get(tracer_joint.id)! * tracer_joint.x);
             return;
           }
-          knownJointArray.push(cur_joint.id);
-          const known_joint_index = simJoints.findIndex(j => j.id === known_joint.id);
-          this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index, known_joint_index]);
-          this.desiredAnalysisJointMap.set(cur_joint.id, 'twoCircleIntersectionPoints');
-          this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
-          this.jointDistMap.set(cur_joint.id + ',' + prev_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prev_joint.x, prev_joint.y));
-          this.jointDistMap.set(cur_joint.id + ',' + known_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, known_joint.x, known_joint.y));
-          // TODO: Set the necessary m's within distMap
-          // TODO: Set the necessary n's within distMap
-          // TODO: Set the necessary b's within distMap
-          const desiredTracerJoints = [];
-          desiredTracerJoints.push(cur_joint);
-          cur_joint.connectedJoints.forEach(tracer_joint => {
-            if (!(tracer_joint instanceof RevJoint)) {return}
-            const cur_joint_index = simJoints.findIndex(j => j.id === cur_joint.id);
-            if (tracer_joint instanceof PrisJoint) {
-              this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index]);
-              this.desiredAnalysisJointMap.set(tracer_joint.id, 'circleLineIntersectionPoints');
-              this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
-              this.jointDistMap.set(tracer_joint.id + ',' + tracer_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y));
-              // TODO: Set the necessary m's within distMap
-              this.m_Map.set(tracer_joint.id, Math.tan(tracer_joint.angle));
-              // TODO: Set the necessary b's within distMap
-              this.b_Map.set(tracer_joint.id, tracer_joint.y - this.m_Map.get(tracer_joint.id)! * tracer_joint.x);
-              return;
-            }
-            const desired_link = simLinks.find(l => {
-              return l.joints.findIndex(l_joint => l_joint.id === prev_joint.id) !== -1 &&
-                l.joints.findIndex(l_joint => l_joint.id === cur_joint.id) !== -1;
-            });
-            if (desired_link === undefined) {return}
-            if (knownJointArray.findIndex(j_id => j_id === tracer_joint.id) !== -1) {
-              return;
-            }
-            // tracer joint is not connected on the same link as prev joint and curr joint
-            // if (tracer_joint.connectedLinks.findIndex(ll => ll.id === desired_link.id) !== -1) {
-            if (tracer_joint.links.findIndex(ll => ll.id === desired_link.id) === -1) {
-              return;
-            }
-            // const tracer_joint_index = 0;
-            // this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index, known_joint_index]);
-            this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [prev_joint_index, cur_joint_index]);
-            this.desiredAnalysisJointMap.set(tracer_joint.id, 'determineTracerJoint');
-            this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
-            knownJointArray.push(tracer_joint.id);
-            desiredTracerJoints.push(tracer_joint);
-            this.jointDistMap.set(tracer_joint.id + ',' + prev_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, prev_joint.x, prev_joint.y));
-            this.jointDistMap.set(tracer_joint.id + ',' + cur_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y));
-            this.jointDistMap.set(cur_joint.id + ',' + prev_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prev_joint.x, prev_joint.y));
-            // TODO: Set the necessary m's within distMap
-            // TODO: Set the necessary n's within distMap
-            // TODO: Set the necessary b's within distMap
+          const desired_link = links.find(l => {
+            return l.joints.findIndex(l_joint => l_joint.id === prevJoint.id) !== -1 &&
+              l.joints.findIndex(l_joint => l_joint.id === cur_joint.id) !== -1;
           });
-          desiredTracerJoints.forEach(jt => {
-            orderNum = this.detJointOrder(simJoints, simLinks, jt, orderNum, knownJointArray);
-          });
-          break;
-        case PrisJoint:
-          if (!(cur_joint instanceof PrisJoint)) {return}
-          this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index]);
-          this.desiredAnalysisJointMap.set(cur_joint.id, 'circleLineIntersectionPoints');
-          this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
-          this.jointDistMap.set(cur_joint.id + ',' + prev_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prev_joint.x, prev_joint.y));
-          // TODO: Set the necessary m's within distMap
-          this.m_Map.set(cur_joint.id, Math.tan(cur_joint.angle));
-          // TODO: Set the necessary b's within distMap
-          this.b_Map.set(cur_joint.id, cur_joint.y - this.m_Map.get(cur_joint.id)! * cur_joint.x);
-          // TODO: Set the necessary n's within distMap
-          break;
+          if (desired_link === undefined) {
+            return
+          }
+          if (knownJointArray.findIndex(j_id => j_id === tracer_joint.id) !== -1) {
+            return;
+          }
+          // tracer joint is not connected on the same link as prev joint and curr joint
+          // if (tracer_joint.connectedLinks.findIndex(ll => ll.id === desired_link.id) !== -1) {
+          if (tracer_joint.links.findIndex(ll => ll.id === desired_link.id) === -1) {
+            return;
+          }
+          // const tracer_joint_index = 0;
+          // this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index, known_joint_index]);
+          this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [prev_joint_index, cur_joint_index]);
+          this.desiredAnalysisJointMap.set(tracer_joint.id, 'determineTracerJoint');
+          this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
+          knownJointArray.push(tracer_joint.id);
+          desiredTracerJoints.push(tracer_joint);
+          this.jointDistMap.set(tracer_joint.id + ',' + prevJoint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, prevJoint.x, prevJoint.y));
+          this.jointDistMap.set(tracer_joint.id + ',' + cur_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y));
+          this.jointDistMap.set(cur_joint.id + ',' + prevJoint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y));
+        });
+        desiredTracerJoints.forEach(jt => {
+          orderNum = this.detJointOrder(joints, links, jt, orderNum, knownJointArray);
+        });
       }
     });
     return orderNum;
@@ -219,6 +216,9 @@ export class PositionSolver {
           this.determineTracerJoint(joints[connected_joint_indices[0]], joints[connected_joint_indices[1]], joint);
           possible = true;
           break;
+        default:
+          // TODO: Should never get here...
+          return false;
       }
       if (!possible) {
         return false;
@@ -411,6 +411,7 @@ export class PositionSolver {
     }
     // const y = Math.tan(unknownJoint.angle) * unknownJoint.x + unknownJoint.y;
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
+    this.jointMapPositions.set(j2.id, [roundNumber(x, 3), roundNumber(y, 3)]);
     return true;
   }
 

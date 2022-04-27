@@ -1,5 +1,5 @@
 import {Joint, PrisJoint, RealJoint} from "../joint";
-import {ImagLink, Link, RealLink} from "../link";
+import {Piston, Link, RealLink} from "../link";
 import {matLinearSystem} from "../utils";
 
 export class ForceSolver {
@@ -115,7 +115,7 @@ export class ForceSolver {
         if (joint1.input || joint2.input) {
           this.inputLinkIndex = 3 * realLinkCount + imagLinkCount + 2;
         }
-        if (link instanceof ImagLink) {
+        if (link instanceof Piston) {
           imagLinkCount++;
         } else {
           realLinkCount++;
@@ -189,7 +189,7 @@ export class ForceSolver {
             this.A_matrix[3 * realLinkCount + imagLinkCount + 2][xIndex] += torqueVal[1] * distance_conversion;
             this.A_matrix[3 * realLinkCount + imagLinkCount + 2][yIndex] += torqueVal[0] * distance_conversion;
             break;
-          case ImagLink:
+          case Piston:
             const mu = 0.1;
             const desiredJoint = joint1;
             if (!(desiredJoint instanceof PrisJoint)) {return}
@@ -251,7 +251,7 @@ export class ForceSolver {
           });
           realLinkCount++;
           break;
-        case ImagLink:
+        case Piston:
           imagLinkCount++;
           break;
       }

@@ -38,9 +38,9 @@
            (mousemove)="mouseMove($event, 'joint')"
            width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
-        <circle *ngIf="!getGround(joint)" id="joint_{{joint.id}}_ring"
+        <circle *ngIf="!getGround(joint) && !containsSlider(joint)" id="joint_{{joint.id}}_ring"
                 [attr.r]="(getJointR(joint) * 7 / 5)" [attr.cx]="0" [attr.cy]="0" fill="black"/>
-        <circle *ngIf="!getGround(joint)" id="joint_{{joint.id}}"
+        <circle *ngIf="!getGround(joint) && !containsSlider(joint)" id="joint_{{joint.id}}"
                 [attr.r]="getJointR(joint)" [attr.cx]="0" [attr.cy]="0" fill="gray" stroke="#00000000"
                 [attr.stroke-width]="(getJointR(joint) * 2)"/>
         <!-- condition for slider crank -->
@@ -107,14 +107,14 @@
     <g id="jointTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let joint of joints" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
-        <text *ngIf="typeOfJoint(joint) !== 'I'" style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
+        <text *ngIf="typeOfJoint(joint) !== 'P'" style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
     <g id="linkTagHolder" *ngIf="showIdTags">
       <svg *ngFor="let link of links" [attr.x]="getLinkProp(link, 'CoMX')"
            [attr.y]="getLinkProp(link, 'CoMY')" [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
-        <text *ngIf="typeOfLink(link) !== 'I'" style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
+        <text *ngIf="typeOfLink(link) !== 'P'" style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the forceTagHolder -->

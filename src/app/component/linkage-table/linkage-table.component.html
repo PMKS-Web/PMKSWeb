@@ -29,7 +29,7 @@
       </thead>
       <tbody>
       <tr *ngFor="let joint of joints">
-        <td *ngIf="typeOfJoint(joint) !== 'I'">
+        <td>
           <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
         </td>
         <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
@@ -37,24 +37,24 @@
         <!--          <td>-->
         <!--            {{joint.type}}-->
         <!--          </td>-->
-        <td *ngIf="typeOfJoint(joint) !== 'I'">
+        <td>
           <table *ngFor="let conJoints of connectedJoints(joint)" style="margin:auto; width:50%">
-            <td style="border: none" *ngIf="typeOfJoint(conJoints) !== 'I'">
+            <td style="border: none">
               {{conJoints.id}}
             </td>
           </table>
         </td>
-        <td *ngIf="typeOfJoint(joint) !== 'I'">
+        <td>
           <table *ngFor="let conJoint of connectedJoints(joint)" style="margin:auto; width:50%">
-            <td style="border: none" *ngIf="typeOfJoint(conJoint) !== 'I'">
+            <td style="border: none">
               {{distFromJoint(conJoint, joint)}}
             </td>
           </table>
         </td>
-        <td *ngIf="typeOfJoint(joint) !== 'I'">
+        <td>
           <input type="text" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
         </td>
-        <td *ngIf="typeOfJoint(joint) !== 'I'">
+        <td>
           <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
         </td>
         <td *ngIf="typeOfJoint(joint) === 'P'">
@@ -79,19 +79,19 @@
       </thead>
       <tbody>
       <tr *ngFor="let link of links">
-        <td *ngIf="typeofLink(link) !== 'I'">
+        <td *ngIf="typeofLink(link) !== 'P'">
           {{link.id}}
         </td>
-        <td *ngIf="typeofLink(link) !== 'I'">
+        <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
         </td>
-        <td *ngIf="typeofLink(link) !== 'I'">
+        <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
         </td>
-        <td *ngIf="typeofLink(link) !== 'I'">
+        <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
         </td>
-        <td *ngIf="typeofLink(link) !== 'I'">
+        <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
         </td>
       </tr>

@@ -687,7 +687,7 @@ export class RealLink extends Link {
   // }
 }
 
-export class ImagLink extends Link {
+export class Piston extends Link {
   constructor(id: string, joints: Joint[]) {
     super(id, joints);
   }

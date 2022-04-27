@@ -1,4 +1,4 @@
-import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
+import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
 import {Link} from "../link";
 
 export class LoopSolver {

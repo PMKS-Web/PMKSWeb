@@ -1,8 +1,8 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
-import {Joint, RevJoint, PrisJoint, ImagJoint, RealJoint} from "../../model/joint";
-import {ImagLink, Link, RealLink, Shape} from "../../model/link";
+import {Joint, RevJoint, PrisJoint, RealJoint} from "../../model/joint";
+import {Piston, Link, RealLink, Shape} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
@@ -338,6 +338,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   });
                   joint1.links.push(GridComponent.selectedLink);
                   GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
+                  GridComponent.selectedLink.joints.push(joint1);
                   this.joints.push(joint1);
                   this.joints.push(joint2);
                   this.links.push(link);
@@ -509,8 +510,8 @@ export class GridComponent implements OnInit, AfterViewInit {
             if (GridComponent.forceStates === forceStates.creating) {
               this.createForce($event);
             } else { // for jointStates.creating, linkStates.creating (When add link from grid, joint, or another link)
-                GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
-                GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
+              GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+              GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
             }
         }
         break;
@@ -855,18 +856,28 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createSlider() {
     this.disappearContext();
-    let joint = GridComponent.selectedJoint;
-    joint = joint instanceof PrisJoint ?
-      // TODO: Be sure to add/remove connected joints and links that are ImagJoint and ImagLinks
-      new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints) :
-      new PrisJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-    joint.ground = joint instanceof PrisJoint;
-    const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
-    this.joints[selectedJointIndex] = joint;
-    GridComponent.selectedJoint = joint;
-    // TODO: Have a method to check for input joint
-    if (joint instanceof PrisJoint && this.findInputJointIndex() !== -1) {
-      this.createImagJointAndLinks(joint);
+    const selJoint = GridComponent.selectedJoint;
+    const prismaticJointIndex = selJoint.connectedJoints.findIndex(j => j.constructor === PrisJoint);
+    if (prismaticJointIndex === -1) { // Create Prismatic Joint
+      const prismaticJointId = this.determineNextLetter();
+      const inputJointIndex = this.findInputJointIndex();
+      const connectedJoints = [selJoint]
+      this.joints.forEach(j => {
+        if (!(j instanceof RealJoint)) {return}
+        if (j.ground) {
+          connectedJoints.push(j);
+        }});
+      const prisJoint = new PrisJoint(prismaticJointId, selJoint.x, selJoint.y, selJoint.input, true,
+        selJoint.links, connectedJoints);
+      GridComponent.selectedJoint.connectedJoints.push(prisJoint);
+      const piston = new Piston(selJoint.id + prisJoint.id, [selJoint, prisJoint]);
+      prisJoint.links.push(piston);
+      this.joints.push(prisJoint);
+      this.links.push(piston);
+    } else { // delete Prismatic Joint
+      // TODO: determine logic to delete crank and the prismatic joint
+      // Find the slider link and delete this
+      // Delete the slider link and prismatic joint from joint's and link's connected links/joints
     }
     this.updateMechanism();
   }
@@ -876,7 +887,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
     GridComponent.selectedJoint.links.forEach(l => {
       // TODO: May wanna check this to be sure...
-      if (l instanceof ImagLink) {
+      if (l instanceof Piston) {
         return
       }
       if (l.joints.length < 3) {
@@ -1144,8 +1155,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         return 'R';
       case PrisJoint:
         return 'P';
-      case ImagJoint:
-        return 'I'
       default:
         return '?'
     }
@@ -1156,8 +1165,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     switch (link.constructor) {
       case RealLink:
         return 'R';
-      case ImagLink:
-        return 'I';
+      case Piston:
+        return 'P';
       default:
         return '?'
     }
@@ -1166,7 +1175,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   showPathHolder: boolean = false;
   getLinkProp(l: Link, propType: string) {
-    if (l instanceof ImagLink) {
+    if (l instanceof Piston) {
       return
     }
     const link = l as RealLink;
@@ -1215,47 +1224,44 @@ export class GridComponent implements OnInit, AfterViewInit {
     return String.fromCharCode(lastLetter.charCodeAt(0) + 1);
   }
 
-  private createImagJointAndLinks(joint: PrisJoint) {
-    const imagJointId = this.determineNextLetter();
-    const inputJointIndex = this.findInputJointIndex();
-    const inputJoint = this.joints[inputJointIndex];
-    if (inputJoint === undefined) {
-      return
-    }
-    const radToDeg = 180 / Math.PI;
-    let coord: Coord;
-    if (joint.angle % (180 * radToDeg) === 0) {
-      coord = new Coord(inputJoint.x, joint.y);
-    } else if (joint.angle % (90 * radToDeg) === 0) {
-      coord = new Coord(joint.x, inputJoint.y);
-    } else {
-      const m1 = Math.cos(joint.angle);
-      const m2 = Math.cos(90 - joint.angle);
-      const b1 = joint.y;
-      const b2 = inputJoint.y;
-      const x = (b2 - b1) / (m1 - m2);
-      const y = m1 * x + b1;
-      coord = new Coord(x, y);
-    }
-    const imagJoint = new ImagJoint(imagJointId, coord.x, coord.y);
-    this.joints.push(imagJoint);
-    joint.connectedJoints.push(imagJoint);
-    const linkJoints = [];
-    linkJoints.push(joint);
-    linkJoints.push(imagJoint);
-    const linkID = joint.id + imagJoint.id;
-    const imagLink = new ImagLink(linkID, linkJoints);
-    this.links.push(imagLink);
-    joint.links.push(imagLink);
-  }
+  // private createImagJointAndLinks(joint: PrisJoint) {
+  //   const imagJointId = this.determineNextLetter();
+  //   const inputJointIndex = this.findInputJointIndex();
+  //   const inputJoint = this.joints[inputJointIndex];
+  //   if (inputJoint === undefined) {
+  //     return
+  //   }
+  //   const radToDeg = 180 / Math.PI;
+  //   let coord: Coord;
+  //   if (joint.angle % (180 * radToDeg) === 0) {
+  //     coord = new Coord(inputJoint.x, joint.y);
+  //   } else if (joint.angle % (90 * radToDeg) === 0) {
+  //     coord = new Coord(joint.x, inputJoint.y);
+  //   } else {
+  //     const m1 = Math.cos(joint.angle);
+  //     const m2 = Math.cos(90 - joint.angle);
+  //     const b1 = joint.y;
+  //     const b2 = inputJoint.y;
+  //     const x = (b2 - b1) / (m1 - m2);
+  //     const y = m1 * x + b1;
+  //     coord = new Coord(x, y);
+  //   }
+  //   const imagJoint = new PrisJoint(imagJointId, coord.x, coord.y);
+  //   this.joints.push(imagJoint);
+  //   joint.connectedJoints.push(imagJoint);
+  //   const linkJoints = [];
+  //   linkJoints.push(joint);
+  //   linkJoints.push(imagJoint);
+  //   const linkID = joint.id + imagJoint.id;
+  //   const imagLink = new Piston(linkID, linkJoints);
+  //   this.links.push(imagLink);
+  //   joint.links.push(imagLink);
+  // }
 
   private findInputJointIndex() {
     return this.joints.findIndex(j => {
-      if (j instanceof ImagJoint) {
-        return
-      }
-      const joint = j as RealJoint;
-      joint.input
+      if (!(j instanceof RealJoint)) { return }
+      return j.input;
     });
   }
 
@@ -1268,6 +1274,26 @@ export class GridComponent implements OnInit, AfterViewInit {
       return
     }
     return joint.ground;
+  }
+
+  containsSlider(joint: Joint) {
+    switch (joint.constructor) {
+      case RevJoint:
+        if (!(joint instanceof RevJoint)) {return false}
+        let condition = false;
+        joint.connectedJoints.forEach(j => {
+          if (j.constructor === PrisJoint) {
+            condition = true;
+          }
+        });
+        return condition;
+      case PrisJoint:
+        return false;
+      case RealJoint:
+        return false;
+      default:
+        return false;
+    }
   }
 
   getJointR(joint: Joint) {
@@ -1341,12 +1367,15 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   saveEdit() {
+    // TODO: Put logic to save chosen link shape
     this.showcaseShapeSelector = false;
   }
   revertEdit() {
+    // TODO: Put logic to revert link shape
     this.showcaseShapeSelector = false;
   }
   cancelEdit() {
+    // TODO: Put logic to cancel link shape
     this.showcaseShapeSelector = false;
   }
 

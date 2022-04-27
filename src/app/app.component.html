@@ -7,7 +7,12 @@
 <app-linkage-table #linkageTableComponent
                    [joints]="gridComponent.joints"
                    [links]="gridComponent.links"
-                   [forces]="gridComponent.forces"></app-linkage-table>
+                   [forces]="gridComponent.forces"
+                   [mechanisms]="gridComponent.mechanisms"
+                   [ics]="gridComponent.ics"
+                   [gravity]="toolbarComponent.gravity"
+                   [unit]="toolbarComponent.unit.selectedUnit"
+                   (updateMechanismEmitter)="gridComponent.updateMechanism()"></app-linkage-table>
 <app-toolbar #toolbarComponent
              [joints]="gridComponent.joints"
              [links]="gridComponent.links"
@@ -35,5 +40,6 @@
                     [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"
                     (saveEdit)="gridComponent.saveEdit()"
                     (revertEdit)="gridComponent.revertEdit()"
-                    (cancelEdit)="gridComponent.cancelEdit()">
+                    (cancelEdit)="gridComponent.cancelEdit()"
+                    (updateMechanismEmitter)="gridComponent.updateMechanism()">
 </app-shape-selector>

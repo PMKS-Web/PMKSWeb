@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
+import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
 import {Link} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";

@@ -76,12 +76,13 @@ export class RealJoint extends Joint {
   }
 }
 
-export class ImagJoint extends Joint {
-
-  constructor(id: string, x: number, y: number) {
-    super(id, x, y);
-  }
-}
+// TODO: Verify this but I don't believe there is an ImagJoint...
+// export class ImagJoint extends Joint {
+//
+//   constructor(id: string, x: number, y: number) {
+//     super(id, x, y);
+//   }
+// }
 
 export class RevJoint extends RealJoint {
   constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],

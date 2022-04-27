@@ -1,9 +1,11 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Force} from "../../model/force";
-import {ImagLink, Link, RealLink, Shape} from "../../model/link";
-import {ImagJoint, Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
+import {Piston, Link, RealLink, Shape} from "../../model/link";
+import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
 import {Coord} from "../../model/coord";
 import {roundNumber} from "../../model/utils";
+import {Mechanism} from "../../model/mechanism/mechanism";
+import {InstantCenter} from "../../model/instant-center";
 
 @Component({
   selector: 'app-linkage-table',
@@ -14,6 +16,11 @@ export class LinkageTableComponent implements OnInit {
   @Input() joints: Joint[] = [];
   @Input() links: Link[] = [];
   @Input() forces: Force[] = [];
+  @Input() mechanisms: Mechanism[] = [];
+  @Input() ics: InstantCenter[] = [];
+  @Input() gravity: boolean = false;
+  @Input() unit: string = 'cm';
+  @Output() updateMechanismEmitter = new EventEmitter();
 
   private static linkageTable: SVGElement;
   private static jointButton: SVGElement;
@@ -78,7 +85,7 @@ export class LinkageTableComponent implements OnInit {
       case 'x':
         joint.x = Number($event.target.value);
         joint.links.forEach(li => {
-          if (li instanceof ImagLink) {return}
+          if (li instanceof Piston) {return}
           const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
@@ -97,7 +104,7 @@ export class LinkageTableComponent implements OnInit {
       case 'y':
         joint.y = Number($event.target.value);
         joint.links.forEach(li => {
-          if (li instanceof ImagLink) {return}
+          if (li instanceof Piston) {return}
           const l = li as RealLink;
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
@@ -118,10 +125,12 @@ export class LinkageTableComponent implements OnInit {
         joint.id = $event.target.value;
         break;
       case 'angle':
-        const j = joint as PrisJoint;
-        j.angle = $event.target.value;
+        if (!(joint instanceof PrisJoint)) {return}
+        joint.angle = $event.target.value;
     }
+    this.updateMechanismEmitter.emit();
   }
+
   changeLinkProp($event: any, link: Link, linkProp: string) {
     if (!(link instanceof RealLink)) {return}
     switch (linkProp) {
@@ -138,6 +147,7 @@ export class LinkageTableComponent implements OnInit {
         link.CoM.y = $event.target.value;
         break;
     }
+    this.updateMechanismEmitter.emit();
   }
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
@@ -162,6 +172,7 @@ export class LinkageTableComponent implements OnInit {
     }
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
     force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
+    this.updateMechanismEmitter.emit();
   }
 
   mouseOver(number: number) {
@@ -219,8 +230,6 @@ export class LinkageTableComponent implements OnInit {
         return '?';
       case RealJoint:
         return '?';
-      case ImagJoint:
-        return 'I';
       case RevJoint:
         return 'R';
       case PrisJoint:
@@ -232,8 +241,8 @@ export class LinkageTableComponent implements OnInit {
     switch (link.constructor) {
       case RealLink:
         return 'R';
-      case ImagLink:
-        return 'I';
+      case Piston:
+        return 'P';
     }
     return '?'
   }
@@ -245,7 +254,7 @@ export class LinkageTableComponent implements OnInit {
   }
 
   getLinkProp(l: Link, propType: string) {
-    if (l instanceof ImagLink) {return}
+    if (l instanceof Piston) {return}
     const link = l as RealLink;
     switch (propType) {
       case 'mass':

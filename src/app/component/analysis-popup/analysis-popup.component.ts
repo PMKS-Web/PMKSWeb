@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Joint, RealJoint} from "../../model/joint";
-import {ImagLink, Link, RealLink} from "../../model/link";
+import {Piston, Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {GridComponent} from "../grid/grid.component";
 import * as XLSX from 'xlsx';

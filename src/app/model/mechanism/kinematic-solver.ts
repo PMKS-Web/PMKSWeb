@@ -1,5 +1,5 @@
 import {Joint, PrisJoint, RealJoint} from "../joint";
-import {ImagLink, Link, RealLink} from "../link";
+import {Piston, Link, RealLink} from "../link";
 import {matLinearSystem} from "../utils";
 import {InstantCenter} from "../instant-center";
 
@@ -139,7 +139,7 @@ export class KinematicsSolver {
     if (simLinks[this.inputLinkIndex] instanceof RealLink) {
       this.linkAngVelMap.set(simLinks[this.inputLinkIndex].id, initialAngularVelocity);
       this.linkAngAccMap.set(simLinks[this.inputLinkIndex].id, 0);
-    } else if (simLinks[this.inputLinkIndex] instanceof ImagLink) {
+    } else if (simLinks[this.inputLinkIndex] instanceof Piston) {
       if (!this.realJointIndexMap.has(simLinks[this.inputLinkIndex].id)) {
         const inputLink = simLinks[this.inputLinkIndex];
         if (!(inputLink instanceof RealLink)) {return}
@@ -160,7 +160,7 @@ export class KinematicsSolver {
     }
 
     simLinks.forEach(l => {
-      if (l instanceof ImagLink) {
+      if (l instanceof Piston) {
         return;
       }
       const angle = Math.atan2(l.joints[1].y - l.joints[0].y, l.joints[1].x - l.joints[0].x);
@@ -221,7 +221,7 @@ export class KinematicsSolver {
     this.requiredLoops.forEach(loop => {
       for (let i = 1; i < loop.length - 1; i++) {
         // cannot find velocity of a joint on an imaginary link
-        if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof ImagLink) {
+        if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof Piston) {
           continue;
         }
         const desiredLink = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
@@ -307,7 +307,7 @@ export class KinematicsSolver {
               unknownLinks.push(desiredLink);
             }
             break;
-          case ImagLink:
+          case Piston:
             if (!this.realJointIndexMap.has(link.id)) {
               const joints = link.joints.find(j => j instanceof RealJoint);
               if (joints === undefined) {return}
@@ -390,7 +390,7 @@ export class KinematicsSolver {
                   // arr = this.crossProduct(-this.linkAngVelMap.get(link.id), [rightXDist, rightYDist, 0]);
                   arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [rightXDist, rightYDist, 0]);
                   break;
-                case ImagLink:
+                case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // slider crank x, y
                   if (!(realJoint instanceof PrisJoint)) {return}
@@ -412,7 +412,7 @@ export class KinematicsSolver {
                   arr = this.crossProduct(1, [leftXDist, leftYDist, 0]);
                   colIndex = this.unknownLinkIndexMap.get(link.id)!;
                   break;
-                case ImagLink:
+                case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   if (!(realJoint instanceof PrisJoint)) {return}
                   arr = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle), 0];
@@ -440,7 +440,7 @@ export class KinematicsSolver {
                   const angularAccel = this.crossProduct(this.linkAngAccMap.get(link.id)!, [rightXDist, rightYDist, 0]);
                   sol = this.addTwoArrays(transAccel, angularAccel);
                   break;
-                case ImagLink:
+                case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   if (!(realJoint instanceof PrisJoint)) {return}
                   sol = [Math.cos(realJoint.angle), Math.sin(realJoint.angle)];
@@ -466,7 +466,7 @@ export class KinematicsSolver {
                   // knownArray[rowIndex + 1] += transAccel[1];
                   colIndex = this.unknownLinkIndexMap.get(link.id)!;
                   break;
-                case ImagLink:
+                case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   if (!(realJoint instanceof PrisJoint)) {return}
                   sol = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle)];
