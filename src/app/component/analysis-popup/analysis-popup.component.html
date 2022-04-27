@@ -214,6 +214,71 @@
               </svg>
             </g>
           </svg>
+          <div *ngFor="let joint of link.joints">
+            <input type="checkbox">
+            <label>Direction of Force {{joint.id}}x</label>
+            <br>
+            <input type="checkbox">
+            <label>Direction of Force {{joint.id}}y</label>
+            <br>
+          </div>
+          <div>
+            <label>Moment reference</label>
+            <select>
+              <option *ngFor="let joint of joints" [innerHTML]="joint.id">
+              </option>
+            </select>
+          </div>
+          <div>
+            &sum;F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div>
+            F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <sub>a</sub>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div>
+            F
+            <sub>ay</sub>
+            = 0
+            <br>
+          </div>
+          <div>
+            F
+            <sub>ax</sub>
+            = 0
+            <br>
+          </div>
+          <hr style="border-color: blue; display: block;">
+          <div>
+            &sum;M
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div>
+            R
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            X F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <div>
+            F
+            <sub>ax</sub>
+            + F
+            <sub>ax</sub>
+            = 0
+          </div>
         </div>
       </div>
       <div *ngIf="selectedAnalysis === 'stress'">
