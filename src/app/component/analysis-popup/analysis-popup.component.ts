@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import {DatePipe} from "@angular/common";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {Mechanism} from "../../model/mechanism/mechanism";
+import {style} from "@angular/animations";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -114,8 +115,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     AnalysisPopupComponent.popUpWindow.style.display = 'none';
   }
 
-  updateTable() {
-
+  updateTable(val: string, obj?: any) {
+    switch (val) {
+      case 'changeHeight':
+        const element = document.getElementById('div_' + obj._id)!;
+        const styleString = element.getAttribute('style')!;
+        const heightIndex = styleString.indexOf('height');
+        if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
+        element.setAttribute('style', 'overflow: scroll; height: 500px');
+        } else {
+        element.setAttribute('style', 'overflow: scroll; height: 50px');
+        }
+        break;
+      default:
+        return
+    }
   }
 
 

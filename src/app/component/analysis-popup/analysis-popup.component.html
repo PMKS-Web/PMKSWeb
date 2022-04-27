@@ -191,10 +191,10 @@
 
       </div>
       <div *ngIf="selectedAnalysis === 'force'">
-        <div *ngFor="let link of links">
-          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable()">
+        <div id="div_{{link.id}}" *ngFor="let link of links" style="overflow: scroll; height: 50px">
+          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link)">
           <label>Link {{link.id}}</label>
-          <div *ngIf="forceSelectedCheckbox(link)">
+          <div *ngIf="forceSelectedCheckbox(link)" style="overflow: hidden auto">
             <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
                  style="transform: scaleY(-1);display: block; margin: auto">
               <!-- TODO: Make sure scale works accordingly -->
@@ -217,10 +217,10 @@
               </g>
             </svg>
             <div *ngFor="let joint of link.joints">
-              <input type="checkbox" (click)="updateTable()">
+              <input type="checkbox" (click)="updateTable('')">
               <label>Direction of Force {{joint.id}}x</label>
               <br>
-              <input type="checkbox" (click)="updateTable()">
+              <input type="checkbox" (click)="updateTable('')">
               <label>Direction of Force {{joint.id}}y</label>
               <br>
             </div>
