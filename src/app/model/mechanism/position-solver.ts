@@ -493,7 +493,7 @@ export class PositionSolver {
       // TODO: Have map for determining r1, r2, r3
       r1 = this.jointDistMap.get(unknown_joint.id + ',' + lastJoint.id)!;
       r2 = this.jointDistMap.get(unknown_joint.id + ',' + joint_with_neighboring_ground.id)!;
-      r3 = this.jointDistMap.get(lastJoint.id  + ',' + joint_with_neighboring_ground.id)!;
+      r3 = this.jointDistMap.get(joint_with_neighboring_ground.id + ',' + lastJoint.id)!;
       internal_angle = Math.acos((Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3));
       this.internalTriangleValuesMap.set(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id,
         [r1, internal_angle]);
