@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {switchMapTo} from "rxjs";
 import {Mechanism} from "../../model/mechanism/mechanism";
 
@@ -7,7 +7,8 @@ import {Mechanism} from "../../model/mechanism/mechanism";
   templateUrl: './animation-bar.component.html',
   styleUrls: ['./animation-bar.component.css']
 })
-export class AnimationBarComponent implements OnInit {
+export class AnimationBarComponent implements OnInit, AfterViewInit {
+  @Input() mechanisms: Mechanism[] = [];
   @Input() screenCoord: string = '';
   @Input() dof: string = '';
   @Input() mechanismTimeSteps: number = 0;
@@ -18,9 +19,22 @@ export class AnimationBarComponent implements OnInit {
   speed: string = 'medium';
   animate: boolean = false;
 
-  constructor() { }
+  private static slider: HTMLInputElement;
 
+  constructor() { }
   ngOnInit(): void {
+  }
+
+  ngAfterViewInit() {
+    AnimationBarComponent.slider = <HTMLInputElement>document.getElementById('slider');
+  }
+
+  maxTimeSteps() {
+    if (this.mechanisms.length === 0) {
+      return 0;
+    } else {
+      return this.mechanisms[0].joints.length;
+    }
   }
 
   onDirectionChange() {
@@ -63,7 +77,9 @@ export class AnimationBarComponent implements OnInit {
   }
 
   setAnim() {
-
+    if (!this.animate) {
+      this.animateGridEmitter.emit([Number(AnimationBarComponent.slider.value), this.animate]);
+    }
   }
 
   showCenterOfMass() {

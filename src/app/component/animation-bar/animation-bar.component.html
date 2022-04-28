@@ -37,7 +37,8 @@
     </button>
   </div>
   <div id="slidecontainer">
-    <input class="tooltip" type="range" min="0" max="100" value="0" id="slider" (change)="setAnim()" (slide)="setAnim()">
+    <input class="tooltip" type="range" min="0" max="{{maxTimeSteps()}}" value="{{mechanismTimeSteps}}"
+           id="slider" (mousemove)="setAnim()">
   </div>
   <div id="gridActionContainer">
     <button id="showCoM" class="tooltip" (click)="showCenterOfMass()">

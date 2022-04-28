@@ -32,6 +32,7 @@
                     [gridOffset]="gridComponent.gridOffset()"
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
 <app-animation-bar #animationBarComponent
+                   [mechanisms]="gridComponent.mechanisms"
                    [screenCoord]="gridComponent.screenCoord"
                    [mechanismTimeSteps]="gridComponent.mechanismTimeStep"
                    (animateGridEmitter)="gridComponent.animate($event)">
