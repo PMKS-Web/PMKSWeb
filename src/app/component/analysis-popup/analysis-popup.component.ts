@@ -9,6 +9,7 @@ import {ForceSolver} from "../../model/mechanism/force-solver";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {style} from "@angular/animations";
 import {Coord} from "../../model/coord";
+import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -33,41 +34,41 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
-  staticForcesCheck: boolean = false;
-  staticTorqueCheck: boolean = false;
-  dynamicForcesCheck: boolean = false;
-  dynamicTorqueCheck: boolean = false;
+  staticForcesCheck: boolean = true;
+  staticTorqueCheck: boolean = true;
+  dynamicForcesCheck: boolean = true;
+  dynamicTorqueCheck: boolean = true;
 
-  linKinJointCheck: boolean = false;
-  linKinJointPos: boolean = false;
-  linKinJointVel: boolean = false;
-  linKinJointAcc: boolean = false;
-  linKinLinkCheck: boolean = false;
-  dynamicAngLinkCheck: boolean = false;
+  linKinJointCheck: boolean = true;
+  linKinJointPos: boolean = true;
+  linKinJointVel: boolean = true;
+  linKinJointAcc: boolean = true;
+  linKinLinkCheck: boolean = true;
+  dynamicAngLinkCheck: boolean = true;
 
-  linKinLinkPos: boolean = false;
-  linKinLinkVel: boolean = false;
-  linKinLinkAcc: boolean = false;
-  angKinLinkPos: boolean = false;
-  angKinLinkVel: boolean = false;
-  angKinLinkAcc: boolean = false;
+  linKinLinkPos: boolean = true;
+  linKinLinkVel: boolean = true;
+  linKinLinkAcc: boolean = true;
+  angKinLinkPos: boolean = true;
+  angKinLinkVel: boolean = true;
+  angKinLinkAcc: boolean = true;
 
-  icPositionsCheck: boolean = false;
-  linKinJointICCheck: boolean = false;
-  linKinJointICPos: boolean = false;
-  linKinJointICVel: boolean = false;
-  linKinLinkICPos: boolean = false;
-  linKinLinkICVel: boolean = false;
-  angKinLinkICCheck: boolean = false;
-  angKinLinkCheck: boolean = false;
-  angKinLinkICPos: boolean = false;
-  angKinLinkICVel: boolean = false;
+  icPositionsCheck: boolean = true;
+  linKinJointICCheck: boolean = true;
+  linKinJointICPos: boolean = true;
+  linKinJointICVel: boolean = true;
+  linKinLinkICPos: boolean = true;
+  linKinLinkICVel: boolean = true;
+  angKinLinkICCheck: boolean = true;
+  angKinLinkCheck: boolean = true;
+  angKinLinkICPos: boolean = true;
+  angKinLinkICVel: boolean = true;
 
-  staticJointPositionsCheck: boolean = false;
-  staticForcePositionsCheck: boolean = false;
-  dynamicForcePositionsCheck: boolean = false;
-  dynamicJointKinematicsCheck: boolean = false;
-  dynamicLinkKinematicsCheck: boolean = false;
+  staticJointPositionsCheck: boolean = true;
+  staticForcePositionsCheck: boolean = true;
+  dynamicForcePositionsCheck: boolean = true;
+  dynamicJointKinematicsCheck: boolean = true;
+  dynamicLinkKinematicsCheck: boolean = true;
 
   // dynamicJointPositionsCheck: boolean;
   // dynamicLinkPositionsCheck: boolean;
@@ -76,20 +77,20 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   // dynamicJointAccelerationCheck: boolean;
   // dynamicLinkAccelerationCheck: boolean;
 
-  dynamicLinKinJointPos: boolean = false;
-  dynamicLinKinJointVel: boolean = false;
-  dynamicLinKinJointAcc: boolean = false;
+  dynamicLinKinJointPos: boolean = true;
+  dynamicLinKinJointVel: boolean = true;
+  dynamicLinKinJointAcc: boolean = true;
 
-  dynamicLinKinLinkPos: boolean = false;
-  dynamicLinKinLinkVel: boolean = false;
-  dynamicLinKinLinkAcc: boolean = false;
+  dynamicLinKinLinkPos: boolean = true;
+  dynamicLinKinLinkVel: boolean = true;
+  dynamicLinKinLinkAcc: boolean = true;
 
-  dynamicAngKinLinkPos: boolean = false;
-  dynamicAngKinLinkVel: boolean = false;
-  dynamicAngKinLinkAcc: boolean = false;
+  dynamicAngKinLinkPos: boolean = true;
+  dynamicAngKinLinkVel: boolean = true;
+  dynamicAngKinLinkAcc: boolean = true;
 
-  allLoopCheck: boolean = false;
-  requiredLoopCheck: boolean = false;
+  allLoopCheck: boolean = true;
+  requiredLoopCheck: boolean = true;
 
   analysis: Array<Array<string>> = [];
   titleRow: Array<string> = [];
@@ -170,6 +171,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
             ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
             break;
           case 'kinematic':
+            KinematicsSolver.resetVariables();
+            KinematicsSolver.requiredLoops = this.mechanisms[0].requiredLoops;
+            KinematicsSolver.determineKinematics(this.joints, this.links, 10);
             break;
           case 'stress':
             break;
@@ -677,6 +681,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       case 'kinematics_loops':
         // check whether linear kinematics for joints have been asked for
+        KinematicsSolver.resetVariables();
+        KinematicsSolver.requiredLoops = this.mechanisms[0].requiredLoops;
+        KinematicsSolver.determineKinematics(this.joints, this.links, 10);
+        this.titleRow = this.mechanisms[0].kinematicLoopTitleRow();
+        this.analysis = this.mechanisms[0].kinematicLoopAnalysis();
         while (increment < (1 + (this.joints.length * 6))) {
           if (this.linKinJointCheck) {
             switch (increment % 6) {
