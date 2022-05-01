@@ -272,62 +272,61 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.gridStates = gridStates.waiting;
     GridComponent.jointStates = jointStates.waiting;
     GridComponent.linkStates = linkStates.waiting;
-    GridComponent.forceStates = forceStates.waiting;
+    if (GridComponent.forceStates !== forceStates.waiting) {
+      GridComponent.forceStates = forceStates.waiting;
+      this.updateMechanism();
+    }
     this.showPathHolder = false;
   }
 
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
-    const rawCoords = GridComponent.getMousePosition($event);
-    if (rawCoords === undefined) {
-      return
-    }
-    const trueCoords = GridComponent.screenToGrid(rawCoords.x, rawCoords.y);
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
               case gridStates.waiting:
-                const mPos = GridComponent.getMousePosition($event);
-                if (mPos === undefined) {
-                  return
-                }
+                const mPos = GridComponent.getMousePosition($event)!;
                 GridComponent.panOffset.x = mPos.x;
                 GridComponent.panOffset.y = mPos.y;
                 GridComponent.gridStates = gridStates.dragging;
                 break;
               case gridStates.creating:
-                if (GridComponent.jointStates === jointStates.creating) {
-                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
-                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  const joint2ID = this.determineNextLetter();
-                  const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new RealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
-                  GridComponent.selectedJoint.links.push(link);
+                if (GridComponent.jointStates === jointStates.creating) { // attach link onto joint
+                  const joint2 = this.createRevJoint(
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  );
                   GridComponent.selectedJoint.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(GridComponent.selectedJoint);
+
+                  const link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
+                    [GridComponent.selectedJoint, joint2]);
+                  GridComponent.selectedJoint.links.push(link);
                   joint2.links.push(link);
-                  this.joints.push(joint2);
-                  this.links.push(link);
+                  this.mergeToJoints([joint2]);
+                  this.mergeToLinks([link]);
                   this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
-                } else if (GridComponent.linkStates === linkStates.creating) {
+                } else if (GridComponent.linkStates === linkStates.creating) { // attach link onto link
                   // TODO: set context Link as a part of joint 1 or joint 2
-                  const x1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
-                  const y1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
-                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
-                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  const joint1ID = this.determineNextLetter();
-                  const joint2ID = this.determineNextLetter([joint1ID]);
-                  const joint1 = new RevJoint(joint1ID, x1, y1);
-                  const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new RealLink(joint1ID + joint2ID, [joint1, joint2]);
+                  const joint1 = this.createRevJoint(
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  );
+                  const joint2 = this.createRevJoint(
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                    joint1.id
+                  );
+                  // Have within constructor other joints so when you add joint, that joint's connected joints also attach
                   joint1.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(joint1);
+                  const link = new RealLink(joint1.id + joint2.id, [joint1, joint2]);
                   joint1.links.push(link);
                   joint2.links.push(link);
                   // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
@@ -337,17 +336,17 @@ export class GridComponent implements OnInit, AfterViewInit {
                     joint1.connectedJoints.push(j);
                   });
                   joint1.links.push(GridComponent.selectedLink);
-                  GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
                   GridComponent.selectedLink.joints.push(joint1);
-                  this.joints.push(joint1);
-                  this.joints.push(joint2);
-                  this.links.push(link);
+                  // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
+                  GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
+                  this.mergeToJoints([joint1, joint2]);
+                  this.mergeToLinks([link]);
 
                   this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
-                } else if (GridComponent.forceStates === forceStates.creating) {
+                } else if (GridComponent.forceStates === forceStates.creating) { // add force onto link
                   let startCoord = new Coord(0, 0);
                   let screenX: number;
                   let screenY: number;
@@ -373,23 +372,24 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
                   GridComponent.forceTempHolderSVG.style.display = 'none';
-                } else {
-                  const x1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')), 3);
-                  const y1 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')), 3);
-                  const x2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')), 3);
-                  const y2 = roundNumber(Number(GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')), 3);
-                  const joint1ID = this.determineNextLetter();
-                  const joint2ID = this.determineNextLetter([joint1ID]);
-                  const joint1 = new RevJoint(joint1ID, x1, y1);
-                  const joint2 = new RevJoint(joint2ID, x2, y2);
-                  const link = new RealLink(joint1ID + joint2ID, [joint1, joint2]);
+                } else { // attach link onto grid
+                  const joint1 = this.createRevJoint(
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  );
+                  const joint2 = this.createRevJoint(
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                    joint1.id
+                  );
                   joint1.connectedJoints.push(joint2);
                   joint2.connectedJoints.push(joint1);
+
+                  const link = this.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
                   joint1.links.push(link);
                   joint2.links.push(link);
-                  this.joints.push(joint1);
-                  this.joints.push(joint2);
-                  this.links.push(link);
+                  this.mergeToJoints([joint1, joint2]);
+                  this.mergeToLinks([link]);
                   this.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
@@ -411,16 +411,15 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'joint':
             switch (GridComponent.jointStates) {
               case jointStates.waiting:
-                GridComponent.gridStates = gridStates.dragging;
                 GridComponent.jointStates = jointStates.dragging;
-                GridComponent.selectedJoint = thing as RealJoint;
+                GridComponent.selectedJoint = thing;
                 break;
             }
             break;
           case 'link':
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
-                GridComponent.linkStates = linkStates.dragging
+                GridComponent.linkStates = linkStates.dragging;
                 break;
             }
             break;
@@ -430,10 +429,9 @@ export class GridComponent implements OnInit, AfterViewInit {
                 if (forcePoint === undefined) {
                   return
                 }
-                GridComponent.gridStates = gridStates.dragging;
                 GridComponent.forceStates = forceStates.dragging;
                 GridComponent.selectedForceEndPoint = forcePoint;
-                GridComponent.selectedForce = thing as Force;
+                GridComponent.selectedForce = thing;
             }
             break;
         }
@@ -445,101 +443,109 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // TODO: Be sure to adjust the position of the ImagJoint when dragging a joint that is a prismatic joint
+  createRevJoint(x: string, y: string, prevID?: string) {
+    const x_num = roundNumber(Number(x), 3);
+    const y_num = roundNumber(Number(y), 3);
+    let id: string;
+    if (prevID === undefined) {
+      id = this.determineNextLetter();
+    } else {
+      id = this.determineNextLetter([prevID]);
+    }
+    return new RevJoint(id, x_num, y_num);
+  }
+
+  createRealLink(id: string, joints: Joint[]) {
+    return new RealLink(id, joints);
+  }
+
+  mergeToJoints(joints: Joint[]) {
+    joints.forEach(j => {
+      this.joints.push(j);
+    });
+  }
+
+  mergeToLinks(links: Link[]) {
+    links.forEach(l => {
+      this.links.push(l);
+    });
+  }
+
+  mergeToForces() {
+
+  }
+
   mouseMove($event: MouseEvent, typeChosen: string) {
     $event.preventDefault();
     $event.stopPropagation();
-    const rawCoord = GridComponent.getMousePosition($event);
-    if (rawCoord === undefined) {
-      return
-    }
+    const rawCoord = GridComponent.getMousePosition($event)!;
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
     this.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
 
-    switch (typeChosen) {
-      case 'grid':
-        switch (GridComponent.gridStates) {
-          case gridStates.dragging:
-            // These conditions are thrown when dragging an object but mouse is on top of the grid
-            // TODO: Rather than to have these if, else if, else if, else,
-            // TODO: Have the gridStates also include dragGrid, dragJoint, dragLink, and dragForce
-            if (GridComponent.jointStates === jointStates.dragging) {
-              GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
-              this.updateMechanism();
-              if (this.mechanisms[0].joints[0].length !== 0) {
-                this.showPathHolder = this.mechanisms[0].dof === 1;
-              }
-            } else if (GridComponent.linkStates === linkStates.dragging) { // user is dragging a link
-              // TODO: Add logic when dragging a link within edit shape mode
-              this.updateMechanism();
-            } else if (GridComponent.forceStates === forceStates.dragging) { // user is dragging a force
-              // TODO: Add logic to drag force properly within the grid
-              GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
-              this.updateMechanism();
-            } else { // user is dragging the grid
-              const offsetX = GridComponent.panOffset.x - rawCoord.x;
-              const offsetY = GridComponent.panOffset.y - rawCoord.y;
-              GridComponent.panOffset.x = rawCoord.x;
-              GridComponent.panOffset.y = rawCoord.y;
-              const box = GridComponent.canvasSVGElement.getBoundingClientRect();
-              const width = box.width;
-              const height = box.height;
-              let correctedPan = false;
-              // Cause panning outside the defined area to pan the user back in.
-              if (GridComponent.screenToGrid(offsetX, 0).x < -100) {
-                GridComponent.panSVG(Math.abs(offsetX), 0);
-                correctedPan = true;
-              }
-              if (GridComponent.screenToGrid(width + offsetX, 0).x > 100) {
-                GridComponent.panSVG(-Math.abs(offsetX), 0);
-                correctedPan = true;
-              }
-              if (GridComponent.screenToGrid(0, offsetY).y < -100) {
-                GridComponent.panSVG(0, Math.abs(offsetY));
-                correctedPan = true;
-              }
-              if (GridComponent.screenToGrid(0, height + offsetY).y > 100) {
-                GridComponent.panSVG(0, -Math.abs(offsetY));
-                correctedPan = true;
-              }
-              if (!correctedPan) {
-                GridComponent.panSVG(offsetX, offsetY);
-              }
-            }
-            break;
-          case gridStates.creating:
-            if (GridComponent.forceStates === forceStates.creating) {
-              this.createForce($event);
-            } else { // for jointStates.creating, linkStates.creating (When add link from grid, joint, or another link)
-              GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
-              GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
-            }
+    switch (GridComponent.gridStates) {
+      case gridStates.dragging:
+        const offsetX = GridComponent.panOffset.x - rawCoord.x;
+        const offsetY = GridComponent.panOffset.y - rawCoord.y;
+        GridComponent.panOffset.x = rawCoord.x;
+        GridComponent.panOffset.y = rawCoord.y;
+        const box = GridComponent.canvasSVGElement.getBoundingClientRect();
+        const width = box.width;
+        const height = box.height;
+        let correctedPan = false;
+        // Cause panning outside the defined area to pan the user back in.
+        if (GridComponent.screenToGrid(offsetX, 0).x < -100) {
+          GridComponent.panSVG(Math.abs(offsetX), 0);
+          correctedPan = true;
+        }
+        if (GridComponent.screenToGrid(width + offsetX, 0).x > 100) {
+          GridComponent.panSVG(-Math.abs(offsetX), 0);
+          correctedPan = true;
+        }
+        if (GridComponent.screenToGrid(0, offsetY).y < -100) {
+          GridComponent.panSVG(0, Math.abs(offsetY));
+          correctedPan = true;
+        }
+        if (GridComponent.screenToGrid(0, height + offsetY).y > 100) {
+          GridComponent.panSVG(0, -Math.abs(offsetY));
+          correctedPan = true;
+        }
+        if (!correctedPan) {
+          GridComponent.panSVG(offsetX, offsetY);
         }
         break;
-      case 'joint':
-        switch (GridComponent.jointStates) {
-          case jointStates.dragging:
-            GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
-            this.updateMechanism();
-            if (this.mechanisms[0].joints[0].length !== 0) {
-              this.showPathHolder = this.mechanisms[0].dof === 1;
-            }
-            break;
-          case jointStates.waiting:
-            break;
+      case gridStates.creating:
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
+    }
+    switch (GridComponent.jointStates) {
+      case jointStates.creating:
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
+        break;
+      case jointStates.dragging:
+        GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
+        this.updateMechanism();
+        if (this.mechanisms[0].joints[0].length !== 0) {
+          this.showPathHolder = this.mechanisms[0].dof === 1;
         }
         break;
-      case 'link':
-        // TODO: Have to take into consideration when clicking on a joint and having dragged the joint on top of the link
-        // TODO: Same logic except when dragging a force on top of a link
+    }
+    switch (GridComponent.linkStates) {
+      case linkStates.creating:
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
+        GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
         break;
-      case 'force':
-        switch (GridComponent.forceStates) {
-          case forceStates.dragging:
-            GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
-            this.updateMechanism();
-            break;
-        }
+      case linkStates.dragging:
+        // TODO: Add logic when dragging a link within edit shape mode
+        this.updateMechanism();
+        break;
+    }
+    switch (GridComponent.forceStates) {
+      case forceStates.creating:
+        this.createForce($event);
+        break;
+      case forceStates.dragging:
+        GridComponent.selectedForce = GridComponent.dragForce(GridComponent.selectedForce, trueCoord);
         break;
     }
   }
@@ -833,6 +839,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   addJoint() {
     this.disappearContext();
+    // const newJoint = this.createRevJoint()
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
@@ -1098,6 +1105,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case RevJoint:
         selectedJoint.links.forEach(l => {
           if (!(l instanceof RealLink)) { return }
+          if (l.shape !== Shape.line) { return }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
