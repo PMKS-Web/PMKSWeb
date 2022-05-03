@@ -75,7 +75,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
   private static transformMatrixGridSVGElement: SVGElement;
-  private static transformMatrixSVG: HTMLElement;
+  private static transformMatrixSVG: SVGElement;
   private static pathsHolderSVG: SVGElement;
   private static pathsPathPointHolderSVG: SVGElement;
   private static jointTempHolderSVG: SVGElement;
@@ -136,7 +136,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    GridComponent.transformMatrixSVG = <HTMLElement> document.getElementById('transformMatrix');
+    GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
     GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
     GridComponent.pathsHolderSVG = document.getElementById('pathsHolder') as unknown as SVGElement;
     GridComponent.pathsPathPointHolderSVG = document.getElementById('pathsPathPointHolder') as unknown as SVGElement;
@@ -1398,6 +1398,26 @@ export class GridComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.animate([this.mechanismTimeStep]);
     }, 10 / 3);
+  }
+
+  adjustView(setting: string) {
+    let halfWidth: number;
+    let halfHeight: number;
+    switch (setting) {
+      case 'in':
+        halfWidth = GridComponent.canvasSVGElement.clientWidth / 2;
+        halfHeight = GridComponent.canvasSVGElement.clientHeight / 2;
+        GridComponent.zoomPoint(21/20, halfWidth, halfHeight);
+        break;
+      case 'out':
+        halfWidth = GridComponent.canvasSVGElement.clientWidth / 2;
+        halfHeight = GridComponent.canvasSVGElement.clientHeight / 2;
+        GridComponent.zoomPoint(20/21, halfWidth, halfHeight);
+        break;
+      case 'reset':
+        GridComponent.reset();
+        break;
+    }
   }
 
   gridOffset() {

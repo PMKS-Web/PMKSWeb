@@ -13,6 +13,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   @Input() dof: string = '';
   @Input() mechanismTimeSteps: number = 0;
   @Output() animateGridEmitter = new EventEmitter<[number, boolean]>();
+  @Output() adjustViewEmit = new EventEmitter<string>();
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
   direction: string = 'ccw';
@@ -91,14 +92,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onZoomInPressed() {
-
+    this.adjustViewEmit.emit('in');
   }
 
   onZoomOutPressed() {
+    this.adjustViewEmit.emit('out');
 
   }
 
   onZoomResetPressed() {
+    this.adjustViewEmit.emit('reset');
 
   }
 

@@ -35,7 +35,8 @@
                    [mechanisms]="gridComponent.mechanisms"
                    [screenCoord]="gridComponent.screenCoord"
                    [mechanismTimeSteps]="gridComponent.mechanismTimeStep"
-                   (animateGridEmitter)="gridComponent.animate($event)">
+                   (animateGridEmitter)="gridComponent.animate($event)"
+                    (adjustViewEmit)="gridComponent.adjustView($event)">
 </app-animation-bar>
 <app-shape-selector #shapeSelectorComponent
                     [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"
