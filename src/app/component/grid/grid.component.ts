@@ -110,7 +110,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static linkStates: linkStates = linkStates.waiting;
   private static forceStates: forceStates = forceStates.waiting;
   private static moveModes: moveModes;
-  static scaleFactor = 1;
+  static scaleFactor = 50;
 
   private static panOffset = {
     x: 0,
