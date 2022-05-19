@@ -245,3 +245,19 @@ export function getXDistance(r: number, theta: number) {
 export function getYDistance(r: number, theta: number) {
   return Math.sin(theta) * r;
 }
+
+export function determineSlope(x1: number, y1: number, x2: number, y2: number) {
+  return (y2 - y1) / (x2 - x1);
+}
+
+export function determineYIntersect(x: number, y: number, m: number) {
+  return y - (m * x);
+}
+
+export function determineX(m1: number, b1: number, m2: number, b2: number) {
+  return (b2 - b1) /  (m1 - m2);
+}
+
+export function determineY(x: number, m: number, b: number) {
+  return (m * x) + b;
+}

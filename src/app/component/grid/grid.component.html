@@ -156,19 +156,23 @@
       <g *ngIf="getSelectedLinkProp('shape') !== 'line'">
         <polygon [attr.points]="getSelectedLinkProp('points')" fill="none" stroke="purple" stroke-width="0.02"></polygon>
         <svg [attr.x]="getSelectedLinkProp('bound', 'b1', 'x')"
-             [attr.y]="getSelectedLinkProp('bound', 'b1', 'y')" style="overflow: visible">
+             [attr.y]="getSelectedLinkProp('bound', 'b1', 'y')" style="overflow: visible"
+        (mousedown)="mouseDown($event, 'link', 'b1')" (mousemove)="mouseMove($event, 'bound', 'b1')">
           <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
         </svg>
         <svg [attr.x]="getSelectedLinkProp('bound', 'b2', 'x')"
-             [attr.y]="getSelectedLinkProp('bound', 'b2', 'y')" style="overflow: visible">
+             [attr.y]="getSelectedLinkProp('bound', 'b2', 'y')" style="overflow: visible"
+             (mousedown)="mouseDown($event, 'link', 'b2')" (mousemove)="mouseMove($event, 'bound', 'b2')">
           <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
         </svg>
         <svg [attr.x]="getSelectedLinkProp('bound', 'b3', 'x')"
-             [attr.y]="getSelectedLinkProp('bound', 'b3', 'y')" style="overflow: visible">
+             [attr.y]="getSelectedLinkProp('bound', 'b3', 'y')" style="overflow: visible"
+             (mousedown)="mouseDown($event, 'link', 'b3')" (mousemove)="mouseMove($event, 'bound', 'b3')">
           <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
         </svg>
         <svg [attr.x]="getSelectedLinkProp('bound', 'b4', 'x')"
-             [attr.y]="getSelectedLinkProp('bound', 'b4', 'y')" style="overflow: visible">
+             [attr.y]="getSelectedLinkProp('bound', 'b4', 'y')" style="overflow: visible"
+             (mousedown)="mouseDown($event, 'link', 'b4')" (mousemove)="mouseMove($event, 'bound', 'b4')">
           <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
         </svg>
       </g>

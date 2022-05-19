@@ -2,11 +2,11 @@ import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
 import {Coord} from "../../model/coord";
 import {AppConstants} from "../../model/app-constants";
 import {Joint, RevJoint, PrisJoint, RealJoint} from "../../model/joint";
-import {Piston, Link, RealLink, Shape} from "../../model/link";
+import {Piston, Link, RealLink, Shape, Bound} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
-import {roundNumber} from "../../model/utils";
+import {determineSlope, determineX, determineY, determineYIntersect, roundNumber} from "../../model/utils";
 
 
 // The possible states the program could be in.
@@ -26,6 +26,7 @@ enum linkStates {
   waiting,
   dragging,
   creating,
+  resizing,
 }
 
 enum forceStates {
@@ -125,6 +126,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // remove this if this is possible
   private static selectedJoint: RealJoint;
   static selectedLink: RealLink;
+  static selectedBound: string;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
 
@@ -419,7 +421,12 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'link':
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
-                GridComponent.linkStates = linkStates.dragging;
+                if (thing !== undefined) {
+                  GridComponent.linkStates = linkStates.resizing;
+                  GridComponent.selectedBound = thing;
+                } else {
+                  GridComponent.linkStates = linkStates.dragging;
+                }
                 break;
             }
             break;
@@ -443,39 +450,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  createRevJoint(x: string, y: string, prevID?: string) {
-    const x_num = roundNumber(Number(x), 3);
-    const y_num = roundNumber(Number(y), 3);
-    let id: string;
-    if (prevID === undefined) {
-      id = this.determineNextLetter();
-    } else {
-      id = this.determineNextLetter([prevID]);
-    }
-    return new RevJoint(id, x_num, y_num);
-  }
-
-  createRealLink(id: string, joints: Joint[]) {
-    return new RealLink(id, joints);
-  }
-
-  mergeToJoints(joints: Joint[]) {
-    joints.forEach(j => {
-      this.joints.push(j);
-    });
-  }
-
-  mergeToLinks(links: Link[]) {
-    links.forEach(l => {
-      this.links.push(l);
-    });
-  }
-
-  mergeToForces() {
-
-  }
-
-  mouseMove($event: MouseEvent, typeChosen: string) {
+  mouseMove($event: MouseEvent, typeChosen: string, bound?: string) {
     $event.preventDefault();
     $event.stopPropagation();
     const rawCoord = GridComponent.getMousePosition($event)!;
@@ -539,6 +514,224 @@ export class GridComponent implements OnInit, AfterViewInit {
         // TODO: Add logic when dragging a link within edit shape mode
         this.updateMechanism();
         break;
+      case linkStates.resizing:
+        // Adjust the link's bounding boxes
+        // let b1n, b2n, b3n, b4n, arrow5n: {x: number, y: number};
+        let b1n, b2n, b3n, b4n, arrow5n: Coord = new Coord(0, 0)!;
+
+        let drag_coord_x, side_coord_x_1, side_coord_x_2: number;
+        let drag_coord_y, side_coord_y_1, side_coord_y_2: number;
+
+        let arrow5n_x, arrow5n_y: number;
+
+        let m1, closest_m, m2, m3, m4, m5: number;
+        let b1, closest_b, b2, b3, b4, b5: number;
+
+        const typeOfBoundToCoordMap = new Map<string, Coord>();
+        let fixedBound: string;
+
+        switch (GridComponent.selectedBound) {
+          case 'b1':
+            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b3);
+            fixedBound = 'b3';
+            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b1);
+            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b2);
+            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b4);
+            break;
+          case 'b2':
+            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b4);
+            fixedBound = 'b4';
+            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b2);
+            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b1);
+            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b3);
+            break;
+          case 'b3':
+            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b1);
+            fixedBound = 'b1';
+            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b3);
+            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b2);
+            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b4);
+            break;
+          case 'b4':
+            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b2);
+            fixedBound = 'b2';
+            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b4);
+            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b1);
+            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b3);
+            break;
+          default:
+            fixedBound = 'none'
+            // this is an arrow
+            // joint_tag_SVG.setAttribute('transform', 'rotate (180), scale(-1, 1)');
+            // if ()
+            // const prev_angle =
+            // arrow5n_x = (oldBounds.b1.x + oldBounds.b2.x + oldBounds.b3.x + oldBounds.b4.x) / 4;
+            // arrow5n_y = (oldBounds.b1.y + oldBounds.b2.y + oldBounds.b3.y + oldBounds.b4.y) / 4;
+            // arrow5n = { x: arrow5n_x, y: arrow5n_y};
+            // return { b1: oldBounds.b1, b2: oldBounds.b2, b3: oldBounds.b3, b4: oldBounds.b4, arrow: arrow5n };
+            const centerx = (GridComponent.selectedLink.bound.b1.x + GridComponent.selectedLink.bound.b2.x +
+              GridComponent.selectedLink.bound.b3.x + GridComponent.selectedLink.bound.b4.x) / 4;
+            const centery = (GridComponent.selectedLink.bound.b1.y + GridComponent.selectedLink.bound.b2.y +
+              GridComponent.selectedLink.bound.b3.y + GridComponent.selectedLink.bound.b4.y) / 4;
+
+            // const dox = oldBounds[eid].x - centerx;
+            // const doy = oldBounds[eid].y - centery;
+            const dox = GridComponent.selectedLink.bound.b1.x - centerx;
+            const doy = GridComponent.selectedLink.bound.b1.y - centery;
+            // const disto = Math.sqrt(dox * dox + doy * doy);
+            const orotation = Math.atan2(doy, dox);
+
+            // TODO: Figure out what is newBound
+            const dnx = trueCoord.x - centerx;
+            const dny = trueCoord.y - centery;
+            // const dnx = newBound.x - centerx;
+            // const dny = newBound.y - centery;
+            // const dnx = oldBounds['b1'].x - centerx;
+            // const dny = oldBounds['b1'].y - centery;
+            const distn = Math.sqrt(dox * dox + doy * doy);
+            const nrotation = Math.atan2(dny, dnx);
+
+            const drotation = nrotation - orotation;
+
+            const d1x = GridComponent.selectedLink.bound.b1.x - centerx;
+            const d1y = GridComponent.selectedLink.bound.b1.y - centery;
+            const rot1 = Math.atan2(d1y, d1x);
+            const xc1 = Math.cos(rot1 + drotation) * distn;
+            const yc1 = Math.sin(rot1 + drotation) * distn;
+            // b1n = { x: xc1, y: yc1};
+            b1n = new Coord(centerx + xc1, centery + yc1);
+
+            const d2x = GridComponent.selectedLink.bound.b2.x - centerx;
+            const d2y = GridComponent.selectedLink.bound.b2.y - centery;
+            const rot2 = Math.atan2(d2y, d2x);
+            const xc2 = Math.cos(rot2 + drotation) * distn;
+            const yc2 = Math.sin(rot2 + drotation) * distn;
+            // b2n = { x: xc2, y: yc2 };
+            b2n = new Coord(centerx + xc2, centery + yc2);
+
+            const d3x = GridComponent.selectedLink.bound.b3.x - centerx;
+            const d3y = GridComponent.selectedLink.bound.b3.y - centery;
+            const rot3 = Math.atan2(d3y, d3x);
+            const xc3 = Math.cos(rot3 + drotation) * distn;
+            const yc3 = Math.sin(rot3 + drotation) * distn;
+            // b3n = { x: xc3, y: yc3 };
+            b3n = new Coord(centerx + xc3, centery + yc3);
+
+            const d4x = GridComponent.selectedLink.bound.b4.x - centerx;
+            const d4y = GridComponent.selectedLink.bound.b4.y - centery;
+            const rot4 = Math.atan2(d4y, d4x);
+            const xc4 = Math.cos(rot4 + drotation) * distn;
+            const yc4 = Math.sin(rot4 + drotation) * distn;
+            // b4n = { x: xc4, y: yc4 };
+            b4n = new Coord(centerx + xc4, centery + yc4);
+
+            // arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
+            // arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
+            arrow5n = new Coord(centerx, centery);
+
+            // TODO: Determine new logic for this since there can't be return here...
+            arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
+            arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
+            arrow5n = new Coord(arrow5n_x, arrow5n_y);
+            GridComponent.selectedLink.bound.b1.x = b1n.x;
+            GridComponent.selectedLink.bound.b1.y = b1n.y;
+            GridComponent.selectedLink.bound.b2.x = b2n.x;
+            GridComponent.selectedLink.bound.b2.y = b2n.y;
+            GridComponent.selectedLink.bound.b3.x = b3n.x;
+            GridComponent.selectedLink.bound.b3.y = b3n.y;
+            GridComponent.selectedLink.bound.b4.x = b4n.x;
+            GridComponent.selectedLink.bound.b4.y = b4n.y;
+            GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
+            GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
+            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
+              GridComponent.selectedLink.shape);
+            GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
+            GridComponent.selectedLink.updateCoMDs();
+          // return { b1: b1n, b2: b2n, b3: b3n, b4: b4n, arrow: arrow5n };
+        }
+
+        // TOOD: Put this within function call to do all this logic
+        const fixedCoord = typeOfBoundToCoordMap.get('fixed')!;
+        const dragCoord = typeOfBoundToCoordMap.get('drag')!;
+        const sideCoord1 = typeOfBoundToCoordMap.get('sideCoord1')!;
+        const sideCoord2 = typeOfBoundToCoordMap.get('sideCoord2')!;
+
+        // determine line from b1 to b3
+
+        m1 = determineSlope(fixedCoord.x, fixedCoord.y, dragCoord.x, dragCoord.y);
+        b1 = determineYIntersect(fixedCoord.x, fixedCoord.y, m1);
+        // determine the point within this line that is closest to where the mouse is
+        closest_m = -1 * Math.pow(m1, -1);
+        closest_b = determineYIntersect(trueCoord.x, trueCoord.y, closest_m);
+        // closest_b = determineYIntersect(newBound.x, newBound.y, closest_m);
+        drag_coord_x = determineX(closest_m, closest_b, m1, b1);
+        drag_coord_y = determineY(drag_coord_x, closest_m, closest_b);
+        // determine the other 2 points
+        m2 = determineSlope(fixedCoord.x, fixedCoord.y, sideCoord1.x, sideCoord1.y);
+        b2 = determineYIntersect(fixedCoord.x, fixedCoord.y, m2);
+        m3 = determineSlope(dragCoord.x, dragCoord.y, sideCoord1.x, sideCoord1.y);
+        b3 = determineYIntersect(drag_coord_x, drag_coord_y, m3);
+        side_coord_x_1 = determineX(m2, b2, m3, b3);
+        side_coord_y_1 = determineY(side_coord_x_1, m2, b2);
+
+        m4 = determineSlope(fixedCoord.x, fixedCoord.y, sideCoord2.x, sideCoord2.y);
+        b4 = determineYIntersect(fixedCoord.x, fixedCoord.y, m4);
+        m5 = determineSlope(dragCoord.x, dragCoord.y, sideCoord2.x, sideCoord2.y);
+        b5 = determineYIntersect(drag_coord_x, drag_coord_y, m5);
+        side_coord_x_2 = determineX(m4, b4, m5, b5);
+        side_coord_y_2 = determineY(side_coord_x_2, m4, b4);
+
+        switch (fixedBound) {
+          case 'b1':
+            b1n = new Coord(fixedCoord.x, fixedCoord.y);
+            b2n = new Coord(side_coord_x_1, side_coord_y_1);
+            b3n = new Coord(drag_coord_x, drag_coord_y);
+            b4n = new Coord(side_coord_x_2, side_coord_y_2);
+            break;
+          case 'b2':
+            b1n = new Coord(side_coord_x_1, side_coord_y_1);
+            b2n = new Coord(fixedCoord.x, fixedCoord.y);
+            b3n = new Coord(side_coord_x_2, side_coord_y_2);
+            b4n = new Coord(drag_coord_x, drag_coord_y);
+            break;
+          case 'b3':
+            b1n = new Coord(drag_coord_x, drag_coord_y);
+            b2n = new Coord(side_coord_x_1, side_coord_y_1);
+            b3n = new Coord(fixedCoord.x, fixedCoord.y);
+            b4n = new Coord(side_coord_x_2, side_coord_y_2);
+            break;
+          case 'b4':
+            b1n = new Coord(side_coord_x_1, side_coord_y_1);
+            b2n = new Coord(drag_coord_x, drag_coord_y);
+            b3n = new Coord(side_coord_x_2, side_coord_y_2);
+            b4n = new Coord(fixedCoord.x, fixedCoord.y);
+            break;
+          default:
+            // TODO: Adjust logic when you determine arrow position
+            b1n = new Coord(side_coord_x_1, side_coord_y_1);
+            b2n = new Coord(drag_coord_x, drag_coord_y);
+            b3n = new Coord(side_coord_x_2, side_coord_y_2);
+            b4n = new Coord(fixedCoord.x, fixedCoord.y);
+            break;
+        }
+        arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
+        arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
+        arrow5n = new Coord(arrow5n_x, arrow5n_y);
+        GridComponent.selectedLink.bound.b1.x = b1n.x;
+        GridComponent.selectedLink.bound.b1.y = b1n.y;
+        GridComponent.selectedLink.bound.b2.x = b2n.x;
+        GridComponent.selectedLink.bound.b2.y = b2n.y;
+        GridComponent.selectedLink.bound.b3.x = b3n.x;
+        GridComponent.selectedLink.bound.b3.y = b3n.y;
+        GridComponent.selectedLink.bound.b4.x = b4n.x;
+        GridComponent.selectedLink.bound.b4.y = b4n.y;
+        GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
+        GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
+          GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
+        GridComponent.selectedLink.updateCoMDs();
+        break;
     }
     switch (GridComponent.forceStates) {
       case forceStates.creating:
@@ -549,6 +742,40 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
     }
   }
+
+  createRevJoint(x: string, y: string, prevID?: string) {
+    const x_num = roundNumber(Number(x), 3);
+    const y_num = roundNumber(Number(y), 3);
+    let id: string;
+    if (prevID === undefined) {
+      id = this.determineNextLetter();
+    } else {
+      id = this.determineNextLetter([prevID]);
+    }
+    return new RevJoint(id, x_num, y_num);
+  }
+
+  createRealLink(id: string, joints: Joint[]) {
+    return new RealLink(id, joints);
+  }
+
+  mergeToJoints(joints: Joint[]) {
+    joints.forEach(j => {
+      this.joints.push(j);
+    });
+  }
+
+  mergeToLinks(links: Link[]) {
+    links.forEach(l => {
+      this.links.push(l);
+    });
+  }
+
+  mergeToForces() {
+
+  }
+
+
 
   RectMouseOver($event: MouseEvent, menuType: string) {
     switch (menuType) {
@@ -1462,7 +1689,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             if (xOrY === 'x') {
               return GridComponent.selectedLink.bound.b1.x;
             } else {
-             return GridComponent.selectedLink.bound.b1.y;
+              return GridComponent.selectedLink.bound.b1.y;
             }
           case 'b2':
             if (xOrY === 'x') {
