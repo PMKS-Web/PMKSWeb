@@ -211,7 +211,48 @@ export class RealLink extends Link {
     bound.b3 = firstAdjustment(coord1, bound.b3, coordAng);
     bound.b4 = firstAdjustment(coord1, bound.b4, coordAng);
     // apply offset
-    // TODO: Be sure to apply offset...
+    let leftRightPad: number;
+    let topBotPad: number;
+    // TODO: Maybe put jointRadius within AppConstants? (Unless it has to be part of grid)
+    const jointRadius = 5;
+    function offset(offsetX: number, offsetY: number, coord: Coord) {
+      coord = new Coord(coord.x + offsetX, coord.y + offsetY);
+      return coord;
+    }
+    switch (shape) {
+      case Shape.eTriangle:
+        leftRightPad = 5 * 2 / Math.tan(Math.PI / 6);
+        topBotPad = leftRightPad / 2 * Math.sqrt(3);
+        bound.b1 = offset(-leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor, bound.b1);
+        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor, bound.b2);
+        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor,
+          (5 * 2 - topBotPad * 2)  * AppConstants.scaleFactor, bound.b3);
+        bound.b4 = offset(-leftRightPad * AppConstants.scaleFactor,
+          (5 * 2 - topBotPad * 2)  * AppConstants.scaleFactor, bound.b4);
+        break;
+      case Shape.rTriangle:
+        leftRightPad = 5 * 2 / Math.tan(Math.PI / 8);
+        bound.b1 = offset(-5 * 2 * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor, bound.b1);
+        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor, bound.b2);
+        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor,
+          -leftRightPad  * AppConstants.scaleFactor, bound.b3);
+        bound.b4 = offset(-5 * 2 * AppConstants.scaleFactor,
+          -leftRightPad * AppConstants.scaleFactor, bound.b4);
+        break;
+      case Shape.circle:
+        const dx = bound.b2.x - bound.b1.x;
+        const dy = bound.b2.y - bound.b1.y;
+        const r = Math.sqrt(dx * dx + dy * dy) / AppConstants.scaleFactor;
+        bound.b1 = offset(-r * AppConstants.scaleFactor, r * AppConstants.scaleFactor, bound.b1);
+        bound.b2 = offset(0, r * AppConstants.scaleFactor, bound.b2);
+        bound.b3 = offset(0, 0, bound.b3);
+        bound.b4 = offset(-r * AppConstants.scaleFactor, 0, bound.b4);
+        break;
+    }
     // apply padding
     function padding(pad: number, bound: Bound) {
       bound.b1.x -= pad;
@@ -375,7 +416,15 @@ export class RealLink extends Link {
     }
     // TODO: Have logic for determining a lot of this stored somewhere to be used for determining mass and mass moment of inertia
     // TODO: Change the logic for r when you get to this point
-    const r = 5 * 2 * AppConstants.scaleFactor;
+    let r: number;
+    if (shape === Shape.circle) {
+      const xdiff = points[1].x - points[0].x;
+      const ydiff = points[1].y - points[0].y;
+      r = Math.sqrt(Math.pow(xdiff, 2) + Math.pow(ydiff, 2)) / 2;
+
+    } else {
+      r = 5 * 2 * AppConstants.scaleFactor;
+    }
     let pathString = '';
 
     // array of angles of next point relative to current point
