@@ -1451,4 +1451,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     return string;
   }
+
+  getSelectedLinkShape() {
+    return GridComponent.selectedLink.shape;
+  }
+
+  getSelectedLinkPoints() {
+    const b = GridComponent.selectedLink.bound;
+    return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
+      + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
+      + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
+      + b.b4.x.toString() + ',' + b.b4.y.toString();
+  }
 }

@@ -150,6 +150,7 @@ export class ForceSolver {
     }
 
     this.desiredLoopLetters.forEach(letters => {
+      // TODO: Determine where to insert logic for jointIdToJointIndexMap and loopLettersToLinkIndexMap
       const joint1 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(0))!];
       const joint2 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(1))!];
       const link = simLinks[this.loopLettersToLinkIndexMap.get(letters[0].charAt(0) + letters[0].charAt(1))!];

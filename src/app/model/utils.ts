@@ -1,3 +1,6 @@
+import {Joint} from "./joint";
+import {Coord} from "./coord";
+
 export class Utils {
 }
 
@@ -221,4 +224,24 @@ export function matLinearSystem(A: Array<Array<number>>, B: Array<Array<number>>
 
 export function crossProduct(A: Array<number>, B: Array<number>) {
   return [(A[1] * B[2] - A[2] * B[1]), -1 * (A[0] * B[2] - A[2] * B[0]), (A[0] * B[1] - A[1] * B[0])];
+}
+
+export function getAngle(j1: Coord, j2: Coord) {
+  const dx = j2.x - j1.x;
+  const dy = j2.y - j1.y;
+  return Math.atan2(dy, dx);
+}
+
+export function getDistance(j1: Coord, j2: Coord) {
+  const dx = j2.x - j1.x;
+  const dy = j2.y - j1.y;
+  return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+}
+
+export function getXDistance(r: number, theta: number) {
+  return Math.cos(theta) * r;
+}
+
+export function getYDistance(r: number, theta: number) {
+  return Math.sin(theta) * r;
 }

@@ -2,6 +2,7 @@ import {Joint} from "./joint";
 import {Coord} from "./coord";
 import {AppConstants} from "./app-constants";
 import {Force} from "./force";
+import {getAngle, getDistance, getXDistance, getYDistance} from "./utils";
 
 export enum Shape {
   line = 'line',
@@ -93,108 +94,68 @@ export class RealLink extends Link {
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
-    // let bound: Bound;
+    const origin = new Coord(0, 0);
+    let bound: Bound = new class implements Bound {
+      arrow: Coord = origin;
+      b1: Coord = new Coord(coord1.x, coord1.y);
+      b2: Coord = new Coord(coord2.x, coord2.y);
+      b3: Coord = new Coord(coord2.x, coord2.y);
+      b4: Coord = new Coord(coord1.x, coord1.y);
+    };
+
+    const coordDist = getDistance(coord1, coord2);
+    const coordAng = getAngle(coord1, coord2);
+
+    if (shape === Shape.line) {
+      const xChange = Math.cos(coordAng) * coordDist;
+      bound.b1.x += xChange;
+      bound.b3.x -= xChange;
+      return bound;
+    }
+
+    // Adjust p3 and p4 for certain conditions
+    function determineRectPoint(ratio: number, p3: Coord, p4: Coord): [p3: Coord, p4: Coord] {
+      const distBound = ratio * coordDist; // Math.cos(Math.PI / 6) * dist;
+      const xChangeBound = Math.sin(coordAng) * distBound;
+      const yChangeBound = Math.cos(coordAng) * distBound;
+
+      p3.x += xChangeBound;
+      p3.y -= yChangeBound;
+      p4.x += xChangeBound;
+      p4.y -= yChangeBound;
+      return [p3, p4];
+    }
     switch (shape) {
-      case Shape.line: {
-        const x1 = coord1.x;
-        const y1 = coord1.y;
-        const x2 = coord2.x;
-        const y2 = coord2.y;
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const rotation = Math.atan2(dy, dx);
-
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const xChange = Math.cos(rotation) * dist;
-
-        return {
-          b1: new Coord(x1 + xChange, y1),
-          b2: new Coord(x1, y1),
-          b3: new Coord(x2 - xChange, y2),
-          b4: new Coord(x2, y2),
-          arrow: new Coord(0, 0)
-        };
-      }
-      case Shape.bar: {
-        return this.getRectBoundsByRatio(coord1, coord2, 0);
-        // bound = this.applyPadding(coord1, coord2, bound,
-        //   {
-        //     padding: SVGSettings.jointRadius * 2
-        //   }
-        // );
-      }
       case Shape.eTriangle: {
-        const angle = Math.PI / 6;
-        return this.getRectBoundsByRatio(coord1, coord2, Math.cos(angle));
-        // const leftRightPad = SVGSettings.jointRadius * 2 / Math.tan(angle);
-        // const topBotPad = leftRightPad / 2 * Math.sqrt(3);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
-        //   {
-        //     offset: {
-        //       b1: { x: -leftRightPad, y: SVGSettings.jointRadius * 2 },
-        //       b2: { x: leftRightPad, y: SVGSettings.jointRadius * 2 },
-        //       b3: { x: leftRightPad, y: SVGSettings.jointRadius * 2 - topBotPad * 2 },
-        //       b4: { x: -leftRightPad, y: SVGSettings.jointRadius * 2 - topBotPad * 2 }
-        //     }
-        //   }
-        // );
+        [bound.b3, bound.b4] = determineRectPoint(Math.cos(Math.PI / 6), bound.b3, bound.b4);
+        break;
       }
       case Shape.rTriangle: {
-        const angle = Math.PI / 8;
-        return this.getRectBoundsByRatio(coord1, coord2, 1);
-        // const leftRightPad = SVGSettings.jointRadius * 2 / Math.tan(angle);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
-        //   {
-        //     offset: {
-        //       b1: { x: -SVGSettings.jointRadius * 2, y: SVGSettings.jointRadius * 2 },
-        //       b2: { x: leftRightPad, y: SVGSettings.jointRadius * 2 },
-        //       b3: { x: leftRightPad, y: -leftRightPad },
-        //       b4: { x: -SVGSettings.jointRadius * 2, y: -leftRightPad }
-        //     }
-        //   }
-        // );
+        [bound.b3, bound.b4] = determineRectPoint(1, bound.b3, bound.b4);
+        break;
       }
       case Shape.rectangle: {
-        return this.getRectBoundsByRatio(coord1, coord2, 1 / 2);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        [bound.b3, bound.b4] = determineRectPoint(1/2, bound.b3, bound.b4);
         break;
       }
       case Shape.square: {
-        return this.getRectBoundsByRatio(coord1, coord2, 1);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        [bound.b3, bound.b4] = determineRectPoint(1, bound.b3, bound.b4);
         break;
       }
       case Shape.circle: {
-        return this.getRectBoundsByRatio(coord1, coord2, 1);
-        // const dx = bounds.b2.x - bounds.b1.x;
-        // const dy = bounds.b2.y - bounds.b1.y;
-        // const r = Math.sqrt(dx * dx + dy * dy) / AppConstants.scaleFactor;
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds,
-        //   {
-        //     offset: {
-        //       b1: { x: -r, y: r },
-        //       b2: { x: 0, y: r },
-        //       b3: { x: 0, y: 0 },
-        //       b4: { x: -r, y: 0 }
-        //     },
-        //     padding: SVGSettings.jointRadius * 2
-        //   }
-        // );
+        [bound.b3, bound.b4] = determineRectPoint(1, bound.b3, bound.b4);
         break;
       }
       case Shape.cShape: {
-        return this.getRectBoundsByRatio(coord1, coord2, 2 / 3);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        [bound.b3, bound.b4] = determineRectPoint(2/3, bound.b3, bound.b4);
         break;
       }
       case Shape.tShape: {
-        return this.getRectBoundsByRatio(coord1, coord2, 1);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        [bound.b3, bound.b4] = determineRectPoint(1, bound.b3, bound.b4);
         break;
       }
       case Shape.lShape: {
-        return this.getRectBoundsByRatio(coord1, coord2, 2 / 3);
-        // bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
+        [bound.b3, bound.b4] = determineRectPoint(2/3, bound.b3, bound.b4);
         break;
       }
       // case Shape.horizontalLine: {
@@ -237,27 +198,80 @@ export class RealLink extends Link {
       //   bounds = this.applyPadding(refCoord1, refCoord2, bounds, { padding: SVGSettings.jointRadius * 2 });
       //   break;
       // }
-      default: {
-        return {
-          b1: new Coord(0, 0),
-          b2: new Coord(0, 0),
-          b3: new Coord(0, 0),
-          b4: new Coord(0, 0),
-          arrow: new Coord(0, 0)
-        };
-      }
     }
+    // Adjust points
+    function firstAdjustment(c1: Coord, c2: Coord, angle: number) {
+      const dist = getDistance(c1, c2);
+      const ang1 = getAngle(c1, c2);
+      const angDiff = ang1 - angle;
+      return new Coord(Math.cos(angDiff) * dist, Math.sin(angDiff) * dist);
+    }
+    bound.b1 = firstAdjustment(coord1, bound.b1, coordAng);
+    bound.b2 = firstAdjustment(coord1, bound.b2, coordAng);
+    bound.b3 = firstAdjustment(coord1, bound.b3, coordAng);
+    bound.b4 = firstAdjustment(coord1, bound.b4, coordAng);
+    // apply offset
+    // TODO: Be sure to apply offset...
+    // apply padding
+    function padding(pad: number, bound: Bound) {
+      bound.b1.x -= pad;
+      bound.b1.y += pad;
+      bound.b2.x += pad;
+      bound.b2.y += pad;
+      bound.b3.x += pad;
+      bound.b3.y -= pad;
+      bound.b4.x -= pad;
+      bound.b4.y -= pad;
+      return bound;
+    }
+    switch (shape) {
+      case Shape.bar:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.rectangle:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.square:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.circle:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.cShape:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.tShape:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+      case Shape.lShape:
+        bound = padding(2 * 5 / 50, bound);
+        break;
+    }
+    // apply final adjustment
+    function finalAdjustment(c1: Coord, c2: Coord, angle: number) {
+      const d = Math.sqrt(Math.pow(c2.x, 2) + Math.pow(c2.y, 2));
+      // const d = getDistance(c1, c2);
+      const added_angle = angle + Math.atan2(c2.y, c2.x);
+      const rx = d * Math.cos(added_angle);
+      const ry = d * Math.sin(added_angle);
+      return new Coord(c1.x + rx, c1.y + ry);
+    }
+    bound.b1 = finalAdjustment(coord1, bound.b1, coordAng);
+    bound.b2 = finalAdjustment(coord1, bound.b2, coordAng);
+    bound.b3 = finalAdjustment(coord1, bound.b3, coordAng);
+    bound.b4 = finalAdjustment(coord1, bound.b4, coordAng);
+    return bound;
   }
 
   static getPointsFromBounds(bound: Bound, shape: Shape) {
     let points: Coord[];
     switch (shape) {
+      // fall through switch
       case Shape.line: {
         const x1 = bound.b4.x;
         const y1 = bound.b4.y;
         const x2 = bound.b2.x;
         const y2 = bound.b2.y;
-        // TODO: Change the 5 to be jointRadius for either link or grid
         const width = 5 * 2 * AppConstants.scaleFactor;
         // Find angle of rotation for link
         const dx = x2 - x1;
@@ -275,12 +289,10 @@ export class RealLink extends Link {
         const p4 = new Coord(x2 - xChange + yChange, y2 + yChange + xChange);
         points = [p1, p2, p3, p4];
         break;
-        // return [p1, p2, p3, p4];
       }
-      case Shape.bar: {
+      case Shape.bar:
         points = [bound.b1, bound.b2, bound.b3, bound.b4];
         break;
-      }
       case Shape.eTriangle: {
         const b1 = bound.b1;
         const b2 = bound.b2;
@@ -491,38 +503,10 @@ export class RealLink extends Link {
     let com_y = 0;
     // TODO: Logic isn't exactly right but can change this once other logic is fully finished
     joints.forEach(j => {
-        com_x += j.x;
-        com_y += j.y;
-      });
+      com_x += j.x;
+      com_y += j.y;
+    });
     return new Coord(com_x / joints.length, com_y / joints.length);
-  }
-
-  getRectBoundsByRatio(refCoord1: Coord, refCoord2: Coord, ratio: number) {
-    const x1 = refCoord1.x;
-    const y1 = refCoord1.y;
-    const x2 = refCoord2.x;
-    const y2 = refCoord2.y;
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const rotation = Math.atan2(dy, dx);
-
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const distBound = ratio * dist; // Math.cos(Math.PI / 6) * dist;
-    const xChangeBound = Math.sin(rotation) * distBound;
-    const yChangeBound = Math.cos(rotation) * distBound;
-
-    const xVal = (x1 + x2 + x1 + x2 + xChangeBound + xChangeBound) / 4;
-    const yVal = (y1 + y2 + y2 - yChangeBound + y1 - yChangeBound) / 4;
-
-    return {
-      b1: {x: x1, y: y1},
-      b2: {x: x2, y: y2},
-      b3: {x: x2 + xChangeBound, y: y2 - yChangeBound},
-      b4: {x: x1 + xChangeBound, y: y1 - yChangeBound},
-      arrow: {x: xVal, y: yVal}
-      // arrow: {x: 1, y: 1}
-      // arrow: {x: 0, y: 0}
-    };
   }
 
   get shape(): Shape {

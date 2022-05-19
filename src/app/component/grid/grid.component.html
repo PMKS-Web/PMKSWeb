@@ -50,7 +50,7 @@
          L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
           -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z" stroke="black"
               stroke-width="0.04" fill-opacity="0"></path>
-        <!-- condition for ground joint -->
+        <!-- condition for ground revolute joint -->
         <!-- TODO: Make all of this within one g container -->
         <circle *ngIf="getGround(joint) && typeOfJoint(joint) === 'R' && !getInput(joint)"
                 r="0.06667" cx="0%" cy="0%" fill="black" stroke="#00000000" stroke-width="0.2"></circle>
@@ -152,6 +152,11 @@
       <path stroke-width="0.04" stroke="black" d=""></path>
       <path fill="black" d=""></path>
     </g>
+<!--    <g id="linkBoundingBox" *ngIf="showcaseShapeSelector" style="transform: scaleY(-1)">-->
+<!--      <g *ngIf="getSelectedLinkShape() !== 'line'">-->
+<!--        <polygon [attr.points]="getSelectedLinkPoints()"></polygon>-->
+<!--      </g>-->
+<!--    </g>-->
   </g>
   <!-- TODO: Set all of the context menu within one g container-->
   <g class="context-menu-canvas" style="cursor: pointer">
