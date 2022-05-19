@@ -152,11 +152,27 @@
       <path stroke-width="0.04" stroke="black" d=""></path>
       <path fill="black" d=""></path>
     </g>
-<!--    <g id="linkBoundingBox" *ngIf="showcaseShapeSelector" style="transform: scaleY(-1)">-->
-<!--      <g *ngIf="getSelectedLinkShape() !== 'line'">-->
-<!--        <polygon [attr.points]="getSelectedLinkPoints()"></polygon>-->
-<!--      </g>-->
-<!--    </g>-->
+    <g id="linkBoundingBox" *ngIf="showcaseShapeSelector" style="transform: scaleY(-1)">
+      <g *ngIf="getSelectedLinkProp('shape') !== 'line'">
+        <polygon [attr.points]="getSelectedLinkProp('points')" fill="none" stroke="purple" stroke-width="0.02"></polygon>
+        <svg [attr.x]="getSelectedLinkProp('bound', 'b1', 'x')"
+             [attr.y]="getSelectedLinkProp('bound', 'b1', 'y')" style="overflow: visible">
+          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
+        </svg>
+        <svg [attr.x]="getSelectedLinkProp('bound', 'b2', 'x')"
+             [attr.y]="getSelectedLinkProp('bound', 'b2', 'y')" style="overflow: visible">
+          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
+        </svg>
+        <svg [attr.x]="getSelectedLinkProp('bound', 'b3', 'x')"
+             [attr.y]="getSelectedLinkProp('bound', 'b3', 'y')" style="overflow: visible">
+          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
+        </svg>
+        <svg [attr.x]="getSelectedLinkProp('bound', 'b4', 'x')"
+             [attr.y]="getSelectedLinkProp('bound', 'b4', 'y')" style="overflow: visible">
+          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02"></circle>
+        </svg>
+      </g>
+    </g>
   </g>
   <!-- TODO: Set all of the context menu within one g container-->
   <g class="context-menu-canvas" style="cursor: pointer">

@@ -1452,15 +1452,55 @@ export class GridComponent implements OnInit, AfterViewInit {
     return string;
   }
 
-  getSelectedLinkShape() {
-    return GridComponent.selectedLink.shape;
+  getSelectedLinkProp(prop: string, type?: string, xOrY?: string) {
+    switch (prop) {
+      case 'shape':
+        return GridComponent.selectedLink.shape;
+      case 'bound':
+        switch (type) {
+          case 'b1':
+            if (xOrY === 'x') {
+              return GridComponent.selectedLink.bound.b1.x;
+            } else {
+             return GridComponent.selectedLink.bound.b1.y;
+            }
+          case 'b2':
+            if (xOrY === 'x') {
+              return GridComponent.selectedLink.bound.b2.x;
+            } else {
+              return GridComponent.selectedLink.bound.b2.y;
+            }
+          case 'b3':
+            if (xOrY === 'x') {
+              return GridComponent.selectedLink.bound.b3.x;
+            } else {
+              return GridComponent.selectedLink.bound.b3.y;
+            }
+          case 'b4':
+            if (xOrY === 'x') {
+              return GridComponent.selectedLink.bound.b4.x;
+            } else {
+              return GridComponent.selectedLink.bound.b4.y;
+            }
+          default:
+            return;
+        }
+      case 'points':
+        const b = GridComponent.selectedLink.bound;
+        return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
+          + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
+          + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
+          + b.b4.x.toString() + ',' + b.b4.y.toString();
+      default:
+        return;
+    }
   }
 
-  getSelectedLinkPoints() {
-    const b = GridComponent.selectedLink.bound;
-    return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
-      + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
-      + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
-      + b.b4.x.toString() + ',' + b.b4.y.toString();
-  }
+  // getSelectedLinkPoints() {
+  //   const b = GridComponent.selectedLink.bound;
+  //   return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
+  //     + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
+  //     + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
+  //     + b.b4.x.toString() + ',' + b.b4.y.toString();
+  // }
 }
