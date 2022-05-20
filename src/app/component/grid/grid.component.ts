@@ -422,6 +422,7 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'link':
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
+                if (!this.showcaseShapeSelector) {break;}
                 if (thing !== undefined) {
                   GridComponent.linkStates = linkStates.resizing;
                   GridComponent.selectedBound = thing;
