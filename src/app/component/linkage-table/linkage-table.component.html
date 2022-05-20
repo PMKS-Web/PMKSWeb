@@ -6,13 +6,15 @@
     <button id="jointButton" (click)="setTab(0)"
             (mouseover)="mouseOver(0)"
             (mouseout)="mouseOut(0)"
-            style="color: black; background-color: gray"> Joints </button>
+            style="color: black; background-color: gray; font-family: Arial, sans-serif"> Joints </button>
     <button id="linkButton" (click)="setTab(1)"
             (mouseover)="mouseOver(1)"
-            (mouseout)="mouseOut(1)"> Links </button>
+            (mouseout)="mouseOut(1)"
+            style="font-family: Arial, sans-serif"> Links </button>
     <button id="forceButton" (click)="setTab(2)"
             (mouseover)="mouseOver(2)"
-            (mouseout)="mouseOut(2)"> Forces </button>
+            (mouseout)="mouseOut(2)"
+            style="font-family: Arial, sans-serif"> Forces </button>
   </div>
   <div class="tabPanel" *ngIf="selectedTab === 0">
     <table id="jointTable">

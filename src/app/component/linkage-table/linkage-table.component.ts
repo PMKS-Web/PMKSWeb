@@ -47,27 +47,27 @@ export class LinkageTableComponent implements OnInit {
     switch (tabNum) {
       case 0:
         LinkageTableComponent.jointButton.setAttribute('style',
-          'color: black; background-color: gray');
+          'color: black; background-color: gray; font-family: Arial, sans-serif');
         LinkageTableComponent.linkButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         LinkageTableComponent.forceButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         break;
       case 1:
         LinkageTableComponent.jointButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         LinkageTableComponent.linkButton.setAttribute('style',
-          'color: black; background-color: gray');
+          'color: black; background-color: gray; font-family: Arial, sans-serif');
         LinkageTableComponent.forceButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         break;
       case 2:
         LinkageTableComponent.jointButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         LinkageTableComponent.linkButton.setAttribute('style',
-          'color: gray; background-color: white');
+          'color: gray; background-color: white; font-family: Arial, sans-serif');
         LinkageTableComponent.forceButton.setAttribute('style',
-          'color: black; background-color: gray');
+          'color: black; background-color: gray; font-family: Arial, sans-serif');
         break;
     }
     // LinkageTableComponent.selectedTab = $event.index;
@@ -182,15 +182,15 @@ export class LinkageTableComponent implements OnInit {
     switch (number) {
       case 0:
         LinkageTableComponent.jointButton.setAttribute('style',
-          'background-color: lightgray');
+          'background-color: lightgray; font-family: Arial, sans-serif');
         break;
       case 1:
         LinkageTableComponent.linkButton.setAttribute('style',
-          'background-color: lightgray');
+          'background-color: lightgray; font-family: Arial, sans-serif');
         break;
       case 2:
         LinkageTableComponent.forceButton.setAttribute('style',
-          'background-color: lightgray');
+          'background-color: lightgray; font-family: Arial, sans-serif');
         break;
     }
   }
@@ -201,15 +201,15 @@ export class LinkageTableComponent implements OnInit {
     switch (number) {
       case 0:
         LinkageTableComponent.jointButton.setAttribute('style',
-          'background-color: white');
+          'background-color: white; font-family: Arial, sans-serif');
         break;
       case 1:
         LinkageTableComponent.linkButton.setAttribute('style',
-          'background-color: white');
+          'background-color: white; font-family: Arial, sans-serif');
         break;
       case 2:
         LinkageTableComponent.forceButton.setAttribute('style',
-          'background-color: white');
+          'background-color: white; font-family: Arial, sans-serif');
         break;
     }
   }

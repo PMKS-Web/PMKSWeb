@@ -130,6 +130,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static initialLinkMouseCoord: Coord;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
+  private static initialLink: RealLink;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
   constructor() {
@@ -430,6 +431,11 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.linkStates = linkStates.dragging;
                   const rawCoord = GridComponent.getMousePosition($event)!;
                   GridComponent.initialLinkMouseCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
+                  // GridComponent.initialLink = new RealLink(GridComponent.selectedLink.id, GridComponent.selectedLink.joints);
+                  // if (GridComponent.selectedLink.bound)
+                  // GridComponent.initialLink.bound = GridComponent.selectedLink.bound;
+                  // GridComponent.initialLink.d = GridComponent.selectedLink.d;
+                  // GridComponent.initialLink.CoM = GridComponent.selectedLink.CoM;
                 }
                 break;
             }
@@ -1270,7 +1276,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   editShape() {
     this.disappearContext();
-    // TODO: Add logic to showcase different link shapes to create
+    // TODO: Check if this logic is valid
+    GridComponent.initialLink = new RealLink(GridComponent.selectedLink.id, GridComponent.selectedLink.joints);
+    GridComponent.initialLink.bound = GridComponent.selectedLink.bound;
+    GridComponent.initialLink.d = GridComponent.selectedLink.d;
+    GridComponent.initialLink.CoM = GridComponent.selectedLink.CoM;
     this.showcaseShapeSelector = !this.showcaseShapeSelector;
   }
 
@@ -1652,15 +1662,19 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   saveEdit() {
-    // TODO: Put logic to save chosen link shape
     this.showcaseShapeSelector = false;
   }
   revertEdit() {
-    // TODO: Put logic to revert link shape
-    this.showcaseShapeSelector = false;
+    GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+    GridComponent.selectedLink.d = GridComponent.initialLink.d;
+    GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
   }
   cancelEdit() {
-    // TODO: Put logic to cancel link shape
+    if (GridComponent.initialLink !== undefined) {
+      GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+      GridComponent.selectedLink.d = GridComponent.initialLink.d;
+      GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
+    }
     this.showcaseShapeSelector = false;
   }
 
