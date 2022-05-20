@@ -1073,7 +1073,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
-    const newJoint = new RevJoint('a', coord.x, coord.y);
+    // TODO: Add logic to add joint to selectedLink. Also, add adjacent joint to tracer joint
+    const newId = this.determineNextLetter();
+    const newJoint = new RevJoint(newId, coord.x, coord.y);
+    GridComponent.selectedLink.joints.forEach(j => {
+      if (!(j instanceof RealJoint)) {return}
+      j.connectedJoints.push(newJoint);
+      newJoint.connectedJoints.push(j);
+    });
+    newJoint.links.push(GridComponent.selectedLink);
+    GridComponent.selectedLink.joints.push(newJoint);
+    GridComponent.selectedLink.id += newJoint.id;
     this.joints.push(newJoint);
     this.updateMechanism();
   }
@@ -1663,11 +1673,13 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   saveEdit() {
     this.showcaseShapeSelector = false;
+    this.updateMechanism();
   }
   revertEdit() {
     GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
     GridComponent.selectedLink.d = GridComponent.initialLink.d;
     GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
+    this.updateMechanism();
   }
   cancelEdit() {
     if (GridComponent.initialLink !== undefined) {
@@ -1676,6 +1688,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
     }
     this.showcaseShapeSelector = false;
+    this.updateMechanism();
   }
 
   getJointPath(joint: Joint) {
