@@ -535,7 +535,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case linkStates.resizing:
         // Adjust the link's bounding boxes
-        // let b1n, b2n, b3n, b4n, arrow5n: {x: number, y: number};
         let b1n, b2n, b3n, b4n, arrow5n: Coord = new Coord(0, 0)!;
 
         let drag_coord_x, side_coord_x_1, side_coord_x_2: number;
@@ -580,33 +579,17 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
           default:
             fixedBound = 'none'
-            // this is an arrow
-            // joint_tag_SVG.setAttribute('transform', 'rotate (180), scale(-1, 1)');
-            // if ()
-            // const prev_angle =
-            // arrow5n_x = (oldBounds.b1.x + oldBounds.b2.x + oldBounds.b3.x + oldBounds.b4.x) / 4;
-            // arrow5n_y = (oldBounds.b1.y + oldBounds.b2.y + oldBounds.b3.y + oldBounds.b4.y) / 4;
-            // arrow5n = { x: arrow5n_x, y: arrow5n_y};
-            // return { b1: oldBounds.b1, b2: oldBounds.b2, b3: oldBounds.b3, b4: oldBounds.b4, arrow: arrow5n };
             const centerx = (GridComponent.selectedLink.bound.b1.x + GridComponent.selectedLink.bound.b2.x +
               GridComponent.selectedLink.bound.b3.x + GridComponent.selectedLink.bound.b4.x) / 4;
             const centery = (GridComponent.selectedLink.bound.b1.y + GridComponent.selectedLink.bound.b2.y +
               GridComponent.selectedLink.bound.b3.y + GridComponent.selectedLink.bound.b4.y) / 4;
 
-            // const dox = oldBounds[eid].x - centerx;
-            // const doy = oldBounds[eid].y - centery;
             const dox = GridComponent.selectedLink.bound.b1.x - centerx;
             const doy = GridComponent.selectedLink.bound.b1.y - centery;
-            // const disto = Math.sqrt(dox * dox + doy * doy);
             const orotation = Math.atan2(doy, dox);
 
-            // TODO: Figure out what is newBound
             const dnx = trueCoord.x - centerx;
             const dny = trueCoord.y - centery;
-            // const dnx = newBound.x - centerx;
-            // const dny = newBound.y - centery;
-            // const dnx = oldBounds['b1'].x - centerx;
-            // const dny = oldBounds['b1'].y - centery;
             const distn = Math.sqrt(dox * dox + doy * doy);
             const nrotation = Math.atan2(dny, dnx);
 
@@ -617,7 +600,6 @@ export class GridComponent implements OnInit, AfterViewInit {
             const rot1 = Math.atan2(d1y, d1x);
             const xc1 = Math.cos(rot1 + drotation) * distn;
             const yc1 = Math.sin(rot1 + drotation) * distn;
-            // b1n = { x: xc1, y: yc1};
             b1n = new Coord(centerx + xc1, centery + yc1);
 
             const d2x = GridComponent.selectedLink.bound.b2.x - centerx;
@@ -625,7 +607,6 @@ export class GridComponent implements OnInit, AfterViewInit {
             const rot2 = Math.atan2(d2y, d2x);
             const xc2 = Math.cos(rot2 + drotation) * distn;
             const yc2 = Math.sin(rot2 + drotation) * distn;
-            // b2n = { x: xc2, y: yc2 };
             b2n = new Coord(centerx + xc2, centery + yc2);
 
             const d3x = GridComponent.selectedLink.bound.b3.x - centerx;
@@ -633,7 +614,6 @@ export class GridComponent implements OnInit, AfterViewInit {
             const rot3 = Math.atan2(d3y, d3x);
             const xc3 = Math.cos(rot3 + drotation) * distn;
             const yc3 = Math.sin(rot3 + drotation) * distn;
-            // b3n = { x: xc3, y: yc3 };
             b3n = new Coord(centerx + xc3, centery + yc3);
 
             const d4x = GridComponent.selectedLink.bound.b4.x - centerx;
@@ -641,11 +621,8 @@ export class GridComponent implements OnInit, AfterViewInit {
             const rot4 = Math.atan2(d4y, d4x);
             const xc4 = Math.cos(rot4 + drotation) * distn;
             const yc4 = Math.sin(rot4 + drotation) * distn;
-            // b4n = { x: xc4, y: yc4 };
             b4n = new Coord(centerx + xc4, centery + yc4);
 
-            // arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
-            // arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
             arrow5n = new Coord(centerx, centery);
 
             // TODO: Determine new logic for this since there can't be return here...
@@ -666,7 +643,7 @@ export class GridComponent implements OnInit, AfterViewInit {
               GridComponent.selectedLink.shape);
             GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
             GridComponent.selectedLink.updateCoMDs();
-          // return { b1: b1n, b2: b2n, b3: b3n, b4: b4n, arrow: arrow5n };
+            return;
         }
 
         // TOOD: Put this within function call to do all this logic
