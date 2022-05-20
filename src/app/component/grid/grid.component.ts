@@ -1709,6 +1709,14 @@ export class GridComponent implements OnInit, AfterViewInit {
             } else {
               return GridComponent.selectedLink.bound.b4.y;
             }
+          case 'arrow':
+            if (xOrY === 'x') {
+              return (GridComponent.selectedLink.bound.b1.x + GridComponent.selectedLink.bound.b2.x
+                + GridComponent.selectedLink.bound.b3.x + GridComponent.selectedLink.bound.b4.x) / 4;
+            } else {
+              return (GridComponent.selectedLink.bound.b1.y + GridComponent.selectedLink.bound.b2.y
+                + GridComponent.selectedLink.bound.b3.y + GridComponent.selectedLink.bound.b4.y) / 4;
+            }
           default:
             return;
         }
