@@ -127,6 +127,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static selectedJoint: RealJoint;
   static selectedLink: RealLink;
   static selectedBound: string;
+  private static initialLinkMouseCoord: Coord;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
 
@@ -426,6 +427,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                   GridComponent.selectedBound = thing;
                 } else {
                   GridComponent.linkStates = linkStates.dragging;
+                  const rawCoord = GridComponent.getMousePosition($event)!;
+                  GridComponent.initialLinkMouseCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
                 }
                 break;
             }
@@ -453,6 +456,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   mouseMove($event: MouseEvent, typeChosen: string, bound?: string) {
     $event.preventDefault();
     $event.stopPropagation();
+    // TODO: Possibly put this somewhere else so don't have to copy/paste?
     const rawCoord = GridComponent.getMousePosition($event)!;
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
     this.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
@@ -512,6 +516,21 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case linkStates.dragging:
         // TODO: Add logic when dragging a link within edit shape mode
+        const offsetX = trueCoord.x - GridComponent.initialLinkMouseCoord.x;
+        const offsetY = trueCoord.y - GridComponent.initialLinkMouseCoord.y;
+        GridComponent.selectedLink.bound.b1.x += offsetX;
+        GridComponent.selectedLink.bound.b1.y += offsetY;
+        GridComponent.selectedLink.bound.b2.x += offsetX;
+        GridComponent.selectedLink.bound.b2.y += offsetY;
+        GridComponent.selectedLink.bound.b3.x += offsetX;
+        GridComponent.selectedLink.bound.b3.y += offsetY;
+        GridComponent.selectedLink.bound.b4.x += offsetX;
+        GridComponent.selectedLink.bound.b4.y += offsetY;
+        GridComponent.initialLinkMouseCoord.x = trueCoord.x;
+        GridComponent.initialLinkMouseCoord.y = trueCoord.y;
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
+          GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
         this.updateMechanism();
         break;
       case linkStates.resizing:
@@ -1730,12 +1749,4 @@ export class GridComponent implements OnInit, AfterViewInit {
         return;
     }
   }
-
-  // getSelectedLinkPoints() {
-  //   const b = GridComponent.selectedLink.bound;
-  //   return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
-  //     + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
-  //     + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
-  //     + b.b4.x.toString() + ',' + b.b4.y.toString();
-  // }
 }
