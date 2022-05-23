@@ -21,6 +21,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   animate: boolean = false;
 
   private static slider: HTMLInputElement;
+  private static adjustAnimation: boolean;
 
   constructor() { }
   ngOnInit(): void {
@@ -34,7 +35,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     if (this.mechanisms.length === 0) {
       return 0;
     } else {
-      return this.mechanisms[0].joints.length;
+      return this.mechanisms[0].joints.length - 1;
     }
   }
 
@@ -78,9 +79,15 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   setAnim() {
-    if (!this.animate) {
+    // if (!this.animate) {
+    if (AnimationBarComponent.adjustAnimation) {
       this.animateGridEmitter.emit([Number(AnimationBarComponent.slider.value), this.animate]);
     }
+    // }
+  }
+
+  adjustMechanismAnimation(condition: boolean) {
+    AnimationBarComponent.adjustAnimation = condition;
   }
 
   showCenterOfMass() {
