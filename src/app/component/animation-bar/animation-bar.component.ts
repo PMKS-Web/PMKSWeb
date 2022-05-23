@@ -1,6 +1,7 @@
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {switchMapTo} from "rxjs";
+// import {switchMapTo} from "rxjs";
 import {Mechanism} from "../../model/mechanism/mechanism";
+import {GridComponent} from "../grid/grid.component";
 
 @Component({
   selector: 'app-animation-bar',
@@ -51,12 +52,15 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     switch (this.speed) {
       case 'slow':
         this.speed = 'medium';
+        GridComponent.mechanismAnimationIncrement = 2;
         break;
       case 'medium':
         this.speed = 'fast';
+        GridComponent.mechanismAnimationIncrement = 3;
         break;
       case 'fast':
         this.speed = 'slow'
+        GridComponent.mechanismAnimationIncrement = 1;
         break;
     }
   }

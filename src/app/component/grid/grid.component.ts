@@ -65,6 +65,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   @Input() gravity: boolean = false;
   @Input() runAnimation: boolean = true;
   mechanismTimeStep: number = 0;
+  static mechanismAnimationIncrement: number = 2;
   joints: Joint[] = [];
   links: Link[] = [];
   forces: Force[] = [];
@@ -1634,14 +1635,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (!this.runAnimation) {
       return
     }
-
-    this.mechanismTimeStep++;
-    if (this.mechanismTimeStep === this.mechanisms[0].joints.length) {
+    this.mechanismTimeStep += GridComponent.mechanismAnimationIncrement;
+    if (this.mechanismTimeStep >= this.mechanisms[0].joints.length) {
       this.mechanismTimeStep = 0;
     }
     setTimeout(() => {
       this.animate([this.mechanismTimeStep]);
-    }, 10 / 3);
+    }, 8);
   }
 
   adjustView(setting: string) {
