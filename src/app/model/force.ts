@@ -22,8 +22,8 @@ export class Force {
     // TODO: Have to have local argument since some forces can be created that are local or global
     this._id = id;
     this._link = link;
-    this._startCoord = startCoord;
-    this._endCoord = endCoord;
+    this._startCoord = new Coord(startCoord.x, startCoord.y);
+    this._endCoord = new Coord(endCoord.x, endCoord.y);
     this._forceLine = Force.createForceLine(startCoord, endCoord);
     this._forceArrow = Force.createForceArrow(startCoord, endCoord);
     this._local = local;
@@ -33,7 +33,7 @@ export class Force {
   }
 
   static updateAngle(startCoord: Coord, endCoord: Coord) {
-    return Math.atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x)  * 180 / Math.PI;;
+    return Math.atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x)  * 180 / Math.PI;
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
