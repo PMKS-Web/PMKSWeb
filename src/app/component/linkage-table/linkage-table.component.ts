@@ -18,7 +18,7 @@ export class LinkageTableComponent implements OnInit {
   @Input() forces: Force[] = [];
   @Input() mechanisms: Mechanism[] = [];
   @Input() ics: InstantCenter[] = [];
-  @Input() gravity: boolean = false;
+  // @Input() gravity: boolean = false;
   @Input() unit: string = 'cm';
   @Output() updateMechanismEmitter = new EventEmitter();
 

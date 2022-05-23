@@ -83,25 +83,25 @@
           Input Speed (RPM):
         </div>
         <div class="input-textbox">
-          <input type="text" value="{{inputAngularVelocity}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
+          <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
         </div>
         <div class="input-direction">
           <label>
-            <input type="radio" name="direction" [checked]="clockwise" (change)="setClockwise()">
+            <input type="radio" name="direction" [checked]="getClockwise()" (change)="setClockwise(true)">
             cw<br>
           </label>
           <label>
-            <input type="radio" name="direction" [checked]="!clockwise" (change)="setCounterClockwise()">
+            <input type="radio" name="direction" [checked]="!getClockwise()" (change)="setClockwise(false)">
             ccw
           </label>
         </div>
         <div class="gravity-toggle">
           <label>
-            <input type="radio" name="gg" [checked]="gravity" (change)="setGravity()">
+            <input type="radio" name="gg" [checked]="getGravity()" (change)="setGravity(true)">
             Gravity On
           </label>
           <label>
-            <input type="radio" name="gg" [checked]="!gravity" (change)="setGravityOff()">
+            <input type="radio" name="gg" [checked]="!getGravity()" (change)="setGravity(false)">
             Gravity Off<br>
           </label>
         </div>

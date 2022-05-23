@@ -1,7 +1,6 @@
 <app-grid #gridComponent
           [showIdTags]="animationBarComponent.showIdTags"
           [showCoMTags]="animationBarComponent.showCoMTags"
-          [gravity]="toolbarComponent.gravity"
           [unit]="toolbarComponent.unit.selectedUnit"
           [runAnimation]="animationBarComponent.animate"></app-grid>
 <app-linkage-table #linkageTableComponent
@@ -10,7 +9,6 @@
                    [forces]="gridComponent.forces"
                    [mechanisms]="gridComponent.mechanisms"
                    [ics]="gridComponent.ics"
-                   [gravity]="toolbarComponent.gravity"
                    [unit]="toolbarComponent.unit.selectedUnit"
                    (updateMechanismEmitter)="gridComponent.updateMechanism()"></app-linkage-table>
 <app-toolbar #toolbarComponent
@@ -27,7 +25,6 @@
                     [links]="gridComponent.links"
                     [forces]="gridComponent.forces"
                     [mechanisms]="gridComponent.mechanisms"
-                    [gravity]="toolbarComponent.gravity"
                     [unit]="toolbarComponent.unit.selectedUnit"
                     [gridOffset]="gridComponent.gridOffset()"
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>

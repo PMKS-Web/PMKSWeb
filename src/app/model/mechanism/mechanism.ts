@@ -25,7 +25,8 @@ export class Mechanism {
   private _requiredLoops: string[] = [];
   private _allLoops: string[] = [];
 
-  constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[], gravity: boolean, unit: string) {
+  constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
+              gravity: boolean, unit: string, inputAngVel: number) {
     // this._joints.push([]);
     // this._links.push([]);
     // this._forces.push([]);
@@ -79,7 +80,7 @@ export class Mechanism {
     // no index found for input Joint
     if (this._dof === 1 && joints.findIndex(j => { if (!(j instanceof RealJoint)) {return} return j.input}) !== -1) {
       [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
-      this.findFullMovementPos();
+      this.findFullMovementPos(inputAngVel);
     } else {
       this.setMechanismInvalid();
     }
@@ -133,8 +134,8 @@ export class Mechanism {
     return (3 * (N - 1)) - (2 * J1) - J2;
   }
 
-  private findFullMovementPos() {
-    let inputAngularVelocity = 10;
+  private findFullMovementPos(inputAngVel: number) {
+    let inputAngularVelocity = inputAngVel;
     let simForward = true;
     let falseTwice = 0;
     let inputAngVelDirection = inputAngularVelocity > 0;

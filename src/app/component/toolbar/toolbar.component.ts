@@ -5,6 +5,7 @@ import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {roundNumber} from "../../model/utils";
 import {ForceSolver} from "../../model/mechanism/force-solver";
+import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 
 @Component({
   selector: 'app-toolbar',
@@ -23,15 +24,16 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   // TODO: Use animategridemitter within toolbar if you can get to this stage of project
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
-  inputAngularVelocity: number = 10;
   selectedTab: string = 'file';
   // showIdTags: boolean = false;
   // showCoMTags: boolean = false;
   // unit: string = 'cm';
-  clockwise: boolean = false;
-  gravity: boolean = false;
+  // TODO: use this within toolbar if you can get to this stage of project
   animate: boolean = false;
 
+  static inputAngularVelocity: number = 10;
+  static clockwise: boolean = false;
+  static gravity: boolean = false;
   private static fileButton: SVGElement;
   private static analysisButton: SVGElement;
   private static settingsButton: SVGElement;
@@ -196,7 +198,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   copyURL() {
     const content = this.generateExportURL(this.joints, this.links, this.forces, [],
-      [], 10, true, this.gravity, this.unit.selectedUnit);
+      [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
     const url = this.getURL();
     const dataURLString = `${url}?${content}`;
     const dataURL = encodeURI(dataURLString);
@@ -221,7 +223,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(this.joints, this.links, this.forces, [],
-      [], 10, true, this.gravity, this.unit.selectedUnit);
+      [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
 
     const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
     const fileName = `PMKS+_${new Date().toISOString()}.csv`;
@@ -462,26 +464,35 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   setInputMagnitudeAngVel($event: any) {
-    this.inputAngularVelocity = $event.target.value
+    ToolbarComponent.inputAngularVelocity = $event.target.value
   }
 
-  setClockwise() {
-    this.clockwise = true;
+  getClockwise() {
+    return ToolbarComponent.clockwise;
   }
 
-  setCounterClockwise() {
-    this.clockwise = false;
+  setClockwise(cond: boolean) {
+    ToolbarComponent.clockwise = cond;
+    if (ToolbarComponent.clockwise) {
+      AnimationBarComponent.direction = 'cw';
+    } else {
+      AnimationBarComponent.direction = 'ccw';
+    }
   }
 
-  setGravity() {
-    this.gravity = true;
+  getGravity() {
+    return ToolbarComponent.gravity;
   }
 
-  setGravityOff() {
-    this.gravity = false;
+  setGravity(cond: boolean) {
+    ToolbarComponent.gravity = cond;
   }
 
   changeUnit(selectedUnit: string) {
     this.unit.selectedUnit = selectedUnit;
+  }
+
+  getInputAngVel() {
+    return ToolbarComponent.inputAngularVelocity;
   }
 }

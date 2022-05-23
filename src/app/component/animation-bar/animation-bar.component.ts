@@ -2,6 +2,7 @@ import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@an
 // import {switchMapTo} from "rxjs";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {GridComponent} from "../grid/grid.component";
+import {ToolbarComponent} from "../toolbar/toolbar.component";
 
 @Component({
   selector: 'app-animation-bar',
@@ -17,10 +18,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   @Output() adjustViewEmit = new EventEmitter<string>();
   showIdTags: boolean = false;
   showCoMTags: boolean = false;
-  direction: string = 'ccw';
-  speed: string = 'medium';
   animate: boolean = false;
 
+  static direction: string = 'ccw';
+  static speed: string = 'medium';
   private static slider: HTMLInputElement;
   private static adjustAnimation: boolean;
 
@@ -41,25 +42,30 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onDirectionChange() {
-    if (this.direction === 'ccw') {
-      this.direction = 'cw';
+    if (AnimationBarComponent.direction === 'ccw') {
+      AnimationBarComponent.direction = 'cw';
     } else {
-      this.direction = 'ccw';
+      AnimationBarComponent.direction = 'ccw';
     }
+    ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
+  }
+
+  getDirection() {
+    return AnimationBarComponent.direction;
   }
 
   onSpeedChange() {
-    switch (this.speed) {
+    switch (AnimationBarComponent.speed) {
       case 'slow':
-        this.speed = 'medium';
+        AnimationBarComponent.speed = 'medium';
         GridComponent.mechanismAnimationIncrement = 2;
         break;
       case 'medium':
-        this.speed = 'fast';
+        AnimationBarComponent.speed = 'fast';
         GridComponent.mechanismAnimationIncrement = 3;
         break;
       case 'fast':
-        this.speed = 'slow'
+        AnimationBarComponent.speed = 'slow'
         GridComponent.mechanismAnimationIncrement = 1;
         break;
     }
@@ -114,6 +120,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   onZoomResetPressed() {
     this.adjustViewEmit.emit('reset');
 
+  }
+
+  getSpeed() {
+    return AnimationBarComponent.speed;
   }
 
   onResetLinkagePressed() {

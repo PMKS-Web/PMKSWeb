@@ -7,6 +7,7 @@ import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
 import {determineSlope, determineX, determineY, determineYIntersect, roundNumber} from "../../model/utils";
+import {ToolbarComponent} from "../toolbar/toolbar.component";
 
 
 // The possible states the program could be in.
@@ -62,7 +63,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   @Input() showIdTags: boolean = false;
   @Input() showCoMTags: boolean = false;
   @Input() unit: string = 'cm';
-  @Input() gravity: boolean = false;
   @Input() runAnimation: boolean = true;
   mechanismTimeStep: number = 0;
   static mechanismAnimationIncrement: number = 2;
@@ -1338,7 +1338,12 @@ export class GridComponent implements OnInit, AfterViewInit {
   updateMechanism() {
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
-    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, this.gravity, this.unit));
+    let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
+    if (ToolbarComponent.clockwise) {
+      inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
+    }
+    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, ToolbarComponent.gravity,
+      this.unit, inputAngularVelocity));
     // TODO: put this logic somewhere when joint is being dragged
   }
 
