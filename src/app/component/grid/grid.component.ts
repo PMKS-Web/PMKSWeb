@@ -14,7 +14,10 @@ import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 // The possible states the program could be in.
 enum gridStates {
   waiting,
-  creating,
+  createJointFromGrid,
+  createJointFromJoint,
+  createJointFromLink,
+  createForce,
   dragging,
 }
 
@@ -284,6 +287,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
+    let joint1: RevJoint;
+    let joint2: RevJoint;
+    let link: RealLink
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
         switch (typeChosen) {
@@ -295,122 +301,197 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.panOffset.y = mPos.y;
                 GridComponent.gridStates = gridStates.dragging;
                 break;
-              case gridStates.creating:
-                if (GridComponent.jointStates === jointStates.creating) { // attach link onto joint
-                  const joint2 = this.createRevJoint(
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
-                  );
-                  GridComponent.selectedJoint.connectedJoints.push(joint2);
-                  joint2.connectedJoints.push(GridComponent.selectedJoint);
+              case gridStates.createJointFromGrid:
+                joint1 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                );
+                joint2 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  joint1.id
+                );
+                joint1.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(joint1);
 
-                  const link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
-                    [GridComponent.selectedJoint, joint2]);
-                  GridComponent.selectedJoint.links.push(link);
-                  joint2.links.push(link);
-                  this.mergeToJoints([joint2]);
-                  this.mergeToLinks([link]);
-                  GridComponent.updateMechanism();
-                  GridComponent.gridStates = gridStates.waiting;
-                  GridComponent.jointStates = jointStates.waiting;
-                  GridComponent.jointTempHolderSVG.style.display = 'none';
-                } else if (GridComponent.linkStates === linkStates.creating) { // attach link onto link
-                  // TODO: set context Link as a part of joint 1 or joint 2
-                  const joint1 = this.createRevJoint(
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
-                  );
-                  const joint2 = this.createRevJoint(
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
-                    joint1.id
-                  );
-                  // Have within constructor other joints so when you add joint, that joint's connected joints also attach
-                  joint1.connectedJoints.push(joint2);
-                  joint2.connectedJoints.push(joint1);
-                  const link = new RealLink(joint1.id + joint2.id, [joint1, joint2]);
-                  joint1.links.push(link);
-                  joint2.links.push(link);
-                  // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
-                  GridComponent.selectedLink.joints.forEach(j => {
-                    if (!(j instanceof RealJoint)) {return}
-                    j.connectedJoints.push(joint1);
-                    joint1.connectedJoints.push(j);
-                  });
-                  joint1.links.push(GridComponent.selectedLink);
-                  GridComponent.selectedLink.joints.push(joint1);
-                  // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
-                  GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
-                  this.mergeToJoints([joint1, joint2]);
-                  this.mergeToLinks([link]);
-
-                  GridComponent.updateMechanism();
-                  GridComponent.gridStates = gridStates.waiting;
-                  GridComponent.linkStates = linkStates.waiting;
-                  GridComponent.jointTempHolderSVG.style.display = 'none';
-                } else if (GridComponent.forceStates === forceStates.creating) { // add force onto link
-                  let startCoord = new Coord(0, 0);
-                  let screenX: number;
-                  let screenY: number;
-                  if (GridComponent.selectedLink.shape === Shape.line) {
-                    screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
-                    screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
-                  } else {
-                    screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
-                    screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
-                  }
-                  startCoord = GridComponent.screenToGrid(screenX, screenY);
-                  const endCoordRaw = GridComponent.getMousePosition($event);
-                  if (endCoordRaw === undefined) {
-                    return
-                  }
-                  const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
-                  // TODO: Be sure the force added is at correct position for binary link
-                  const force = new Force('F' + GridComponent.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
-                  GridComponent.selectedLink.forces.push(force);
-                  GridComponent.forces.push(force);
-                  GridComponent.updateMechanism();
-                  GridComponent.selectedLink.forces.push(force)
-                  GridComponent.gridStates = gridStates.waiting;
-                  GridComponent.forceStates = forceStates.waiting;
-                  GridComponent.forceTempHolderSVG.style.display = 'none';
-                } else { // attach link onto grid
-                  const joint1 = this.createRevJoint(
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
-                  );
-                  const joint2 = this.createRevJoint(
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                    GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
-                    joint1.id
-                  );
-                  joint1.connectedJoints.push(joint2);
-                  joint2.connectedJoints.push(joint1);
-
-                  const link = this.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
-                  joint1.links.push(link);
-                  joint2.links.push(link);
-                  this.mergeToJoints([joint1, joint2]);
-                  this.mergeToLinks([link]);
-                  GridComponent.updateMechanism();
-                  GridComponent.gridStates = gridStates.waiting;
-                  GridComponent.linkStates = linkStates.waiting;
-                  GridComponent.jointTempHolderSVG.style.display = 'none';
-                }
-                // if (that.createMode === createModes.link) {
-                //   that.secondJointOnCanvas(trueCoords.x, trueCoords.y);
-                //   that.createNewSimulator();
-                // } else if (that.createMode === createModes.force) {
-                //   that.setForceEndEndpoint(trueCoords.x, trueCoords.y);
-                //   that.createNewSimulator();
-                //   that.cancelCreation();
-                //   that.state = gridStates.waiting;
-                // }
+                link = this.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
+                joint1.links.push(link);
+                joint2.links.push(link);
+                this.mergeToJoints([joint1, joint2]);
+                this.mergeToLinks([link]);
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.linkStates = linkStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
                 break;
-              default:
+              case gridStates.createJointFromJoint:
+                joint2 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                );
+                GridComponent.selectedJoint.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(GridComponent.selectedJoint);
+
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
+                  [GridComponent.selectedJoint, joint2]);
+                GridComponent.selectedJoint.links.push(link);
+                joint2.links.push(link);
+                this.mergeToJoints([joint2]);
+                this.mergeToLinks([link]);
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.jointStates = jointStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
+                break;
+              case gridStates.createJointFromLink:
+                // TODO: set context Link as a part of joint 1 or joint 2
+                joint1 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                );
+                joint2 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  joint1.id
+                );
+                // Have within constructor other joints so when you add joint, that joint's connected joints also attach
+                joint1.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(joint1);
+                link = new RealLink(joint1.id + joint2.id, [joint1, joint2]);
+                joint1.links.push(link);
+                joint2.links.push(link);
+                // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
+                GridComponent.selectedLink.joints.forEach(j => {
+                  if (!(j instanceof RealJoint)) {return}
+                  j.connectedJoints.push(joint1);
+                  joint1.connectedJoints.push(j);
+                });
+                joint1.links.push(GridComponent.selectedLink);
+                GridComponent.selectedLink.joints.push(joint1);
+                // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
+                GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
+                this.mergeToJoints([joint1, joint2]);
+                this.mergeToLinks([link]);
+
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.linkStates = linkStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
+                break;
+              case gridStates.createForce:
+                let startCoord = new Coord(0, 0);
+                let screenX: number;
+                let screenY: number;
+                if (GridComponent.selectedLink.shape === Shape.line) {
+                  screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+                  screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+                } else {
+                  screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+                  screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+                }
+                startCoord = GridComponent.screenToGrid(screenX, screenY);
+                const endCoordRaw = GridComponent.getMousePosition($event);
+                if (endCoordRaw === undefined) {
+                  return
+                }
+                const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
+                // TODO: Be sure the force added is at correct position for binary link
+                const force = new Force('F' + GridComponent.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
+                GridComponent.selectedLink.forces.push(force);
+                GridComponent.forces.push(force);
+                GridComponent.updateMechanism();
+                GridComponent.selectedLink.forces.push(force)
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.forceStates = forceStates.waiting;
+                GridComponent.forceTempHolderSVG.style.display = 'none';
+                break;
+
             }
             break;
           case 'joint':
+            switch (GridComponent.gridStates) {
+              case gridStates.waiting:
+                break;
+              case gridStates.createJointFromGrid:
+                joint1 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                );
+                joint2 = thing;
+                // joint2 = this.createRevJoint(
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                //   joint1.id
+                // );
+                joint1.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(joint1);
+
+                link = this.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
+                joint1.links.push(link);
+                joint2.links.push(link);
+                this.mergeToJoints([joint1]);
+                this.mergeToLinks([link]);
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.linkStates = linkStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
+                break;
+              case gridStates.createJointFromJoint:
+                // joint2 = this.createRevJoint(
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                // );
+                joint2 = thing;
+                GridComponent.selectedJoint.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(GridComponent.selectedJoint);
+
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
+                  [GridComponent.selectedJoint, joint2]);
+                GridComponent.selectedJoint.links.push(link);
+                joint2.links.push(link);
+                this.mergeToLinks([link]);
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.jointStates = jointStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
+                break;
+              case gridStates.createJointFromLink:
+                // TODO: set context Link as a part of joint 1 or joint 2
+                joint1 = this.createRevJoint(
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
+                );
+                // joint2 = this.createRevJoint(
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
+                //   GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                //   joint1.id
+                // );
+                joint2 = thing;
+                // Have within constructor other joints so when you add joint, that joint's connected joints also attach
+                joint1.connectedJoints.push(joint2);
+                joint2.connectedJoints.push(joint1);
+                link = new RealLink(joint1.id + joint2.id, [joint1, joint2]);
+                joint1.links.push(link);
+                joint2.links.push(link);
+                // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
+                GridComponent.selectedLink.joints.forEach(j => {
+                  if (!(j instanceof RealJoint)) {return}
+                  j.connectedJoints.push(joint1);
+                  joint1.connectedJoints.push(j);
+                });
+                joint1.links.push(GridComponent.selectedLink);
+                GridComponent.selectedLink.joints.push(joint1);
+                // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
+                GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
+                this.mergeToJoints([joint1]);
+                this.mergeToLinks([link]);
+
+                GridComponent.updateMechanism();
+                GridComponent.gridStates = gridStates.waiting;
+                GridComponent.linkStates = linkStates.waiting;
+                GridComponent.jointTempHolderSVG.style.display = 'none';
+                break;
+            }
             switch (GridComponent.jointStates) {
               case jointStates.waiting:
                 GridComponent.jointStates = jointStates.dragging;
@@ -451,9 +532,20 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
         }
         break;
+        // TODO: Be sure all things reset
       case 1: // Middle-Click
+        GridComponent.gridStates = gridStates.waiting;
+        GridComponent.jointStates = jointStates.waiting;
+        GridComponent.linkStates = linkStates.waiting;
+        GridComponent.forceStates = forceStates.waiting;
+        GridComponent.jointTempHolderSVG.style.display = 'none';
         return;
       case 2: // Right-Click
+        GridComponent.gridStates = gridStates.waiting;
+        GridComponent.jointStates = jointStates.waiting;
+        GridComponent.linkStates = linkStates.waiting;
+        GridComponent.forceStates = forceStates.waiting;
+        GridComponent.jointTempHolderSVG.style.display = 'none';
         break;
     }
   }
@@ -497,9 +589,13 @@ export class GridComponent implements OnInit, AfterViewInit {
           GridComponent.panSVG(offsetX, offsetY);
         }
         break;
-      case gridStates.creating:
+      case gridStates.createForce:
+      case gridStates.createJointFromGrid:
+      case gridStates.createJointFromJoint:
+      case gridStates.createJointFromLink:
         GridComponent.jointTempHolderSVG.children[0].setAttribute('x2', trueCoord.x.toString());
         GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
+        break;
     }
     switch (GridComponent.jointStates) {
       case jointStates.creating:
@@ -1177,10 +1273,13 @@ export class GridComponent implements OnInit, AfterViewInit {
         startX = Number(GridComponent.contextMenuAddLinkOntoGrid.children[0].getAttribute('x'));
         startY = Number(GridComponent.contextMenuAddLinkOntoGrid.children[0].getAttribute('y'));
         startCoord = GridComponent.screenToGrid(startX, startY);
+        GridComponent.gridStates = gridStates.createJointFromGrid;
+
         break;
       case 'joint':
         startCoord.x = GridComponent.selectedJoint.x;
         startCoord.y = GridComponent.selectedJoint.y;
+        GridComponent.gridStates = gridStates.createJointFromJoint;
         GridComponent.jointStates = jointStates.creating;
         break;
       case 'link':
@@ -1188,6 +1287,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         startX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
         startY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
         startCoord = GridComponent.screenToGrid(startX, startY);
+        GridComponent.gridStates = gridStates.createJointFromLink;
         GridComponent.linkStates = linkStates.creating;
         break;
       default:
@@ -1206,7 +1306,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', mousePos.y.toString());
     GridComponent.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
     GridComponent.jointTempHolderSVG.children[1].setAttribute('y', startCoord.y.toString());
-    GridComponent.gridStates = gridStates.creating;
     GridComponent.jointTempHolderSVG.style.display = 'block';
   }
 
@@ -1278,7 +1377,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.forceTempHolderSVG.children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
     GridComponent.forceTempHolderSVG.children[1].setAttribute('d', Force.createForceArrow(startCoord, mousePos));
     GridComponent.forceStates = forceStates.creating;
-    GridComponent.gridStates = gridStates.creating;
+    GridComponent.gridStates = gridStates.createForce;
     GridComponent.forceTempHolderSVG.style.display = 'block';
   }
 
