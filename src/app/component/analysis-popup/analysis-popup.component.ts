@@ -19,7 +19,7 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
 })
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   // @Input() gravity: boolean = false;
-  @Input() unit: string = '';
+  // @Input() unit: string = '';
   @Input() gridOffset: { x: number, y: number } = {x: 0, y: 0};
   @Input() scaleFactor: number = 50;
   private static popUpWindow: SVGElement;
@@ -165,7 +165,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           case 'force':
             ForceSolver.resetVariables();
             ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-            ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, this.unit);
+            ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
+              ToolbarComponent.gravity, ToolbarComponent.unit);
             break;
           case 'kinematic':
             KinematicsSolver.resetVariables();
@@ -533,7 +534,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         ForceSolver.resetVariables();
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity,
-          this.unit);
+          ToolbarComponent.unit);
         this.titleRow = GridComponent.mechanisms[0].forceTitleRow(analysisType)!;
         this.analysis = GridComponent.mechanisms[0].forceAnalysis(analysisType)!;
         while (increment < (1 + (GridComponent.joints.length * 2))) {

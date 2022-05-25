@@ -109,8 +109,8 @@
           <label>
             Units
             <select name="selectedUnit"
-                    [(ngModel)]="unit.selectedUnit" (ngModelChange)="changeUnit(unit.selectedUnit)">
-              <option *ngFor="let unit of units" [value]="unit.id">{{unit.label}}</option>
+                    [(ngModel)]="localUnit.selectedUnit" (ngModelChange)="changeUnit(localUnit.selectedUnit)">
+              <option *ngFor="let localUnit of localUnits" [value]="localUnit.id">{{localUnit.label}}</option>
             </select>
           </label>
         </div>

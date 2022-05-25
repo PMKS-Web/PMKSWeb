@@ -15,8 +15,8 @@ import {GridComponent} from "../grid/grid.component";
 })
 export class LinkageTableComponent implements OnInit {
   // @Input() gravity: boolean = false;
-  @Input() unit: string = 'cm';
-  @Output() updateMechanismEmitter = new EventEmitter();
+  // @Input() unit: string = 'cm';
+  // @Output() updateMechanismEmitter = new EventEmitter();
 
   private static linkageTable: SVGElement;
   private static jointButton: SVGElement;
@@ -124,7 +124,7 @@ export class LinkageTableComponent implements OnInit {
         if (!(joint instanceof PrisJoint)) {return}
         joint.angle = $event.target.value;
     }
-    this.updateMechanismEmitter.emit();
+    GridComponent.updateMechanism();
   }
 
   changeLinkProp($event: any, link: Link, linkProp: string) {
@@ -143,7 +143,7 @@ export class LinkageTableComponent implements OnInit {
         link.CoM.y = $event.target.value;
         break;
     }
-    this.updateMechanismEmitter.emit();
+    GridComponent.updateMechanism();
   }
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
@@ -168,7 +168,7 @@ export class LinkageTableComponent implements OnInit {
     }
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
     force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
-    this.updateMechanismEmitter.emit();
+    GridComponent.updateMechanism();
   }
 
   mouseOver(number: number) {

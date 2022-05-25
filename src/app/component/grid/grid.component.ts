@@ -62,7 +62,7 @@ enum moveModes {
 export class GridComponent implements OnInit, AfterViewInit {
   @Input() showIdTags: boolean = false;
   @Input() showCoMTags: boolean = false;
-  @Input() unit: string = 'cm';
+  // @Input() unit: string = 'cm';
   @Input() runAnimation: boolean = true;
   mechanismTimeStep: number = 0;
   static mechanismAnimationIncrement: number = 2;
@@ -279,7 +279,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.linkStates = linkStates.waiting;
     if (GridComponent.forceStates !== forceStates.waiting) {
       GridComponent.forceStates = forceStates.waiting;
-      this.updateMechanism();
+      GridComponent.updateMechanism();
     }
     this.showPathHolder = false;
   }
@@ -313,7 +313,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   joint2.links.push(link);
                   this.mergeToJoints([joint2]);
                   this.mergeToLinks([link]);
-                  this.updateMechanism();
+                  GridComponent.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -347,7 +347,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   this.mergeToJoints([joint1, joint2]);
                   this.mergeToLinks([link]);
 
-                  this.updateMechanism();
+                  GridComponent.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -372,7 +372,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   const force = new Force('F' + GridComponent.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
                   GridComponent.selectedLink.forces.push(force);
                   GridComponent.forces.push(force);
-                  this.updateMechanism();
+                  GridComponent.updateMechanism();
                   GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.forceStates = forceStates.waiting;
@@ -395,7 +395,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   joint2.links.push(link);
                   this.mergeToJoints([joint1, joint2]);
                   this.mergeToLinks([link]);
-                  this.updateMechanism();
+                  GridComponent.updateMechanism();
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.linkStates = linkStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -511,7 +511,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case jointStates.dragging:
         GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
-        this.updateMechanism();
+        GridComponent.updateMechanism();
         if (GridComponent.mechanisms[0].joints[0].length !== 0) {
           this.showPathHolder = GridComponent.mechanisms[0].dof === 1;
         }
@@ -539,7 +539,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
           GridComponent.selectedLink.shape);
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
-        this.updateMechanism();
+        GridComponent.updateMechanism();
         break;
       case linkStates.resizing:
         // Adjust the link's bounding boxes
@@ -1086,7 +1086,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.selectedLink.joints.push(newJoint);
     GridComponent.selectedLink.id += newJoint.id;
     GridComponent.joints.push(newJoint);
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   createGround() {
@@ -1100,7 +1100,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   createSlider() {
@@ -1129,7 +1129,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       // Find the slider link and delete this
       // Delete the slider link and prismatic joint from joint's and link's connected links/joints
     }
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   deleteJoint() {
@@ -1167,7 +1167,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     GridComponent.joints.splice(jointIndex, 1);
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   createLink($event: MouseEvent, gridOrJoint: string) {
@@ -1258,7 +1258,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     //     this.links.splice(linkIndicesRemove.pop()!, 1);
     //   }
     // }
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   createForce($event: MouseEvent) {
@@ -1299,7 +1299,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     const linkIndex = GridComponent.links.findIndex(l => l.id === GridComponent.selectedLink.id);
     GridComponent.links.splice(linkIndex, 1);
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   changeForceDirection() {
@@ -1312,7 +1312,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.forceArrow = Force.createForceArrow(
         GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
     }
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   changeForceLocal() {
@@ -1325,17 +1325,17 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedForce.stroke = 'black';
       GridComponent.selectedForce.fill = 'black';
     }
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   deleteForce() {
     this.disappearContext();
     const forceIndex = GridComponent.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
     GridComponent.forces.splice(forceIndex, 1);
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
-  updateMechanism() {
+  static updateMechanism() {
     GridComponent.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
@@ -1344,7 +1344,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
-      this.unit, inputAngularVelocity));
+      ToolbarComponent.unit, inputAngularVelocity));
     // TODO: put this logic somewhere when joint is being dragged
   }
 
@@ -1679,13 +1679,13 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   saveEdit() {
     this.showcaseShapeSelector = false;
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
   revertEdit() {
     GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
     GridComponent.selectedLink.d = GridComponent.initialLink.d;
     GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
   cancelEdit() {
     if (GridComponent.initialLink !== undefined) {
@@ -1694,7 +1694,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
     }
     this.showcaseShapeSelector = false;
-    this.updateMechanism();
+    GridComponent.updateMechanism();
   }
 
   getJointPath(joint: Joint) {

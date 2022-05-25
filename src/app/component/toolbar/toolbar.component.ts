@@ -39,14 +39,14 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   private static analysisButton: SVGElement;
   private static settingsButton: SVGElement;
   private static helpButton: SVGElement;
-
-
-  unit = {
+  static unit = 'cm';
+  // TODO: If possible, change this to static variable...
+  localUnit = {
     // selectedUnit: 'Metric'
     selectedUnit: 'cm'
   };
 
-  units = [
+  localUnits = [
     {id: 'cm', label: 'cm'},
     {id: 'm', label: 'm'},
     // { id: 'km', label: 'km'},
@@ -199,7 +199,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   copyURL() {
     const content = this.generateExportURL(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
-      [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
+      [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
     const url = this.getURL();
     const dataURLString = `${url}?${content}`;
     const dataURL = encodeURI(dataURLString);
@@ -224,7 +224,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
-      [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
+      [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
 
     const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
     const fileName = `PMKS+_${new Date().toISOString()}.csv`;
@@ -466,6 +466,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   setInputMagnitudeAngVel($event: any) {
     ToolbarComponent.inputAngularVelocity = $event.target.value
+    GridComponent.updateMechanism();
   }
 
   getClockwise() {
@@ -479,6 +480,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     } else {
       AnimationBarComponent.direction = 'ccw';
     }
+    GridComponent.updateMechanism();
   }
 
   getGravity() {
@@ -487,10 +489,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   setGravity(cond: boolean) {
     ToolbarComponent.gravity = cond;
+    GridComponent.updateMechanism();
   }
 
   changeUnit(selectedUnit: string) {
-    this.unit.selectedUnit = selectedUnit;
+    this.localUnit.selectedUnit = selectedUnit;
+    ToolbarComponent.unit = this.localUnit.selectedUnit;
+    GridComponent.updateMechanism();
   }
 
   getInputAngVel() {

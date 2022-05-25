@@ -47,6 +47,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
       AnimationBarComponent.direction = 'ccw';
     }
     ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
+    GridComponent.updateMechanism();
   }
 
   getDirection() {
