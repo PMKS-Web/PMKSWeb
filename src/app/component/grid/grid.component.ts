@@ -8,6 +8,7 @@ import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
 import {determineSlope, determineX, determineY, determineYIntersect, roundNumber} from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
+import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 
 
 // The possible states the program could be in.
@@ -60,11 +61,7 @@ enum moveModes {
 })
 
 export class GridComponent implements OnInit, AfterViewInit {
-  @Input() showIdTags: boolean = false;
-  @Input() showCoMTags: boolean = false;
-  // @Input() unit: string = 'cm';
-  @Input() runAnimation: boolean = true;
-  mechanismTimeStep: number = 0;
+  static mechanismTimeStep: number = 0;
   static mechanismAnimationIncrement: number = 2;
   static joints: Joint[] = [];
   static links: Link[] = [];
@@ -72,7 +69,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   static ics: InstantCenter[] = [];
   static mechanisms: Mechanism[] = [];
 
-  screenCoord: string = '';
+  static screenCoord: string = '';
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -101,7 +98,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuChangeForceLocal: SVGElement;
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
-  showcaseShapeSelector: boolean = false;
+  static showcaseShapeSelector: boolean = false;
 
   static get gridOffset(): { x: number; y: number } {
     return this._gridOffset;
@@ -131,7 +128,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static initialLinkMouseCoord: Coord;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
-  private static initialLink: RealLink;
+  static initialLink: RealLink;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
   constructor() {
@@ -424,7 +421,7 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 'link':
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
-                if (!this.showcaseShapeSelector) {break;}
+                if (!GridComponent.showcaseShapeSelector) {break;}
                 if (thing !== undefined) {
                   GridComponent.linkStates = linkStates.resizing;
                   GridComponent.selectedBound = thing;
@@ -467,7 +464,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Possibly put this somewhere else so don't have to copy/paste?
     const rawCoord = GridComponent.getMousePosition($event)!;
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
-    this.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
+    GridComponent.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
 
     switch (GridComponent.gridStates) {
       case gridStates.dragging:
@@ -1050,8 +1047,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'force':
-        const force = thing;
-        GridComponent.selectedForce = force;
+        // const force = thing;
+        GridComponent.selectedForce = thing;
         this.showcaseContextMenu(GridComponent.contextMenuChangeForceDirection, offsetX, offsetY, 0, 0);
         this.showcaseContextMenu(GridComponent.contextMenuChangeForceLocal, offsetX, offsetY, 20, 20);
         this.showcaseContextMenu(GridComponent.contextMenuDeleteForce, offsetX, offsetY, 40, 40);
@@ -1292,7 +1289,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.initialLink.bound = GridComponent.selectedLink.bound;
     GridComponent.initialLink.d = GridComponent.selectedLink.d;
     GridComponent.initialLink.CoM = GridComponent.selectedLink.CoM;
-    this.showcaseShapeSelector = !this.showcaseShapeSelector;
+    GridComponent.showcaseShapeSelector = !GridComponent.showcaseShapeSelector;
   }
 
   deleteLink() {
@@ -1607,20 +1604,20 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   animate(e: [progress: number, animationState?: boolean]) {
-    this.mechanismTimeStep = e[0];
+    GridComponent.mechanismTimeStep = e[0];
     const animationState = e[1];
-    this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
+    this.showPathHolder = !(GridComponent.mechanismTimeStep === 0 && !animationState);
     if (animationState !== undefined) {
-      this.runAnimation = animationState;
+      AnimationBarComponent.animate = animationState;
     }
 
     GridComponent.joints.forEach((j, j_index) => {
-      j.x = GridComponent.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
-      j.y = GridComponent.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
+      j.x = GridComponent.mechanisms[0].joints[GridComponent.mechanismTimeStep][j_index].x;
+      j.y = GridComponent.mechanisms[0].joints[GridComponent.mechanismTimeStep][j_index].y;
     });
     GridComponent.links.forEach((l, l_index) => {
       if (!(l instanceof RealLink)) {return}
-      const link = GridComponent.mechanisms[0].links[this.mechanismTimeStep][l_index];
+      const link = GridComponent.mechanisms[0].links[GridComponent.mechanismTimeStep][l_index];
       if (!(link instanceof RealLink)) {return}
       l.bound = link.bound;
       l.d = link.d;
@@ -1628,25 +1625,25 @@ export class GridComponent implements OnInit, AfterViewInit {
       l.updateCoMDs();
     });
     GridComponent.forces.forEach((f, f_index) => {
-      f.startCoord.x = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
-      f.startCoord.y = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
-      f.endCoord.x = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
-      f.endCoord.y = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
-      f.local = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
-      f.mag = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
-      f.angle = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
+      f.startCoord.x = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].startCoord.x;
+      f.startCoord.y = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].startCoord.y;
+      f.endCoord.x = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].endCoord.x;
+      f.endCoord.y = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].endCoord.y;
+      f.local = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].local;
+      f.mag = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].mag;
+      f.angle = GridComponent.mechanisms[0].forces[GridComponent.mechanismTimeStep][f_index].angle;
       f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
     });
-    if (!this.runAnimation) {
+    if (!AnimationBarComponent.animate) {
       return
     }
-    this.mechanismTimeStep += GridComponent.mechanismAnimationIncrement;
-    if (this.mechanismTimeStep >= GridComponent.mechanisms[0].joints.length) {
-      this.mechanismTimeStep = 0;
+    GridComponent.mechanismTimeStep += GridComponent.mechanismAnimationIncrement;
+    if (GridComponent.mechanismTimeStep >= GridComponent.mechanisms[0].joints.length) {
+      GridComponent.mechanismTimeStep = 0;
     }
     setTimeout(() => {
-      this.animate([this.mechanismTimeStep]);
+      this.animate([GridComponent.mechanismTimeStep]);
     }, 8);
   }
 
@@ -1668,33 +1665,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.reset();
         break;
     }
-  }
-
-  gridOffset() {
-    return GridComponent.gridOffset;
-  }
-  scaleFactor() {
-    return GridComponent.scaleFactor;
-  }
-
-  saveEdit() {
-    this.showcaseShapeSelector = false;
-    GridComponent.updateMechanism();
-  }
-  revertEdit() {
-    GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
-    GridComponent.selectedLink.d = GridComponent.initialLink.d;
-    GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
-    GridComponent.updateMechanism();
-  }
-  cancelEdit() {
-    if (GridComponent.initialLink !== undefined) {
-      GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
-      GridComponent.selectedLink.d = GridComponent.initialLink.d;
-      GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
-    }
-    this.showcaseShapeSelector = false;
-    GridComponent.updateMechanism();
   }
 
   getJointPath(joint: Joint) {
@@ -1771,5 +1741,17 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   getForces() {
     return GridComponent.forces;
+  }
+
+  showIDTags() {
+    return AnimationBarComponent.showIdTags;
+  }
+
+  showCoMTags() {
+    return AnimationBarComponent.showCoMTags;
+  }
+
+  getShowcaseShapeSelector() {
+    return GridComponent.showcaseShapeSelector;
   }
 }

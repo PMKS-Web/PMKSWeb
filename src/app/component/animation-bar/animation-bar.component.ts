@@ -10,14 +10,11 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
   styleUrls: ['./animation-bar.component.css']
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
-  @Input() screenCoord: string = '';
-  @Input() dof: string = '';
-  @Input() mechanismTimeSteps: number = 0;
   @Output() animateGridEmitter = new EventEmitter<[number, boolean]>();
   @Output() adjustViewEmit = new EventEmitter<string>();
-  showIdTags: boolean = false;
-  showCoMTags: boolean = false;
-  animate: boolean = false;
+  static showIdTags: boolean = false;
+  static showCoMTags: boolean = false;
+  static animate: boolean = false;
 
   static direction: string = 'ccw';
   static speed: string = 'medium';
@@ -25,8 +22,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   private static adjustAnimation: boolean;
 
   constructor() { }
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
     AnimationBarComponent.slider = <HTMLInputElement>document.getElementById('slider');
@@ -74,16 +70,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   startAnimation(state: string) {
     switch (state) {
       case 'play':
-        this.animate = false;
-        this.animateGridEmitter.emit([this.mechanismTimeSteps, this.animate]);
+        AnimationBarComponent.animate = false;
+        this.animateGridEmitter.emit([GridComponent.mechanismTimeStep, AnimationBarComponent.animate]);
         break;
       case 'pause':
-        this.animate = true;
-        this.animateGridEmitter.emit([this.mechanismTimeSteps, this.animate]);
+        AnimationBarComponent.animate = true;
+        this.animateGridEmitter.emit([GridComponent.mechanismTimeStep, AnimationBarComponent.animate]);
         break;
       case 'stop':
-        this.animate = false;
-        this.animateGridEmitter.emit([0, this.animate]);
+        AnimationBarComponent.animate = false;
+        this.animateGridEmitter.emit([0, AnimationBarComponent.animate]);
         break;
     }
   }
@@ -91,7 +87,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   setAnim() {
     // if (!this.animate) {
     if (AnimationBarComponent.adjustAnimation) {
-      this.animateGridEmitter.emit([Number(AnimationBarComponent.slider.value), this.animate]);
+      this.animateGridEmitter.emit([Number(AnimationBarComponent.slider.value), AnimationBarComponent.animate]);
     }
     // }
   }
@@ -101,11 +97,11 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   showCenterOfMass() {
-    this.showCoMTags = !this.showCoMTags;
+    AnimationBarComponent.showCoMTags = !AnimationBarComponent.showCoMTags;
   }
 
   onShowIDPressed() {
-    this.showIdTags = !this.showIdTags;
+    AnimationBarComponent.showIdTags = !AnimationBarComponent.showIdTags;
   }
 
   onZoomInPressed() {
@@ -133,5 +129,23 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     const port = window.location.port;
     const urlString = `${protocol}//${hostname}${port ? `:${port}` : ''}${pathname}`;
     window.location.href = encodeURI(urlString);
+  }
+
+  getMechanismTimeStep() {
+    return GridComponent.mechanismTimeStep;
+  }
+
+  getScreenCoord() {
+    return GridComponent.screenCoord;
+  }
+
+  getDoF() {
+    // TODO: Have DOF soon
+    return '';
+    // return GridComponent.
+  }
+
+  getAnimate() {
+    return AnimationBarComponent.animate;
   }
 }

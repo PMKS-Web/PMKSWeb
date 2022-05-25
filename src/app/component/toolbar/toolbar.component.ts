@@ -7,6 +7,7 @@ import {roundNumber} from "../../model/utils";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 import {GridComponent} from "../grid/grid.component";
+import {LinkageTableComponent} from "../linkage-table/linkage-table.component";
 
 @Component({
   selector: 'app-toolbar',
@@ -20,8 +21,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   // @Input() forces: Force[] = [];
   // @Input() mechanisms: Mechanism[] = [];
   // TODO: Use screen Coord within toolbar if you can get to this stage of project
-  @Input() screenCoord: string = '';
-  @Output() showcaseTable = new EventEmitter();
+  // @Input() screenCoord: string = '';
+  // @Output() showcaseTable = new EventEmitter();
   // TODO: Use animategridemitter within toolbar if you can get to this stage of project
   @Output() animateGridEmitter = new EventEmitter();
   @Output() showAnalysisPopup = new EventEmitter<string>();
@@ -71,7 +72,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   showTable() {
     // TODO: If possible, don't have this as an emitter. Have the linkage table have an input here that determines the value,
     // TODO: that is either if it updates automoatically or if NgUpdates is needed
-    this.showcaseTable.emit();
+    LinkageTableComponent.linkageVisibility();
+    // this.showcaseTable.emit();
   }
 
   setTab(analysis: string) {

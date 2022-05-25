@@ -1,25 +1,12 @@
-<app-grid #gridComponent
-          [showIdTags]="animationBarComponent.showIdTags"
-          [showCoMTags]="animationBarComponent.showCoMTags"
-          [runAnimation]="animationBarComponent.animate"></app-grid>
+<app-grid #gridComponent></app-grid>
 <app-linkage-table #linkageTableComponent></app-linkage-table>
 <app-toolbar #toolbarComponent
-             [screenCoord]="gridComponent.screenCoord"
-             (showcaseTable)="linkageTableComponent.linkageVisibility()"
              (animateGridEmitter)="gridComponent.animate($event)"
              (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
-<app-analysis-popup #analysisPopupComponent
-                    [gridOffset]="gridComponent.gridOffset()"
-                    [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
+<app-analysis-popup #analysisPopupComponent></app-analysis-popup>
 <app-animation-bar #animationBarComponent
-                   [screenCoord]="gridComponent.screenCoord"
-                   [mechanismTimeSteps]="gridComponent.mechanismTimeStep"
                    (animateGridEmitter)="gridComponent.animate($event)"
                     (adjustViewEmit)="gridComponent.adjustView($event)">
 </app-animation-bar>
-<app-shape-selector #shapeSelectorComponent
-                    [showcaseShapeSelector]="gridComponent.showcaseShapeSelector"
-                    (saveEdit)="gridComponent.saveEdit()"
-                    (revertEdit)="gridComponent.revertEdit()"
-                    (cancelEdit)="gridComponent.cancelEdit()">
+<app-shape-selector #shapeSelectorComponent>
 </app-shape-selector>

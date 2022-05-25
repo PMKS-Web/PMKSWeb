@@ -14,10 +14,6 @@ import {GridComponent} from "../grid/grid.component";
   styleUrls: ['./linkage-table.component.css']
 })
 export class LinkageTableComponent implements OnInit {
-  // @Input() gravity: boolean = false;
-  // @Input() unit: string = 'cm';
-  // @Output() updateMechanismEmitter = new EventEmitter();
-
   private static linkageTable: SVGElement;
   private static jointButton: SVGElement;
   private static linkButton: SVGElement;
@@ -210,7 +206,7 @@ export class LinkageTableComponent implements OnInit {
     }
   }
 
-  linkageVisibility() {
+  static linkageVisibility() {
     if (LinkageTableComponent.linkageTable.style.visibility === 'visible') {
       LinkageTableComponent.linkageTable.style.visibility = 'hidden';
       LinkageTableComponent.showLinkageTableButton.textContent = 'Show Table'
@@ -218,6 +214,10 @@ export class LinkageTableComponent implements OnInit {
       LinkageTableComponent.linkageTable.style.visibility = 'visible';
       LinkageTableComponent.showLinkageTableButton.textContent = 'Hide Table'
     }
+  }
+
+  getLinkageVisibility() {
+    return LinkageTableComponent.linkageVisibility();
   }
 
   typeOfJoint(joint: Joint) {

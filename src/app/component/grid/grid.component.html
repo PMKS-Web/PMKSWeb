@@ -104,21 +104,21 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the jointTagHolder -->
-    <g id="jointTagHolder" *ngIf="showIdTags">
+    <g id="jointTagHolder" *ngIf="showIDTags()">
       <svg *ngFor="let joint of getJoints()" [attr.x]="joint.x - 0.2" [attr.y]="(-1 * joint.y) - 0.2"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text *ngIf="typeOfJoint(joint) !== 'P'" style="font-size: 0.7px; text-anchor: middle">{{joint.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
-    <g id="linkTagHolder" *ngIf="showIdTags">
+    <g id="linkTagHolder" *ngIf="showIDTags()">
       <svg *ngFor="let link of getLinks()" [attr.x]="getLinkProp(link, 'CoMX')"
            [attr.y]="getLinkProp(link, 'CoMY')" [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
         <text *ngIf="typeOfLink(link) !== 'P'" style="font-size: 0.7px; text-anchor: middle">{{link.id}}</text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the forceTagHolder -->
-    <g id="forceTagHolder" *ngIf="showIdTags">
+    <g id="forceTagHolder" *ngIf="showIDTags()">
       <svg *ngFor="let force of getForces()" [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
            [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1"
            [attr.height]="10" [attr.width]="10" style="overflow: visible; text-anchor: middle">
@@ -127,7 +127,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the comTagHolder -->
-    <g id="comTagHolder" style="transform: scaleY(-1)" *ngIf="showCoMTags">
+    <g id="comTagHolder" style="transform: scaleY(-1)" *ngIf="showCoMTags()">
       <svg *ngFor="let link of getLinks()" style="overflow: visible" width="1.23" height="2.61">
         <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0"
               [attr.d]="getLinkProp(link, 'CoM_d1')"></path>
@@ -152,7 +152,7 @@
       <path stroke-width="0.04" stroke="black" d=""></path>
       <path fill="black" d=""></path>
     </g>
-    <g id="linkBoundingBox" *ngIf="showcaseShapeSelector" style="transform: scaleY(-1)">
+    <g id="linkBoundingBox" *ngIf="getShowcaseShapeSelector()" style="transform: scaleY(-1)">
       <g *ngIf="getSelectedLinkProp('shape') !== 'line'">
         <polygon [attr.points]="getSelectedLinkProp('points')" fill="none" stroke="purple" stroke-width="0.02"></polygon>
         <svg [attr.x]="getSelectedLinkProp('bound', 'b1', 'x')"

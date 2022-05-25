@@ -10,11 +10,6 @@ import {Coord} from "../../model/coord";
 })
 export class ShapeSelectorComponent implements OnInit {
 
-  @Input() showcaseShapeSelector: boolean = false;
-  @Output() saveEdit = new EventEmitter();
-  @Output() cancelEdit = new EventEmitter();
-  @Output() revertEdit = new EventEmitter();
-  // @Output() updateMechanismEmitter = new EventEmitter();
   shapes: Shape[] = [Shape.line,
     Shape.bar,
     Shape.eTriangle,
@@ -26,6 +21,11 @@ export class ShapeSelectorComponent implements OnInit {
     Shape.tShape,
     Shape.lShape
   ];
+
+  constructor() { }
+
+  ngOnInit(): void {
+  }
 
   getURL(shape: Shape) {
     switch (shape) {
@@ -54,21 +54,31 @@ export class ShapeSelectorComponent implements OnInit {
     }
   }
 
-  constructor() { }
 
-  ngOnInit(): void {
+  getShowcaseShapeSelector() {
+    return GridComponent.showcaseShapeSelector;
   }
 
   save() {
-    this.saveEdit.emit();
+    GridComponent.showcaseShapeSelector = false;
+    GridComponent.updateMechanism();
   }
 
   cancel() {
-    this.cancelEdit.emit();
+    if (GridComponent.initialLink !== undefined) {
+      GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+      GridComponent.selectedLink.d = GridComponent.initialLink.d;
+      GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
+    }
+    GridComponent.showcaseShapeSelector = false;
+    GridComponent.updateMechanism();
   }
 
   revert() {
-    this.revertEdit.emit();
+    GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+    GridComponent.selectedLink.d = GridComponent.initialLink.d;
+    GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
+    GridComponent.updateMechanism();
   }
 
   changeShape(shape: Shape) {

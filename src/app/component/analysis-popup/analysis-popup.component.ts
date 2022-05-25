@@ -18,10 +18,6 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
   styleUrls: ['./analysis-popup.component.css']
 })
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
-  // @Input() gravity: boolean = false;
-  // @Input() unit: string = '';
-  @Input() gridOffset: { x: number, y: number } = {x: 0, y: 0};
-  @Input() scaleFactor: number = 50;
   private static popUpWindow: SVGElement;
   private static exportButton: SVGElement;
   private static showPlotsButton: SVGElement;
@@ -370,10 +366,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         if (link.bound.b4.y < bot) {
           bot = link.bound.b4.y;
         }
-        center_cord = (this.scaleFactor * left) + this.gridOffset.x;
-        return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  ')';
+        center_cord = (GridComponent.scaleFactor * left) + GridComponent.gridOffset.x;
+        return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) +  ')';
       case 'scale':
-        return 'scale(' + this.scaleFactor + ')'
+        return 'scale(' + GridComponent.scaleFactor + ')'
       case 'transform':
         left = link.bound.b1.x;
         bot = link.bound.b1.y;
@@ -396,15 +392,15 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         if (link.bound.b4.y < bot) {
           bot = link.bound.b4.y;
         }
-        center_cord = (this.scaleFactor * left) + this.gridOffset.x;
+        center_cord = (GridComponent.scaleFactor * left) + GridComponent.gridOffset.x;
 
 
         top = link.bound.b1.y;
         bot = link.bound.b3.y;
-        const link_height =  (Math.abs(top - bot) * this.scaleFactor) + (this.scaleFactor * 2 / 5);
+        const link_height =  (Math.abs(top - bot) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5);
         left = link.bound.b1.x;
         right = link.bound.b2.x;
-        const link_width = (Math.abs(right - left) * (this.scaleFactor)) + (this.scaleFactor * 2 / 5);
+        const link_width = (Math.abs(right - left) * (GridComponent.scaleFactor)) + (GridComponent.scaleFactor * 2 / 5);
         // TODO: Need scale factor?? Or does this need to be 1 / AppConstants.scaleFactor?
         // TODO: Make sure that the conversion for screen grid matches
         // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * (1 / AppConstants.scaleFactor);
@@ -445,17 +441,17 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // const y_dist = 0;
         // TODO: Be sure to account for the force that is added on the link as well
 
-        return 'translate(' + (x_dist) + ' ' + (y_dist) +  '), scale(' + this.scaleFactor + ')'
+        return 'translate(' + (x_dist) + ' ' + (y_dist) +  '), scale(' + GridComponent.scaleFactor + ')'
       // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
       // return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  '), scale(' + this.scaleFactor + ')'
       case 'height':
         top = link.bound.b1.y;
         bot = link.bound.b3.y;
-        return (Math.abs(top - bot) * this.scaleFactor) + (this.scaleFactor * 2 / 5) + 60;
+        return (Math.abs(top - bot) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5) + 60;
       case 'width':
         left = link.bound.b1.x;
         right = link.bound.b2.x;
-        return (Math.abs(right - left) * (this.scaleFactor)) + (this.scaleFactor * 2 / 5) + 50;
+        return (Math.abs(right - left) * (GridComponent.scaleFactor)) + (GridComponent.scaleFactor * 2 / 5) + 50;
       default:
         return '?';
     }

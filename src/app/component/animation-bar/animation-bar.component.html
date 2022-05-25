@@ -1,13 +1,13 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
 <div id="animationBar" style="position:absolute; bottom:10px">
   <div id="currentPos" class="tooltip">
-    <label id="xPos" class="coordinateDisplay" style="font-family: Arial">{{screenCoord}}</label>
+    <label id="xPos" class="coordinateDisplay" style="font-family: Arial">{{getScreenCoord()}}</label>
 <!--    <label id="curPosComma" class="coordinateDisplay" style="font-family: Arial">,</label>-->
 <!--    <label id="yPos" class="coordinateDisplay" style="font-family: Arial">0</label>-->
 <!--    <span class="tooltiptext">Position</span>-->
   </div>
   <div id="dofWrapper" class="tooltip">
-    <label id="btnDOF">DOF {{dof}}</label>
+    <label id="btnDOF">DOF {{getDoF()}}</label>
     <span class="tooltiptext">Degrees of freedom</span>
   </div>
   <div id="animationBtns">
@@ -26,10 +26,10 @@
     <button id="fastspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="getSpeed() === 'fast'">
       <span class="tooltiptext">Change Speed</span>
     </button>
-    <button class="tooltip" id="playBtn" (click)="startAnimation('pause')" *ngIf="!this.animate">
+    <button class="tooltip" id="playBtn" (click)="startAnimation('pause')" *ngIf="!getAnimate()">
       <span class="tooltiptext">Play Animation</span>
     </button>
-    <button class="tooltip" id="pauseBtn" (click)="startAnimation('play')" *ngIf="this.animate">
+    <button class="tooltip" id="pauseBtn" (click)="startAnimation('play')" *ngIf="getAnimate()">
       <span class="tooltiptext">Resume Animation</span>
     </button>
     <button class="tooltip" id="stopBtn" (click)="startAnimation('stop')">
@@ -37,7 +37,7 @@
     </button>
   </div>
   <div id="slidecontainer">
-    <input class="tooltip" type="range" min="0" max="{{maxTimeSteps()}}" value="{{mechanismTimeSteps}}"
+    <input class="tooltip" type="range" min="0" max="{{maxTimeSteps()}}" value="{{getMechanismTimeStep()}}"
            id="slider" (mousedown)="adjustMechanismAnimation(true)" (mousemove)="setAnim()" (mouseup)="adjustMechanismAnimation(false)">
   </div>
   <div id="gridActionContainer">
