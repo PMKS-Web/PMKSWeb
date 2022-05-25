@@ -6,6 +6,7 @@ import {Coord} from "../../model/coord";
 import {roundNumber} from "../../model/utils";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
+import {GridComponent} from "../grid/grid.component";
 
 @Component({
   selector: 'app-linkage-table',
@@ -13,11 +14,6 @@ import {InstantCenter} from "../../model/instant-center";
   styleUrls: ['./linkage-table.component.css']
 })
 export class LinkageTableComponent implements OnInit {
-  @Input() joints: Joint[] = [];
-  @Input() links: Link[] = [];
-  @Input() forces: Force[] = [];
-  @Input() mechanisms: Mechanism[] = [];
-  @Input() ics: InstantCenter[] = [];
   // @Input() gravity: boolean = false;
   @Input() unit: string = 'cm';
   @Output() updateMechanismEmitter = new EventEmitter();
@@ -273,5 +269,17 @@ export class LinkageTableComponent implements OnInit {
   connectedJoints(joint: Joint) {
     if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {return}
     return joint.connectedJoints;
+  }
+
+  getJoints() {
+    return GridComponent.joints;
+  }
+
+  getLinks() {
+    return GridComponent.links;
+  }
+
+  getForces() {
+    return GridComponent.forces;
   }
 }

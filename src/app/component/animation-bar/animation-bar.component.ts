@@ -10,7 +10,6 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
   styleUrls: ['./animation-bar.component.css']
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
-  @Input() mechanisms: Mechanism[] = [];
   @Input() screenCoord: string = '';
   @Input() dof: string = '';
   @Input() mechanismTimeSteps: number = 0;
@@ -34,10 +33,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   maxTimeSteps() {
-    if (this.mechanisms.length === 0) {
+    if (GridComponent.mechanisms.length === 0) {
       return 0;
     } else {
-      return this.mechanisms[0].joints.length - 1;
+      return GridComponent.mechanisms[0].joints.length - 1;
     }
   }
 

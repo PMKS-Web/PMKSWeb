@@ -30,7 +30,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let joint of joints">
+      <tr *ngFor="let joint of getJoints()">
         <td>
           <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
         </td>
@@ -80,7 +80,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let link of links">
+      <tr *ngFor="let link of getLinks()">
         <td *ngIf="typeofLink(link) !== 'P'">
           {{link.id}}
         </td>
@@ -114,7 +114,7 @@
       </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let force of forces">
+      <tr *ngFor="let force of getForces()">
         <td>
           {{force.link.id}}
         </td>

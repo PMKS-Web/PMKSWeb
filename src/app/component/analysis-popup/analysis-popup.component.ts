@@ -18,10 +18,6 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
   styleUrls: ['./analysis-popup.component.css']
 })
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
-  @Input() joints: Joint[] = [];
-  @Input() links: Link[] = [];
-  @Input() forces: Force[] = [];
-  @Input() mechanisms: Mechanism[] = [];
   // @Input() gravity: boolean = false;
   @Input() unit: string = '';
   @Input() gridOffset: { x: number, y: number } = {x: 0, y: 0};
@@ -168,13 +164,13 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
             break;
           case 'force':
             ForceSolver.resetVariables();
-            ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-            ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', ToolbarComponent.gravity, this.unit);
+            ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+            ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, this.unit);
             break;
           case 'kinematic':
             KinematicsSolver.resetVariables();
-            KinematicsSolver.requiredLoops = this.mechanisms[0].requiredLoops;
-            KinematicsSolver.determineKinematics(this.joints, this.links, 10);
+            KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+            KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, 10);
             break;
           case 'stress':
             break;
@@ -535,12 +531,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'statics':
         // determine whether to export force
         ForceSolver.resetVariables();
-        ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', ToolbarComponent.gravity,
+        ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity,
           this.unit);
-        this.titleRow = this.mechanisms[0].forceTitleRow(analysisType)!;
-        this.analysis = this.mechanisms[0].forceAnalysis(analysisType)!;
-        while (increment < (1 + (this.joints.length * 2))) {
+        this.titleRow = GridComponent.mechanisms[0].forceTitleRow(analysisType)!;
+        this.analysis = GridComponent.mechanisms[0].forceAnalysis(analysisType)!;
+        while (increment < (1 + (GridComponent.joints.length * 2))) {
           this.staticForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // determine whether to export torque
@@ -550,22 +546,22 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           (this.staticForcePositionsCheck || this.staticJointPositionsCheck)) ?
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // determine whether to export force positions
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 +
-          (this.forces.length * 2))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 +
+          (GridComponent.forces.length * 2))) {
           this.staticForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // determine whether to leave space in between analyses
         (this.staticForcePositionsCheck && this.staticJointPositionsCheck) ?
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // determine whether to export joint positions
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 +
-          (this.forces.length * 2) + 1 + (this.joints.length * 2))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 +
+          (GridComponent.forces.length * 2) + 1 + (GridComponent.joints.length * 2))) {
           this.staticJointPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         break;
       case 'dynamics':
         // check whether to put the internal force analysis occurring at joints
-        while (increment < (1 + (this.joints.length * 2))) {
+        while (increment < (1 + (GridComponent.joints.length * 2))) {
           this.dynamicForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // check whether to put the torque analysis occurring for mechanism
@@ -575,7 +571,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck) ?
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether to put force positions
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2))) {
           this.dynamicForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // check whether to put space between analyses
@@ -585,8 +581,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
         sub_increment = 0;
         // check whether linear kinematics for joints (p,v,a) have been asked for
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
-          (this.joints.length * 6))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
+          (GridComponent.joints.length * 6))) {
           if (this.dynamicJointKinematicsCheck) {
             switch (sub_increment % 6) {
               case 0:
@@ -621,8 +617,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether linear kinematics for links have been asked for
         sub_increment = 0;
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
-          (this.joints.length * 6) + 1 + (this.links.length * 6))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
+          (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6))) {
           if (this.dynamicLinkKinematicsCheck) {
             switch (sub_increment % 6) {
               case 0:
@@ -657,8 +653,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         sub_increment = 0;
         // check whether angular kinematics have been asked for
-        while (increment < (1 + (this.joints.length * 2) + (1) + 1 + (this.forces.length * 2) + 1 +
-          (this.joints.length * 6) + 1 + (this.links.length * 6) + 1 + (this.links.length * 3))) {
+        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
+          (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6) + 1 + (GridComponent.links.length * 3))) {
           if (this.dynamicAngLinkCheck) {
             switch (sub_increment % 3) {
               case 0:
@@ -683,11 +679,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'kinematics_loops':
         // check whether linear kinematics for joints have been asked for
         KinematicsSolver.resetVariables();
-        KinematicsSolver.requiredLoops = this.mechanisms[0].requiredLoops;
-        KinematicsSolver.determineKinematics(this.joints, this.links, 10);
-        this.titleRow = this.mechanisms[0].kinematicLoopTitleRow();
-        this.analysis = this.mechanisms[0].kinematicLoopAnalysis();
-        while (increment < (1 + (this.joints.length * 6))) {
+        KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+        KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, 10);
+        this.titleRow = GridComponent.mechanisms[0].kinematicLoopTitleRow();
+        this.analysis = GridComponent.mechanisms[0].kinematicLoopAnalysis();
+        while (increment < (1 + (GridComponent.joints.length * 6))) {
           if (this.linKinJointCheck) {
             switch (increment % 6) {
               case 0:
@@ -720,7 +716,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         (this.linKinJointCheck && (this.linKinLinkCheck || this.dynamicAngLinkCheck)) ?
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether linear kinematics for links have been asked for
-        while (increment < (1 + (this.joints.length * 6) + 1 + (this.links.length * 6))) {
+        while (increment < (1 + (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6))) {
           if (this.linKinLinkCheck) {
             switch (increment % 6) {
               case 0:
@@ -754,7 +750,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether angular kinematics have been asked for
         sub_increment = 0;
-        while (increment < (1 + (this.joints.length * 6) + 1 + (this.links.length * 6) + 1 + (this.links.length * 3))) {
+        while (increment < (1 + (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6) + 1 +
+          (GridComponent.links.length * 3))) {
           if (this.dynamicAngLinkCheck) {
             switch (sub_increment % 3) {
               case 0:
@@ -940,5 +937,17 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return -1;
       }
     }
+  }
+
+  getJoints() {
+    return GridComponent.joints;
+  }
+
+  getLinks() {
+    return GridComponent.links;
+  }
+
+  getForces() {
+    return GridComponent.forces;
   }
 }

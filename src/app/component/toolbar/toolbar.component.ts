@@ -6,6 +6,7 @@ import {Mechanism} from "../../model/mechanism/mechanism";
 import {roundNumber} from "../../model/utils";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
+import {GridComponent} from "../grid/grid.component";
 
 @Component({
   selector: 'app-toolbar',
@@ -14,10 +15,10 @@ import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
 
-  @Input() joints: Joint[] = [];
-  @Input() links: Link[] = [];
-  @Input() forces: Force[] = [];
-  @Input() mechanisms: Mechanism[] = [];
+  // @Input() joints: Joint[] = [];
+  // @Input() links: Link[] = [];
+  // @Input() forces: Force[] = [];
+  // @Input() mechanisms: Mechanism[] = [];
   // TODO: Use screen Coord within toolbar if you can get to this stage of project
   @Input() screenCoord: string = '';
   @Output() showcaseTable = new EventEmitter();
@@ -197,7 +198,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   copyURL() {
-    const content = this.generateExportURL(this.joints, this.links, this.forces, [],
+    const content = this.generateExportURL(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
       [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
     const url = this.getURL();
     const dataURLString = `${url}?${content}`;
@@ -222,7 +223,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
-    const content = this.generateExportFile(this.joints, this.links, this.forces, [],
+    const content = this.generateExportFile(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
       [], 10, true, ToolbarComponent.gravity, this.unit.selectedUnit);
 
     const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});

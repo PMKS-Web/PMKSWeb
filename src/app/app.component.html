@@ -4,32 +4,18 @@
           [unit]="toolbarComponent.unit.selectedUnit"
           [runAnimation]="animationBarComponent.animate"></app-grid>
 <app-linkage-table #linkageTableComponent
-                   [joints]="gridComponent.joints"
-                   [links]="gridComponent.links"
-                   [forces]="gridComponent.forces"
-                   [mechanisms]="gridComponent.mechanisms"
-                   [ics]="gridComponent.ics"
                    [unit]="toolbarComponent.unit.selectedUnit"
                    (updateMechanismEmitter)="gridComponent.updateMechanism()"></app-linkage-table>
 <app-toolbar #toolbarComponent
-             [joints]="gridComponent.joints"
-             [links]="gridComponent.links"
-             [forces]="gridComponent.forces"
-             [mechanisms]="gridComponent.mechanisms"
              [screenCoord]="gridComponent.screenCoord"
              (showcaseTable)="linkageTableComponent.linkageVisibility()"
              (animateGridEmitter)="gridComponent.animate($event)"
              (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
 <app-analysis-popup #analysisPopupComponent
-                    [joints]="gridComponent.joints"
-                    [links]="gridComponent.links"
-                    [forces]="gridComponent.forces"
-                    [mechanisms]="gridComponent.mechanisms"
                     [unit]="toolbarComponent.unit.selectedUnit"
                     [gridOffset]="gridComponent.gridOffset()"
                     [scaleFactor]="gridComponent.scaleFactor()"></app-analysis-popup>
 <app-animation-bar #animationBarComponent
-                   [mechanisms]="gridComponent.mechanisms"
                    [screenCoord]="gridComponent.screenCoord"
                    [mechanismTimeSteps]="gridComponent.mechanismTimeStep"
                    (animateGridEmitter)="gridComponent.animate($event)"

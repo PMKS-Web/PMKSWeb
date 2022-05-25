@@ -66,11 +66,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   @Input() runAnimation: boolean = true;
   mechanismTimeStep: number = 0;
   static mechanismAnimationIncrement: number = 2;
-  joints: Joint[] = [];
-  links: Link[] = [];
-  forces: Force[] = [];
-  ics: InstantCenter[] = [];
-  mechanisms: Mechanism[] = [];
+  static joints: Joint[] = [];
+  static links: Link[] = [];
+  static forces: Force[] = [];
+  static ics: InstantCenter[] = [];
+  static mechanisms: Mechanism[] = [];
 
   screenCoord: string = '';
 
@@ -369,9 +369,9 @@ export class GridComponent implements OnInit, AfterViewInit {
                   }
                   const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                   // TODO: Be sure the force added is at correct position for binary link
-                  const force = new Force('F' + this.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
+                  const force = new Force('F' + GridComponent.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
                   GridComponent.selectedLink.forces.push(force);
-                  this.forces.push(force);
+                  GridComponent.forces.push(force);
                   this.updateMechanism();
                   GridComponent.selectedLink.forces.push(force)
                   GridComponent.gridStates = gridStates.waiting;
@@ -512,8 +512,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       case jointStates.dragging:
         GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
         this.updateMechanism();
-        if (this.mechanisms[0].joints[0].length !== 0) {
-          this.showPathHolder = this.mechanisms[0].dof === 1;
+        if (GridComponent.mechanisms[0].joints[0].length !== 0) {
+          this.showPathHolder = GridComponent.mechanisms[0].dof === 1;
         }
         break;
     }
@@ -765,13 +765,13 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   mergeToJoints(joints: Joint[]) {
     joints.forEach(j => {
-      this.joints.push(j);
+      GridComponent.joints.push(j);
     });
   }
 
   mergeToLinks(links: Link[]) {
     links.forEach(l => {
-      this.links.push(l);
+      GridComponent.links.push(l);
     });
   }
 
@@ -1085,7 +1085,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     newJoint.links.push(GridComponent.selectedLink);
     GridComponent.selectedLink.joints.push(newJoint);
     GridComponent.selectedLink.id += newJoint.id;
-    this.joints.push(newJoint);
+    GridComponent.joints.push(newJoint);
     this.updateMechanism();
   }
 
@@ -1095,8 +1095,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       let joint = GridComponent.selectedJoint as RevJoint;
       // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
       joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-      const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
-      this.joints[selectedJointIndex] = joint;
+      const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
+      GridComponent.joints[selectedJointIndex] = joint;
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
@@ -1111,7 +1111,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
       const connectedJoints = [selJoint]
-      this.joints.forEach(j => {
+      GridComponent.joints.forEach(j => {
         if (!(j instanceof RealJoint)) {return}
         if (j.ground) {
           connectedJoints.push(j);
@@ -1122,8 +1122,8 @@ export class GridComponent implements OnInit, AfterViewInit {
       const piston = new Piston(selJoint.id + prisJoint.id, [selJoint, prisJoint]);
       prisJoint.links.push(piston);
       GridComponent.selectedJoint.links.push(piston);
-      this.joints.push(prisJoint);
-      this.links.push(piston);
+      GridComponent.joints.push(prisJoint);
+      GridComponent.links.push(piston);
     } else { // delete Prismatic Joint
       // TODO: determine logic to delete crank and the prismatic joint
       // Find the slider link and delete this
@@ -1134,7 +1134,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteJoint() {
     this.disappearContext();
-    const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, this.joints);
+    const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
     GridComponent.selectedJoint.links.forEach(l => {
       // TODO: May wanna check this to be sure...
       if (l instanceof Piston) {
@@ -1147,26 +1147,26 @@ export class GridComponent implements OnInit, AfterViewInit {
         // delete forces on link
         if (l instanceof RealLink) {
           l.forces.forEach(f => {
-            const forceIndex = this.forces.findIndex(fo => fo.id === f.id);
-            this.forces.splice(forceIndex, 1);
+            const forceIndex = GridComponent.forces.findIndex(fo => fo.id === f.id);
+            GridComponent.forces.splice(forceIndex, 1);
           });
         }
         // go to other connected joint and remove this link from its connectedLinks and joint from connectedJoint
         // There may be an easier way to do this but this logic works :P
         const desiredJointID = l.joints[0].id === GridComponent.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
-        const desiredJointIndex = this.findJointIDIndex(desiredJointID, this.joints);
-        const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (this.joints[desiredJointIndex] as RealJoint).connectedJoints);
-        (this.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
-        const deleteLinkIndex = (this.joints[desiredJointIndex] as RealJoint).links.findIndex(lin => {
+        const desiredJointIndex = this.findJointIDIndex(desiredJointID, GridComponent.joints);
+        const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints);
+        (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
+        const deleteLinkIndex = (GridComponent.joints[desiredJointIndex] as RealJoint).links.findIndex(lin => {
           if (!(lin instanceof RealLink)) {return}
           return lin.id === l.id});
-        (this.joints[desiredJointIndex] as RealJoint).links.splice(deleteLinkIndex, 1);
+        (GridComponent.joints[desiredJointIndex] as RealJoint).links.splice(deleteLinkIndex, 1);
         // remove link from links
-        const deleteLinkIndex2 = this.links.findIndex(li => li.id === l.id);
-        this.links.splice(deleteLinkIndex2, 1);
+        const deleteLinkIndex2 = GridComponent.links.findIndex(li => li.id === l.id);
+        GridComponent.links.splice(deleteLinkIndex2, 1);
       }
     });
-    this.joints.splice(jointIndex, 1);
+    GridComponent.joints.splice(jointIndex, 1);
     this.updateMechanism();
   }
 
@@ -1297,8 +1297,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteLink() {
     this.disappearContext();
-    const linkIndex = this.links.findIndex(l => l.id === GridComponent.selectedLink.id);
-    this.links.splice(linkIndex, 1);
+    const linkIndex = GridComponent.links.findIndex(l => l.id === GridComponent.selectedLink.id);
+    GridComponent.links.splice(linkIndex, 1);
     this.updateMechanism();
   }
 
@@ -1330,19 +1330,20 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteForce() {
     this.disappearContext();
-    const forceIndex = this.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
-    this.forces.splice(forceIndex, 1);
+    const forceIndex = GridComponent.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
+    GridComponent.forces.splice(forceIndex, 1);
     this.updateMechanism();
   }
 
   updateMechanism() {
-    this.mechanisms = [];
+    GridComponent.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
     if (ToolbarComponent.clockwise) {
       inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
     }
-    this.mechanisms.push(new Mechanism(this.joints, this.links, this.forces, this.ics, ToolbarComponent.gravity,
+    GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
+      GridComponent.ics, ToolbarComponent.gravity,
       this.unit, inputAngularVelocity));
     // TODO: put this logic somewhere when joint is being dragged
   }
@@ -1499,10 +1500,10 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private determineNextLetter(additionalLetters?: string[]) {
     let lastLetter = '';
-    if (this.joints.length === 0 && additionalLetters === undefined) {
+    if (GridComponent.joints.length === 0 && additionalLetters === undefined) {
       return 'a';
     }
-    this.joints.forEach(j => {
+    GridComponent.joints.forEach(j => {
       if (j.id > lastLetter) {
         lastLetter = j.id;
       }
@@ -1550,7 +1551,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // }
 
   private findInputJointIndex() {
-    return this.joints.findIndex(j => {
+    return GridComponent.joints.findIndex(j => {
       if (!(j instanceof RealJoint)) { return }
       return j.input;
     });
@@ -1613,27 +1614,27 @@ export class GridComponent implements OnInit, AfterViewInit {
       this.runAnimation = animationState;
     }
 
-    this.joints.forEach((j, j_index) => {
-      j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
-      j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
+    GridComponent.joints.forEach((j, j_index) => {
+      j.x = GridComponent.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
+      j.y = GridComponent.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
     });
-    this.links.forEach((l, l_index) => {
+    GridComponent.links.forEach((l, l_index) => {
       if (!(l instanceof RealLink)) {return}
-      const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
+      const link = GridComponent.mechanisms[0].links[this.mechanismTimeStep][l_index];
       if (!(link instanceof RealLink)) {return}
       l.bound = link.bound;
       l.d = link.d;
       l.CoM = link.CoM;
       l.updateCoMDs();
     });
-    this.forces.forEach((f, f_index) => {
-      f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
-      f.startCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
-      f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
-      f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
-      f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
-      f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
-      f.angle = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
+    GridComponent.forces.forEach((f, f_index) => {
+      f.startCoord.x = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
+      f.startCoord.y = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
+      f.endCoord.x = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
+      f.endCoord.y = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
+      f.local = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
+      f.mag = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
+      f.angle = GridComponent.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
       f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
     });
@@ -1641,7 +1642,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       return
     }
     this.mechanismTimeStep += GridComponent.mechanismAnimationIncrement;
-    if (this.mechanismTimeStep >= this.mechanisms[0].joints.length) {
+    if (this.mechanismTimeStep >= GridComponent.mechanisms[0].joints.length) {
       this.mechanismTimeStep = 0;
     }
     setTimeout(() => {
@@ -1697,13 +1698,13 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   getJointPath(joint: Joint) {
-    if (this.mechanisms[0].joints[0].length === 0) {return ''}
+    if (GridComponent.mechanisms[0].joints[0].length === 0) {return ''}
     let string = 'M'
-    const jointIndex = this.joints.findIndex(j => j.id === joint.id);
-    string += this.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + this.mechanisms[0].joints[0][jointIndex].y.toString()
-    for (let j_index = 1; j_index < this.mechanisms[0].joints.length; j_index++) {
-      string += 'L' + this.mechanisms[0].joints[j_index][jointIndex].x.toString() + ' , '
-        + this.mechanisms[0].joints[j_index][jointIndex].y.toString();
+    const jointIndex = GridComponent.joints.findIndex(j => j.id === joint.id);
+    string += GridComponent.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + GridComponent.mechanisms[0].joints[0][jointIndex].y.toString()
+    for (let j_index = 1; j_index < GridComponent.mechanisms[0].joints.length; j_index++) {
+      string += 'L' + GridComponent.mechanisms[0].joints[j_index][jointIndex].x.toString() + ' , '
+        + GridComponent.mechanisms[0].joints[j_index][jointIndex].y.toString();
     }
     return string;
   }
@@ -1758,5 +1759,17 @@ export class GridComponent implements OnInit, AfterViewInit {
       default:
         return;
     }
+  }
+
+  getJoints() {
+    return GridComponent.joints;
+  }
+
+  getLinks() {
+    return GridComponent.links;
+  }
+
+  getForces() {
+    return GridComponent.forces;
   }
 }
