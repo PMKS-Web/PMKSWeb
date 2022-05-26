@@ -33,7 +33,7 @@ export class Force {
   }
 
   static updateAngle(startCoord: Coord, endCoord: Coord) {
-    return Math.atan2(startCoord.y - endCoord.y, startCoord.x - endCoord.x)  * 180 / Math.PI;
+    return Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x)  * 180 / Math.PI;
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
