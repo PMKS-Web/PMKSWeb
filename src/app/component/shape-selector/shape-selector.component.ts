@@ -75,6 +75,7 @@ export class ShapeSelectorComponent implements OnInit {
   }
 
   revert() {
+    // TODO: Fix a bug where a binary link returns bound when it shouldn't
     GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
     GridComponent.selectedLink.d = GridComponent.initialLink.d;
     GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;

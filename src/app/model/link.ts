@@ -2,7 +2,7 @@ import {Joint} from "./joint";
 import {Coord} from "./coord";
 import {AppConstants} from "./app-constants";
 import {Force} from "./force";
-import {getAngle, getDistance, getXDistance, getYDistance} from "./utils";
+import {getAngle, getDistance, getXDistance, getYDistance, roundNumber} from "./utils";
 
 export enum Shape {
   line = 'line',
@@ -94,9 +94,8 @@ export class RealLink extends Link {
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
-    const origin = new Coord(0, 0);
     let bound: Bound = new class implements Bound {
-      arrow: Coord = origin;
+      arrow: Coord = new Coord(0, 0);
       b1: Coord = new Coord(coord1.x, coord1.y);
       b2: Coord = new Coord(coord2.x, coord2.y);
       b3: Coord = new Coord(coord2.x, coord2.y);
@@ -301,6 +300,90 @@ export class RealLink extends Link {
     bound.b2 = finalAdjustment(coord1, bound.b2, coordAng);
     bound.b3 = finalAdjustment(coord1, bound.b3, coordAng);
     bound.b4 = finalAdjustment(coord1, bound.b4, coordAng);
+    return bound;
+  }
+
+  static rotateBounds(coord1: Coord, coord2: Coord, bound: Bound, shape: Shape) {
+    function getRAndTheta(coord1: Coord, coord2: Coord, coord3: Coord) {
+        const r1 = getDistance(coord1, coord2)
+        const r2 = getDistance(coord2, coord3)
+        const r3 = getDistance(coord3, coord1)
+        const internal_angle = Math.acos((Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3));
+      return [r3, internal_angle];
+    }
+    function determineNewBoundCoord(coord1: Coord, coord2: Coord, coord3: Coord, r1: number, internal_angle: number) {
+      const x1 = coord1.x;
+      const y1 = coord1.y;
+      const x2 = coord2.x;
+      const y2 = coord2.y;
+      const angle = Math.atan2(y2 - y1, x2 - x1) + (Math.PI / 180);
+      let x_calc: number;
+      let y_calc: number;
+      let x_calc1: number;
+      let y_calc1: number;
+      let x_calc2: number;
+      let y_calc2: number;
+      if (x1 > x2) { // A to the right of B
+        if (y1 > y2) { // A on top of B (good)
+          x_calc1 = x1 + r1 * Math.cos( (Math.PI) + (internal_angle + (Math.PI + angle)));
+          y_calc1 = y1 + r1 * Math.sin( (Math.PI) + (internal_angle + (Math.PI + angle)));
+          x_calc2 = x1 + r1 * Math.cos((Math.PI) - (internal_angle - (Math.PI + angle)));
+          y_calc2 = y1 + r1 * Math.sin((Math.PI) - (internal_angle - (Math.PI + angle)));
+        } else { // A below B (good)
+          x_calc1 = x1 + r1 * Math.cos((Math.PI) + (internal_angle - (Math.PI - angle)));
+          y_calc1 = y1 + r1 * Math.sin((Math.PI) + (internal_angle - (Math.PI - angle)));
+          x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle + (Math.PI - angle)));
+          y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle + (Math.PI - angle)));
+        }
+      } else { // A to the left of B
+        if (y1 > y2) { // A on top of B (good)
+          x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (Math.abs(angle) + internal_angle));
+          y_calc1 = y1 + r1 * Math.sin((2 * Math.PI) - (Math.abs(angle) + internal_angle));
+          x_calc2 = x1 + r1 * Math.cos(internal_angle - Math.abs(angle));
+          y_calc2 = y1 + r1 * Math.sin(internal_angle - Math.abs(angle));
+        } else { // A below B (good)
+          x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (angle - internal_angle));
+          y_calc1 = y1 + r1 * Math.sin(angle - internal_angle);
+          x_calc2 = x1 + r1 * Math.cos(internal_angle + angle);
+          y_calc2 = y1 + r1 * Math.sin(internal_angle + angle);
+        }
+      }
+      const prevJoint_x = coord3.x;
+      const prevJoint_y = coord3.y;
+      // TODO: Should this also call euclidean distance? Also, shouldn't this be sqrt instead of abs
+      const dist1 = Math.abs(Math.pow(x_calc1 - prevJoint_x, 2) + Math.pow(y_calc1 - prevJoint_y, 2));
+      const dist2 = Math.abs(Math.pow(x_calc2 - prevJoint_x, 2) + Math.pow(y_calc2 - prevJoint_y, 2));
+      if (dist1 < dist2) {
+        x_calc = x_calc1;
+        y_calc = y_calc1;
+      } else {
+        x_calc = x_calc2;
+        y_calc = y_calc2;
+      }
+      return new Coord(x_calc, y_calc);
+    }
+    let r1, r2, r3, r4, internal_angle1, internal_angle2, internal_angle3, internal_angle4: number;
+    // TODO: Do this later...
+    // if (!this.internalTriangleValuesMap.has(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)) {
+    //   // TODO: Have map for determining r1, r2, r3
+    //   r1 = this.jointDistMap.get(unknown_joint.id + ',' + lastJoint.id)!;
+    //   r2 = this.jointDistMap.get(unknown_joint.id + ',' + joint_with_neighboring_ground.id)!;
+    //   r3 = this.jointDistMap.get(joint_with_neighboring_ground.id + ',' + lastJoint.id)!;
+    //   internal_angle = Math.acos((Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3));
+    //   this.internalTriangleValuesMap.set(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id,
+    //     [r1, internal_angle]);
+    //
+    // }
+    [r1, internal_angle1] = getRAndTheta(coord1, coord2, bound.b1);
+    [r2, internal_angle2] = getRAndTheta(coord1, coord2, bound.b2);
+    [r3, internal_angle3] = getRAndTheta(coord1, coord2, bound.b3);
+    [r4, internal_angle4] = getRAndTheta(coord1, coord2, bound.b4);
+    // r1 = this.internalTriangleValuesMap.get(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)![0];
+    // internal_angle = this.internalTriangleValuesMap.get(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)![1];
+    bound.b1 = determineNewBoundCoord(coord1, coord2, bound.b1, r1, internal_angle1);
+    bound.b2 = determineNewBoundCoord(coord1, coord2, bound.b2, r2, internal_angle2);
+    bound.b3 = determineNewBoundCoord(coord1, coord2, bound.b3, r3, internal_angle3);
+    bound.b4 = determineNewBoundCoord(coord1, coord2, bound.b4, r4, internal_angle4);
     return bound;
   }
 

@@ -202,6 +202,8 @@ export class Mechanism {
           // });
           const pushLink = new RealLink(l.id, connectedJoints);
           pushLink.shape = l.shape;
+          // pushLink.bound = RealLink.rotateBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
+          //     new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound, l.shape);
           pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
             new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
           pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
