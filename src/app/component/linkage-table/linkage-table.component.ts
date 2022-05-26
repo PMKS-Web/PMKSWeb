@@ -118,7 +118,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'angle':
         if (!(joint instanceof PrisJoint)) {return}
-        joint.angle = $event.target.value;
+        joint.angle = Number($event.target.value);
     }
     GridComponent.updateMechanism();
   }
@@ -127,19 +127,22 @@ export class LinkageTableComponent implements OnInit {
     if (!(link instanceof RealLink)) {return}
     switch (linkProp) {
       case 'mass':
-        link.mass = $event.target.value;
+        link.mass = Number($event.target.value);
         break;
       case 'massMoI':
-        link.massMoI = $event.target.value;
+        link.massMoI = Number($event.target.value);
         break;
       case 'CoMX':
-        link.CoM.x = $event.target.value;
+        link.CoM.x = Number($event.target.value);
         break;
       case 'CoMY':
-        link.CoM.y = $event.target.value;
+        link.CoM.y = Number($event.target.value);
         break;
     }
     GridComponent.updateMechanism();
+  }
+  showForceAngle(force: Force) {
+    return force.angle * (180 / Math.PI);
   }
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
@@ -147,19 +150,19 @@ export class LinkageTableComponent implements OnInit {
         force.id = $event.target.value;
         break;
       case 'xPos':
-        force.startCoord.x = $event.target.value;
+        force.startCoord.x = Number($event.target.value);
         break;
       case 'yPos':
-        force.startCoord.y = $event.target.value;
+        force.startCoord.y = Number($event.target.value);
         break;
       case 'mag':
-        force.mag = $event.target.value;
+        force.mag = Number($event.target.value);
         break;
       case 'angle':
-        force.angle = $event.target.value;
+        force.angle = Number($event.target.value) * (Math.PI / 180);
         // TODO: Within commonClass, have radToDeg and degToRad
-        force.endCoord.x = Math.cos(force.angle * Math.PI / 180) * force.mag + force.startCoord.x;
-        force.endCoord.y = Math.sin(force.angle * Math.PI / 180) * force.mag + force.startCoord.y;
+        force.endCoord.x = Math.cos(force.angle) + force.startCoord.x;
+        force.endCoord.y = Math.sin(force.angle) + force.startCoord.y;
         break;
     }
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);

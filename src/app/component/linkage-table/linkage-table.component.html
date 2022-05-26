@@ -122,7 +122,7 @@
           <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
         </td>
         <td>
-          <input type="text" value="{{force.angle}}" (change)="changeForceProp($event, force, 'angle')">
+          <input type="text" value="{{showForceAngle(force)}}" (change)="changeForceProp($event, force, 'angle')">
         </td>
         <td>
           <input type="text" value="{{force.mag}}" (change)="changeForceProp($event, force, 'mag')">
