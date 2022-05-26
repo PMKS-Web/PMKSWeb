@@ -190,124 +190,123 @@
       <div *ngIf="selectedAnalysis === 'loop'">
 
       </div>
-      <div *ngIf="selectedAnalysis === 'force'">
-        <div id="div_{{link.id}}" *ngFor="let link of getLinks()" style="overflow: scroll; height: 50px">
-          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link)">
+      <div *ngIf="selectedAnalysis === 'force'"
+           style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
+        <div id="div_{{link.id}}" *ngFor="let link of getLinks()"
+             style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block">
+          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link)"
+                 style="display: block; float: left">
           <label>Link {{link.id}}</label>
-          <div *ngIf="forceSelectedCheckbox(link)" style="overflow: hidden auto">
-            <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
-                 style="transform: scaleY(-1);display: block; margin: auto">
-              <!-- TODO: Make sure scale works accordingly -->
-              <g [attr.transform]="getLinkProp(link, 'transform')"
-                 [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
-                 style="display: block; margin: auto">
-                <path
-                  [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
-                  [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8">
+          <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
+               style="transform: scaleY(-1);display: none">
+            <!-- TODO: Make sure scale works accordingly -->
+            <g [attr.transform]="getLinkProp(link, 'transform')"
+               [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">
+              <path
+                [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"
+                [attr.fill]="getLinkProp(link, 'fill')">
+              </path>
+              <!-- TODO: Determine logic when the link shape is too big to showcase -->
+              <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')"
+                      [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
+              <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
+                      [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
+              <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3">
+                <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
+              </svg>
+              <g *ngFor="let joint of link.joints">
+                <!-- TODO: Have ngIf for when condition met -->
+                <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
+                      [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
                 </path>
-                <!-- TODO: Determine logic when the link shape is too big to showcase -->
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')"
-                        [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
-                        [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
-                <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3" style="font-size: 1px;
-               text-anchor: middle; overflow: visible;">
-                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
-                </svg>
-                <g *ngFor="let joint of link.joints">
-                  <!-- TODO: Have ngIf for when condition met -->
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
-                        [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                        [attr.d]="getForceLine(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path  *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                         [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path  *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                         [attr.d]="getForceLine(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
-                        [attr.d]="getForceArrow(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                        [attr.d]="getForceArrow(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path   *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                          [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
-                  </path>
-                  <path   *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                          [attr.d]="getForceArrow(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
-                  </path>
-                </g>
+                <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
+                      [attr.d]="getForceLine(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
+                </path>
+                <path  *ngIf="getForceAssumption(link, joint, 'y') === 1"
+                       [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                </path>
+                <path  *ngIf="getForceAssumption(link, joint, 'y') === -1"
+                       [attr.d]="getForceLine(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
+                </path>
+                <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
+                      [attr.d]="getForceArrow(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
+                </path>
+                <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
+                      [attr.d]="getForceArrow(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
+                </path>
+                <path   *ngIf="getForceAssumption(link, joint, 'y') === 1"
+                        [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                </path>
+                <path   *ngIf="getForceAssumption(link, joint, 'y') === -1"
+                        [attr.d]="getForceArrow(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
+                </path>
               </g>
-            </svg>
-            <div *ngFor="let joint of link.joints">
-              <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'x') === 1">
-              <label>Direction of Force {{joint.id}}x</label>
-              <br>
-              <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'y') === 1">
-              <label>Direction of Force {{joint.id}}y</label>
-              <br>
-            </div>
-            <div>
-              <label>Moment reference</label>
-              <select>
-                <option *ngFor="let joint of getJoints()" [innerHTML]="joint.id">
-                </option>
-              </select>
-            </div>
-            <div>
-              &sum;F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br>
-            </div>
-            <div>
-              F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>a</sub>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br>
-            </div>
-            <div>
-              F
-              <sub>ay</sub>
-              = 0
-              <br>
-            </div>
-            <div>
-              F
-              <sub>ax</sub>
-              = 0
-              <br>
-            </div>
-            <hr style="border-color: blue; display: block;">
-            <div>
-              &sum;M
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br>
-            </div>
-            <div>
-              R
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              X F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <div>
-              F
-              <sub>ax</sub>
-              + F
-              <sub>ax</sub>
-              = 0
-            </div>
+            </g>
+          </svg>
+          <div *ngFor="let joint of link.joints" style="display: none">
+            <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'x') === 1">
+            <label>Direction of Force {{joint.id}}x</label>
+            <br>
+            <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'y') === 1">
+            <label>Direction of Force {{joint.id}}y</label>
+            <br>
+          </div>
+          <div style="display: none">
+            <label>Moment reference</label>
+            <select>
+              <option *ngFor="let joint of getJoints()" [innerHTML]="joint.id">
+              </option>
+            </select>
+          </div>
+          <div style="display: none">
+            &sum;F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div style="display: none">
+            F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <sub>a</sub>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div style="display: none">
+            F
+            <sub>ay</sub>
+            = 0
+            <br>
+          </div>
+          <div style="display: none">
+            F
+            <sub>ax</sub>
+            = 0
+            <br>
+          </div>
+          <hr style="border-color: blue; display: none;">
+          <div style="display: none">
+            &sum;M
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <br>
+          </div>
+          <div style="display: none">
+            R
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            X F
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <div style="display: none">
+            F
+            <sub>ax</sub>
+            + F
+            <sub>ax</sub>
+            = 0
           </div>
         </div>
       </div>

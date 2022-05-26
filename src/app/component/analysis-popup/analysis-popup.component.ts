@@ -117,9 +117,20 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         const styleString = element.getAttribute('style')!;
         const heightIndex = styleString.indexOf('height');
         if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
-          element.setAttribute('style', 'overflow: scroll; height: 500px');
+          element.setAttribute('style', 'margin: 4px; padding: 4px; height: 500px; width: 500px; overflow: scroll; text-align: justify; display: block');
+          for (let htmlIndex = 2; htmlIndex < element.children.length; htmlIndex++) {
+            const SVGElement = element.children[htmlIndex] as SVGElement;
+            SVGElement.style.display = 'block';
+          }
         } else {
-          element.setAttribute('style', 'overflow: scroll; height: 50px');
+          element.setAttribute('style', 'margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block"');
+          for (let htmlIndex = 2; htmlIndex < element.children.length; htmlIndex++) {
+            const SVGElement = element.children[htmlIndex] as SVGElement;
+            SVGElement.style.display = 'none';
+          }
+        //   element.setAttribute('style', 'overflow: scroll; height: 500px');
+        // } else {
+        //   element.setAttribute('style', 'overflow: scroll; height: 50px');
         }
         break;
       default:
