@@ -267,7 +267,7 @@
           </div>
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
-              <span *ngIf="indexOfElement !== 0">
+              <span *ngIf="indexOfElement !== 0" >
                 +
               </span>
               F
@@ -280,8 +280,11 @@
           </div>
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
-              <span *ngIf="indexOfElement !== 0">
+              <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1">
                 +
+              </span>
+              <span *ngIf="getForceAssumption(link, joint, 'x') !== 1">
+                -
               </span>
               F
               <sub>{{joint.id}}x</sub>
@@ -291,8 +294,11 @@
           </div>
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
-              <span *ngIf="indexOfElement !== 0">
+              <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1">
                 +
+              </span>
+              <span *ngIf="getForceAssumption(link, joint, 'y') !== 1">
+                -
               </span>
               F
               <sub>{{joint.id}}y</sub>
