@@ -266,22 +266,37 @@
             <br>
           </div>
           <div style="display: none">
-            F
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            <sub>a</sub>
+            <span *ngFor="let joint of link.joints; let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+                +
+              </span>
+              F
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{joint.id}}</sub>
+            </span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             <br>
           </div>
           <div style="display: none">
-            F
-            <sub>ay</sub>
+            <span *ngFor="let joint of link.joints; let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+                +
+              </span>
+              F
+              <sub>{{joint.id}}x</sub>
+            </span>
             = 0
             <br>
           </div>
           <div style="display: none">
-            F
-            <sub>ax</sub>
+            <span *ngFor="let joint of link.joints; let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+                +
+              </span>
+              F
+              <sub>{{joint.id}}y</sub>
+            </span>
             = 0
             <br>
           </div>

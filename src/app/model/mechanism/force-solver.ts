@@ -9,7 +9,7 @@ export class ForceSolver {
   static linkToFixedPositionMap = new Map<string, string>();
   static jointPositiveForceYLinkMap = new Map<string, string>();
   private static jointIDToTracerBooleanMap = new Map<string, boolean>();
-  private static unknownVariableNum: number;
+  private static unknownVariableNum: number | undefined;
   private static jointIDToUsedBooleanMap = new Map<string, boolean>();
 
   static jointIdToJointIndexMap = new Map<string, number>();
@@ -36,6 +36,7 @@ export class ForceSolver {
     this.A_matrix = [];
     this.B_matrix = [];
     this.desiredLoopLetters = Array<Array<string>>();
+    this.unknownVariableNum = undefined;
   }
 
   static determineForceAnalysis(joints: Joint[], links: Link[], analysisType: string, gravity: boolean, unit: string) {
