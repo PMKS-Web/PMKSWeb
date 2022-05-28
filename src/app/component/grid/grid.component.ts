@@ -556,7 +556,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Possibly put this somewhere else so don't have to copy/paste?
     const rawCoord = GridComponent.getMousePosition($event)!;
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
-    GridComponent.screenCoord = '(' + trueCoord.x + ' , ' + trueCoord.y + ')';
+    GridComponent.screenCoord = '(' + roundNumber(trueCoord.x, 1) + ' , ' + roundNumber(trueCoord.y, 1) + ')';
 
     switch (GridComponent.gridStates) {
       case gridStates.dragging:

@@ -1,5 +1,5 @@
 import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
-import {Piston, Link, RealLink} from "../link";
+import {Link, Piston, RealLink, Shape} from "../link";
 import {Force} from "../force";
 // import {LoopSolver} from "./loop-solver";
 import {PositionSolver} from "./position-solver";
@@ -10,7 +10,6 @@ import {Coord} from "../coord";
 import {KinematicsSolver} from "./kinematic-solver";
 import {ForceSolver} from "./force-solver";
 import {roundNumber} from "../utils";
-import {GridComponent} from "../../component/grid/grid.component";
 
 export class Mechanism {
   private _joints: Joint[][] = [[]];
@@ -164,6 +163,7 @@ export class Mechanism {
       connectedJointMapIndices.set(l.id, numArray);
     });
 
+
     const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1);
     const desiredJointIndex =this.joints[0].findIndex(j => j.id === desiredJointID);
     if (desiredJointIndex === undefined) {return}
@@ -202,10 +202,14 @@ export class Mechanism {
           // });
           const pushLink = new RealLink(l.id, connectedJoints);
           pushLink.shape = l.shape;
-          // pushLink.bound = RealLink.rotateBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
-          //     new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound, l.shape);
-          pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
-            new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
+          // TODO: Update this to just one function later...
+          if (pushLink.shape === 'line') {
+            pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
+              new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
+          } else {
+            pushLink.bound = RealLink.rotateBounds(l.joints[0], l.joints[1], new Coord(connectedJoints[0].x, connectedJoints[0].y),
+              new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound);
+          }
           pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
           // TODO: When you insert a joint onto a link, be sure to utilize this function call
           pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);

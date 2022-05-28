@@ -9,7 +9,7 @@ export class Utils {
 // degToRad
 
 export function roundNumber(num: number, scale: number): number {
-  return Math.round(num * 10000) / 10000;
+  return Math.round(num * Math.pow(10, scale)) / Math.pow(10, scale);
 }
 
 // https://jamesmccaffrey.wordpress.com/2020/04/24/matrix-inverse-with-javascript/
