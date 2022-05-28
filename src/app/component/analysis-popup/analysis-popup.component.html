@@ -17,8 +17,8 @@
                 (mouseout)="mouseOut(2)"> Show Eqns </button>
       </div>
     </div>
-    <div class="tabPanel" *ngIf="selectedTab === 0">
-      <div *ngIf="selectedAnalysis === 'loop'">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 0">
+      <div *ngIf="getSelectedAnalysis() === 'loop'">
         <div>
           <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck">
           <label>
@@ -37,7 +37,7 @@
           </button>
         </div>
       </div>
-      <div *ngIf="selectedAnalysis === 'force'">
+      <div *ngIf="getSelectedAnalysis() === 'force'">
         <div>
           <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck">
           <label>
@@ -68,10 +68,10 @@
           </button>
         </div>
       </div>
-      <div *ngIf="selectedAnalysis === 'stress'">
+      <div *ngIf="getSelectedAnalysis() === 'stress'">
         <!-- TODO: Do this once this is determined -->
       </div>
-      <div *ngIf="selectedAnalysis === 'kinematic'">
+      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
         <div>
           <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck">
           <label>
@@ -132,7 +132,7 @@
           </button>
         </div>
       </div>
-      <div *ngIf="selectedAnalysis === 'ic'">
+      <div *ngIf="getSelectedAnalysis() === 'ic'">
         <div>
           <input type="checkbox">
           <label>
@@ -170,7 +170,7 @@
         </div>
       </div>
     </div>
-    <div class="tabPanel" *ngIf="selectedTab === 1">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 1">
       <table id="plotTable">
         <thead>
         <tr>
@@ -186,11 +186,11 @@
         <tfoot></tfoot>
       </table>
     </div>
-    <div class="tabPanel" *ngIf="selectedTab === 2">
-      <div *ngIf="selectedAnalysis === 'loop'">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 2">
+      <div *ngIf="getSelectedAnalysis() === 'loop'">
 
       </div>
-      <div *ngIf="selectedAnalysis === 'force'"
+      <div *ngIf="getSelectedAnalysis() === 'force'"
            style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
         <div id="div_{{link.id}}" *ngFor="let link of getLinks()"
              style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block">
@@ -310,13 +310,13 @@
           </div>
         </div>
       </div>
-      <div *ngIf="selectedAnalysis === 'stress'">
+      <div *ngIf="getSelectedAnalysis() === 'stress'">
 
       </div>
-      <div *ngIf="selectedAnalysis === 'kinematic'">
+      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
 
       </div>
-      <div *ngIf="selectedAnalysis === 'ic'">
+      <div *ngIf="getSelectedAnalysis() === 'ic'">
 
       </div>
     </div>

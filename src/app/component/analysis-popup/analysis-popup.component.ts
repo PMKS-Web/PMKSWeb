@@ -22,8 +22,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   private static exportButton: SVGElement;
   private static showPlotsButton: SVGElement;
   private static showEqsButton: SVGElement;
-  selectedTab: number = 0;
-  selectedAnalysis: string = '';
+  static selectedTab: number = 0;
+  static selectedAnalysis: string = '';
 
   // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
@@ -101,13 +101,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     AnalysisPopupComponent.showEqsButton = document.getElementById('showEqsButton') as unknown as SVGElement;
   }
 
-  showAnalysis($event: string) {
+  static showAnalysis(analysis: string) {
     AnalysisPopupComponent.popUpWindow.style.display = 'block';
-    this.selectedAnalysis = $event;
+    AnalysisPopupComponent.selectedAnalysis = analysis;
   }
 
   closeAnalysis() {
     AnalysisPopupComponent.popUpWindow.style.display = 'none';
+  }
+
+  getSelectedAnalysis() {
+    return AnalysisPopupComponent.selectedAnalysis;
+  }
+
+  getSelectedTab() {
+    return AnalysisPopupComponent.selectedTab;
   }
 
   updateTable(val: string, obj?: any) {
@@ -140,7 +148,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
 
   setTab(tabNum: number) {
-    this.selectedTab = tabNum;
+    AnalysisPopupComponent.selectedTab = tabNum;
     // TODO: If possible, put this as hover within css
     switch (tabNum) {
       case 0:
@@ -166,7 +174,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           'color: gray; background-color: white');
         AnalysisPopupComponent.showEqsButton.setAttribute('style',
           'color: black; background-color: gray');
-        switch (this.selectedAnalysis) {
+        switch (AnalysisPopupComponent.selectedAnalysis) {
           case 'loop':
             break;
           case 'force':

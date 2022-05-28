@@ -10,8 +10,6 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
   styleUrls: ['./animation-bar.component.css']
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
-  @Output() animateGridEmitter = new EventEmitter<[number, boolean]>();
-  @Output() adjustViewEmit = new EventEmitter<string>();
   static showIdTags: boolean = false;
   static showCoMTags: boolean = false;
   static animate: boolean = false;
@@ -71,25 +69,23 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     switch (state) {
       case 'play':
         AnimationBarComponent.animate = false;
-        this.animateGridEmitter.emit([GridComponent.mechanismTimeStep, AnimationBarComponent.animate]);
+        GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
         break;
       case 'pause':
         AnimationBarComponent.animate = true;
-        this.animateGridEmitter.emit([GridComponent.mechanismTimeStep, AnimationBarComponent.animate]);
+        GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
-        this.animateGridEmitter.emit([0, AnimationBarComponent.animate]);
+        GridComponent.animate(0, AnimationBarComponent.animate);
         break;
     }
   }
 
   setAnim() {
-    // if (!this.animate) {
     if (AnimationBarComponent.adjustAnimation) {
-      this.animateGridEmitter.emit([Number(AnimationBarComponent.slider.value), AnimationBarComponent.animate]);
+      GridComponent.animate(Number(AnimationBarComponent.slider.value), AnimationBarComponent.animate);
     }
-    // }
   }
 
   adjustMechanismAnimation(condition: boolean) {
@@ -105,16 +101,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onZoomInPressed() {
-    this.adjustViewEmit.emit('in');
+    GridComponent.adjustView('in');
   }
 
   onZoomOutPressed() {
-    this.adjustViewEmit.emit('out');
+    GridComponent.adjustView('out');
 
   }
 
   onZoomResetPressed() {
-    this.adjustViewEmit.emit('reset');
+    GridComponent.adjustView('reset');
 
   }
 

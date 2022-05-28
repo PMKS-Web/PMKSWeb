@@ -1,12 +1,6 @@
-<app-grid #gridComponent></app-grid>
-<app-linkage-table #linkageTableComponent></app-linkage-table>
-<app-toolbar #toolbarComponent
-             (animateGridEmitter)="gridComponent.animate($event)"
-             (showAnalysisPopup)="analysisPopupComponent.showAnalysis($event)"></app-toolbar>
-<app-analysis-popup #analysisPopupComponent></app-analysis-popup>
-<app-animation-bar #animationBarComponent
-                   (animateGridEmitter)="gridComponent.animate($event)"
-                    (adjustViewEmit)="gridComponent.adjustView($event)">
-</app-animation-bar>
-<app-shape-selector #shapeSelectorComponent>
-</app-shape-selector>
+<app-grid></app-grid>
+<app-linkage-table></app-linkage-table>
+<app-toolbar></app-toolbar>
+<app-analysis-popup></app-analysis-popup>
+<app-animation-bar></app-animation-bar>
+<app-shape-selector></app-shape-selector>

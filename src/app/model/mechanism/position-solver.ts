@@ -255,8 +255,8 @@ export class PositionSolver {
     const angle = Math.atan2(unknownJoint.y - inputJoint.y, unknownJoint.x - inputJoint.x);
     const x = Math.cos(angle + increment) * r + inputJoint.x;
     const y = Math.sin(angle + increment) * r + inputJoint.y;
-    this.jointMapPositions.set(inputJoint.id, [roundNumber(inputJoint.x, 3), roundNumber(inputJoint.y, 3)]);
-    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
+    this.jointMapPositions.set(inputJoint.id, [roundNumber(inputJoint.x, 4), roundNumber(inputJoint.y, 4)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
   }
 
   private static incrementPrisInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
@@ -268,7 +268,7 @@ export class PositionSolver {
     const yIncrement = increment * Math.sin(0);
     const x = unknownJoint.x + xIncrement;
     const y = unknownJoint.y + yIncrement;
-    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
   }
 
 // https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
@@ -285,7 +285,7 @@ export class PositionSolver {
     }
     const x = sols[desiredIndex][0];
     const y = sols[desiredIndex][1];
-    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
   }
 
@@ -410,8 +410,8 @@ export class PositionSolver {
       }
     }
     // const y = Math.tan(unknownJoint.angle) * unknownJoint.x + unknownJoint.y;
-    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 3), roundNumber(y, 3)]);
-    this.jointMapPositions.set(j2.id, [roundNumber(x, 3), roundNumber(y, 3)]);
+    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
+    this.jointMapPositions.set(j2.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
   }
 
@@ -549,7 +549,7 @@ export class PositionSolver {
       x_calc = x_calc2;
       y_calc = y_calc2;
     }
-    this.jointMapPositions.set(unknown_joint.id, [roundNumber(x_calc, 3), roundNumber(y_calc, 3)]);
+    this.jointMapPositions.set(unknown_joint.id, [roundNumber(x_calc, 4), roundNumber(y_calc, 4)]);
   }
 
   static setUpSolvingForces(forces: Force[]) {

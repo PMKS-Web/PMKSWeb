@@ -260,8 +260,8 @@ export class Mechanism {
         inputAngularVelocity = inputAngularVelocity * -1;
         inputAngVelDirection = !inputAngVelDirection;
       }
-      xDiff = Math.abs(startingPositionX - (Math.round(this._joints[currentTimeStamp][desiredJointIndex].x * 100) / 100));
-      yDiff = Math.abs(startingPositionY - (Math.round(this._joints[currentTimeStamp][desiredJointIndex].y * 100) / 100));
+      xDiff = Math.abs(startingPositionX - (roundNumber(this._joints[currentTimeStamp][desiredJointIndex].x, 2)));
+      yDiff = Math.abs(startingPositionY - (roundNumber(this._joints[currentTimeStamp][desiredJointIndex].y, 2)));
       if (currentTimeStamp === 750) {
         this.setMechanismInvalid();
         return;

@@ -281,7 +281,11 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.forceStates = forceStates.waiting;
       GridComponent.updateMechanism();
     }
-    this.showPathHolder = false;
+    GridComponent.showPathHolder = false;
+  }
+
+  getShowPathHolder() {
+    return GridComponent.showPathHolder;
   }
 
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
@@ -606,7 +610,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedJoint = GridComponent.dragJoint(GridComponent.selectedJoint, trueCoord);
         GridComponent.updateMechanism();
         if (GridComponent.mechanisms[0].joints[0].length !== 0) {
-          this.showPathHolder = GridComponent.mechanisms[0].dof === 1;
+          GridComponent.showPathHolder = GridComponent.mechanisms[0].dof === 1;
         }
         break;
     }
@@ -1561,7 +1565,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
-  showPathHolder: boolean = false;
+  static showPathHolder: boolean = false;
   getLinkProp(l: Link, propType: string) {
     if (l instanceof Piston) {
       return
@@ -1702,10 +1706,9 @@ export class GridComponent implements OnInit, AfterViewInit {
     clearTimeout(0);
   }
 
-  animate(e: [progress: number, animationState?: boolean]) {
-    GridComponent.mechanismTimeStep = e[0];
-    const animationState = e[1];
-    this.showPathHolder = !(GridComponent.mechanismTimeStep === 0 && !animationState);
+  static animate(progress: number, animationState?: boolean) {
+    GridComponent.mechanismTimeStep = progress;
+    GridComponent.showPathHolder = !(GridComponent.mechanismTimeStep === 0 && !animationState);
     if (animationState !== undefined) {
       AnimationBarComponent.animate = animationState;
     }
@@ -1742,11 +1745,11 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.mechanismTimeStep = 0;
     }
     setTimeout(() => {
-      this.animate([GridComponent.mechanismTimeStep]);
+      this.animate(GridComponent.mechanismTimeStep);
     }, 8);
   }
 
-  adjustView(setting: string) {
+  static adjustView(setting: string) {
     let halfWidth: number;
     let halfHeight: number;
     switch (setting) {
