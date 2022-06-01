@@ -173,16 +173,8 @@ export class ForceSolver {
         let yForce: number;
         const xIndex = this.jointIDToUnknownArrayIndexMap.get(j.id)!;
         const yIndex = xIndex + 1;
-        if (this.jointPositiveForceXLinkMap.get(j.id) === link.id) {
-          xForce = 1;
-        } else {
-          xForce = -1;
-        }
-        if (this.jointPositiveForceYLinkMap.get(j.id) === link.id) {
-          yForce = 1;
-        } else {
-          yForce = -1;
-        }
+        xForce = this.jointPositiveForceXLinkMap.get(j.id) === link.id ? 1: -1;
+        yForce = this.jointPositiveForceYLinkMap.get(j.id) === link.id ? 1: -1;
         switch (link.constructor) {
           case RealLink:
             const torqueVal = this.determineMoment(fixedJoint, j.x, j.y, xForce, yForce);

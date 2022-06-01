@@ -315,18 +315,33 @@
             <br>
           </div>
           <div style="display: none">
-            R
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            X F
+            <span *ngFor="let joint of link.joints; let indexOfElement=index">
+              <span *ngIf="joint.id !== getLinkFixedJoint(link)">
+                {{getMomentSignEqs(joint, link)}} R
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>{{getLinkFixedJoint(link)}}-{{joint.id}}</sub>
+                X F
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>{{joint.id}}</sub>
+              </span>
+            </span>
+            <span>
+              + T
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            </span>
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
           </div>
           <div style="display: none">
-            F
-            <sub>ax</sub>
-            + F
-            <sub>ax</sub>
+            <span *ngFor="let joint of link.joints; let indexOfElement=index">
+              <span *ngIf="joint.id !== getLinkFixedJoint(link)">
+                {{getMoment(joint, link, 'x')}}F
+                <sub>{{joint.id}}x</sub>
+                {{getMoment(joint, link, 'y')}}F
+                <sub>{{joint.id}}y</sub>
+              </span>
+            </span>
             = 0
           </div>
         </div>

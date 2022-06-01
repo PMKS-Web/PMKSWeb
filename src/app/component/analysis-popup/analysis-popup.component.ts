@@ -1,16 +1,15 @@
-import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {Joint, RealJoint} from "../../model/joint";
-import {Piston, Link, RealLink} from "../../model/link";
+import {Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {GridComponent} from "../grid/grid.component";
 import * as XLSX from 'xlsx';
 import {DatePipe} from "@angular/common";
 import {ForceSolver} from "../../model/mechanism/force-solver";
-import {Mechanism} from "../../model/mechanism/mechanism";
-import {style} from "@angular/animations";
 import {Coord} from "../../model/coord";
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
+import {roundNumber} from "../../model/utils";
 
 @Component({
   selector: 'app-analysis-popup',
@@ -24,6 +23,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   private static showEqsButton: SVGElement;
   static selectedTab: number = 0;
   static selectedAnalysis: string = '';
+
+  static momentForLinkMap = new Map<string, string>();
 
   // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
@@ -967,6 +968,46 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return 1;
       } else {
         return -1;
+      }
+    }
+  }
+
+  getLinkFixedJoint(link: Link) {
+    return ForceSolver.linkToFixedPositionMap.get(link.id);
+  }
+
+  getMomentSignEqs(joint: Joint, link: Link) {
+    if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === undefined) {
+      AnalysisPopupComponent.momentForLinkMap.set(link.id, joint.id);
+      return '';
+    } else {
+      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id) {
+        return '';
+      } else {
+        return ' + ';
+      }
+    }
+  }
+
+  getMoment(joint: Joint, link: Link, xOrY: string) {
+    // get value within matrix
+    const jointXIndex = ForceSolver.jointIDToUnknownArrayIndexMap.get(joint.id)!;
+    const jointYIndex = jointXIndex + 1;
+    const linkIndex = ForceSolver.linkIDToUnknownArrayIndexMap.get(link.id)!;
+    let val = xOrY === 'x' ? ForceSolver.A_matrix[linkIndex + 2][jointXIndex] : ForceSolver.A_matrix[linkIndex + 2][jointYIndex];
+    if (val > 0) {
+      val = Math.abs(roundNumber(val, 3));
+      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id && xOrY === 'x') {
+        return '' + val.toString();
+      } else {
+        return ' + ' + val.toString();
+      }
+    } else {
+      val = Math.abs(roundNumber(val, 3));
+      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id && xOrY === 'x') {
+        return '-' + val.toString();
+      } else {
+        return ' - ' + val.toString();
       }
     }
   }
