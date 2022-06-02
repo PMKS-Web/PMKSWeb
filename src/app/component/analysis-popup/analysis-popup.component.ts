@@ -105,6 +105,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   static showAnalysis(analysis: string) {
     AnalysisPopupComponent.popUpWindow.style.display = 'block';
     AnalysisPopupComponent.selectedAnalysis = analysis;
+    // TODO: When choosing an analysis, only here should one reset the static variables...
   }
 
   closeAnalysis() {
@@ -119,10 +120,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return AnalysisPopupComponent.selectedTab;
   }
 
-  updateTable(val: string, obj?: any) {
+  updateTable(val: string, link?: Link, joint?: Joint) {
+    let otherLink: Link;
     switch (val) {
       case 'changeHeight':
-        const element = document.getElementById('div_' + obj._id)!;
+        const element = document.getElementById('div_' + link!.id)!;
         const styleString = element.getAttribute('style')!;
         const heightIndex = styleString.indexOf('height');
         if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
@@ -141,6 +143,22 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // } else {
         //   element.setAttribute('style', 'overflow: scroll; height: 50px');
         }
+        break;
+      case 'x':
+        if (!(joint instanceof RealJoint)) {return}
+        otherLink = joint.links[0].id === link!.id ? joint.links[1] : joint.links[0];
+        if (otherLink === undefined) {otherLink = new Link('', []);}
+        ForceSolver.jointPositiveForceXLinkMap.get(joint!.id) === link!.id ? ForceSolver.jointPositiveForceXLinkMap.set(joint!.id, otherLink.id) : ForceSolver.jointPositiveForceXLinkMap.set(joint!.id, link!.id);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
+          ToolbarComponent.gravity, ToolbarComponent.unit);
+        break;
+      case 'y':
+        if (!(joint instanceof RealJoint)) {return}
+        otherLink = joint.links[0].id === link!.id ? joint.links[1] : joint.links[0];
+        if (otherLink === undefined) {otherLink = new Link('', []);}
+        ForceSolver.jointPositiveForceYLinkMap.get(joint!.id) === link!.id ? ForceSolver.jointPositiveForceYLinkMap.set(joint!.id, otherLink.id) : ForceSolver.jointPositiveForceYLinkMap.set(joint!.id, link!.id);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
+          ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       default:
         return

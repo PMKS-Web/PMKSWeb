@@ -244,10 +244,10 @@
             </g>
           </svg>
           <div *ngFor="let joint of link.joints" style="display: none">
-            <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'x') === 1">
+            <input type="checkbox" (click)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">
             <label>Direction of Force {{joint.id}}x</label>
             <br>
-            <input type="checkbox" (click)="updateTable('')" [checked]="getForceAssumption(link, joint, 'y') === 1">
+            <input type="checkbox" (click)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1">
             <label>Direction of Force {{joint.id}}y</label>
             <br>
           </div>
