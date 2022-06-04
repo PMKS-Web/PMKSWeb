@@ -44,10 +44,21 @@ export enum editorID {
 export class Link {
   private _id: string;
   private _joints: Joint[];
+  fixedLocations = [
+    {id: 'com', label: 'com'},
+  ];
+  fixedLocation = {
+    fixedPoint: 'com'
+  };
 
   constructor(id: string, joints: Joint[]) {
     this._id = id;
     this._joints = joints;
+    joints.forEach(j => {
+      this.fixedLocations.push(
+        {id: j.id, label: j.id}
+      );
+    });
   }
 
   get id(): string {

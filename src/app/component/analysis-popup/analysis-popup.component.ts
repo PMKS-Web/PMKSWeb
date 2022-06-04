@@ -120,7 +120,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return AnalysisPopupComponent.selectedTab;
   }
 
-  updateTable(val: string, link?: Link, joint?: Joint) {
+  updateTable(val: string, link?: Link, jointOrCoM?: any) {
     let otherLink: Link;
     switch (val) {
       case 'changeHeight':
@@ -139,24 +139,32 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
             const SVGElement = element.children[htmlIndex] as SVGElement;
             SVGElement.style.display = 'none';
           }
-        //   element.setAttribute('style', 'overflow: scroll; height: 500px');
-        // } else {
-        //   element.setAttribute('style', 'overflow: scroll; height: 50px');
+          //   element.setAttribute('style', 'overflow: scroll; height: 500px');
+          // } else {
+          //   element.setAttribute('style', 'overflow: scroll; height: 50px');
         }
         break;
       case 'x':
-        if (!(joint instanceof RealJoint)) {return}
-        otherLink = joint.links[0].id === link!.id ? joint.links[1] : joint.links[0];
+        if (!(jointOrCoM instanceof RealJoint)) {return}
+        otherLink = jointOrCoM.links[0].id === link!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
         if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceXLinkMap.get(joint!.id) === link!.id ? ForceSolver.jointPositiveForceXLinkMap.set(joint!.id, otherLink.id) : ForceSolver.jointPositiveForceXLinkMap.set(joint!.id, link!.id);
+        ForceSolver.jointPositiveForceXLinkMap.get(jointOrCoM!.id) === link!.id ? ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, otherLink.id) : ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, link!.id);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'y':
-        if (!(joint instanceof RealJoint)) {return}
-        otherLink = joint.links[0].id === link!.id ? joint.links[1] : joint.links[0];
+        if (!(jointOrCoM instanceof RealJoint)) {return}
+        otherLink = jointOrCoM.links[0].id === link!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
         if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceYLinkMap.get(joint!.id) === link!.id ? ForceSolver.jointPositiveForceYLinkMap.set(joint!.id, otherLink.id) : ForceSolver.jointPositiveForceYLinkMap.set(joint!.id, link!.id);
+        ForceSolver.jointPositiveForceYLinkMap.get(jointOrCoM!.id) === link!.id ? ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, otherLink.id) : ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, link!.id);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
+          ToolbarComponent.gravity, ToolbarComponent.unit);
+        break;
+      case 'moment':
+        let value = jointOrCoM;
+        if (value === 'com') {value = link!.id}
+        ForceSolver.linkToFixedPositionMap.set(link!.id, value);
+        link!.fixedLocation.fixedPoint = value;
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
@@ -988,10 +996,6 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return -1;
       }
     }
-  }
-
-  getLinkFixedJoint(link: Link) {
-    return ForceSolver.linkToFixedPositionMap.get(link.id);
   }
 
   getMomentSignEqs(joint: Joint, link: Link) {

@@ -254,8 +254,8 @@
           </div>
           <div style="display: none">
             <label>Moment reference</label>
-            <select>
-              <option *ngFor="let joint of getJoints()" [innerHTML]="joint.id">
+            <select [(ngModel)]="link.fixedLocation.fixedPoint" (ngModelChange)="updateTable('moment', link, link.fixedLocation.fixedPoint)">
+              <option *ngFor="let fixedPoint of link.fixedLocations" [value]="fixedPoint.id"> {{fixedPoint.label}}
               </option>
             </select>
           </div>
@@ -317,10 +317,10 @@
           </div>
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
-              <span *ngIf="joint.id !== getLinkFixedJoint(link)">
+              <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
                 {{getMomentSignEqs(joint, link)}} R
                 <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{getLinkFixedJoint(link)}}-{{joint.id}}</sub>
+                <sub>{{link.fixedLocation.fixedPoint}}-{{joint.id}}</sub>
                 X F
                 <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
                 <sub>{{joint.id}}</sub>
@@ -336,7 +336,7 @@
           </div>
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
-              <span *ngIf="joint.id !== getLinkFixedJoint(link)">
+              <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
                 {{getMoment(joint, link, 'x')}}F
                 <sub>{{joint.id}}x</sub>
                 {{getMoment(joint, link, 'y')}}F
