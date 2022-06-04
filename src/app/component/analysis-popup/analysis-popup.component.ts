@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
 import {Joint, RealJoint} from "../../model/joint";
 import {Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
@@ -10,13 +10,57 @@ import {Coord} from "../../model/coord";
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {roundNumber} from "../../model/utils";
+import {
+  ChartComponent,
+  ApexAxisChartSeries,
+  ApexChart,
+  ApexXAxis,
+  ApexYAxis,
+  ApexDataLabels,
+  ApexGrid,
+  ApexStroke,
+  ApexTitleSubtitle
+} from "ng-apexcharts";
+
+export type ChartOptions = {
+  series: ApexAxisChartSeries;
+  chart: ApexChart;
+  xaxis: ApexXAxis;
+  yaxis: ApexYAxis;
+  dataLabels: ApexDataLabels
+  grid: ApexGrid
+  stroke: ApexStroke
+  title: ApexTitleSubtitle;
+};
 
 @Component({
   selector: 'app-analysis-popup',
   templateUrl: './analysis-popup.component.html',
   styleUrls: ['./analysis-popup.component.css']
 })
+
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
+
+  // public chartOptions: Partial<ChartOptions> = {};
+  public chartOptions: Partial<ChartOptions> = {
+    series: [
+      {
+        name: "My-series",
+        data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
+      }
+    ],
+    chart: {
+      height: 350,
+      type: "bar"
+    },
+    title: {
+      text: "My First Angular Chart"
+    },
+    xaxis: {
+      categories: ["Jan", "Feb",  "Mar",  "Apr",  "May",  "Jun",  "Jul",  "Aug", "Sep"]
+    }
+  };
+
   private static popUpWindow: SVGElement;
   private static exportButton: SVGElement;
   private static showPlotsButton: SVGElement;

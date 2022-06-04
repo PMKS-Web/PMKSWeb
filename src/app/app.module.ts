@@ -9,6 +9,7 @@ import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popu
 import { AnimationBarComponent} from "./component/animation-bar/animation-bar.component";
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 import {FormsModule} from "@angular/forms";
+import {NgApexchartsModule} from "ng-apexcharts";
 
 @NgModule({
   declarations: [
@@ -20,10 +21,11 @@ import {FormsModule} from "@angular/forms";
     AnimationBarComponent,
     ShapeSelectorComponent,
   ],
-    imports: [
-        BrowserModule,
-        FormsModule
-    ],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    NgApexchartsModule,
+  ],
   providers: [
 
   ],

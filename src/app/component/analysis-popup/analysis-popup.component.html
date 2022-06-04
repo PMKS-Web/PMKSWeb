@@ -171,20 +171,16 @@
       </div>
     </div>
     <div class="tabPanel" *ngIf="getSelectedTab() === 1">
-      <table id="plotTable">
-        <thead>
-        <tr>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>
-          </td>
-        </tr>
-        </tbody>
-        <tfoot></tfoot>
-      </table>
+      <apx-chart
+        [series]="chartOptions.series!"
+        [chart]="chartOptions.chart!"
+        [xaxis]="chartOptions.xaxis!"
+        [yaxis]="chartOptions.yaxis!"
+        [dataLabels]="chartOptions.dataLabels!"
+        [grid]="chartOptions.grid!"
+        [stroke]="chartOptions.stroke!"
+        [title]="chartOptions.title!">
+      </apx-chart>
     </div>
     <div class="tabPanel" *ngIf="getSelectedTab() === 2">
       <div *ngIf="getSelectedAnalysis() === 'loop'">
