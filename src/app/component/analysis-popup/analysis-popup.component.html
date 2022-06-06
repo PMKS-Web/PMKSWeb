@@ -171,16 +171,50 @@
       </div>
     </div>
     <div class="tabPanel" *ngIf="getSelectedTab() === 1">
-      <apx-chart
-        [series]="chartOptions.series!"
-        [chart]="chartOptions.chart!"
-        [xaxis]="chartOptions.xaxis!"
-        [yaxis]="chartOptions.yaxis!"
-        [dataLabels]="chartOptions.dataLabels!"
-        [grid]="chartOptions.grid!"
-        [stroke]="chartOptions.stroke!"
-        [title]="chartOptions.title!">
-      </apx-chart>
+      <div *ngIf="getSelectedAnalysis() === 'force'">
+        <div>
+          <label> Type of Analysis</label>
+          <select name="selectedStaticAnalysis"
+                  [(ngModel)]="forceAnalysis.selectedAnalysis"
+                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, '', 'statics')">
+            <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">{{analysis.label}}
+            </option>
+          </select>
+        </div>
+        <!--        <div *ngIf="forceAnalysis.selectedAnalysis === 'joint_position'">-->
+        <!--          <label> Joint</label>-->
+        <!--          <select name="selectedStaticJoint"-->
+        <!--                  [(ngModel)]="jointPlot.jointID"-->
+        <!--                  (ngModelChange)="changeStaticJointPos(jointPlot.jointID)">-->
+        <!--            <option *ngFor="let stat_joint of this.jointArray" [value]="stat_joint.id">{{stat_joint.id}}-->
+        <!--            </option>-->
+        <!--          </select>-->
+        <!--        </div>-->
+        <div *ngIf="forceAnalysis.selectedAnalysis === 'Joint Forces'">
+          <label> Joint</label>
+          <select name="selectedStaticJoint"
+                  [(ngModel)]="forceMagPlot.force"
+                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, 'statics')">
+            <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">{{stat_joint.id}}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div *ngIf="getSelectedAnalysis() === 'dynamic'"></div>
+      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'"></div>
+      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'"></div>
+      <div *ngIf="showChart">
+        <apx-chart
+          [series]="chartOptions.series!"
+          [chart]="chartOptions.chart!"
+          [xaxis]="chartOptions.xaxis!"
+          [yaxis]="chartOptions.yaxis!"
+          [dataLabels]="chartOptions.dataLabels!"
+          [grid]="chartOptions.grid!"
+          [stroke]="chartOptions.stroke!"
+          [title]="chartOptions.title!">
+        </apx-chart>
+      </div>
     </div>
     <div class="tabPanel" *ngIf="getSelectedTab() === 2">
       <div *ngIf="getSelectedAnalysis() === 'loop'">

@@ -21,6 +21,7 @@ import {
   ApexStroke,
   ApexTitleSubtitle
 } from "ng-apexcharts";
+import {AbstractFormGroupDirective} from "@angular/forms";
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
@@ -41,25 +42,26 @@ export type ChartOptions = {
 
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
-  // public chartOptions: Partial<ChartOptions> = {};
-  public chartOptions: Partial<ChartOptions> = {
-    series: [
-      {
-        name: "My-series",
-        data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-      }
-    ],
-    chart: {
-      height: 350,
-      type: "bar"
-    },
-    title: {
-      text: "My First Angular Chart"
-    },
-    xaxis: {
-      categories: ["Jan", "Feb",  "Mar",  "Apr",  "May",  "Jun",  "Jul",  "Aug", "Sep"]
-    }
-  };
+  // https://apexcharts.com/docs/angular-charts/
+  public chartOptions: Partial<ChartOptions> = {};
+  // public chartOptions: Partial<ChartOptions> = {
+  //   series: [
+  //     {
+  //       name: "My-series",
+  //       data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
+  //     }
+  //   ],
+  //   chart: {
+  //     height: 350,
+  //     type: "bar"
+  //   },
+  //   title: {
+  //     text: "My First Angular Chart"
+  //   },
+  //   xaxis: {
+  //     categories: ["Jan", "Feb",  "Mar",  "Apr",  "May",  "Jun",  "Jul",  "Aug", "Sep"]
+  //   }
+  // };
 
   private static popUpWindow: SVGElement;
   private static exportButton: SVGElement;
@@ -132,6 +134,26 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   analysis: Array<Array<string>> = [];
   titleRow: Array<string> = [];
+
+  forceAnalysis = {
+    selectedAnalysis: 'none'
+  };
+
+  forceMagPlot = {
+    force: 'none'
+  };
+
+  jointAnalyses = [
+    {id: 'Joint Forces', label: 'Joint Forces'},
+    {id: 'Input Torque', label: 'Input Torque'},
+    // {id: 'force_position', label: 'force_position'},
+    // {id: 'joint_position', label: 'joint_position'},
+    // { id: 'position', label: 'position'},
+    // { id: 'velocity', label: 'velocity'},
+    // { id: 'acceleration', label: 'acceleration'},
+  ];
+
+  showChart = false;
 
   constructor() {
   }
@@ -1088,5 +1110,306 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   getForces() {
     return GridComponent.forces;
+  }
+
+  determineChart(analysis: string, type_of: string, more_type: string) {
+    let data1Title = '';
+    let data2Title = '';
+    let data3Title = '';
+    let chartTitle = '';
+    const xAxisTitle = 'Time-steps';
+    let yAxisTitle = '';
+    let datum: number[][] = [];
+    let categories: string[] = [];
+    const seriesData =  [];
+    let posLinUnit = '(cm)';
+    let velLinUnit = '(cm/s)';
+    let accLinUnit = '(cm/s^2)';
+    const posAngUnit = '(degrees)';
+    // const posAngUnit = '(rad)';
+    const velAngUnit = '((rad)/s)';
+    const accAngUnit = '((rad)/s^2)';
+    if (ToolbarComponent.unit === 'm') {
+      posLinUnit = 'm';
+      velLinUnit = 'm/s';
+      accLinUnit = 'm/s^2';
+    }
+    switch (analysis) {
+      case 'Input Torque':
+        chartTitle = 'Torque for Mechanism';
+        data1Title = 'Torque (Nm)';
+        yAxisTitle = 'Torque (Nm)';
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        break;
+      case 'Joint Forces':
+        chartTitle = 'Force Magnitudes';
+        data1Title = 'Force ' + type_of + ' X-Magnitude (N)';
+        data2Title = 'Force ' + type_of + ' Y-Magnitude (N)';
+        data3Title = 'Abs Force (N)';
+        yAxisTitle = 'Force (N)';
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+        break;
+      case 'Linear Joint Pos':
+        chartTitle = 'Joint\'s Linear Position';
+        data1Title = 'Joint ' + type_of + ' X Position ' + posLinUnit;
+        data2Title = 'Joint ' + type_of + ' Y Position ' + posLinUnit;
+        yAxisTitle = 'Position ' + posLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        break;
+      case 'Linear Joint Vel':
+        chartTitle = 'Joint\'s Linear Velocity';
+        data1Title = 'Joint ' + type_of + ' X Velocity ' + velLinUnit;
+        data2Title = 'Joint ' + type_of + ' Y Velocity ' + velLinUnit;
+        data3Title = 'Absolute Velocity ' + velLinUnit;
+        yAxisTitle = 'Velocity ' + velLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+        break;
+      case 'Linear Joint Acc':
+        chartTitle = 'Joint\'s Linear Acceleration';
+        data1Title = 'Joint ' + type_of + ' X Acceleration ' + accLinUnit;
+        data2Title = 'Joint ' + type_of + ' Y Acceleration ' + accLinUnit;
+        data3Title = 'Absolute Acceleration ' + accLinUnit;
+        yAxisTitle = 'Acceleration ' + accLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+        break;
+      case 'Linear Link\'s CoM Pos':
+        chartTitle = 'Link\'s Center of Mass Linear Position';
+        data1Title = 'Link ' + type_of + ' (CoM) X Position ' + posLinUnit;
+        data2Title = 'Link ' + type_of + ' (CoM) Y Position ' + posLinUnit;
+        yAxisTitle = 'Position (CoM) ' + posLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        break;
+      case 'Linear Link\'s CoM Vel':
+        chartTitle = 'Link\'s Center of Mass Linear Velocity';
+        data1Title = 'Link ' + type_of + ' (CoM) X Velocity ' + velLinUnit;
+        data2Title = 'Link ' + type_of + ' (CoM) Y Velocity ' + velLinUnit;
+        data3Title = 'Absolute Velocity ' + velLinUnit;
+        yAxisTitle = 'Velocity ' + velLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+        break;
+      case 'Linear Link\'s CoM Acc':
+        chartTitle = 'Link\'s Center of Mass Linear Acceleration';
+        data1Title = 'Link ' + type_of + ' (CoM) X Acceleration ' + accLinUnit;
+        data2Title = 'Link ' + type_of + ' (CoM) Y Acceleration ' + accLinUnit;
+        data3Title = 'Link Absolute Acceleration ' + accLinUnit;
+        yAxisTitle = 'Acceleration ' + accLinUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+        seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+        break;
+      case 'Angular Link Pos':
+        chartTitle = 'Link\'s Angular Position';
+        data1Title = 'Link ' + type_of + ' Angle ' + posAngUnit;
+        yAxisTitle = 'Position ' + posAngUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        break;
+      case 'Angular Link Vel':
+        chartTitle = 'Link\'s Angular Velocity';
+        data1Title = 'Link ' + type_of + ' Angular Velocity ' + velAngUnit;
+        yAxisTitle = 'Velocity ' + velAngUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        break;
+      case 'Angular Link Acc':
+        chartTitle = 'Link\'s Angular Acceleration';
+        data1Title = 'Link ' + type_of + ' Angular Acceleration ' + accAngUnit;
+        yAxisTitle = 'Acceleration ' + accAngUnit;
+        [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+        seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+        break;
+      default:
+        break;
+    }
+    this.chartOptions = {
+
+      series: seriesData,
+      chart: {
+        height: 350,
+        type: 'line',
+        zoom: {
+          enabled: false
+        }
+      },
+      dataLabels: {
+        enabled: false
+      },
+      stroke: {
+        curve: 'straight'
+      },
+      title: {
+        text: chartTitle,
+        align: 'left'
+      },
+      grid: {
+        row: {
+          colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+          opacity: 0.5
+        }
+      },
+      xaxis: {
+        categories: categories,
+        title: {
+          text: xAxisTitle
+        }
+      },
+      yaxis: {
+        title: {
+          text: yAxisTitle
+        },
+      }
+    };
+  }
+
+  changePlotAnalysis(analysis: string, type_of: string, more_type:string) {
+    this.showChart = false;
+    switch (analysis) {
+      case 'Input Torque':
+        this.showChart = true;
+        this.determineChart(analysis, type_of, more_type);
+        break;
+      default:
+        switch (type_of) {
+          case '':
+            break;
+          default:
+            this.showChart = true;
+            this.determineChart(analysis, type_of, more_type);
+        }
+    }
+  }
+
+  determineAnalysis(analysis: string, type_of: string, more_type: string): [[number[], number[], number[]], string[]] {
+    const datum_X: number[] = [];
+    const datum_Y: number[] = [];
+    const datum_Z: number[] = [];
+    let x = 0;
+    let y = 0;
+    let z = 0;
+    const categories: string[] = [];
+    GridComponent.mechanisms[0].joints.forEach((_, index) => {
+      switch (analysis) {
+        case 'Input Torque':
+          if (more_type === 'dynamics') {
+            // TODO: Be sure to have each step within mechanism know its input angular velocity
+            KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+              GridComponent.mechanisms[0].links[index], 10);
+          }
+          ForceSolver.determineForceAnalysis(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], more_type, ToolbarComponent.gravity, ToolbarComponent.unit);
+          // datum_X.push(roundNumber(ForceSolver.unknownVariableTorque[0], 3));
+          datum_X.push(roundNumber(1, 3));
+          break;
+        case 'Joint Forces':
+          if (more_type === 'dynamics') {
+            KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+              GridComponent.mechanisms[0].links[index], 10);
+          }
+          ForceSolver.determineForceAnalysis(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], more_type, ToolbarComponent.gravity, ToolbarComponent.unit);
+          x = ForceSolver.unknownVariableForcesMap.get(type_of)![0];
+          y = ForceSolver.unknownVariableForcesMap.get(type_of)![1];
+          z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          datum_Z.push(roundNumber(z, 3));
+          break;
+        case 'Linear Joint Pos':
+          const jt = GridComponent.mechanisms[0].joints[index].find(j => j.id === type_of)!;
+          x = jt.x;
+          y = jt.y;
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          break;
+        case 'Linear Joint Vel':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.jointVelMap.get(type_of)![0];
+          y = KinematicsSolver.jointVelMap.get(type_of)![1];
+          z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          datum_Z.push(roundNumber(z, 3));
+          break;
+        case 'Linear Joint Acc':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.jointAccMap.get(type_of)![0];
+          y = KinematicsSolver.jointAccMap.get(type_of)![1];
+          z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          datum_Z.push(roundNumber(z, 3));
+          break;
+        case 'Linear Link\'s CoM Pos':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkCoMMap.get(type_of)![0];
+          y = KinematicsSolver.linkCoMMap.get(type_of)![1];
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          break;
+        case 'Linear Link\'s CoM Vel':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkVelMap.get(type_of)![0];
+          y = KinematicsSolver.linkVelMap.get(type_of)![1];
+          z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          datum_Z.push(roundNumber(z, 3));
+          break;
+        case 'Linear Link\'s CoM Acc':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkAccMap.get(type_of)![0];
+          y = KinematicsSolver.linkAccMap.get(type_of)![1];
+          z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+          datum_X.push(roundNumber(x, 3));
+          datum_Y.push(roundNumber(y, 3));
+          datum_Z.push(roundNumber(z, 3));
+          break;
+        case 'Angular Link Pos':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkAngPosMap.get(type_of)!;
+          datum_X.push(roundNumber(x, 3));
+          break;
+        case 'Angular Link Vel':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkAngVelMap.get(type_of)!;
+          datum_X.push(roundNumber(x, 3));
+          break;
+        case 'Angular Link Acc':
+          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index], 10);
+          x = KinematicsSolver.linkAngAccMap.get(type_of)!;
+          datum_X.push(roundNumber(x, 3));
+          break;
+        case 'ic':
+          break;
+      }
+      categories.push('Timestep ' + index);
+    });
+    return [[datum_X, datum_Y, datum_Z], categories];
   }
 }
