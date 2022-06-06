@@ -52,7 +52,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   static selectedTab: number = 0;
   static selectedAnalysis: string = '';
 
-  static momentForLinkMap = new Map<string, string>();
+  static firstRefWithinMomentMap = new Map<string, string>();
 
   // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
@@ -211,6 +211,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'moment':
         let value = jointOrCoM;
         if (value === 'com') {value = link!.id}
+        AnalysisPopupComponent.firstRefWithinMomentMap = new Map<string, string>();
         ForceSolver.linkToFixedPositionMap.set(link!.id, value);
         link!.fixedLocation.fixedPoint = value;
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
@@ -1047,11 +1048,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   }
 
   getMomentSignEqs(joint: Joint, link: Link) {
-    if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === undefined) {
-      AnalysisPopupComponent.momentForLinkMap.set(link.id, joint.id);
+    if (AnalysisPopupComponent.firstRefWithinMomentMap.get(link.id) === undefined) {
+      AnalysisPopupComponent.firstRefWithinMomentMap.set(link.id, joint.id);
       return '';
     } else {
-      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id) {
+      if (AnalysisPopupComponent.firstRefWithinMomentMap.get(link.id) === joint.id) {
         return '';
       } else {
         return ' + ';
@@ -1067,14 +1068,14 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     let val = xOrY === 'x' ? ForceSolver.A_matrix[linkIndex + 2][jointXIndex] : ForceSolver.A_matrix[linkIndex + 2][jointYIndex];
     if (val > 0) {
       val = Math.abs(roundNumber(val, 3));
-      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id && xOrY === 'x') {
+      if (AnalysisPopupComponent.firstRefWithinMomentMap.get(link.id) === joint.id && xOrY === 'x') {
         return '' + val.toString();
       } else {
         return ' + ' + val.toString();
       }
     } else {
       val = Math.abs(roundNumber(val, 3));
-      if (AnalysisPopupComponent.momentForLinkMap.get(link.id) === joint.id && xOrY === 'x') {
+      if (AnalysisPopupComponent.firstRefWithinMomentMap.get(link.id) === joint.id && xOrY === 'x') {
         return '-' + val.toString();
       } else {
         return ' - ' + val.toString();
