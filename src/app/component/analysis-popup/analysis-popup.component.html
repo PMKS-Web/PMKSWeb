@@ -246,7 +246,6 @@
                 <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
               </svg>
               <g *ngFor="let joint of link.joints">
-                <!-- TODO: Have ngIf for when condition met -->
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
                       [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
                 </path>

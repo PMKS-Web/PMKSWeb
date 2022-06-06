@@ -21,15 +21,12 @@ export class Mechanism {
   private _gravity: boolean;
   private _unit: string
   private _dof: number;
+  private _inputAngularVelocities: number[] = [];
   private _requiredLoops: string[] = [];
   private _allLoops: string[] = [];
 
   constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
               gravity: boolean, unit: string, inputAngVel: number) {
-    // this._joints.push([]);
-    // this._links.push([]);
-    // this._forces.push([]);
-
     joints.forEach(j => {
       switch (j.constructor) {
         case RealJoint:
@@ -76,6 +73,7 @@ export class Mechanism {
     this._gravity = gravity;
     this._unit = unit;
     this._dof = this.determineDegreesOfFreedom();
+    this._inputAngularVelocities.push(inputAngVel);
     // no index found for input Joint
     if (this._dof === 1 && joints.findIndex(j => { if (!(j instanceof RealJoint)) {return} return j.input}) !== -1) {
       [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
@@ -134,10 +132,9 @@ export class Mechanism {
   }
 
   private findFullMovementPos(inputAngVel: number) {
-    let inputAngularVelocity = inputAngVel;
     let simForward = true;
     let falseTwice = 0;
-    let inputAngVelDirection = inputAngularVelocity > 0;
+    let inputAngVelDirection = inputAngVel > 0;
     let currentTimeStamp = 0;
     const TOLERANCE = 0.008;
     let max_counter = 0;
@@ -245,6 +242,7 @@ export class Mechanism {
         // }
         falseTwice = 0;
         currentTimeStamp++;
+        this._inputAngularVelocities.push(inputAngVel)
         // TODO: Create own function to determine this. Probably just utilize tracer joint logic
         // const ffs = this.calculateForces(this.SimulationLinks, this.SimulationForces);
         // adjust for linkAngle (for center of mass)
@@ -257,7 +255,7 @@ export class Mechanism {
         }
         falseTwice += 1;
         simForward = !simForward;
-        inputAngularVelocity = inputAngularVelocity * -1;
+        inputAngVel = inputAngVel * -1;
         inputAngVelDirection = !inputAngVelDirection;
       }
       xDiff = Math.abs(startingPositionX - (roundNumber(this._joints[currentTimeStamp][desiredJointIndex].x, 2)));
@@ -330,6 +328,14 @@ export class Mechanism {
 
   get joints(): Joint[][] {
     return this._joints;
+  }
+
+  get inputAngularVelocities(): number[] {
+    return this._inputAngularVelocities;
+  }
+
+  set inputAngularVelocities(value: number[]) {
+    this._inputAngularVelocities = value;
   }
 
   set joints(value: Joint[][]) {
@@ -636,7 +642,7 @@ export class Mechanism {
       if (analysisType === 'dynamics') {
         // determine kinematic analysis
         KinematicsSolver.requiredLoops = this.requiredLoops;
-        KinematicsSolver.determineKinematics(this.joints[index], this.links[index], 10);
+        KinematicsSolver.determineKinematics(this.joints[index], this.links[index], this.inputAngularVelocities[index]);
       }
       ForceSolver.determineForceAnalysis(this.joints[index], this.links[index], analysisType, this.gravity, this.unit);
       for (let simJointIndex = 0; simJointIndex < this.joints[index].length; simJointIndex++) {
@@ -742,7 +748,7 @@ export class Mechanism {
       const row = Array<string>();
       row.push((index * 10 * Math.PI / 180).toString());
       KinematicsSolver.requiredLoops = this.requiredLoops;
-      KinematicsSolver.determineKinematics(this.joints[index], this.links[index], 10);
+      KinematicsSolver.determineKinematics(this.joints[index], this.links[index], this.inputAngularVelocities[index]);
       let posUnitConversion: number;
       let velUnitConversion: number;
       let accUnitConversion: number;

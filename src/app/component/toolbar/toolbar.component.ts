@@ -152,9 +152,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       case 'loop':
         break;
       case 'force':
-        // ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-        // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity,
-        //   this.unit.selectedUnit);
+        ForceSolver.resetVariables()
+        ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
+          ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'stress':
         break;
@@ -166,7 +167,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         return
     }
     AnalysisPopupComponent.showAnalysis(analysisType);
-    // this.showAnalysisPopup.emit(analysisType);
   }
 
   upload($event: any) {
