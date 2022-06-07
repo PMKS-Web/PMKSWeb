@@ -844,6 +844,11 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
+  getJointColor(joint: Joint) {
+    if (GridComponent.jointStates !== jointStates.dragging) {return 'black'}
+    return joint.id === GridComponent.selectedJoint.id ? 'red' : 'black';
+  }
+
   createRevJoint(x: string, y: string, prevID?: string) {
     const x_num = roundNumber(Number(x), 3);
     const y_num = roundNumber(Number(y), 3);
