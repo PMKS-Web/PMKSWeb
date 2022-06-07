@@ -347,7 +347,7 @@
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
-                {{getMomentSignEqs(joint, link)}} R
+                {{getMomentSignEqs(joint, link)}} r
                 <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
                 <sub>{{link.fixedLocation.fixedPoint}}-{{joint.id}}</sub>
                 X F
@@ -355,11 +355,10 @@
                 <sub>{{joint.id}}</sub>
               </span>
             </span>
-            <span>
+            <span *ngIf="containInputJoint(link)">
               + T
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             </span>
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
           </div>

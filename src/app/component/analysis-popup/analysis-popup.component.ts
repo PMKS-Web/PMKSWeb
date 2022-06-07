@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {Joint, RealJoint} from "../../model/joint";
+import {Joint, RealJoint, RevJoint} from "../../model/joint";
 import {Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {GridComponent} from "../grid/grid.component";
@@ -1058,6 +1058,18 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return ' + ';
       }
     }
+  }
+
+  containInputJoint(link: Link) {
+    let containInputJoint = false;
+    link.joints.forEach(j => {
+      if (containInputJoint) {return}
+      if (!(j instanceof RevJoint)) {return}
+      if (j.input) {
+        containInputJoint = true;
+      }
+    });
+    return containInputJoint;
   }
 
   getMoment(joint: Joint, link: Link, xOrY: string) {
