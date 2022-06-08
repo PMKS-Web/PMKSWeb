@@ -127,7 +127,7 @@
           <label>Acceleration</label>
         </div>
         <div>
-          <button class="secondaryButtons" (click)="exportExcel('kinematics_loops')">Export
+          <button class="secondaryButtons" (click)="exportExcel('kinematic_loop')">Export
             Data on the Selected Analysis
           </button>
         </div>
@@ -262,7 +262,7 @@
            style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
         <div id="div_{{link.id}}" *ngFor="let link of getLinks()"
              style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block">
-          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link)"
+          <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link.id)"
                  style="display: block; float: left">
           <label>Link {{link.id}}</label>
           <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"
@@ -279,8 +279,8 @@
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>
               <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"
                       [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>
-              <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3" style="font-size: 1px;
-               text-anchor: middle; overflow: visible;">
+              <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3"
+                   style="font-size: 1px; text-anchor: middle; overflow: visible;">
                 <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
               </svg>
               <g *ngFor="let joint of link.joints">
@@ -290,10 +290,10 @@
                 <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
                       [attr.d]="getForceLine(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
                 </path>
-                <path  *ngIf="getForceAssumption(link, joint, 'y') === 1"
+                <path *ngIf="getForceAssumption(link, joint, 'y') === 1"
                        [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
                 </path>
-                <path  *ngIf="getForceAssumption(link, joint, 'y') === -1"
+                <path *ngIf="getForceAssumption(link, joint, 'y') === -1"
                        [attr.d]="getForceLine(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
                 </path>
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
@@ -302,10 +302,10 @@
                 <path *ngIf="getForceAssumption(link, joint, 'x') === -1"
                       [attr.d]="getForceArrow(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
                 </path>
-                <path   *ngIf="getForceAssumption(link, joint, 'y') === 1"
+                <path  *ngIf="getForceAssumption(link, joint, 'y') === 1"
                         [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
                 </path>
-                <path   *ngIf="getForceAssumption(link, joint, 'y') === -1"
+                <path  *ngIf="getForceAssumption(link, joint, 'y') === -1"
                         [attr.d]="getForceArrow(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
                 </path>
               </g>
@@ -456,8 +456,12 @@
       <div *ngIf="getSelectedAnalysis() === 'stress'">
 
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-
+      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
+        <div id="div_{{loop}}" *ngFor="let loop of getKinematicLoops()"
+             style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block">
+          <input type="checkbox" id="checkbox_{{loop}}" (click)="updateTable('changeHeight', loop)"
+                 style="display: block; float: left">
+          <label>Loop {{loop}}</label>
       </div>
       <div *ngIf="getSelectedAnalysis() === 'ic'">
 

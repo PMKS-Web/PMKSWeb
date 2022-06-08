@@ -200,11 +200,15 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return AnalysisPopupComponent.selectedTab;
   }
 
-  updateTable(val: string, link?: Link, jointOrCoM?: any) {
+  getKinematicLoops() {
+    return KinematicsSolver.requiredLoops;
+  }
+
+  updateTable(val: string, linkOrLoop?: any, jointOrCoM?: any) {
     let otherLink: Link;
     switch (val) {
       case 'changeHeight':
-        const element = document.getElementById('div_' + link!.id)!;
+        const element = document.getElementById('div_' + linkOrLoop!)!;
         const styleString = element.getAttribute('style')!;
         const heightIndex = styleString.indexOf('height');
         if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
@@ -219,33 +223,34 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
             const SVGElement = element.children[htmlIndex] as SVGElement;
             SVGElement.style.display = 'none';
           }
-          //   element.setAttribute('style', 'overflow: scroll; height: 500px');
-          // } else {
-          //   element.setAttribute('style', 'overflow: scroll; height: 50px');
         }
         break;
       case 'x':
         if (!(jointOrCoM instanceof RealJoint)) {return}
-        otherLink = jointOrCoM.links[0].id === link!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
+        otherLink = jointOrCoM.links[0].id === linkOrLoop!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
         if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceXLinkMap.get(jointOrCoM!.id) === link!.id ? ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, otherLink.id) : ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, link!.id);
+        ForceSolver.jointPositiveForceXLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id ?
+          ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, otherLink.id) :
+          ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'y':
         if (!(jointOrCoM instanceof RealJoint)) {return}
-        otherLink = jointOrCoM.links[0].id === link!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
+        otherLink = jointOrCoM.links[0].id === linkOrLoop!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
         if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceYLinkMap.get(jointOrCoM!.id) === link!.id ? ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, otherLink.id) : ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, link!.id);
+        ForceSolver.jointPositiveForceYLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id ?
+          ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, otherLink.id) :
+          ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'moment':
         let value = jointOrCoM;
-        if (value === 'com') {value = link!.id}
+        if (value === 'com') {value = linkOrLoop!.id}
         AnalysisPopupComponent.firstRefWithinMomentMap = new Map<string, string>();
-        ForceSolver.linkToFixedPositionMap.set(link!.id, value);
-        link!.fixedLocation.fixedPoint = value;
+        ForceSolver.linkToFixedPositionMap.set(linkOrLoop!.id, value);
+        linkOrLoop!.fixedLocation.fixedPoint = value;
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
@@ -286,13 +291,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           case 'loop':
             break;
           case 'force':
-            // ForceSolver.resetVariables();
             ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
             ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
               ToolbarComponent.gravity, ToolbarComponent.unit);
             break;
           case 'kinematic':
-            KinematicsSolver.resetVariables();
             KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
             break;
@@ -816,9 +819,8 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         break;
-      case 'kinematics_loops':
+      case 'kinematic_loop':
         // check whether linear kinematics for joints have been asked for
-        KinematicsSolver.resetVariables();
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
         this.titleRow = GridComponent.mechanisms[0].kinematicLoopTitleRow();
