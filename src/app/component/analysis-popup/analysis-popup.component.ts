@@ -1343,9 +1343,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           }
           ForceSolver.determineForceAnalysis(GridComponent.mechanisms[0].joints[index],
             GridComponent.mechanisms[0].links[index], more_type, ToolbarComponent.gravity, ToolbarComponent.unit);
-          // TODO: Figure out how to get this number...
-          // datum_X.push(roundNumber(ForceSolver.unknownVariableTorque[0], 3));
-          datum_X.push(roundNumber(1, 3));
+          datum_X.push(roundNumber(ForceSolver.unknownVariableTorque, 3));
           break;
         case 'Joint Forces':
           if (more_type === 'dynamics') {
