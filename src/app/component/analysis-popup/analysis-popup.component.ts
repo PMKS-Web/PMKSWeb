@@ -212,6 +212,81 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return arr;
   }
 
+  determineInputVel(pair: string, xOrY: string) {
+    return '?';
+  }
+
+  determineUnknownVel(pair: string, xOrY: string) {
+    return '?';
+  }
+
+  determineInputAcc(pair: string, xOrY: string) {
+    return '?';
+  }
+
+  determineUnknownAcc(pair: string, xOrY: string) {
+    return '?';
+  }
+
+  // determineSolution(velOrAcc: string, pair: string, index: number, iOrJ: string) {
+  //   const joint1 = GridComponent.joints.find(j => j.id === pair[0])!;
+  //   const joint2 = GridComponent.joints.find(j => j.id === pair[1])!;
+  //   const posArr = [joint2.x - joint1.x, joint2.y - joint1.y, 0];
+  //   let angVelArr = [];
+  //   let angAccArr = []
+  //   let sol = [];
+  //   let firstSign: string;
+  //   let secondSign: string;
+  //   if (!(joint1 instanceof RealJoint)) {return}
+  //   if (!(joint2 instanceof RealJoint)) {return}
+  //   switch (velOrAcc) {
+  //     case 'vel':
+  //       if (!joint1.input && !joint2.input) {
+  //         angVelArr = [0, 0, 1];
+  //         sol = crossProduct(angVelArr, posArr);
+  //         if (index === 0) {
+  //
+  //           return roundNumber(sol[0], 3).toString();
+  //         } else {
+  //           return roundNumber(sol[0], 3).toString();
+  //         }
+  //       } else {
+  //         // TODO: Be sure to account for the sign
+  //         angVelArr = [0, 0, ToolbarComponent.inputAngularVelocity];
+  //         sol = crossProduct(crossProduct(angVelArr, posArr), angVelArr);
+  //         if (index === 0) {
+  //           firstSign = sol[2] > 0? '' : '-';
+  //         } else {
+  //           firstSign = sol[2] > 0? ' + ' : ' - ';
+  //         }
+  //         switch (iOrJ) {
+  //           case 'i':
+  //             return firstSign + roundNumber(sol[0], 3).toString();
+  //           case 'j':
+  //             return firstSign + roundNumber(sol[1], 3).toString();
+  //         }
+  //       }
+  //       break;
+  //     case 'acc':
+  //       if (!joint1.input && !joint2.input) {
+  //
+  //       } else {
+  //
+  //       }
+  //       break;
+  //   }
+  // }
+
+  pairContainInputJoint(pair: string) {
+    for (let index = 0; index < pair.length; index++) {
+      // TODO: Maybe have this in a map??? Or this may be okay...
+      const joint = GridComponent.joints.find(j => j.id === pair[index]);
+      if (!(joint instanceof RealJoint)) {continue}
+      if (joint.input) {return true}
+    }
+    return false;
+  }
+
   updateTable(val: string, linkOrLoop?: any, jointOrCoM?: any) {
     let otherLink: Link;
     switch (val) {

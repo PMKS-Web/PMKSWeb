@@ -485,16 +485,40 @@
               ω
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair[0]}}/{{pair[1]}}</sub>
-               X
-              r
+               X r
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair}}</sub>
             </span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
           </div>
-          <!-- w x r Solutions -->
+          <!-- w x r (x) Solutions -->
           <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="pairContainInputJoint(pair)">
+              {{determineInputVel(pair, 'x')}}
+              </span>
+              <span *ngIf="!pairContainInputJoint(pair)">
+                {{determineUnknownVel(pair, 'x')}}ω
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>{{pair[0]}}/{{pair[1]}}</sub>
+              </span>
+            </span>
+            = 0
+          </div>
+          <!-- w x r (y) Solutions -->
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="pairContainInputJoint(pair)">
+              {{determineInputVel(pair, 'y')}}
+              </span>
+              <span *ngIf="!pairContainInputJoint(pair)">
+                {{determineUnknownVel(pair, 'y')}}ω
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>{{pair[0]}}/{{pair[1]}}</sub>
+              </span>
+            </span>
+            = 0
           </div>
           <hr style="border-color: blue; display: none;">
           <div>
@@ -535,9 +559,35 @@
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
           </div>
-          <!-- w x w x r + a x r Solutions -->
+          <!-- w x w x r + a x r (x) Solutions -->
           <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="pairContainInputJoint(pair)">
+              {{determineInputAcc(pair, 'x')}}
+              </span>
+              <span *ngIf="!pairContainInputJoint(pair)">
+                {{determineUnknownAcc(pair, 'x')}}α
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+              </span>
+            </span>
+            = 0
           </div>
+          <!-- w x w x r + a x r (y) Solutions -->
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="pairContainInputJoint(pair)">
+                {{determineInputAcc(pair, 'y')}}
+              </span>
+              <span *ngIf="!pairContainInputJoint(pair)">
+                {{determineUnknownAcc(pair, 'y')}}α
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+              </span>
+            </span>
+            = 0
+          </div>
+        </div>
       </div>
       <div *ngIf="getSelectedAnalysis() === 'ic'">
 
