@@ -9,7 +9,7 @@ import {ForceSolver} from "../../model/mechanism/force-solver";
 import {Coord} from "../../model/coord";
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
-import {roundNumber} from "../../model/utils";
+import {crossProduct, roundNumber} from "../../model/utils";
 import {
   ChartComponent,
   ApexAxisChartSeries,
@@ -1045,6 +1045,39 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         return -1;
       }
     }
+  }
+
+  gravityOn() {
+    return ToolbarComponent.gravity;
+  }
+
+  getLinkWeight(link: Link) {
+    if (!(link instanceof RealLink)) {return}
+    return (link.mass * 9.81).toString();
+  }
+
+  getMomentDueToGravity(link: Link) {
+    if (!(link instanceof RealLink)) {return}
+    const fixedJointID = ForceSolver.linkToFixedPositionMap.get(link.id);
+    // TODO: Have map do this
+    const fixedJoint = link.joints.find(j => j.id === fixedJointID)!;
+    const pos_vec = [link.CoM.x - fixedJoint.x, link.CoM.y - fixedJoint.y, 0];
+    const force_vec = [0, link.mass * 9.81, 0]
+    // TODO: Check for units...
+    const vec = crossProduct(pos_vec, force_vec);
+    const sign = vec[2] > 0 ? ' + ' : ' - ';
+    return sign + roundNumber(Math.abs(vec[2]), 3);
+  }
+
+  getMomentDueToForce(link: Link, force: Force) {
+    if (!(link instanceof RealLink)) {return}
+    const pos_vec = [force.startCoord.x - link.CoM.x, force.startCoord.y - link.CoM.y, 0];
+    const force_vec = [force.mag * Math.cos(force.angle), force.mag * Math.sin(force.angle), 0];
+    const momentInX = crossProduct([pos_vec[0], 0, 0], [0, force_vec[1], 0]);
+    const momentInY = crossProduct([0, pos_vec[1], 0], [force_vec[0], 0, 0]);
+    const xSign = momentInX[2] > 0 ? ' + ' : ' - ';
+    const ySign = momentInY[2] > 0 ? ' + ' : ' - ';
+    return xSign + roundNumber(Math.abs(momentInX[2]), 3) + ySign + roundNumber(Math.abs(momentInY[2]), 3);
   }
 
   getMomentSignEqs(joint: Joint, link: Link) {

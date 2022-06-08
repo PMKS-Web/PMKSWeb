@@ -288,6 +288,7 @@
               </option>
             </select>
           </div>
+          <!-- General Force Equations -->
           <div style="display: none">
             &sum;F
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
@@ -295,6 +296,7 @@
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             <br>
           </div>
+          <!-- Force Equations -->
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0" >
@@ -304,10 +306,16 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{joint.id}}</sub>
             </span>
+            <span>
+              - F
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>grav</sub>
+            </span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             <br>
           </div>
+          <!-- Force Solutions X -->
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1">
@@ -322,6 +330,7 @@
             = 0
             <br>
           </div>
+          <!-- Force Solutions Y -->
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1">
@@ -333,10 +342,14 @@
               F
               <sub>{{joint.id}}y</sub>
             </span>
+            <span *ngIf="gravityOn()">
+              - {{getLinkWeight(link)}}
+            </span>
             = 0
             <br>
           </div>
           <hr style="border-color: blue; display: none;">
+          <!-- General Moment -->
           <div style="display: none">
             &sum;M
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
@@ -344,6 +357,7 @@
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             <br>
           </div>
+          <!-- Moment Equations -->
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
@@ -355,6 +369,22 @@
                 <sub>{{joint.id}}</sub>
               </span>
             </span>
+            <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
+             + r
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{link.fixedLocation.fixedPoint}}-{{'com'}}</sub>
+              X F
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>grav</sub>
+            </span>
+            <span *ngFor="let force of link.forces">
+              + r
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{force.id}}-{{'com'}}</sub>
+              X F
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{force.id}}</sub>
+            </span>
             <span *ngIf="containInputJoint(link)">
               + T
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
@@ -362,6 +392,7 @@
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
           </div>
+          <!-- Moment Solution  -->
           <div style="display: none">
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
@@ -370,6 +401,15 @@
                 {{getMoment(joint, link, 'y')}}F
                 <sub>{{joint.id}}y</sub>
               </span>
+            </span>
+            <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
+              {{getMomentDueToGravity(link)}}
+            </span>
+            <span *ngFor="let force of link.forces">
+              {{getMomentDueToForce(link, force)}}
+            </span>
+            <span *ngIf="containInputJoint(link)">
+              + T
             </span>
             = 0
           </div>

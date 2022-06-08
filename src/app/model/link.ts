@@ -44,6 +44,7 @@ export enum editorID {
 export class Link {
   private _id: string;
   private _joints: Joint[];
+  private _forces: Force[] = [];
   fixedLocations = [
     {id: 'com', label: 'com'},
   ];
@@ -76,6 +77,15 @@ export class Link {
   set joints(value: Joint[]) {
     this._joints = value;
   }
+
+  get forces(): Force[] {
+    return this._forces;
+  }
+
+  set forces(value: Force[]) {
+    this._forces = value;
+  }
+
 }
 
 export class RealLink extends Link {
@@ -83,7 +93,6 @@ export class RealLink extends Link {
   private _shape: Shape;
   private _bound: Bound;
   private _d: string
-  private _forces: Force[] = [];
   private _mass: number = 1;
   private _massMoI: number = 1;
   private _CoM: Coord;
@@ -625,14 +634,6 @@ export class RealLink extends Link {
 
   set fill(value: string) {
     this._fill = value;
-  }
-
-  get forces(): Force[] {
-    return this._forces;
-  }
-
-  set forces(value: Force[]) {
-    this._forces = value;
   }
 
   get mass(): number {
