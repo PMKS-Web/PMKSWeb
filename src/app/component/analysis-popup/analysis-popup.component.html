@@ -462,6 +462,82 @@
           <input type="checkbox" id="checkbox_{{loop}}" (click)="updateTable('changeHeight', loop)"
                  style="display: block; float: left">
           <label>Loop {{loop}}</label>
+          <!-- General Velocity Equations -->
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+               +
+              </span>
+              V
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[1]}}/{{pair[0]}}</sub>
+            </span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <!--  w x r Equations -->
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+               +
+              </span>
+              <!-- TODO: Be sure to replace certain characters with their actual /u character! -->
+              ω
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+               X
+              r
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair}}</sub>
+            </span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <!-- w x r Solutions -->
+          <div>
+          </div>
+          <hr style="border-color: blue; display: none;">
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+               +
+              </span>
+              A
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[1]}}/{{pair[0]}}</sub>
+            </span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <!--  w x w x r + a x r Equations -->
+          <div>
+            <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
+              <span *ngIf="indexOfElement !== 0">
+               +
+              </span>
+              <!-- TODO: Be sure to replace certain characters with their actual /u character! -->
+              ω
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+               X ω
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+               X r
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair}}</sub>
+              + α
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair[0]}}/{{pair[1]}}</sub>
+               X r
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{pair}}</sub>
+            </span>
+            = 0
+            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+          </div>
+          <!-- w x w x r + a x r Solutions -->
+          <div>
+          </div>
       </div>
       <div *ngIf="getSelectedAnalysis() === 'ic'">
 

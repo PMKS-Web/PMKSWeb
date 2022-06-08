@@ -204,6 +204,14 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return KinematicsSolver.requiredLoops;
   }
 
+  getLoopPairs(loop: string) {
+    const arr = [];
+    for (let index = 0; index < (loop.length - 1); index++) {
+      arr.push(loop[index] + loop[index + 1]);
+    }
+    return arr;
+  }
+
   updateTable(val: string, linkOrLoop?: any, jointOrCoM?: any) {
     let otherLink: Link;
     switch (val) {
