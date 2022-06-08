@@ -9,6 +9,7 @@ import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 import {GridComponent} from "../grid/grid.component";
 import {LinkageTableComponent} from "../linkage-table/linkage-table.component";
 import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component";
+import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 
 @Component({
   selector: 'app-toolbar',
@@ -152,14 +153,17 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       case 'loop':
         break;
       case 'force':
-        ForceSolver.resetVariables()
+        ForceSolver.resetVariables();
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'stress':
         break;
-      case 'kinematic':
+      case 'kinematic_loop':
+        KinematicsSolver.resetVariables();
+        KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+        KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
         break;
       case 'ic':
         break

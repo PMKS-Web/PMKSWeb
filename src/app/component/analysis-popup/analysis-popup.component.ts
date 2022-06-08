@@ -121,6 +121,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     selectedAnalysis: 'none'
   };
 
+  kinematicLoopAnalysis = {
+    selectedAnalysis: 'none'
+  };
+
   forceMagPlot = {
     force: 'none'
   };
@@ -134,6 +138,34 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     // { id: 'velocity', label: 'velocity'},
     // { id: 'acceleration', label: 'acceleration'},
   ];
+
+  kinematicLoopAnalyses = [
+    {id: 'Linear Joint Pos', label: 'Linear Joint Pos'},
+    {id: 'Linear Joint Vel', label: 'Linear Joint Vel'},
+    {id: 'Linear Joint Acc', label: 'Linear Joint Acc'},
+    {id: 'Linear Link\'s CoM Pos', label: 'Linear Link\'s CoM Pos'},
+    {id: 'Linear Link\'s CoM Vel', label: 'Linear Link\'s CoM Vel'},
+    {id: 'Linear Link\'s CoM Acc', label: 'Linear Link\'s CoM Acc'},
+    {id: 'Angular Link Pos', label: 'Angular Link Pos'},
+    {id: 'Angular Link Vel', label: 'Angular Link Vel'},
+    {id: 'Angular Link Acc', label: 'Angular Link Acc'},
+    // {id: 'Angular Velocity', label: 'Angular Velocity'},
+    // {id: 'Angular Acceleration', label: 'Angular Acceleration'},
+    // {id: 'Linear Velocity', label: 'Linear Velocity'},
+    // {id: 'Linear Acceleration', label: 'Linear Acceleration'},
+  ];
+
+  kinematicLoopLinearJoint = {
+    joint: 'none'
+  };
+
+  kinematicLoopLinearLink = {
+    link: 'none'
+  };
+
+  kinematicLoopAngularLink = {
+    link: 'none'
+  };
 
   showChart = false;
 
