@@ -1193,11 +1193,31 @@ export class GridComponent implements OnInit, AfterViewInit {
   createGround() {
     this.disappearContext();
     if (GridComponent.selectedJoint instanceof PrisJoint) {
-      let joint = GridComponent.selectedJoint as RevJoint;
-      // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
-      joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-      const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
-      GridComponent.joints[selectedJointIndex] = joint;
+      const revJoint = GridComponent.selectedJoint.connectedJoints.find(j => j instanceof RevJoint)!;
+      if (!(revJoint instanceof RevJoint)) {return}
+
+      GridComponent.selectedJoint.connectedJoints.forEach(j => {
+        if (!(j instanceof RealJoint)) {return}
+        const removeIndex = j.connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+        j.connectedJoints.splice(removeIndex, 1);
+      });
+      const piston = GridComponent.links.find(l => l instanceof Piston)!;
+      piston.joints.forEach(j => {
+        if (!(j instanceof RealJoint)) {return}
+        const removeIndex = j.links.findIndex(l => l.id === piston.id);
+        j.links.splice(removeIndex, 1);
+      });
+      const prismaticJointIndex = GridComponent.joints.findIndex(j => j.id == GridComponent.selectedJoint.id);
+      const pistonIndex = GridComponent.links.findIndex(l => l.id === piston.id);
+      GridComponent.joints.splice(prismaticJointIndex, 1);
+      GridComponent.links.splice(pistonIndex, 1);
+
+      revJoint.ground = true;
+      // let joint = GridComponent.selectedJoint as RevJoint;
+      // // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
+      // joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
+      // const selectedJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
+      // GridComponent.joints[selectedJointIndex] = joint;
     } else {
       GridComponent.selectedJoint.ground = !GridComponent.selectedJoint.ground;
     }
@@ -1206,29 +1226,41 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createSlider() {
     this.disappearContext();
-    const selJoint = GridComponent.selectedJoint;
-    const prismaticJointIndex = selJoint.connectedJoints.findIndex(j => j.constructor === PrisJoint);
-    if (prismaticJointIndex === -1) { // Create Prismatic Joint
+    if (!(GridComponent.selectedJoint instanceof PrisJoint)) { // Create Prismatic Joint
+      GridComponent.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
-      const connectedJoints = [selJoint]
+      const connectedJoints: Joint[] = [(GridComponent.selectedJoint)];
       GridComponent.joints.forEach(j => {
         if (!(j instanceof RealJoint)) {return}
         if (j.ground) {
           connectedJoints.push(j);
         }});
-      const prisJoint = new PrisJoint(prismaticJointId, selJoint.x, selJoint.y, selJoint.input, true,
+      const prisJoint = new PrisJoint(prismaticJointId, GridComponent.selectedJoint.x, GridComponent.selectedJoint.y, GridComponent.selectedJoint.input, true,
         [], connectedJoints);
       GridComponent.selectedJoint.connectedJoints.push(prisJoint);
-      const piston = new Piston(selJoint.id + prisJoint.id, [selJoint, prisJoint]);
+      const piston = new Piston(GridComponent.selectedJoint.id + prisJoint.id, [GridComponent.selectedJoint, prisJoint]);
       prisJoint.links.push(piston);
       GridComponent.selectedJoint.links.push(piston);
       GridComponent.joints.push(prisJoint);
       GridComponent.links.push(piston);
     } else { // delete Prismatic Joint
       // TODO: determine logic to delete crank and the prismatic joint
-      // Find the slider link and delete this
-      // Delete the slider link and prismatic joint from joint's and link's connected links/joints
+      GridComponent.selectedJoint.connectedJoints.forEach(j => {
+        if (!(j instanceof RealJoint)) {return}
+        const removeIndex = j.connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+        j.connectedJoints.splice(removeIndex, 1);
+      });
+      const piston = GridComponent.links.find(l => l instanceof Piston)!;
+      piston.joints.forEach(j => {
+        if (!(j instanceof RealJoint)) {return}
+        const removeIndex = j.links.findIndex(l => l.id === piston.id);
+        j.links.splice(removeIndex, 1);
+      });
+      const prismaticJointIndex = GridComponent.joints.findIndex(j => j.id == GridComponent.selectedJoint.id);
+      const pistonIndex = GridComponent.links.findIndex(l => l.id === piston.id);
+      GridComponent.joints.splice(prismaticJointIndex, 1);
+      GridComponent.links.splice(pistonIndex, 1);
     }
     GridComponent.updateMechanism();
   }
