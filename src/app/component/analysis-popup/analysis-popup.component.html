@@ -342,6 +342,7 @@
           </div>
           <!-- Force Equations -->
           <div style="display: none">
+            <!-- Display internal forces at joints -->
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0" >
                 +
@@ -350,10 +351,17 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{joint.id}}</sub>
             </span>
+            <!-- Display forces due to gravity -->
             <span *ngIf="gravityOn()">
               + F
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>grav</sub>
+            </span>
+            <!-- Display external forces -->
+            <span *ngFor="let force of link.forces">
+              + F
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+              <sub>{{force.id}}</sub>
             </span>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>

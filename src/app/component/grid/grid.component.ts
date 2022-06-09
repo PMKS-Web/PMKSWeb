@@ -404,7 +404,6 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedLink.forces.push(force);
                 GridComponent.forces.push(force);
                 GridComponent.updateMechanism();
-                GridComponent.selectedLink.forces.push(force)
                 GridComponent.gridStates = gridStates.waiting;
                 GridComponent.forceStates = forceStates.waiting;
                 GridComponent.forceTempHolderSVG.style.display = 'none';
