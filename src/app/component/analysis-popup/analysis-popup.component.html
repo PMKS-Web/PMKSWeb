@@ -151,7 +151,7 @@
       </div>
       <div *ngIf="getSelectedAnalysis() === 'ic'">
         <div>
-          <input type="checkbox">
+          <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">
           <label>
             Position of ICs
           </label>

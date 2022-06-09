@@ -751,6 +751,18 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     switch (analysisType) {
       case 'loops':
         increment = 0;
+        this.titleRow = ['Necessary Loops', 'All Loops'];
+        this.analysis = [];
+        GridComponent.mechanisms[0].allLoops.forEach((_, index) => {
+          const arr = [];
+          if (index <= GridComponent.mechanisms[0].requiredLoops.length - 1) {
+            arr.push(GridComponent.mechanisms[0].requiredLoops[index]);
+          } else {
+            arr.push('');
+          }
+          arr.push(GridComponent.mechanisms[0].allLoops[index]);
+          this.analysis.push(arr);
+        });
         this.requiredLoopCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         this.allLoopCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         break;
