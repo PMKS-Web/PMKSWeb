@@ -369,6 +369,7 @@
           </div>
           <!-- Force Solutions X -->
           <div style="display: none">
+            <!-- Display internal forces Equations at joints (x)-->
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1">
                 +
@@ -378,12 +379,17 @@
               </span>
               F
               <sub>{{joint.id}}x</sub>
+              <!-- Display external forces equations (x) -->
+              <span *ngFor="let force of link.forces">
+
+              </span>
             </span>
             = 0
             <br>
           </div>
           <!-- Force Solutions Y -->
           <div style="display: none">
+            <!-- Display internal forces Equations at joints (y)-->
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1">
                 +
@@ -394,8 +400,13 @@
               F
               <sub>{{joint.id}}y</sub>
             </span>
+            <!-- Display forces due to gravity -->
             <span *ngIf="gravityOn()">
               - {{getLinkWeight(link)}}
+            </span>
+            <!-- Display external forces equations (y) -->
+            <span *ngFor="let force of link.forces">
+
             </span>
             = 0
             <br>
@@ -461,6 +472,7 @@
           </div>
           <!-- Moment Solution  -->
           <div style="display: none">
+            <!-- Moment due to the joint Equation -->
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
                 {{getMoment(joint, link, 'x')}}F
@@ -469,9 +481,11 @@
                 <sub>{{joint.id}}y</sub>
               </span>
             </span>
+            <!-- Moment due to the gravity -->
             <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
               {{getMomentDueToGravity(link)}}
             </span>
+            <!-- Moment due to external force -->
             <span *ngFor="let force of link.forces">
               {{getMomentDueToForce(link, force)}}
             </span>
