@@ -122,7 +122,7 @@
   <div class="tabPanel" *ngIf="selectedTab === 'help'">
     <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: 640px; border: 1px solid black">
-        <button class="secondaryButtons">About</button>
+        <button class="secondaryButtons" (click)="openURL('https://pmks.mech.website/')">About</button>
         <button class="secondaryButtons">Section Info</button>
         <button class="secondaryButtons">Templates</button>
       </div>

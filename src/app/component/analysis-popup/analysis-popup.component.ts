@@ -798,6 +798,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'dynamics':
+        KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
+        ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'dynamics', ToolbarComponent.gravity,
+          ToolbarComponent.unit);
         // check whether to put the internal force analysis occurring at joints
         while (increment < (1 + (GridComponent.joints.length * 2))) {
           this.dynamicForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
