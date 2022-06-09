@@ -288,18 +288,6 @@
                   <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
                   <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
                 </g>
-                <svg id="startForceEndpoint"
-                     [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
-                     style="overflow: visible; cursor: move">
-                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
-                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
-                </svg>
-                <svg id="endForceEndpoint"
-                     [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
-                     style="overflow: visible; cursor: move">
-                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
-                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
-                </svg>
               </g>
               <g *ngFor="let joint of link.joints">
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
@@ -309,10 +297,10 @@
                       [attr.d]="getForceLine(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
                 </path>
                 <path *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                       [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                      [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
                 </path>
                 <path *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                       [attr.d]="getForceLine(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
+                      [attr.d]="getForceLine(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
                 </path>
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
                       [attr.d]="getForceArrow(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
@@ -321,10 +309,10 @@
                       [attr.d]="getForceArrow(joint, 'neg', 'x')" stroke="black" stroke-width="0.04">
                 </path>
                 <path  *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                        [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
+                       [attr.d]="getForceArrow(joint, 'pos', 'y')" stroke="black" stroke-width="0.04">
                 </path>
                 <path  *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                        [attr.d]="getForceArrow(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
+                       [attr.d]="getForceArrow(joint, 'neg', 'y')" stroke="black" stroke-width="0.04">
                 </path>
               </g>
             </g>
@@ -362,8 +350,8 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{joint.id}}</sub>
             </span>
-            <span>
-              - F
+            <span *ngIf="gravityOn()">
+              + F
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>grav</sub>
             </span>
@@ -415,6 +403,7 @@
           </div>
           <!-- Moment Equations -->
           <div style="display: none">
+            <!-- Showcase moment due to the reactionary forces occurring within each link's joint -->
             <span *ngFor="let joint of link.joints; let indexOfElement=index">
               <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
                 {{getMomentSignEqs(joint, link)}} r
@@ -425,22 +414,36 @@
                 <sub>{{joint.id}}</sub>
               </span>
             </span>
-            <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
-             + r
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>{{link.fixedLocation.fixedPoint}}-{{'com'}}</sub>
-              X F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>grav</sub>
+            <!-- Showcase moment due to the gravity -->
+            <span *ngIf="gravityOn()">
+              <span *ngFor="let joint of link.joints">
+                <span *ngIf="link.fixedLocation.fixedPoint !== joint.id">
+                  + r
+                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                  <sub>{{link.fixedLocation.fixedPoint}}-{{joint.id}}</sub>
+                  X F
+                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                  <sub>grav</sub>
+                </span>
+              </span>
+              <span *ngIf="link.fixedLocation.fixedPoint !== 'com'">
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>{{link.fixedLocation.fixedPoint}}-{{'com'}}</sub>
+                X F
+                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+                <sub>grav</sub>
+              </span>
             </span>
+            <!-- Showcase moment due to external forces being applied to a link -->
             <span *ngFor="let force of link.forces">
               + r
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>{{force.id}}-{{'com'}}</sub>
+              <sub>{{link.fixedLocation.fixedPoint}}-{{force.id}}</sub>
               X F
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{force.id}}</sub>
             </span>
+            <!-- Showcase torque due to input torque -->
             <span *ngIf="containInputJoint(link)">
               + T
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
