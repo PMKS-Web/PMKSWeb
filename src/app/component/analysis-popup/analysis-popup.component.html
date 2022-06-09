@@ -283,6 +283,24 @@
                    style="font-size: 1px; text-anchor: middle; overflow: visible;">
                 <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>
               </svg>
+              <g *ngFor="let force of link.forces">
+                <g [attr.id]="force.id">
+                  <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
+                  <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
+                </g>
+                <svg id="startForceEndpoint"
+                     [attr.x]="force.startCoord.x" [attr.y]="force.startCoord.y" height="10" width="10"
+                     style="overflow: visible; cursor: move">
+                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+                </svg>
+                <svg id="endForceEndpoint"
+                     [attr.x]="force.endCoord.x" [attr.y]="force.endCoord.y" height="10" width="10"
+                     style="overflow: visible; cursor: move">
+                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+                  <circle cx="0%" cy="0%" r="0.1" fill="blue"></circle>
+                </svg>
+              </g>
               <g *ngFor="let joint of link.joints">
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
                       [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04">
