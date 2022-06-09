@@ -39,7 +39,10 @@ export class Mechanism {
           break;
         case PrisJoint:
           if (!(j instanceof PrisJoint)) {return}
-          this._joints[0].push(new PrisJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
+          const prisJoint = new PrisJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints);
+          prisJoint.angle = j.angle;
+          this._joints[0].push(prisJoint);
+
           break;
         default:
           break;

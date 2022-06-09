@@ -118,7 +118,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'angle':
         if (!(joint instanceof PrisJoint)) {return}
-        joint.angle = Number($event.target.value);
+        joint.angle = Number($event.target.value) * Math.PI / 180;
     }
     GridComponent.updateMechanism();
   }
@@ -249,7 +249,7 @@ export class LinkageTableComponent implements OnInit {
   getJointAngle(joint: Joint) {
     if (!(joint instanceof PrisJoint)) {return}
     // joint will always be a prismatic joint
-    return joint.angle;
+    return joint.angle * 180 / Math.PI;
   }
 
   getLinkProp(l: Link, propType: string) {
