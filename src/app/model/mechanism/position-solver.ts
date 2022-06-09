@@ -8,6 +8,7 @@ import {core} from "@angular/compiler";
 export class PositionSolver {
   static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
   static jointMapPositions = new Map<string, Array<number>>();
+  static sliderAngleMap = new Map<string, number>();
   static desiredJointGroundIndexMap = new Map<string, number>();
   static unknownJointsIndicesMap = new Map<string, number[]>();
   static desiredLinkIndexMap = new Map<string, number>();
@@ -25,6 +26,7 @@ export class PositionSolver {
   static resetStaticVariables() {
     this.desiredIndexWithinPosAnalysisMap = new Map<string, number>();
     this.jointMapPositions = new Map<string, Array<number>>();
+    this.sliderAngleMap = new Map<string, number>();
     this.desiredJointGroundIndexMap = new Map<string, number>();
     this.unknownJointsIndicesMap = new Map<string, number[]>();
     this.desiredLinkIndexMap = new Map<string, number>();
@@ -49,6 +51,7 @@ export class PositionSolver {
     // 1st: store all ground joints as known joints
     joints.forEach(j => {
       if (!(j instanceof RealJoint)) {return}
+      if (j instanceof PrisJoint) {this.sliderAngleMap.set(j.id, j.angle)}
       if (!(j.ground)) {return}
       knownJointsIds.push(j.id);
     });
@@ -62,6 +65,7 @@ export class PositionSolver {
     const tracer_joints: Joint[] = [];
     inputJoint.connectedJoints.forEach(j => {
       if (!(j instanceof RealJoint)) {return}
+      if (j.ground) {return}
       // if (j.ground && j.constructor !== PrisJoint) {
       //   return;
       // }
@@ -261,14 +265,13 @@ export class PositionSolver {
 
   private static incrementPrisInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {
     const increment = angVelDir ? 0.1 : -0.1; // 0.01 : -0.01;
-    // TODO: Have a map to get unknownJoint.angle
-    // const xIncrement = increment * Math.cos(unknownJoint.angle);
-    // const yIncrement = increment * Math.sin(unknownJoint.angle);
-    const xIncrement = increment * Math.cos(0);
-    const yIncrement = increment * Math.sin(0);
+    const inputJointAngle = this.sliderAngleMap.get(inputJoint.id)!;
+    const xIncrement = increment * Math.cos(inputJointAngle);
+    const yIncrement = increment * Math.sin(inputJointAngle);
     const x = unknownJoint.x + xIncrement;
     const y = unknownJoint.y + yIncrement;
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
+    this.jointMapPositions.set(inputJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
   }
 
 // https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
