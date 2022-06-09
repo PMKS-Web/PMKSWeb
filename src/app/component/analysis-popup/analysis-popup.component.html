@@ -305,6 +305,11 @@
                   <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
                   <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
                 </g>
+                <svg [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
+                     [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"
+                     style="font-size: 1px; text-anchor: middle; overflow: visible">
+                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">{{force.id}}</text>
+                </svg>
               </g>
               <g *ngFor="let joint of link.joints">
                 <path *ngIf="getForceAssumption(link, joint, 'x') === 1"
