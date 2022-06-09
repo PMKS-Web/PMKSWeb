@@ -81,20 +81,31 @@
       </thead>
       <tbody>
       <tr *ngFor="let link of getLinks()">
-        <td *ngIf="typeofLink(link) !== 'P'">
-          {{link.id}}
-        </td>
+        <!-- ID -->
+        {{link.id}}
+        <!-- mass -->
         <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
         </td>
+        <td *ngIf="typeofLink(link) === 'P'">
+        </td>
+        <!-- massMoI -->
         <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
         </td>
+        <td *ngIf="typeofLink(link) === 'P'">
+        </td>
+        <!-- CoM_x -->
         <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
         </td>
+        <td *ngIf="typeofLink(link) === 'P'">
+        </td>
+        <!-- CoM_y -->
         <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
+        </td>
+        <td *ngIf="typeofLink(link) === 'P'">
         </td>
       </tr>
       </tbody>
