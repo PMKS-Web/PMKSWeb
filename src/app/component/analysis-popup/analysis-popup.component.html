@@ -1,6 +1,22 @@
 <div id="analysisPopup" class="ontop">
-  <div class="popupAnalysis">
+  <div class="popupAnalysis" style="border-style: solid; border-width: 10px">
     <div>
+      <div *ngIf="getSelectedAnalysis() === 'loop'">
+        Loops
+      </div>
+      <div *ngIf="getSelectedAnalysis() === 'force'">
+        Forces
+      </div>
+      <div *ngIf="getSelectedAnalysis() === 'stress'">
+        Stress
+      </div>
+      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
+        Kinematics (Loop Method)
+      </div>
+      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'">
+        Kinematics (Ics)
+      </div>
+
       <div class="buttonContainer">
         <button class="closeAnalysis" (click)="closeAnalysis()"
                 (mouseover)="mouseOver(99999)"
@@ -17,7 +33,8 @@
                 (mouseout)="mouseOut(2)"> Show Eqns </button>
       </div>
     </div>
-    <div class="tabPanel" *ngIf="getSelectedTab() === 0">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 0"
+         style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
       <div *ngIf="getSelectedAnalysis() === 'loop'">
         <div>
           <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck">
@@ -170,7 +187,8 @@
         </div>
       </div>
     </div>
-    <div class="tabPanel" *ngIf="getSelectedTab() === 1">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 1"
+         style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
       <div *ngIf="getSelectedAnalysis() === 'force'">
         <div>
           <label> Type of Analysis</label>
@@ -254,12 +272,11 @@
         </apx-chart>
       </div>
     </div>
-    <div class="tabPanel" *ngIf="getSelectedTab() === 2">
+    <div class="tabPanel" *ngIf="getSelectedTab() === 2"
+         style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
       <div *ngIf="getSelectedAnalysis() === 'loop'">
-
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'force'"
-           style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
+      <div *ngIf="getSelectedAnalysis() === 'force'">
         <div id="div_{{link.id}}" *ngFor="let link of getLinks()"
              style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block">
           <input type="checkbox" id="checkbox_{{link.id}}" (click)="updateTable('changeHeight', link.id)"
