@@ -23,10 +23,13 @@
         <th>ID</th>
         <!--          <th>Type</th>-->
         <th>Linked To</th>
-        <th>Dist From Joint</th>
-        <th>x</th>
-        <th>y</th>
-        <th>angle</th>
+        <th *ngIf="getUnit() === 'cm'">Dist From Joint (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Dist From Joint (m)</th>
+        <th *ngIf="getUnit() === 'cm'">x (cm)</th>
+        <th *ngIf="getUnit() === 'm'">x (m)</th>
+        <th *ngIf="getUnit() === 'cm'">y (cm)</th>
+        <th *ngIf="getUnit() === 'm'">y (m)</th>
+        <th>angle (deg)</th>
       </tr>
       </thead>
       <tbody>
@@ -73,10 +76,14 @@
       <thead>
       <tr>
         <th>ID</th>
-        <th>Mass</th>
-        <th>MoI</th>
-        <th>X CoM</th>
-        <th>Y CoM</th>
+        <th *ngIf="getUnit() === 'cm'">Mass (g)</th>
+        <th *ngIf="getUnit() === 'm'">Mass (kg)</th>
+        <th *ngIf="getUnit() === 'cm'">MoI (kg * cm^2)</th>
+        <th *ngIf="getUnit() === 'm'">MoI (kg * m^2)</th>
+        <th *ngIf="getUnit() === 'cm'">X CoM (cm)</th>
+        <th *ngIf="getUnit() === 'm'">X CoM (m)</th>
+        <th *ngIf="getUnit() === 'cm'">Y CoM (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Y CoM (m)</th>
       </tr>
       </thead>
       <tbody>

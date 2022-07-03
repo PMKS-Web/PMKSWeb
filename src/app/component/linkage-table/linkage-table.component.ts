@@ -7,6 +7,7 @@ import {roundNumber} from "../../model/utils";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
 import {GridComponent} from "../grid/grid.component";
+import {ToolbarComponent} from "../toolbar/toolbar.component";
 
 @Component({
   selector: 'app-linkage-table',
@@ -284,5 +285,9 @@ export class LinkageTableComponent implements OnInit {
 
   getForces() {
     return GridComponent.forces;
+  }
+
+  getUnit() {
+    return ToolbarComponent.unit;
   }
 }
