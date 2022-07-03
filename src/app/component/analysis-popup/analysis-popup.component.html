@@ -340,12 +340,27 @@
             </g>
           </svg>
           <div *ngFor="let joint of link.joints" style="display: none">
-            <input type="checkbox" (click)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">
-            <label>Direction of Force {{joint.id}}x</label>
+<!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">-->
+            <label> Direction of Force {{joint.id}}x</label>
             <br>
-            <input type="checkbox" (click)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1">
-            <label>Direction of Force {{joint.id}}y</label>
+            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">
+            <label> Pos </label>
+            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">
+            <label> Neg </label>
             <br>
+
+            <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">-->
+<!--            <label> Neg Direction of Force {{joint.id}}x</label>-->
+<!--            <br>-->
+            <label> Direction of Force {{joint.id}}y</label>
+            <br>
+            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1">
+            <label> Pos </label>
+            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">
+            <label> Neg </label>
+            <!--            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">-->
+<!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
+<!--            <br>-->
           </div>
           <div style="display: none">
             <label>Moment reference</label>

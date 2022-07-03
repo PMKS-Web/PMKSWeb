@@ -330,10 +330,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       case 'moment':
         let value = jointOrCoM;
-        if (value === 'com') {value = linkOrLoop!.id}
+        linkOrLoop!.fixedLocation.fixedPoint = value;
+        if (value === 'com') {
+          value = linkOrLoop!.id
+        }
         AnalysisPopupComponent.firstRefWithinMomentMap = new Map<string, string>();
         ForceSolver.linkToFixedPositionMap.set(linkOrLoop!.id, value);
-        linkOrLoop!.fixedLocation.fixedPoint = value;
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
           ToolbarComponent.gravity, ToolbarComponent.unit);
         break;

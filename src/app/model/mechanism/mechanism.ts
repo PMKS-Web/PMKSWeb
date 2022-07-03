@@ -187,34 +187,80 @@ export class Mechanism {
         });
         // TODO: Redo the logic here
         this.links[0].forEach((l, l_index) => {
-          if (!(l instanceof RealLink)) {return}
-          const connectedJointIndices = connectedJointMapIndices.get(l.id)!;
-          const connectedJoints: Joint[] = [];
+          let connectedJointIndices: number[];
+          let connectedJoints: Joint[] = [];
+          connectedJointIndices = connectedJointMapIndices.get(l.id)!;
           connectedJointIndices.forEach((ji: number) => {
             connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
           });
-          // const connectedJoints: Joint[] = [];
-          // TODO: think of possible way to reduce this if there is time
-          // l.joints.forEach(j => {
-          //   const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
-          //   if (joint === undefined) {return}
-          //   connectedJoints.push(joint);
-          // });
-          const pushLink = new RealLink(l.id, connectedJoints);
-          pushLink.shape = l.shape;
-          // TODO: Update this to just one function later...
-          if (pushLink.shape === 'line') {
-            pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
-              new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
-          } else {
-            pushLink.bound = RealLink.rotateBounds(l.joints[0], l.joints[1], new Coord(connectedJoints[0].x, connectedJoints[0].y),
-              new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound);
+          switch (l.constructor) {
+            case RealLink:
+              if (!(l instanceof RealLink)) {return}
+              // connectedJointIndices = connectedJointMapIndices.get(l.id)!;
+              // connectedJointIndices.forEach((ji: number) => {
+              //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
+              // });
+              // const connectedJoints: Joint[] = [];
+              // TODO: think of possible way to reduce this if there is time
+              // l.joints.forEach(j => {
+              //   const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
+              //   if (joint === undefined) {return}
+              //   connectedJoints.push(joint);
+              // });
+              const pushLink = new RealLink(l.id, connectedJoints);
+              pushLink.shape = l.shape;
+              // TODO: Update this to just one function later...
+              if (pushLink.shape === 'line') {
+                pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
+                  new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
+              } else {
+                pushLink.bound = RealLink.rotateBounds(l.joints[0], l.joints[1], new Coord(connectedJoints[0].x, connectedJoints[0].y),
+                  new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound);
+              }
+              pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
+              // TODO: When you insert a joint onto a link, be sure to utilize this function call
+              pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
+              pushLink.forces = l.forces;
+              this._links[currentTimeStamp + 1].push(pushLink);
+              break;
+            case Piston:
+              if (!(l instanceof Piston)) {return}
+              // connectedJointIndices = connectedJointMapIndices.get(l.id)!;
+              // connectedJointIndices.forEach((ji: number) => {
+              //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
+              // });
+              const newLink = new Piston(l.id, connectedJoints);
+              this._links[currentTimeStamp + 1].push(newLink);
+              break;
           }
-          pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
-          // TODO: When you insert a joint onto a link, be sure to utilize this function call
-          pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
-          pushLink.forces = l.forces;
-          this._links[currentTimeStamp + 1].push(pushLink);
+          // if (!(l instanceof RealLink)) {return}
+          // const connectedJointIndices = connectedJointMapIndices.get(l.id)!;
+          // const connectedJoints: Joint[] = [];
+          // connectedJointIndices.forEach((ji: number) => {
+          //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
+          // });
+          // // const connectedJoints: Joint[] = [];
+          // // TODO: think of possible way to reduce this if there is time
+          // // l.joints.forEach(j => {
+          // //   const joint = this._joints[currentTimeStamp + 1].find(jt => jt.id === j.id);
+          // //   if (joint === undefined) {return}
+          // //   connectedJoints.push(joint);
+          // // });
+          // const pushLink = new RealLink(l.id, connectedJoints);
+          // pushLink.shape = l.shape;
+          // // TODO: Update this to just one function later...
+          // if (pushLink.shape === 'line') {
+          //   pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
+          //     new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
+          // } else {
+          //   pushLink.bound = RealLink.rotateBounds(l.joints[0], l.joints[1], new Coord(connectedJoints[0].x, connectedJoints[0].y),
+          //     new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound);
+          // }
+          // pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
+          // // TODO: When you insert a joint onto a link, be sure to utilize this function call
+          // pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
+          // pushLink.forces = l.forces;
+          // this._links[currentTimeStamp + 1].push(pushLink);
         });
         // TODO: If forces are a part of links, is all of this info needed? Or just the positions?
         this.forces[0].forEach(f => {
