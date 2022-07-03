@@ -89,7 +89,9 @@
       <tbody>
       <tr *ngFor="let link of getLinks()">
         <!-- ID -->
-        {{link.id}}
+        <td>
+          {{link.id}}
+        </td>
         <!-- mass -->
         <td *ngIf="typeofLink(link) !== 'P'">
           <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
@@ -123,21 +125,23 @@
     <table id="forceTable">
       <thead>
       <tr>
-        <th>On Link</th>
         <th>ID</th>
-        <th>Angle</th>
-        <th>Mag</th>
-        <th>X-Pos</th>
-        <th>Y-Pos</th>
+        <th>On Link</th>
+        <th>Angle (deg)</th>
+        <th>Mag (N)</th>
+        <th *ngIf="getUnit() === 'cm'">X Pos (cm)</th>
+        <th *ngIf="getUnit() === 'm'">X Pos (m)</th>
+        <th *ngIf="getUnit() === 'cm'">Y Pos (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Y Pos (m)</th>
       </tr>
       </thead>
       <tbody>
       <tr *ngFor="let force of getForces()">
         <td>
-          {{force.link.id}}
+          <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
         </td>
         <td>
-          <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
+          {{force.link.id}}
         </td>
         <td>
           <input type="text" value="{{showForceAngle(force)}}" (change)="changeForceProp($event, force, 'angle')">
