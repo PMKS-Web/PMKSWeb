@@ -257,6 +257,9 @@ export class GridComponent implements OnInit, AfterViewInit {
           joints[next_j_index].connectedJoints.push(joints[j_index]);
         }
       }
+      joints.forEach(j => {
+        j.links.push(newLink);
+      });
       linkArray.push(newLink);
     });
     const forceStringArray = forcePropsString.split('\n');
