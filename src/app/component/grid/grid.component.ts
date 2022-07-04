@@ -166,7 +166,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       const type = propsArray[4];
       const ground = stringToBoolean(propsArray[5]);
       // const coefficient_of_friction = propsArray[7];
-      const input = stringToBoolean(propsArray[6]);
+      const input = stringToBoolean(propsArray[7]);
       let joint: Joint;
       switch (type) {
         case 'R':
@@ -175,7 +175,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         case 'P':
           joint = new PrisJoint(id, x, y, input, ground);
           if (!(joint instanceof PrisJoint)) {return}
-          const angle = stringToFloat(propsArray[7]);
+          const angle = stringToFloat(propsArray[6]);
           joint.angle = angle;
           break;
         default:

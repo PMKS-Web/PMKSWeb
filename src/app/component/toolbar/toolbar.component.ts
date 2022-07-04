@@ -239,9 +239,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       // }
       content += `${joint.ground ? 't' : 'f'},`;
       // result += `${joint.coeffFriction},`;
-      content += `${joint.input ? 't' : 'f'},`;
       if (joint instanceof PrisJoint) {content += `${joint.angle},`;}
-      else {content += `Null`;}
+      else {content += `Null,`;}
+      content += `${joint.input ? 't' : 'f'}`;
 
       // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
       content += '\n';
