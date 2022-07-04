@@ -482,69 +482,90 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   generateExportFile(jointArray: Joint[], linkArray: Link[], forceArray: Force[], pathPointArray: any,
                      threePositionArray: any,  input_speed_mag: number, clockwise: boolean,
                      gravity: boolean, unit: string): string {
-    // let result = '';
-    // result += 'joints\n';
-    // result += 'id,x,y,links,type,ground,angle,coeffOfFriction,input\n';
-    // jointArray.forEach(joint => {
-    //   result += `${joint.id},`;
-    //   result += `${joint.x},`;
-    //   result += `${joint.y},`;
-    //   const relatedLinkIDs = joint.links.map(link => {
-    //     return link.id;
-    //   });
-    //   result += `${relatedLinkIDs.join('|')},`;
-    //   result += `${joint.type},`;
-    //   result += `${joint.grounded},`;
-    //   result += `${joint.angle},`;
-    //   result += `${joint.coeffFriction},`;
-    //   result += `${joint.input},`;
-    //   // result += `0`;
-    //   result += '\n';
-    // });
-    //
-    // result += 'links\n';
-    // result += 'id,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
-    //
-    // linkArray.forEach(link => {
-    //   result += `${link.id},`;
-    //   result += `${link.mass},`;
-    //   result += `${link.massMomentOfInertia},`;
-    //   result += `${link.centerOfMassX},`;
-    //   result += `${link.centerOfMassY},`;
-    //   const relatedJointIDs = link.joints.map(joint => {
-    //     return joint.id;
-    //   });
-    //   const relatedForceIDs = link.forces.map(force => {
-    //     return force.id;
-    //   });
-    //   result += `"${relatedJointIDs.join(',')}",`;
-    //   result += `"${relatedForceIDs.join(',')}",`;
-    //   result += `${link.uiShape}`;
-    //   const bounds = link.uiBounds;
-    //   const keyArray = [editorID.b1, editorID.b2, editorID.b3, editorID.b4];
-    //   keyArray.forEach(eid => {
-    //     result += `,${bounds[eid].x}`;
-    //     result += `,${bounds[eid].y}`;
-    //   });
-    //   result += '\n';
-    // });
-    //
-    // result += 'forces\n';
-    // result += 'id,link,startx,starty,endx,endy,fixed,direction,xMag,yMag\n';
-    // forceArray.forEach(force => {
-    //
-    //   result += `${force.id},`;
-    //   result += `${force.link.id},`;
-    //   result += `${force.start.x},`;
-    //   result += `${force.start.y},`;
-    //   result += `${force.end.x},`;
-    //   result += `${force.end.y},`;
-    //   result += `${force.isGlobal},`;
-    //   result += `${force.directionOutward},`;
-    //   result += `${force.xMag},`;
-    //   result += `${force.yMag}`;
-    //   result += '\n';
-    // });
+    let result = '';
+    result += 'joints\n';
+    result += 'id,x,y,links,type,ground,angle,input\n';
+    jointArray.forEach(joint => {
+      if (!(joint instanceof RealJoint)) {return}
+      result += `${joint.id},`;
+      result += `${joint.x},`;
+      result += `${joint.y},`;
+      const relatedLinkIDs = joint.links.map(link => {
+        return link.id;
+      });
+      result += `${relatedLinkIDs.join('|')},`;
+      switch (joint.constructor) {
+        case RevJoint:
+          result += `R,`;
+          break;
+        case PrisJoint:
+          result += `P,`;
+          break;
+        default:
+          return;
+      }
+      result += `${joint.ground},`;
+      switch (joint.constructor) {
+        case RevJoint:
+          result += `Null`;
+          break;
+        case PrisJoint:
+          if (!(joint instanceof PrisJoint)) {return}
+          result += `${joint.angle},`;
+          break;
+        default:
+          return;
+      }
+      // result += `${joint.coeffFriction},`;
+      result += `${joint.input},`;
+      // result += `0`;
+      result += '\n';
+    });
+
+    result += 'links\n';
+    result += 'id,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
+
+    linkArray.forEach(link => {
+      if (!(link instanceof RealLink)) {return}
+      result += `${link.id},`;
+      result += `${link.mass},`;
+      result += `${link.massMoI},`;
+      result += `${link.CoM.x},`;
+      result += `${link.CoM.y},`;
+      const relatedJointIDs = link.joints.map(joint => {
+        return joint.id;
+      });
+      const relatedForceIDs = link.forces.map(force => {
+        return force.id;
+      });
+      result += `"${relatedJointIDs.join(',')}",`;
+      result += `"${relatedForceIDs.join(',')}",`;
+      result += `${link.shape}`;
+      const bounds = link.bound;
+      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+      keyArray.forEach(eid => {
+        result += `,${eid.x}`;
+        result += `,${eid.y}`;
+      });
+      result += '\n';
+    });
+
+    result += 'forces\n';
+    result += 'id,link,startx,starty,endx,endy,fixed,direction,mag\n';
+    forceArray.forEach(force => {
+
+      result += `${force.id},`;
+      result += `${force.link.id},`;
+      result += `${force.startCoord.x},`;
+      result += `${force.startCoord.y},`;
+      result += `${force.endCoord.x},`;
+      result += `${force.endCoord.y},`;
+      result += `${!force.local},`;
+      result += `${force.arrowOutward},`;
+      result += `${force.mag},`;
+      // result += `${force.yMag}`;
+      result += '\n';
+    });
     // result += 'pathPoints\n';
     // result += 'id,x,y,neighbor1,neighbor2\n';
     // pathPointArray.forEach(pathPoint => {
@@ -555,22 +576,21 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     //   result += `${pathPoint.neighbor_two.id},`;
     //   result += '\n';
     // });
-    // // result += 'threePosition\n';
-    // // result += 'id,x,y\n';
-    // // threePositionArray.forEach(force => {
-    // //
-    // //   result += '\n';
-    // // });
-    // result += 'settings\n';
-    // result += 'input_speed_mag,clockwise,gravity,unit\n';
-    // result += `${input_speed_mag},`;
-    // result += `${clockwise},`;
-    // result += `${gravity},`;
-    // result += `${unit}`;
-    // result += '\n';
+    // result += 'threePosition\n';
+    // result += 'id,x,y\n';
+    // threePositionArray.forEach(force => {
     //
-    // return result;
-    return '';
+    //   result += '\n';
+    // });
+    result += 'settings\n';
+    result += 'input_speed_mag,clockwise,gravity,unit\n';
+    result += `${input_speed_mag},`;
+    result += `${clockwise},`;
+    result += `${gravity},`;
+    result += `${unit}`;
+    result += '\n';
+
+    return result;
   }
 
   setInputMagnitudeAngVel($event: any) {
