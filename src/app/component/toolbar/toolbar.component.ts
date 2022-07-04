@@ -324,6 +324,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     toolman.select();
     document.execCommand('copy');
     document.body.removeChild(toolman);
+    GridComponent.sendNotification('URL Copied');
   }
 
   downloadLinkage() {

@@ -83,6 +83,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
+  static notificationWrapper: SVGElement;
   private static transformMatrixGridSVGElement: SVGElement;
   private static transformMatrixSVG: SVGElement;
   private static pathsHolderSVG: SVGElement;
@@ -244,14 +245,12 @@ export class GridComponent implements OnInit, AfterViewInit {
 
       // const newLink = new RealLink(id, joints, shape, { b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
       const newLink = new RealLink(id, joints);
-      // TODO: Set the code as below and also include mass, massMoI, and CoM
+      // TODO: Set the code as below and also include mass, massMoI, and CoM. This important for links with other link shapes
       // const newLinks = new RealLink(id, joints, shape, bound);
       newLink.mass = mass;
       newLink.massMoI = mass_moi;
       newLink.CoM.x = CoM_X;
       newLink.CoM.y = CoM_Y;
-      // newLink.forces = forces;
-      // TODO: Make sure the joints know they are connected to each other
       for (let j_index = 0; j_index < joints.length - 1; j_index++) {
         for (let next_j_index = j_index + 1; next_j_index < joints.length; next_j_index++) {
           joints[j_index].connectedJoints.push(joints[next_j_index]);
@@ -300,6 +299,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
     GridComponent.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
+    GridComponent.notificationWrapper = document.getElementById('notificationWrapper') as unknown as SVGElement;
 
     // context Menu for Grid
     GridComponent.contextMenuAddLinkOntoGrid = document.getElementById('menuEntryAddLinkOnGrid') as unknown as SVGElement;
@@ -2043,5 +2043,13 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   getShowcaseShapeSelector() {
     return GridComponent.showcaseShapeSelector;
+  }
+
+  static sendNotification(text: string) {
+    GridComponent.notificationWrapper.style.display = 'block';
+    GridComponent.notificationWrapper.children[1].textContent = text;
+    setTimeout(() => {
+      GridComponent.notificationWrapper.style.display = 'none';
+    }, 3000);
   }
 }
