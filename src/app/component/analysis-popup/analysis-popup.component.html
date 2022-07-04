@@ -344,9 +344,9 @@
             <label> Direction of Force {{joint.id}}x</label>
             <br>
             <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">
-            <label> Pos </label>
+            <label> Positive (+) </label>
             <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">
-            <label> Neg </label>
+            <label> Negative (-) </label>
             <br>
 
             <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">-->
@@ -355,9 +355,9 @@
             <label> Direction of Force {{joint.id}}y</label>
             <br>
             <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1">
-            <label> Pos </label>
+            <label> Positive (+) </label>
             <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">
-            <label> Neg </label>
+            <label> Negative (-) </label>
             <!--            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">-->
 <!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
 <!--            <br>-->
