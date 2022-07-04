@@ -1,9 +1,9 @@
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
-import {Link} from "../../model/link";
+import {Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
-import {roundNumber} from "../../model/utils";
+import {roundNumber, splitURLInfo, stringToBoolean, stringToFloat} from "../../model/utils";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 import {GridComponent} from "../grid/grid.component";
@@ -48,6 +48,20 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   constructor() { }
 
   ngOnInit(): void {
+    const settingsPropsString = splitURLInfo('&s=');
+    if (!(typeof settingsPropsString === 'string')) {return}
+    const settingsPropsArray = settingsPropsString.split(',');
+    if (settingsPropsArray.length === 0) {return}
+    const input_speed_mag = stringToFloat(settingsPropsArray[0]);
+    const clockwise = stringToBoolean(settingsPropsArray[1]);
+    const gravity = stringToBoolean(settingsPropsArray[2]);
+    const unit = settingsPropsArray[3];
+    ToolbarComponent.inputAngularVelocity = input_speed_mag;
+    ToolbarComponent.clockwise = clockwise;
+    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+    ToolbarComponent.gravity = gravity;
+    this.localUnit.selectedUnit = unit;
+    ToolbarComponent.unit = unit;
   }
 
   ngAfterViewInit() {
@@ -189,18 +203,118 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   copyURL() {
-    const content = this.generateExportURL(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
-      [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
+    // const content = this.generateExportURL(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
+    //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
+    let content = '';
+    content += `j=`;
+    GridComponent.joints.forEach(joint => {
+      if (!(joint instanceof RealJoint)) {return}
+      content += `${joint.id},`;
+      content += `${roundNumber(joint.x, 3)},`;
+      content += `${roundNumber(joint.y, 3)},`;
+      const relatedLinkIDs = joint.links.map(link => {
+        return link.id;
+      });
+      content += `${relatedLinkIDs.join('|')},`;
+      switch (joint.constructor) {
+        case RevJoint:
+          content += `R,`;
+          break;
+        case PrisJoint:
+          content += `P,`;
+          break;
+        default:
+          content += `???`;
+          break;
+      }
+      // switch (joint.constructor) {
+      //   case RevJoint:
+      //     result += `R`;
+      //     break;
+      //   case PrisJoint:
+      //     if (!(joint instanceof PrisJoint)) {return}
+      //     result += `P`;
+      //     result += `${joint.angle}`;
+      //     break;
+      // }
+      content += `${joint.ground ? 't' : 'f'},`;
+      // result += `${joint.coeffFriction},`;
+      content += `${joint.input ? 't' : 'f'},`;
+      if (joint instanceof PrisJoint) {content += `${joint.angle},`;}
+      else {content += `Null`;}
+
+      // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
+      content += '\n';
+    });
+    content += `&l=`;
+    GridComponent.links.forEach(link => {
+      if (!(link instanceof RealLink)) {return}
+      content += `${link.id},`;
+      content += `${link.mass},`;
+      content += `${link.massMoI},`;
+      content += `${link.CoM.x},`;
+      content += `${link.CoM.y},`;
+      const relatedJointIDs = link.joints.map(joint => {
+        return joint.id;
+      });
+      const relatedForceIDs = link.forces.map(force => {
+        return force.id;
+      });
+
+      content += `${relatedJointIDs.join('|')},`;
+      content += `${relatedForceIDs.join('|')},`;
+      content += `${link.shape}`;
+      // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
+      const bounds = link.bound;
+      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+      keyArray.forEach(eid => {
+        content += `,${roundNumber(eid.x, 3)}`;
+        content += `,${roundNumber(eid.y, 3)}`;
+      });
+      content += '\n';
+    });
+
+    content += `&f=`;
+    GridComponent.forces.forEach(force => {
+      content += `${force.id},`;
+      content += `${force.link.id},`;
+      content += `${roundNumber(force.startCoord.x, 3)},`;
+      content += `${roundNumber(force.startCoord.y, 3)},`;
+      content += `${roundNumber(force.endCoord.x, 3)},`;
+      content += `${roundNumber(force.endCoord.y, 3)},`;
+      content += `${force.local ? 'f' : 't'},`;
+      content += `${force.arrowOutward},`;
+      content += `${force.mag},`;
+      // result += `${force.yMag}`;
+      content += '\n';
+    });
+    // result += `&pp=`;
+    // pathPointArray.forEach(pp => {
+    //   result += `${pp.id},`;
+    //   result += `${IndiFuncs.roundNumber(pp.x, 3)},`;
+    //   result += `${IndiFuncs.roundNumber(pp.y, 3)},`;
+    //   result += `${pp.neighbor_one.id},`;
+    //   result += `${pp.neighbor_two.id},`;
+    //   result += '\n';
+    // });
+    // result += `&tp=`;
+    // threePositionArray.forEach(tp => {});
+    content += `&s=`;
+    content += `${ToolbarComponent.inputAngularVelocity},`; // input speed
+    content += `${ToolbarComponent.clockwise},`; // cw (true) or ccw (false)
+    content += `${ToolbarComponent.gravity},`; // gravity on or off
+    content += `${ToolbarComponent.unit}`;
+    /////
     const url = this.getURL();
     const dataURLString = `${url}?${content}`;
     const dataURL = encodeURI(dataURLString);
     console.log(dataURL.length);
-    // if (dataURL.length > 2000) {
-    //   IndiFuncs.showErrorNotification('linkage too large, please use export file');
-    //   return;
-    // } else {
-    //   IndiFuncs.showNotification('URL copied!');
-    // }
+    if (dataURL.length > 2000) {
+      // IndiFuncs.showErrorNotification('linkage too large, please use export file');
+      return;
+    } else {
+      // IndiFuncs.showNotification('URL copied!');
+    }
 
     // fake a text area to exec copy
     const toolman = document.createElement('textarea');
@@ -263,84 +377,88 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   generateExportURL(jointArray: Joint[], linkArray: Link[], forceArray: Force[], pathPointArray: any,
                     threePositionArray: any,  angularVelocity: number, clockwise: boolean,
                     gravityBool: boolean, unit: string): string {
-    // TODO: Once the analysis has been completed, have this. Don't want to change this again and again
-    // let result = '';
-    // result += `j=`;
-    // jointArray.forEach(joint => {
-    //   result += `${joint.id},`;
-    //   result += `${roundNumber(joint.x, 3)},`;
-    //   result += `${roundNumber(joint.y, 3)},`;
-    //   if (!(joint instanceof RealJoint)) {
-    //     if (joint instanceof ImagJoint) {
-    //       result += `I`;
-    //     } else {
-    //       result += `?`; // should never reach here since only mechanism contains pure Joint
-    //     }
-    //     result += '\n';
-    //     return;
-    //   }
-    //   const relatedLinkIDs = joint.links.map(link => {
-    //     return link.id;
-    //   });
-    //   result += `${relatedLinkIDs.join('|')},`;
-    //   result += `${joint.input ? 't' : 'f'},`;
-    //   result += `${joint.ground ? 't' : 'f'},`;
-    //   switch (joint.constructor) {
-    //     case RevJoint:
-    //       result += `R`;
-    //       break;
-    //     case PrisJoint:
-    //       if (!(joint instanceof PrisJoint)) {return}
-    //       result += `P`;
-    //       result += `${joint.angle}`;
-    //       break;
-    //   }
-    //   result += `${joint.type},`;
-    //   // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
-    //
-    //
-    //   result += '\n';
-    // });
-    // result += `&l=`;
-    // linkArray.forEach(link => {
-    //   result += `${link.id},`;
-    //   result += `${link.mass},`;
-    //   result += `${link.massMomentOfInertia},`;
-    //   result += `${link.centerOfMassX},`;
-    //   result += `${link.centerOfMassY},`;
-    //   const relatedJointIDs = link.joints.map(joint => {
-    //     return joint.id;
-    //   });
-    //   const relatedForceIDs = link.forces.map(force => {
-    //     return force.id;
-    //   });
-    //
-    //   result += `${relatedJointIDs.join('|')},`;
-    //   result += `${relatedForceIDs.join('|')},`;
-    //   result += `${this.shapeFullnameToNickname(link.uiShape)}`;
-    //   const bounds = link.uiBounds;
-    //   const keyArray = [editorID.b1, editorID.b2, editorID.b3, editorID.b4];
-    //   keyArray.forEach(eid => {
-    //     result += `,${IndiFuncs.roundNumber(bounds[eid].x, 3)}`;
-    //     result += `,${IndiFuncs.roundNumber(bounds[eid].y, 3)}`;
-    //   });
-    //   result += '\n';
-    // });
-    //
-    // result += `&f=`;
-    // forceArray.forEach(force => {
-    //   result += `${force.id},`;
-    //   result += `${force.link.id},`;
-    //   result += `${IndiFuncs.roundNumber(force.start.x, 3)},`;
-    //   result += `${IndiFuncs.roundNumber(force.start.y, 3)},`;
-    //   result += `${IndiFuncs.roundNumber(force.end.x, 3)},`;
-    //   result += `${IndiFuncs.roundNumber(force.end.y, 3)},`;
-    //   result += `${force.isGlobal ? 't' : 'f'},`;
-    //   result += `${force.directionOutward},`;
-    //   result += `${force.xMag},`;
-    //   result += `${force.yMag}`;
-    //   result += '\n';
-    // });
+    let result = '';
+    result += `j=`;
+    jointArray.forEach(joint => {
+      if (!(joint instanceof RealJoint)) {return}
+      result += `${joint.id},`;
+      result += `${roundNumber(joint.x, 3)},`;
+      result += `${roundNumber(joint.y, 3)},`;
+      const relatedLinkIDs = joint.links.map(link => {
+        return link.id;
+      });
+      result += `${relatedLinkIDs.join('|')},`;
+      switch (joint.constructor) {
+        case RevJoint:
+          result += `R`;
+          break;
+        case PrisJoint:
+          result += `P`;
+          break;
+        default:
+          result += `???`;
+          break;
+      }
+      // switch (joint.constructor) {
+      //   case RevJoint:
+      //     result += `R`;
+      //     break;
+      //   case PrisJoint:
+      //     if (!(joint instanceof PrisJoint)) {return}
+      //     result += `P`;
+      //     result += `${joint.angle}`;
+      //     break;
+      // }
+      result += `${joint.ground ? 't' : 'f'},`;
+      if (joint instanceof PrisJoint) {result += `${joint.angle},`;}
+      // result += `${joint.coeffFriction},`;
+      result += `${joint.input ? 't' : 'f'},`;
+
+      // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
+      result += '\n';
+    });
+    result += `&l=`;
+    linkArray.forEach(link => {
+      if (!(link instanceof RealLink)) {return}
+      result += `${link.id},`;
+      result += `${link.mass},`;
+      result += `${link.massMoI},`;
+      result += `${link.CoM.x},`;
+      result += `${link.CoM.y},`;
+      const relatedJointIDs = link.joints.map(joint => {
+        return joint.id;
+      });
+      const relatedForceIDs = link.forces.map(force => {
+        return force.id;
+      });
+
+      result += `${relatedJointIDs.join('|')},`;
+      result += `${relatedForceIDs.join('|')},`;
+      result += `${link.shape},`;
+      // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
+      const bounds = link.bound;
+      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+      keyArray.forEach(eid => {
+        result += `,${roundNumber(eid.x, 3)}`;
+        result += `,${roundNumber(eid.y, 3)}`;
+      });
+      result += '\n';
+    });
+
+    result += `&f=`;
+    forceArray.forEach(force => {
+      result += `${force.id},`;
+      result += `${force.link.id},`;
+      result += `${roundNumber(force.startCoord.x, 3)},`;
+      result += `${roundNumber(force.startCoord.y, 3)},`;
+      result += `${roundNumber(force.endCoord.x, 3)},`;
+      result += `${roundNumber(force.endCoord.y, 3)},`;
+      result += `${force.local ? 'f' : 't'},`;
+      result += `${force.arrowOutward},`;
+      result += `${force.mag},`;
+      // result += `${force.yMag}`;
+      result += '\n';
+    });
     // result += `&pp=`;
     // pathPointArray.forEach(pp => {
     //   result += `${pp.id},`;
@@ -352,13 +470,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // });
     // result += `&tp=`;
     // threePositionArray.forEach(tp => {});
-    // result += `&s=`;
-    // result += `${angularVelocity},`; // input speed
-    // result += `${clockwise},`; // cw (true) or ccw (false)
-    // result += `${gravityBool},`; // gravity on or off
-    // result += `${unit}`;
-    // return result;
-    return '';
+    result += `&s=`;
+    result += `${angularVelocity},`; // input speed
+    result += `${clockwise},`; // cw (true) or ccw (false)
+    result += `${gravityBool},`; // gravity on or off
+    result += `${unit}`;
+    return result;
   }
 
   generateExportFile(jointArray: Joint[], linkArray: Link[], forceArray: Force[], pathPointArray: any,
@@ -466,11 +583,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   setClockwise(cond: boolean) {
     ToolbarComponent.clockwise = cond;
-    if (ToolbarComponent.clockwise) {
-      AnimationBarComponent.direction = 'cw';
-    } else {
-      AnimationBarComponent.direction = 'ccw';
-    }
+    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw': 'ccw';
     GridComponent.updateMechanism();
   }
 

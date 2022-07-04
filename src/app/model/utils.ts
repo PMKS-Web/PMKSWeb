@@ -261,3 +261,52 @@ export function determineX(m1: number, b1: number, m2: number, b2: number) {
 export function determineY(x: number, m: number, b: number) {
   return (m * x) + b;
 }
+
+export function stringToFloat(str: string) {
+  const res = parseFloat(str);
+  if (Number.isNaN(res)) {
+    throw new Error('should be a number, file corrupted');
+  }
+  return res;
+}
+
+export function stringToBoolean(str: string) {
+  const lowerCaseString = str.toLowerCase();
+  switch (lowerCaseString) {
+    case 't':
+    case 'true':
+      return true;
+    case 'f':
+    case 'false':
+      return false;
+    default:
+      throw new Error ('should be a boolean, file corrupted');
+  }
+}
+
+export function splitURLInfo(str: string) {
+  const decodedURL = decodeURI(window.location.href);
+  let indexVal = decodedURL.indexOf(str);
+  if (indexVal === -1) {return []}
+  else if (str === 'j=') {indexVal += 2;}
+  else {indexVal += 3;}
+  let nextIndexVal: number;
+  switch (str) {
+    case 'j=':
+      nextIndexVal = decodedURL.indexOf('&l=');
+      break;
+    case '&l=':
+      nextIndexVal = decodedURL.indexOf('&f=');
+      break;
+    case '&f=':
+      nextIndexVal = decodedURL.indexOf('&s=');
+      break;
+    case '&s=':
+      nextIndexVal = decodedURL.length;
+      break;
+    default:
+      throw new Error ('ummm??');
+  }
+  return decodedURL.substring(indexVal, nextIndexVal);
+  // return settingArrayString.split(',');
+}

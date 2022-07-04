@@ -6,7 +6,14 @@ import {Piston, Link, RealLink, Shape, Bound} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {InstantCenter} from "../../model/instant-center";
-import {determineSlope, determineX, determineY, determineYIntersect, roundNumber} from "../../model/utils";
+import {
+  determineSlope,
+  determineX,
+  determineY,
+  determineYIntersect,
+  roundNumber,
+  splitURLInfo, stringToBoolean, stringToFloat
+} from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 
@@ -138,6 +145,151 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    const jointPropsString = splitURLInfo('j=');
+    const linkPropsString = splitURLInfo('&l=');
+    const forcePropsString = splitURLInfo('&f=');
+    if (jointPropsString.length === 0 || linkPropsString.length === 0 || forcePropsString.length === 0) {return}
+    if (!(typeof jointPropsString === 'string' && typeof linkPropsString === 'string' && typeof forcePropsString === 'string')) {return}
+    const jointStringArray = jointPropsString.split('\n');
+    const jointArray = [] as Joint[];
+    jointStringArray.forEach(jointString => {
+      if (jointString.length === 0) {return}
+      const propsArray = jointString.split(',');
+      // todo: needs input error checking
+      const id = propsArray[0];
+      const x = stringToFloat(propsArray[1]);
+      const y = stringToFloat(propsArray[2]);
+      // const linkIDArray = propsArray[3].split('|');
+      // const links = this.getLinksByIds(linkIDArray, linkArray);
+      // const links = propsArray[3];
+      const type = propsArray[4];
+      const ground = stringToBoolean(propsArray[5]);
+      // const coefficient_of_friction = propsArray[7];
+      const input = stringToBoolean(propsArray[6]);
+      let joint: Joint;
+      switch (type) {
+        case 'R':
+          joint = new RevJoint(id, x, y, input, ground);
+          break;
+        case 'P':
+          joint = new PrisJoint(id, x, y, input, ground);
+          if (!(joint instanceof PrisJoint)) {return}
+          const angle = stringToFloat(propsArray[7]);
+          joint.angle = angle;
+          break;
+        default:
+          return;
+      }
+      jointArray.push(joint);
+
+      // const joint = new Joint(propsArray[0], parseFloat(propsArray[1]), parseFloat(propsArray[2]), propsArray[3]);
+      // const ground = this.stringToBoolean(propsArray[4]);
+      // const input = this.stringToBoolean(propsArray[5]);
+      // const joint = new Joint(id, parseFloat(x), parseFloat(y), type, parseFloat(angle), parseFloat(coefficient_of_friction));
+      // joint.input = input_joint;
+      // joint.grounded = ground_joint;
+      // if (input_joint) {
+      //   // joint.setInput(true, joint);
+      //   joint.setInput(true);
+      // } else if (joint.getSlider()) {
+      //   joint.setSlider(true);
+      // } else if (ground_joint) {
+      //   joint.setGrounded(true, type);
+      // }
+      // joint.links = links;
+      // joint.setLinks(links);
+      // jointArray.push(joint);
+    });
+    const linkStringArray = linkPropsString.split('\n');
+    const linkArray = [] as Link[];
+    linkStringArray.forEach(linkString => {
+      if (linkString.length === 0) {return}
+      const propsArray = linkString.split(',');
+      // todo: needs input error checking
+      const id = propsArray[0];
+      const mass = stringToFloat(propsArray[1]);
+      const mass_moi = stringToFloat(propsArray[2]);
+      const CoM_X = stringToFloat(propsArray[3]);
+      const CoM_Y = stringToFloat(propsArray[4]);
+      const jointIDArray = propsArray[5].split('|');
+      // const forceIDArray = propsArray[6].split('|');
+      let joints: RealJoint[] = [];
+      jointIDArray.forEach(jointID => {
+        const joint = jointArray.find(jt => jt.id === jointID)!;
+        if (!(joint instanceof RealJoint)) {return}
+        // TODO: Maybe put check here to see if they got a joint
+        joints.push(joint);
+      });
+      // const joints = getJointsByIds(jointIDArray, jointArray);
+      // const forces = getForcesByIds(forceIDArray, forceArray);
+      const shape = propsArray[7];
+      // const shapeFullname = this.shapeNicknameToFullname(propsArray[7]);
+      // const shape = this.stringToShape(shapeFullname);
+
+      const b1 = new Coord(stringToFloat(propsArray[8]), stringToFloat(propsArray[9]));
+      const b2 = new Coord(stringToFloat(propsArray[10]), stringToFloat(propsArray[11]));
+      const b3 = new Coord(stringToFloat(propsArray[12]), stringToFloat(propsArray[13]));
+      const b4 = new Coord(stringToFloat(propsArray[14]), stringToFloat(propsArray[15]));
+      const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
+      const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
+      const arrow = new Coord(arrow_x, arrow_y);
+
+      const bound: Bound = new class implements Bound {
+        arrow: Coord = arrow;
+        b1: Coord = b1;
+        b2: Coord = b2;
+        b3: Coord = b3;
+        b4: Coord = b4;
+      };
+
+      // const newLink = new RealLink(id, joints, shape, { b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
+      const newLink = new RealLink(id, joints);
+      // TODO: Set the code as below and also include mass, massMoI, and CoM
+      // const newLinks = new RealLink(id, joints, shape, bound);
+      newLink.mass = mass;
+      newLink.massMoI = mass_moi;
+      newLink.CoM.x = CoM_X;
+      newLink.CoM.y = CoM_Y;
+      // newLink.forces = forces;
+      // TODO: Make sure the joints know they are connected to each other
+      for (let j_index = 0; j_index < joints.length - 1; j_index++) {
+        for (let next_j_index = j_index + 1; next_j_index < joints.length; next_j_index++) {
+          joints[j_index].connectedJoints.push(joints[next_j_index]);
+          joints[next_j_index].connectedJoints.push(joints[j_index]);
+        }
+      }
+      linkArray.push(newLink);
+    });
+    const forceStringArray = forcePropsString.split('\n');
+    const forceArray = [] as Force[];
+    forceStringArray.forEach(forceString => {
+      if (forceString.length === 0) {return}
+      const propsArray = forceString.split(',');
+
+      const id = propsArray[0];
+      const linkId = propsArray[1];
+      const link = linkArray.find(l => {return l.id === linkId;});
+      if (!link) { throw new Error('link referenced in force does not exist'); }
+      if (!(link instanceof RealLink)) {return}
+      const start = new Coord(stringToFloat(propsArray[2]), stringToFloat(propsArray[3]));
+      const end = new Coord(stringToFloat(propsArray[4]), stringToFloat(propsArray[5]));
+      const global = stringToBoolean(propsArray[6]);
+      const direction = stringToBoolean(propsArray[7]);
+      const mag = stringToFloat(propsArray[8]);
+      const newForce = new Force(id, link, start, end, global);
+      newForce.arrowOutward = direction;
+      newForce.mag = mag;
+      link.forces.push(newForce);
+      forceArray.push(newForce);
+    });
+    GridComponent.joints = jointArray;
+    GridComponent.links = linkArray;
+    GridComponent.forces = forceArray;
+    // jointArray.forEach(j => {
+      // GridComponent.
+    // });
+    // linkArray.forEach(l => {});
+    // forceArray.forEach(f => {});
   }
 
   ngAfterViewInit() {
@@ -535,7 +687,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
         }
         break;
-        // TODO: Be sure all things reset
+      // TODO: Be sure all things reset
       case 1: // Middle-Click
         GridComponent.gridStates = gridStates.waiting;
         GridComponent.jointStates = jointStates.waiting;
