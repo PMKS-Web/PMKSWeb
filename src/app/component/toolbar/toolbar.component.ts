@@ -10,6 +10,8 @@ import {GridComponent} from "../grid/grid.component";
 import {LinkageTableComponent} from "../linkage-table/linkage-table.component";
 import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component";
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
+import { parse as parseCSV } from 'papaparse';
+import {Coord} from "../../model/coord";
 
 @Component({
   selector: 'app-toolbar',
@@ -196,10 +198,256 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     const that = this;
 
     reader.onload = function () {
-      const newFile = reader.result;
-      // that.newCSVEmit.emit(newFile as String);
+      const newFile = reader.result as string;
+      const csv = parseCSV(newFile);
+
+      if (csv.errors.length > 0) {
+        console.error(csv.errors);
+        throw new Error('parse csv failed');
+      }
+
+      const lines = csv.data;
+      let currentParseMode = 'none';
+      let parsing = false;
+      let propsLine = false;
+      const jointArray: Joint[] = [];
+      const linkArray: Link[] = [];
+      const forceArray: Force[] = [];
+      // const pathPointArray = [];
+      // const threePositionArray = [];
+      // const gearSynthesisArray = [];
+      // let settings_: {
+      //   input_speed_mag: number;
+      //   clockwise: boolean;
+      //   gravity: boolean;
+      //   unit: string};
+      // let inputJoint: Joint;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i] as string[];
+
+        if (line.length === 1) {
+          switch (line[0]) {
+            case 'joints': {
+              currentParseMode = 'joint';
+              propsLine = true;
+              break;
+            }
+            case 'links': {
+              currentParseMode = 'link';
+              propsLine = true;
+              break;
+            }
+            case 'forces': {
+              currentParseMode = 'force';
+              propsLine = true;
+              break;
+            }
+            case 'pathPoints': {
+              currentParseMode = 'pathPoint';
+              propsLine = true;
+              break;
+            }
+            case 'threePositions': {
+              currentParseMode = 'threePosition';
+              propsLine = true;
+              break;
+            }
+            case 'settings': {
+              currentParseMode = 'setting';
+              propsLine = true;
+              break;
+            }
+            default: {
+              currentParseMode = 'none';
+              break;
+            }
+          }
+          parsing = false;
+          continue;
+        }
+
+        // ignore props line
+        if (propsLine) {
+          propsLine = false;
+          parsing = true;
+          continue;
+        }
+
+        if (!parsing) { continue; }
+        switch (currentParseMode) {
+          case 'joint':
+            try {
+              const id = line[0];
+              const x = stringToFloat(line[1]);
+              const y = stringToFloat(line[2]);
+              // const links = getLinksByIds(line[3].split(','), linkArray);
+              const type = line[4];
+              const ground = stringToBoolean(line[5]);
+              // const angle = stringToFloat(line[6]);
+              // const coeff_of_friction = stringToFloat(line[7]);
+              const input = stringToBoolean(line[7]);
+
+              let newJoint: RealJoint
+              switch (type) {
+                case 'R':
+                  newJoint = new RevJoint(id, x, y, input, ground);
+                  break;
+                case 'P':
+                  newJoint = new PrisJoint(id, x, y, input, ground);
+                  if (!(newJoint instanceof PrisJoint)) {return;}
+                  const angle = stringToFloat(line[6]);
+                  newJoint.angle = angle;
+                  break;
+                default:
+                  return;
+              }
+              // newJoint.angle = angle;
+              // newJoint.coeffFriction = coeff_of_friction;
+              // newJoint.links = links;
+              jointArray.push(newJoint);
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'link':
+            try {
+              const id = line[0];
+              const mass = line[1];
+              const mass_moi = line[2];
+              const CoM_x = line[3];
+              const CoM_y = line[4];
+              // const joints = this.getJointsByIds(line[5].split(','), jointArray);
+              let joints: RealJoint[] = [];
+              const jointIDArray = line[5].split(',');
+              jointIDArray.forEach(jointID => {
+                const joint = jointArray.find(jt => jt.id === jointID)!;
+                if (!(joint instanceof RealJoint)) {return}
+                // TODO: Maybe put check here to see if they got a joint
+                joints.push(joint);
+              });
+              // const forces = this.getForcesByIds(line[6].split(','), forceArray);
+              // const shape = this.stringToShape(line[7]);
+              const shape = line[7];
+              const b1 = new Coord(stringToFloat(line[8]), stringToFloat(line[9]));
+              const b2 = new Coord(stringToFloat(line[10]), stringToFloat(line[11]));
+              const b3 = new Coord(stringToFloat(line[12]), stringToFloat(line[13]));
+              const b4 = new Coord(stringToFloat(line[14]), stringToFloat(line[15]));
+              const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
+              const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
+              const arrow = new Coord(arrow_x, arrow_y);
+              const newLink = new RealLink(id, joints);
+              // const newLink = new RealLink(id, joints, shape);
+              newLink.mass = stringToFloat(mass);
+              newLink.massMoI = stringToFloat(mass_moi);
+              newLink.CoM.x = stringToFloat(CoM_x);
+              newLink.CoM.y = stringToFloat(CoM_y);
+              // newLink.tryNewBounds({ b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
+              // newLink.saveBounds();
+              for (let j_index = 0; j_index < joints.length - 1; j_index++) {
+                for (let next_j_index = j_index + 1; next_j_index < joints.length; next_j_index++) {
+                  joints[j_index].connectedJoints.push(joints[next_j_index]);
+                  joints[next_j_index].connectedJoints.push(joints[j_index]);
+                }
+              }
+              joints.forEach(j => {
+                j.links.push(newLink);
+              });
+              linkArray.push(newLink);
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'force':
+            try {
+              const id = line[0];
+              const linkId = line[1];
+              const link = linkArray.find(l => {return l.id === linkId;});
+              // if (!link) { throw new Error('link referenced in force does not exist'); }
+              if (!(link instanceof RealLink)) {return}
+              const start = new Coord(stringToFloat(line[2]), stringToFloat(line[3]));
+              const end = new Coord(stringToFloat(line[4]), stringToFloat(line[5]));
+              const global = stringToBoolean(line[6]);
+              const newForce = new Force(id, link, start, end, global);
+              newForce.arrowOutward = stringToBoolean(line[7]);
+              newForce.mag = stringToFloat(line[8]);
+              // newForce.yMag = this.stringToFloat(line[9]);
+              forceArray.push(newForce);
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'pathPoint':
+            try {
+              // const id = line[0];
+              // const x = this.stringToFloat(line[1]);
+              // const y = this.stringToFloat(line[2]);
+              // const newPathPoint = new PathPoint(id, x, y);
+              // const neighborOne = this.getPathPointById(line[3], pathPointArray);
+              // const neighborTwo = this.getPathPointById(line[4], pathPointArray);
+              // if (neighborOne !== undefined) {
+              //   newPathPoint.neighbor_one = neighborOne;
+              //   newPathPoint.neighbor_one.neighbor_two = newPathPoint;
+              // }
+              // if (neighborTwo !== undefined) {
+              //   newPathPoint.neighbor_two = neighborTwo;
+              //   newPathPoint.neighbor_two.neighbor_one = newPathPoint;
+              // }
+              // pathPointArray.push(newPathPoint);
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'threePosition':
+            try {
+
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'gearSynthesis':
+            try {
+
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+          case 'setting':
+            try {
+              const input_speed_mag = stringToFloat(line[0]);
+              const clockwise = stringToBoolean(line[1]);
+              const gravity = stringToBoolean(line[2]);
+              const unit = line[3];
+              ToolbarComponent.clockwise = clockwise;
+              AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+              ToolbarComponent.gravity = gravity;
+              // this.localUnit.selectedUnit = unit;
+              ToolbarComponent.unit = unit;
+            } catch (e) {
+              console.error(line);
+              console.error(e);
+              throw new Error('parse csv failed');
+            }
+            break;
+        }
+      }
+      GridComponent.joints = jointArray;
+      GridComponent.links = linkArray;
+      GridComponent.forces = forceArray;
     };
-    // reader.readAsText(input.files[0]);
+    reader.readAsText(input.files[0]);
   }
 
   copyURL() {
@@ -284,7 +532,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       content += `${roundNumber(force.endCoord.y, 3)},`;
       content += `${force.local ? 'f' : 't'},`;
       content += `${force.arrowOutward},`;
-      content += `${force.mag},`;
+      content += `${force.mag}`;
       // result += `${force.yMag}`;
       content += '\n';
     });
@@ -507,7 +755,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       result += `${joint.ground},`;
       switch (joint.constructor) {
         case RevJoint:
-          result += `Null`;
+          result += `Null,`;
           break;
         case PrisJoint:
           if (!(joint instanceof PrisJoint)) {return}
@@ -517,7 +765,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           return;
       }
       // result += `${joint.coeffFriction},`;
-      result += `${joint.input},`;
+      result += `${joint.input}`;
       // result += `0`;
       result += '\n';
     });

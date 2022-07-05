@@ -271,7 +271,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       const id = propsArray[0];
       const linkId = propsArray[1];
       const link = linkArray.find(l => {return l.id === linkId;});
-      if (!link) { throw new Error('link referenced in force does not exist'); }
+      // if (!link) { throw new Error('link referenced in force does not exist'); }
       if (!(link instanceof RealLink)) {return}
       const start = new Coord(stringToFloat(propsArray[2]), stringToFloat(propsArray[3]));
       const end = new Coord(stringToFloat(propsArray[4]), stringToFloat(propsArray[5]));
