@@ -149,7 +149,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     const jointPropsString = splitURLInfo('j=');
     const linkPropsString = splitURLInfo('&l=');
     const forcePropsString = splitURLInfo('&f=');
-    if (jointPropsString.length === 0 || linkPropsString.length === 0 || forcePropsString.length === 0) {return}
+    if (jointPropsString.length === 0 || linkPropsString.length === 0) {return}
     if (!(typeof jointPropsString === 'string' && typeof linkPropsString === 'string' && typeof forcePropsString === 'string')) {return}
     const jointStringArray = jointPropsString.split('\n');
     const jointArray = [] as Joint[];

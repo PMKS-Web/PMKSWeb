@@ -1,201 +1,73 @@
 <div id="templatesPopup" class="ontop">
   <div class="popupTemplates" style="border-style: solid; border-width: 10px">
     <div style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden;
-     overflow-y:auto; text-align: justify">
- Example Mechanisms
+     overflow-y:auto; text-align: justify"> Example Mechanisms
       <div class="buttonContainer">
-<!--        <button></button>-->
-<!--        <button></button>-->
-<!--        <button></button>-->
-<!--        <button></button>-->
-<!--        <button></button>-->
-<!--        <button></button>-->
-<!--        <button></button>-->
         <button class="closeTemplates" (click)="closeTemplates()"
                 (mouseover)="mouseOver(99999)"
                 (mouseout)="mouseOut(99999)">X</button>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('4-Bar')"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)">4-Bar Linkage</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Watt_I')"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)">Watt I Linkage</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Watt_II')"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)">Watt II Linkage</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Stephenson_I')"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)">Stephenson I Linkage</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Stephenson_III')"
                 (mouseover)="mouseOver(0)"
                 (mouseout)="mouseOut(0)">Stephenson III Linkage</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Slider_Crank')"
                 (mouseover)="mouseOver(0)"
-                (mouseout)="mouseOut(0)">Basic Sliding Linkage</button>
+                (mouseout)="mouseOut(0)">Slider Crank</button>
         <br>
-        <button class="secondaryButtons" (click)="openLinkage(0)"
+        <button class="secondaryButtons" (click)="openLinkage('Force')"
                 (mouseover)="mouseOver(0)"
-                (mouseout)="mouseOut(0)">Basic Forces</button>
+                (mouseout)="mouseOut(0)">4-Bar with Force</button>
       </div>
+      <!-- TODO: After doing bunch of other stuff, showcase mechanism when mouse hovers over button -->
+<!--      <div *ngFor="let link of getLinks()">-->
+<!--        <svg [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')"-->
+<!--             style="transform: scaleY(-1);display: none; margin: auto">-->
+<!--          &lt;!&ndash; TODO: Make sure scale works accordingly &ndash;&gt;-->
+<!--          <g [attr.transform]="getLinkProp(link, 'transform')"-->
+<!--             [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">-->
+<!--            <path-->
+<!--              [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id"-->
+<!--              [attr.fill]="getLinkProp(link, 'fill')">-->
+<!--            </path>-->
+<!--            &lt;!&ndash; TODO: Determine logic when the link shape is too big to showcase &ndash;&gt;-->
+<!--            <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')"-->
+<!--                    [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black"/>-->
+<!--            <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')"-->
+<!--                    [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray"/>-->
+<!--            <svg *ngFor="let joint of link.joints" [attr.x]="joint.x - 0.3" [attr.y]="joint.y + 0.3"-->
+<!--                 style="font-size: 1px; text-anchor: middle; overflow: visible;">-->
+<!--              <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)"> {{joint.id}}</text>-->
+<!--            </svg>-->
+<!--            <g *ngFor="let force of link.forces">-->
+<!--              <g [attr.id]="force.id">-->
+<!--                <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>-->
+<!--                <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>-->
+<!--              </g>-->
+<!--              <svg [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"-->
+<!--                   [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"-->
+<!--                   style="font-size: 1px; text-anchor: middle; overflow: visible">-->
+<!--                <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">{{force.id}}</text>-->
+<!--              </svg>-->
+<!--            </g>-->
+<!--          </g>-->
+<!--        </svg>-->
+<!--      </div>-->
     </div>
-<!--    <div class="tabPanel" style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px;-->
-<!--     overflow-x: hidden; overflow-y:auto; text-align: justify">-->
-<!--      <div *ngIf="getSelectedAnalysis() === 'loop'">-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck">-->
-<!--          <label>-->
-<!--            Required Loops-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="allLoopCheck" (change)="setOption($event)" [checked]="allLoopCheck">-->
-<!--          <label>-->
-<!--            All Loops-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <button class="secondaryButtons" (click)="exportExcel('loops')">Export-->
-<!--            Data on the Selected Analysis-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div *ngIf="getSelectedAnalysis() === 'force'">-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck">-->
-<!--          <label>-->
-<!--            Forces-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="staticTorqueCheck" (change)="setOption($event)" [checked]="staticTorqueCheck">-->
-<!--          <label>-->
-<!--            Torque-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="staticForcePositionsCheck" (change)="setOption($event)" [checked]="staticForcePositionsCheck">-->
-<!--          <label>-->
-<!--            Force Positions-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="staticJointPositionsCheck" (change)="setOption($event)" [checked]="staticJointPositionsCheck">-->
-<!--          <label>-->
-<!--            Joint Positions-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <button class="secondaryButtons" (click)="exportExcel('statics')">Export-->
-<!--            Data on the Selected Analysis-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div *ngIf="getSelectedAnalysis() === 'stress'">-->
-<!--        &lt;!&ndash; TODO: Do this once this is determined &ndash;&gt;-->
-<!--      </div>-->
-<!--      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck">-->
-<!--          <label>-->
-<!--            Linear Kinematics at Joint-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos">-->
-<!--          <label>Position</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel">-->
-<!--          <label>Velocity</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc">-->
-<!--          <label>Acceleration</label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck">-->
-<!--          <label>-->
-<!--            Linear Kinematics at Link (Center of Mass)-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos">-->
-<!--          <label>Position</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel">-->
-<!--          <label>Velocity</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc">-->
-<!--          <label>Acceleration</label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck">-->
-<!--          <label>-->
-<!--            Angular Kinematics at Link-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos">-->
-<!--          <label>Position</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel">-->
-<!--          <label>Velocity</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc">-->
-<!--          <label>Acceleration</label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <button class="secondaryButtons" (click)="exportExcel('kinematic_loop')">Export-->
-<!--            Data on the Selected Analysis-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--      <div *ngIf="getSelectedAnalysis() === 'ic'">-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">-->
-<!--          <label>-->
-<!--            Position of ICs-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck">-->
-<!--          <label>-->
-<!--            Linear Kinematics at Joint-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos">-->
-<!--          <label>Position</label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel">-->
-<!--          <label>Velocity</label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]=angKinLinkICCheck>-->
-<!--          <label>-->
-<!--            Angular Kinematics at Link-->
-<!--          </label>-->
-<!--        </div>-->
-<!--        <div *ngIf="this.angKinLinkICCheck" style="text-indent: 30px">-->
-<!--          <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">-->
-<!--          <label>Velocity</label>-->
-<!--        </div>-->
-<!--        <div>-->
-<!--          <button class="secondaryButtons" (click)="exportExcel('ics')">Export-->
-<!--            Data on the Selected Analysis-->
-<!--          </button>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
   </div>
 </div>
