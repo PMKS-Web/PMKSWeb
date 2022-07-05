@@ -195,7 +195,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       return;
     }
     const reader = new FileReader();
-    const that = this;
+    // const that = this;
+    let selectedUnit: string = '';
 
     reader.onload = function () {
       const newFile = reader.result as string;
@@ -430,10 +431,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               const clockwise = stringToBoolean(line[1]);
               const gravity = stringToBoolean(line[2]);
               const unit = line[3];
+              ToolbarComponent.inputAngularVelocity = input_speed_mag;
               ToolbarComponent.clockwise = clockwise;
               AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
               ToolbarComponent.gravity = gravity;
+              // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
               // this.localUnit.selectedUnit = unit;
+              // selectedUnit = unit;
               ToolbarComponent.unit = unit;
             } catch (e) {
               console.error(line);
@@ -448,6 +452,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       GridComponent.forces = forceArray;
     };
     reader.readAsText(input.files[0]);
+    // if (selectedUnit !== '') {
+    //   this.localUnit.selectedUnit = selectedUnit;
+    // }
   }
 
   copyURL() {
@@ -577,8 +584,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
-    const content = this.generateExportFile(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
-      [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
+    const content = this.generateExportFile(GridComponent.joints, GridComponent.links, GridComponent.forces,
+      [], [], ToolbarComponent.inputAngularVelocity, ToolbarComponent.clockwise,
+      ToolbarComponent.gravity, ToolbarComponent.unit);
 
     const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
     const fileName = `PMKS+_${new Date().toISOString()}.csv`;
