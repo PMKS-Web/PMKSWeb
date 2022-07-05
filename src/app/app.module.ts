@@ -10,17 +10,19 @@ import { AnimationBarComponent} from "./component/animation-bar/animation-bar.co
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 import {FormsModule} from "@angular/forms";
 import {NgApexchartsModule} from "ng-apexcharts";
+import {TemplatesPopupComponent} from "./component/templates-popup/templates-popup.component";
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    GridComponent,
-    LinkageTableComponent,
-    ToolbarComponent,
-    AnalysisPopupComponent,
-    AnimationBarComponent,
-    ShapeSelectorComponent,
-  ],
+    declarations: [
+        AppComponent,
+        GridComponent,
+        LinkageTableComponent,
+        ToolbarComponent,
+        AnalysisPopupComponent,
+        AnimationBarComponent,
+        ShapeSelectorComponent,
+        TemplatesPopupComponent,
+    ],
   imports: [
     BrowserModule,
     FormsModule,

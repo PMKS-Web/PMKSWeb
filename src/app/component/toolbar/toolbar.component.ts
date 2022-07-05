@@ -12,6 +12,7 @@ import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 import { parse as parseCSV } from 'papaparse';
 import {Coord} from "../../model/coord";
+import {TemplatesPopupComponent} from "../templates-popup/templates-popup.component";
 
 @Component({
   selector: 'app-toolbar',
@@ -187,6 +188,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         return
     }
     AnalysisPopupComponent.showAnalysis(analysisType);
+  }
+
+  popUpTemplates() {
+    TemplatesPopupComponent.showTemplates();
   }
 
   upload($event: any) {
