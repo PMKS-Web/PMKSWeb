@@ -208,13 +208,9 @@ export class GridComponent implements OnInit, AfterViewInit {
       const propsArray = linkString.split(',');
       // todo: needs input error checking
       const id = propsArray[0];
-      const mass = stringToFloat(propsArray[1]);
-      const mass_moi = stringToFloat(propsArray[2]);
-      const CoM_X = stringToFloat(propsArray[3]);
-      const CoM_Y = stringToFloat(propsArray[4]);
-      const CoM = new Coord (CoM_X, CoM_Y);
-      const jointIDArray = propsArray[5].split('|');
-      // const forceIDArray = propsArray[6].split('|');
+      const typeOfLink = propsArray[1];
+      const jointIDArray = propsArray[6].split('|');
+      // const forceIDArray = propsArray[7].split('|');
       let joints: RealJoint[] = [];
       jointIDArray.forEach(jointID => {
         const joint = jointArray.find(jt => jt.id === jointID)!;
@@ -222,30 +218,54 @@ export class GridComponent implements OnInit, AfterViewInit {
         // TODO: Maybe put check here to see if they got a joint
         joints.push(joint);
       });
-      // const joints = getJointsByIds(jointIDArray, jointArray);
-      // const forces = getForcesByIds(forceIDArray, forceArray);
-      const shape = stringToShape(propsArray[7]);
-      // const shapeFullname = this.shapeNicknameToFullname(propsArray[7]);
-      // const shape = this.stringToShape(shapeFullname);
+      let newLink: Link;
+      switch (typeOfLink) {
+        case 'R':
+          const mass = stringToFloat(propsArray[2]);
+          const mass_moi = stringToFloat(propsArray[3]);
+          const CoM_X = stringToFloat(propsArray[4]);
+          const CoM_Y = stringToFloat(propsArray[5]);
+          const CoM = new Coord (CoM_X, CoM_Y);
+          // const jointIDArray = propsArray[6].split('|');
+          // // const forceIDArray = propsArray[7].split('|');
+          // let joints: RealJoint[] = [];
+          // jointIDArray.forEach(jointID => {
+          //   const joint = jointArray.find(jt => jt.id === jointID)!;
+          //   if (!(joint instanceof RealJoint)) {return}
+          //   // TODO: Maybe put check here to see if they got a joint
+          //   joints.push(joint);
+          // });
+          // const joints = getJointsByIds(jointIDArray, jointArray);
+          // const forces = getForcesByIds(forceIDArray, forceArray);
+          const shape = stringToShape(propsArray[8]);
+          // const shapeFullname = this.shapeNicknameToFullname(propsArray[7]);
+          // const shape = this.stringToShape(shapeFullname);
 
-      const b1 = new Coord(stringToFloat(propsArray[8]), stringToFloat(propsArray[9]));
-      const b2 = new Coord(stringToFloat(propsArray[10]), stringToFloat(propsArray[11]));
-      const b3 = new Coord(stringToFloat(propsArray[12]), stringToFloat(propsArray[13]));
-      const b4 = new Coord(stringToFloat(propsArray[14]), stringToFloat(propsArray[15]));
-      const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
-      const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
-      const arrow = new Coord(arrow_x, arrow_y);
+          const b1 = new Coord(stringToFloat(propsArray[9]), stringToFloat(propsArray[10]));
+          const b2 = new Coord(stringToFloat(propsArray[11]), stringToFloat(propsArray[12]));
+          const b3 = new Coord(stringToFloat(propsArray[13]), stringToFloat(propsArray[14]));
+          const b4 = new Coord(stringToFloat(propsArray[15]), stringToFloat(propsArray[16]));
+          const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
+          const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
+          const arrow = new Coord(arrow_x, arrow_y);
 
-      const bound: Bound = new class implements Bound {
-        arrow: Coord = arrow;
-        b1: Coord = b1;
-        b2: Coord = b2;
-        b3: Coord = b3;
-        b4: Coord = b4;
-      };
+          const bound: Bound = new class implements Bound {
+            arrow: Coord = arrow;
+            b1: Coord = b1;
+            b2: Coord = b2;
+            b3: Coord = b3;
+            b4: Coord = b4;
+          };
+          newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+          break;
+        case 'P':
+          newLink = new Piston(id, joints);
+          break;
+        default:
+          return
+      }
 
       // const newLink = new RealLink(id, joints, shape, { b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
-      const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
       // TODO: Set the code as below and also include mass, massMoI, and CoM. This important for links with other link shapes
       // const newLinks = new RealLink(id, joints, shape, bound);
       // newLink.mass = mass;

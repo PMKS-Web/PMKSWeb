@@ -84,9 +84,10 @@ export class TemplatesPopupComponent implements OnInit {
           '0,3.15%0Afg,1,1,4.5,3.74,f%7Cg,,line,4.98,4.87,4.98,2.61,4.02,2.61,4.02,4.87%0A&f=&s=10,false,false,cm';
         break;
       case 'Slider_Crank':
-        content = 'j=a,-1.76,-1.99,ab,R,t,Null,t%0Ab,0.52,1.95,ab%7Cbc,R,f,Null,f%0Ac,2.54,0.15,bc%7Ccd,R,f,Null,' +
-          'f%0Ad,2.54,0.15,cd,P,t,0,f%0A&l=ab,1,1,-0.62,-0.020000000000000018,a%7Cb,,line,0.52,-1.99,0.52,1.95,-1.76,' +
-          '1.95,-1.76,-1.99%0Abc,1,1,1.53,1.05,b%7Cc,,line,2.54,1.95,2.54,0.15,0.52,0.15,0.52,1.95%0A&f=&s=10,' +
+        content = 'j=a,-2.04,-1.33,ab,R,t,Null,t%0Ab,-1.26,0.51,ab%7Cbc,R,f,Null,f%0Ac,2,-0.29,bc%7Ccd,R,f,Null,' +
+          'f%0Ad,2,-0.29,cd,P,t,0,f%0A&l=ab,R,1,1,-1.65,-0.41000000000000003,a%7Cb,,line,-1.26,-1.33,-1.26,0.51,' +
+          '-2.04,0.51,-2.04,-1.33%0Abc,R,1,1,0.37,0.11000000000000001,b%7Cc,,line,2,0.51,2,-0.29,-1.26,-0.29,-1.26,' +
+          '0.51%0Acd,P,Null,Null,Null,Null,c%7Cd,,Null,Null,Null,Null,Null,Null,Null,Null,Null%0A&f=&s=10,' +
           'false,false,cm';
         break;
       case 'Force':

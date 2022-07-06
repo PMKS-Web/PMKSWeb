@@ -508,12 +508,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     });
     content += `&l=`;
     GridComponent.links.forEach(link => {
-      if (!(link instanceof RealLink)) {return}
       content += `${link.id},`;
-      content += `${link.mass},`;
-      content += `${link.massMoI},`;
-      content += `${link.CoM.x},`;
-      content += `${link.CoM.y},`;
+      content += (!(link instanceof RealLink)) ? `P,` : `R,`;
+      // if (!(link instanceof RealLink)) {return}
+      content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
+      content += (!(link instanceof RealLink)) ? `Null,` : `${link.massMoI},`;
+      content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.x},`;
+      content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.y},`;
       const relatedJointIDs = link.joints.map(joint => {
         return joint.id;
       });
@@ -523,14 +524,24 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
       content += `${relatedJointIDs.join('|')},`;
       content += `${relatedForceIDs.join('|')},`;
-      content += `${link.shape},`;
-      // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
-      const bounds = link.bound;
-      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      keyArray.forEach((eid, index) => {
-        content += `${roundNumber(eid.x, 3)},`;
-        content += index === keyArray.length - 1 ? `${roundNumber(eid.y, 3)}` : `${roundNumber(eid.y, 3)},`;
-      });
+      content += (!(link instanceof RealLink)) ? `Null,` : `${link.shape},`;
+      if (!(link instanceof RealLink)) {
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null,`;
+        content += `Null`;
+      } else {
+        const bounds = link.bound;
+        const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+        keyArray.forEach((eid, index) => {
+          content += `${roundNumber(eid.x, 3)},`;
+          content += index === keyArray.length - 1 ? `${roundNumber(eid.y, 3)}` : `${roundNumber(eid.y, 3)},`;
+        });
+      }
       content += '\n';
     });
 
