@@ -1,5 +1,6 @@
 import {Joint} from "./joint";
 import {Coord} from "./coord";
+import {Shape} from "./link";
 
 export class Utils {
 }
@@ -281,6 +282,41 @@ export function stringToBoolean(str: string) {
       return false;
     default:
       throw new Error ('should be a boolean, file corrupted');
+  }
+}
+
+export function stringToShape(str: string) {
+  switch (str) {
+    case 'line':
+      return Shape.line;
+    case 'bar':
+      return Shape.bar;
+    case 'eTriangle':
+      return Shape.eTriangle;
+    case 'rTriangle':
+      return Shape.rTriangle;
+    case 'rectangle':
+      return Shape.rectangle;
+    case 'square':
+      return Shape.square;
+    case 'circle':
+      return Shape.circle;
+    case 'cShape':
+      return Shape.cShape;
+    case 'tShape':
+      return Shape.tShape;
+    case 'lShape':
+      return Shape.lShape;
+    default:
+      return Shape.line;
+    // case Shape.horizontalLine:
+    // case Shape.verticalLine:
+    // case Shape.slantedLineForward:
+    // case Shape.slantedLineBackward:
+    // case Shape.beanShape:
+    // case Shape.infinityShape:
+    // case Shape.eightShape:
+    // case Shape.customShape:
   }
 }
 

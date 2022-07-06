@@ -12,7 +12,7 @@ import {
   determineY,
   determineYIntersect,
   roundNumber,
-  splitURLInfo, stringToBoolean, stringToFloat
+  splitURLInfo, stringToBoolean, stringToFloat, stringToShape
 } from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
@@ -212,6 +212,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       const mass_moi = stringToFloat(propsArray[2]);
       const CoM_X = stringToFloat(propsArray[3]);
       const CoM_Y = stringToFloat(propsArray[4]);
+      const CoM = new Coord (CoM_X, CoM_Y);
       const jointIDArray = propsArray[5].split('|');
       // const forceIDArray = propsArray[6].split('|');
       let joints: RealJoint[] = [];
@@ -223,7 +224,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       });
       // const joints = getJointsByIds(jointIDArray, jointArray);
       // const forces = getForcesByIds(forceIDArray, forceArray);
-      const shape = propsArray[7];
+      const shape = stringToShape(propsArray[7]);
       // const shapeFullname = this.shapeNicknameToFullname(propsArray[7]);
       // const shape = this.stringToShape(shapeFullname);
 
@@ -244,13 +245,13 @@ export class GridComponent implements OnInit, AfterViewInit {
       };
 
       // const newLink = new RealLink(id, joints, shape, { b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
-      const newLink = new RealLink(id, joints);
+      const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
       // TODO: Set the code as below and also include mass, massMoI, and CoM. This important for links with other link shapes
       // const newLinks = new RealLink(id, joints, shape, bound);
-      newLink.mass = mass;
-      newLink.massMoI = mass_moi;
-      newLink.CoM.x = CoM_X;
-      newLink.CoM.y = CoM_Y;
+      // newLink.mass = mass;
+      // newLink.massMoI = mass_moi;
+      // newLink.CoM.x = CoM_X;
+      // newLink.CoM.y = CoM_Y;
       for (let j_index = 0; j_index < joints.length - 1; j_index++) {
         for (let next_j_index = j_index + 1; next_j_index < joints.length; next_j_index++) {
           joints[j_index].connectedJoints.push(joints[next_j_index]);

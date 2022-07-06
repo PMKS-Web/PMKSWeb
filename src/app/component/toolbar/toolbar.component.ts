@@ -523,13 +523,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
       content += `${relatedJointIDs.join('|')},`;
       content += `${relatedForceIDs.join('|')},`;
-      content += `${link.shape}`;
+      content += `${link.shape},`;
       // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
       const bounds = link.bound;
       const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      keyArray.forEach(eid => {
-        content += `,${roundNumber(eid.x, 3)}`;
-        content += `,${roundNumber(eid.y, 3)}`;
+      keyArray.forEach((eid, index) => {
+        content += `${roundNumber(eid.x, 3)},`;
+        content += index === keyArray.length - 1 ? `${roundNumber(eid.y, 3)}` : `${roundNumber(eid.y, 3)},`;
       });
       content += '\n';
     });
