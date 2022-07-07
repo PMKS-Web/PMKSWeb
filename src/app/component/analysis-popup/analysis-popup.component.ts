@@ -1206,10 +1206,14 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   getMomentDueToForce(link: Link, force: Force) {
     if (!(link instanceof RealLink)) {return}
-    const pos_vec = [force.startCoord.x - link.CoM.x, force.startCoord.y - link.CoM.y, 0];
+    const fixedJointIndex = GridComponent.joints.findIndex(j => j.id === link.fixedLocation.fixedPoint);
+    const fixedJoint = fixedJointIndex === -1 ? link.CoM : GridComponent.joints[fixedJointIndex];
+    const unitConversion = ToolbarComponent.unit === 'cm' ? 0.01 : 1;
+    const pos_vec = [(force.startCoord.x - fixedJoint.x) * unitConversion, (force.startCoord.y - fixedJoint.y) * unitConversion, 0];
+    // const pos_vec = [force.startCoord.x - link.CoM.x, force.startCoord.y - link.CoM.y, 0];
     const force_vec = [force.mag * Math.cos(force.angle), force.mag * Math.sin(force.angle), 0];
-    const momentInX = crossProduct([pos_vec[0], 0, 0], [0, force_vec[1], 0]);
-    const momentInY = crossProduct([0, pos_vec[1], 0], [force_vec[0], 0, 0]);
+    const momentInX = crossProduct([pos_vec[0], pos_vec[1], 0], [0, force_vec[1], 0]);
+    const momentInY = crossProduct([pos_vec[0], pos_vec[1], 0], [force_vec[0], 0, 0]);
     const xSign = momentInX[2] > 0 ? ' + ' : ' - ';
     const ySign = momentInY[2] > 0 ? ' + ' : ' - ';
     return xSign + roundNumber(Math.abs(momentInX[2]), 3) + ySign + roundNumber(Math.abs(momentInY[2]), 3);
@@ -1573,5 +1577,16 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       categories.push('Timestep ' + index);
     });
     return [[datum_X, datum_Y, datum_Z], categories];
+  }
+
+  getForce(force: Force, xOrY: string) {
+    switch (xOrY) {
+      case 'x':
+        return Math.abs(roundNumber(force.mag * Math.cos(force.angle), 3));
+      case 'y':
+        return Math.abs(roundNumber(force.mag * Math.sin(force.angle), 3));
+      default:
+        return 0;
+    }
   }
 }

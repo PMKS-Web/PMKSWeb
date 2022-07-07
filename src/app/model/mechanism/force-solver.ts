@@ -240,9 +240,9 @@ export class ForceSolver {
           // TODO: Be sure force is updated within link
           link.forces.forEach(f => {
             const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y,
-              f.mag * Math.cos(f.angle * Math.PI / 180), f.mag * Math.sin(f.angle * Math.PI / 180));
-            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += (f.mag * Math.cos(f.angle * Math.PI / 180) * -1);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (f.mag * Math.sin(f.angle * Math.PI / 180) * -1);
+              f.mag * Math.cos(f.angle), f.mag * Math.sin(f.angle));
+            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += (f.mag * Math.cos(f.angle) * -1);
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (f.mag * Math.sin(f.angle) * -1);
             this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[1] * -1 * distance_conversion);
             this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[0] * -1 * distance_conversion);
           });

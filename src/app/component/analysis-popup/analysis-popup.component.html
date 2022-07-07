@@ -416,10 +416,15 @@
               </span>
               F
               <sub>{{joint.id}}x</sub>
-              <!-- Display external forces equations (x) -->
-              <span *ngFor="let force of link.forces">
-
+            </span>
+            <span *ngFor="let force of link.forces">
+              <span *ngIf="getForce(force, 'x') > 0">
+                +
               </span>
+              <span *ngIf="getForce(force, 'x') <= 0">
+                -
+              </span>
+              {{getForce(force, 'x')}}
             </span>
             = 0
             <br>
@@ -443,7 +448,13 @@
             </span>
             <!-- Display external forces equations (y) -->
             <span *ngFor="let force of link.forces">
-
+              <span *ngIf="getForce(force, 'x') > 0">
+                +
+              </span>
+              <span *ngIf="getForce(force, 'x') <= 0">
+                -
+              </span>
+              {{getForce(force, 'x')}}
             </span>
             = 0
             <br>
@@ -453,6 +464,7 @@
           <div style="display: none">
             &sum;M
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            <sub>{{link.fixedLocation.fixedPoint}}</sub>
             = 0
             <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
             <br>
