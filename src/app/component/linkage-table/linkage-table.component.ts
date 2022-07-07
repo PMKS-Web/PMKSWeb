@@ -77,9 +77,9 @@ export class LinkageTableComponent implements OnInit {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
         joint.x = Number($event.target.value);
-        joint.links.forEach(li => {
-          if (li instanceof Piston) {return}
-          const l = li as RealLink;
+        joint.links.forEach(l => {
+          if (!(l instanceof RealLink)) {return}
+          if (l.shape !== 'line') {return}
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
@@ -96,9 +96,9 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'y':
         joint.y = Number($event.target.value);
-        joint.links.forEach(li => {
-          if (li instanceof Piston) {return}
-          const l = li as RealLink;
+        joint.links.forEach(l => {
+          if (!(l instanceof RealLink)) {return}
+          if (l.shape !== 'line') {return}
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
@@ -249,13 +249,11 @@ export class LinkageTableComponent implements OnInit {
 
   getJointAngle(joint: Joint) {
     if (!(joint instanceof PrisJoint)) {return}
-    // joint will always be a prismatic joint
     return joint.angle * 180 / Math.PI;
   }
 
-  getLinkProp(l: Link, propType: string) {
-    if (l instanceof Piston) {return}
-    const link = l as RealLink;
+  getLinkProp(link: Link, propType: string) {
+    if (!(link instanceof RealLink)) {return}
     switch (propType) {
       case 'mass':
         return link.mass;
