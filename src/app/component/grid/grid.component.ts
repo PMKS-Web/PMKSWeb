@@ -576,7 +576,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                 // TODO: Be sure the force added is at correct position for binary link
-                const force = new Force('F' + GridComponent.forces.length + 1, GridComponent.selectedLink, startCoord, endCoord);
+                const force = new Force('F' + (GridComponent.forces.length + 1).toString(), GridComponent.selectedLink, startCoord, endCoord);
                 GridComponent.selectedLink.forces.push(force);
                 GridComponent.forces.push(force);
                 GridComponent.updateMechanism();
