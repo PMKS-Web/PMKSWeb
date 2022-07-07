@@ -65,6 +65,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.gravity = gravity;
     this.localUnit.selectedUnit = unit;
     ToolbarComponent.unit = unit;
+    GridComponent.updateMechanism();
   }
 
   ngAfterViewInit() {
