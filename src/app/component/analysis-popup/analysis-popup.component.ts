@@ -936,7 +936,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         break;
-      case 'kinematic_loop':
+      case 'kinematic':
         // check whether linear kinematics for joints have been asked for
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);

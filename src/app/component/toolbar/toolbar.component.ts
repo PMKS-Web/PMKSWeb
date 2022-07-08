@@ -178,13 +178,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         break;
       case 'stress':
         break;
-      case 'kinematic_loop':
+      case 'kinematic':
         KinematicsSolver.resetVariables();
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
+        // Be sure to include IC method
         break;
-      case 'ic':
-        break
       default:
         return
     }

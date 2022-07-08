@@ -10,7 +10,7 @@
       <div *ngIf="getSelectedAnalysis() === 'stress'">
         Stress
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
+      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
         Kinematics
         <!--        Kinematics (Loop Method)-->
       </div>
@@ -184,7 +184,7 @@
       <div *ngIf="getSelectedAnalysis() === 'stress'">
         <!-- TODO: Do this once this is determined -->
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
+      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
         <div>
           <input type="checkbox" value="loopMethodCheck" (change)="setOption($event)" [checked]="loopMethodCheck">
           <label>
@@ -300,7 +300,7 @@
           </div>
         </div>
         <div *ngIf="this.instantCenterMethodCheck || this.loopMethodCheck" style="text-indent: 100px">
-          <button class="secondaryButtons" (click)="exportExcel('kinematic_loop')">Export
+          <button class="secondaryButtons" (click)="exportExcel('kinematic')">Export
             Data on the Selected Analysis
           </button>
         </div>
@@ -836,9 +836,6 @@
             = 0
           </div>
         </div>
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'ic'">
-
       </div>
     </div>
   </div>
