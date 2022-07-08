@@ -59,9 +59,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   staticMethodCheck: boolean = true;
   staticForcesCheck: boolean = true;
   staticTorqueCheck: boolean = true;
+  showcaseStaticFBD: boolean = true;
   dynamicMethodCheck: boolean = true;
   dynamicForcesCheck: boolean = true;
   dynamicTorqueCheck: boolean = true;
+  showcaseDynamicFBD: boolean = true;
 
   loopMethodCheck: boolean = true;
   linKinJointCheck: boolean = true;
@@ -453,6 +455,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       ///////////////////////////
       // check for statics
+      case 'showcaseStaticFBD':
+        this.showcaseStaticFBD = !this.showcaseStaticFBD;
+        break;
       case 'staticMethodCheck':
         this.staticMethodCheck = !this.staticMethodCheck;
         break;
@@ -470,6 +475,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       ///////////////
       // check for dynamics
+      case 'showcaseDynamicFBD':
+        this.showcaseDynamicFBD = !this.showcaseDynamicFBD;
+        break;
       case 'dynamicMethodCheck':
         this.dynamicMethodCheck = !this.dynamicMethodCheck;
         break;
