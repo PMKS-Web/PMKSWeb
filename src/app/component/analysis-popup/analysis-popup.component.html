@@ -11,11 +11,12 @@
         Stress
       </div>
       <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
-        Kinematics (Loop Method)
+        Kinematics
+        <!--        Kinematics (Loop Method)-->
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'">
-        Kinematics (Ics)
-      </div>
+      <!--      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'">-->
+      <!--        Kinematics (Ics)-->
+      <!--      </div>-->
 
       <div class="buttonContainer">
         <button class="closeAnalysis" (click)="closeAnalysis()"
@@ -55,25 +56,25 @@
         </div>
       </div>
       <div *ngIf="getSelectedAnalysis() === 'force'">
-        <div>
+        <div style="text-indent: 30px">
           <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck">
           <label>
             Forces
           </label>
         </div>
-        <div>
+        <div style="text-indent: 30px">
           <input type="checkbox" value="staticTorqueCheck" (change)="setOption($event)" [checked]="staticTorqueCheck">
           <label>
             Torque
           </label>
         </div>
-        <div>
+        <div style="text-indent: 30px">
           <input type="checkbox" value="staticForcePositionsCheck" (change)="setOption($event)" [checked]="staticForcePositionsCheck">
           <label>
             Force Positions
           </label>
         </div>
-        <div>
+        <div style="text-indent: 30px">
           <input type="checkbox" value="staticJointPositionsCheck" (change)="setOption($event)" [checked]="staticJointPositionsCheck">
           <label>
             Joint Positions
@@ -90,65 +91,126 @@
       </div>
       <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
         <div>
-          <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck">
+          <input type="checkbox" value="loopMethodCheck" (change)="setOption($event)" [checked]="loopMethodCheck">
           <label>
-            Linear Kinematics at Joint
+            Loop Method
           </label>
         </div>
-        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos">
-          <label>Position</label>
-        </div>
-        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel">
-          <label>Velocity</label>
-        </div>
-        <div *ngIf="this.linKinJointCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc">
-          <label>Acceleration</label>
+        <div *ngIf="this.loopMethodCheck">
+          <div style="text-indent: 30px">
+            <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck">
+            <label>
+              Linear Kinematics at Joint
+            </label>
+          </div>
+          <div *ngIf="this.linKinJointCheck">
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos">
+              <label>Position</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel">
+              <label>Velocity</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc">
+              <label>Acceleration</label>
+            </div>
+          </div>
+          <div style="text-indent: 30px">
+            <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck">
+            <label>
+              Linear Kinematics at Link (Center of Mass)
+            </label>
+          </div>
+          <div *ngIf="this.linKinLinkCheck">
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos">
+              <label>Position</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel">
+              <label>Velocity</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc">
+              <label>Acceleration</label>
+            </div>
+          </div>
+          <div style="text-indent: 30px">
+            <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck">
+            <label>
+              Angular Kinematics at Link
+            </label>
+          </div>
+          <div *ngIf="this.angKinLinkCheck">
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos">
+              <label>Position</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel">
+              <label>Velocity</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc">
+              <label>Acceleration</label>
+            </div>
+          </div>
         </div>
         <div>
-          <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck">
+          <input type="checkbox" value="instantCenterMethodCheck" (change)="setOption($event)" [checked]="instantCenterMethodCheck">
           <label>
-            Linear Kinematics at Link (Center of Mass)
+            Instant Center Method
           </label>
         </div>
-        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos">
-          <label>Position</label>
+        <div *ngIf="this.instantCenterMethodCheck" style="text-indent: 30px">
+          <div>
+            <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">
+            <label>
+              Position of ICs
+            </label>
+          </div>
+          <div style="text-indent: 30px">
+            <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck">
+            <label>
+              Linear Kinematics at Joint
+            </label>
+          </div>
+          <div *ngIf="this.linKinJointICCheck">
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos">
+              <label>Position</label>
+            </div>
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel">
+              <label>Velocity</label>
+            </div>
+          </div>
+          <div style="text-indent: 30px">
+            <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]=angKinLinkICCheck>
+            <label>
+              Angular Kinematics at Link
+            </label>
+          </div>
+          <div *ngIf="this.angKinLinkICCheck">
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkICPos" (change)="setOption($event)" [checked]="angKinLinkICPos">-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+            <div style="text-indent: 60px">
+              <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">
+              <label>Velocity</label>
+            </div>
+          </div>
         </div>
-        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel">
-          <label>Velocity</label>
-        </div>
-        <div *ngIf="this.linKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc">
-          <label>Acceleration</label>
-        </div>
-        <div>
-          <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck">
-          <label>
-            Angular Kinematics at Link
-          </label>
-        </div>
-        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos">
-          <label>Position</label>
-        </div>
-        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel">
-          <label>Velocity</label>
-        </div>
-        <div *ngIf="this.angKinLinkCheck" style="text-indent: 30px">
-          <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc">
-          <label>Acceleration</label>
-        </div>
-        <div>
+        <div *ngIf="this.instantCenterMethodCheck || this.loopMethodCheck" style="text-indent: 100px">
           <button class="secondaryButtons" (click)="exportExcel('kinematic_loop')">Export
             Data on the Selected Analysis
           </button>
         </div>
       </div>
+      <!--      </div>-->
       <div *ngIf="getSelectedAnalysis() === 'ic'">
         <div>
           <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">
@@ -340,7 +402,7 @@
             </g>
           </svg>
           <div *ngFor="let joint of link.joints" style="display: none">
-<!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">-->
+            <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">-->
             <label> Direction of Force {{joint.id}}x</label>
             <br>
             <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">
@@ -350,8 +412,8 @@
             <br>
 
             <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">-->
-<!--            <label> Neg Direction of Force {{joint.id}}x</label>-->
-<!--            <br>-->
+            <!--            <label> Neg Direction of Force {{joint.id}}x</label>-->
+            <!--            <br>-->
             <label> Direction of Force {{joint.id}}y</label>
             <br>
             <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1">
@@ -359,8 +421,8 @@
             <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">
             <label> Negative (-) </label>
             <!--            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">-->
-<!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
-<!--            <br>-->
+            <!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
+            <!--            <br>-->
           </div>
           <div style="display: none">
             <label>Moment reference</label>

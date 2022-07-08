@@ -61,6 +61,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   dynamicForcesCheck: boolean = true;
   dynamicTorqueCheck: boolean = true;
 
+  loopMethodCheck: boolean = true;
   linKinJointCheck: boolean = true;
   linKinJointPos: boolean = true;
   linKinJointVel: boolean = true;
@@ -68,6 +69,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   linKinLinkCheck: boolean = true;
   dynamicAngLinkCheck: boolean = true;
 
+  instantCenterMethodCheck: boolean = true;
   linKinLinkPos: boolean = true;
   linKinLinkVel: boolean = true;
   linKinLinkAcc: boolean = true;
@@ -406,6 +408,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     switch (e.target.value) {
       // kinematics section
       // kin for joints
+      case 'loopMethodCheck':
+        this.loopMethodCheck = !this.loopMethodCheck;
+        break;
       case 'linKinJointCheck':
         this.linKinJointCheck = !this.linKinJointCheck;
         break;
@@ -509,6 +514,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       /////////
       // check for IC
+      case 'instantCenterMethodCheck':
+        this.instantCenterMethodCheck = !this.instantCenterMethodCheck;
+        break;
       case 'icPositionsCheck':
         this.icPositionsCheck = !this.icPositionsCheck;
         break;
