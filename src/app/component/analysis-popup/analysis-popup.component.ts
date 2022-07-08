@@ -56,8 +56,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   // TODO: Possibly come up with new way to have this logic...
   // utilizedLoops: string;
+  staticMethodCheck: boolean = true;
   staticForcesCheck: boolean = true;
   staticTorqueCheck: boolean = true;
+  dynamicMethodCheck: boolean = true;
   dynamicForcesCheck: boolean = true;
   dynamicTorqueCheck: boolean = true;
 
@@ -451,6 +453,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       ///////////////////////////
       // check for statics
+      case 'staticMethodCheck':
+        this.staticMethodCheck = !this.staticMethodCheck;
+        break;
       case 'staticForcesCheck':
         this.staticForcesCheck = !this.staticForcesCheck;
         break;
@@ -465,6 +470,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       ///////////////
       // check for dynamics
+      case 'dynamicMethodCheck':
+        this.dynamicMethodCheck = !this.dynamicMethodCheck;
+        break;
       case 'dynamicForcesCheck':
         this.dynamicForcesCheck = !this.dynamicForcesCheck;
         break;
