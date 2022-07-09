@@ -88,12 +88,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   setTab(analysis: string) {
-    // TODO: Maybe have this logic later???
-    // if (this.selectedTab === analysis) {
-    //   this.selectedTab = 'none';
-    // } else {
-    //   this.selectedTab = analysis;
-    // }
+    // TODO: adjust each of the analysis button when mechanism cannot be analyzed
     switch (analysis) {
       case 'file':
         ToolbarComponent.fileButton.setAttribute('style',
@@ -604,6 +599,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     toolman.select();
     document.execCommand('copy');
     document.body.removeChild(toolman);
+
     GridComponent.sendNotification('URL Copied');
   }
 
