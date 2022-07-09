@@ -36,10 +36,10 @@
   <div class="tabPanel" *ngIf="selectedTab === 'analysis'">
     <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">
       <div style="width: 640px; border: 1px solid black">
-        <button class="secondaryButtons" (click)="popUpAnalysis('loop')">Loops</button>
-        <button class="secondaryButtons" (click)="popUpAnalysis('force')">Force</button>
-        <button class="secondaryButtons" (click)="popUpAnalysis('stress')">Stress</button>
-        <button class="secondaryButtons" (click)="popUpAnalysis('kinematic')">Kinematic</button>
+        <button class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
+        <button class="secondaryButtons" id="forceButton" (click)="popUpAnalysis('force')">Force</button>
+        <button class="secondaryButtons" id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
+        <button class="secondaryButtons" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
 <!--        <button class="secondaryButtons" (click)="popUpAnalysis('ic')">Instant Center</button>-->
       </div>
     </nav>

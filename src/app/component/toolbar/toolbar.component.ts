@@ -28,7 +28,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   static clockwise: boolean = false;
   static gravity: boolean = false;
   private static fileButton: SVGElement;
-  private static analysisButton: SVGElement;
+  static analysisButton: SVGElement;
+  static loopButton: SVGElement;
+  static forceButton: SVGElement;
+  static stressButton: SVGElement;
+  static kinematicButton: SVGElement;
   private static settingsButton: SVGElement;
   private static helpButton: SVGElement;
   static unit = 'cm';
@@ -71,6 +75,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     ToolbarComponent.fileButton = document.getElementById('fileButton') as unknown as SVGElement;
     ToolbarComponent.analysisButton = document.getElementById('analysisButton') as unknown as SVGElement;
+    ToolbarComponent.loopButton = document.getElementById('loopButton') as unknown as SVGElement;
+    ToolbarComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
+    ToolbarComponent.stressButton = document.getElementById('stressButton') as unknown as SVGElement;
+    ToolbarComponent.kinematicButton = document.getElementById('kinematicButton') as unknown as SVGElement;
     ToolbarComponent.settingsButton = document.getElementById('settingsButton') as unknown as SVGElement;
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
@@ -86,7 +94,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // } else {
     //   this.selectedTab = analysis;
     // }
-    this.selectedTab = analysis
     switch (analysis) {
       case 'file':
         ToolbarComponent.fileButton.setAttribute('style',
@@ -103,6 +110,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
         break;
       case 'analysis':
+        if (GridComponent.mechanisms[0].joints.length < 3) {return;}
         ToolbarComponent.fileButton.setAttribute('style',
           'height: 34px; width: 160px; font-size: 24px;\n' +
           '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
@@ -145,6 +153,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
         break;
     }
+    this.selectedTab = analysis;
   }
 
   changeIdTag() {
