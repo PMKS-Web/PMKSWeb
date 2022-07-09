@@ -1657,7 +1657,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
       ToolbarComponent.unit, inputAngularVelocity));
-    // TODO: put this logic somewhere when joint is being dragged
+    if (GridComponent.mechanisms[0].joints.length < 3) {
+      AnimationBarComponent.playButton.setAttribute('style', 'opacity: 50%; cursor: auto');
+      AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');
+      AnimationBarComponent.slider.setAttribute('style', 'opacity: 50%; cursor: auto');
+      AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 50%; cursor: auto');
+    } else {
+      AnimationBarComponent.playButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
+      AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
+      AnimationBarComponent.slider.setAttribute('style', 'opacity: 100%; cursor: pointer');
+      AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 100%; cursor: pointer');
+    }
   }
 
   private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {

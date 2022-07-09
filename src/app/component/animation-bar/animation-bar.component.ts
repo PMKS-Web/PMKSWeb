@@ -16,14 +16,22 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   static direction: string = 'ccw';
   static speed: string = 'medium';
-  private static slider: HTMLInputElement;
+  static playButton: HTMLInputElement;
+  static pauseButton: HTMLInputElement;
+  static stopButton: HTMLInputElement;
+  static slider: HTMLInputElement;
+  static sliderContainer: HTMLInputElement;
   private static adjustAnimation: boolean;
 
   constructor() { }
   ngOnInit(): void {}
 
   ngAfterViewInit() {
+    AnimationBarComponent.playButton = <HTMLInputElement>document.getElementById('playBtn');
+    AnimationBarComponent.pauseButton = <HTMLInputElement>document.getElementById('pauseBtn');
+    AnimationBarComponent.stopButton = <HTMLInputElement>document.getElementById('stopBtn');
     AnimationBarComponent.slider = <HTMLInputElement>document.getElementById('slider');
+    AnimationBarComponent.sliderContainer = <HTMLInputElement>document.getElementById('sliderContainer');
   }
 
   maxTimeSteps() {
@@ -35,11 +43,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onDirectionChange() {
-    if (AnimationBarComponent.direction === 'ccw') {
-      AnimationBarComponent.direction = 'cw';
-    } else {
-      AnimationBarComponent.direction = 'ccw';
-    }
+    AnimationBarComponent.direction = AnimationBarComponent.direction === 'ccw' ? 'cw' : 'ccw';
     ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
     GridComponent.updateMechanism();
   }
@@ -66,6 +70,9 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   startAnimation(state: string) {
+    if (GridComponent.mechanisms[0].joints.length < 3) {
+      return;
+    }
     switch (state) {
       case 'play':
         AnimationBarComponent.animate = false;

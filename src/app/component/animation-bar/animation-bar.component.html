@@ -36,7 +36,7 @@
       <span class="tooltiptext">Reset Animation</span>
     </button>
   </div>
-  <div id="slidecontainer">
+  <div id="sliderContainer">
     <input class="tooltip" type="range" min="0" max="{{maxTimeSteps()}}" value="{{getMechanismTimeStep()}}"
            id="slider" (mousedown)="adjustMechanismAnimation(true)" (mousemove)="setAnim()" (mouseup)="adjustMechanismAnimation(false)">
   </div>
