@@ -346,7 +346,14 @@
     <div class="tabPanel" *ngIf="getSelectedTab() === 1"
          style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y:auto; text-align: justify">
       <div *ngIf="getSelectedAnalysis() === 'force'">
-        <div>
+        <label> Mechanism State</label>
+        <select name="selectedForceAnalysis"
+                [(ngModel)]="forceMechanismState.selectedMechanismState"
+                (ngModelChange)="changePlotAnalysis(forceMechanismState.selectedMechanismState, '', '')">
+          <option *ngFor="let states of forceMechanismStates" [value]="states.id">{{states.label}}
+          </option>
+        </select>
+        <div *ngIf="forceCondition === 'static'">
           <label> Type of Analysis</label>
           <select name="selectedStaticAnalysis"
                   [(ngModel)]="forceAnalysis.selectedAnalysis"
@@ -354,6 +361,18 @@
             <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">{{analysis.label}}
             </option>
           </select>
+          <div *ngIf="forceAnalysis.selectedAnalysis === 'Joint Forces'">
+            <label> Joint</label>
+            <select name="selectedStaticJoint"
+                    [(ngModel)]="forceMagPlot.force"
+                    (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, 'statics')">
+              <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">{{stat_joint.id}}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div *ngIf="forceCondition === 'dynamic'">
+          <label> Type of Analysis</label>
         </div>
         <!--        <div *ngIf="forceAnalysis.selectedAnalysis === 'joint_position'">-->
         <!--          <label> Joint</label>-->
@@ -364,18 +383,8 @@
         <!--            </option>-->
         <!--          </select>-->
         <!--        </div>-->
-        <div *ngIf="forceAnalysis.selectedAnalysis === 'Joint Forces'">
-          <label> Joint</label>
-          <select name="selectedStaticJoint"
-                  [(ngModel)]="forceMagPlot.force"
-                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, 'statics')">
-            <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">{{stat_joint.id}}
-            </option>
-          </select>
-        </div>
       </div>
-      <div *ngIf="getSelectedAnalysis() === 'dynamic'"></div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic_loop'">
+      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
         <label> Type of Analysis</label>
         <select name="selectedKinematicLoopAnalysis"
                 [(ngModel)]="kinematicLoopAnalysis.selectedAnalysis"

@@ -125,6 +125,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   analysis: Array<Array<string>> = [];
   titleRow: Array<string> = [];
 
+  forceMechanismState = {
+    selectedMechanismState: 'none'
+  };
+
   forceAnalysis = {
     selectedAnalysis: 'none'
   };
@@ -136,6 +140,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   forceMagPlot = {
     force: 'none'
   };
+
+  forceMechanismStates = [
+    {id: 'Static Equilibrium', label: 'Static Equilibrium'},
+    {id: 'Newton\'s II Law', label: 'Newton\'s II Law'},
+  ];
 
   jointAnalyses = [
     {id: 'Joint Forces', label: 'Joint Forces'},
@@ -175,6 +184,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     link: 'none'
   };
 
+  forceCondition = '';
   showChart = false;
 
   constructor() {
@@ -1481,18 +1491,23 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   changePlotAnalysis(analysis: string, type_of: string, more_type:string) {
     this.showChart = false;
     switch (analysis) {
+      case 'Static Equilibrium':
+        this.forceCondition = 'static';
+        break;
+      case 'Newton\'s II Law':
+        this.forceCondition = 'dynamic';
+        break;
       case 'Input Torque':
         this.showChart = true;
         this.determineChart(analysis, type_of, more_type);
         break;
+      case 'Joint Forces':
+        if (type_of === '') {return}
+        this.showChart = true;
+        this.determineChart(analysis, type_of, more_type);
+        break;
       default:
-        switch (type_of) {
-          case '':
-            break;
-          default:
-            this.showChart = true;
-            this.determineChart(analysis, type_of, more_type);
-        }
+        break;
     }
   }
 
