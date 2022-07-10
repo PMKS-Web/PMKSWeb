@@ -295,11 +295,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     return false;
   }
 
-  updateTable(val: string, linkOrLoop?: any, jointOrCoM?: any) {
+  updateTable(val: string, typeOfAnalysis: string, linkOrLoop?: any, jointOrCoM?: any) {
     let otherLink: Link;
     switch (val) {
       case 'changeHeight':
-        const element = document.getElementById('div_' + linkOrLoop!)!;
+        const element = document.getElementById('div_' + typeOfAnalysis + linkOrLoop!)!;
         const styleString = element.getAttribute('style')!;
         const heightIndex = styleString.indexOf('height');
         if (styleString.substring(heightIndex + 8, heightIndex + 8 + 4) === '50px') {
