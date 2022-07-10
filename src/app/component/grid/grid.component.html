@@ -189,94 +189,66 @@
   </g>
   <!-- TODO: Set all of the context menu within one g container-->
   <g class="context-menu-canvas" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="createLink($event, 'grid')"
-       (mouseout)="RectMouseOut($event, 'grid')"
-       (mouseover)="RectMouseOver($event, 'grid')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="createLink($event, 'grid')">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
   </g>
   <g class="context-menu-joint" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryAddInput" (click)="createInput($event)"
-       (mouseout)="RectMouseOut($event, 'addInput')"
-       (mouseover)="RectMouseOver($event, 'addInput')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddInput" (click)="createInput($event)">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Input</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="createLink($event, 'joint')"
-       (mouseout)="RectMouseOut($event, 'addLink')"
-       (mouseover)="RectMouseOver($event, 'addLink')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="createLink($event, 'joint')">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround()"
-       (mouseout)="RectMouseOut($event, 'addGround')"
-       (mouseover)="RectMouseOver($event, 'addGround')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Create Ground</text>
     </g>
-    <g class="menu-entry" id="menuEntryCreateSlider" (click)="createSlider()"
-       (mouseout)="RectMouseOut($event, 'addSlider')"
-       (mouseover)="RectMouseOver($event, 'addSlider')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryCreateSlider" (click)="createSlider()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Create Slider</text>
     </g>
-    <g class="menu-entry" id="menuEntryDeleteJoint" (click)="deleteJoint()"
-       (mouseout)="RectMouseOut($event, 'deleteJoint')"
-       (mouseover)="RectMouseOver($event, 'deleteJoint')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryDeleteJoint" (click)="deleteJoint()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Joint</text>
     </g>
   </g>
   <g class="context-menu-link" style="cursor:pointer">
-    <g class="menu-entry" id="menuEntryAddLinkOnLink" (click)="createLink($event, 'link')"
-       (mouseout)="RectMouseOut($event, 'attachLink')"
-       (mouseover)="RectMouseOver($event, 'attachLink')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddLinkOnLink" (click)="createLink($event, 'link')">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Link</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce($event)"
-       (mouseout)="RectMouseOut($event, 'addForce')"
-       (mouseover)="RectMouseOver($event, 'addForce')" style="display:none;">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddForce" (click)="createForce($event)">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Force</text>
     </g>
-    <g class="menu-entry" id="menuEntryAddTracerPoint" (click)="addJoint()"
-       (mouseout)="RectMouseOut($event, 'addTracer')"
-       (mouseover)="RectMouseOver($event, 'addTracer')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryAddTracerPoint" (click)="addJoint()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Tracer Point</text>
     </g>
-    <g class="menu-entry" id="menuEntryEditShape" (click)="editShape()"
-       (mouseout)="RectMouseOut($event, 'editShape')"
-       (mouseover)="RectMouseOver($event, 'editShape')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryEditShape" (click)="editShape()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Edit Shape</text>
     </g>
-    <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink()"
-       (mouseout)="RectMouseOut($event, 'deleteLink')"
-       (mouseover)="RectMouseOver($event, 'deleteLink')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Link</text>
     </g>
   </g>
   <g class="context-menu-force" style="cursor: pointer">
-    <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection()"
-       (mouseout)="RectMouseOut($event, 'changeForceDirection')"
-       (mouseover)="RectMouseOver($event, 'changeForceDirection')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Switch Force Direction</text>
     </g>
-    <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal()"
-       (mouseout)="RectMouseOut($event, 'changeForceLocal')"
-       (mouseover)="RectMouseOver($event, 'changeForceLocal')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Change Force Local</text>
     </g>
-    <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce()"
-       (mouseout)="RectMouseOut($event, 'deleteForce')"
-       (mouseover)="RectMouseOver($event, 'deleteForce')" style="display: none">
-      <rect x="400" y="400" width="120" height="20" style="fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px"></rect>
+    <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce()">
+      <rect x="400" y="400" width="120" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Force</text>
     </g>
   </g>

@@ -375,7 +375,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.applyMatrixToSVG();
   }
 
-  // TODO: Maybe see if there is a way to put this within HTML
+  // TODO: Maybe see if there is a way to put this within HTML (within css)
   private static applyMatrixToSVG() {
     const offsetX = GridComponent._gridOffset.x;
     const offsetY = GridComponent._gridOffset.y;
@@ -1056,130 +1056,6 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   }
 
-
-
-  RectMouseOver($event: MouseEvent, menuType: string) {
-    switch (menuType) {
-      case 'addInput':
-        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'grid':
-        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addLink':
-        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'attachLink':
-        GridComponent.contextMenuAddLinkOntoLink.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addGround':
-        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addSlider':
-        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteJoint':
-        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addForce':
-        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'addTracer':
-        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'editShape':
-        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteLink':
-        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceDirection':
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceLocal':
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteForce':
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
-          'fill: rgb(200, 200, 200); stroke: white; stroke-width: 1px');
-        break;
-    }
-  }
-
-  RectMouseOut($event: MouseEvent, menuType: string) {
-    switch (menuType) {
-      case 'addInput':
-        GridComponent.contextMenuAddInputJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'grid':
-        GridComponent.contextMenuAddLinkOntoGrid.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addLink':
-        GridComponent.contextMenuAddLinkOntoJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'attachLink':
-        GridComponent.contextMenuAddLinkOntoLink.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addGround':
-        GridComponent.contextMenuAddGround.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addSlider':
-        GridComponent.contextMenuAddSlider.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteJoint':
-        GridComponent.contextMenuDeleteJoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addForce':
-        GridComponent.contextMenuAddForce.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'addTracer':
-        GridComponent.contextMenuAddTracerPoint.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'editShape':
-        GridComponent.contextMenuEditShape.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteLink':
-        GridComponent.contextMenuDeleteLink.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceDirection':
-        GridComponent.contextMenuChangeForceDirection.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'changeForceLocal':
-        GridComponent.contextMenuChangeForceLocal.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-      case 'deleteForce':
-        GridComponent.contextMenuDeleteForce.children[0].setAttribute('style',
-          'fill: rgb(244, 244, 244); stroke: white; stroke-width: 1px');
-        break;
-    }
-  }
-
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';
     GridComponent.contextMenuAddLinkOntoGrid.style.display = 'none';
@@ -1657,6 +1533,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
       ToolbarComponent.unit, inputAngularVelocity));
+    // TODO: Put this logic within CSS
     if (GridComponent.mechanisms[0].joints.length < 3) {
       AnimationBarComponent.playButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');

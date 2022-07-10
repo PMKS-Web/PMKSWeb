@@ -1,0 +1,8 @@
+.menu-entry {
+  fill: rgb(244, 244, 244);
+  display: none;
+}
+.menu-entry:hover {
+  background: rgb(200, 200, 200);
+  fill: rgb(200, 200, 200);
+}
