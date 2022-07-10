@@ -65,7 +65,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   dynamicTorqueCheck: boolean = true;
   showcaseDynamicFBD: boolean = true;
 
+  showEqsPosition: boolean = true;
   loopMethodCheck: boolean = true;
+  showEqsLoopMethod: boolean = true;
   linKinJointCheck: boolean = true;
   linKinJointPos: boolean = true;
   linKinJointVel: boolean = true;
@@ -411,6 +413,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     // TODO: Figure out what is e's type?
     switch (e.target.value) {
       // kinematics section
+      case 'showEqsPosition':
+        this.showEqsPosition = !this.showEqsPosition;
+        break;
+      case 'showEqsLoopMethod':
+        this.showEqsLoopMethod = !this.showEqsLoopMethod;
+        break;
       // kin for joints
       case 'loopMethodCheck':
         this.loopMethodCheck = !this.loopMethodCheck;

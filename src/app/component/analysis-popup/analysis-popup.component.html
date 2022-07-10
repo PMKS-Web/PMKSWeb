@@ -723,19 +723,26 @@
 
       </div>
       <div *ngIf="getSelectedAnalysis() === 'kinematic'">
+        <div> <!-- Position Analysis -->
+          <input type="checkbox" value="showEqsPosition" (change)="setOption($event)" [checked]="showEqsPosition">
+          <label>
+            Position Analysis
+          </label>
+        </div>
         <div> <!-- Kinematics utilizing Loops -->
-          <input type="checkbox" value="" (change)="setOption($event)" [checked]="">
+          <input type="checkbox" value="showEqsLoopMethod" (change)="setOption($event)" [checked]="showEqsLoopMethod">
           <label>
             Loop Method
           </label>
         </div>
-        <div id="div_{{loop}}" *ngFor="let loop of getKinematicLoops()"
-             style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px">
-          <input type="checkbox" id="checkbox_{{loop}}" (click)="updateTable('changeHeight', loop)">
-<!--                 style="display: block; float: left">-->
-          <label>Loop {{loop}}</label>
-          <!-- General Velocity Equations -->
-          <div>
+        <div *ngIf="showEqsLoopMethod">
+          <div id="div_{{loop}}" *ngFor="let loop of getKinematicLoops()"
+               style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px">
+            <input type="checkbox" id="checkbox_{{loop}}" (click)="updateTable('changeHeight', loop)">
+            <!--                 style="display: block; float: left">-->
+            <label>Loop {{loop}}</label>
+            <!-- General Velocity Equations -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0">
                +
@@ -744,11 +751,11 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair[1]}}/{{pair[0]}}</sub>
             </span>
-            = 0
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-          </div>
-          <!--  w x r Equations -->
-          <div>
+              = 0
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            </div>
+            <!--  w x r Equations -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0">
                +
@@ -761,11 +768,11 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair}}</sub>
             </span>
-            = 0
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-          </div>
-          <!-- w x r (x) Solutions -->
-          <div>
+              = 0
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            </div>
+            <!-- w x r (x) Solutions -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="pairContainInputJoint(pair)">
               {{determineInputVel(pair, 'x')}}
@@ -776,10 +783,10 @@
                 <sub>{{pair[0]}}/{{pair[1]}}</sub>
               </span>
             </span>
-            = 0
-          </div>
-          <!-- w x r (y) Solutions -->
-          <div>
+              = 0
+            </div>
+            <!-- w x r (y) Solutions -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="pairContainInputJoint(pair)">
               {{determineInputVel(pair, 'y')}}
@@ -790,10 +797,10 @@
                 <sub>{{pair[0]}}/{{pair[1]}}</sub>
               </span>
             </span>
-            = 0
-          </div>
-          <hr style="border-color: blue; display: none;">
-          <div>
+              = 0
+            </div>
+            <hr style="border-color: blue; display: none;">
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0">
                +
@@ -802,11 +809,11 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair[1]}}/{{pair[0]}}</sub>
             </span>
-            = 0
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-          </div>
-          <!--  w x w x r + a x r Equations -->
-          <div>
+              = 0
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            </div>
+            <!--  w x w x r + a x r Equations -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="indexOfElement !== 0">
                +
@@ -828,11 +835,11 @@
               <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
               <sub>{{pair}}</sub>
             </span>
-            = 0
-            <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-          </div>
-          <!-- w x w x r + a x r (x) Solutions -->
-          <div>
+              = 0
+              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
+            </div>
+            <!-- w x w x r + a x r (x) Solutions -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="pairContainInputJoint(pair)">
               {{determineInputAcc(pair, 'x')}}
@@ -843,10 +850,10 @@
               <sub>{{pair[0]}}/{{pair[1]}}</sub>
               </span>
             </span>
-            = 0
-          </div>
-          <!-- w x w x r + a x r (y) Solutions -->
-          <div>
+              = 0
+            </div>
+            <!-- w x w x r + a x r (y) Solutions -->
+            <div>
             <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement=index">
               <span *ngIf="pairContainInputJoint(pair)">
                 {{determineInputAcc(pair, 'y')}}
@@ -857,7 +864,8 @@
               <sub>{{pair[0]}}/{{pair[1]}}</sub>
               </span>
             </span>
-            = 0
+              = 0
+            </div>
           </div>
         </div>
         <div> <!-- Kinematics utilizing Instant Centers -->
