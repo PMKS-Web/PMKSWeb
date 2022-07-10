@@ -375,7 +375,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.applyMatrixToSVG();
   }
 
-  // TODO: Maybe see if there is a way to put this within HTML (within css)
+  // TODO: Figure out how to put this logic within html/css (find some code online that already does this :P)
   private static applyMatrixToSVG() {
     const offsetX = GridComponent._gridOffset.x;
     const offsetY = GridComponent._gridOffset.y;
@@ -1533,7 +1533,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
       ToolbarComponent.unit, inputAngularVelocity));
-    // TODO: Put this logic within CSS
+    // TODO: Put this logic within HTML or CSS
     if (GridComponent.mechanisms[0].joints.length < 3) {
       AnimationBarComponent.playButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');

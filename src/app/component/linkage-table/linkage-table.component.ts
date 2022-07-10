@@ -76,7 +76,7 @@ export class LinkageTableComponent implements OnInit {
     switch (jointProp) {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Joint X Value');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Joint X Value');}
         joint.x = Number($event.target.value);
         joint.links.forEach(l => {
           if (!(l instanceof RealLink)) {return}
@@ -96,7 +96,7 @@ export class LinkageTableComponent implements OnInit {
         });
         break;
       case 'y':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Joint Y Value');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Joint Y Value');}
         joint.y = Number($event.target.value);
         joint.links.forEach(l => {
           if (!(l instanceof RealLink)) {return}
@@ -121,7 +121,7 @@ export class LinkageTableComponent implements OnInit {
         joint.id = $event.target.value;
         break;
       case 'angle':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Angle Value');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Angle Value');}
         if (!(joint instanceof PrisJoint)) {return}
         joint.angle = Number($event.target.value) * Math.PI / 180;
     }
@@ -132,19 +132,19 @@ export class LinkageTableComponent implements OnInit {
     if (!(link instanceof RealLink)) {return}
     switch (linkProp) {
       case 'mass':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Link Mass');}
+        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Link Mass');}
         link.mass = Number($event.target.value);
         break;
       case 'massMoI':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Link Mass MoI');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link Mass MoI');}
         link.massMoI = Number($event.target.value);
         break;
       case 'CoMX':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Link CoM Y');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link CoM Y');}
         link.CoM.x = Number($event.target.value);
         break;
       case 'CoMY':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Link CoM Y');}
+        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link CoM Y');}
         link.CoM.y = Number($event.target.value);
         break;
     }
@@ -160,19 +160,19 @@ export class LinkageTableComponent implements OnInit {
         force.id = $event.target.value;
         break;
       case 'xPos':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Force X Position');}
+        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force X Position');}
         force.startCoord.x = Number($event.target.value);
         break;
       case 'yPos':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Force X Position');}
+        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Y Position');}
         force.startCoord.y = Number($event.target.value);
         break;
       case 'mag':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Force Magnitude');}
+        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Magnitude');}
         force.mag = Number($event.target.value);
         break;
       case 'angle':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Force Angle');}
+        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Angle');}
         force.angle = Number($event.target.value) * (Math.PI / 180);
         // TODO: Within commonClass, have radToDeg and degToRad
         force.endCoord.x = Math.cos(force.angle) + force.startCoord.x;
