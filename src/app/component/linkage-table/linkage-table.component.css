@@ -1,34 +1,45 @@
-.linkageTable{
-  visibility: visible;
-  position: absolute;
-  top: 130px;
-  left: 10px;
-  opacity: 1;
-  /*overflow: hidden;*/
-  border: 1px solid;
-  display: grid;
-  overflow: visible;
-  background-color: white;
-  border-collapse: separate;
-}
-.linkageTable .buttonContainer{
-  height: 10%;
-}
-.linkageTable .buttonContainer button{
-  width: 33.333%;
-  /*height: 100%;*/
-  cursor: pointer;
-  float: left;
-  border: 1px solid;
-  /*outline: none;*/
-  padding: 10px;
-  font-family: "Times New Roman", Times, serif;
-  font-weight: lighter;
-  text-align: center;
-  font-size: 24px;
-  background-color: white;
-  color: gray;
-}
+/*.linkageTable{*/
+/*  !*visibility: visible;*!*/
+/*  position: absolute;*/
+/*  top: 130px;*/
+/*  left: 10px;*/
+/*  opacity: 1;*/
+/*  !*overflow: hidden;*!*/
+/*  border: 1px solid;*/
+/*  display: grid;*/
+/*  overflow: visible;*/
+/*  background-color: white;*/
+/*  border-collapse: separate;*/
+/*}*/
+/*.linkageTable .buttonContainer{*/
+/*  height: 10%;*/
+/*}*/
+/*.linkageTable .buttonContainer button{*/
+/*  width: 33.333%;*/
+/*  !*height: 100%;*!*/
+/*  cursor: pointer;*/
+/*  float: left;*/
+/*  border: 1px solid;*/
+/*  !*outline: none;*!*/
+/*  padding: 10px;*/
+/*  font-family: Arial, sans-serif;*/
+/*  !*font-family: "Times New Roman", Times, serif;*!*/
+/*  font-weight: lighter;*/
+/*  text-align: center;*/
+/*  font-size: 24px;*/
+/*  background-color: white;*/
+/*  color: gray;*/
+/*!*'color: black; background-color: gray; font-family: Arial, sans-serif'*!*/
+/*}*/
+/*.linkageTable .buttonContainer button:hover{*/
+/*  background-color: lightgray;*/
+/*  font-family: Arial, sans-serif;*/
+/*}*/
+
+/*.linkageTable .buttonContainer button:active{*/
+/*  color: black;*/
+/*  background-color: gray;*/
+/*}*/
 /*.linkageTable .buttonContainer button:hover {*/
 /*  background-color: lightgray;*/
 /*}*/
@@ -51,21 +62,66 @@
 /*  display: none;*/
 /*  !*border: 1px solid;*!*/
 /*}*/
-th,td{
-  border: 1px solid black;
-  text-align: center;
-  /*need box-sizing??*/
-  box-sizing: border-box;
-  font-family: "Times New Roman", Times, serif;
-  font-size: 16px;
-  border-collapse: collapse;
+/*th,td{*/
+/*  border: 1px solid black;*/
+/*  text-align: center;*/
+/*  !*need box-sizing??*!*/
+/*  box-sizing: border-box;*/
+/*  font-family: "Times New Roman", Times, serif;*/
+/*  font-size: 16px;*/
+/*  border-collapse: collapse;*/
+/*}*/
+/*th{*/
+/*  background-color: #AAAAAA;*/
+/*}*/
+/*table {*/
+/*  border-collapse: collapse;*/
+/*}*/
+/*input{*/
+/*  width: 50px;*/
+/*}*/
+
+.myTabs {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 300px;
+  position: absolute;
+  top: 130px;
+  left: 10px;
+  opacity: 1;
+  /*overflow: hidden;*/
+  border: 1px solid;
+  /*display: grid;*/
+  overflow: visible;
+  background-color: white;
+  border-collapse: separate;
 }
-th{
-  background-color: #AAAAAA;
+
+.myTabs input[type="radio"] {
+  display: none;
 }
-table {
-  border-collapse: collapse;
+
+.myTabs label {
+  background: white;
+  font-weight: bold;
+  border: 1px solid;
 }
-input{
-  width: 50px;
+
+.myTabs .tab {
+  width: 100%;
+  background: white;
+  order: 1;
+  display: none;
+}
+
+.myTabs input[type="radio"]:hover + label {
+  background: lightgray;
+}
+
+.myTabs input[type="radio"]:checked + label + .tab {
+  display: block;
+}
+
+.myTabs input[type="radio"]:checked + label {
+  background: gray;
 }

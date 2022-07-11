@@ -1,38 +1,27 @@
 <button class="secondaryButtons" id="showTable"
         style="position: absolute; top: 95px; left: 10px; z-index: 1000;
          font-size: 17px; width: 8em;" (click)="getLinkageVisibility()">Hide table</button>
-<div id="linkageTable" class="linkageTable" style="visibility: visible">
-  <div class="buttonContainer">
-    <button id="jointButton" (click)="setTab(0)"
-            (mouseover)="mouseOver(0)"
-            (mouseout)="mouseOut(0)"
-            style="color: black; background-color: gray; font-family: Arial, sans-serif"> Joints </button>
-    <button id="linkButton" (click)="setTab(1)"
-            (mouseover)="mouseOver(1)"
-            (mouseout)="mouseOut(1)"
-            style="font-family: Arial, sans-serif"> Links </button>
-    <button id="forceButton" (click)="setTab(2)"
-            (mouseover)="mouseOver(2)"
-            (mouseout)="mouseOut(2)"
-            style="font-family: Arial, sans-serif"> Forces </button>
-  </div>
-  <div class="tabPanel" *ngIf="selectedTab === 0">
-    <table id="jointTable">
+<!--<body id="linkageTable" class="linkageTable" style="visibility: visible">-->
+<body>
+  <div class="myTabs">
+    <input type="radio" id="tabJoint" name="myTabs" checked="checked">
+    <label for="tabJoint">Joints</label>
+    <table class="tab">
       <thead>
       <tr>
         <th>ID</th>
         <!--          <th>Type</th>-->
         <th>Linked To</th>
-<!--        <div *ngIf="getUnit() === 'cm'">-->
-<!--          <th>Dist From Joint (cm)</th>-->
-<!--          <th>x (cm)</th>-->
-<!--          <th>y (cm)</th>-->
-<!--        </div>-->
-<!--        <div *ngIf="getUnit() === 'm'">-->
-<!--          <th>Dist From Joint (m)</th>-->
-<!--          <th>x (m)</th>-->
-<!--          <th>y (m)</th>-->
-<!--        </div>-->
+        <!--        <div *ngIf="getUnit() === 'cm'">-->
+        <!--          <th>Dist From Joint (cm)</th>-->
+        <!--          <th>x (cm)</th>-->
+        <!--          <th>y (cm)</th>-->
+        <!--        </div>-->
+        <!--        <div *ngIf="getUnit() === 'm'">-->
+        <!--          <th>Dist From Joint (m)</th>-->
+        <!--          <th>x (m)</th>-->
+        <!--          <th>y (m)</th>-->
+        <!--        </div>-->
         <th *ngIf="getUnit() === 'cm'">Dist From Joint (cm)</th>
         <th *ngIf="getUnit() === 'm'">Dist From Joint (m)</th>
         <th *ngIf="getUnit() === 'cm'">x (cm)</th>
@@ -80,9 +69,10 @@
       </tr>
       </tbody>
     </table>
-  </div>
-  <div class="tabPanel" *ngIf="selectedTab === 1">
-    <table id="linkTable">
+
+    <input type="radio" id="tabLink" name="myTabs">
+    <label for="tabLink">Links</label>
+    <table class="tab">
       <thead>
       <tr>
         <th>ID</th>
@@ -130,9 +120,10 @@
       </tbody>
       <tfoot></tfoot>
     </table>
-  </div>
-  <div class="tabPanel" *ngIf="selectedTab === 2">
-    <table id="forceTable">
+
+    <input type="radio" id="tabForce" name="myTabs">
+    <label for="tabForce">Forces </label>
+    <table class="tab">
       <thead>
       <tr>
         <th>ID</th>
@@ -171,4 +162,4 @@
       </tfoot>
     </table>
   </div>
-</div>
+</body>

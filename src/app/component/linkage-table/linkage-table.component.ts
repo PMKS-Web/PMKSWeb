@@ -21,7 +21,6 @@ export class LinkageTableComponent implements OnInit {
   private static forceButton: SVGElement;
   private static showLinkageTableButton: SVGElement;
 
-  selectedTab: number = 0;
   constructor() { }
 
   ngOnInit(): void {}
@@ -32,38 +31,6 @@ export class LinkageTableComponent implements OnInit {
     LinkageTableComponent.linkButton = document.getElementById('linkButton') as unknown as SVGElement;
     LinkageTableComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
     LinkageTableComponent.showLinkageTableButton = document.getElementById('showTable') as unknown as SVGElement;
-  }
-
-  setTab(tabNum: number) {
-    this.selectedTab = tabNum;
-    // TODO: If possible, put this as hover within css
-    switch (tabNum) {
-      case 0:
-        LinkageTableComponent.jointButton.setAttribute('style',
-          'color: black; background-color: gray; font-family: Arial, sans-serif');
-        LinkageTableComponent.linkButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        LinkageTableComponent.forceButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        break;
-      case 1:
-        LinkageTableComponent.jointButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        LinkageTableComponent.linkButton.setAttribute('style',
-          'color: black; background-color: gray; font-family: Arial, sans-serif');
-        LinkageTableComponent.forceButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        break;
-      case 2:
-        LinkageTableComponent.jointButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        LinkageTableComponent.linkButton.setAttribute('style',
-          'color: gray; background-color: white; font-family: Arial, sans-serif');
-        LinkageTableComponent.forceButton.setAttribute('style',
-          'color: black; background-color: gray; font-family: Arial, sans-serif');
-        break;
-    }
-    // LinkageTableComponent.selectedTab = $event.index;
   }
 
   distFromJoint(joint1: Joint, joint2: Joint) {
@@ -182,45 +149,6 @@ export class LinkageTableComponent implements OnInit {
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
     force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
     GridComponent.updateMechanism();
-  }
-
-  mouseOver(number: number) {
-    if (this.selectedTab === number) {
-      return;
-    }
-    switch (number) {
-      case 0:
-        LinkageTableComponent.jointButton.setAttribute('style',
-          'background-color: lightgray; font-family: Arial, sans-serif');
-        break;
-      case 1:
-        LinkageTableComponent.linkButton.setAttribute('style',
-          'background-color: lightgray; font-family: Arial, sans-serif');
-        break;
-      case 2:
-        LinkageTableComponent.forceButton.setAttribute('style',
-          'background-color: lightgray; font-family: Arial, sans-serif');
-        break;
-    }
-  }
-  mouseOut(number: number) {
-    if (this.selectedTab === number) {
-      return;
-    }
-    switch (number) {
-      case 0:
-        LinkageTableComponent.jointButton.setAttribute('style',
-          'background-color: white; font-family: Arial, sans-serif');
-        break;
-      case 1:
-        LinkageTableComponent.linkButton.setAttribute('style',
-          'background-color: white; font-family: Arial, sans-serif');
-        break;
-      case 2:
-        LinkageTableComponent.forceButton.setAttribute('style',
-          'background-color: white; font-family: Arial, sans-serif');
-        break;
-    }
   }
 
   static linkageVisibility() {
