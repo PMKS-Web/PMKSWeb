@@ -1546,6 +1546,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       // ToolbarComponent.stressButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       // ToolbarComponent.kinematicButton.setAttribute('style', 'opacity: 50%; cursor: auto');
     } else {
+      // TODO: PUt this logic somewhere else so this error message doesn't show up
       AnimationBarComponent.playButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
       AnimationBarComponent.slider.setAttribute('style', 'opacity: 100%; cursor: pointer');

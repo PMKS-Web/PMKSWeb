@@ -1,9 +1,9 @@
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
-import {Link, RealLink} from "../../model/link";
+import {Bound, Link, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
-import {roundNumber, splitURLInfo, stringToBoolean, stringToFloat} from "../../model/utils";
+import {roundNumber, splitURLInfo, stringToBoolean, stringToFloat, stringToShape} from "../../model/utils";
 import {ForceSolver} from "../../model/mechanism/force-solver";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 import {GridComponent} from "../grid/grid.component";
@@ -294,7 +294,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               // const links = getLinksByIds(line[3].split(','), linkArray);
               const type = line[4];
               const ground = stringToBoolean(line[5]);
-              // const angle = stringToFloat(line[6]);
               // const coeff_of_friction = stringToFloat(line[7]);
               const input = stringToBoolean(line[7]);
 
@@ -323,12 +322,14 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
             }
             break;
           case 'link':
+            // TODO: Make sure to insert what kind of link this is (Piston or not)
             try {
               const id = line[0];
-              const mass = line[1];
-              const mass_moi = line[2];
-              const CoM_x = line[3];
-              const CoM_y = line[4];
+              const mass = stringToFloat(line[1]);
+              const mass_moi = stringToFloat(line[2]);
+              const CoM_x = stringToFloat(line[3]);
+              const CoM_y = stringToFloat(line[4]);
+              const CoM = new Coord(CoM_x, CoM_y);
               // const joints = this.getJointsByIds(line[5].split(','), jointArray);
               let joints: RealJoint[] = [];
               const jointIDArray = line[5].split(',');
@@ -340,7 +341,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               });
               // const forces = this.getForcesByIds(line[6].split(','), forceArray);
               // const shape = this.stringToShape(line[7]);
-              const shape = line[7];
+              const shape = stringToShape(line[7]);
               const b1 = new Coord(stringToFloat(line[8]), stringToFloat(line[9]));
               const b2 = new Coord(stringToFloat(line[10]), stringToFloat(line[11]));
               const b3 = new Coord(stringToFloat(line[12]), stringToFloat(line[13]));
@@ -348,12 +349,16 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
               const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
               const arrow = new Coord(arrow_x, arrow_y);
-              const newLink = new RealLink(id, joints);
+              const bound = new class implements Bound {
+                arrow: Coord = arrow;
+                b1: Coord = b1;
+                b2: Coord = b2;
+                b3: Coord = b3;
+                b4: Coord = b4;
+              };
+              const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+              // const newLink = new RealLink(id, joints);
               // const newLink = new RealLink(id, joints, shape);
-              newLink.mass = stringToFloat(mass);
-              newLink.massMoI = stringToFloat(mass_moi);
-              newLink.CoM.x = stringToFloat(CoM_x);
-              newLink.CoM.y = stringToFloat(CoM_y);
               // newLink.tryNewBounds({ b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
               // newLink.saveBounds();
               for (let j_index = 0; j_index < joints.length - 1; j_index++) {
@@ -459,6 +464,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       GridComponent.joints = jointArray;
       GridComponent.links = linkArray;
       GridComponent.forces = forceArray;
+      GridComponent.updateMechanism();
     };
     reader.readAsText(input.files[0]);
     // if (selectedUnit !== '') {
