@@ -1,8 +1,8 @@
 <!--<nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 80px; position: absolute; top: 0">-->
-<nav>
+<nav class="navBar">
   <!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
   <!--         font-size: 17px">-->
-<!--  <img alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()" style="cursor: pointer">-->
+  <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()">
   <!--  <label class="DOF">{{screenCoord}}</label>-->
   <!--  <div style="width: 640px; border: 1px solid black; background-color: #D1D1D1; color: black;-->
   <!--   position: relative; height: 100%;">-->
@@ -14,17 +14,17 @@
         <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
                (change)="upload($event)">
       </label>
-      <button class="secondaryButtons" (click)="downloadLinkage()">Save</button>
-      <button class="secondaryButtons" (click)="copyURL()">Copy</button>
+      <label class="secondaryButtons" (click)="downloadLinkage()">Save</label>
+      <label class="secondaryButtons" (click)="copyURL()">Copy</label>
     </div>
 
     <input type="radio" id="analysisTab" name="navTabs">
     <label for="analysisTab">Analysis</label>
     <div class="tab">
-      <button class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
-      <button class="secondaryButtons" id="forceButton" (click)="popUpAnalysis('force')">Force</button>
-      <button class="secondaryButtons" id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
-      <button class="secondaryButtons" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
+      <label class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</label>
+      <label class="secondaryButtons" id="forceButton" (click)="popUpAnalysis('force')">Force</label>
+      <label class="secondaryButtons" id="stressButton" (click)="popUpAnalysis('stress')">Stress</label>
+      <label class="secondaryButtons" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</label>
     </div>
 
     <input type="radio" id="settingTab" name="navTabs">
@@ -70,9 +70,9 @@
     <input type="radio" id="helpTab" name="navTabs">
     <label for="helpTab">Help</label>
     <div class="tab">
-      <button class="secondaryButtons" (click)="openURL('https://pmks.mech.website/')">About</button>
-      <button class="secondaryButtons">Section Info</button>
-      <button class="secondaryButtons" (click)="popUpTemplates()">Templates</button>
+      <label class="secondaryButtons" (click)="openURL('https://pmks.mech.website/')">About</label>
+      <label class="secondaryButtons">Section Info</label>
+      <label class="secondaryButtons" (click)="popUpTemplates()">Templates</label>
     </div>
   </div>
 </nav>
