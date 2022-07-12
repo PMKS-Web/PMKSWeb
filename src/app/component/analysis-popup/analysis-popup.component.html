@@ -176,7 +176,7 @@
           </div>
         </div>
         <div *ngIf="this.staticMethodCheck || this.dynamicMethodCheck">
-          <button class="secondaryButtons" (click)="exportExcel('statics')">Export
+          <button class="secondaryButtons" (click)="exportAnalysis('force')">Export
             Data on the Selected Analysis
           </button>
         </div>
@@ -300,7 +300,7 @@
           </div>
         </div>
         <div *ngIf="this.instantCenterMethodCheck || this.loopMethodCheck" style="text-indent: 100px">
-          <button class="secondaryButtons" (click)="exportExcel('kinematic')">Export
+          <button class="secondaryButtons" (click)="exportAnalysis('kinematic')">Export
             Data on the Selected Analysis
           </button>
         </div>

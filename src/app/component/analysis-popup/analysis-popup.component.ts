@@ -785,6 +785,29 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     }
   }
 
+  exportAnalysis(analysis: string) {
+    switch (analysis) {
+      case 'force':
+        if (this.staticMethodCheck) {
+          this.exportExcel('statics');
+        }
+        if (this.dynamicMethodCheck) {
+          this.exportExcel('dynamics');
+        }
+        break;
+      case 'stress':
+        break;
+      case 'kinematic':
+        if (this.loopMethodCheck) {
+          this.exportExcel('kinematic_loop');
+        }
+        if (this.instantCenterMethodCheck) {
+          this.exportExcel('kinematic_ic')
+        }
+        break;
+    }
+  }
+
   exportExcel(analysisType: string): void {
     // first, determine what information will not be put within the table
     const includeMapIndex = new Map<number, boolean>();
@@ -842,10 +865,13 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'dynamics':
+        KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
         ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'dynamics', ToolbarComponent.gravity,
           ToolbarComponent.unit);
+        this.titleRow = GridComponent.mechanisms[0].forceTitleRow(analysisType)!;
+        this.analysis = GridComponent.mechanisms[0].forceAnalysis(analysisType)!;
         // check whether to put the internal force analysis occurring at joints
         while (increment < (1 + (GridComponent.joints.length * 2))) {
           this.dynamicForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
@@ -962,7 +988,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         break;
-      case 'kinematic':
+      case 'kinematic_loop':
         // check whether linear kinematics for joints have been asked for
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
