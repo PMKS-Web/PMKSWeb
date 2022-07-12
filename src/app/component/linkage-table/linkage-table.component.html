@@ -6,7 +6,7 @@
   <div class="linkageTabs">
     <input type="radio" id="tabJoint" name="linkageTabs" checked="checked">
     <label for="tabJoint">Joints</label>
-    <table class="tab">
+    <div class="tab">
       <thead>
       <tr>
         <th>ID</th>
@@ -42,15 +42,15 @@
         <!--            {{joint.type}}-->
         <!--          </td>-->
         <td>
-          <table *ngFor="let conJoints of connectedJoints(joint)" style="margin:auto; width:50%">
-            <td style="border: none">
+          <table *ngFor="let conJoints of connectedJoints(joint)">
+            <td>
               {{conJoints.id}}
             </td>
           </table>
         </td>
         <td>
-          <table *ngFor="let conJoint of connectedJoints(joint)" style="margin:auto; width:50%">
-            <td style="border: none">
+          <table *ngFor="let conJoint of connectedJoints(joint)">
+            <td>
               {{distFromJoint(conJoint, joint)}}
             </td>
           </table>
@@ -68,7 +68,7 @@
         </td>
       </tr>
       </tbody>
-    </table>
+    </div>
 
     <input type="radio" id="tabLink" name="linkageTabs">
     <label for="tabLink">Links</label>

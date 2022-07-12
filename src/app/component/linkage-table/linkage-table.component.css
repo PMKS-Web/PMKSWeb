@@ -103,8 +103,13 @@
 
 .linkageTabs label {
   background: white;
-  font-weight: bold;
+  font-weight: lighter;
   border: 1px solid;
+  text-align: center;
+  width: 98px;
+  font-family: Arial, sans-serif;
+  font-size: 22px;
+  cursor: pointer;
 }
 
 .linkageTabs .tab {
@@ -124,4 +129,11 @@
 
 .linkageTabs input[type="radio"]:checked + label {
   background: gray;
+}
+
+.linkageTabs input[type="radio"]:checked + label +.tab thead {
+  background: gray;
+}
+.linkageTabs input[type="radio"]:checked + label +.tab th{
+  border: 1px solid black;
 }
