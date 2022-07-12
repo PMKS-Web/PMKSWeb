@@ -1516,6 +1516,17 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   changePlotAnalysis(analysis: string, type_of: string, more_type:string) {
     this.showChart = false;
+    let analysisString = '';
+    switch (more_type) {
+      case 'Static Equilibrium':
+        analysisString = 'statics';
+        break;
+        case 'Newton\'s II Law':
+          analysisString = 'dynamics'
+          break;
+      default:
+        return;
+    }
     switch (analysis) {
       case 'Static Equilibrium':
         this.forceCondition = 'static';
@@ -1525,12 +1536,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         break;
       case 'Input Torque':
         this.showChart = true;
-        this.determineChart(analysis, type_of, more_type);
+        this.determineChart(analysis, type_of, analysisString);
         break;
       case 'Joint Forces':
         if (type_of === '') {return}
         this.showChart = true;
-        this.determineChart(analysis, type_of, more_type);
+        this.determineChart(analysis, type_of, analysisString);
         break;
       default:
         break;
@@ -1550,6 +1561,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         case 'Input Torque':
           if (more_type === 'dynamics') {
             // TODO: Be sure to have each step within mechanism know its input angular velocity
+            KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
               GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
           }
@@ -1559,6 +1571,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           break;
         case 'Joint Forces':
           if (more_type === 'dynamics') {
+            KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
               GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
           }

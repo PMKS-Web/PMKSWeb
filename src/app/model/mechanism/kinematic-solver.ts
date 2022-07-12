@@ -101,7 +101,9 @@ export class KinematicsSolver {
         return j.input});
       const inputJoint = joints[this.inputJointIndex];
       if (!(inputJoint instanceof RealJoint)) {return}
-      this.inputLinkIndex = links.indexOf(inputJoint.links[0]);
+      // this.inputLinkIndex = links.findIndex(l => l.id === inputJoint.links[0])
+      // this.inputLinkIndex = links.indexOf(inputJoint.links[0]);
+      this.inputLinkIndex = links.findIndex(l => l.id === inputJoint.links[0].id);
     }
 
     for (const entry of this.groundJointIndexMap.entries()) {

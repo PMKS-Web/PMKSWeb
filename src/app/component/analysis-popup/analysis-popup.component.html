@@ -353,11 +353,11 @@
           <option *ngFor="let states of forceMechanismStates" [value]="states.id">{{states.label}}
           </option>
         </select>
-        <div *ngIf="forceCondition === 'static'">
+        <div *ngIf="forceMechanismState.selectedMechanismState !== 'none'">
           <label> Type of Analysis</label>
           <select name="selectedStaticAnalysis"
                   [(ngModel)]="forceAnalysis.selectedAnalysis"
-                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, '', 'statics')">
+                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, '', forceMechanismState.selectedMechanismState)">
             <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">{{analysis.label}}
             </option>
           </select>
@@ -365,24 +365,12 @@
             <label> Joint</label>
             <select name="selectedStaticJoint"
                     [(ngModel)]="forceMagPlot.force"
-                    (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, 'statics')">
+                    (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, forceMechanismState.selectedMechanismState)">
               <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">{{stat_joint.id}}
               </option>
             </select>
           </div>
         </div>
-        <div *ngIf="forceCondition === 'dynamic'">
-          <label> Type of Analysis</label>
-        </div>
-        <!--        <div *ngIf="forceAnalysis.selectedAnalysis === 'joint_position'">-->
-        <!--          <label> Joint</label>-->
-        <!--          <select name="selectedStaticJoint"-->
-        <!--                  [(ngModel)]="jointPlot.jointID"-->
-        <!--                  (ngModelChange)="changeStaticJointPos(jointPlot.jointID)">-->
-        <!--            <option *ngFor="let stat_joint of this.jointArray" [value]="stat_joint.id">{{stat_joint.id}}-->
-        <!--            </option>-->
-        <!--          </select>-->
-        <!--        </div>-->
       </div>
       <div *ngIf="getSelectedAnalysis() === 'kinematic'">
         <label> Type of Analysis</label>
