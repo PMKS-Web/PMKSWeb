@@ -2,9 +2,9 @@
         style="position: absolute; top: 95px; left: 10px; z-index: 1000;
          font-size: 17px; width: 8em;" (click)="getLinkageVisibility()">Hide table</button>
 <!--<body id="linkageTable" class="linkageTable" style="visibility: visible">-->
-<body>
-  <div class="myTabs">
-    <input type="radio" id="tabJoint" name="myTabs" checked="checked">
+<div>
+  <div class="linkageTabs">
+    <input type="radio" id="tabJoint" name="linkageTabs" checked="checked">
     <label for="tabJoint">Joints</label>
     <table class="tab">
       <thead>
@@ -70,7 +70,7 @@
       </tbody>
     </table>
 
-    <input type="radio" id="tabLink" name="myTabs">
+    <input type="radio" id="tabLink" name="linkageTabs">
     <label for="tabLink">Links</label>
     <table class="tab">
       <thead>
@@ -121,7 +121,7 @@
       <tfoot></tfoot>
     </table>
 
-    <input type="radio" id="tabForce" name="myTabs">
+    <input type="radio" id="tabForce" name="linkageTabs">
     <label for="tabForce">Forces </label>
     <table class="tab">
       <thead>
@@ -162,4 +162,4 @@
       </tfoot>
     </table>
   </div>
-</body>
+</div>

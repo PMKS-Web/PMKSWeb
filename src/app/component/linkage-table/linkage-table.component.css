@@ -81,7 +81,7 @@
 /*  width: 50px;*/
 /*}*/
 
-.myTabs {
+.linkageTabs {
   display: flex;
   flex-wrap: wrap;
   max-width: 300px;
@@ -97,31 +97,31 @@
   border-collapse: separate;
 }
 
-.myTabs input[type="radio"] {
+.linkageTabs input[type="radio"] {
   display: none;
 }
 
-.myTabs label {
+.linkageTabs label {
   background: white;
   font-weight: bold;
   border: 1px solid;
 }
 
-.myTabs .tab {
+.linkageTabs .tab {
   width: 100%;
   background: white;
   order: 1;
   display: none;
 }
 
-.myTabs input[type="radio"]:hover + label {
+.linkageTabs input[type="radio"]:hover + label {
   background: lightgray;
 }
 
-.myTabs input[type="radio"]:checked + label + .tab {
+.linkageTabs input[type="radio"]:checked + label + .tab {
   display: block;
 }
 
-.myTabs input[type="radio"]:checked + label {
+.linkageTabs input[type="radio"]:checked + label {
   background: gray;
 }

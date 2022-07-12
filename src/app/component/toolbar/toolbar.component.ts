@@ -20,8 +20,6 @@ import {TemplatesPopupComponent} from "../templates-popup/templates-popup.compon
   styleUrls: ['./toolbar.component.css']
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
-
-  selectedTab: string = 'file';
   animate: boolean = false;
 
   static inputAngularVelocity: number = 10;
@@ -87,69 +85,69 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     LinkageTableComponent.linkageVisibility();
   }
 
-  setTab(analysis: string) {
-    // TODO: adjust each of the analysis button when mechanism cannot be analyzed
-    switch (analysis) {
-      case 'file':
-        ToolbarComponent.fileButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-        ToolbarComponent.analysisButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.settingsButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.helpButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        break;
-      case 'analysis':
-        if (GridComponent.mechanisms[0].joints.length < 3) {return;}
-        ToolbarComponent.fileButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.analysisButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-        ToolbarComponent.settingsButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.helpButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        break;
-      case 'settings':
-        ToolbarComponent.fileButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.analysisButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.settingsButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-        ToolbarComponent.helpButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        break;
-      case 'help':
-        ToolbarComponent.fileButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.analysisButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.settingsButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-        ToolbarComponent.helpButton.setAttribute('style',
-          'height: 34px; width: 160px; font-size: 24px;\n' +
-          '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-        break;
-    }
-    this.selectedTab = analysis;
-  }
+  // setTab(analysis: string) {
+  //   // TODO: adjust each of the analysis button when mechanism cannot be analyzed
+  //   switch (analysis) {
+  //     case 'file':
+  //       ToolbarComponent.fileButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+  //       ToolbarComponent.analysisButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.settingsButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.helpButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       break;
+  //     case 'analysis':
+  //       if (GridComponent.mechanisms[0].joints.length < 3) {return;}
+  //       ToolbarComponent.fileButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.analysisButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+  //       ToolbarComponent.settingsButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.helpButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       break;
+  //     case 'settings':
+  //       ToolbarComponent.fileButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.analysisButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.settingsButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+  //       ToolbarComponent.helpButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       break;
+  //     case 'help':
+  //       ToolbarComponent.fileButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.analysisButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.settingsButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
+  //       ToolbarComponent.helpButton.setAttribute('style',
+  //         'height: 34px; width: 160px; font-size: 24px;\n' +
+  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
+  //       break;
+  //   }
+  //   // this.selectedTab = analysis;
+  // }
 
   changeIdTag() {
     // this.showIdTags = !this.showIdTags;
