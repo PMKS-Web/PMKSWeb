@@ -84,7 +84,7 @@
 .linkageTabs {
   display: flex;
   flex-wrap: wrap;
-  max-width: 300px;
+  max-width: 400px;
   position: absolute;
   top: 130px;
   left: 10px;
@@ -106,7 +106,7 @@
   font-weight: lighter;
   border: 1px solid;
   text-align: center;
-  width: 98px;
+  width: 131.2px;
   font-family: Arial, sans-serif;
   font-size: 22px;
   cursor: pointer;
@@ -124,7 +124,11 @@
 }
 
 .linkageTabs input[type="radio"]:checked + label + .tab {
-  display: block;
+  /*display: block;*/
+  max-width: 400px;
+  display: table;
+  table-layout: fixed;
+  border-collapse: collapse;
 }
 
 .linkageTabs input[type="radio"]:checked + label {
@@ -132,8 +136,21 @@
 }
 
 .linkageTabs input[type="radio"]:checked + label +.tab thead {
+  /*max-width: 300px;*/
+  /*display: table;*/
+  /*table-layout: fixed;*/
+  /*border-collapse: collapse;*/
+  /*display: table-cell;*/
   background: gray;
 }
 .linkageTabs input[type="radio"]:checked + label +.tab th{
   border: 1px solid black;
 }
+.linkageTabs input[type="radio"]:checked + label +.tab input {
+  display: table-cell;
+  width: 80%;
+  /*max-width: 300px;*/
+  /*display: table;*/
+  /*table-layout: fixed;*/
+}
+

@@ -1539,8 +1539,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       AnimationBarComponent.slider.setAttribute('style', 'opacity: 50%; cursor: auto');
       AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 50%; cursor: auto');
-      ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
-        '     font-family: Arial, sans-serif; cursor: auto;color: gray; background-color: white; opacity: 50%');
+      // ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
+      //   '     font-family: Arial, sans-serif; cursor: auto;color: gray; background-color: white; opacity: 50%');
+
+
       // ToolbarComponent.loopButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       // ToolbarComponent.forceButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       // ToolbarComponent.stressButton.setAttribute('style', 'opacity: 50%; cursor: auto');
@@ -1551,8 +1553,12 @@ export class GridComponent implements OnInit, AfterViewInit {
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
       AnimationBarComponent.slider.setAttribute('style', 'opacity: 100%; cursor: pointer');
       AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
-        '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white; opacity: 100%');
+
+
+
+
+      // ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
+      //   '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white; opacity: 100%');
       // ToolbarComponent.analysisButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
       // ToolbarComponent.loopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
       // ToolbarComponent.forceButton.setAttribute('style', 'opacity: 100%; cursor: pointer');

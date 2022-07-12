@@ -6,7 +6,7 @@
   <div class="linkageTabs">
     <input type="radio" id="tabJoint" name="linkageTabs" checked="checked">
     <label for="tabJoint">Joints</label>
-    <div class="tab">
+    <table class="tab">
       <thead>
       <tr>
         <th>ID</th>
@@ -34,7 +34,7 @@
       <tbody>
       <tr *ngFor="let joint of getJoints()">
         <td>
-          <input type="text" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
+          <input type="text" width="18" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
         </td>
         <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
         <!-- <td>{{row[1]}}</td>  --> <!-- joint type -->
@@ -56,10 +56,10 @@
           </table>
         </td>
         <td>
-          <input type="text" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
+          <input type="text" width="37px" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
         </td>
         <td>
-          <input type="text" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
+          <input type="text" width="37px" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
         </td>
         <td *ngIf="typeOfJoint(joint) === 'P'">
           <input type="text" value="{{getJointAngle(joint)}}" (change)="changeJointProp($event, joint, 'angle')">
@@ -68,7 +68,7 @@
         </td>
       </tr>
       </tbody>
-    </div>
+    </table>
 
     <input type="radio" id="tabLink" name="linkageTabs">
     <label for="tabLink">Links</label>
