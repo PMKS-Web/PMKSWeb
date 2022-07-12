@@ -93,6 +93,7 @@
   overflow: visible;
   background-color: white;
   border-collapse: separate;
+  visibility: visible;
 }
 
 .linkageTabs input[type="radio"] {
