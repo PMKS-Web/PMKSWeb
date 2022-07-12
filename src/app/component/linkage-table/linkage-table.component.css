@@ -89,9 +89,7 @@
   top: 130px;
   left: 10px;
   opacity: 1;
-  /*overflow: hidden;*/
   border: 1px solid;
-  /*display: grid;*/
   overflow: visible;
   background-color: white;
   border-collapse: separate;
@@ -124,7 +122,6 @@
 }
 
 .linkageTabs input[type="radio"]:checked + label + .tab {
-  /*display: block;*/
   max-width: 400px;
   display: table;
   table-layout: fixed;
@@ -136,11 +133,6 @@
 }
 
 .linkageTabs input[type="radio"]:checked + label +.tab thead {
-  /*max-width: 300px;*/
-  /*display: table;*/
-  /*table-layout: fixed;*/
-  /*border-collapse: collapse;*/
-  /*display: table-cell;*/
   background: gray;
 }
 .linkageTabs input[type="radio"]:checked + label +.tab th{
@@ -149,8 +141,13 @@
 .linkageTabs input[type="radio"]:checked + label +.tab input {
   display: table-cell;
   width: 80%;
-  /*max-width: 300px;*/
-  /*display: table;*/
-  /*table-layout: fixed;*/
 }
 
+.linkageTabs input[type="radio"]:checked + label +.tab tbody td {
+  border: 1px solid black;
+}
+
+.linkageTabs input[type="radio"]:checked + label +.tab tbody table {
+  display: contents;
+  text-align: center;
+}

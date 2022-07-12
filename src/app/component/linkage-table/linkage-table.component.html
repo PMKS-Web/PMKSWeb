@@ -43,16 +43,16 @@
         <!--          </td>-->
         <td>
           <table *ngFor="let conJoints of connectedJoints(joint)">
-            <td>
+            <div>
               {{conJoints.id}}
-            </td>
+            </div>
           </table>
         </td>
         <td>
           <table *ngFor="let conJoint of connectedJoints(joint)">
-            <td>
+            <div>
               {{distFromJoint(conJoint, joint)}}
-            </td>
+            </div>
           </table>
         </td>
         <td>
