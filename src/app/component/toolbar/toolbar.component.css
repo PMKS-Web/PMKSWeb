@@ -783,7 +783,7 @@
   display: none;
 }
 
-.navTabs input[type="radio"]:hover + label {
+.navTabs input[type="radio"]:hover:enabled + label {
   background: lightgray;
 }
 
@@ -805,6 +805,7 @@
 .pmksImage {
   width: 200px;
   height: 85px;
+  cursor: pointer;
 }
 
 .navTabs input[type="radio"]:checked + label + .tab {
@@ -842,4 +843,11 @@
   /*text-align: center;*/
   text-shadow:0px 1px 0px #ffffff;
   /*outline: none;*/
+}
+.navTabs input[type="radio"]:disabled + label {
+  opacity: 25%;
+  cursor: auto;
+}
+.navTabs input[type="radio"]:disabled + label + .tab {
+  display: none;
 }

@@ -18,7 +18,7 @@
       <label class="secondaryButtons" (click)="copyURL()">Copy</label>
     </div>
 
-    <input type="radio" id="analysisTab" name="navTabs">
+    <input type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
     <label for="analysisTab">Analysis</label>
     <div class="tab">
       <label class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</label>

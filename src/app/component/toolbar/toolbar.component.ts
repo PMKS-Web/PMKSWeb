@@ -907,4 +907,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   getInputAngVel() {
     return ToolbarComponent.inputAngularVelocity;
   }
+
+  validMechanism() {
+    if (GridComponent.mechanisms[0] === undefined) {return true}
+    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
+  }
 }
