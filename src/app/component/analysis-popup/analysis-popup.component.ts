@@ -155,7 +155,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   ];
 
   kinematicAnalyses = [
-    {id: 'Loop', label: 'Loop'},
+    {id: 'loop', label: 'loop'},
     {id: 'ic', label: 'ic'},
   ];
 
@@ -1871,7 +1871,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                     this.determineChart(AnalysisPopupComponent.selectedAnalysis, this.kinematicAnalysis.selectedMechanismState,
                       this.kinematicPropertyAnalysis.selectedAnalysis, this.kinematicLoopLinearJoint.joint);
                     break;
-                  case 'Linear Link':
+                  case 'Linear Link\'':
                     if (this.kinematicLoopLinearLink.link === 'none') {
                       this.showChart = false;
                       return;
