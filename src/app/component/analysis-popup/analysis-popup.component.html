@@ -349,7 +349,7 @@
         <label> Mechanism State</label>
         <select name="selectedForceAnalysis"
                 [(ngModel)]="forceMechanismState.selectedMechanismState"
-                (ngModelChange)="changePlotAnalysis(forceMechanismState.selectedMechanismState, '', '')">
+                (ngModelChange)="changePlotAnalysis()">
           <option *ngFor="let states of forceMechanismStates" [value]="states.id">{{states.label}}
           </option>
         </select>
@@ -357,7 +357,7 @@
           <label> Type of Analysis</label>
           <select name="selectedStaticAnalysis"
                   [(ngModel)]="forceAnalysis.selectedAnalysis"
-                  (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, '', forceMechanismState.selectedMechanismState)">
+                  (ngModelChange)="changePlotAnalysis()">
             <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">{{analysis.label}}
             </option>
           </select>
@@ -365,7 +365,7 @@
             <label> Joint</label>
             <select name="selectedStaticJoint"
                     [(ngModel)]="forceMagPlot.force"
-                    (ngModelChange)="changePlotAnalysis(forceAnalysis.selectedAnalysis, forceMagPlot.force, forceMechanismState.selectedMechanismState)">
+                    (ngModelChange)="changePlotAnalysis()">
               <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">{{stat_joint.id}}
               </option>
             </select>
@@ -373,45 +373,59 @@
         </div>
       </div>
       <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-        <label> Type of Analysis</label>
-        <select name="selectedKinematicLoopAnalysis"
-                [(ngModel)]="kinematicLoopAnalysis.selectedAnalysis"
-                (ngModelChange)="changePlotAnalysis(kinematicLoopAnalysis.selectedAnalysis, '', 'loop')">
-          <option *ngFor="let analysis of kinematicLoopAnalyses" [value]="analysis.id">{{analysis.label}}
+        <label> Kinematic Analysis</label>
+        <select name="selectedKinematicAnalysis"
+                [(ngModel)]="kinematicAnalysis.selectedMechanismState"
+                (ngModelChange)="changePlotAnalysis()">
+          <option *ngFor="let analysis of kinematicAnalyses" [value]="analysis.id">{{analysis.label}}
           </option>
         </select>
+        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'loop'">
+          <label> Kinematic Property</label>
+          <select name="selectedKinematicLoopAnalysis"
+                  [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis"
+                  (ngModelChange)="changePlotAnalysis()">
+            <option *ngFor="let analysis of kinematicLoopAnalyses" [value]="analysis.id">{{analysis.label}}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'ic'">
+          <label> Kinematic Property</label>
+          <select name="selectedKinematicLoopAnalysis"
+                  [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis"
+                  (ngModelChange)="changePlotAnalysis()">
+            <option *ngFor="let analysis of kinematicICAnalyses" [value]="analysis.id">{{analysis.label}}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Linear Joint'">
+          <label> Linear Joint</label>
+          <select name="selectedKinematicLoopLinearJoint"
+                  [(ngModel)]="kinematicLoopLinearJoint.joint"
+                  (ngModelChange)="changePlotAnalysis()">
+            <option *ngFor="let joint of getJoints()" [value]="joint.id">{{joint.id}}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 11)  === 'Linear Link'">
+          <label> Linear Link</label>
+          <select name="selectedKinematicLoopLinearLink"
+                  [(ngModel)]="kinematicLoopLinearLink.link"
+                  (ngModelChange)="changePlotAnalysis()">
+            <option *ngFor="let link of getLinks()" [value]="link.id">{{link.id}}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Angular Link'">
+          <label> Angular Link</label>
+          <select name="selectedKinematicLoopAngularLink"
+                  [(ngModel)]="kinematicLoopAngularLink.link"
+                  (ngModelChange)="changePlotAnalysis()">
+            <option *ngFor="let link of getLinks()" [value]="link.id">{{link.id}}
+            </option>
+          </select>
+        </div>
       </div>
-      <div *ngIf="kinematicLoopAnalysis.selectedAnalysis.substring(0, 12) === 'Linear Joint'">
-        <label> Linear Joint</label>
-        <select name="selectedKinematicLoopLinearJoint"
-                [(ngModel)]="kinematicLoopLinearJoint.joint"
-                (ngModelChange)="changePlotAnalysis(kinematicLoopAnalysis.selectedAnalysis,
-                   kinematicLoopLinearJoint.joint, 'loop')">
-          <option *ngFor="let joint of getJoints()" [value]="joint.id">{{joint.id}}
-          </option>
-        </select>
-      </div>
-      <div *ngIf="kinematicLoopAnalysis.selectedAnalysis.substring(0, 11)  === 'Linear Link'">
-        <label> Linear Link</label>
-        <select name="selectedKinematicLoopLinearLink"
-                [(ngModel)]="kinematicLoopLinearLink.link"
-                (ngModelChange)="changePlotAnalysis(kinematicLoopAnalysis.selectedAnalysis,
-                   kinematicLoopLinearLink.link, 'loop')">
-          <option *ngFor="let link of getLinks()" [value]="link.id">{{link.id}}
-          </option>
-        </select>
-      </div>
-      <div *ngIf="kinematicLoopAnalysis.selectedAnalysis.substring(0, 12) === 'Angular Link'">
-        <label> Angular Link</label>
-        <select name="selectedKinematicLoopAngularLink"
-                [(ngModel)]="kinematicLoopAngularLink.link"
-                (ngModelChange)="changePlotAnalysis(kinematicLoopAnalysis.selectedAnalysis,
-                   kinematicLoopAngularLink.link, 'loop')">
-          <option *ngFor="let link of getLinks()" [value]="link.id">{{link.id}}
-          </option>
-        </select>
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'"></div>
       <div *ngIf="showChart">
         <apx-chart
           [series]="chartOptions.series!"
