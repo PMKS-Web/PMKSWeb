@@ -26,19 +26,21 @@
     <button id="fastspeed" class="tooltip" (click)="onSpeedChange()" *ngIf="getSpeed() === 'fast'">
       <span class="tooltiptext">Change Speed</span>
     </button>
-    <button class="tooltip" id="playBtn" (click)="startAnimation('pause')" *ngIf="!getAnimate()">
+    <button class="tooltip" id="playBtn" (click)="startAnimation('pause')" *ngIf="!getAnimate()" [attr.disabled]="validMechanism()">
       <span class="tooltiptext">Play Animation</span>
     </button>
-    <button class="tooltip" id="pauseBtn" (click)="startAnimation('play')" *ngIf="getAnimate()">
+    <button class="tooltip" id="pauseBtn" (click)="startAnimation('play')" *ngIf="getAnimate()" [attr.disabled]="validMechanism()">
       <span class="tooltiptext">Resume Animation</span>
     </button>
-    <button class="tooltip" id="stopBtn" (click)="startAnimation('stop')">
+    <button class="tooltip" id="stopBtn" (click)="startAnimation('stop')" [attr.disabled]="validMechanism()">
       <span class="tooltiptext">Reset Animation</span>
     </button>
   </div>
   <div id="sliderContainer">
-    <input class="tooltip" type="range" min="0" max="{{maxTimeSteps()}}" value="{{getMechanismTimeStep()}}"
-           id="slider" (mousedown)="adjustMechanismAnimation(true)" (mousemove)="setAnim()" (mouseup)="adjustMechanismAnimation(false)">
+    <input id="slider" class="tooltip" type="range" [attr.disabled]="validMechanism()"
+           min="0" max="{{maxTimeSteps()}}" value="{{getMechanismTimeStep()}}"
+           (mousedown)="adjustMechanismAnimation(true)" (mousemove)="setAnim()"
+           (mouseup)="adjustMechanismAnimation(false)">
   </div>
   <div id="gridActionContainer">
     <button id="showCoM" class="tooltip" (click)="showCenterOfMass()">

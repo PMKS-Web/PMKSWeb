@@ -1552,38 +1552,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
       ToolbarComponent.unit, inputAngularVelocity));
-    // TODO: Put this logic within HTML/CSS
-    if (GridComponent.mechanisms[0].joints.length < 3) {
-      AnimationBarComponent.playButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-      AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-      AnimationBarComponent.slider.setAttribute('style', 'opacity: 50%; cursor: auto');
-      AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 50%; cursor: auto');
-      // ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
-      //   '     font-family: Arial, sans-serif; cursor: auto;color: gray; background-color: white; opacity: 50%');
-
-
-      // ToolbarComponent.loopButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-      // ToolbarComponent.forceButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-      // ToolbarComponent.stressButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-      // ToolbarComponent.kinematicButton.setAttribute('style', 'opacity: 50%; cursor: auto');
-    } else {
-      // TODO: PUt this logic somewhere else so this error message doesn't show up
-      AnimationBarComponent.playButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      AnimationBarComponent.slider.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      AnimationBarComponent.sliderContainer.setAttribute('style', 'opacity: 100%; cursor: pointer');
-
-
-
-
-      // ToolbarComponent.analysisButton.setAttribute('style', 'height: 34px; width: 160px; font-size: 24px;\n' +
-      //   '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white; opacity: 100%');
-      // ToolbarComponent.analysisButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      // ToolbarComponent.loopButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      // ToolbarComponent.forceButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      // ToolbarComponent.stressButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-      // ToolbarComponent.kinematicButton.setAttribute('style', 'opacity: 100%; cursor: pointer');
-    }
   }
 
   private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {

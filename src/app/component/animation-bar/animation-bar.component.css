@@ -2,7 +2,7 @@ button{
   outline: 0;
   cursor: pointer;
 }
-button:hover {
+button:hover:enabled {
   box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
 }
 /* h1{
@@ -151,7 +151,7 @@ div{
   border-bottom-color: black;
 }
 
-.tooltip:hover .tooltiptext {
+.tooltip:hover:enabled .tooltiptext {
   visibility: visible;
   transition-delay:1s;
 }
@@ -188,11 +188,11 @@ div{
   transition: opacity .2s;
 }
 
-#slider:hover {
+#slider:hover:enabled {
   opacity: 1;
 }
 
-#slider::-webkit-slider-thumb {
+#slider:enabled::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 25px;
@@ -201,7 +201,7 @@ div{
   cursor: pointer;
 }
 
-#slider::-moz-range-thumb {
+#slider:enabled::-moz-range-thumb {
   width: 25px;
   height: 25px;
   background: black;
@@ -359,4 +359,16 @@ div{
   margin-left: 2px;
   margin-right: 2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 #FFF;
+}
+
+button:disabled {
+  opacity: 50%;
+  cursor: auto;
+}
+button:disabled + span {
+  visibility: hidden;
+}
+input[type="range"]:disabled {
+  opacity: 50%;
+  cursor: auto;
 }

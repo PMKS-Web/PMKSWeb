@@ -70,6 +70,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   startAnimation(state: string) {
+    if (GridComponent.mechanisms[0] === undefined) {return;}
     if (GridComponent.mechanisms[0].joints.length < 3) {
       return;
     }
@@ -150,5 +151,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   getAnimate() {
     return AnimationBarComponent.animate;
+  }
+
+  validMechanism() {
+    if (GridComponent.mechanisms[0] === undefined) {return true}
+    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
   }
 }
