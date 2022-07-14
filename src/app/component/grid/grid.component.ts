@@ -620,7 +620,21 @@ export class GridComponent implements OnInit, AfterViewInit {
                 //   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
                 //   GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
                 // );
+
                 joint2 = thing;
+                let commonLinkCheck = false;
+                // Make sure link is not being attached to the same link
+                joint2.links.forEach(l => {
+                  if (commonLinkCheck) {return}
+                  if (GridComponent.selectedJoint.links.findIndex(li => li.id === l.id) !== -1) { commonLinkCheck = true;}
+                });
+                if (commonLinkCheck) {
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.jointStates = jointStates.waiting;
+                  GridComponent.jointTempHolderSVG.style.display = 'none';
+                  GridComponent.sendNotification('Don\'t link to a joint on the same link');
+                  return;
+                }
                 GridComponent.selectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(GridComponent.selectedJoint);
 
