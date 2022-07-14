@@ -43,6 +43,7 @@ export enum editorID {
 
 export class Link {
   private _id: string;
+  private _mass: number;
   private _joints: Joint[];
   private _forces: Force[] = [];
   fixedLocations = [
@@ -52,9 +53,10 @@ export class Link {
     fixedPoint: 'com'
   };
 
-  constructor(id: string, joints: Joint[]) {
+  constructor(id: string, joints: Joint[], mass?: number) {
     this._id = id;
     this._joints = joints;
+    this._mass = mass !== undefined ? mass : 1;
     joints.forEach(j => {
       this.fixedLocations.push(
         {id: j.id, label: j.id}
@@ -68,6 +70,14 @@ export class Link {
 
   set id(value: string) {
     this._id = value;
+  }
+
+  get mass(): number {
+    return this._mass;
+  }
+
+  set mass(value: number) {
+    this._mass = value;
   }
 
   get joints(): Joint[] {
@@ -93,7 +103,7 @@ export class RealLink extends Link {
   private _shape: Shape;
   private _bound: Bound;
   private _d: string
-  private _mass: number;
+  // private _mass: number;
   private _massMoI: number;
   private _CoM: Coord;
   private _CoM_d1: string = '';
@@ -103,8 +113,8 @@ export class RealLink extends Link {
 
   // TODO: Have an optional argument of forces
   constructor(id: string, joints: Joint[], mass?: number, massMoI?: number, shape?: Shape, bound?: Bound, CoM?: Coord) {
-    super(id, joints);
-    this._mass = mass !== undefined ? mass : 1;
+    super(id, joints, mass);
+    // this._mass = mass !== undefined ? mass : 1;
     this._massMoI = massMoI !== undefined ? massMoI : 1;
     this._shape = shape !== undefined ? shape : Shape.line;
     this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
@@ -638,14 +648,6 @@ export class RealLink extends Link {
     this._fill = value;
   }
 
-  get mass(): number {
-    return this._mass;
-  }
-
-  set mass(value: number) {
-    this._mass = value;
-  }
-
   get massMoI(): number {
     return this._massMoI;
   }
@@ -761,7 +763,7 @@ export class RealLink extends Link {
 }
 
 export class Piston extends Link {
-  constructor(id: string, joints: Joint[]) {
-    super(id, joints);
+  constructor(id: string, joints: Joint[], mass?: number) {
+    super(id, joints, mass);
   }
 }

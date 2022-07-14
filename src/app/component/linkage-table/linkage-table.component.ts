@@ -125,7 +125,7 @@ export class LinkageTableComponent implements OnInit {
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
       case 'id':
-        if (!($event.target.value instanceof Number)) {return GridComponent.sendNotification('Check Force ID');}
+        if (!(typeof $event.target.value === 'string')) {return GridComponent.sendNotification('Check Force ID');}
         force.id = $event.target.value;
         break;
       case 'xPos':

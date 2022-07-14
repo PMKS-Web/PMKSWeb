@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
-import {Bound, Link, RealLink} from "../../model/link";
+import {Bound, Link, Piston, RealLink} from "../../model/link";
 import {Force} from "../../model/force";
 import {Mechanism} from "../../model/mechanism/mechanism";
 import {roundNumber, splitURLInfo, stringToBoolean, stringToFloat, stringToShape} from "../../model/utils";
@@ -323,38 +323,51 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
             // TODO: Make sure to insert what kind of link this is (Piston or not)
             try {
               const id = line[0];
-              const mass = stringToFloat(line[1]);
-              const mass_moi = stringToFloat(line[2]);
-              const CoM_x = stringToFloat(line[3]);
-              const CoM_y = stringToFloat(line[4]);
-              const CoM = new Coord(CoM_x, CoM_y);
-              // const joints = this.getJointsByIds(line[5].split(','), jointArray);
+              const linkType = line[1];
+              const mass = stringToFloat(line[2]);
               let joints: RealJoint[] = [];
-              const jointIDArray = line[5].split(',');
+              const jointIDArray = line[6].split(',');
               jointIDArray.forEach(jointID => {
                 const joint = jointArray.find(jt => jt.id === jointID)!;
                 if (!(joint instanceof RealJoint)) {return}
                 // TODO: Maybe put check here to see if they got a joint
                 joints.push(joint);
               });
-              // const forces = this.getForcesByIds(line[6].split(','), forceArray);
-              // const shape = this.stringToShape(line[7]);
-              const shape = stringToShape(line[7]);
-              const b1 = new Coord(stringToFloat(line[8]), stringToFloat(line[9]));
-              const b2 = new Coord(stringToFloat(line[10]), stringToFloat(line[11]));
-              const b3 = new Coord(stringToFloat(line[12]), stringToFloat(line[13]));
-              const b4 = new Coord(stringToFloat(line[14]), stringToFloat(line[15]));
-              const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
-              const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
-              const arrow = new Coord(arrow_x, arrow_y);
-              const bound = new class implements Bound {
-                arrow: Coord = arrow;
-                b1: Coord = b1;
-                b2: Coord = b2;
-                b3: Coord = b3;
-                b4: Coord = b4;
-              };
-              const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+              let newLink: Link;
+              switch (linkType) {
+                case 'R':
+                  const mass_moi = stringToFloat(line[3]);
+                  const CoM_x = stringToFloat(line[4]);
+                  const CoM_y = stringToFloat(line[5]);
+                  const CoM = new Coord(CoM_x, CoM_y);
+                  // const joints = this.getJointsByIds(line[5].split(','), jointArray);
+
+                  // const forces = this.getForcesByIds(line[6].split(','), forceArray);
+                  // const shape = this.stringToShape(line[7]);
+                  const shape = stringToShape(line[8]);
+                  const b1 = new Coord(stringToFloat(line[9]), stringToFloat(line[10]));
+                  const b2 = new Coord(stringToFloat(line[11]), stringToFloat(line[12]));
+                  const b3 = new Coord(stringToFloat(line[13]), stringToFloat(line[14]));
+                  const b4 = new Coord(stringToFloat(line[15]), stringToFloat(line[16]));
+                  const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
+                  const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
+                  const arrow = new Coord(arrow_x, arrow_y);
+                  const bound = new class implements Bound {
+                    arrow: Coord = arrow;
+                    b1: Coord = b1;
+                    b2: Coord = b2;
+                    b3: Coord = b3;
+                    b4: Coord = b4;
+                  };
+                  newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+                  break;
+                case 'P':
+                  newLink = new Piston(id, joints, mass);
+                  break;
+                default:
+                  return;
+              }
+              // const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
               // const newLink = new RealLink(id, joints);
               // const newLink = new RealLink(id, joints, shape);
               // newLink.tryNewBounds({ b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
@@ -519,7 +532,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       content += `${link.id},`;
       content += (!(link instanceof RealLink)) ? `P,` : `R,`;
       // if (!(link instanceof RealLink)) {return}
-      content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
+      // content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
+      content += `${link.mass},`;
       content += (!(link instanceof RealLink)) ? `Null,` : `${link.massMoI},`;
       content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.x},`;
       content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.y},`;
@@ -804,31 +818,65 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     });
 
     result += 'links\n';
-    result += 'id,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
+    result += 'id,type,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
 
+    let relatedJointIDs: any;
+    let relatedForceIDs: any;
     linkArray.forEach(link => {
-      if (!(link instanceof RealLink)) {return}
-      result += `${link.id},`;
-      result += `${link.mass},`;
-      result += `${link.massMoI},`;
-      result += `${link.CoM.x},`;
-      result += `${link.CoM.y},`;
-      const relatedJointIDs = link.joints.map(joint => {
-        return joint.id;
-      });
-      const relatedForceIDs = link.forces.map(force => {
-        return force.id;
-      });
-      result += `"${relatedJointIDs.join(',')}",`;
-      result += `"${relatedForceIDs.join(',')}",`;
-      result += `${link.shape}`;
-      const bounds = link.bound;
-      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      keyArray.forEach(eid => {
-        result += `,${eid.x}`;
-        result += `,${eid.y}`;
-      });
-      result += '\n';
+      switch (link.constructor) {
+        case RealLink:
+          if (!(link instanceof RealLink)) {return}
+          result += `${link.id},`;
+          result += `R,`;
+          result += `${link.mass},`;
+          result += `${link.massMoI},`;
+          result += `${link.CoM.x},`;
+          result += `${link.CoM.y},`;
+          relatedJointIDs = link.joints.map(joint => {
+            return joint.id;
+          });
+          relatedForceIDs = link.forces.map(force => {
+            return force.id;
+          });
+          result += `"${relatedJointIDs.join(',')}",`;
+          result += `"${relatedForceIDs.join(',')}",`;
+          result += `${link.shape}`;
+          const bounds = link.bound;
+          const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+          keyArray.forEach(eid => {
+            result += `,${eid.x}`;
+            result += `,${eid.y}`;
+          });
+          result += '\n';
+          break;
+        case Piston:
+          if (!(link instanceof Piston)) {return}
+          result += `${link.id},`;
+          result += `P,`;
+          result += `${link.mass},`;
+          result += `Null,`;
+          result += `Null,`;
+          result += `Null,`;
+          relatedJointIDs = link.joints.map(joint => {
+            return joint.id;
+          });
+          relatedForceIDs = link.forces.map(force => {
+            return force.id;
+          });
+          result += `"${relatedJointIDs.join(',')}",`;
+          result += `"${relatedForceIDs.join(',')}",`;
+          result += `Null,`; // Shape
+          result += `Null,`; // b1
+          result += `Null,`;
+          result += `Null,`; // b2
+          result += `Null,`;
+          result += `Null,`; // b3
+          result += `Null,`;
+          result += `Null,`; // b4
+          result += `Null`;
+          result += '\n';
+          break;
+      }
     });
 
     result += 'forces\n';
