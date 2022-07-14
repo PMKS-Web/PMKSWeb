@@ -10,57 +10,60 @@
     <input type="radio" id="fileTab" name="navTabs" checked="checked">
     <label for="fileTab">File</label>
     <div class="tab">
-      <label class="secondaryButtons">Open
+      <label>Open
+<!--      <button></button>-->
         <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
                (change)="upload($event)">
       </label>
-      <label class="secondaryButtons" (click)="downloadLinkage()">Save</label>
-      <label class="secondaryButtons" (click)="copyURL()">Copy</label>
+      <button (click)="downloadLinkage()">Save</button>
+      <button (click)="copyURL()">Copy</button>
     </div>
 
     <input type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
     <label for="analysisTab">Analysis</label>
     <div class="tab">
-      <label class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</label>
-      <label class="secondaryButtons" id="forceButton" (click)="popUpAnalysis('force')">Force</label>
-      <label class="secondaryButtons" id="stressButton" (click)="popUpAnalysis('stress')">Stress</label>
-      <label class="secondaryButtons" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</label>
+      <button id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
+      <button id="forceButton" (click)="popUpAnalysis('force')">Force</button>
+      <button id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
+      <button id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
     </div>
 
     <input type="radio" id="settingTab" name="navTabs">
     <label for="settingTab">Settings</label>
     <div class="tab">
-      <div class="input-text">
-        Input Speed (RPM):
-      </div>
-      <div class="input-textbox">
+<!--      <div>-->
+        <label>
+          Input Speed (RPM):
+        </label>
+<!--      </div>-->
+      <div>
         <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
       </div>
-      <div class="input-direction">
+      <div>
         <label>
-          <input type="radio" name="direction" [checked]="getClockwise()" (change)="setClockwise(true)">
+          <input type="radio" [checked]="getClockwise()" (change)="setClockwise(true)">
           cw<br>
         </label>
         <label>
-          <input type="radio" name="direction" [checked]="!getClockwise()" (change)="setClockwise(false)">
+          <input type="radio" [checked]="!getClockwise()" (change)="setClockwise(false)">
           ccw
         </label>
       </div>
-      <div class="gravity-toggle">
+      <div>
         <label>
-          <input type="radio" name="gg" [checked]="getGravity()" (change)="setGravity(true)">
+          <input type="radio" [checked]="getGravity()" (change)="setGravity(true)">
           Gravity On
         </label>
         <label>
-          <input type="radio" name="gg" [checked]="!getGravity()" (change)="setGravity(false)">
+          <input type="radio" [checked]="!getGravity()" (change)="setGravity(false)">
           Gravity Off<br>
         </label>
       </div>
-      <div class="select-units">
+      <div>
         <label>
           Units
-          <select name="selectedUnit"
-                  [(ngModel)]="localUnit.selectedUnit" (ngModelChange)="changeUnit(localUnit.selectedUnit)">
+          <select name="selectedUnit" [(ngModel)]="localUnit.selectedUnit"
+                  (ngModelChange)="changeUnit(localUnit.selectedUnit)">
             <option *ngFor="let localUnit of localUnits" [value]="localUnit.id">{{localUnit.label}}</option>
           </select>
         </label>
@@ -70,9 +73,9 @@
     <input type="radio" id="helpTab" name="navTabs">
     <label for="helpTab">Help</label>
     <div class="tab">
-      <label class="secondaryButtons" (click)="openURL('https://pmks.mech.website/')">About</label>
-      <label class="secondaryButtons">Section Info</label>
-      <label class="secondaryButtons" (click)="popUpTemplates()">Templates</label>
+      <button (click)="openURL('https://pmks.mech.website/')">About</button>
+      <button>Section Info</button>
+      <button (click)="popUpTemplates()">Templates</button>
     </div>
   </div>
 </nav>
