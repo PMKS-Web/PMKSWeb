@@ -83,8 +83,10 @@ export class LinkageTableComponent implements OnInit {
         });
         break;
       case 'id':
-        // TODO: Be sure to change the link's ID
-        if (!($event.target.value instanceof String)) {return GridComponent.sendNotification('Check Joint ID');}
+        if (!(typeof $event.target.value === 'string')) {return GridComponent.sendNotification('Check Joint ID');}
+        joint.links.forEach(l => {
+          l.id = l.id.replace(joint.id, $event.target.value);
+        });
         joint.id = $event.target.value;
         break;
       case 'angle':
