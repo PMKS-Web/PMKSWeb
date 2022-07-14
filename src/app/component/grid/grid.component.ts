@@ -709,6 +709,11 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedForce = thing;
             }
             break;
+          case 'jointTemp':
+            GridComponent.gridStates = gridStates.waiting;
+            GridComponent.jointStates = jointStates.waiting;
+            GridComponent.jointTempHolderSVG.style.display = 'none';
+            GridComponent.sendNotification('Don\'t link a joint to itself');
         }
         break;
       // TODO: Be sure all things reset
@@ -1533,7 +1538,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
       GridComponent.ics, ToolbarComponent.gravity,
       ToolbarComponent.unit, inputAngularVelocity));
-    // TODO: Put this logic within HTML or CSS
+    // TODO: Put this logic within HTML/CSS
     if (GridComponent.mechanisms[0].joints.length < 3) {
       AnimationBarComponent.playButton.setAttribute('style', 'opacity: 50%; cursor: auto');
       AnimationBarComponent.stopButton.setAttribute('style', 'opacity: 50%; cursor: auto');

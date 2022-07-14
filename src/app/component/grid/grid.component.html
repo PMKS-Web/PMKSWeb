@@ -144,8 +144,10 @@
     <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
       <line stroke="black" stroke-width="0.02" stroke-opacity="0.5" style="pointer-events: none"></line>
       <svg height="10" width="10" style="overflow: visible" cursor="move">
-        <circle r="0.14" cx="0%" cy="0%" fill="black" fill-opacity="0.5" stroke-opacity="0.5"> </circle>
-        <circle r="0.1" cx="0%" cy="0%" fill="gray" stroke="#00000000" stroke-width="0.2"> </circle>
+        <circle r="0.14" cx="0%" cy="0%" fill="black" fill-opacity="0.5" stroke-opacity="0.5"
+                (mousedown)="mouseDown($event, 'jointTemp')"> </circle>
+        <circle r="0.1" cx="0%" cy="0%" fill="gray" stroke="#00000000" stroke-width="0.2"
+                (mousedown)="mouseDown($event, 'jointTemp')"> </circle>
       </svg>
     </g>
     <g id="forceTempHolder" opacity="0.5" style="display: none; pointer-events: none; transform: scaleY(-1)">

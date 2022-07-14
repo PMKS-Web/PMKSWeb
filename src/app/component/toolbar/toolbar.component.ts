@@ -320,7 +320,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
             }
             break;
           case 'link':
-            // TODO: Make sure to insert what kind of link this is (Piston or not)
             try {
               const id = line[0];
               const linkType = line[1];
