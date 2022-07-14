@@ -1,12 +1,12 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
 <div id="animationBar">
-  <div id="currentPos" class="tooltip">
+  <div id="currentPos" class="tooltip" data-title="Position">
     <label id="xPos" class="coordinateDisplay">{{getScreenCoord()}}</label>
 <!--    <label id="curPosComma" class="coordinateDisplay" style="font-family: Arial">,</label>-->
 <!--    <label id="yPos" class="coordinateDisplay" style="font-family: Arial">0</label>-->
 <!--    <span class="tooltiptext">Position</span>-->
   </div>
-  <div id="dofWrapper" class="tooltip">
+  <div id="dofWrapper" class="tooltip" data-title="Degrees of Freedom">
     <label id="btnDOF">DOF {{getDoF()}}</label>
 <!--    <span class="tooltiptext">Degrees of freedom</span>-->
   </div>
