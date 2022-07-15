@@ -10,31 +10,32 @@
     <input class="navTabInput" type="radio" id="fileTab" name="navTabs" checked="checked">
     <label class="navTabLabel" for="fileTab">File</label>
     <div class="tab">
-      <label>Open
-        <!--      <button></button>-->
+      <label class="buttonSetUp">
         <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
                (change)="upload($event)">
+        Open
       </label>
-      <button (click)="downloadLinkage()">Save</button>
-      <button (click)="copyURL()">Copy</button>
+
+      <button class="buttonSetUp" (click)="downloadLinkage()">Save</button>
+      <button class="buttonSetUp" (click)="copyURL()">Copy</button>
     </div>
 
     <input class="navTabInput" type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
     <label class="navTabLabel" for="analysisTab">Analysis</label>
     <div class="tab">
-      <button id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
-      <button id="forceButton" (click)="popUpAnalysis('force')">Force</button>
-      <button id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
-      <button id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
+      <button class="buttonSetUp" id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
+      <button class="buttonSetUp" id="forceButton" (click)="popUpAnalysis('force')">Force</button>
+      <button class="buttonSetUp" id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
+      <button class="buttonSetUp" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
     </div>
 
     <input class="navTabInput" type="radio" id="settingTab" name="navTabs">
     <label class="navTabLabel" for="settingTab">Settings</label>
     <div class="tab">
-      <label>
+      <label style="margin-left: 5px; margin-right: 5px">
         Input Speed (RPM):
       </label>
-      <div>
+      <div style="margin-right: 5px">
         <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
       </div>
       <!--      Helpful to create radio button-->
@@ -79,10 +80,10 @@
     <input class="navTabInput" type="radio" id="helpTab" name="navTabs">
     <label class="navTabLabel" for="helpTab">Help</label>
     <div class="tab">
-      <button (click)="openURL('https://pmks.mech.website/')">About</button>
+      <button class="buttonSetUp" (click)="openURL('https://pmks.mech.website/')">About</button>
       <!--      <button>Info</button>-->
-      <button>Section Info</button>
-      <button (click)="popUpTemplates()">Templates</button>
+      <button class="buttonSetUp">Section Info</button>
+      <button class="buttonSetUp" (click)="popUpTemplates()">Templates</button>
     </div>
   </div>
 </nav>
