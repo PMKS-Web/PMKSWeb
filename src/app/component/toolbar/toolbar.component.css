@@ -793,23 +793,14 @@
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  margin-right: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
+  /*margin-right: 10px;*/
 }
-
-/*.radioGravity {*/
-/*  display: inline-flex;*/
-/*  align-items: center;*/
-/*  cursor: pointer;*/
-/*  margin-right: 10px;*/
-/*}*/
 
 .radioInput {
   display: none;
 }
-
-/*.radioInputGravity {*/
-/*  display: none;*/
-/*}*/
 
 .radioDiv {
   width: 1.25em;
@@ -821,16 +812,6 @@
   padding: 2px;
   background: white;
 }
-
-/*.radioGravityDiv {*/
-/*  width: 1.25em;*/
-/*  height: 1.25em;*/
-/*  border: 2px solid white;*/
-/*  border-radius: 50%;*/
-/*  margin-right: 10px;*/
-/*  box-sizing: border-box;*/
-/*  padding: 2px;*/
-/*}*/
 
 .radioDiv::after {
   content: "";
@@ -844,25 +825,9 @@
   transition: transform 0.15s;
 }
 
-/*.radioGravityDiv::after {*/
-/*  content: "";*/
-/*  width: 100%;*/
-/*  height: 100%;*/
-/*  display: block;*/
-/*  background: blue;*/
-/*  border-radius: 50%;*/
-
-/*  transform: scale(0);*/
-/*  transition: transform 0.15s;*/
-/*}*/
-
 .radioInput:checked + .radioDiv::after {
   transform: scale(1);
 }
-
-/*.radioInputGravity:checked + .radioGravityDiv::after {*/
-/*  transform: scale(1);*/
-/*}*/
 
 .navTabs .tab {
   width: 100%;
@@ -879,8 +844,10 @@
 
 .navTabInput:checked + label + .tab {
   /*display: block;*/
+  /*display: flex;*/
+  /*flex-wrap: wrap;*/
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   background: #D9F2EF;
   border: 1px solid black;
 }

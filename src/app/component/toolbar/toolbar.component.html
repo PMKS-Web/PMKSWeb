@@ -11,7 +11,7 @@
     <label class="navTabLabel" for="fileTab">File</label>
     <div class="tab">
       <label>Open
-<!--      <button></button>-->
+        <!--      <button></button>-->
         <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
                (change)="upload($event)">
       </label>
@@ -31,16 +31,14 @@
     <input class="navTabInput" type="radio" id="settingTab" name="navTabs">
     <label class="navTabLabel" for="settingTab">Settings</label>
     <div class="tab">
-<!--      <div>-->
-        <label>
-          Input Speed (RPM):
-        </label>
-<!--      </div>-->
+      <label>
+        Input Speed (RPM):
+      </label>
       <div>
         <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
       </div>
-<!--      Helpful to create radio button-->
-<!--      https://www.youtube.com/watch?v=5K7JefKDa4s&list=WL&index=2-->
+      <!--      Helpful to create radio button-->
+      <!--      https://www.youtube.com/watch?v=5K7JefKDa4s&list=WL&index=2-->
       <div>
         <label for="radioIdCw" class="radioLabel">
           <input type="radio" name="myRadioFieldDirection" id="radioIdCw" class="radioInput" [checked]="getClockwise()" (change)="setClockwise(true)">
@@ -82,7 +80,7 @@
     <label class="navTabLabel" for="helpTab">Help</label>
     <div class="tab">
       <button (click)="openURL('https://pmks.mech.website/')">About</button>
-<!--      <button>Info</button>-->
+      <!--      <button>Info</button>-->
       <button>Section Info</button>
       <button (click)="popUpTemplates()">Templates</button>
     </div>
