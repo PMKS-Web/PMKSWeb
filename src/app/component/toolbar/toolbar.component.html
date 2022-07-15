@@ -7,8 +7,8 @@
   <!--  <div style="width: 640px; border: 1px solid black; background-color: #D1D1D1; color: black;-->
   <!--   position: relative; height: 100%;">-->
   <div class="navTabs">
-    <input type="radio" id="fileTab" name="navTabs" checked="checked">
-    <label for="fileTab">File</label>
+    <input class="navTabInput" type="radio" id="fileTab" name="navTabs" checked="checked">
+    <label class="navTabLabel" for="fileTab">File</label>
     <div class="tab">
       <label>Open
 <!--      <button></button>-->
@@ -19,8 +19,8 @@
       <button (click)="copyURL()">Copy</button>
     </div>
 
-    <input type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
-    <label for="analysisTab">Analysis</label>
+    <input class="navTabInput" type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
+    <label class="navTabLabel" for="analysisTab">Analysis</label>
     <div class="tab">
       <button id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
       <button id="forceButton" (click)="popUpAnalysis('force')">Force</button>
@@ -28,8 +28,8 @@
       <button id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
     </div>
 
-    <input type="radio" id="settingTab" name="navTabs">
-    <label for="settingTab">Settings</label>
+    <input class="navTabInput" type="radio" id="settingTab" name="navTabs">
+    <label class="navTabLabel" for="settingTab">Settings</label>
     <div class="tab">
 <!--      <div>-->
         <label>
@@ -39,24 +39,32 @@
       <div>
         <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
       </div>
+<!--      Helpful to create radio button-->
+<!--      https://www.youtube.com/watch?v=5K7JefKDa4s&list=WL&index=2-->
       <div>
-        <label>
-          <input type="radio" [checked]="getClockwise()" (change)="setClockwise(true)">
-          cw<br>
+        <label for="radioIdCw" class="radioLabel">
+          <input type="radio" name="myRadioFieldDirection" id="radioIdCw" class="radioInput" [checked]="getClockwise()" (change)="setClockwise(true)">
+          <div class="radioDiv"></div>
+          cw
         </label>
-        <label>
-          <input type="radio" [checked]="!getClockwise()" (change)="setClockwise(false)">
+        <br>
+        <label for="radioIdCcw" class="radioLabel">
+          <input type="radio" name="myRadioFieldDirection" id="radioIdCcw" class="radioInput" [checked]="!getClockwise()" (change)="setClockwise(false)">
+          <div class="radioDiv"></div>
           ccw
         </label>
       </div>
       <div>
-        <label>
-          <input type="radio" [checked]="getGravity()" (change)="setGravity(true)">
+        <label for="radioGravOn" class="radioLabel">
+          <input type="radio" name="myRadioFieldGravity" id="radioGravOn" class="radioInput" [attr.checked]="getGravity()" (change)="setGravity(true)">
+          <div class="radioDiv"></div>
           Gravity On
         </label>
-        <label>
-          <input type="radio" [checked]="!getGravity()" (change)="setGravity(false)">
-          Gravity Off<br>
+        <br>
+        <label for="radioGravOff" class="radioLabel">
+          <input type="radio" name="myRadioFieldGravity" id="radioGravOff" class="radioInput" [attr.checked]="!getGravity()" (change)="setGravity(false)">
+          <div class="radioDiv"></div>
+          Gravity Off
         </label>
       </div>
       <div>
@@ -70,8 +78,8 @@
       </div>
     </div>
 
-    <input type="radio" id="helpTab" name="navTabs">
-    <label for="helpTab">Help</label>
+    <input class="navTabInput" type="radio" id="helpTab" name="navTabs">
+    <label class="navTabLabel" for="helpTab">Help</label>
     <div class="tab">
       <button (click)="openURL('https://pmks.mech.website/')">About</button>
       <button>Section Info</button>
