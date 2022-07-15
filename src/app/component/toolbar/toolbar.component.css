@@ -937,7 +937,7 @@
   border:1px solid black;
   display: inline-grid;
   /*TODO: Determine how to set up the width without fixing length*/
-  max-width: 115px;
+  max-width: 200px;
   /*cursor:pointer;*/
   /*color: black;*/
   /*font-size:17px;*/
@@ -949,6 +949,8 @@
   /*width: 35px;*/
   /*text-align: center;*/
   text-shadow:0px 1px 0px #ffffff;
+  font-size: 17px;
+  padding: 6px 24px;
   /*outline: none;*/
 }
 .navTabs input[type="radio"]:disabled + label {
