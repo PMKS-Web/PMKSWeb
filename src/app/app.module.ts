@@ -11,6 +11,7 @@ import { ShapeSelectorComponent } from './component/shape-selector/shape-selecto
 import {FormsModule} from "@angular/forms";
 import {NgApexchartsModule} from "ng-apexcharts";
 import {TemplatesPopupComponent} from "./component/templates-popup/templates-popup.component";
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
     declarations: [
@@ -27,6 +28,7 @@ import {TemplatesPopupComponent} from "./component/templates-popup/templates-pop
     BrowserModule,
     FormsModule,
     NgApexchartsModule,
+    BrowserAnimationsModule,
   ],
   providers: [
 
