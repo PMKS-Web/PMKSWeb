@@ -36,6 +36,8 @@
            (click)="disappearContext()" [attr.x]="joint.x" [attr.y]="joint.y"
            (mousedown)="mouseDown($event, 'joint', joint)"
            (mousemove)="mouseMove($event, 'joint')"
+           (mouseover)="joint.showHighlight = true"
+           (mouseout)="joint.showHighlight = false"
            width="10" height="10" style="overflow: visible" cursor="move">
         <!-- condition with regular revolute joint -->
         <circle *ngIf="!getGround(joint) && !containsSlider(joint)" id="joint_{{joint.id}}_ring"
@@ -189,6 +191,7 @@
       </g>
     </g>
   </g>
+
   <!-- TODO: Set all of the context menu within one g container-->
   <g class="context-menu-canvas" style="cursor: pointer">
     <g class="menu-entry" id="menuEntryAddLinkOnGrid" (click)="createLink($event, 'grid')">

@@ -4,6 +4,7 @@ import {Coord} from "./coord";
 
 export class Joint  extends Coord {
   private _id: string;
+  private _showHighlight: boolean = false;
 
   constructor(id: string, x: number, y: number) {
     super(x, y);
@@ -17,11 +18,19 @@ export class Joint  extends Coord {
   set id(value: string) {
     this._id = value;
   }
+
+  get showHighlight(): boolean {
+    return this._showHighlight;
+  }
+
+  set showHighlight(value: boolean) {
+    this._showHighlight = value;
+  }
 }
 
 export class RealJoint extends Joint {
   // TODO: Does the r only need to be on RevJoints?
-  private _r: number = 5 * AppConstants.scaleFactor;
+  private _r: number = 5 * AppConstants.scaleFactor; //This seems like the SVG scale factor
   private _input: boolean;
   private _ground: boolean;
   private _links: Link[];
@@ -35,6 +44,7 @@ export class RealJoint extends Joint {
     this._connectedJoints = connectedJoints;
   }
 
+  //R is radius of the joint
   get r(): number {
     return this._r;
   }

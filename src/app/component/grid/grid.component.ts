@@ -1039,8 +1039,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   getJointColor(joint: Joint) {
-    if (GridComponent.jointStates !== jointStates.dragging) {return 'black'}
-    return joint.id === GridComponent.selectedJoint.id ? 'red' : 'black';
+    if (GridComponent.jointStates !== jointStates.dragging) {
+      return joint.showHighlight ? 'yellow' : 'black';
+    }else{
+      return joint.id == GridComponent.selectedJoint.id? 'red': 'black';
+    }
   }
 
   createRevJoint(x: string, y: string, prevID?: string) {
@@ -1767,6 +1770,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     return joints.findIndex(j => j.id === id);
   }
 
+  //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
     if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {
       return
