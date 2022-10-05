@@ -87,7 +87,9 @@
        (click)="disappearContext()">
       <g [attr.id]="force.id" (mouseover)="force.showHighlight = true" (mouseout)="force.showHighlight = false">
         <path *ngIf="force.showHighlight" [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
+        <!-- Transpent thicker force to increase hitbox for the group for highliting-->
         <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
+        <path [attr.d]="force.forceLine" stroke="transparent" stroke-width="0.4"></path>
         <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
       </g>
       <svg id="startForceEndpoint" (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
