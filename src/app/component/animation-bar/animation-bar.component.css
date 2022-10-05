@@ -213,6 +213,7 @@ button:hover:enabled {
 
 #slider {
   margin: auto;
+  appearance: none;
   -webkit-appearance: none;
   width: 100%;
   height: 25px;
@@ -226,6 +227,11 @@ button:hover:enabled {
 
 #slider:hover:enabled {
   opacity: 1;
+}
+
+#slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 #slider:enabled::-webkit-slider-thumb {
