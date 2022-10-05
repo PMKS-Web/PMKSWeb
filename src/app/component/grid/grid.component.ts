@@ -16,7 +16,7 @@ import {
 } from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
-
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 // The possible states the program could be in.
 enum gridStates {
@@ -110,6 +110,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
   static showcaseShapeSelector: boolean = false;
+  // static snackBar: any;
 
   static get gridOffset(): { x: number; y: number } {
     return this._gridOffset;
@@ -140,9 +141,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
   static initialLink: RealLink;
+  static snackBar: MatSnackBar;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor() {
+  constructor(snackBar: MatSnackBar) {
+    GridComponent.snackBar = snackBar;
   }
 
   ngOnInit(): void {
@@ -1968,10 +1971,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   static sendNotification(text: string) {
-    GridComponent.notificationWrapper.style.display = 'block';
-    GridComponent.notificationWrapper.children[1].textContent = text;
-    setTimeout(() => {
-      GridComponent.notificationWrapper.style.display = 'none';
-    }, 3000);
+    // console.log(text);
+    this.snackBar.open(text,'',{
+      duration: 2000,
+    });
   }
 }

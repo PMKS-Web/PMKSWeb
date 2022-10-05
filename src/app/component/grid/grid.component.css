@@ -6,3 +6,10 @@
   background: rgb(200, 200, 200);
   fill: rgb(200, 200, 200);
 }
+
+.mat-snack-bar-container{
+  position: absolute !important;
+  bottom: 200px;
+  background-color: aquamarine;
+  opacity: 0.5 !important;
+}
