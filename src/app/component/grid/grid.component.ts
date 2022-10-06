@@ -1532,6 +1532,24 @@ export class GridComponent implements OnInit, AfterViewInit {
   deleteLink() {
     this.disappearContext();
     const linkIndex = GridComponent.links.findIndex(l => l.id === GridComponent.selectedLink.id);
+    GridComponent.links[linkIndex].joints.forEach(j => {
+      if (!(j instanceof RealJoint)) {return}
+      const delLinkIndex = j.links.findIndex(l => l.id === GridComponent.selectedLink.id);
+      j.links.splice(delLinkIndex, 1);
+    });
+    for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
+      for (let next_j_i = j_i + 1; next_j_i < GridComponent.links[linkIndex].joints.length; next_j_i++) {
+        // TODO: Should recreate a function for this... (kinda too lazy atm)
+        const joint = GridComponent.links[linkIndex].joints[j_i];
+        if (!(joint instanceof RealJoint)) {return}
+        const desiredJointIndex = joint.connectedJoints.findIndex(jj => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id);
+        joint.connectedJoints.splice(desiredJointIndex,1);
+        const otherJoint = GridComponent.links[linkIndex].joints[next_j_i];
+        if (!(otherJoint instanceof RealJoint)) {return}
+        const otherDesiredJointIndex = joint.connectedJoints.findIndex(jj => jj.id === GridComponent.links[linkIndex].joints[j_i].id);
+        otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
+      }
+    }
     GridComponent.links.splice(linkIndex, 1);
     GridComponent.updateMechanism();
   }
