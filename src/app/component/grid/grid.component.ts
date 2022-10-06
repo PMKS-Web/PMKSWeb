@@ -470,6 +470,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
+    this.disappearContext();
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink
@@ -1107,6 +1108,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuDeleteForce.style.display = 'none';
   }
 
+  //This funciton shows the correct context menu
   contextMenu($event: MouseEvent, desiredMenu: string, thing?: any) {
     $event.preventDefault();
     $event.stopPropagation();
