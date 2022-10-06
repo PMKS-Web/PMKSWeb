@@ -467,6 +467,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     return GridComponent.showPathHolder;
   }
 
+  //This really needs a comment, what is 'thing?'
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -706,9 +707,17 @@ export class GridComponent implements OnInit, AfterViewInit {
             }
             break;
           case 'link':
+            console.log(GridComponent.linkStates);
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
-                if (!GridComponent.showcaseShapeSelector) {break;}
+                //If the shapeselector is not open
+                if (!GridComponent.showcaseShapeSelector) {
+                  GridComponent.sendNotification("Cannot link to a bar. Please select a joint");
+                  GridComponent.gridStates = gridStates.waiting;
+                  GridComponent.jointStates = jointStates.waiting;
+                  GridComponent.jointTempHolderSVG.style.display = 'none';
+                  break;
+                }
                 if (thing !== undefined) {
                   GridComponent.linkStates = linkStates.resizing;
                   GridComponent.selectedBound = thing;
@@ -1391,6 +1400,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.updateMechanism();
   }
 
+  //This is only used for context menu link creation
   createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext();
     let startX: number;
