@@ -1395,6 +1395,17 @@ export class GridComponent implements OnInit, AfterViewInit {
         const deleteLinkIndex2 = GridComponent.links.findIndex(li => li.id === l.id);
         GridComponent.links.splice(deleteLinkIndex2, 1);
       }
+      else {
+        l.joints.forEach(jt => {
+          if (!(jt instanceof RealJoint)) {return}
+          if (jt.id === GridComponent.selectedJoint.id) {return}
+          const deleteJointIndex = jt.connectedJoints.findIndex(jjj => jjj.id === GridComponent.selectedJoint.id);
+          jt.connectedJoints.splice(deleteJointIndex, 1);
+        });
+        l.id = l.id.replace(GridComponent.selectedJoint.id, '');
+        const delJointIndex = l.joints.findIndex(jj => jj.id === GridComponent.selectedJoint.id);
+        l.joints.splice(delJointIndex, 1);
+      }
     });
     GridComponent.joints.splice(jointIndex, 1);
     GridComponent.updateMechanism();
