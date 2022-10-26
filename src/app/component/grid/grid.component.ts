@@ -17,6 +17,9 @@ import {
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import { SVG } from '@svgdotjs/svg.js';
+import '@svgdotjs/svg.draggable.js';
+import '@svgdotjs/svg.panzoom.js'
 
 // The possible states the program could be in.
 enum gridStates {
@@ -149,6 +152,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // don't forget to add "#" CSS selector to the name of the DOM element.
+    var draw = SVG().addTo('#canvas').size(1000, 1000).panZoom();
+    var rect = draw.rect(100, 100).attr({ fill: '#f06' });
+    // rect.draggable();
+
     const jointPropsString = splitURLInfo('j=');
     const linkPropsString = splitURLInfo('&l=');
     const forcePropsString = splitURLInfo('&f=');
