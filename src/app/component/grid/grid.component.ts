@@ -153,8 +153,8 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     // don't forget to add "#" CSS selector to the name of the DOM element.
-    var draw = SVG().addTo('#canvas').size(1000, 1000).panZoom();
-    var rect = draw.rect(100, 100).attr({ fill: '#f06' });
+    // var draw = SVG().addTo('#canvas').size(1000, 1000).panZoom();
+    // var rect = draw.rect(100, 100).attr({ fill: '#f06' });
     // rect.draggable();
 
     const jointPropsString = splitURLInfo('j=');
