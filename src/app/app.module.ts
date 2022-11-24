@@ -12,7 +12,8 @@ import {FormsModule} from "@angular/forms";
 import {NgApexchartsModule} from "ng-apexcharts";
 import {TemplatesPopupComponent} from "./component/templates-popup/templates-popup.component";
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
+
+import { MaterialModule } from './material/material.module';
 
 @NgModule({
     declarations: [
@@ -30,7 +31,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     FormsModule,
     NgApexchartsModule,
     BrowserAnimationsModule,
-    MatSnackBarModule,
+    MaterialModule,
   ],
   providers: [
 

@@ -16,7 +16,8 @@ import {
 } from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
-import {MatSnackBar} from "@angular/material/snack-bar";
+// import {MatSnackBar} from "@angular/material/snack-bar";
+// import { MatIcon } from '@angular/material/icon';
 import { SVG } from '@svgdotjs/svg.js';
 import '@svgdotjs/svg.draggable.js';
 import '@svgdotjs/svg.panzoom.js'
@@ -144,11 +145,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
   static initialLink: RealLink;
-  static snackBar: MatSnackBar;
+  // static snackBar: MatSnackBar;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor(snackBar: MatSnackBar) {
-    GridComponent.snackBar = snackBar;
+  constructor() {
+    // GridComponent.snackBar = snackBar;
   }
 
   ngOnInit(): void {
@@ -2029,9 +2030,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   static sendNotification(text: string) {
-    // console.log(text);
-    this.snackBar.open(text,'',{
-      duration: 2000,
-    });
+    console.log(text);
+    // this.snackBar.open(text,'',{
+    //   duration: 2000,
+    // });
   }
 }
