@@ -1,12 +1,25 @@
 <!--<nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 80px; position: absolute; top: 0">-->
 <nav class="navBar">
-  <!--     style="position: absolute; top: 0; left: 0; z-index: 1000;-->
-  <!--         font-size: 17px">-->
   <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()">
-  <!--  <label class="DOF">{{screenCoord}}</label>-->
-  <!--  <div style="width: 640px; border: 1px solid black; background-color: #D1D1D1; color: black;-->
-  <!--   position: relative; height: 100%;">-->
-  <div class="navTabs">
+  <button mat-button>
+    <mat-icon>workspaces</mat-icon>
+    Start Recording
+  </button>
+  <button mat-button>
+    <mat-icon>workspaces</mat-icon>
+    Start Recording
+  </button>
+  <div class="spacer"></div>
+  <button mat-button>
+    <mat-icon>workspaces</mat-icon>
+    Start Recording
+  </button>
+  <button mat-button>
+    <mat-icon>workspaces</mat-icon>
+    Start Recording
+  </button>
+  
+  <!-- <div class="navTabs">
     <input class="navTabInput" type="radio" id="fileTab" name="navTabs" checked="checked">
     <label class="navTabLabel" for="fileTab">File</label>
     <div class="tab">
@@ -38,8 +51,6 @@
       <div style="margin-right: 5px">
         <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
       </div>
-      <!--      Helpful to create radio button-->
-      <!--      https://www.youtube.com/watch?v=5K7JefKDa4s&list=WL&index=2-->
       <div>
         <label for="radioIdCw" class="radioLabel">
           <input type="radio" name="myRadioFieldDirection" id="radioIdCw" class="radioInput" [checked]="getClockwise()" (change)="setClockwise(true)">
@@ -81,11 +92,10 @@
     <label class="navTabLabel" for="helpTab">Help</label>
     <div class="tab">
       <button class="buttonSetUp" (click)="openURL('https://pmks.mech.website/')">About</button>
-      <!--      <button>Info</button>-->
       <button class="buttonSetUp">Section Info</button>
       <button class="buttonSetUp" (click)="popUpTemplates()">Templates</button>
     </div>
-  </div>
+  </div> -->
 </nav>
 
 <!--<button id="fileButton" class="fileButton" (click)="setTab('file')" style="height: 34px; width: 160px; font-size: 24px;-->
