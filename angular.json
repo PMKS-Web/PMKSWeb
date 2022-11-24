@@ -5,6 +5,11 @@
   },
   "version": 1,
   "newProjectRoot": "projects",
+  "schematics": {
+    "@schematics/angular:component": {
+      "style": "scss"
+    }
+  },
   "projects": {
     "PMKSWeb": {
       "projectType": "application",
@@ -26,7 +31,7 @@
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/mytheme.scss", "src/styles.css"],
+            "styles": ["src/mytheme.scss", "src/styles.scss"],
             "scripts": ["node_modules/apexcharts/dist/apexcharts.min.js"]
           },
           "configurations": {
@@ -88,7 +93,7 @@
             "tsConfig": "tsconfig.spec.json",
             "karmaConfig": "karma.conf.js",
             "assets": ["src/favicon.ico", "src/assets"],
-            "styles": ["src/mytheme.scss", "src/styles.css"],
+            "styles": ["src/mytheme.scss", "src/styles.scss"],
             "scripts": []
           }
         }

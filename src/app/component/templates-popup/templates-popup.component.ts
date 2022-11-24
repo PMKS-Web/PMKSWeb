@@ -8,7 +8,7 @@ import {Coord} from "../../model/coord";
 @Component({
   selector: 'app-templates-popup',
   templateUrl: './templates-popup.component.html',
-  styleUrls: ['./templates-popup.component.css']
+  styleUrls: ['./templates-popup.component.scss']
 })
 export class TemplatesPopupComponent implements OnInit {
 

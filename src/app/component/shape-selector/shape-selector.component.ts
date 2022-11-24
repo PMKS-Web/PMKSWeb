@@ -6,7 +6,7 @@ import {Coord} from "../../model/coord";
 @Component({
   selector: 'app-shape-selector',
   templateUrl: './shape-selector.component.html',
-  styleUrls: ['./shape-selector.component.css']
+  styleUrls: ['./shape-selector.component.scss']
 })
 export class ShapeSelectorComponent implements OnInit {
 

@@ -7,7 +7,7 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
 @Component({
   selector: 'app-animation-bar',
   templateUrl: './animation-bar.component.html',
-  styleUrls: ['./animation-bar.component.css']
+  styleUrls: ['./animation-bar.component.scss']
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
   static showIdTags: boolean = false;

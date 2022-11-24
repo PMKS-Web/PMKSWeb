@@ -12,7 +12,7 @@ import {ToolbarComponent} from "../toolbar/toolbar.component";
 @Component({
   selector: 'app-linkage-table',
   templateUrl: './linkage-table.component.html',
-  styleUrls: ['./linkage-table.component.css']
+  styleUrls: ['./linkage-table.component.scss']
 })
 export class LinkageTableComponent implements OnInit {
   private static linkageTable: SVGElement;

@@ -37,7 +37,7 @@ export type ChartOptions = {
 @Component({
   selector: 'app-analysis-popup',
   templateUrl: './analysis-popup.component.html',
-  styleUrls: ['./analysis-popup.component.css']
+  styleUrls: ['./analysis-popup.component.scss']
 })
 
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
