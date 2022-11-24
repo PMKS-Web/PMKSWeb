@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use 'src/app/component/toolbar/toolbar.component.scss' as toolbar;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -15,3 +16,4 @@ $my-theme: mat.define-light-theme((
 
 @include mat.all-component-themes($my-theme);
 @include mat.strong-focus-indicators-theme($my-theme);
+@include toolbar.color($my-theme);
