@@ -1,0 +1,19 @@
+<div>
+    <div class="tabContainer">
+        <app-tab tabLabel="Synthesize" [tabID]=1 (pressedEvent)="tabClicked($event)"></app-tab>
+        <app-tab tabLabel="Edit" [tabID]=2 (pressedEvent)="tabClicked($event)"></app-tab>
+        <app-tab tabLabel="Analyze" [tabID]=3 (pressedEvent)="tabClicked($event)"></app-tab>
+    </div>
+    <div *ngIf="this.openTab" class="panel" visible="false">
+        {{this.openTab}}
+        <div class="page1">
+            
+        </div>
+        <div class="page2">
+
+        </div>
+        <div class="page3">
+
+        </div>
+    </div>
+</div>

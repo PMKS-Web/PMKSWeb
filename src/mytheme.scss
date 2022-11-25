@@ -1,5 +1,7 @@
 @use '@angular/material' as mat;
 @use 'src/app/component/toolbar/toolbar.component.scss' as toolbar;
+@use 'src/app/component/tab/tab.component.scss' as tab;
+@use 'src/app/component/left-tabs/left-tabs.component.scss' as left-tabs;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -16,4 +18,6 @@ $my-theme: mat.define-light-theme((
 
 @include mat.all-component-themes($my-theme);
 @include mat.strong-focus-indicators-theme($my-theme);
-@include toolbar.color($my-theme);
+@include toolbar.css($my-theme);
+@include tab.css($my-theme);
+@include left-tabs.css($my-theme);

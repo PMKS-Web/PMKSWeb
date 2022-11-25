@@ -1,0 +1,44 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  .panel{
+    position: absolute;
+    top: 50px;
+    left: 70px;
+    width: 400px;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+  }
+
+  .tabContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+
+    position: absolute;
+    top: 40px;
+    left: 10px;
+    width: 50px;
+    height: 100%;
+
+    app-tab{
+        flex-grow:1;
+        width: 100%;
+    }
+  }
+
+}

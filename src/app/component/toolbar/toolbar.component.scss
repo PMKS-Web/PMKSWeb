@@ -1,7 +1,7 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-@mixin color($theme) {
+@mixin css($theme) {
   // Get the color config from the theme.
   $color-config: mat.get-color-config($theme);
   // Get the primary color palette from the color-config.
@@ -10,6 +10,7 @@
   $foreground: map.get($theme, foreground);
 
   .navBar {
+    z-index: 1;
     @include mat.elevation(2);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
     background-color: mat.get-color-from-palette($background,'background');
@@ -20,25 +21,25 @@
     width: 100%;
     top: 0;
     left: 0;
-  }
 
-  .mat-icon {
-    vertical-align: middle;
-  }
-
-  .spacer {
-    flex: 1 1 auto;
-  };
-
-  .mat-icon {
-    color: mat.get-color-from-palette($foreground,'icon');
-  }
-
-  .mat-button-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
+    .mat-icon {
+      vertical-align: middle;
+    }
+  
+    .spacer {
+      flex: 1 1 auto;
+    };
+  
+    .mat-icon {
+      color: mat.get-color-from-palette($foreground,'icon');
+    }
+  
+    .mat-button-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
   }
 
 }
