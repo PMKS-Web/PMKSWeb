@@ -1,65 +1,14 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
-<div id="animationBar">
-  <div id="currentPos" class="tooltip" data-title="Position">
-    <label id="xPos" class="coordinateDisplay">{{getScreenCoord()}}</label>
-<!--    <label id="curPosComma" class="coordinateDisplay" style="font-family: Arial">,</label>-->
-<!--    <label id="yPos" class="coordinateDisplay" style="font-family: Arial">0</label>-->
-<!--    <span class="tooltiptext">Position</span>-->
-  </div>
-  <div id="dofWrapper" class="tooltip" data-title="Degrees of Freedom">
-    <label id="btnDOF">DOF {{getDoF()}}</label>
-<!--    <span class="tooltiptext">Degrees of freedom</span>-->
-  </div>
-  <div id="animationBtns">
-    <button id="counterclockwise" class="tooltip" data-title="Change Direction" (click)="onDirectionChange()" *ngIf="getDirection() === 'ccw'">
-<!--      <span class="tooltiptext">Change Direction</span>-->
-    </button>
-    <button id="clockwise" class="tooltip" data-title="Change Direction" (click)="onDirectionChange()" *ngIf="getDirection() === 'cw'">
-<!--      <span class="tooltiptext">Change Direction</span>-->
-    </button>
-    <button id="slowspeed" class="tooltip" data-title="Change Speed" (click)="onSpeedChange()" *ngIf="getSpeed() === 'slow'">
-<!--      <span class="tooltiptext">Change Speed</span>-->
-    </button>
-    <button id="mediumspeed" class="tooltip" data-title="Change Speed" (click)="onSpeedChange()" *ngIf="getSpeed() === 'medium'">
-<!--      <span class="tooltiptext">Change Speed</span>-->
-    </button>
-    <button id="fastspeed" class="tooltip" data-title="Change Speed" (click)="onSpeedChange()" *ngIf="getSpeed() === 'fast'">
-<!--      <span class="tooltiptext">Change Speed</span>-->
-    </button>
-    <button class="tooltip" id="playBtn" data-title="Play Animation" (click)="startAnimation('pause')" *ngIf="!getAnimate()" [attr.disabled]="validMechanism()">
-<!--      <span class="tooltiptext">Play Animation</span>-->
-    </button>
-    <button class="tooltip" id="pauseBtn" data-title="Resume Animation" (click)="startAnimation('play')" *ngIf="getAnimate()" [attr.disabled]="validMechanism()">
-<!--      <span class="tooltiptext">Resume Animation</span>-->
-    </button>
-    <button class="tooltip" id="stopBtn" data-title="Reset Animation" (click)="startAnimation('stop')" [attr.disabled]="validMechanism()">
-<!--      <span class="tooltiptext">Reset Animation</span>-->
-    </button>
-  </div>
-  <div id="sliderContainer">
-    <input id="slider" class="tooltip" type="range" [attr.disabled]="validMechanism()"
-           min="0" max="{{maxTimeSteps()}}" value="{{getMechanismTimeStep()}}"
-           (mousedown)="adjustMechanismAnimation(true)" (mousemove)="setAnim()"
-           (mouseup)="adjustMechanismAnimation(false)">
-  </div>
-  <div id="gridActionContainer">
-    <button id="showCoM" class="tooltip" data-title="Show Center of Mass" (click)="showCenterOfMass()">
-<!--      <span class="tooltiptext">Show Center Of Mass</span>-->
-    </button>
-    <button id="showID" class="tooltip" data-title="Show ID Tags" (click)="onShowIDPressed()">
-<!--      <span class="tooltiptext">Show ID Tags</span>-->
-    </button>
-    <button id="zoomIn" class="tooltip" data-title="Zoom In" (click)="onZoomInPressed()">
-<!--      <span class="tooltiptext">Zoom In</span>-->
-    </button>
-    <button id="zoomOut" class="tooltip" data-title="Zoom Out" (click)="onZoomOutPressed()">
-<!--      <span class="tooltiptext">Zoom Out</span>-->
-    </button>
-    <button id="zoomReset" class="tooltip" data-title="Reset View" (click)="onZoomResetPressed()">
-<!--      <span class="tooltiptext">Reset View</span>-->
-    </button>
-    <button id="clearCanvas" class="tooltip" data-title="Delete Linkage" (click)="onResetLinkagePressed()">
-<!--      <span class="tooltiptext">Delete Linkage</span>-->
-    </button>
-  </div>
+<div id="barContainer">
+    <div id="animationBar">
+        <button mat-fab aria-label="Example icon button with a home icon">
+            <mat-icon>play_arrow</mat-icon>
+        </button>
+        <button mat-fab aria-label="Example icon button with a home icon">
+            <mat-icon>stop</mat-icon>
+        </button>
+        <mat-slider>
+            <input matSliderThumb>
+        </mat-slider>
+    </div>
 </div>

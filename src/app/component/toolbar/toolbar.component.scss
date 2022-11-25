@@ -17,20 +17,18 @@
 
     position: absolute;
     display: flex;
+
     height: 40px;
     width: 100%;
     top: 0;
     left: 0;
 
-    .mat-icon {
-      vertical-align: middle;
-    }
-  
     .spacer {
       flex: 1 1 auto;
     };
   
     .mat-icon {
+      vertical-align: middle;
       color: mat.get-color-from-palette($foreground,'icon');
     }
   
@@ -38,8 +36,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 10px;
     }
+
+    button{
+      font-size: 0.8em !important;
+      font-weight: 600 !important;
+      height: 100% !important;
+    }
+
   }
 
 }

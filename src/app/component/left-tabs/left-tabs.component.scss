@@ -14,7 +14,7 @@
     top: 50px;
     left: 70px;
     width: 300px;
-    height: 90vh;
+    height: calc(100vh - 60px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,7 +26,7 @@
     .page1{
         width: 100%;
         height: 100%;
-        background-color: red;
+        background-color: white;
         border-radius: 5px;
     }
     .page2{
@@ -55,7 +55,7 @@
     top: 40px;
     left: 10px;
     width: 50px;
-    height: 100%;
+    height: calc(100% - 60px);
 
     app-tab{
         flex-grow:1;
