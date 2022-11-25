@@ -13,12 +13,34 @@
     position: absolute;
     top: 50px;
     left: 70px;
-    width: 400px;
+    width: 300px;
     height: 90vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
+    border-radius: 5px;
+
+    @include mat.elevation(2);
+    //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
+    background-color: mat.get-color-from-palette($background,'background');
+    .page1{
+        width: 100%;
+        height: 100%;
+        background-color: red;
+        border-radius: 5px;
+    }
+    .page2{
+        width: 100%;
+        height: 100%;
+        background-color: blue;
+        border-radius: 5px;
+    }
+    .page3{
+        width: 100%;
+        height: 100%;
+        background-color: green;
+        border-radius: 5px;
+    }
   }
 
   .tabContainer{

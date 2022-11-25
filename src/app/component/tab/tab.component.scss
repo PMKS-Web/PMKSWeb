@@ -10,13 +10,16 @@
     $foreground: map.get($theme, foreground);
 
     .tab{
-        
+        border-radius: 5px;
+
         height: 100%;
         width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: white;
+        @include mat.elevation(2);
+        //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
+        background-color: mat.get-color-from-palette($background,'background');
 
         cursor: pointer;
     

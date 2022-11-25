@@ -5,14 +5,13 @@
         <app-tab tabLabel="Analyze" [tabID]=3 (pressedEvent)="tabClicked($event)"></app-tab>
     </div>
     <div *ngIf="this.openTab" class="panel" visible="false">
-        {{this.openTab}}
-        <div class="page1">
+        <div *ngIf="this.openTab===1" class="page1">
             
         </div>
-        <div class="page2">
+        <div *ngIf="this.openTab===2" class="page2">
 
         </div>
-        <div class="page3">
+        <div *ngIf="this.openTab===3" class="page3">
 
         </div>
     </div>
