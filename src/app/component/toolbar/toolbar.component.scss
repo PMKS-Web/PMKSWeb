@@ -13,7 +13,8 @@
     z-index: 1;
     @include mat.elevation(2);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
-    background-color: mat.get-color-from-palette($background,'raised-button');
+    // background-color: mat.get-color-from-palette($background,'raised-button');
+    background-color: mat.get-color-from-palette($primary-palette,50);
 
     position: absolute;
     display: flex;

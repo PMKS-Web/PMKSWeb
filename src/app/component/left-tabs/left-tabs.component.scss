@@ -26,20 +26,20 @@
     .page1{
         width: 100%;
         height: 100%;
-        background-color: white;
+        background-color: mat.get-color-from-palette($primary-palette,50);
         border-radius: 5px;
     }
     .page2{
         width: 100%;
         height: 100%;
-        background-color: blue;
+        background-color: mat.get-color-from-palette($primary-palette,50);
         border-radius: 5px;
     }
     .page3{
         width: 100%;
         height: 100%;
         background-color: green;
-        border-radius: 5px;
+        background-color: mat.get-color-from-palette($primary-palette,50);
     }
   }
 
