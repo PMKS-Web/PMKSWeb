@@ -6,9 +6,9 @@ import { Component, OnInit, Input, Output, EventEmitter} from '@angular/core';
   styleUrls: ['./tab.component.scss']
 })
 export class TabComponent implements OnInit {
-  @Input() tabLabel = 'NoName';
-  @Input() activeTab = 0;
-  @Input() tabID = 0;
+  @Input() tabLabel:string = 'NoName';
+  @Input() activeTab:number = 0;
+  @Input() tabID:number = 0;
   @Output() pressedEvent = new EventEmitter<number>();
 
   constructor() { }

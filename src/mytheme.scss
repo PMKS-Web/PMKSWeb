@@ -3,6 +3,8 @@
 @use 'src/app/component/tab/tab.component.scss' as tab;
 @use 'src/app/component/left-tabs/left-tabs.component.scss' as left-tabs;
 @use 'src/app/component/animation-bar/animation-bar.component.scss' as animation-bar;
+@use 'src/app/component/blocks/base-block/base-block.component.scss' as base-block;
+@use 'src/app/component/blocks/title/title.component.scss' as title-block;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -23,3 +25,6 @@ $my-theme: mat.define-light-theme((
 @include tab.css($my-theme);
 @include left-tabs.css($my-theme);
 @include animation-bar.css($my-theme);
+
+@include base-block.css($my-theme);
+@include title-block.css($my-theme);

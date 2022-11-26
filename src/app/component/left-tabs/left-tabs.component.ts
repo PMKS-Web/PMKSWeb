@@ -6,7 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./left-tabs.component.scss']
 })
 export class LeftTabsComponent implements OnInit {
-  openTab = 0;
+  openTab = 1; //Default open tab
   constructor() { 
   }
 

@@ -1,9 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-
-.mat-button, .mat-flat-button, .mat-stroked-button,.mat-mdc-focus-indicator
-{   
-  opacity: 0 !important;
+body { 
+  margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; 
+  --mat-focus-indicator-border-width: 0;
+  --mat-mdc-focus-indicator-border-width: 0;
 }

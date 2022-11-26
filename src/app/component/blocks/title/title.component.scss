@@ -1,0 +1,27 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+
+    :host{
+        width: 100%;
+    }
+
+    .row{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 20px;
+
+        button{
+            // font-size: 0.8em !important;
+            // font-weight: 600 !important;
+            height: 24px !important;
+          }
+    }
+
+    #titleDescription{
+        font-weight: 200;
+        font-size: 12px;
+    }
+}

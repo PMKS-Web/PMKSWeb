@@ -20,7 +20,7 @@
     justify-content: center;
     border-radius: 5px;
 
-    @include mat.elevation(2);
+    @include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
     background-color: mat.get-color-from-palette($background,'background');
     .page1{

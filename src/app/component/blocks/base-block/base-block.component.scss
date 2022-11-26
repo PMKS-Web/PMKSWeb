@@ -1,0 +1,10 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+    
+    .baseBlockContainer{
+        // padding: 10px;
+        width: 100%;
+    }
+}
