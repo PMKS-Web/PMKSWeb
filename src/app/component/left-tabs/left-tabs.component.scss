@@ -28,6 +28,9 @@
         height: 100%;
         background-color: mat.get-color-from-palette($primary-palette,50);
         border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     .page2{
         width: 100%;

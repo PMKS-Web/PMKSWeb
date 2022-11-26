@@ -9,11 +9,29 @@
             <mat-card>
                 <mat-card-header>
                     <mat-card-title-group>
-                        <mat-card-title>Generate a new design</mat-card-title>
+                        <mat-card-title>Link BC</mat-card-title>
                         <mat-icon>edit</mat-icon>
                     </mat-card-title-group>
                 </mat-card-header>
-
+                <mat-card-content>
+                    <div class="row">
+                        <span>Link Length</span>
+                        <button mat-icon-button [matTooltipShowDelay]="1000" matTooltip="Info about the action">
+                            <mat-icon>help</mat-icon>
+                        </button>
+                        <input type="text" placeholder="Enter">
+                    </div>
+                    <div class="row">
+                        <span>Link Angle</span>
+                        <button mat-icon-button [matTooltipShowDelay]="1000" matTooltip="Info about the action">
+                            <mat-icon>help</mat-icon>
+                        </button>
+                        <input type="text" placeholder="Enter">
+                    </div>
+                </mat-card-content>
+                <mat-card-actions>
+                    <button mat-flat-button color="primary">Delete Link</button>
+                </mat-card-actions>
             </mat-card>
             <mat-expansion-panel>
                 <mat-expansion-panel-header>
