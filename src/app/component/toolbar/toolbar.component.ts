@@ -10,9 +10,9 @@ import {GridComponent} from "../grid/grid.component";
 import {LinkageTableComponent} from "../linkage-table/linkage-table.component";
 import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component";
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
-import { parse as parseCSV } from 'papaparse';
 import {Coord} from "../../model/coord";
 import {TemplatesPopupComponent} from "../templates-popup/templates-popup.component";
+const parseCSV = require('papaparse');
 
 @Component({
   selector: 'app-toolbar',
@@ -49,6 +49,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // { id: 'Metric', label: 'Metric'},
     // { id: 'English', label: 'English'}
   ];
+window: any;
+url: any;
 
   constructor() { }
 

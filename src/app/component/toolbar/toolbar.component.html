@@ -1,23 +1,23 @@
-<!--<nav class="dropDownMenu" id="dropDownMenu" style="display: flex; flex-direction: row; height: 80px; position: absolute; top: 0">-->
 <nav class="navBar">
   <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()">
-  <button mat-button>
+  <button mat-button onclick="window.open(window.location.origin, '_blank');">
     <mat-icon>note_add</mat-icon>
     New
   </button>
-  <button mat-button>
+  <input #csvInput style="display:none" type="file" accept=".csv" (change)="upload($event)">
+  <button mat-button (click)="csvInput.click()">
     <mat-icon>file_open</mat-icon>
     Open
   </button>
-  <button mat-button>
+  <button mat-button (click)="popUpTemplates()">
     <mat-icon>apps</mat-icon>
     Templates
   </button>
-  <button mat-button>
+  <button mat-button (click)="downloadLinkage()">
     <mat-icon>save</mat-icon>
     Save
   </button>
-  <button mat-button>
+  <button mat-button (click)="copyURL()">
     <mat-icon>file_copy</mat-icon>
     Copy URL
   </button>
@@ -34,206 +34,4 @@
     <mat-icon>help</mat-icon>
     Help
   </button>
-  
-  <!-- <div class="navTabs">
-    <input class="navTabInput" type="radio" id="fileTab" name="navTabs" checked="checked">
-    <label class="navTabLabel" for="fileTab">File</label>
-    <div class="tab">
-      <label class="buttonSetUp">
-        <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"
-               (change)="upload($event)">
-        Open
-      </label>
-
-      <button class="buttonSetUp" (click)="downloadLinkage()">Save</button>
-      <button class="buttonSetUp" (click)="copyURL()">Copy</button>
-    </div>
-
-    <input class="navTabInput" type="radio" id="analysisTab" name="navTabs" [attr.disabled]="validMechanism()">
-    <label class="navTabLabel" for="analysisTab">Analysis</label>
-    <div class="tab">
-      <button class="buttonSetUp" id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>
-      <button class="buttonSetUp" id="forceButton" (click)="popUpAnalysis('force')">Force</button>
-      <button class="buttonSetUp" id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>
-      <button class="buttonSetUp" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>
-    </div>
-
-    <input class="navTabInput" type="radio" id="settingTab" name="navTabs">
-    <label class="navTabLabel" for="settingTab">Settings</label>
-    <div class="tab">
-      <label style="margin-left: 5px; margin-right: 5px">
-        Input Speed (RPM):
-      </label>
-      <div style="margin-right: 5px">
-        <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">
-      </div>
-      <div>
-        <label for="radioIdCw" class="radioLabel">
-          <input type="radio" name="myRadioFieldDirection" id="radioIdCw" class="radioInput" [checked]="getClockwise()" (change)="setClockwise(true)">
-          <div class="radioDiv"></div>
-          cw
-        </label>
-        <br>
-        <label for="radioIdCcw" class="radioLabel">
-          <input type="radio" name="myRadioFieldDirection" id="radioIdCcw" class="radioInput" [checked]="!getClockwise()" (change)="setClockwise(false)">
-          <div class="radioDiv"></div>
-          ccw
-        </label>
-      </div>
-      <div>
-        <label for="radioGravOn" class="radioLabel">
-          <input type="radio" name="myRadioFieldGravity" id="radioGravOn" class="radioInput" [attr.checked]="getGravity()" (change)="setGravity(true)">
-          <div class="radioDiv"></div>
-          Gravity On
-        </label>
-        <br>
-        <label for="radioGravOff" class="radioLabel">
-          <input type="radio" name="myRadioFieldGravity" id="radioGravOff" class="radioInput" [attr.checked]="!getGravity()" (change)="setGravity(false)">
-          <div class="radioDiv"></div>
-          Gravity Off
-        </label>
-      </div>
-      <div>
-        <label>
-          Units
-          <select name="selectedUnit" [(ngModel)]="localUnit.selectedUnit"
-                  (ngModelChange)="changeUnit(localUnit.selectedUnit)">
-            <option *ngFor="let localUnit of localUnits" [value]="localUnit.id">{{localUnit.label}}</option>
-          </select>
-        </label>
-      </div>
-    </div>
-
-    <input class="navTabInput" type="radio" id="helpTab" name="navTabs">
-    <label class="navTabLabel" for="helpTab">Help</label>
-    <div class="tab">
-      <button class="buttonSetUp" (click)="openURL('https://pmks.mech.website/')">About</button>
-      <button class="buttonSetUp">Section Info</button>
-      <button class="buttonSetUp" (click)="popUpTemplates()">Templates</button>
-    </div>
-  </div> -->
 </nav>
-
-<!--<button id="fileButton" class="fileButton" (click)="setTab('file')" style="height: 34px; width: 160px; font-size: 24px;-->
-<!--     font-family: Arial, sans-serif; cursor: pointer; color: black; background-color: gray">File</button>-->
-<!--&lt;!&ndash;    <button class="tableButton" (click)="showTable()" style="height: 60px">Table&ndash;&gt;-->
-<!--&lt;!&ndash;      &lt;!&ndash;      <span class="tableButtonIcon"></span>&ndash;&gt;&ndash;&gt;-->
-<!--&lt;!&ndash;    </button>&ndash;&gt;-->
-<!--<button id="analysisButton" class="analysisButton" (click)="setTab('analysis')" style="height: 34px; width: 160px; font-size: 24px;-->
-<!--     font-family: Arial, sans-serif; cursor: pointer; color: gray; background-color: white">Analysis</button>-->
-<!--&lt;!&ndash;    <button class="animateButton" (click)="setTab('animate')" style="height: 60px">Animate</button>&ndash;&gt;-->
-<!--&lt;!&ndash;    <button class="synthesisButton" (click)="setTab('synthesis')" style="height: 60px">Synthesis</button>&ndash;&gt;-->
-<!--<button id="settingsButton" class="settingsButton" (click)="setTab('settings')" style="height: 34px; width: 160px;  font-size: 24px;-->
-<!--     font-family: Arial, sans-serif; cursor: pointer; color: gray; background-color: white">Settings</button>-->
-<!--<button id="helpButton" class=" helpButton" (click)="setTab('help')" style="height: 34px; width: 160px; font-size: 24px;-->
-<!--     font-family: Arial, sans-serif; cursor: pointer; color: gray; background-color: white">Help</button>-->
-<!--&lt;!&ndash;  </div>&ndash;&gt;-->
-<!--<div class="tabPanel">-->
-<!--  <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">-->
-<!--    <div style="width: 640px; border: 1px solid black">-->
-<!--      &lt;!&ndash; label instead of button but this works &ndash;&gt;-->
-<!--      <label class="secondaryButtons">Open-->
-<!--        <input id="csv" class="chooseFileInput" type="file" style="display: none" accept=".csv"-->
-<!--               (change)="upload($event)">-->
-<!--      </label>-->
-<!--      <button class="secondaryButtons" (click)="downloadLinkage()">Save</button>-->
-<!--      <button class="secondaryButtons" (click)="copyURL()">Copy</button>-->
-<!--      &lt;!&ndash;        <button class="secondaryButtons" (click)="merge()">Merge</button>&ndash;&gt;-->
-<!--    </div>-->
-<!--  </nav>-->
-<!--</div>-->
-<!--<div class="tabPanel">-->
-<!--  <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">-->
-<!--    <div style="width: 640px; border: 1px solid black">-->
-<!--      <button class="secondaryButtons" id="loopButton" (click)="popUpAnalysis('loop')">Loops</button>-->
-<!--      <button class="secondaryButtons" id="forceButton" (click)="popUpAnalysis('force')">Force</button>-->
-<!--      <button class="secondaryButtons" id="stressButton" (click)="popUpAnalysis('stress')">Stress</button>-->
-<!--      <button class="secondaryButtons" id="kinematicButton" (click)="popUpAnalysis('kinematic')">Kinematic</button>-->
-<!--      &lt;!&ndash;        <button class="secondaryButtons" (click)="popUpAnalysis('ic')">Instant Center</button>&ndash;&gt;-->
-<!--    </div>-->
-<!--  </nav>-->
-<!--</div>-->
-<!--&lt;!&ndash;  <div class="tabPanel" *ngIf="selectedTab === 'animate'">&ndash;&gt;-->
-<!--&lt;!&ndash;    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">&ndash;&gt;-->
-<!--&lt;!&ndash;      <div id="animationBtns" style="float: left">&ndash;&gt;-->
-<!--&lt;!&ndash;        <button id="counterclockwise" class="tooltip">&ndash;&gt;-->
-<!--&lt;!&ndash;          <span class="tooltiptext">Change Direction</span>&ndash;&gt;-->
-<!--&lt;!&ndash;        </button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button id="mediumspeed" class="tooltip">&ndash;&gt;-->
-<!--&lt;!&ndash;          <span class="tooltiptext">Change Speed</span>&ndash;&gt;-->
-<!--&lt;!&ndash;        </button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button class="tooltip" id="playBtn" (click)="animateMechanism()">&ndash;&gt;-->
-<!--&lt;!&ndash;          <span class="tooltiptext">Play Animation</span>&ndash;&gt;-->
-<!--&lt;!&ndash;        </button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button class="tooltip" id="stopBtn">&ndash;&gt;-->
-<!--&lt;!&ndash;          <span class="tooltiptext">Reset Animation</span>&ndash;&gt;-->
-<!--&lt;!&ndash;        </button>&ndash;&gt;-->
-<!--&lt;!&ndash;      </div>&ndash;&gt;-->
-<!--&lt;!&ndash;      <div id="slidecontainer" style="float:left;">&ndash;&gt;-->
-<!--&lt;!&ndash;        <input class="tooltip" type="range" min="0" max="100" value="0" id="slider">&ndash;&gt;-->
-<!--&lt;!&ndash;      </div>&ndash;&gt;-->
-<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
-<!--&lt;!&ndash;  </div>&ndash;&gt;-->
-<!--&lt;!&ndash;  <div class="tabPanel" *ngIf="selectedTab === 'synthesis'">&ndash;&gt;-->
-<!--&lt;!&ndash;    <nav style="position: absolute; top: 61px; left: 0; z-index: 1000; font-size: 17px">&ndash;&gt;-->
-<!--&lt;!&ndash;      <div>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button>None</button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button>2/3-Position</button>&ndash;&gt;-->
-<!--&lt;!&ndash;        <button>Path</button>&ndash;&gt;-->
-<!--&lt;!&ndash;      </div>&ndash;&gt;-->
-<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
-<!--&lt;!&ndash;  </div>&ndash;&gt;-->
-<!--<div class="tabPanel">-->
-<!--  <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">-->
-<!--    &lt;!&ndash; TODO: Input Speed &ndash;&gt;-->
-<!--    <div id="settings" class="tabcontent">-->
-<!--      <div class="input-text">-->
-<!--        Input Speed (RPM):-->
-<!--      </div>-->
-<!--      <div class="input-textbox">-->
-<!--        <input type="text" value="{{getInputAngVel()}}" size="2" (keyup)="setInputMagnitudeAngVel($event)">-->
-<!--      </div>-->
-<!--      <div class="input-direction">-->
-<!--        <label>-->
-<!--          <input type="radio" name="direction" [checked]="getClockwise()" (change)="setClockwise(true)">-->
-<!--          cw<br>-->
-<!--        </label>-->
-<!--        <label>-->
-<!--          <input type="radio" name="direction" [checked]="!getClockwise()" (change)="setClockwise(false)">-->
-<!--          ccw-->
-<!--        </label>-->
-<!--      </div>-->
-<!--      <div class="gravity-toggle">-->
-<!--        <label>-->
-<!--          <input type="radio" name="gg" [checked]="getGravity()" (change)="setGravity(true)">-->
-<!--          Gravity On-->
-<!--        </label>-->
-<!--        <label>-->
-<!--          <input type="radio" name="gg" [checked]="!getGravity()" (change)="setGravity(false)">-->
-<!--          Gravity Off<br>-->
-<!--        </label>-->
-<!--      </div>-->
-<!--      <div class="select-units">-->
-<!--        <label>-->
-<!--          Units-->
-<!--          <select name="selectedUnit"-->
-<!--                  [(ngModel)]="localUnit.selectedUnit" (ngModelChange)="changeUnit(localUnit.selectedUnit)">-->
-<!--            <option *ngFor="let localUnit of localUnits" [value]="localUnit.id">{{localUnit.label}}</option>-->
-<!--          </select>-->
-<!--        </label>-->
-<!--      </div>-->
-<!--      &lt;!&ndash;        <button class="secondaryButtons" (click)="changeIdTag()">ID Tags</button>&ndash;&gt;-->
-<!--      &lt;!&ndash;        <button class="secondaryButtons" (click)="changeCoMTag()">CoM</button>&ndash;&gt;-->
-<!--      &lt;!&ndash;        <button class="secondaryButtons">ICs</button>&ndash;&gt;-->
-<!--    </div>-->
-<!--  </nav>-->
-<!--</div>-->
-<!--<div class="tabPanel">-->
-<!--  <nav class="tabcontent" style="position: absolute; top: 34px; left: 167px; z-index: 1000; font-size: 17px">-->
-<!--    <div style="width: 640px; border: 1px solid black">-->
-<!--      <button class="secondaryButtons" (click)="openURL('https://pmks.mech.website/')">About</button>-->
-<!--      <button class="secondaryButtons">Section Info</button>-->
-<!--      <button class="secondaryButtons" (click)="popUpTemplates()">Templates</button>-->
-<!--    </div>-->
-<!--  </nav>-->
-<!--</div>-->
