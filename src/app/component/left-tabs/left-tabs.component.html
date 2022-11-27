@@ -9,24 +9,24 @@
             <mat-card>
                 <mat-card-header>
                     <mat-card-title-group>
-                        <mat-card-title>Link BC</mat-card-title>
+                        <mat-card-title id="block-header-title">Link BC</mat-card-title>
                         <mat-icon>edit</mat-icon>
                     </mat-card-title-group>
                 </mat-card-header>
                 <mat-card-content>
                     <div class="row">
-                        <span>Link Length</span>
-                        <button mat-icon-button [matTooltipShowDelay]="1000" matTooltip="Info about the action">
-                            <mat-icon>help</mat-icon>
-                        </button>
-                        <input type="text" placeholder="Enter">
+                        <span id="block-input-label">Link Length</span>
+                        <mat-icon id="block-input-label-help">help</mat-icon>
+                        <div class="spacer"></div>
+                        <input id="block-input-box" type="text" placeholder="Enter">
+                        <span id="block-input-units">cm</span>
                     </div>
                     <div class="row">
-                        <span>Link Angle</span>
-                        <button mat-icon-button [matTooltipShowDelay]="1000" matTooltip="Info about the action">
-                            <mat-icon>help</mat-icon>
-                        </button>
-                        <input type="text" placeholder="Enter">
+                        <span id="block-input-label">Link Angle</span>
+                        <mat-icon id="block-input-label-help">help</mat-icon>
+                        <div class="spacer"></div>
+                        <input id="block-input-box" type="text" placeholder="Enter">
+                        <span id="block-input-units">deg</span>
                     </div>
                 </mat-card-content>
                 <mat-card-actions>
