@@ -16,11 +16,10 @@ import {
 } from "../../model/utils";
 import {ToolbarComponent} from "../toolbar/toolbar.component";
 import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
+import { ActiveObjService } from 'src/app/services/active-obj.service';
+import { type } from 'os';
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
-import { SVG } from '@svgdotjs/svg.js';
-import '@svgdotjs/svg.draggable.js';
-import '@svgdotjs/svg.panzoom.js'
 
 // The possible states the program could be in.
 enum gridStates {
@@ -148,7 +147,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // static snackBar: MatSnackBar;
 
 // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor() {
+  constructor(private activeObjService: ActiveObjService) {
     // GridComponent.snackBar = snackBar;
   }
 
@@ -495,6 +494,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
+        console.log(thing);
+        this.activeObjService.updateSelectedObj(thing);
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
@@ -716,12 +717,12 @@ export class GridComponent implements OnInit, AfterViewInit {
             }
             break;
           case 'link':
-            console.log(GridComponent.linkStates);
+            // console.log(GridComponent.linkStates);
             switch (GridComponent.linkStates) {
               case linkStates.waiting:
                 //If the shapeselector is not open
                 if (!GridComponent.showcaseShapeSelector) {
-                  GridComponent.sendNotification("Cannot link to a bar. Please select a joint");
+                  // GridComponent.sendNotification("Cannot link to a bar. Please select a joint");
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';

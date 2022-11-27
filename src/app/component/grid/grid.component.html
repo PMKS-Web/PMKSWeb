@@ -29,7 +29,7 @@
     <g id="linkHolder" style="transform: scaleY(-1)">
       <path *ngFor="let link of getLinks()" (contextmenu)="contextMenu($event, 'link', link); false"
             (click)="disappearContext()"
-            (mousedown)="mouseDown($event, 'link')"
+            (mousedown)="mouseDown($event, 'link',link)"
             (mousemove)="mouseMove($event, 'link')"
             [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')" style="opacity: 0.8"></path>
     </g>
@@ -87,7 +87,7 @@
     <g id="forcesHolder" style="transform: scaleY(-1)" *ngFor="let force of getForces()"
        (contextmenu)="contextMenu($event, 'force', force); false"
        (click)="disappearContext()">
-      <g [attr.id]="force.id" (mouseover)="force.showHighlight = true" (mouseout)="force.showHighlight = false">
+      <g [attr.id]="force.id" (mousedown)="mouseDown($event, 'force', force)" (mouseover)="force.showHighlight = true" (mouseout)="force.showHighlight = false">
         <path *ngIf="force.showHighlight" [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
         <!-- Transpent thicker force to increase hitbox for the group for highliting-->
         <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
@@ -160,6 +160,8 @@
       <path stroke-width="0.04" stroke="black" d=""></path>
       <path fill="black" d=""></path>
     </g>
+
+    <!-- Only Shown when shape selector is open -->
     <g id="linkBoundingBox" *ngIf="getShowcaseShapeSelector()" style="transform: scaleY(-1)">
       <g *ngIf="getSelectedLinkProp('shape') !== 'line'">
         <polygon [attr.points]="getSelectedLinkProp('points')" fill="none" stroke="purple" stroke-width="0.02"></polygon>

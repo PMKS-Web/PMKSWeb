@@ -12,6 +12,8 @@ import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component
 import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
 import {Coord} from "../../model/coord";
 import {TemplatesPopupComponent} from "../templates-popup/templates-popup.component";
+
+import { ActiveObjService } from 'src/app/services/active-obj.service';
 const parseCSV = require('papaparse');
 
 @Component({
@@ -52,7 +54,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 window: any;
 url: any;
 
-  constructor() { }
+  constructor(private activeObjService: ActiveObjService) { }
 
   ngOnInit(): void {
     const settingsPropsString = splitURLInfo('&s=');
