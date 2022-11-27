@@ -4,23 +4,24 @@
      (mousemove)="mouseMove($event, 'grid')">
     <defs>
       <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-        <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5" />
+        <path d="M 10 0 L 0 0 0 10" fill="none" id="grid_lines_small" stroke-width="0.5"/>
       </pattern>
       <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
         <rect width="50" height="50" fill="url(#smallGrid)" />
-        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="black" stroke-width="1" />
+        <path d="M 50 0 L 0 0 0 50" fill="none" id="grid_lines_mid" stroke-width="1" />
       </pattern>
     </defs>
+    <rect x="-5000" y="-5000" width="10000px" height="10000px" id="grid_bg" />
     <rect x="-5000" y="-5000" width="10000px" height="10000px" fill="url(#grid)" />
   </g>
 
   <g id="transformMatrix">
-    <line id="yAxis" x1="0" y1="-99999" x2="0" y2="99999" style="stroke:rgb(0,0,0);stroke-width:0.04px"
+    <line id="yAxis" id="grid_lines_large" x1="0" y1="-99999" x2="0" y2="99999" style="stroke-width:0.04px"
           (contextmenu)="contextMenu($event, 'grid'); false"
           (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
           (mousemove)="mouseMove($event, 'grid')"
     />
-    <line id="xAxis" x1="-99999" y1="0" x2="99999" y2="0" style="stroke:rgb(0,0,0);stroke-width:0.04px"
+    <line id="xAxis" id="grid_lines_large" x1="-99999" y1="0" x2="99999" y2="0" style="stroke-width:0.04px"
           (contextmenu)="contextMenu($event, 'grid'); false"
           (click)="disappearContext()" (mousedown)="mouseDown($event, 'grid')"
           (mousemove)="mouseMove($event, 'grid')"
