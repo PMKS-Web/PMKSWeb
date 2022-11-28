@@ -6,56 +6,10 @@
     </div>
     <div *ngIf="this.openTab" class="panel" visible="false">
         <div *ngIf="this.openTab===1" class="page1">
-            <mat-card>
-                <mat-card-header>
-                    <mat-card-title-group>
-                        <mat-card-title id="block-header-title">{{this.activeObj?.id}}</mat-card-title>
-                        <mat-icon>edit</mat-icon>
-                    </mat-card-title-group>
-                </mat-card-header>
-                <mat-card-content>
-                    <div class="row">
-                        <span id="block-input-label">Link Length</span>
-                        <mat-icon id="block-input-label-help">help</mat-icon>
-                        <div class="spacer"></div>
-                        <input id="block-input-box" type="text" placeholder="Enter">
-                        <span id="block-input-units">cm</span>
-                    </div>
-                    <div class="row">
-                        <span id="block-input-label">Link Angle</span>
-                        <mat-icon id="block-input-label-help">help</mat-icon>
-                        <div class="spacer"></div>
-                        <input id="block-input-box" type="text" placeholder="Enter">
-                        <span id="block-input-units">deg</span>
-                    </div>
-                </mat-card-content>
-                <mat-card-actions>
-                    <button mat-flat-button color="primary">Delete Link</button>
-                </mat-card-actions>
-            </mat-card>
-            <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    Personal
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-            </mat-expansion-panel>
-            <mat-expansion-panel hideToggle>
-                <mat-expansion-panel-header>
-                    <title-block icon="edit">
-                        Title of Real Block
-                    </title-block>
-                </mat-expansion-panel-header>
-                <title-block icon="edit" buttonLabel="Edit" description="Test Description Test Description Test Description Test Description Test Description Test Description">
-                    Title of Real Block
-                </title-block>
-                <title-block icon="edit" buttonLabel="Edit" description="Test Description Test Description Test Description Test Description Test Description Test Description">
-                    Title of Real Block
-                </title-block>
-              </mat-expansion-panel>
+            Synth
         </div>
         <div *ngIf="this.openTab===2" class="page2">
-            Edit
+            <app-edit-panel></app-edit-panel>
         </div>
         <div *ngIf="this.openTab===3" class="page3">
             Analyze

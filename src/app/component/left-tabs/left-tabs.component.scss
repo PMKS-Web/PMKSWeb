@@ -9,44 +9,6 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
-  #block-header-title{
-    font-size: 20px;
-  }
-
-  #block-input-label{
-    font-size: 14px;
-    font-weight: 200;
-  }
-
-  #block-input-label-help{
-    transform: scale(0.5);
-    color: mat.get-color-from-palette($foreground,'icon');
-  }
-
-  #block-input-box{
-    font-size: 14px;
-    font-weight: 200;
-    width: 80px;
-    border: 0;
-    outline: none;
-    background-color: mat.get-color-from-palette($primary-palette,50);
-    border-radius: 5px;
-    padding: 5px;
-  }
-
-  #block-input-units{
-    font-size: 14px;
-    font-weight: 200;
-    color: mat.get-color-from-palette($foreground,'disabled-text');
-    margin-left:-30px;
-    width: 25px; 
-    text-align: right;
-  }
-
-  .spacer {
-    flex: 1 1 auto;
-  };
-
   .panel{
     position: absolute;
     top: 50px;

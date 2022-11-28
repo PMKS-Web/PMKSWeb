@@ -17,7 +17,11 @@ import { MaterialModule } from './material/material.module';
 import { LeftTabsComponent } from './component/left-tabs/left-tabs.component';
 import { TabComponent } from './component/tab/tab.component';
 import { TitleBlock } from './component/blocks/title/title.component';
-import { BaseBlock } from './component/blocks/base-block/base-block.component';
+import { EditPanelComponent } from './component/blocks/edit-panel/edit-panel.component';
+import { InputComponent } from './component/blocks/input/input.component';
+import { ButtonComponent } from './component/blocks/button/button.component';
+import { PanelSectionComponent } from './component/blocks/panel-section/panel-section.component';
+import { PanelSectionCollapsibleComponent } from './component/blocks/panel-section-collapsible/panel-section-collapsible.component';
 
 @NgModule({
     declarations: [
@@ -32,7 +36,11 @@ import { BaseBlock } from './component/blocks/base-block/base-block.component';
         LeftTabsComponent,
         TabComponent,
         TitleBlock,
-        BaseBlock,
+        EditPanelComponent,
+        InputComponent,
+        ButtonComponent,
+        PanelSectionComponent,
+        PanelSectionCollapsibleComponent,
     ],
   imports: [
     BrowserModule,

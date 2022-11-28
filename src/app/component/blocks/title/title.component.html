@@ -1,12 +1,13 @@
-<base-block [templateRef]='childTemplate'></base-block>
-<ng-template #childTemplate>
+<div id="title-block"> 
     <div class="row">
         <ng-content></ng-content>
-        <button mat-flat-button color="primary" *ngIf="buttonLabel && icon">
+        <button id="title-button" mat-flat-button (click)="toggleExpand()" color="primary" *ngIf="buttonLabel && icon">
             <mat-icon *ngIf="icon">{{icon}}</mat-icon>
             {{buttonLabel}}
         </button>
-        <mat-icon *ngIf="!buttonLabel && icon">{{icon}}</mat-icon>
+        <button id="title-icon-button" (click)="toggleExpand()" *ngIf="!buttonLabel && icon" mat-icon-button>
+            <mat-icon>{{this.shownIcon}}</mat-icon>
+        </button>
     </div>
-    <p id="titleDescription" *ngIf="description">{{description}}</p>
-</ng-template>
+    <p id="title-description" *ngIf="description">{{description}}</p>
+</div>

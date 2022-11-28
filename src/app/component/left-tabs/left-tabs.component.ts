@@ -9,17 +9,8 @@ import { Force } from 'src/app/model/force';
   templateUrl: './left-tabs.component.html',
   styleUrls: ['./left-tabs.component.scss']
 })
-export class LeftTabsComponent implements OnInit {
-  openTab = 1; //Default open tab
-  constructor(private activeObjService: ActiveObjService) { }
-  activeObj: RealJoint | RealLink | Force | undefined;
-
-  ngOnInit(): void {
-    this.activeObjService.onActiveObjChange.subscribe((newObj: RealJoint | RealLink | Force | undefined) => {
-      // console.log('LeftTabsComponent: ' + newPhrase);
-      this.activeObj = newObj;
-    })
-  }
+export class LeftTabsComponent{
+  openTab = 2; //Default open tab
 
   tabClicked(tabID: number) {
     if (this.openTab === tabID) {
