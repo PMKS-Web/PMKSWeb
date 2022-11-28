@@ -1,10 +1,9 @@
-<div id="input-block">
+<div id="toggle-block">
     <div class="row">
         <span class="label"><ng-content></ng-content></span>
         <mat-icon matTooltip={{this.tooltip}}
         [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
         <div class="spacer"></div>
-        <input id="block-input-box" type="text" [value]="this.value">
-        <span id="block-input-units">{{this.unit}}</span>
+        <mat-slide-toggle color="primary"></mat-slide-toggle>
     </div>
 </div>

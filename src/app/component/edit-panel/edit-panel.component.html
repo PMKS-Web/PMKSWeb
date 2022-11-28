@@ -1,16 +1,31 @@
 <div class="editPanel">
-<h1 *ngIf="this.activeObjType == 'Nothing'">Select an object to see details</h1>
+<h1 *ngIf="this.activeObjType == 'Nothing'">Select Joint to see details</h1>
 <panel-section *ngIf="this.activeObjType == 'Joint'">
     <title-block icon="edit">{{this.activeObjType}} {{this.activeObj.id | uppercase}}</title-block>
-    <input-block unit="cm" [value]="(this.activeJoint?.x)" tooltip="Tooltip Info">X</input-block>
-    <input-block unit="cm" [value]="(this.activeJoint?.y)" tooltip="Tooltip Info">Y</input-block>
+    <dual-input-block unit="cm" tooltip="The current location of the Joint in cm" [value1]="this.activeJoint?.x" [value2]="this.activeJoint?.y">Joint Position</dual-input-block>
+    <toggle-block tooltip="Should this be non-moving?">Ground</toggle-block>
+    <toggle-block tooltip="Should joint be the input?">Input</toggle-block>
+    <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block>
     <button-block icon="delete">Delete Joint</button-block>
 </panel-section>
 
 <panel-section-collapsible>
     <title-block alwaysShown icon="expand_less">Collapsable Section</title-block>
     <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
-    <input-block unit="cm" [value]="0.1" tooltip="Tooltip Info">Input Label</input-block>
     <button-block icon="edit">Button Label</button-block>
+    <radio-block tooltip="Tooltip Info" option1="cm" option2="meter" option3="inches">Radio Block</radio-block>
+    <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block>
+    <subtitle-block icon="home">Subtitle Block</subtitle-block>
+    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
 </panel-section-collapsible>
+
+<panel-section>
+    <title-block icon="edit">Normal Section</title-block>
+    <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
+    <button-block icon="edit">Button Label</button-block>
+    <radio-block tooltip="Tooltip Info" option1="this" option2="that">Radio Block</radio-block>
+    <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block>
+    <subtitle-block icon="home" buttonLabel="back">Subtitle Block</subtitle-block>
+    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
+</panel-section>
 </div>

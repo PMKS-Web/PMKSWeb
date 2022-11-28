@@ -10,14 +10,4 @@
     $background: map.get($theme, background);
     $foreground: map.get($theme, foreground);
 
-    .editPanel{
-        height: 100%;
-        background-color: transparent;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        overflow-y: scroll;
-        overflow-x: hidden;
-    }
-    
 }

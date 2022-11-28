@@ -10,9 +10,10 @@
     $background: map.get($theme, background);
     $foreground: map.get($theme, foreground);
 
-    #input-block{
+    #dual-input-block{
 
-          #block-input-box{
+        #block-input-box{
+            margin-left: 10px;
             font-size: 14px;
             font-weight: 200;
             width: 80px;
@@ -34,5 +35,8 @@
             width: 30px; 
             
           }
+
     }
+
+
 }

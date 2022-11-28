@@ -22,6 +22,12 @@ import { InputComponent } from './component/blocks/input/input.component';
 import { ButtonComponent } from './component/blocks/button/button.component';
 import { PanelSectionComponent } from './component/blocks/panel-section/panel-section.component';
 import { PanelSectionCollapsibleComponent } from './component/blocks/panel-section-collapsible/panel-section-collapsible.component';
+import { ToggleComponent } from './component/blocks/toggle/toggle.component';
+import { SubtitleComponent } from './component/blocks/subtitle/subtitle.component';
+import { RadioComponent } from './component/blocks/radio/radio.component';
+import { DualInputComponent } from './component/blocks/dual-input/dual-input.component';
+import { MAT_RADIO_DEFAULT_OPTIONS } from '@angular/material/radio';
+import { MAT_BUTTON_TOGGLE_DEFAULT_OPTIONS, MAT_BUTTON_TOGGLE_GROUP, MAT_BUTTON_TOGGLE_GROUP_VALUE_ACCESSOR } from '@angular/material/button-toggle';
 
 @NgModule({
     declarations: [
@@ -41,6 +47,10 @@ import { PanelSectionCollapsibleComponent } from './component/blocks/panel-secti
         ButtonComponent,
         PanelSectionComponent,
         PanelSectionCollapsibleComponent,
+        ToggleComponent,
+        SubtitleComponent,
+        RadioComponent,
+        DualInputComponent,
     ],
   imports: [
     BrowserModule,
@@ -50,7 +60,6 @@ import { PanelSectionCollapsibleComponent } from './component/blocks/panel-secti
     MaterialModule,
   ],
   providers: [
-
   ],
   bootstrap: [AppComponent]
 })

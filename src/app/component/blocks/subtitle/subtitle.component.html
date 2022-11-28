@@ -1,0 +1,13 @@
+<div id="subtitle-block"> 
+    <div class="row">
+        <ng-content></ng-content>
+        <button id="title-button" mat-flat-button color="primary" *ngIf="buttonLabel && icon">
+            <mat-icon *ngIf="icon">{{icon}}</mat-icon>
+            {{buttonLabel}}
+        </button>
+        <button id="title-icon-button" *ngIf="!buttonLabel && icon" mat-icon-button>
+            <mat-icon>{{this.icon}}</mat-icon>
+        </button>
+    </div>
+    <p id="title-description" *ngIf="description">{{description}}</p>
+</div>

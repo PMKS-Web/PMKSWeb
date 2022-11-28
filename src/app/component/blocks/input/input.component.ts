@@ -6,7 +6,7 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./input.component.scss']
 })
 export class InputComponent {
-  @Input() units : string | undefined;  
+  @Input() unit : string | undefined;  
   @Input() tooltip : string | undefined;  
   @Input() value : number | undefined;  
 }

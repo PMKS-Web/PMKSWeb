@@ -9,15 +9,24 @@
     $accent-palette: map.get($color-config, 'accent');
     $background: map.get($theme, background);
     $foreground: map.get($theme, foreground);
-
-    .editPanel{
-        height: 100%;
-        background-color: transparent;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        overflow-y: scroll;
-        overflow-x: hidden;
-    }
     
+    .row{
+        display: flex;
+        align-items: center;
+
+        .label{
+            font-size: 14px;
+            font-weight: 200;
+          }
+        
+          .label-help{
+            transform: scale(0.5);
+            color: mat.get-color-from-palette($foreground,'icon');
+          }
+
+          .spacer {
+            flex: 1 1 auto;
+          };
+    }
+
 }
