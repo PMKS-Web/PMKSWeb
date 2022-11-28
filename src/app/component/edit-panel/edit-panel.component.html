@@ -1,0 +1,16 @@
+<div class="editPanel">
+<h1 *ngIf="this.activeObjType == 'Nothing'">Select an object to see details</h1>
+<panel-section *ngIf="this.activeObjType == 'Joint'">
+    <title-block icon="edit">{{this.activeObjType}} {{this.activeObj.id | uppercase}}</title-block>
+    <input-block unit="cm" [value]="(this.activeJoint?.x)" tooltip="Tooltip Info">X</input-block>
+    <input-block unit="cm" [value]="(this.activeJoint?.y)" tooltip="Tooltip Info">Y</input-block>
+    <button-block icon="delete">Delete Joint</button-block>
+</panel-section>
+
+<panel-section-collapsible>
+    <title-block alwaysShown icon="expand_less">Collapsable Section</title-block>
+    <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
+    <input-block unit="cm" [value]="0.1" tooltip="Tooltip Info">Input Label</input-block>
+    <button-block icon="edit">Button Label</button-block>
+</panel-section-collapsible>
+</div>

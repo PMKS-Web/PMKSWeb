@@ -8,5 +8,5 @@ import { Component, Input } from '@angular/core';
 export class InputComponent {
   @Input() units : string | undefined;  
   @Input() tooltip : string | undefined;  
-  @Input() placeholder : string | undefined;  
+  @Input() value : number | undefined;  
 }
