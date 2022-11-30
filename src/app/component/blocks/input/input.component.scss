@@ -19,7 +19,7 @@
             border: 0;
             outline: none;
             background-color: mat.get-color-from-palette($primary-palette,50);
-            border-radius: 5px;
+            border-radius: var(--border-radius);
             padding: 5px;
           }
         

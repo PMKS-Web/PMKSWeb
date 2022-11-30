@@ -6,6 +6,7 @@
   $color-config: mat.get-color-config($theme);
   // Get the primary color palette from the color-config.
   $primary-palette: map.get($color-config, 'primary');
+  $typography-config: mat.get-typography-config($theme);
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
@@ -18,7 +19,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
 
     @include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
@@ -27,7 +28,7 @@
         width: 100%;
         height: 100%;
         background-color: mat.get-color-from-palette($primary-palette,50);
-        border-radius: 5px;
+        border-radius: var(--border-radius);
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -36,13 +37,46 @@
         width: 100%;
         height: 100%;
         background-color: mat.get-color-from-palette($primary-palette,50);
-        border-radius: 5px;
+        border-radius: var(--border-radius);
     }
     .page3{
         width: 100%;
         height: 100%;
         background-color: green;
         background-color: mat.get-color-from-palette($primary-palette,50);
+        #headline-1{
+          @include mat.typography-level($typography-config, 'headline-1');
+        }
+        #headline-2{
+          @include mat.typography-level($typography-config, 'headline-2');
+        }
+        #headline-3{
+          @include mat.typography-level($typography-config, 'headline-3');
+        }
+        #headline-4{
+          @include mat.typography-level($typography-config, 'headline-4');
+        }
+        #headline-5{
+          @include mat.typography-level($typography-config, 'headline-5');
+        }
+        #headline-6{
+          @include mat.typography-level($typography-config, 'headline-6');
+        }
+        #subtitle-1{
+          @include mat.typography-level($typography-config, 'subtitle-1');
+        }
+        #subtitle-2{
+          @include mat.typography-level($typography-config, 'subtitle-2');
+        }
+        #body-1{
+          @include mat.typography-level($typography-config, 'body-1');
+        }
+        #body-2{
+          @include mat.typography-level($typography-config, 'body-2');
+        }
+        #caption{
+          @include mat.typography-level($typography-config, 'caption');
+        }
     }
   }
 

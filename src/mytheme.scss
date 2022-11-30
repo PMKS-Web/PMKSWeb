@@ -26,7 +26,8 @@ $my-theme: mat.define-light-theme((
  color: (
    primary: $my-primary,
    accent: $my-accent,
- )
+ ),
+ typography: mat.define-typography-config()
 ));
 
 @include mat.all-component-themes($my-theme);

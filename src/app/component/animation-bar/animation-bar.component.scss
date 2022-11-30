@@ -20,7 +20,7 @@
       align-items: center;
       justify-content: center;
       // width: 400px;
-      border-radius: 5px;
+      border-radius: var(--border-radius);
       //Set the elevation of the animation bar to 2.
       @include mat.elevation(2);
       //Set the background color of the animation bar to the background color of the raised button.

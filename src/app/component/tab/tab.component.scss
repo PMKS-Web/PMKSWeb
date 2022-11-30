@@ -14,7 +14,7 @@
         &.active{
             background-color: mat.get-color-from-palette($primary-palette,50);
         }
-        border-radius: 5px;
+        border-radius: var(--border-radius);
 
         height: 100%;
         width: 100%;
