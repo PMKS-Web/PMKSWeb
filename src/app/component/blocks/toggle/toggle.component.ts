@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'toggle-block',
@@ -7,4 +8,11 @@ import { Component, Input } from '@angular/core';
 })
 export class ToggleComponent {
   @Input() tooltip: string | undefined;
+  @Input() formGroup!: FormGroup;
+  @Input() _formControl!: string;
+  @Input() value!: boolean;
+
+  x = () => {
+    console.log('Help');
+  };
 }

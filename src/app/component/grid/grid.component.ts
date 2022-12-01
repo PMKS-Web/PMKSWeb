@@ -165,7 +165,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (jointPropsString.length === 0 || linkPropsString.length === 0) {
       return;
     }
-    if (!(typeof jointPropsString === 'string' && typeof linkPropsString === 'string' && typeof forcePropsString === 'string')) {
+    if (
+      !(
+        typeof jointPropsString === 'string' &&
+        typeof linkPropsString === 'string' &&
+        typeof forcePropsString === 'string'
+      )
+    ) {
       return;
     }
     const jointStringArray = jointPropsString.split('\n');
@@ -348,7 +354,9 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     GridComponent.transformMatrixSVG = document.getElementById('transformMatrix') as unknown as SVGElement;
-    GridComponent.transformMatrixGridSVGElement = document.getElementById('transformMatrixGrid') as unknown as SVGElement;
+    GridComponent.transformMatrixGridSVGElement = document.getElementById(
+      'transformMatrixGrid'
+    ) as unknown as SVGElement;
     GridComponent.pathsHolderSVG = document.getElementById('pathsHolder') as unknown as SVGElement;
     GridComponent.pathsPathPointHolderSVG = document.getElementById('pathsPathPointHolder') as unknown as SVGElement;
     GridComponent.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
@@ -357,22 +365,34 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.notificationWrapper = document.getElementById('notificationWrapper') as unknown as SVGElement;
 
     // context Menu for Grid
-    GridComponent.contextMenuAddLinkOntoGrid = document.getElementById('menuEntryAddLinkOnGrid') as unknown as SVGElement;
+    GridComponent.contextMenuAddLinkOntoGrid = document.getElementById(
+      'menuEntryAddLinkOnGrid'
+    ) as unknown as SVGElement;
     // context Menu for Joint
     GridComponent.contextMenuAddGround = document.getElementById('menuEntryCreateGround') as unknown as SVGElement;
     GridComponent.contextMenuAddSlider = document.getElementById('menuEntryCreateSlider') as unknown as SVGElement;
     GridComponent.contextMenuDeleteJoint = document.getElementById('menuEntryDeleteJoint') as unknown as SVGElement;
-    GridComponent.contextMenuAddLinkOntoJoint = document.getElementById('menuEntryAddLinkOnJoint') as unknown as SVGElement;
+    GridComponent.contextMenuAddLinkOntoJoint = document.getElementById(
+      'menuEntryAddLinkOnJoint'
+    ) as unknown as SVGElement;
     GridComponent.contextMenuAddInputJoint = document.getElementById('menuEntryAddInput') as unknown as SVGElement;
     // context Menu for Link
-    GridComponent.contextMenuAddLinkOntoLink = document.getElementById('menuEntryAddLinkOnLink') as unknown as SVGElement;
-    GridComponent.contextMenuAddTracerPoint = document.getElementById('menuEntryAddTracerPoint') as unknown as SVGElement;
+    GridComponent.contextMenuAddLinkOntoLink = document.getElementById(
+      'menuEntryAddLinkOnLink'
+    ) as unknown as SVGElement;
+    GridComponent.contextMenuAddTracerPoint = document.getElementById(
+      'menuEntryAddTracerPoint'
+    ) as unknown as SVGElement;
     GridComponent.contextMenuAddForce = document.getElementById('menuEntryAddForce') as unknown as SVGElement;
     GridComponent.contextMenuEditShape = document.getElementById('menuEntryEditShape') as unknown as SVGElement;
     GridComponent.contextMenuDeleteLink = document.getElementById('menuEntryDeleteLink') as unknown as SVGElement;
     // context Menu for Force
-    GridComponent.contextMenuChangeForceDirection = document.getElementById('menuEntryChangeForceDirection') as unknown as SVGElement;
-    GridComponent.contextMenuChangeForceLocal = document.getElementById('menuEntryChangeForceLocal') as unknown as SVGElement;
+    GridComponent.contextMenuChangeForceDirection = document.getElementById(
+      'menuEntryChangeForceDirection'
+    ) as unknown as SVGElement;
+    GridComponent.contextMenuChangeForceLocal = document.getElementById(
+      'menuEntryChangeForceLocal'
+    ) as unknown as SVGElement;
     GridComponent.contextMenuDeleteForce = document.getElementById('menuEntryDeleteForce') as unknown as SVGElement;
 
     GridComponent.reset();
@@ -401,8 +421,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.scaleFactor = newScale * GridComponent.scaleFactor;
     }
     const afterScaleCoords = this.screenToGrid(pointX, pointY);
-    GridComponent._gridOffset.x = GridComponent._gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
-    GridComponent._gridOffset.y = GridComponent._gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
+    GridComponent._gridOffset.x =
+      GridComponent._gridOffset.x - (beforeScaleCoords.x - afterScaleCoords.x) * GridComponent.scaleFactor;
+    GridComponent._gridOffset.y =
+      GridComponent._gridOffset.y + (beforeScaleCoords.y - afterScaleCoords.y) * GridComponent.scaleFactor;
     GridComponent.applyMatrixToSVG();
   }
 
@@ -411,7 +433,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     const offsetX = GridComponent._gridOffset.x;
     const offsetY = GridComponent._gridOffset.y;
     const newMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor + ')';
-    const gridMatrix = 'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
+    const gridMatrix =
+      'translate(' + offsetX + ' ' + offsetY + ') scale(' + GridComponent.scaleFactor * AppConstants.scaleFactor + ')';
     GridComponent.transformMatrixSVG.setAttributeNS(null, 'transform', newMatrix);
     GridComponent.transformMatrixGridSVGElement.setAttributeNS(null, 'transform', gridMatrix);
   }
@@ -555,7 +578,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(GridComponent.selectedJoint);
 
-                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [
+                  GridComponent.selectedJoint,
+                  joint2,
+                ]);
                 GridComponent.selectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mergeToJoints([joint2]);
@@ -620,7 +646,12 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                 // TODO: Be sure the force added is at correct position for binary link
-                const force = new Force('F' + (GridComponent.forces.length + 1).toString(), GridComponent.selectedLink, startCoord, endCoord);
+                const force = new Force(
+                  'F' + (GridComponent.forces.length + 1).toString(),
+                  GridComponent.selectedLink,
+                  startCoord,
+                  endCoord
+                );
                 GridComponent.selectedLink.forces.push(force);
                 GridComponent.forces.push(force);
                 GridComponent.updateMechanism();
@@ -685,7 +716,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(GridComponent.selectedJoint);
 
-                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [
+                  GridComponent.selectedJoint,
+                  joint2,
+                ]);
                 GridComponent.selectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mergeToLinks([link]);
@@ -883,7 +917,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedLink.bound.b4.y += offsetY;
         GridComponent.initialLinkMouseCoord.x = trueCoord.x;
         GridComponent.initialLinkMouseCoord.y = trueCoord.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
+          GridComponent.selectedLink.bound,
+          GridComponent.selectedLink.shape
+        );
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
         GridComponent.updateMechanism();
         break;
@@ -1005,7 +1042,10 @@ export class GridComponent implements OnInit, AfterViewInit {
             GridComponent.selectedLink.bound.b4.y = b4n.y;
             GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
             GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
+            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
+              GridComponent.selectedLink.bound,
+              GridComponent.selectedLink.shape
+            );
             GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
             GridComponent.selectedLink.updateCoMDs();
             return;
@@ -1088,7 +1128,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedLink.bound.b4.y = b4n.y;
         GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
         GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
+          GridComponent.selectedLink.bound,
+          GridComponent.selectedLink.shape
+        );
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
         GridComponent.selectedLink.updateCoMDs();
         break;
@@ -1298,7 +1341,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  showcaseContextMenu(contextMenu: SVGElement, offsetX: number, offsetY: number, boxIncrement: number, textIncrement: number) {
+  showcaseContextMenu(
+    contextMenu: SVGElement,
+    offsetX: number,
+    offsetY: number,
+    boxIncrement: number,
+    textIncrement: number
+  ) {
     contextMenu.style.display = 'block';
     contextMenu.children[0].setAttribute('x', offsetX.toString());
     contextMenu.children[0].setAttribute('y', (offsetY + boxIncrement).toString());
@@ -1395,7 +1444,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         connectedJoints
       );
       GridComponent.selectedJoint.connectedJoints.push(prisJoint);
-      const piston = new Piston(GridComponent.selectedJoint.id + prisJoint.id, [GridComponent.selectedJoint, prisJoint]);
+      const piston = new Piston(GridComponent.selectedJoint.id + prisJoint.id, [
+        GridComponent.selectedJoint,
+        prisJoint,
+      ]);
       prisJoint.links.push(piston);
       GridComponent.selectedJoint.links.push(piston);
       GridComponent.joints.push(prisJoint);
@@ -1449,7 +1501,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         // There may be an easier way to do this but this logic works :P
         const desiredJointID = l.joints[0].id === GridComponent.selectedJoint.id ? l.joints[1].id : l.joints[0].id;
         const desiredJointIndex = this.findJointIDIndex(desiredJointID, GridComponent.joints);
-        const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints);
+        const deleteJointIndex = this.findJointIDIndex(
+          GridComponent.selectedJoint.id,
+          (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints
+        );
         (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
         const deleteLinkIndex = (GridComponent.joints[desiredJointIndex] as RealJoint).links.findIndex((lin) => {
           if (!(lin instanceof RealLink)) {
@@ -1629,13 +1684,17 @@ export class GridComponent implements OnInit, AfterViewInit {
         if (!(joint instanceof RealJoint)) {
           return;
         }
-        const desiredJointIndex = joint.connectedJoints.findIndex((jj) => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id);
+        const desiredJointIndex = joint.connectedJoints.findIndex(
+          (jj) => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id
+        );
         joint.connectedJoints.splice(desiredJointIndex, 1);
         const otherJoint = GridComponent.links[linkIndex].joints[next_j_i];
         if (!(otherJoint instanceof RealJoint)) {
           return;
         }
-        const otherDesiredJointIndex = joint.connectedJoints.findIndex((jj) => jj.id === GridComponent.links[linkIndex].joints[j_i].id);
+        const otherDesiredJointIndex = joint.connectedJoints.findIndex(
+          (jj) => jj.id === GridComponent.links[linkIndex].joints[j_i].id
+        );
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
@@ -1647,9 +1706,15 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
     if (GridComponent.selectedForce.arrowOutward) {
-      GridComponent.selectedForce.forceArrow = Force.createForceArrow(GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
+        GridComponent.selectedForce.startCoord,
+        GridComponent.selectedForce.endCoord
+      );
     } else {
-      GridComponent.selectedForce.forceArrow = Force.createForceArrow(GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
+        GridComponent.selectedForce.endCoord,
+        GridComponent.selectedForce.startCoord
+      );
     }
     GridComponent.updateMechanism();
   }
@@ -1711,7 +1776,11 @@ export class GridComponent implements OnInit, AfterViewInit {
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.bound = RealLink.getBounds(
+            new Coord(l.joints[0].x, l.joints[0].y),
+            new Coord(l.joints[1].x, l.joints[1].y),
+            Shape.line
+          );
           l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
@@ -1739,7 +1808,11 @@ export class GridComponent implements OnInit, AfterViewInit {
             const jointIndex = l.joints.findIndex((jt) => jt.id === j.id);
             l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
             l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-            l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+            l.bound = RealLink.getBounds(
+              new Coord(l.joints[0].x, l.joints[0].y),
+              new Coord(l.joints[1].x, l.joints[1].y),
+              Shape.line
+            );
             l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
             l.CoM = RealLink.determineCenterOfMass(l.joints);
             l.updateCoMDs();
@@ -2034,7 +2107,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     let string = 'M';
     const jointIndex = GridComponent.joints.findIndex((j) => j.id === joint.id);
-    string += GridComponent.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + GridComponent.mechanisms[0].joints[0][jointIndex].y.toString();
+    string +=
+      GridComponent.mechanisms[0].joints[0][jointIndex].x.toString() +
+      ' , ' +
+      GridComponent.mechanisms[0].joints[0][jointIndex].y.toString();
     for (let j_index = 1; j_index < GridComponent.mechanisms[0].joints.length; j_index++) {
       string +=
         'L' +

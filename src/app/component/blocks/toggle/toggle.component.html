@@ -1,8 +1,11 @@
 <div id="toggle-block">
   <div class="row">
-    <span class="label"><ng-content></ng-content></span>
-    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
-    <div class="spacer"></div>
-    <mat-slide-toggle color="primary"></mat-slide-toggle>
+    <form [formGroup]="this.formGroup">
+      <!-- <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike" [formControlName]="this._formControl" /> -->
+      <span class="label"><ng-content></ng-content></span>
+      <!-- <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon> -->
+      <div class="spacer"></div>
+      <!-- <mat-slide-toggle color="primary" [checked]="this.value" [formControlName]="'ground'"></mat-slide-toggle> -->
+    </form>
   </div>
 </div>

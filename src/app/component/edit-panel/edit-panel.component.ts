@@ -21,6 +21,8 @@ export class EditPanelComponent implements OnInit {
     {
       xPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       yPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      ground: [false, [Validators.required]],
+      input: [false, [Validators.required]],
     },
     { updateOn: 'blur' }
   );
@@ -41,6 +43,7 @@ export class EditPanelComponent implements OnInit {
     });
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
+      console.warn(val);
       if (this.jointForm.controls['yPos'].invalid) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toString() });
       } else {
@@ -49,11 +52,18 @@ export class EditPanelComponent implements OnInit {
       }
     });
 
+    this.jointForm.controls['ground'].valueChanges.subscribe((val) => {
+      console.warn(val);
+      this.activeSrv.Joint.ground = val!;
+    });
+
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
         this.jointForm.patchValue({
           xPos: this.activeSrv.Joint.x.toString(),
           yPos: this.activeSrv.Joint.y.toString(),
+          ground: this.activeSrv.Joint.ground,
+          input: this.activeSrv.Joint.input,
         });
       }
     });
