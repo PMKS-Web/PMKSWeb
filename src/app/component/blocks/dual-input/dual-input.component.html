@@ -5,13 +5,13 @@
         [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
         <div class="spacer"></div>
     </div>
-    <div class="row">
+    <div class="row" [formGroup]="this.formGroup">
         <span class="label">X</span>
-        <input id="block-input-box" type="text" [value]="this.value1">
+        <input id="block-input-box" type="text" [value]="this.value1" [formControlName]="this.formControl1">
         <span id="block-input-units">{{this.unit}}</span>
         <div class="spacer"></div>
         <span class="label">Y</span>
-        <input id="block-input-box" type="text" [value]="this.value2">
+        <input id="block-input-box" type="text" [value]="this.value2" [formControlName]="this.formControl2">
         <span id="block-input-units">{{this.unit}}</span>
     </div>
 </div>

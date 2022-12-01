@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'dual-input-block',
@@ -6,8 +7,15 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./dual-input.component.scss']
 })
 export class DualInputComponent {
-  @Input() tooltip : string | undefined;  
-  @Input() value1 : number | undefined;  
-  @Input() value2 : number | undefined;  
-  @Input() unit : string | undefined;  
+  @Input() tooltip! : string;  
+  @Input() value1! : number;  
+  @Input() value2! : number;  
+  @Input() unit! : string;  
+  @Input() formControl1! : string;  
+  @Input() formControl2! : string;  
+  @Input() formGroup!: FormGroup;
+
+  constructor() {
+    this.formGroup = new FormGroup({});
+  }
 }

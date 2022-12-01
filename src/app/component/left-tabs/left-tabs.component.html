@@ -7,6 +7,9 @@
     <div *ngIf="this.openTab" class="panel" visible="false">
         <div *ngIf="this.openTab===1" class="page1">
             Synth
+            <mat-form-field id="testInput">
+                <input matInput value="Sushi">
+            </mat-form-field>
         </div>
         <div *ngIf="this.openTab===2" class="page2">
             <app-edit-panel></app-edit-panel>

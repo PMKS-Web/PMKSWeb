@@ -12,7 +12,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    pointer-events:none;
     #animationBar{
+      pointer-events:auto;
       margin: 10px;
       padding: 10px 20px;
       display: flex;

@@ -1620,7 +1620,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       ToolbarComponent.unit, inputAngularVelocity));
   }
 
-  private static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
+  static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 3);
     selectedJoint.y = roundNumber(trueCoord.y, 3);
