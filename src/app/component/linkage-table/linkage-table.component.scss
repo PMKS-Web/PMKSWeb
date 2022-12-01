@@ -96,7 +96,7 @@
   visibility: visible;
 }
 
-.linkageTabs input[type="radio"] {
+.linkageTabs input[type='radio'] {
   display: none;
 }
 
@@ -118,37 +118,37 @@
   display: none;
 }
 
-.linkageTabs input[type="radio"]:hover + label {
+.linkageTabs input[type='radio']:hover + label {
   background: lightgray;
 }
 
-.linkageTabs input[type="radio"]:checked + label + .tab {
+.linkageTabs input[type='radio']:checked + label + .tab {
   max-width: 400px;
   display: table;
   table-layout: fixed;
   border-collapse: collapse;
 }
 
-.linkageTabs input[type="radio"]:checked + label {
+.linkageTabs input[type='radio']:checked + label {
   background: gray;
 }
 
-.linkageTabs input[type="radio"]:checked + label +.tab thead {
+.linkageTabs input[type='radio']:checked + label + .tab thead {
   background: gray;
 }
-.linkageTabs input[type="radio"]:checked + label +.tab th{
+.linkageTabs input[type='radio']:checked + label + .tab th {
   border: 1px solid black;
 }
-.linkageTabs input[type="radio"]:checked + label +.tab input {
+.linkageTabs input[type='radio']:checked + label + .tab input {
   display: table-cell;
   width: 80%;
 }
 
-.linkageTabs input[type="radio"]:checked + label +.tab tbody td {
+.linkageTabs input[type='radio']:checked + label + .tab tbody td {
   border: 1px solid black;
 }
 
-.linkageTabs input[type="radio"]:checked + label +.tab tbody table {
+.linkageTabs input[type='radio']:checked + label + .tab tbody table {
   display: contents;
   text-align: center;
 }

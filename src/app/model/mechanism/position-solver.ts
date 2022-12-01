@@ -1,9 +1,9 @@
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
-import {Link} from "../link";
-import {roundNumber} from "../utils";
-import {Force} from "../force";
-import {Coord} from "../coord";
-import {core} from "@angular/compiler";
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
+import { Link } from '../link';
+import { roundNumber } from '../utils';
+import { Force } from '../force';
+import { Coord } from '../coord';
+import { core } from '@angular/compiler';
 
 export class PositionSolver {
   static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
@@ -41,31 +41,45 @@ export class PositionSolver {
   }
 
   static determineJointOrder(joints: Joint[], links: Link[]) {
-    const knownJointsIds: string[] =  [];
+    const knownJointsIds: string[] = [];
     let orderNum = 1;
     // pre-condition: Save all the joints as initial Values
-    joints.forEach(j => {
+    joints.forEach((j) => {
       this.initialJointPosMap.set(j.id, [j.x, j.y]);
     });
 
     // 1st: store all ground joints as known joints
-    joints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
-      if (j instanceof PrisJoint) {this.sliderAngleMap.set(j.id, j.angle)}
-      if (!(j.ground)) {return}
+    joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      if (j instanceof PrisJoint) {
+        this.sliderAngleMap.set(j.id, j.angle);
+      }
+      if (!j.ground) {
+        return;
+      }
       knownJointsIds.push(j.id);
     });
     // 2nd: determine joints that neighbor the input joint
-    const inputJointIndex = joints.findIndex(j => {
-      if (!(j instanceof RealJoint)) {return}
+    const inputJointIndex = joints.findIndex((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       return j.input;
     });
     const inputJoint = joints[inputJointIndex];
-    if (!(inputJoint instanceof RealJoint)) {return}
+    if (!(inputJoint instanceof RealJoint)) {
+      return;
+    }
     const tracer_joints: Joint[] = [];
-    inputJoint.connectedJoints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
-      if (j.ground) {return}
+    inputJoint.connectedJoints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      if (j.ground) {
+        return;
+      }
       // if (j.ground && j.constructor !== PrisJoint) {
       //   return;
       // }
@@ -89,34 +103,40 @@ export class PositionSolver {
       knownJointsIds.push(j.id);
       tracer_joints.push(j);
     });
-    tracer_joints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
+    tracer_joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       orderNum = this.detJointOrder(joints, links, j, orderNum, knownJointsIds);
     });
   }
 
   // TODO: Change the names from simJoints, simLinks to just joints and links
   static detJointOrder(joints: Joint[], links: Link[], prevJoint: RealJoint, orderNum: number, knownJointArray: string[]) {
-    prevJoint.connectedJoints.forEach(cur_joint => {
+    prevJoint.connectedJoints.forEach((cur_joint) => {
       if (!(cur_joint instanceof RealJoint)) {
-        return
-      }
-      // TODO: Within future, have a method to determine the index based on list of joints and desired ID
-      if (knownJointArray.findIndex(j_id => j_id === cur_joint.id) !== -1) {
         return;
       }
-      const prev_joint_index = joints.findIndex(j => j.id === prevJoint.id);
+      // TODO: Within future, have a method to determine the index based on list of joints and desired ID
+      if (knownJointArray.findIndex((j_id) => j_id === cur_joint.id) !== -1) {
+        return;
+      }
+      const prev_joint_index = joints.findIndex((j) => j.id === prevJoint.id);
       let connectedToSlider = false;
-      cur_joint.connectedJoints.forEach(j => {
+      cur_joint.connectedJoints.forEach((j) => {
         if (j.constructor === PrisJoint) {
           connectedToSlider = true;
         }
       });
       if (connectedToSlider) {
-        const sliderJoint = cur_joint.connectedJoints.find(j => j.constructor === PrisJoint);
-        if (sliderJoint === undefined) {return}
-        if (!(sliderJoint instanceof PrisJoint)) {return}
-        const sliderJointIndex = joints.findIndex(j => j.id === sliderJoint.id);
+        const sliderJoint = cur_joint.connectedJoints.find((j) => j.constructor === PrisJoint);
+        if (sliderJoint === undefined) {
+          return;
+        }
+        if (!(sliderJoint instanceof PrisJoint)) {
+          return;
+        }
+        const sliderJointIndex = joints.findIndex((j) => j.id === sliderJoint.id);
         this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index, sliderJointIndex]);
         this.desiredAnalysisJointMap.set(cur_joint.id, 'circleLineIntersectionPoints');
         this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
@@ -129,7 +149,7 @@ export class PositionSolver {
           return;
         }
         knownJointArray.push(cur_joint.id);
-        const known_joint_index = joints.findIndex(j => j.id === known_joint.id);
+        const known_joint_index = joints.findIndex((j) => j.id === known_joint.id);
         this.desiredConnectedJointIndicesMap.set(cur_joint.id, [prev_joint_index, known_joint_index]);
         this.desiredAnalysisJointMap.set(cur_joint.id, 'twoCircleIntersectionPoints');
         this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
@@ -137,11 +157,11 @@ export class PositionSolver {
         this.jointDistMap.set(cur_joint.id + ',' + known_joint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, known_joint.x, known_joint.y));
         const desiredTracerJoints = [];
         desiredTracerJoints.push(cur_joint);
-        cur_joint.connectedJoints.forEach(tracer_joint => {
+        cur_joint.connectedJoints.forEach((tracer_joint) => {
           if (!(tracer_joint instanceof RevJoint)) {
-            return
+            return;
           }
-          const cur_joint_index = joints.findIndex(j => j.id === cur_joint.id);
+          const cur_joint_index = joints.findIndex((j) => j.id === cur_joint.id);
           if (tracer_joint instanceof PrisJoint) {
             this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index]);
             this.desiredAnalysisJointMap.set(tracer_joint.id, 'circleLineIntersectionPoints');
@@ -151,19 +171,18 @@ export class PositionSolver {
             this.b_Map.set(tracer_joint.id, tracer_joint.y - this.m_Map.get(tracer_joint.id)! * tracer_joint.x);
             return;
           }
-          const desired_link = links.find(l => {
-            return l.joints.findIndex(l_joint => l_joint.id === prevJoint.id) !== -1 &&
-              l.joints.findIndex(l_joint => l_joint.id === cur_joint.id) !== -1;
+          const desired_link = links.find((l) => {
+            return l.joints.findIndex((l_joint) => l_joint.id === prevJoint.id) !== -1 && l.joints.findIndex((l_joint) => l_joint.id === cur_joint.id) !== -1;
           });
           if (desired_link === undefined) {
-            return
+            return;
           }
-          if (knownJointArray.findIndex(j_id => j_id === tracer_joint.id) !== -1) {
+          if (knownJointArray.findIndex((j_id) => j_id === tracer_joint.id) !== -1) {
             return;
           }
           // tracer joint is not connected on the same link as prev joint and curr joint
           // if (tracer_joint.connectedLinks.findIndex(ll => ll.id === desired_link.id) !== -1) {
-          if (tracer_joint.links.findIndex(ll => ll.id === desired_link.id) === -1) {
+          if (tracer_joint.links.findIndex((ll) => ll.id === desired_link.id) === -1) {
             return;
           }
           // const tracer_joint_index = 0;
@@ -177,7 +196,7 @@ export class PositionSolver {
           this.jointDistMap.set(tracer_joint.id + ',' + cur_joint.id, this.euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y));
           this.jointDistMap.set(cur_joint.id + ',' + prevJoint.id, this.euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y));
         });
-        desiredTracerJoints.forEach(jt => {
+        desiredTracerJoints.forEach((jt) => {
           orderNum = this.detJointOrder(joints, links, jt, orderNum, knownJointArray);
         });
       }
@@ -186,9 +205,9 @@ export class PositionSolver {
   }
 
   static findKnownJoint(joint: RealJoint, prev_joint: Joint, knownJointArray: string[]) {
-    return joint.connectedJoints.find(jt => {
-      const knownJointIndex = knownJointArray.findIndex(j_id => j_id === jt.id);
-      return (knownJointIndex !== -1 && jt.id !== prev_joint.id);
+    return joint.connectedJoints.find((jt) => {
+      const knownJointIndex = knownJointArray.findIndex((j_id) => j_id === jt.id);
+      return knownJointIndex !== -1 && jt.id !== prev_joint.id;
       // return knownJointArray.findIndex(j_id => j_id === jt.id) !== -1 && jt.id !== prev_joint.id;
     });
   }
@@ -197,7 +216,7 @@ export class PositionSolver {
     let counter = 1;
     while (counter <= max_counter) {
       const joint_id = this.jointNumOrderSolverMap.get(counter)!;
-      const joint = joints.find(j => j.id === joint_id)!;
+      const joint = joints.find((j) => j.id === joint_id)!;
       const connected_joint_indices = this.desiredConnectedJointIndicesMap.get(joint_id)!;
       const desired_analysis = this.desiredAnalysisJointMap.get(joint_id)!;
       let possible: boolean = true; // Doesn't need to be defined
@@ -229,7 +248,7 @@ export class PositionSolver {
       }
       counter++;
     }
-    forces.forEach(f => {
+    forces.forEach((f) => {
       this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
       // Logic is backwards
       if (!f.local) {
@@ -245,7 +264,7 @@ export class PositionSolver {
         const startCoord = this.forcePositionMap.get(f.id + 'start')!;
         const endCoord = this.forcePositionMap.get(f.id + 'end')!;
         // TODO: Be sure this function is put within utils
-        const angle = Math.tan((startCoord.y - endCoord.y) / (startCoord.x - endCoord.x ));
+        const angle = Math.tan((startCoord.y - endCoord.y) / (startCoord.x - endCoord.x));
         // this.forceMagnitudeMap.set(f.id + 'x', Math.cos(angle) * absMag);
         // this.forceMagnitudeMap.set(f.id + 'y', Math.cos(angle) * absMag);
       }
@@ -274,7 +293,7 @@ export class PositionSolver {
     this.jointMapPositions.set(inputJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
   }
 
-// https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
+  // https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
   private static twoCircleIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: Joint) {
     let desiredIndex = this.desiredIndexWithinPosAnalysisMap.get(unknownJoint.id);
     if (desiredIndex === undefined || desiredIndex === -1) {
@@ -292,8 +311,7 @@ export class PositionSolver {
     return true;
   }
 
-  private static determineDesiredIndexTwoCircleIntersection(tempJ1: Joint, tempJ2: Joint,
-                                                            tempUnknownJoint: Joint) {
+  private static determineDesiredIndexTwoCircleIntersection(tempJ1: Joint, tempJ2: Joint, tempUnknownJoint: Joint) {
     const sols = this.TwoCircleIntersectionMethod(tempJ1, tempJ2, tempUnknownJoint);
     if (sols === false || sols === undefined) {
       return -1;
@@ -301,11 +319,9 @@ export class PositionSolver {
     if (sols.length === 1) {
       return 0; // index is 0;
     }
-    const intersection1Diff = (Math.abs(Math.sqrt(Math.pow(sols[0][0] - tempUnknownJoint.x, 2)
-      + Math.pow(sols[0][1] - tempUnknownJoint.y, 2))));
-    const intersection2Diff = (Math.abs(Math.sqrt(Math.pow(sols[1][0] - tempUnknownJoint.x, 2)
-      + Math.pow(sols[1][1] - tempUnknownJoint.y, 2))));
-    return intersection1Diff < intersection2Diff ?  0 : 1;
+    const intersection1Diff = Math.abs(Math.sqrt(Math.pow(sols[0][0] - tempUnknownJoint.x, 2) + Math.pow(sols[0][1] - tempUnknownJoint.y, 2)));
+    const intersection2Diff = Math.abs(Math.sqrt(Math.pow(sols[1][0] - tempUnknownJoint.x, 2) + Math.pow(sols[1][1] - tempUnknownJoint.y, 2)));
+    return intersection1Diff < intersection2Diff ? 0 : 1;
   }
 
   private static TwoCircleIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: Joint) {
@@ -319,7 +335,9 @@ export class PositionSolver {
     const y0 = this.jointMapPositions.get(j1.id)![1];
     const x1 = this.jointMapPositions.get(j2.id)![0];
     const y1 = this.jointMapPositions.get(j2.id)![1];
-    if (x0 === undefined || y0 === undefined) {return}
+    if (x0 === undefined || y0 === undefined) {
+      return;
+    }
     const r0 = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
     const r1 = this.jointDistMap.get(unknownJoint.id + ',' + j2.id)!;
     let dx = x1 - x0;
@@ -330,7 +348,7 @@ export class PositionSolver {
       return false;
     }
 
-// One circle completely inside the other
+    // One circle completely inside the other
     if (d < Math.abs(r0 - r1)) {
       return false;
     }
@@ -356,10 +374,13 @@ export class PositionSolver {
     const p1y = py - h * dx;
     const p2x = px - h * dy;
     const p2y = py + h * dx;
-    return [[p1x, p1y], [p2x, p2y]];
+    return [
+      [p1x, p1y],
+      [p2x, p2y],
+    ];
   }
 
-// https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
+  // https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
   private static circleLineIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: Joint) {
     if (!this.desiredIndexWithinPosAnalysisMap.has(unknownJoint.id)) {
       this.desiredIndexWithinPosAnalysisMap.set(unknownJoint.id, this.determineDesiredIndexCircleLineIntersection(j1, j2, unknownJoint));
@@ -378,13 +399,13 @@ export class PositionSolver {
       a_temp = 1;
       b_temp = -2 * curr_known_y;
       c_temp = Math.pow(curr_known_y, 2) + Math.pow(curr_known_x - curr_unknown_x, 2) - Math.pow(r, 2);
-      d_temp = Math.pow(b_temp, 2) - (4 * a_temp * c_temp);
+      d_temp = Math.pow(b_temp, 2) - 4 * a_temp * c_temp;
       // utilize quadratic formula to solve for both y values
       if (d_temp < 0) {
         return false;
       }
-      y_1 = (-b_temp + Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp);
-      y_2 = (-b_temp - Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp);
+      y_1 = (-b_temp + Math.sqrt(Math.pow(b_temp, 2) - 4 * a_temp * c_temp)) / (2 * a_temp);
+      y_2 = (-b_temp - Math.sqrt(Math.pow(b_temp, 2) - 4 * a_temp * c_temp)) / (2 * a_temp);
 
       // y_1 = Math.abs((-b_temp + Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp));
       // y_2 = Math.abs((-b_temp - Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp));
@@ -399,8 +420,8 @@ export class PositionSolver {
       if (d >= 0) {
         const sign = desiredIndex === 0 ? 1 : -1;
         x = (-b + sign * Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
-        const vertical_line = 90 * Math.PI / 180;
-        const horizontal_line = 180 * Math.PI / 180;
+        const vertical_line = (90 * Math.PI) / 180;
+        const horizontal_line = (180 * Math.PI) / 180;
         // TODO: Have map for determining m
         // const m = Math.tan(unknownJoint.angle);
         const m = this.m_Map.get(unknownJoint.id)!;
@@ -422,8 +443,8 @@ export class PositionSolver {
     const [a, b, c, _] = this.circleLineIntersectionMethod(j1, j2, unknownJoint);
     // const x_1 = Math.abs((-b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
     // const x_2 = Math.abs((-b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
-    const x_1 = ((-b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
-    const x_2 = ((-b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
+    const x_1 = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
+    const x_2 = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
     // TODO: have map for determining m
     const m = this.m_Map.get(unknownJoint.id)!;
     // const m = Math.sin(unknownJoint.angle) / Math.cos(unknownJoint.angle);
@@ -432,10 +453,12 @@ export class PositionSolver {
     // const b_intersect = unknownJoint.yInitial - m * unknownJoint.xInitial;
     const y_1 = m * x_1 + b_intersect;
     const y_2 = m * x_2 + b_intersect;
-    const intersection1Diff = Math.sqrt(Math.pow(x_1 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) +
-      Math.pow(y_1 - this.initialJointPosMap.get(unknownJoint.id)![1], 2));
-    const intersection2Diff = Math.sqrt(Math.pow(x_2 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) +
-      Math.pow(y_2 - this.initialJointPosMap.get(unknownJoint.id)![1], 2));
+    const intersection1Diff = Math.sqrt(
+      Math.pow(x_1 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) + Math.pow(y_1 - this.initialJointPosMap.get(unknownJoint.id)![1], 2)
+    );
+    const intersection2Diff = Math.sqrt(
+      Math.pow(x_2 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) + Math.pow(y_2 - this.initialJointPosMap.get(unknownJoint.id)![1], 2)
+    );
     return intersection1Diff < intersection2Diff ? 0 : 1;
   }
 
@@ -476,11 +499,11 @@ export class PositionSolver {
     // const n = j2.y;
     // get a, b, c values
     const a = 1 + Math.pow(m, 2);
-    const b = -h * 2 + (m * (n - k)) * 2;
+    const b = -h * 2 + m * (n - k) * 2;
     const c = Math.pow(h, 2) + Math.pow(n - k, 2) - Math.pow(r, 2);
 
     // get discriminant
-    const d = Math.pow(b, 2) - (4 * a * c);
+    const d = Math.pow(b, 2) - 4 * a * c;
     return [a, b, c, d];
   }
 
@@ -489,7 +512,7 @@ export class PositionSolver {
   //   return Math.round(num * 10000) / 10000;
   // }
 
-// https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
+  // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
   private static determineTracerJoint(lastJoint: Joint, joint_with_neighboring_ground: Joint, unknown_joint: Joint) {
     let r1, r2, r3, internal_angle: number;
     if (!this.internalTriangleValuesMap.has(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)) {
@@ -498,8 +521,7 @@ export class PositionSolver {
       r2 = this.jointDistMap.get(unknown_joint.id + ',' + joint_with_neighboring_ground.id)!;
       r3 = this.jointDistMap.get(joint_with_neighboring_ground.id + ',' + lastJoint.id)!;
       internal_angle = Math.acos((Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3));
-      this.internalTriangleValuesMap.set(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id,
-        [r1, internal_angle]);
+      this.internalTriangleValuesMap.set(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id, [r1, internal_angle]);
     }
 
     r1 = this.internalTriangleValuesMap.get(lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id)![0];
@@ -515,26 +537,32 @@ export class PositionSolver {
     let y_calc1: number;
     let x_calc2: number;
     let y_calc2: number;
-    if (x1 > x2) { // A to the right of B
-      if (y1 > y2) { // A on top of B (good)
-        x_calc1 = x1 + r1 * Math.cos( (Math.PI) + (internal_angle + (Math.PI + angle)));
-        y_calc1 = y1 + r1 * Math.sin( (Math.PI) + (internal_angle + (Math.PI + angle)));
-        x_calc2 = x1 + r1 * Math.cos((Math.PI) - (internal_angle - (Math.PI + angle)));
-        y_calc2 = y1 + r1 * Math.sin((Math.PI) - (internal_angle - (Math.PI + angle)));
-      } else { // A below B (good)
-        x_calc1 = x1 + r1 * Math.cos((Math.PI) + (internal_angle - (Math.PI - angle)));
-        y_calc1 = y1 + r1 * Math.sin((Math.PI) + (internal_angle - (Math.PI - angle)));
+    if (x1 > x2) {
+      // A to the right of B
+      if (y1 > y2) {
+        // A on top of B (good)
+        x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle + (Math.PI + angle)));
+        y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle + (Math.PI + angle)));
+        x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle - (Math.PI + angle)));
+        y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle - (Math.PI + angle)));
+      } else {
+        // A below B (good)
+        x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle - (Math.PI - angle)));
+        y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle - (Math.PI - angle)));
         x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle + (Math.PI - angle)));
         y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle + (Math.PI - angle)));
       }
-    } else { // A to the left of B
-      if (y1 > y2) { // A on top of B (good)
-        x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (Math.abs(angle) + internal_angle));
-        y_calc1 = y1 + r1 * Math.sin((2 * Math.PI) - (Math.abs(angle) + internal_angle));
+    } else {
+      // A to the left of B
+      if (y1 > y2) {
+        // A on top of B (good)
+        x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (Math.abs(angle) + internal_angle));
+        y_calc1 = y1 + r1 * Math.sin(2 * Math.PI - (Math.abs(angle) + internal_angle));
         x_calc2 = x1 + r1 * Math.cos(internal_angle - Math.abs(angle));
         y_calc2 = y1 + r1 * Math.sin(internal_angle - Math.abs(angle));
-      } else { // A below B (good)
-        x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (angle - internal_angle));
+      } else {
+        // A below B (good)
+        x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (angle - internal_angle));
         y_calc1 = y1 + r1 * Math.sin(angle - internal_angle);
         x_calc2 = x1 + r1 * Math.cos(internal_angle + angle);
         y_calc2 = y1 + r1 * Math.sin(internal_angle + angle);
@@ -556,7 +584,7 @@ export class PositionSolver {
   }
 
   static setUpSolvingForces(forces: Force[]) {
-    forces.forEach(f => {
+    forces.forEach((f) => {
       const joint1 = f.link.joints[0];
       const joint2 = f.link.joints[1];
       PositionSolver.jointDistMap.set(f.id + 'start' + ',' + joint1.id, PositionSolver.euclideanDistance(f.startCoord.x, f.startCoord.y, joint1.x, joint1.y));
@@ -564,7 +592,6 @@ export class PositionSolver {
       PositionSolver.jointDistMap.set(f.id + 'end' + ',' + joint1.id, PositionSolver.euclideanDistance(f.endCoord.x, f.endCoord.y, joint1.x, joint1.y));
       PositionSolver.jointDistMap.set(f.id + 'end' + ',' + joint2.id, PositionSolver.euclideanDistance(f.endCoord.x, f.endCoord.y, joint2.x, joint2.y));
       PositionSolver.jointDistMap.set(joint1.id + ',' + joint2.id, PositionSolver.euclideanDistance(joint1.x, joint1.y, joint2.x, joint2.y));
-
     });
   }
 
@@ -574,11 +601,10 @@ export class PositionSolver {
     if (!this.internalTriangleValuesMap.has(joint.id + joint2.id + force.id + startOrEnd)) {
       // TODO: Have map for determining r1, r2, r3
       r1 = this.jointDistMap.get(force.id + startOrEnd + ',' + joint.id)!;
-      r2 = this.jointDistMap.get(force.id + startOrEnd  + ',' + joint2.id)!;
+      r2 = this.jointDistMap.get(force.id + startOrEnd + ',' + joint2.id)!;
       r3 = this.jointDistMap.get(joint.id + ',' + joint2.id)!;
       internal_angle = Math.acos((Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3));
-      this.internalTriangleValuesMap.set(joint.id + joint2.id + startOrEnd,
-        [r1, internal_angle]);
+      this.internalTriangleValuesMap.set(joint.id + joint2.id + startOrEnd, [r1, internal_angle]);
     }
 
     r1 = this.internalTriangleValuesMap.get(joint.id + joint2.id + startOrEnd)![0];
@@ -594,26 +620,32 @@ export class PositionSolver {
     let y_calc1: number;
     let x_calc2: number;
     let y_calc2: number;
-    if (x1 > x2) { // A to the right of B
-      if (y1 > y2) { // A on top of B (good)
-        x_calc1 = x1 + r1 * Math.cos( (Math.PI) + (internal_angle + (Math.PI + angle)));
-        y_calc1 = y1 + r1 * Math.sin( (Math.PI) + (internal_angle + (Math.PI + angle)));
-        x_calc2 = x1 + r1 * Math.cos((Math.PI) - (internal_angle - (Math.PI + angle)));
-        y_calc2 = y1 + r1 * Math.sin((Math.PI) - (internal_angle - (Math.PI + angle)));
-      } else { // A below B (good)
-        x_calc1 = x1 + r1 * Math.cos((Math.PI) + (internal_angle - (Math.PI - angle)));
-        y_calc1 = y1 + r1 * Math.sin((Math.PI) + (internal_angle - (Math.PI - angle)));
+    if (x1 > x2) {
+      // A to the right of B
+      if (y1 > y2) {
+        // A on top of B (good)
+        x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle + (Math.PI + angle)));
+        y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle + (Math.PI + angle)));
+        x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle - (Math.PI + angle)));
+        y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle - (Math.PI + angle)));
+      } else {
+        // A below B (good)
+        x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle - (Math.PI - angle)));
+        y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle - (Math.PI - angle)));
         x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle + (Math.PI - angle)));
         y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle + (Math.PI - angle)));
       }
-    } else { // A to the left of B
-      if (y1 > y2) { // A on top of B (good)
-        x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (Math.abs(angle) + internal_angle));
-        y_calc1 = y1 + r1 * Math.sin((2 * Math.PI) - (Math.abs(angle) + internal_angle));
+    } else {
+      // A to the left of B
+      if (y1 > y2) {
+        // A on top of B (good)
+        x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (Math.abs(angle) + internal_angle));
+        y_calc1 = y1 + r1 * Math.sin(2 * Math.PI - (Math.abs(angle) + internal_angle));
         x_calc2 = x1 + r1 * Math.cos(internal_angle - Math.abs(angle));
         y_calc2 = y1 + r1 * Math.sin(internal_angle - Math.abs(angle));
-      } else { // A below B (good)
-        x_calc1 = x1 + r1 * Math.cos((2 * Math.PI) - (angle - internal_angle));
+      } else {
+        // A below B (good)
+        x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (angle - internal_angle));
         y_calc1 = y1 + r1 * Math.sin(angle - internal_angle);
         x_calc2 = x1 + r1 * Math.cos(internal_angle + angle);
         y_calc2 = y1 + r1 * Math.sin(internal_angle + angle);

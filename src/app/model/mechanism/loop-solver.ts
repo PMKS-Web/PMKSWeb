@@ -1,16 +1,24 @@
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
-import {Link} from "../link";
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
+import { Link } from '../link';
 
 export class LoopSolver {
   static determineLoops(joints: Joint[], links: Link[]): [string[], string[]] {
     let allLoops: string[] = [];
     let requiredLoops: string[] = [];
     const groundJoints: Joint[] = [];
-    joints.forEach(j => {
-      if (!(j instanceof RealJoint) || (!j.ground)) {return}
-      if (j.input || j.connectedJoints.findIndex(jt => {
-        if (!(jt instanceof RealJoint)) {return}
-        jt.input}) !== -1) {
+    joints.forEach((j) => {
+      if (!(j instanceof RealJoint) || !j.ground) {
+        return;
+      }
+      if (
+        j.input ||
+        j.connectedJoints.findIndex((jt) => {
+          if (!(jt instanceof RealJoint)) {
+            return;
+          }
+          jt.input;
+        }) !== -1
+      ) {
         groundJoints.unshift(j);
       } else {
         groundJoints.push(j);
@@ -22,10 +30,11 @@ export class LoopSolver {
     // find loops from one ground joint to another ground joint
     while (groundJoints.length >= 2) {
       const desiredGround = groundJoints.shift()!;
-      if (!(desiredGround instanceof RealJoint)) {continue}
-      desiredGround.connectedJoints.forEach(cj => {
-        const [validLoops, requiredSubLoops] = this.findGround(cj, groundJoints, cj.id,
-          desiredGround.id + cj.id, [], [], desiredGround.input);
+      if (!(desiredGround instanceof RealJoint)) {
+        continue;
+      }
+      desiredGround.connectedJoints.forEach((cj) => {
+        const [validLoops, requiredSubLoops] = this.findGround(cj, groundJoints, cj.id, desiredGround.id + cj.id, [], [], desiredGround.input);
         allLoops = allLoops.concat(validLoops);
         requiredLoops = requiredLoops.concat(requiredSubLoops);
       });
@@ -36,12 +45,12 @@ export class LoopSolver {
     const links_determined_map = new Map<number, number>();
     const joints_to_link_determined = new Map<string, number>();
     const deleteLoop: string[] = [];
-    requiredLoops.forEach(loop => {
+    requiredLoops.forEach((loop) => {
       let prevLinkIndex: number;
       let currLinkIndex: number;
       for (let i = 0; i < loop.length - 2; i++) {
         if (!joints_to_link_determined.has(loop[i] + loop[i + 1])) {
-          const link_index = links.findIndex(cur_link => cur_link.id.includes(loop[i]) && cur_link.id.includes(loop[i + 1]));
+          const link_index = links.findIndex((cur_link) => cur_link.id.includes(loop[i]) && cur_link.id.includes(loop[i + 1]));
           joints_to_link_determined.set(loop[i] + loop[i + 1], link_index);
         }
         if (i === 0) {
@@ -61,8 +70,8 @@ export class LoopSolver {
         links_known_count++;
       }
     });
-    deleteLoop.forEach(loop => {
-      requiredLoops = requiredLoops.filter(e => e !== loop);
+    deleteLoop.forEach((loop) => {
+      requiredLoops = requiredLoops.filter((e) => e !== loop);
     });
     if (links_known_count === links_num) {
       return [allLoops, requiredLoops];
@@ -70,7 +79,7 @@ export class LoopSolver {
     // Add necessary loops from allLoops into requiredLoops
     // 1st: Use Loops where input joint is first
     const temp_all_loops: string[] = [];
-    allLoops.forEach(loop => {
+    allLoops.forEach((loop) => {
       if (loop[0] === requiredLoops[0][0]) {
         temp_all_loops.push(loop);
       }
@@ -86,7 +95,7 @@ export class LoopSolver {
       if (a[1] === b[1]) {
         return 0;
       } else {
-        return (a[1] < b[1]) ? -1 : 1;
+        return a[1] < b[1] ? -1 : 1;
       }
     }
     // 3rd: Go through sorted array and add new loops to requiredLoops
@@ -97,7 +106,7 @@ export class LoopSolver {
         if (joints_to_link_determined.has(loop[index] + loop[index + 1])) {
           continue;
         }
-        const link_index = links.findIndex(cur_link => cur_link.id.includes(loop[index]) && cur_link.id.includes(loop[index + 1]));
+        const link_index = links.findIndex((cur_link) => cur_link.id.includes(loop[index]) && cur_link.id.includes(loop[index + 1]));
         joints_to_link_determined.set(loop[index] + loop[index + 1], 1); // doesn't matter what the second number is
         if (links_determined_map.has(link_index)) {
           continue;
@@ -118,12 +127,23 @@ export class LoopSolver {
     return [allLoops, requiredLoops];
   }
 
-// Searches through neighboring joints until ground joint is found
-  private static findGround(joint: Joint, groundJoints: Joint[], linkPath: string, path: string, allFoundLoops: string[],
-                            requiredLoops: string[], storeJointPath: boolean): [string[], string[]] {
-    if (!(joint instanceof RealJoint)) {return [allFoundLoops, requiredLoops]}
-    joint.connectedJoints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
+  // Searches through neighboring joints until ground joint is found
+  private static findGround(
+    joint: Joint,
+    groundJoints: Joint[],
+    linkPath: string,
+    path: string,
+    allFoundLoops: string[],
+    requiredLoops: string[],
+    storeJointPath: boolean
+  ): [string[], string[]] {
+    if (!(joint instanceof RealJoint)) {
+      return [allFoundLoops, requiredLoops];
+    }
+    joint.connectedJoints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       if (linkPath.includes(j.id)) {
         return;
       }
@@ -132,18 +152,17 @@ export class LoopSolver {
           return;
         }
         if (storeJointPath) {
-          const currentPathLoop = requiredLoops.find(loop => loop[loop.length - 2] === j.id);
+          const currentPathLoop = requiredLoops.find((loop) => loop[loop.length - 2] === j.id);
           if (currentPathLoop === undefined) {
             requiredLoops.push(path + j.id + path[0]);
-          } else if (currentPathLoop.length > (path.length + 2)) {
+          } else if (currentPathLoop.length > path.length + 2) {
             requiredLoops.splice(requiredLoops.indexOf(currentPathLoop), 1);
             requiredLoops.push(path + j.id + path[0]);
           }
         }
         allFoundLoops.push(path + j.id + path[0]);
       } else {
-        [allFoundLoops, requiredLoops] = this.findGround(j, groundJoints, linkPath + j.id, path + j.id,
-          allFoundLoops, requiredLoops, storeJointPath);
+        [allFoundLoops, requiredLoops] = this.findGround(j, groundJoints, linkPath + j.id, path + j.id, allFoundLoops, requiredLoops, storeJointPath);
       }
     });
     return [allFoundLoops, requiredLoops];

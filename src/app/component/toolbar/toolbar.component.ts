@@ -1,17 +1,17 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
-import {Bound, Link, Piston, RealLink} from "../../model/link";
-import {Force} from "../../model/force";
-import {Mechanism} from "../../model/mechanism/mechanism";
-import {roundNumber, splitURLInfo, stringToBoolean, stringToFloat, stringToShape} from "../../model/utils";
-import {ForceSolver} from "../../model/mechanism/force-solver";
-import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
-import {GridComponent} from "../grid/grid.component";
-import {LinkageTableComponent} from "../linkage-table/linkage-table.component";
-import {AnalysisPopupComponent} from "../analysis-popup/analysis-popup.component";
-import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
-import {Coord} from "../../model/coord";
-import {TemplatesPopupComponent} from "../templates-popup/templates-popup.component";
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
+import { Bound, Link, Piston, RealLink } from '../../model/link';
+import { Force } from '../../model/force';
+import { Mechanism } from '../../model/mechanism/mechanism';
+import { roundNumber, splitURLInfo, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
+import { ForceSolver } from '../../model/mechanism/force-solver';
+import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { GridComponent } from '../grid/grid.component';
+import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
+import { AnalysisPopupComponent } from '../analysis-popup/analysis-popup.component';
+import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
+import { Coord } from '../../model/coord';
+import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 const parseCSV = require('papaparse');
@@ -19,7 +19,7 @@ const parseCSV = require('papaparse');
 @Component({
   selector: 'app-toolbar',
   templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.scss']
+  styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
   animate: boolean = false;
@@ -39,28 +39,32 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   // TODO: If possible, change this to static variable...
   localUnit = {
     // selectedUnit: 'Metric'
-    selectedUnit: 'cm'
+    selectedUnit: 'cm',
   };
 
   localUnits = [
-    {id: 'cm', label: 'cm'},
-    {id: 'm', label: 'm'},
+    { id: 'cm', label: 'cm' },
+    { id: 'm', label: 'm' },
     // { id: 'km', label: 'km'},
     // { id: 'in', label: 'in'},
     // { id: 'ft', label: 'ft'}
     // { id: 'Metric', label: 'Metric'},
     // { id: 'English', label: 'English'}
   ];
-window: any;
-url: any;
+  window: any;
+  url: any;
 
-  constructor(private activeObjService: ActiveObjService) { }
+  constructor(private activeObjService: ActiveObjService) {}
 
   ngOnInit(): void {
     const settingsPropsString = splitURLInfo('&s=');
-    if (!(typeof settingsPropsString === 'string')) {return}
+    if (!(typeof settingsPropsString === 'string')) {
+      return;
+    }
     const settingsPropsArray = settingsPropsString.split(',');
-    if (settingsPropsArray.length === 0) {return}
+    if (settingsPropsArray.length === 0) {
+      return;
+    }
     const input_speed_mag = stringToFloat(settingsPropsArray[0]);
     const clockwise = stringToBoolean(settingsPropsArray[1]);
     const gravity = stringToBoolean(settingsPropsArray[2]);
@@ -179,8 +183,7 @@ url: any;
       case 'force':
         ForceSolver.resetVariables();
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
-          ToolbarComponent.gravity, ToolbarComponent.unit);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'stress':
         break;
@@ -191,7 +194,7 @@ url: any;
         // Be sure to include IC method
         break;
       default:
-        return
+        return;
     }
     AnalysisPopupComponent.showAnalysis(analysisType);
   }
@@ -286,7 +289,9 @@ url: any;
           continue;
         }
 
-        if (!parsing) { continue; }
+        if (!parsing) {
+          continue;
+        }
         switch (currentParseMode) {
           case 'joint':
             try {
@@ -299,14 +304,16 @@ url: any;
               // const coeff_of_friction = stringToFloat(line[7]);
               const input = stringToBoolean(line[7]);
 
-              let newJoint: RealJoint
+              let newJoint: RealJoint;
               switch (type) {
                 case 'R':
                   newJoint = new RevJoint(id, x, y, input, ground);
                   break;
                 case 'P':
                   newJoint = new PrisJoint(id, x, y, input, ground);
-                  if (!(newJoint instanceof PrisJoint)) {return;}
+                  if (!(newJoint instanceof PrisJoint)) {
+                    return;
+                  }
                   const angle = stringToFloat(line[6]);
                   newJoint.angle = angle;
                   break;
@@ -330,9 +337,11 @@ url: any;
               const mass = stringToFloat(line[2]);
               let joints: RealJoint[] = [];
               const jointIDArray = line[6].split(',');
-              jointIDArray.forEach(jointID => {
-                const joint = jointArray.find(jt => jt.id === jointID)!;
-                if (!(joint instanceof RealJoint)) {return}
+              jointIDArray.forEach((jointID) => {
+                const joint = jointArray.find((jt) => jt.id === jointID)!;
+                if (!(joint instanceof RealJoint)) {
+                  return;
+                }
                 // TODO: Maybe put check here to see if they got a joint
                 joints.push(joint);
               });
@@ -355,13 +364,13 @@ url: any;
                   const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
                   const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
                   const arrow = new Coord(arrow_x, arrow_y);
-                  const bound = new class implements Bound {
+                  const bound = new (class implements Bound {
                     arrow: Coord = arrow;
                     b1: Coord = b1;
                     b2: Coord = b2;
                     b3: Coord = b3;
                     b4: Coord = b4;
-                  };
+                  })();
                   newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
                   break;
                 case 'P':
@@ -381,7 +390,7 @@ url: any;
                   joints[next_j_index].connectedJoints.push(joints[j_index]);
                 }
               }
-              joints.forEach(j => {
+              joints.forEach((j) => {
                 j.links.push(newLink);
               });
               linkArray.push(newLink);
@@ -395,9 +404,13 @@ url: any;
             try {
               const id = line[0];
               const linkId = line[1];
-              const link = linkArray.find(l => {return l.id === linkId;});
+              const link = linkArray.find((l) => {
+                return l.id === linkId;
+              });
               // if (!link) { throw new Error('link referenced in force does not exist'); }
-              if (!(link instanceof RealLink)) {return}
+              if (!(link instanceof RealLink)) {
+                return;
+              }
               const start = new Coord(stringToFloat(line[2]), stringToFloat(line[3]));
               const end = new Coord(stringToFloat(line[4]), stringToFloat(line[5]));
               const global = stringToBoolean(line[6]);
@@ -437,7 +450,6 @@ url: any;
             break;
           case 'threePosition':
             try {
-
             } catch (e) {
               console.error(line);
               console.error(e);
@@ -446,7 +458,6 @@ url: any;
             break;
           case 'gearSynthesis':
             try {
-
             } catch (e) {
               console.error(line);
               console.error(e);
@@ -491,12 +502,14 @@ url: any;
     //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
     let content = '';
     content += `j=`;
-    GridComponent.joints.forEach(joint => {
-      if (!(joint instanceof RealJoint)) {return}
+    GridComponent.joints.forEach((joint) => {
+      if (!(joint instanceof RealJoint)) {
+        return;
+      }
       content += `${joint.id},`;
       content += `${roundNumber(joint.x, 3)},`;
       content += `${roundNumber(joint.y, 3)},`;
-      const relatedLinkIDs = joint.links.map(link => {
+      const relatedLinkIDs = joint.links.map((link) => {
         return link.id;
       });
       content += `${relatedLinkIDs.join('|')},`;
@@ -523,33 +536,36 @@ url: any;
       // }
       content += `${joint.ground ? 't' : 'f'},`;
       // result += `${joint.coeffFriction},`;
-      if (joint instanceof PrisJoint) {content += `${joint.angle},`;}
-      else {content += `Null,`;}
+      if (joint instanceof PrisJoint) {
+        content += `${joint.angle},`;
+      } else {
+        content += `Null,`;
+      }
       content += `${joint.input ? 't' : 'f'}`;
 
       // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
       content += '\n';
     });
     content += `&l=`;
-    GridComponent.links.forEach(link => {
+    GridComponent.links.forEach((link) => {
       content += `${link.id},`;
-      content += (!(link instanceof RealLink)) ? `P,` : `R,`;
+      content += !(link instanceof RealLink) ? `P,` : `R,`;
       // if (!(link instanceof RealLink)) {return}
       // content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
       content += `${link.mass},`;
-      content += (!(link instanceof RealLink)) ? `Null,` : `${link.massMoI},`;
-      content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.x},`;
-      content += (!(link instanceof RealLink)) ? `Null,` : `${link.CoM.y},`;
-      const relatedJointIDs = link.joints.map(joint => {
+      content += !(link instanceof RealLink) ? `Null,` : `${link.massMoI},`;
+      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.x},`;
+      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.y},`;
+      const relatedJointIDs = link.joints.map((joint) => {
         return joint.id;
       });
-      const relatedForceIDs = link.forces.map(force => {
+      const relatedForceIDs = link.forces.map((force) => {
         return force.id;
       });
 
       content += `${relatedJointIDs.join('|')},`;
       content += `${relatedForceIDs.join('|')},`;
-      content += (!(link instanceof RealLink)) ? `Null,` : `${link.shape},`;
+      content += !(link instanceof RealLink) ? `Null,` : `${link.shape},`;
       if (!(link instanceof RealLink)) {
         content += `Null,`;
         content += `Null,`;
@@ -571,7 +587,7 @@ url: any;
     });
 
     content += `&f=`;
-    GridComponent.forces.forEach(force => {
+    GridComponent.forces.forEach((force) => {
       content += `${force.id},`;
       content += `${force.link.id},`;
       content += `${roundNumber(force.startCoord.x, 3)},`;
@@ -626,17 +642,26 @@ url: any;
 
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
-    const content = this.generateExportFile(GridComponent.joints, GridComponent.links, GridComponent.forces,
-      [], [], ToolbarComponent.inputAngularVelocity, ToolbarComponent.clockwise,
-      ToolbarComponent.gravity, ToolbarComponent.unit);
+    const content = this.generateExportFile(
+      GridComponent.joints,
+      GridComponent.links,
+      GridComponent.forces,
+      [],
+      [],
+      ToolbarComponent.inputAngularVelocity,
+      ToolbarComponent.clockwise,
+      ToolbarComponent.gravity,
+      ToolbarComponent.unit
+    );
 
-    const blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const fileName = `PMKS+_${new Date().toISOString()}.csv`;
     // if (navigator.msSaveBlob) { // IE 10+
     //   navigator.msSaveBlob(blob, fileName);
     // } else {
     const link = document.createElement('a');
-    if (link.download !== undefined) { // feature detection
+    if (link.download !== undefined) {
+      // feature detection
       // Browsers that support HTML5 download attribute
       // fake an <a> to click on
       const url = URL.createObjectURL(blob);
@@ -650,9 +675,7 @@ url: any;
     }
   }
 
-  merge() {
-
-  }
+  merge() {}
 
   getURL(): string {
     const protocol = window.location.protocol;
@@ -673,17 +696,27 @@ url: any;
     document.body.removeChild(toolman);
   }
 
-  generateExportURL(jointArray: Joint[], linkArray: Link[], forceArray: Force[], pathPointArray: any,
-                    threePositionArray: any,  angularVelocity: number, clockwise: boolean,
-                    gravityBool: boolean, unit: string): string {
+  generateExportURL(
+    jointArray: Joint[],
+    linkArray: Link[],
+    forceArray: Force[],
+    pathPointArray: any,
+    threePositionArray: any,
+    angularVelocity: number,
+    clockwise: boolean,
+    gravityBool: boolean,
+    unit: string
+  ): string {
     let result = '';
     result += `j=`;
-    jointArray.forEach(joint => {
-      if (!(joint instanceof RealJoint)) {return}
+    jointArray.forEach((joint) => {
+      if (!(joint instanceof RealJoint)) {
+        return;
+      }
       result += `${joint.id},`;
       result += `${roundNumber(joint.x, 3)},`;
       result += `${roundNumber(joint.y, 3)},`;
-      const relatedLinkIDs = joint.links.map(link => {
+      const relatedLinkIDs = joint.links.map((link) => {
         return link.id;
       });
       result += `${relatedLinkIDs.join('|')},`;
@@ -709,7 +742,9 @@ url: any;
       //     break;
       // }
       result += `${joint.ground ? 't' : 'f'},`;
-      if (joint instanceof PrisJoint) {result += `${joint.angle},`;}
+      if (joint instanceof PrisJoint) {
+        result += `${joint.angle},`;
+      }
       // result += `${joint.coeffFriction},`;
       result += `${joint.input ? 't' : 'f'},`;
 
@@ -717,17 +752,19 @@ url: any;
       result += '\n';
     });
     result += `&l=`;
-    linkArray.forEach(link => {
-      if (!(link instanceof RealLink)) {return}
+    linkArray.forEach((link) => {
+      if (!(link instanceof RealLink)) {
+        return;
+      }
       result += `${link.id},`;
       result += `${link.mass},`;
       result += `${link.massMoI},`;
       result += `${link.CoM.x},`;
       result += `${link.CoM.y},`;
-      const relatedJointIDs = link.joints.map(joint => {
+      const relatedJointIDs = link.joints.map((joint) => {
         return joint.id;
       });
-      const relatedForceIDs = link.forces.map(force => {
+      const relatedForceIDs = link.forces.map((force) => {
         return force.id;
       });
 
@@ -737,7 +774,7 @@ url: any;
       // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
       const bounds = link.bound;
       const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      keyArray.forEach(eid => {
+      keyArray.forEach((eid) => {
         result += `,${roundNumber(eid.x, 3)}`;
         result += `,${roundNumber(eid.y, 3)}`;
       });
@@ -745,7 +782,7 @@ url: any;
     });
 
     result += `&f=`;
-    forceArray.forEach(force => {
+    forceArray.forEach((force) => {
       result += `${force.id},`;
       result += `${force.link.id},`;
       result += `${roundNumber(force.startCoord.x, 3)},`;
@@ -777,18 +814,28 @@ url: any;
     return result;
   }
 
-  generateExportFile(jointArray: Joint[], linkArray: Link[], forceArray: Force[], pathPointArray: any,
-                     threePositionArray: any,  input_speed_mag: number, clockwise: boolean,
-                     gravity: boolean, unit: string): string {
+  generateExportFile(
+    jointArray: Joint[],
+    linkArray: Link[],
+    forceArray: Force[],
+    pathPointArray: any,
+    threePositionArray: any,
+    input_speed_mag: number,
+    clockwise: boolean,
+    gravity: boolean,
+    unit: string
+  ): string {
     let result = '';
     result += 'joints\n';
     result += 'id,x,y,links,type,ground,angle,input\n';
-    jointArray.forEach(joint => {
-      if (!(joint instanceof RealJoint)) {return}
+    jointArray.forEach((joint) => {
+      if (!(joint instanceof RealJoint)) {
+        return;
+      }
       result += `${joint.id},`;
       result += `${joint.x},`;
       result += `${joint.y},`;
-      const relatedLinkIDs = joint.links.map(link => {
+      const relatedLinkIDs = joint.links.map((link) => {
         return link.id;
       });
       result += `${relatedLinkIDs.join('|')},`;
@@ -808,7 +855,9 @@ url: any;
           result += `Null,`;
           break;
         case PrisJoint:
-          if (!(joint instanceof PrisJoint)) {return}
+          if (!(joint instanceof PrisJoint)) {
+            return;
+          }
           result += `${joint.angle},`;
           break;
         default:
@@ -825,20 +874,22 @@ url: any;
 
     let relatedJointIDs: any;
     let relatedForceIDs: any;
-    linkArray.forEach(link => {
+    linkArray.forEach((link) => {
       switch (link.constructor) {
         case RealLink:
-          if (!(link instanceof RealLink)) {return}
+          if (!(link instanceof RealLink)) {
+            return;
+          }
           result += `${link.id},`;
           result += `R,`;
           result += `${link.mass},`;
           result += `${link.massMoI},`;
           result += `${link.CoM.x},`;
           result += `${link.CoM.y},`;
-          relatedJointIDs = link.joints.map(joint => {
+          relatedJointIDs = link.joints.map((joint) => {
             return joint.id;
           });
-          relatedForceIDs = link.forces.map(force => {
+          relatedForceIDs = link.forces.map((force) => {
             return force.id;
           });
           result += `"${relatedJointIDs.join(',')}",`;
@@ -846,24 +897,26 @@ url: any;
           result += `${link.shape}`;
           const bounds = link.bound;
           const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-          keyArray.forEach(eid => {
+          keyArray.forEach((eid) => {
             result += `,${eid.x}`;
             result += `,${eid.y}`;
           });
           result += '\n';
           break;
         case Piston:
-          if (!(link instanceof Piston)) {return}
+          if (!(link instanceof Piston)) {
+            return;
+          }
           result += `${link.id},`;
           result += `P,`;
           result += `${link.mass},`;
           result += `Null,`;
           result += `Null,`;
           result += `Null,`;
-          relatedJointIDs = link.joints.map(joint => {
+          relatedJointIDs = link.joints.map((joint) => {
             return joint.id;
           });
-          relatedForceIDs = link.forces.map(force => {
+          relatedForceIDs = link.forces.map((force) => {
             return force.id;
           });
           result += `"${relatedJointIDs.join(',')}",`;
@@ -884,8 +937,7 @@ url: any;
 
     result += 'forces\n';
     result += 'id,link,startx,starty,endx,endy,fixed,direction,mag\n';
-    forceArray.forEach(force => {
-
+    forceArray.forEach((force) => {
       result += `${force.id},`;
       result += `${force.link.id},`;
       result += `${force.startCoord.x},`;
@@ -926,7 +978,7 @@ url: any;
   }
 
   setInputMagnitudeAngVel($event: any) {
-    ToolbarComponent.inputAngularVelocity = $event.target.value
+    ToolbarComponent.inputAngularVelocity = $event.target.value;
     GridComponent.updateMechanism();
   }
 
@@ -936,7 +988,7 @@ url: any;
 
   setClockwise(cond: boolean) {
     ToolbarComponent.clockwise = cond;
-    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw': 'ccw';
+    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
     GridComponent.updateMechanism();
   }
 
@@ -960,7 +1012,9 @@ url: any;
   }
 
   validMechanism() {
-    if (GridComponent.mechanisms[0] === undefined) {return true}
+    if (GridComponent.mechanisms[0] === undefined) {
+      return true;
+    }
     return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
   }
 }

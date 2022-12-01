@@ -1,21 +1,24 @@
-import {AfterViewInit, Component, Input, OnInit} from '@angular/core';
-import {Coord} from "../../model/coord";
-import {AppConstants} from "../../model/app-constants";
-import {Joint, RevJoint, PrisJoint, RealJoint} from "../../model/joint";
-import {Piston, Link, RealLink, Shape, Bound} from "../../model/link";
-import {Force} from "../../model/force";
-import {Mechanism} from "../../model/mechanism/mechanism";
-import {InstantCenter} from "../../model/instant-center";
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { Coord } from '../../model/coord';
+import { AppConstants } from '../../model/app-constants';
+import { Joint, RevJoint, PrisJoint, RealJoint } from '../../model/joint';
+import { Piston, Link, RealLink, Shape, Bound } from '../../model/link';
+import { Force } from '../../model/force';
+import { Mechanism } from '../../model/mechanism/mechanism';
+import { InstantCenter } from '../../model/instant-center';
 import {
   determineSlope,
   determineX,
   determineY,
   determineYIntersect,
   roundNumber,
-  splitURLInfo, stringToBoolean, stringToFloat, stringToShape
-} from "../../model/utils";
-import {ToolbarComponent} from "../toolbar/toolbar.component";
-import {AnimationBarComponent} from "../animation-bar/animation-bar.component";
+  splitURLInfo,
+  stringToBoolean,
+  stringToFloat,
+  stringToShape,
+} from '../../model/utils';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
 // import {MatSnackBar} from "@angular/material/snack-bar";
@@ -52,19 +55,19 @@ enum forceStates {
 
 enum shapeEditModes {
   move,
-  resize
+  resize,
 }
 
 enum createModes {
   link,
-  force
+  force,
 }
 
 enum moveModes {
   joint,
   forceEndpoint,
   threePosition,
-  pathPoint
+  pathPoint,
 }
 
 @Component({
@@ -72,7 +75,6 @@ enum moveModes {
   templateUrl: './grid.component.html',
   styleUrls: ['./grid.component.scss'],
 })
-
 export class GridComponent implements OnInit, AfterViewInit {
   static mechanismTimeStep: number = 0;
   static mechanismAnimationIncrement: number = 2;
@@ -128,12 +130,12 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static panOffset = {
     x: 0,
-    y: 0
+    y: 0,
   };
   // TODO: Make getters and setters
   static _gridOffset = {
     x: 0,
-    y: 0
+    y: 0,
   };
 
   // remove this if this is possible
@@ -146,7 +148,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   static initialLink: RealLink;
   // static snackBar: MatSnackBar;
 
-// TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
+  // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
   constructor(private activeObjService: ActiveObjService) {
     // GridComponent.snackBar = snackBar;
   }
@@ -160,12 +162,18 @@ export class GridComponent implements OnInit, AfterViewInit {
     const jointPropsString = splitURLInfo('j=');
     const linkPropsString = splitURLInfo('&l=');
     const forcePropsString = splitURLInfo('&f=');
-    if (jointPropsString.length === 0 || linkPropsString.length === 0) {return}
-    if (!(typeof jointPropsString === 'string' && typeof linkPropsString === 'string' && typeof forcePropsString === 'string')) {return}
+    if (jointPropsString.length === 0 || linkPropsString.length === 0) {
+      return;
+    }
+    if (!(typeof jointPropsString === 'string' && typeof linkPropsString === 'string' && typeof forcePropsString === 'string')) {
+      return;
+    }
     const jointStringArray = jointPropsString.split('\n');
     const jointArray = [] as Joint[];
-    jointStringArray.forEach(jointString => {
-      if (jointString.length === 0) {return}
+    jointStringArray.forEach((jointString) => {
+      if (jointString.length === 0) {
+        return;
+      }
       const propsArray = jointString.split(',');
       // todo: needs input error checking
       const id = propsArray[0];
@@ -185,7 +193,9 @@ export class GridComponent implements OnInit, AfterViewInit {
           break;
         case 'P':
           joint = new PrisJoint(id, x, y, input, ground);
-          if (!(joint instanceof PrisJoint)) {return}
+          if (!(joint instanceof PrisJoint)) {
+            return;
+          }
           const angle = stringToFloat(propsArray[6]);
           joint.angle = angle;
           break;
@@ -214,8 +224,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
     const linkStringArray = linkPropsString.split('\n');
     const linkArray = [] as Link[];
-    linkStringArray.forEach(linkString => {
-      if (linkString.length === 0) {return}
+    linkStringArray.forEach((linkString) => {
+      if (linkString.length === 0) {
+        return;
+      }
       const propsArray = linkString.split(',');
       // todo: needs input error checking
       const id = propsArray[0];
@@ -223,9 +235,11 @@ export class GridComponent implements OnInit, AfterViewInit {
       const jointIDArray = propsArray[6].split('|');
       // const forceIDArray = propsArray[7].split('|');
       let joints: RealJoint[] = [];
-      jointIDArray.forEach(jointID => {
-        const joint = jointArray.find(jt => jt.id === jointID)!;
-        if (!(joint instanceof RealJoint)) {return}
+      jointIDArray.forEach((jointID) => {
+        const joint = jointArray.find((jt) => jt.id === jointID)!;
+        if (!(joint instanceof RealJoint)) {
+          return;
+        }
         // TODO: Maybe put check here to see if they got a joint
         joints.push(joint);
       });
@@ -236,7 +250,7 @@ export class GridComponent implements OnInit, AfterViewInit {
           const mass_moi = stringToFloat(propsArray[3]);
           const CoM_X = stringToFloat(propsArray[4]);
           const CoM_Y = stringToFloat(propsArray[5]);
-          const CoM = new Coord (CoM_X, CoM_Y);
+          const CoM = new Coord(CoM_X, CoM_Y);
           // const jointIDArray = propsArray[6].split('|');
           // // const forceIDArray = propsArray[7].split('|');
           // let joints: RealJoint[] = [];
@@ -260,20 +274,20 @@ export class GridComponent implements OnInit, AfterViewInit {
           const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
           const arrow = new Coord(arrow_x, arrow_y);
 
-          const bound: Bound = new class implements Bound {
+          const bound: Bound = new (class implements Bound {
             arrow: Coord = arrow;
             b1: Coord = b1;
             b2: Coord = b2;
             b3: Coord = b3;
             b4: Coord = b4;
-          };
+          })();
           newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
           break;
         case 'P':
           newLink = new Piston(id, joints);
           break;
         default:
-          return
+          return;
       }
 
       // const newLink = new RealLink(id, joints, shape, { b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
@@ -289,22 +303,28 @@ export class GridComponent implements OnInit, AfterViewInit {
           joints[next_j_index].connectedJoints.push(joints[j_index]);
         }
       }
-      joints.forEach(j => {
+      joints.forEach((j) => {
         j.links.push(newLink);
       });
       linkArray.push(newLink);
     });
     const forceStringArray = forcePropsString.split('\n');
     const forceArray = [] as Force[];
-    forceStringArray.forEach(forceString => {
-      if (forceString.length === 0) {return}
+    forceStringArray.forEach((forceString) => {
+      if (forceString.length === 0) {
+        return;
+      }
       const propsArray = forceString.split(',');
 
       const id = propsArray[0];
       const linkId = propsArray[1];
-      const link = linkArray.find(l => {return l.id === linkId;});
+      const link = linkArray.find((l) => {
+        return l.id === linkId;
+      });
       // if (!link) { throw new Error('link referenced in force does not exist'); }
-      if (!(link instanceof RealLink)) {return}
+      if (!(link instanceof RealLink)) {
+        return;
+      }
       const start = new Coord(stringToFloat(propsArray[2]), stringToFloat(propsArray[3]));
       const end = new Coord(stringToFloat(propsArray[4]), stringToFloat(propsArray[5]));
       const global = stringToBoolean(propsArray[6]);
@@ -320,7 +340,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.links = linkArray;
     GridComponent.forces = forceArray;
     // jointArray.forEach(j => {
-      // GridComponent.
+    // GridComponent.
     // });
     // linkArray.forEach(l => {});
     // forceArray.forEach(f => {});
@@ -365,17 +385,17 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static gridToScreen(x: number, y: number) {
-    const newX = (AppConstants.scaleFactor * x) + GridComponent._gridOffset.x;
-    const newY = (AppConstants.scaleFactor * y) + GridComponent._gridOffset.y;
+    const newX = AppConstants.scaleFactor * x + GridComponent._gridOffset.x;
+    const newY = AppConstants.scaleFactor * y + GridComponent._gridOffset.y;
     return new Coord(newX, newY);
   }
 
   private static zoomPoint(newScale: number, pointX: number, pointY: number) {
     const beforeScaleCoords = this.screenToGrid(pointX, pointY);
     // Prevent zooming in or out too far
-    if ((newScale * GridComponent.scaleFactor) < AppConstants.maxZoomOut) {
+    if (newScale * GridComponent.scaleFactor < AppConstants.maxZoomOut) {
       GridComponent.scaleFactor = AppConstants.maxZoomOut;
-    } else if ((newScale * GridComponent.scaleFactor) > AppConstants.maxZoomIn) {
+    } else if (newScale * GridComponent.scaleFactor > AppConstants.maxZoomIn) {
       GridComponent.scaleFactor = AppConstants.maxZoomIn;
     } else {
       GridComponent.scaleFactor = newScale * GridComponent.scaleFactor;
@@ -416,7 +436,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.applyMatrixToSVG();
   }
 
-
   private static getMousePosition(e: MouseEvent) {
     const svg = GridComponent.canvasSVGElement as SVGGraphicsElement;
     const CTM = svg.getScreenCTM();
@@ -425,7 +444,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // const width = box.right - box.left;
     const height = box.bottom - box.top;
     if (CTM === null) {
-      return
+      return;
     }
     const newX = roundNumber((e.clientX - CTM.e) / CTM.a, 0);
     let newY: number;
@@ -454,7 +473,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     const rawSVGCoords = GridComponent.getMousePosition($event);
     if (rawSVGCoords === undefined) {
-      return
+      return;
     }
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
@@ -482,12 +501,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     let joint1: RevJoint;
     let joint2: RevJoint;
-    let link: RealLink
-    if(AnimationBarComponent.animate === true) {
+    let link: RealLink;
+    if (AnimationBarComponent.animate === true) {
       GridComponent.sendNotification('Cannot edit while animation is running');
       return;
     }
-    if(GridComponent.mechanismTimeStep !== 0) {
+    if (GridComponent.mechanismTimeStep !== 0) {
       GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
       this.disappearContext();
       return;
@@ -531,13 +550,12 @@ export class GridComponent implements OnInit, AfterViewInit {
               case gridStates.createJointFromJoint:
                 joint2 = this.createRevJoint(
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!
                 );
                 GridComponent.selectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(GridComponent.selectedJoint);
 
-                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
-                  [GridComponent.selectedJoint, joint2]);
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                 GridComponent.selectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mergeToJoints([joint2]);
@@ -565,8 +583,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 joint1.links.push(link);
                 joint2.links.push(link);
                 // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
-                GridComponent.selectedLink.joints.forEach(j => {
-                  if (!(j instanceof RealJoint)) {return}
+                GridComponent.selectedLink.joints.forEach((j) => {
+                  if (!(j instanceof RealJoint)) {
+                    return;
+                  }
                   j.connectedJoints.push(joint1);
                   joint1.connectedJoints.push(j);
                 });
@@ -596,7 +616,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 startCoord = GridComponent.screenToGrid(screenX, screenY);
                 const endCoordRaw = GridComponent.getMousePosition($event);
                 if (endCoordRaw === undefined) {
-                  return
+                  return;
                 }
                 const endCoord = GridComponent.screenToGrid(endCoordRaw.x, endCoordRaw.y * -1);
                 // TODO: Be sure the force added is at correct position for binary link
@@ -608,7 +628,6 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.forceStates = forceStates.waiting;
                 GridComponent.forceTempHolderSVG.style.display = 'none';
                 break;
-
             }
             break;
           case 'joint':
@@ -648,22 +667,25 @@ export class GridComponent implements OnInit, AfterViewInit {
                 joint2 = thing;
                 let commonLinkCheck = false;
                 // Make sure link is not being attached to the same link
-                joint2.links.forEach(l => {
-                  if (commonLinkCheck) {return}
-                  if (GridComponent.selectedJoint.links.findIndex(li => li.id === l.id) !== -1) { commonLinkCheck = true;}
+                joint2.links.forEach((l) => {
+                  if (commonLinkCheck) {
+                    return;
+                  }
+                  if (GridComponent.selectedJoint.links.findIndex((li) => li.id === l.id) !== -1) {
+                    commonLinkCheck = true;
+                  }
                 });
                 if (commonLinkCheck) {
                   GridComponent.gridStates = gridStates.waiting;
                   GridComponent.jointStates = jointStates.waiting;
                   GridComponent.jointTempHolderSVG.style.display = 'none';
-                  GridComponent.sendNotification('Don\'t link to a joint on the same link');
+                  GridComponent.sendNotification("Don't link to a joint on the same link");
                   return;
                 }
                 GridComponent.selectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(GridComponent.selectedJoint);
 
-                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id,
-                  [GridComponent.selectedJoint, joint2]);
+                link = this.createRealLink(GridComponent.selectedJoint.id + joint2.id, [GridComponent.selectedJoint, joint2]);
                 GridComponent.selectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mergeToLinks([link]);
@@ -691,8 +713,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 joint1.links.push(link);
                 joint2.links.push(link);
                 // TODO: Be sure that I think joint1 also changes the link to add the desired joint to it's connected Joints and to its connected Links
-                GridComponent.selectedLink.joints.forEach(j => {
-                  if (!(j instanceof RealJoint)) {return}
+                GridComponent.selectedLink.joints.forEach((j) => {
+                  if (!(j instanceof RealJoint)) {
+                    return;
+                  }
                   j.connectedJoints.push(joint1);
                   joint1.connectedJoints.push(j);
                 });
@@ -748,7 +772,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             switch (GridComponent.forceStates) {
               case forceStates.waiting:
                 if (forcePoint === undefined) {
-                  return
+                  return;
                 }
                 GridComponent.forceStates = forceStates.dragging;
                 GridComponent.selectedForceEndPoint = forcePoint;
@@ -759,7 +783,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             GridComponent.gridStates = gridStates.waiting;
             GridComponent.jointStates = jointStates.waiting;
             GridComponent.jointTempHolderSVG.style.display = 'none';
-            GridComponent.sendNotification('Don\'t link a joint to itself');
+            GridComponent.sendNotification("Don't link a joint to itself");
         }
         break;
       // TODO: Be sure all things reset
@@ -859,14 +883,17 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedLink.bound.b4.y += offsetY;
         GridComponent.initialLinkMouseCoord.x = trueCoord.x;
         GridComponent.initialLinkMouseCoord.y = trueCoord.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
-          GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
         GridComponent.updateMechanism();
         break;
       case linkStates.resizing:
         // Adjust the link's bounding boxes
-        let b1n, b2n, b3n, b4n, arrow5n: Coord = new Coord(0, 0)!;
+        let b1n,
+          b2n,
+          b3n,
+          b4n,
+          arrow5n: Coord = new Coord(0, 0)!;
 
         let drag_coord_x, side_coord_x_1, side_coord_x_2: number;
         let drag_coord_y, side_coord_y_1, side_coord_y_2: number;
@@ -909,11 +936,19 @@ export class GridComponent implements OnInit, AfterViewInit {
             typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b3);
             break;
           default:
-            fixedBound = 'none'
-            const centerx = (GridComponent.selectedLink.bound.b1.x + GridComponent.selectedLink.bound.b2.x +
-              GridComponent.selectedLink.bound.b3.x + GridComponent.selectedLink.bound.b4.x) / 4;
-            const centery = (GridComponent.selectedLink.bound.b1.y + GridComponent.selectedLink.bound.b2.y +
-              GridComponent.selectedLink.bound.b3.y + GridComponent.selectedLink.bound.b4.y) / 4;
+            fixedBound = 'none';
+            const centerx =
+              (GridComponent.selectedLink.bound.b1.x +
+                GridComponent.selectedLink.bound.b2.x +
+                GridComponent.selectedLink.bound.b3.x +
+                GridComponent.selectedLink.bound.b4.x) /
+              4;
+            const centery =
+              (GridComponent.selectedLink.bound.b1.y +
+                GridComponent.selectedLink.bound.b2.y +
+                GridComponent.selectedLink.bound.b3.y +
+                GridComponent.selectedLink.bound.b4.y) /
+              4;
 
             const dox = GridComponent.selectedLink.bound.b1.x - centerx;
             const doy = GridComponent.selectedLink.bound.b1.y - centery;
@@ -970,8 +1005,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             GridComponent.selectedLink.bound.b4.y = b4n.y;
             GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
             GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
-              GridComponent.selectedLink.shape);
+            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
             GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
             GridComponent.selectedLink.updateCoMDs();
             return;
@@ -1054,8 +1088,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.selectedLink.bound.b4.y = b4n.y;
         GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
         GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound,
-          GridComponent.selectedLink.shape);
+        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, GridComponent.selectedLink.shape);
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
         GridComponent.selectedLink.updateCoMDs();
         break;
@@ -1073,8 +1106,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   getJointColor(joint: Joint) {
     if (GridComponent.jointStates !== jointStates.dragging) {
       return joint.showHighlight ? 'yellow' : 'black';
-    }else{
-      return joint.id == GridComponent.selectedJoint.id? 'red': 'black';
+    } else {
+      return joint.id == GridComponent.selectedJoint.id ? 'red' : 'black';
     }
   }
 
@@ -1095,20 +1128,18 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   mergeToJoints(joints: Joint[]) {
-    joints.forEach(j => {
+    joints.forEach((j) => {
       GridComponent.joints.push(j);
     });
   }
 
   mergeToLinks(links: Link[]) {
-    links.forEach(l => {
+    links.forEach((l) => {
       GridComponent.links.push(l);
     });
   }
 
-  mergeToForces() {
-
-  }
+  mergeToForces() {}
 
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';
@@ -1146,13 +1177,13 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 0:
             switch (joint.constructor) {
               case RevJoint:
-                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider';
                 if (joint.ground) {
-                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground';
                   if (joint.input) {
-                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input'
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                   } else {
-                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input'
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
                   }
                   this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
                   this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoJoint, offsetX, offsetY, 20, 20);
@@ -1186,13 +1217,13 @@ export class GridComponent implements OnInit, AfterViewInit {
           case 1:
             switch (joint.constructor) {
               case RevJoint:
-                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider'
+                GridComponent.contextMenuAddSlider.children[1].innerHTML = 'Add Slider';
                 if (joint.ground) {
-                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground'
+                  GridComponent.contextMenuAddGround.children[1].innerHTML = 'Remove Ground';
                   if (joint.input) {
-                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input'
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Remove Input';
                   } else {
-                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input'
+                    GridComponent.contextMenuAddInputJoint.children[1].innerHTML = 'Add Input';
                   }
                   this.showcaseContextMenu(GridComponent.contextMenuAddInputJoint, offsetX, offsetY, 0, 0);
                   this.showcaseContextMenu(GridComponent.contextMenuAddGround, offsetX, offsetY, 20, 20);
@@ -1267,9 +1298,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
   }
 
-  showcaseContextMenu(contextMenu: SVGElement, offsetX: number, offsetY: number,
-                      boxIncrement: number, textIncrement: number) {
-    contextMenu.style.display = 'block'
+  showcaseContextMenu(contextMenu: SVGElement, offsetX: number, offsetY: number, boxIncrement: number, textIncrement: number) {
+    contextMenu.style.display = 'block';
     contextMenu.children[0].setAttribute('x', offsetX.toString());
     contextMenu.children[0].setAttribute('y', (offsetY + boxIncrement).toString());
     contextMenu.children[1].setAttribute('x', offsetX.toString());
@@ -1285,8 +1315,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Add logic to add joint to selectedLink. Also, add adjacent joint to tracer joint
     const newId = this.determineNextLetter();
     const newJoint = new RevJoint(newId, coord.x, coord.y);
-    GridComponent.selectedLink.joints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
+    GridComponent.selectedLink.joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       j.connectedJoints.push(newJoint);
       newJoint.connectedJoints.push(j);
     });
@@ -1300,22 +1332,28 @@ export class GridComponent implements OnInit, AfterViewInit {
   createGround() {
     this.disappearContext();
     if (GridComponent.selectedJoint instanceof PrisJoint) {
-      const revJoint = GridComponent.selectedJoint.connectedJoints.find(j => j instanceof RevJoint)!;
-      if (!(revJoint instanceof RevJoint)) {return}
+      const revJoint = GridComponent.selectedJoint.connectedJoints.find((j) => j instanceof RevJoint)!;
+      if (!(revJoint instanceof RevJoint)) {
+        return;
+      }
 
-      GridComponent.selectedJoint.connectedJoints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
-        const removeIndex = j.connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+      GridComponent.selectedJoint.connectedJoints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        const removeIndex = j.connectedJoints.findIndex((jt) => jt.id === GridComponent.selectedJoint.id);
         j.connectedJoints.splice(removeIndex, 1);
       });
-      const piston = GridComponent.links.find(l => l instanceof Piston)!;
-      piston.joints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
-        const removeIndex = j.links.findIndex(l => l.id === piston.id);
+      const piston = GridComponent.links.find((l) => l instanceof Piston)!;
+      piston.joints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        const removeIndex = j.links.findIndex((l) => l.id === piston.id);
         j.links.splice(removeIndex, 1);
       });
-      const prismaticJointIndex = GridComponent.joints.findIndex(j => j.id == GridComponent.selectedJoint.id);
-      const pistonIndex = GridComponent.links.findIndex(l => l.id === piston.id);
+      const prismaticJointIndex = GridComponent.joints.findIndex((j) => j.id == GridComponent.selectedJoint.id);
+      const pistonIndex = GridComponent.links.findIndex((l) => l.id === piston.id);
       GridComponent.joints.splice(prismaticJointIndex, 1);
       GridComponent.links.splice(pistonIndex, 1);
 
@@ -1333,39 +1371,55 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   createSlider() {
     this.disappearContext();
-    if (!(GridComponent.selectedJoint instanceof PrisJoint)) { // Create Prismatic Joint
+    if (!(GridComponent.selectedJoint instanceof PrisJoint)) {
+      // Create Prismatic Joint
       GridComponent.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
-      const connectedJoints: Joint[] = [(GridComponent.selectedJoint)];
-      GridComponent.joints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
+      const connectedJoints: Joint[] = [GridComponent.selectedJoint];
+      GridComponent.joints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
         if (j.ground) {
           connectedJoints.push(j);
-        }});
-      const prisJoint = new PrisJoint(prismaticJointId, GridComponent.selectedJoint.x, GridComponent.selectedJoint.y, GridComponent.selectedJoint.input, true,
-        [], connectedJoints);
+        }
+      });
+      const prisJoint = new PrisJoint(
+        prismaticJointId,
+        GridComponent.selectedJoint.x,
+        GridComponent.selectedJoint.y,
+        GridComponent.selectedJoint.input,
+        true,
+        [],
+        connectedJoints
+      );
       GridComponent.selectedJoint.connectedJoints.push(prisJoint);
       const piston = new Piston(GridComponent.selectedJoint.id + prisJoint.id, [GridComponent.selectedJoint, prisJoint]);
       prisJoint.links.push(piston);
       GridComponent.selectedJoint.links.push(piston);
       GridComponent.joints.push(prisJoint);
       GridComponent.links.push(piston);
-    } else { // delete Prismatic Joint
+    } else {
+      // delete Prismatic Joint
       // TODO: determine logic to delete crank and the prismatic joint
-      GridComponent.selectedJoint.connectedJoints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
-        const removeIndex = j.connectedJoints.findIndex(jt => jt.id === GridComponent.selectedJoint.id);
+      GridComponent.selectedJoint.connectedJoints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        const removeIndex = j.connectedJoints.findIndex((jt) => jt.id === GridComponent.selectedJoint.id);
         j.connectedJoints.splice(removeIndex, 1);
       });
-      const piston = GridComponent.links.find(l => l instanceof Piston)!;
-      piston.joints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
-        const removeIndex = j.links.findIndex(l => l.id === piston.id);
+      const piston = GridComponent.links.find((l) => l instanceof Piston)!;
+      piston.joints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        const removeIndex = j.links.findIndex((l) => l.id === piston.id);
         j.links.splice(removeIndex, 1);
       });
-      const prismaticJointIndex = GridComponent.joints.findIndex(j => j.id == GridComponent.selectedJoint.id);
-      const pistonIndex = GridComponent.links.findIndex(l => l.id === piston.id);
+      const prismaticJointIndex = GridComponent.joints.findIndex((j) => j.id == GridComponent.selectedJoint.id);
+      const pistonIndex = GridComponent.links.findIndex((l) => l.id === piston.id);
       GridComponent.joints.splice(prismaticJointIndex, 1);
       GridComponent.links.splice(pistonIndex, 1);
     }
@@ -1375,10 +1429,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   deleteJoint() {
     this.disappearContext();
     const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
-    GridComponent.selectedJoint.links.forEach(l => {
+    GridComponent.selectedJoint.links.forEach((l) => {
       // TODO: May wanna check this to be sure...
       if (l instanceof Piston) {
-        return
+        return;
       }
       if (l.joints.length < 3) {
         // TODO: Utilize this same logic when you delete ImagJoint and ImagLink
@@ -1386,8 +1440,8 @@ export class GridComponent implements OnInit, AfterViewInit {
         // TODO: this.deleteLinkFromConnectedLinks(delLink);
         // delete forces on link
         if (l instanceof RealLink) {
-          l.forces.forEach(f => {
-            const forceIndex = GridComponent.forces.findIndex(fo => fo.id === f.id);
+          l.forces.forEach((f) => {
+            const forceIndex = GridComponent.forces.findIndex((fo) => fo.id === f.id);
             GridComponent.forces.splice(forceIndex, 1);
           });
         }
@@ -1397,23 +1451,29 @@ export class GridComponent implements OnInit, AfterViewInit {
         const desiredJointIndex = this.findJointIDIndex(desiredJointID, GridComponent.joints);
         const deleteJointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints);
         (GridComponent.joints[desiredJointIndex] as RealJoint).connectedJoints.splice(deleteJointIndex, 1);
-        const deleteLinkIndex = (GridComponent.joints[desiredJointIndex] as RealJoint).links.findIndex(lin => {
-          if (!(lin instanceof RealLink)) {return}
-          return lin.id === l.id});
+        const deleteLinkIndex = (GridComponent.joints[desiredJointIndex] as RealJoint).links.findIndex((lin) => {
+          if (!(lin instanceof RealLink)) {
+            return;
+          }
+          return lin.id === l.id;
+        });
         (GridComponent.joints[desiredJointIndex] as RealJoint).links.splice(deleteLinkIndex, 1);
         // remove link from links
-        const deleteLinkIndex2 = GridComponent.links.findIndex(li => li.id === l.id);
+        const deleteLinkIndex2 = GridComponent.links.findIndex((li) => li.id === l.id);
         GridComponent.links.splice(deleteLinkIndex2, 1);
-      }
-      else {
-        l.joints.forEach(jt => {
-          if (!(jt instanceof RealJoint)) {return}
-          if (jt.id === GridComponent.selectedJoint.id) {return}
-          const deleteJointIndex = jt.connectedJoints.findIndex(jjj => jjj.id === GridComponent.selectedJoint.id);
+      } else {
+        l.joints.forEach((jt) => {
+          if (!(jt instanceof RealJoint)) {
+            return;
+          }
+          if (jt.id === GridComponent.selectedJoint.id) {
+            return;
+          }
+          const deleteJointIndex = jt.connectedJoints.findIndex((jjj) => jjj.id === GridComponent.selectedJoint.id);
           jt.connectedJoints.splice(deleteJointIndex, 1);
         });
         l.id = l.id.replace(GridComponent.selectedJoint.id, '');
-        const delJointIndex = l.joints.findIndex(jj => jj.id === GridComponent.selectedJoint.id);
+        const delJointIndex = l.joints.findIndex((jj) => jj.id === GridComponent.selectedJoint.id);
         l.joints.splice(delJointIndex, 1);
       }
     });
@@ -1454,7 +1514,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) {
-      return
+      return;
     }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
@@ -1473,14 +1533,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     // TODO: Adjust this logic when there are multiple mechanisms created
     GridComponent.selectedJoint.input = !GridComponent.selectedJoint.input;
     let jointsTraveled = ''.concat(GridComponent.selectedJoint.id);
-    GridComponent.selectedJoint.connectedJoints.forEach(j => {
-      jointsTraveled = checkConnectedJoints(j, jointsTraveled)
+    GridComponent.selectedJoint.connectedJoints.forEach((j) => {
+      jointsTraveled = checkConnectedJoints(j, jointsTraveled);
     });
     function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
-      if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {return jointsTraveled}
+      if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {
+        return jointsTraveled;
+      }
       j.input = false;
       jointsTraveled = jointsTraveled.concat(j.id);
-      j.connectedJoints.forEach(jt => {
+      j.connectedJoints.forEach((jt) => {
         jointsTraveled = checkConnectedJoints(jt, jointsTraveled);
       });
       return jointsTraveled;
@@ -1530,7 +1592,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) {
-      return
+      return;
     }
     const mousePos = GridComponent.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     GridComponent.forceTempHolderSVG.children[0].setAttribute('d', Force.createForceLine(startCoord, mousePos));
@@ -1552,22 +1614,28 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteLink() {
     this.disappearContext();
-    const linkIndex = GridComponent.links.findIndex(l => l.id === GridComponent.selectedLink.id);
-    GridComponent.links[linkIndex].joints.forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
-      const delLinkIndex = j.links.findIndex(l => l.id === GridComponent.selectedLink.id);
+    const linkIndex = GridComponent.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
+    GridComponent.links[linkIndex].joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
       j.links.splice(delLinkIndex, 1);
     });
     for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
       for (let next_j_i = j_i + 1; next_j_i < GridComponent.links[linkIndex].joints.length; next_j_i++) {
         // TODO: Should recreate a function for this... (kinda too lazy atm)
         const joint = GridComponent.links[linkIndex].joints[j_i];
-        if (!(joint instanceof RealJoint)) {return}
-        const desiredJointIndex = joint.connectedJoints.findIndex(jj => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id);
-        joint.connectedJoints.splice(desiredJointIndex,1);
+        if (!(joint instanceof RealJoint)) {
+          return;
+        }
+        const desiredJointIndex = joint.connectedJoints.findIndex((jj) => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id);
+        joint.connectedJoints.splice(desiredJointIndex, 1);
         const otherJoint = GridComponent.links[linkIndex].joints[next_j_i];
-        if (!(otherJoint instanceof RealJoint)) {return}
-        const otherDesiredJointIndex = joint.connectedJoints.findIndex(jj => jj.id === GridComponent.links[linkIndex].joints[j_i].id);
+        if (!(otherJoint instanceof RealJoint)) {
+          return;
+        }
+        const otherDesiredJointIndex = joint.connectedJoints.findIndex((jj) => jj.id === GridComponent.links[linkIndex].joints[j_i].id);
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
@@ -1579,11 +1647,9 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     GridComponent.selectedForce.arrowOutward = !GridComponent.selectedForce.arrowOutward;
     if (GridComponent.selectedForce.arrowOutward) {
-      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
-        GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(GridComponent.selectedForce.startCoord, GridComponent.selectedForce.endCoord);
     } else {
-      GridComponent.selectedForce.forceArrow = Force.createForceArrow(
-        GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
+      GridComponent.selectedForce.forceArrow = Force.createForceArrow(GridComponent.selectedForce.endCoord, GridComponent.selectedForce.startCoord);
     }
     GridComponent.updateMechanism();
   }
@@ -1603,7 +1669,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteForce() {
     this.disappearContext();
-    const forceIndex = GridComponent.forces.findIndex(f => f.id === GridComponent.selectedForce.id);
+    const forceIndex = GridComponent.forces.findIndex((f) => f.id === GridComponent.selectedForce.id);
     GridComponent.forces.splice(forceIndex, 1);
     GridComponent.updateMechanism();
   }
@@ -1615,9 +1681,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (ToolbarComponent.clockwise) {
       inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
     }
-    GridComponent.mechanisms.push(new Mechanism(GridComponent.joints, GridComponent.links, GridComponent.forces,
-      GridComponent.ics, ToolbarComponent.gravity,
-      ToolbarComponent.unit, inputAngularVelocity));
+    GridComponent.mechanisms.push(
+      new Mechanism(
+        GridComponent.joints,
+        GridComponent.links,
+        GridComponent.forces,
+        GridComponent.ics,
+        ToolbarComponent.gravity,
+        ToolbarComponent.unit,
+        inputAngularVelocity
+      )
+    );
   }
 
   static dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
@@ -1626,53 +1700,57 @@ export class GridComponent implements OnInit, AfterViewInit {
     selectedJoint.y = roundNumber(trueCoord.y, 3);
     switch (selectedJoint.constructor) {
       case RevJoint:
-        selectedJoint.links.forEach(l => {
-          if (!(l instanceof RealLink)) { return }
-          if (l.shape !== Shape.line) { return }
+        selectedJoint.links.forEach((l) => {
+          if (!(l instanceof RealLink)) {
+            return;
+          }
+          if (l.shape !== Shape.line) {
+            return;
+          }
           // TODO: delete this if this is not needed (verify this)
-          const jointIndex = l.joints.findIndex(jt => jt.id === selectedJoint.id);
+          const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-          l.bound = RealLink.getBounds(
-            new Coord(l.joints[0].x, l.joints[0].y),
-            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
           l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
-          l.forces.forEach(f => {
+          l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
         });
         break;
       case PrisJoint:
-        selectedJoint.connectedJoints.forEach(j => {
-          if (!(j instanceof RealJoint)) {return}
-          if (j.ground) {return}
+        selectedJoint.connectedJoints.forEach((j) => {
+          if (!(j instanceof RealJoint)) {
+            return;
+          }
+          if (j.ground) {
+            return;
+          }
           j.x = selectedJoint.x;
           j.y = selectedJoint.y;
 
-          j.links.forEach(l => {
+          j.links.forEach((l) => {
             if (!(l instanceof RealLink)) {
-              return
+              return;
             }
             // TODO: delete this if this is not needed (verify this)
-            const jointIndex = l.joints.findIndex(jt => jt.id === j.id);
+            const jointIndex = l.joints.findIndex((jt) => jt.id === j.id);
             l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
             l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-            l.bound = RealLink.getBounds(
-              new Coord(l.joints[0].x, l.joints[0].y),
-              new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+            l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
             l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
             l.CoM = RealLink.determineCenterOfMass(l.joints);
             l.updateCoMDs();
-            l.forces.forEach(f => {
+            l.forces.forEach((f) => {
               // TODO: adjust the location of force endpoints and update the line and arrow
             });
           });
         });
         break;
     }
-    return selectedJoint
+    return selectedJoint;
   }
 
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
@@ -1720,7 +1798,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case PrisJoint:
         return 'P';
       default:
-        return '?'
+        return '?';
     }
   }
 
@@ -1732,7 +1810,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       case Piston:
         return 'P';
       default:
-        return '?'
+        return '?';
     }
   }
 
@@ -1740,7 +1818,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   static showPathHolder: boolean = false;
   getLinkProp(l: Link, propType: string) {
     if (l instanceof Piston) {
-      return
+      return;
     }
     const link = l as RealLink;
     switch (propType) {
@@ -1775,12 +1853,12 @@ export class GridComponent implements OnInit, AfterViewInit {
     if (GridComponent.joints.length === 0 && additionalLetters === undefined) {
       return 'a';
     }
-    GridComponent.joints.forEach(j => {
+    GridComponent.joints.forEach((j) => {
       if (j.id > lastLetter) {
         lastLetter = j.id;
       }
     });
-    additionalLetters?.forEach(l => {
+    additionalLetters?.forEach((l) => {
       if (l > lastLetter) {
         lastLetter = l;
       }
@@ -1823,20 +1901,22 @@ export class GridComponent implements OnInit, AfterViewInit {
   // }
 
   private findInputJointIndex() {
-    return GridComponent.joints.findIndex(j => {
-      if (!(j instanceof RealJoint)) { return }
+    return GridComponent.joints.findIndex((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       return j.input;
     });
   }
 
   private findJointIDIndex(id: string, joints: Joint[]) {
-    return joints.findIndex(j => j.id === id);
+    return joints.findIndex((j) => j.id === id);
   }
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
     if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {
-      return
+      return;
     }
     return joint.ground;
   }
@@ -1844,9 +1924,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   containsSlider(joint: Joint) {
     switch (joint.constructor) {
       case RevJoint:
-        if (!(joint instanceof RevJoint)) {return false}
+        if (!(joint instanceof RevJoint)) {
+          return false;
+        }
         let condition = false;
-        joint.connectedJoints.forEach(j => {
+        joint.connectedJoints.forEach((j) => {
           if (j.constructor === PrisJoint) {
             condition = true;
           }
@@ -1863,14 +1945,14 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   getJointR(joint: Joint) {
     if (!(joint instanceof RevJoint)) {
-      return 0
+      return 0;
     }
     return joint.r;
   }
 
   getInput(joint: Joint) {
     if (!(joint instanceof RevJoint || joint instanceof PrisJoint)) {
-      return
+      return;
     }
     return joint.input;
   }
@@ -1891,9 +1973,13 @@ export class GridComponent implements OnInit, AfterViewInit {
       j.y = GridComponent.mechanisms[0].joints[GridComponent.mechanismTimeStep][j_index].y;
     });
     GridComponent.links.forEach((l, l_index) => {
-      if (!(l instanceof RealLink)) {return}
+      if (!(l instanceof RealLink)) {
+        return;
+      }
       const link = GridComponent.mechanisms[0].links[GridComponent.mechanismTimeStep][l_index];
-      if (!(link instanceof RealLink)) {return}
+      if (!(link instanceof RealLink)) {
+        return;
+      }
       l.bound = link.bound;
       l.d = link.d;
       l.CoM = link.CoM;
@@ -1911,7 +1997,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
     });
     if (!AnimationBarComponent.animate) {
-      return
+      return;
     }
     GridComponent.mechanismTimeStep += GridComponent.mechanismAnimationIncrement;
     if (GridComponent.mechanismTimeStep >= GridComponent.mechanisms[0].joints.length) {
@@ -1929,12 +2015,12 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'in':
         halfWidth = GridComponent.canvasSVGElement.clientWidth / 2;
         halfHeight = GridComponent.canvasSVGElement.clientHeight / 2;
-        GridComponent.zoomPoint(21/20, halfWidth, halfHeight);
+        GridComponent.zoomPoint(21 / 20, halfWidth, halfHeight);
         break;
       case 'out':
         halfWidth = GridComponent.canvasSVGElement.clientWidth / 2;
         halfHeight = GridComponent.canvasSVGElement.clientHeight / 2;
-        GridComponent.zoomPoint(20/21, halfWidth, halfHeight);
+        GridComponent.zoomPoint(20 / 21, halfWidth, halfHeight);
         break;
       case 'reset':
         GridComponent.reset();
@@ -1943,13 +2029,18 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   getJointPath(joint: Joint) {
-    if (GridComponent.mechanisms[0].joints[0].length === 0) {return ''}
-    let string = 'M'
-    const jointIndex = GridComponent.joints.findIndex(j => j.id === joint.id);
-    string += GridComponent.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + GridComponent.mechanisms[0].joints[0][jointIndex].y.toString()
+    if (GridComponent.mechanisms[0].joints[0].length === 0) {
+      return '';
+    }
+    let string = 'M';
+    const jointIndex = GridComponent.joints.findIndex((j) => j.id === joint.id);
+    string += GridComponent.mechanisms[0].joints[0][jointIndex].x.toString() + ' , ' + GridComponent.mechanisms[0].joints[0][jointIndex].y.toString();
     for (let j_index = 1; j_index < GridComponent.mechanisms[0].joints.length; j_index++) {
-      string += 'L' + GridComponent.mechanisms[0].joints[j_index][jointIndex].x.toString() + ' , '
-        + GridComponent.mechanisms[0].joints[j_index][jointIndex].y.toString();
+      string +=
+        'L' +
+        GridComponent.mechanisms[0].joints[j_index][jointIndex].x.toString() +
+        ' , ' +
+        GridComponent.mechanisms[0].joints[j_index][jointIndex].y.toString();
     }
     return string;
   }
@@ -1986,21 +2077,44 @@ export class GridComponent implements OnInit, AfterViewInit {
             }
           case 'arrow':
             if (xOrY === 'x') {
-              return (GridComponent.selectedLink.bound.b1.x + GridComponent.selectedLink.bound.b2.x
-                + GridComponent.selectedLink.bound.b3.x + GridComponent.selectedLink.bound.b4.x) / 4;
+              return (
+                (GridComponent.selectedLink.bound.b1.x +
+                  GridComponent.selectedLink.bound.b2.x +
+                  GridComponent.selectedLink.bound.b3.x +
+                  GridComponent.selectedLink.bound.b4.x) /
+                4
+              );
             } else {
-              return (GridComponent.selectedLink.bound.b1.y + GridComponent.selectedLink.bound.b2.y
-                + GridComponent.selectedLink.bound.b3.y + GridComponent.selectedLink.bound.b4.y) / 4;
+              return (
+                (GridComponent.selectedLink.bound.b1.y +
+                  GridComponent.selectedLink.bound.b2.y +
+                  GridComponent.selectedLink.bound.b3.y +
+                  GridComponent.selectedLink.bound.b4.y) /
+                4
+              );
             }
           default:
             return;
         }
       case 'points':
         const b = GridComponent.selectedLink.bound;
-        return b.b1.x.toString() + ',' + b.b1.y.toString() + ' '
-          + b.b2.x.toString() + ',' + b.b2.y.toString() + ' '
-          + b.b3.x.toString() + ',' + b.b3.y.toString() + ' '
-          + b.b4.x.toString() + ',' + b.b4.y.toString();
+        return (
+          b.b1.x.toString() +
+          ',' +
+          b.b1.y.toString() +
+          ' ' +
+          b.b2.x.toString() +
+          ',' +
+          b.b2.y.toString() +
+          ' ' +
+          b.b3.x.toString() +
+          ',' +
+          b.b3.y.toString() +
+          ' ' +
+          b.b4.x.toString() +
+          ',' +
+          b.b4.y.toString()
+        );
       default:
         return;
     }

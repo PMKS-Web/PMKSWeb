@@ -7,19 +7,16 @@ import { Force } from 'src/app/model/force';
 @Component({
   selector: 'app-left-tabs',
   templateUrl: './left-tabs.component.html',
-  styleUrls: ['./left-tabs.component.scss']
+  styleUrls: ['./left-tabs.component.scss'],
 })
-export class LeftTabsComponent{
+export class LeftTabsComponent {
   openTab = 2; //Default open tab
 
   tabClicked(tabID: number) {
     if (this.openTab === tabID) {
       this.openTab = 0;
-    }else{
+    } else {
       this.openTab = tabID;
     }
   }
-
-
-
 }

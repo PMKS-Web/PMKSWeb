@@ -1,16 +1,16 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {GridComponent} from "../grid/grid.component";
-import {RealLink, Shape} from "../../model/link";
-import {Coord} from "../../model/coord";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { GridComponent } from '../grid/grid.component';
+import { RealLink, Shape } from '../../model/link';
+import { Coord } from '../../model/coord';
 
 @Component({
   selector: 'app-shape-selector',
   templateUrl: './shape-selector.component.html',
-  styleUrls: ['./shape-selector.component.scss']
+  styleUrls: ['./shape-selector.component.scss'],
 })
 export class ShapeSelectorComponent implements OnInit {
-
-  shapes: Shape[] = [Shape.line,
+  shapes: Shape[] = [
+    Shape.line,
     Shape.bar,
     Shape.eTriangle,
     Shape.rTriangle,
@@ -19,13 +19,12 @@ export class ShapeSelectorComponent implements OnInit {
     Shape.circle,
     Shape.cShape,
     Shape.tShape,
-    Shape.lShape
+    Shape.lShape,
   ];
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   getURL(shape: Shape) {
     switch (shape) {
@@ -53,7 +52,6 @@ export class ShapeSelectorComponent implements OnInit {
         return '';
     }
   }
-
 
   getShowcaseShapeSelector() {
     return GridComponent.showcaseShapeSelector;
@@ -84,9 +82,11 @@ export class ShapeSelectorComponent implements OnInit {
 
   changeShape(shape: Shape) {
     GridComponent.selectedLink.shape = shape;
-    GridComponent.selectedLink.bound = RealLink.getBounds(new Coord(GridComponent.selectedLink.joints[0].x,
-      GridComponent.selectedLink.joints[0].y), new Coord(GridComponent.selectedLink.joints[1].x,
-      GridComponent.selectedLink.joints[1].y), shape);
+    GridComponent.selectedLink.bound = RealLink.getBounds(
+      new Coord(GridComponent.selectedLink.joints[0].x, GridComponent.selectedLink.joints[0].y),
+      new Coord(GridComponent.selectedLink.joints[1].x, GridComponent.selectedLink.joints[1].y),
+      shape
+    );
     GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);

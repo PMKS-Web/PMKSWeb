@@ -97,4 +97,3 @@ export class SecondaryInstantCenter extends InstantCenter {
     this._desired_ICs = value;
   }
 }
-

@@ -1,9 +1,9 @@
-import {Link, RealLink} from "./link";
-import {Coord} from "./coord";
-import {AppConstants} from "./app-constants";
+import { Link, RealLink } from './link';
+import { Coord } from './coord';
+import { AppConstants } from './app-constants';
 
 export class Force {
-  private _id: string
+  private _id: string;
   private _link: RealLink;
   private _startCoord: Coord;
   private _endCoord: Coord;
@@ -37,8 +37,7 @@ export class Force {
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
-    return 'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L '
-      + endCoord.x.toString() + ' ' + endCoord.y.toString() + ' Z';
+    return 'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L ' + endCoord.x.toString() + ' ' + endCoord.y.toString() + ' Z';
   }
 
   static createForceArrow(startCoord: Coord, endCoord: Coord) {
@@ -52,9 +51,21 @@ export class Force {
     const dy2 = Math.sin(a2) * triLen;
 
     // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
-    return 'M ' + endCoord.x.toString() + ' ' + endCoord.y.toString() +
-      ' L ' + (endCoord.x - dx1).toString() + ' ' + (endCoord.y - dy1).toString() +
-      ' L ' + (endCoord.x - dx2).toString() + ' ' + (endCoord.y - dy2).toString() + ' Z';
+    return (
+      'M ' +
+      endCoord.x.toString() +
+      ' ' +
+      endCoord.y.toString() +
+      ' L ' +
+      (endCoord.x - dx1).toString() +
+      ' ' +
+      (endCoord.y - dy1).toString() +
+      ' L ' +
+      (endCoord.x - dx2).toString() +
+      ' ' +
+      (endCoord.y - dy2).toString() +
+      ' Z'
+    );
   }
 
   get id(): string {

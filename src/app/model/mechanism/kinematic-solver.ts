@@ -1,7 +1,7 @@
-import {Joint, PrisJoint, RealJoint} from "../joint";
-import {Piston, Link, RealLink} from "../link";
-import {matLinearSystem} from "../utils";
-import {InstantCenter} from "../instant-center";
+import { Joint, PrisJoint, RealJoint } from '../joint';
+import { Piston, Link, RealLink } from '../link';
+import { matLinearSystem } from '../utils';
+import { InstantCenter } from '../instant-center';
 
 export class KinematicsSolver {
   static jointIndexMap = new Map<string, number>();
@@ -18,12 +18,12 @@ export class KinematicsSolver {
 
   static A_matrix_AngVel: Array<Array<number>> = [];
   static B_matrix_AngVel: Array<Array<number>> = [];
-  static A_matrix_AngAcc: Array<Array<number>>  = [];
-  static B_matrix_AngAcc: Array<Array<number>>  = [];
-  static LinVelJointEq = new Map <string, [string, string]>();
-  static LinVelLinkEq = new Map <string, [string, string]>();
-  static LinAccJointEq = new Map <string, [string, string]>();
-  static LinAccLinkEq = new Map <string, [string, string]>();
+  static A_matrix_AngAcc: Array<Array<number>> = [];
+  static B_matrix_AngAcc: Array<Array<number>> = [];
+  static LinVelJointEq = new Map<string, [string, string]>();
+  static LinVelLinkEq = new Map<string, [string, string]>();
+  static LinAccJointEq = new Map<string, [string, string]>();
+  static LinAccLinkEq = new Map<string, [string, string]>();
   static requiredLoops: string[];
 
   static loopIndexMap = new Map<string, number>();
@@ -64,7 +64,6 @@ export class KinematicsSolver {
     this.LinAccLinkEq = new Map<string, [string, string]>();
   }
 
-
   static determineKinematics(simJoints: Joint[], simLinks: Link[], initialAngularVelocity: number) {
     this.kinematicsInitializer(simJoints, simLinks, initialAngularVelocity);
 
@@ -88,7 +87,9 @@ export class KinematicsSolver {
   private static kinematicsInitializer(joints: Joint[], links: Link[], initialAngularVelocity: number) {
     if (this.groundJointIndexMap.size === 0) {
       joints.forEach((j, j_index) => {
-        if (!(j instanceof RealJoint)) {return}
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
         if (j.ground) {
           this.groundJointIndexMap.set(j.id, j_index);
         }
@@ -96,14 +97,19 @@ export class KinematicsSolver {
     }
 
     if (this.inputJointIndex === undefined) {
-      this.inputJointIndex = joints.findIndex(j => {
-        if (!(j instanceof RealJoint)) {return}
-        return j.input});
+      this.inputJointIndex = joints.findIndex((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        return j.input;
+      });
       const inputJoint = joints[this.inputJointIndex];
-      if (!(inputJoint instanceof RealJoint)) {return}
+      if (!(inputJoint instanceof RealJoint)) {
+        return;
+      }
       // this.inputLinkIndex = links.findIndex(l => l.id === inputJoint.links[0])
       // this.inputLinkIndex = links.indexOf(inputJoint.links[0]);
-      this.inputLinkIndex = links.findIndex(l => l.id === inputJoint.links[0].id);
+      this.inputLinkIndex = links.findIndex((l) => l.id === inputJoint.links[0].id);
     }
 
     for (const entry of this.groundJointIndexMap.entries()) {
@@ -119,34 +125,44 @@ export class KinematicsSolver {
       case Piston:
         if (!this.realJointIndexMap.has(links[this.inputLinkIndex].id)) {
           const inputLink = links[this.inputLinkIndex];
-          if (!(inputLink instanceof RealLink)) {return}
-          if (inputLink.joints === undefined) {return}
-          const realJoint = inputLink.joints.find(j => j instanceof RealJoint);
-          if (realJoint === undefined) {return}
-          this.realJointIndexMap.set(links[this.inputLinkIndex].id,
-            joints.indexOf(realJoint));
+          if (!(inputLink instanceof RealLink)) {
+            return;
+          }
+          if (inputLink.joints === undefined) {
+            return;
+          }
+          const realJoint = inputLink.joints.find((j) => j instanceof RealJoint);
+          if (realJoint === undefined) {
+            return;
+          }
+          this.realJointIndexMap.set(links[this.inputLinkIndex].id, joints.indexOf(realJoint));
         }
         const inputLink = links[this.inputLinkIndex].id;
-        if (inputLink === undefined) {return}
+        if (inputLink === undefined) {
+          return;
+        }
         const realJoint = joints[this.realJointIndexMap.get(inputLink)!];
-        if (!(realJoint instanceof PrisJoint)) {return}
-        this.jointVelMap.set(realJoint.id, [initialAngularVelocity * Math.cos(realJoint.angle),
-          initialAngularVelocity * Math.sin(realJoint.angle)]);
+        if (!(realJoint instanceof PrisJoint)) {
+          return;
+        }
+        this.jointVelMap.set(realJoint.id, [initialAngularVelocity * Math.cos(realJoint.angle), initialAngularVelocity * Math.sin(realJoint.angle)]);
         this.jointAccMap.set(realJoint.id, [0.0, 0.0]);
         break;
       default:
         break;
     }
 
-    links.forEach(l => {
-      if (l instanceof Piston) { return; }
+    links.forEach((l) => {
+      if (l instanceof Piston) {
+        return;
+      }
       const angle = Math.atan2(l.joints[1].y - l.joints[0].y, l.joints[1].x - l.joints[0].x);
       const RadToDeg = 180 / Math.PI;
       this.linkAngPosMap.set(l.id, angle * RadToDeg);
     });
 
     if (this.linkIndexMap.size === 0) {
-      this.requiredLoops.forEach(loop => {
+      this.requiredLoops.forEach((loop) => {
         // initialize the jointIndexMap and linkIndexMap
         for (let i = 1; i < loop.length - 1; i++) {
           if (!this.linkIndexMap.has(loop[i] + loop[i - 1])) {
@@ -155,21 +171,29 @@ export class KinematicsSolver {
         }
       });
     }
-    joints.forEach(joint => {
+    joints.forEach((joint) => {
       this.setJointIndexMap(joint.id, joints);
     });
 
     if (this.unknownLinkIndexMap.size === 0) {
-      this.requiredLoops.forEach(loop => {
+      this.requiredLoops.forEach((loop) => {
         for (let i = 1; i < loop.length - 1; i++) {
           const link = links[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
           switch (link.constructor) {
             case RealLink:
-              if (!(link instanceof RealLink)) {return}
+              if (!(link instanceof RealLink)) {
+                return;
+              }
               if (!this.linkContainsInputMap.has(link.id)) {
-                this.linkContainsInputMap.set(link.id, link.joints.findIndex(j => {
-                  if (!(j instanceof RealJoint)) {return}
-                  return j.input}) !== -1);
+                this.linkContainsInputMap.set(
+                  link.id,
+                  link.joints.findIndex((j) => {
+                    if (!(j instanceof RealJoint)) {
+                      return;
+                    }
+                    return j.input;
+                  }) !== -1
+                );
               }
               if (!this.unknownLinkIndexMap.has(link.id) && !this.linkContainsInputMap.get(link.id)) {
                 this.unknownLinkIndexMap.set(link.id, this.unknownLinkIndexMap.size);
@@ -177,15 +201,21 @@ export class KinematicsSolver {
               break;
             case Piston:
               if (!this.realJointIndexMap.has(link.id)) {
-                const connectedJoint = link.joints.find(j => j instanceof RealJoint)!;
+                const connectedJoint = link.joints.find((j) => j instanceof RealJoint)!;
                 this.realJointIndexMap.set(link.id, joints.indexOf(connectedJoint));
               }
 
               const desiredJoint = joints[this.realJointIndexMap.get(link.id)!];
               if (!this.linkContainsInputMap.has(desiredJoint.id)) {
-                this.linkContainsInputMap.set(desiredJoint.id, link.joints.findIndex(j => {
-                  if (!(j instanceof RealJoint)) {return}
-                  return j.input}) !== -1);
+                this.linkContainsInputMap.set(
+                  desiredJoint.id,
+                  link.joints.findIndex((j) => {
+                    if (!(j instanceof RealJoint)) {
+                      return;
+                    }
+                    return j.input;
+                  }) !== -1
+                );
               }
               if (!this.unknownLinkIndexMap.has(desiredJoint.id) && !this.linkContainsInputMap.get(desiredJoint.id)) {
                 this.unknownLinkIndexMap.set(desiredJoint.id, this.unknownLinkIndexMap.size);
@@ -201,7 +231,6 @@ export class KinematicsSolver {
     this.A_matrix_AngAcc = [];
     this.B_matrix_AngAcc = [];
   }
-
 
   private static determineAng(simJoints: Joint[], simLinks: Link[], analysisType: string) {
     // 1st, determine arrays from loops and put that within their respective arrays
@@ -220,7 +249,8 @@ export class KinematicsSolver {
     // 3rd, store unknown values to respected links
     for (let i = 0; i < X.length; i++) {
       const linkOrJoint = unknownLinks[i];
-      if (linkOrJoint instanceof RealLink) { // Link
+      if (linkOrJoint instanceof RealLink) {
+        // Link
         switch (analysisType) {
           case 'Velocity':
             this.linkAngVelMap.set(linkOrJoint.id, X[i][0]);
@@ -228,7 +258,8 @@ export class KinematicsSolver {
           case 'Acceleration':
             this.linkAngAccMap.set(linkOrJoint.id, X[i][0]);
         }
-      } else { // Joint
+      } else {
+        // Joint
         switch (analysisType) {
           case 'Velocity':
             this.jointVelMap.set(linkOrJoint.id, [X[i][0] * Math.cos(linkOrJoint.angle), X[i][0] * Math.sin(linkOrJoint.angle)]);
@@ -244,14 +275,16 @@ export class KinematicsSolver {
   private static determineLin(simJoints: Joint[], simLinks: Link[]) {
     // this.setUpLinkAndJointIndexMap(simJoints, simLinks, requiredLoops);
     const desired_links_used: Array<string> = [];
-    this.requiredLoops.forEach(loop => {
+    this.requiredLoops.forEach((loop) => {
       for (let i = 1; i < loop.length - 1; i++) {
         // cannot find velocity of a joint on an imaginary link
         if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof Piston) {
           continue;
         }
         const desiredLink = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
-        if (!(desiredLink instanceof RealLink)) {return}
+        if (!(desiredLink instanceof RealLink)) {
+          return;
+        }
         const firstJoint = simJoints[this.jointIndexMap.get(loop[i - 1])!];
         // determine the velocity/accel of each link's joint that is not the first joint
         for (let index = 0; index < desiredLink.id.length; index++) {
@@ -268,32 +301,29 @@ export class KinematicsSolver {
           this.determineVelAndAccel(desiredLink.id, firstJoint.id, leftXDist, leftYDist, desiredJoint.id, 'joint');
         }
 
-
         // set for where link's center of mass is located
-        if (desired_links_used.findIndex(id => id === desiredLink.id) !== -1) {
+        if (desired_links_used.findIndex((id) => id === desiredLink.id) !== -1) {
           continue;
         }
         this.linkCoMMap.set(desiredLink.id, [desiredLink.CoM.x, desiredLink.CoM.y]);
         // determine velocity and acceleration for link's center of mass
-        this.determineVelAndAccel(desiredLink.id, firstJoint.id, desiredLink.CoM.x - firstJoint.x,
-          desiredLink.CoM.y  - firstJoint.y, desiredLink.id, 'link');
+        this.determineVelAndAccel(desiredLink.id, firstJoint.id, desiredLink.CoM.x - firstJoint.x, desiredLink.CoM.y - firstJoint.y, desiredLink.id, 'link');
         desired_links_used.push(desiredLink.id);
       }
     });
     // determine the velocity and acceleration of tracer joints
-
   }
 
   // determine AX = B
   private static determineArrays(simJoints: Joint[], simLinks: Link[], analysisType: string): any[] {
     const unknownLinksOrJoints: Array<any> = [];
     // first, determine variable locations (X)
-    this.requiredLoops.forEach(loop => {
+    this.requiredLoops.forEach((loop) => {
       for (let i = 1; i < loop.length - 1; i++) {
         const link = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
         switch (link.constructor) {
           case RealLink:
-            if (this.unknownLinkIndexMap.has(link.id) && unknownLinksOrJoints.findIndex(l => l.id === link.id) === -1) {
+            if (this.unknownLinkIndexMap.has(link.id) && unknownLinksOrJoints.findIndex((l) => l.id === link.id) === -1) {
               unknownLinksOrJoints.push(link);
             }
             break;
@@ -324,15 +354,15 @@ export class KinematicsSolver {
     }
 
     if (!this.loopIndexMap.has(this.requiredLoops[0])) {
-      this.requiredLoops.forEach(loop => {
+      this.requiredLoops.forEach((loop) => {
         this.loopIndexMap.set(loop, this.requiredLoops.indexOf(loop));
       });
     }
 
     // second, set up the known and unknown matrix (A and B)
-    this.requiredLoops.forEach(loop => {
+    this.requiredLoops.forEach((loop) => {
       for (let i = 1; i < loop.length - 1; i++) {
-        const link = this.getLink(simLinks, loop[i] + loop [i - 1]);
+        const link = this.getLink(simLinks, loop[i] + loop[i - 1]);
         const firstJoint = this.getJoint(simJoints, loop[i - 1]);
         const secondJoint = this.getJoint(simJoints, loop[i]);
         // right side of the equation (B)
@@ -343,7 +373,9 @@ export class KinematicsSolver {
         const leftYDist = secondJoint.y - firstJoint.y;
         let sol: Array<number>;
         let arr: Array<number>;
-        switch (analysisType) { // clean later
+        switch (
+          analysisType // clean later
+        ) {
           case 'Velocity':
             if (link === simLinks[this.inputLinkIndex]) {
               // part of input link (B matrix)
@@ -355,17 +387,20 @@ export class KinematicsSolver {
                 case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // slider crank x, y
-                  if (!(realJoint instanceof PrisJoint)) {return}
+                  if (!(realJoint instanceof PrisJoint)) {
+                    return;
+                  }
                   arr = [Math.cos(realJoint.angle), Math.sin(realJoint.angle), 0];
                   break;
                 default:
-                  return
+                  return;
               }
               // insert value within B matrix
               const rowIndex = 2 * this.loopIndexMap.get(loop)!;
               this.B_matrix_AngVel[rowIndex][0] += arr[0];
               this.B_matrix_AngVel[rowIndex + 1][0] += arr[1];
-            } else { // not an input Link (A matrix)
+            } else {
+              // not an input Link (A matrix)
               let colIndex: number;
               switch (link.constructor) {
                 case RealLink:
@@ -374,12 +409,14 @@ export class KinematicsSolver {
                   break;
                 case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
-                  if (!(realJoint instanceof PrisJoint)) {return}
+                  if (!(realJoint instanceof PrisJoint)) {
+                    return;
+                  }
                   arr = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle), 0];
                   colIndex = this.unknownLinkIndexMap.get(realJoint.id)!;
                   break;
                 default:
-                  return
+                  return;
               }
 
               // insert value within A matrix
@@ -389,7 +426,8 @@ export class KinematicsSolver {
             }
             break;
           case 'Acceleration':
-            if (link === simLinks[this.inputLinkIndex]) { // input link
+            if (link === simLinks[this.inputLinkIndex]) {
+              // input link
               const rowIndex = 2 * this.loopIndexMap.get(loop)!;
               switch (link.constructor) {
                 case RealLink:
@@ -400,11 +438,13 @@ export class KinematicsSolver {
                   break;
                 case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
-                  if (!(realJoint instanceof PrisJoint)) {return}
+                  if (!(realJoint instanceof PrisJoint)) {
+                    return;
+                  }
                   sol = [Math.cos(realJoint.angle), Math.sin(realJoint.angle)];
                   break;
                 default:
-                  return
+                  return;
               }
               this.B_matrix_AngAcc[rowIndex][0] += sol[0];
               this.B_matrix_AngAcc[rowIndex + 1][0] += sol[1];
@@ -422,7 +462,9 @@ export class KinematicsSolver {
                   break;
                 case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
-                  if (!(realJoint instanceof PrisJoint)) {return}
+                  if (!(realJoint instanceof PrisJoint)) {
+                    return;
+                  }
                   sol = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle)];
                   colIndex = this.unknownLinkIndexMap.get(realJoint.id)!;
                   break;
@@ -439,18 +481,29 @@ export class KinematicsSolver {
     return unknownLinksOrJoints;
   }
 
-  static determineVelocitiesInstantCenters(simJoints: Joint[], simLinks: Link[], simICS: InstantCenter[],
-                                           requiredLoops: string[], initialAngularVelocity: number) {
+  static determineVelocitiesInstantCenters(
+    simJoints: Joint[],
+    simLinks: Link[],
+    simICS: InstantCenter[],
+    requiredLoops: string[],
+    initialAngularVelocity: number
+  ) {
     this.kinematicsInitializer(simJoints, simLinks, initialAngularVelocity);
     // this.kinematicsInitializer(simJoints, simLinks, requiredLoops, initialAngularVelocity);
   }
 
   private static setLinkIndexMap(joint_id1: string, joint_id2: string, simLinks: Link[]) {
-    this.linkIndexMap.set(joint_id1 + joint_id2, simLinks.findIndex(l => l.id.includes(joint_id1) && l.id.includes(joint_id2)));
+    this.linkIndexMap.set(
+      joint_id1 + joint_id2,
+      simLinks.findIndex((l) => l.id.includes(joint_id1) && l.id.includes(joint_id2))
+    );
   }
 
   private static setJointIndexMap(joint_id1: string, simJoints: Joint[]) {
-    this.jointIndexMap.set(joint_id1, simJoints.findIndex(j => j.id === joint_id1));
+    this.jointIndexMap.set(
+      joint_id1,
+      simJoints.findIndex((j) => j.id === joint_id1)
+    );
   }
 
   static getLink(simLinks: Link[], link_id: string) {
@@ -468,8 +521,7 @@ export class KinematicsSolver {
     });
   }
 
-  private static determineVelAndAccel(desiredLinkID: string, firstJointID: string, xDist: number, yDist: number,
-                                      desiredID: string, linkOrJoint: string) {
+  private static determineVelAndAccel(desiredLinkID: string, firstJointID: string, xDist: number, yDist: number, desiredID: string, linkOrJoint: string) {
     // Velocity calculation
     // w x r
     const arr = this.crossProduct(this.linkAngVelMap.get(desiredLinkID)!, [xDist, yDist, 0]);
@@ -516,10 +568,10 @@ export class KinematicsSolver {
       this.LinVelJointEq.set(desiredID, [firstValue + secondSign + secondValue, thirdValue + fourthSign + fourthValue]);
 
       // set joint acceleration
-      this.jointAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0],
-        knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
+      this.jointAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0], knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
       this.LinAccJointEq.set(desiredID, [fifthValue + sixthSign + sixthValue, seventhValue + eighthSign + eighthValue]);
-    } else { // link
+    } else {
+      // link
       firstValue = (Math.round(arr[0] * 1000) / 1000).toString();
       secondValue = (Math.round(this.jointVelMap.get(firstJointID)![0] * 1000) / 1000).toString();
       thirdValue = (Math.round(arr[1] * 1000) / 1000).toString();
@@ -536,8 +588,7 @@ export class KinematicsSolver {
       this.linkVelMap.set(desiredID, [arr[0] + this.jointVelMap.get(firstJointID)![0], arr[1] + this.jointVelMap.get(firstJointID)![1]]);
       this.LinVelLinkEq.set(desiredID, [firstValue + secondSign + secondValue, thirdValue + fourthSign + fourthValue]);
       // set link's center of mass Acceleration
-      this.linkAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0],
-        knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
+      this.linkAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0], knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
       this.LinAccLinkEq.set(desiredID, [fifthValue + sixthSign + sixthValue, seventhValue + eighthSign + eighthValue]);
     }
   }

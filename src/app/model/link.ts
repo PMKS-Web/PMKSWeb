@@ -1,8 +1,8 @@
-import {Joint} from "./joint";
-import {Coord} from "./coord";
-import {AppConstants} from "./app-constants";
-import {Force} from "./force";
-import {getAngle, getDistance, getXDistance, getYDistance, roundNumber} from "./utils";
+import { Joint } from './joint';
+import { Coord } from './coord';
+import { AppConstants } from './app-constants';
+import { Force } from './force';
+import { getAngle, getDistance, getXDistance, getYDistance, roundNumber } from './utils';
 
 export enum Shape {
   line = 'line',
@@ -22,7 +22,7 @@ export enum Shape {
   beanShape = 'beanShape',
   infinityShape = 'infinityShape',
   eightShape = 'eightShape',
-  customShape = 'customShape'
+  customShape = 'customShape',
 }
 
 export interface Bound {
@@ -38,7 +38,7 @@ export enum editorID {
   b2 = 'b2',
   b3 = 'b3',
   b4 = 'b4',
-  arrow = 'arrow'
+  arrow = 'arrow',
 }
 
 export class Link {
@@ -46,21 +46,17 @@ export class Link {
   private _mass: number;
   private _joints: Joint[];
   private _forces: Force[] = [];
-  fixedLocations = [
-    {id: 'com', label: 'com'},
-  ];
+  fixedLocations = [{ id: 'com', label: 'com' }];
   fixedLocation = {
-    fixedPoint: 'com'
+    fixedPoint: 'com',
   };
 
   constructor(id: string, joints: Joint[], mass?: number) {
     this._id = id;
     this._joints = joints;
     this._mass = mass !== undefined ? mass : 1;
-    joints.forEach(j => {
-      this.fixedLocations.push(
-        {id: j.id, label: j.id}
-      );
+    joints.forEach((j) => {
+      this.fixedLocations.push({ id: j.id, label: j.id });
     });
   }
 
@@ -95,14 +91,13 @@ export class Link {
   set forces(value: Force[]) {
     this._forces = value;
   }
-
 }
 
 export class RealLink extends Link {
   private _fill: string;
   private _shape: Shape;
   private _bound: Bound;
-  private _d: string
+  private _d: string;
   // private _mass: number;
   private _massMoI: number;
   private _CoM: Coord;
@@ -117,7 +112,7 @@ export class RealLink extends Link {
     // this._mass = mass !== undefined ? mass : 1;
     this._massMoI = massMoI !== undefined ? massMoI : 1;
     this._shape = shape !== undefined ? shape : Shape.line;
-    this._fill = '#' + (0x1000000 + (Math.random()) * 0xffffff).toString(16).substr(1, 6);
+    this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
     this._bound = bound !== undefined ? bound : RealLink.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
     this._d = RealLink.getPointsFromBounds(this._bound, this._shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
@@ -126,13 +121,13 @@ export class RealLink extends Link {
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
-    let bound: Bound = new class implements Bound {
+    let bound: Bound = new (class implements Bound {
       arrow: Coord = new Coord(0, 0);
       b1: Coord = new Coord(coord1.x, coord1.y);
       b2: Coord = new Coord(coord2.x, coord2.y);
       b3: Coord = new Coord(coord2.x, coord2.y);
       b4: Coord = new Coord(coord1.x, coord1.y);
-    };
+    })();
 
     const coordDist = getDistance(coord1, coord2);
     const coordAng = getAngle(coord1, coord2);
@@ -166,7 +161,7 @@ export class RealLink extends Link {
         break;
       }
       case Shape.rectangle: {
-        [bound.b3, bound.b4] = determineRectPoint(1/2, bound.b3, bound.b4);
+        [bound.b3, bound.b4] = determineRectPoint(1 / 2, bound.b3, bound.b4);
         break;
       }
       case Shape.square: {
@@ -178,7 +173,7 @@ export class RealLink extends Link {
         break;
       }
       case Shape.cShape: {
-        [bound.b3, bound.b4] = determineRectPoint(2/3, bound.b3, bound.b4);
+        [bound.b3, bound.b4] = determineRectPoint(2 / 3, bound.b3, bound.b4);
         break;
       }
       case Shape.tShape: {
@@ -186,7 +181,7 @@ export class RealLink extends Link {
         break;
       }
       case Shape.lShape: {
-        [bound.b3, bound.b4] = determineRectPoint(2/3, bound.b3, bound.b4);
+        [bound.b3, bound.b4] = determineRectPoint(2 / 3, bound.b3, bound.b4);
         break;
       }
       // case Shape.horizontalLine: {
@@ -252,27 +247,19 @@ export class RealLink extends Link {
     }
     switch (shape) {
       case Shape.eTriangle:
-        leftRightPad = 5 * 2 / Math.tan(Math.PI / 6);
-        topBotPad = leftRightPad / 2 * Math.sqrt(3);
-        bound.b1 = offset(-leftRightPad * AppConstants.scaleFactor,
-          5 * 2 * AppConstants.scaleFactor, bound.b1);
-        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor,
-          5 * 2 * AppConstants.scaleFactor, bound.b2);
-        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor,
-          (5 * 2 - topBotPad * 2)  * AppConstants.scaleFactor, bound.b3);
-        bound.b4 = offset(-leftRightPad * AppConstants.scaleFactor,
-          (5 * 2 - topBotPad * 2)  * AppConstants.scaleFactor, bound.b4);
+        leftRightPad = (5 * 2) / Math.tan(Math.PI / 6);
+        topBotPad = (leftRightPad / 2) * Math.sqrt(3);
+        bound.b1 = offset(-leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b1);
+        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b2);
+        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor, (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor, bound.b3);
+        bound.b4 = offset(-leftRightPad * AppConstants.scaleFactor, (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor, bound.b4);
         break;
       case Shape.rTriangle:
-        leftRightPad = 5 * 2 / Math.tan(Math.PI / 8);
-        bound.b1 = offset(-5 * 2 * AppConstants.scaleFactor,
-          5 * 2 * AppConstants.scaleFactor, bound.b1);
-        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor,
-          5 * 2 * AppConstants.scaleFactor, bound.b2);
-        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor,
-          -leftRightPad  * AppConstants.scaleFactor, bound.b3);
-        bound.b4 = offset(-5 * 2 * AppConstants.scaleFactor,
-          -leftRightPad * AppConstants.scaleFactor, bound.b4);
+        leftRightPad = (5 * 2) / Math.tan(Math.PI / 8);
+        bound.b1 = offset(-5 * 2 * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b1);
+        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b2);
+        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor, -leftRightPad * AppConstants.scaleFactor, bound.b3);
+        bound.b4 = offset(-5 * 2 * AppConstants.scaleFactor, -leftRightPad * AppConstants.scaleFactor, bound.b4);
         break;
       case Shape.circle:
         const dx = bound.b2.x - bound.b1.x;
@@ -298,25 +285,25 @@ export class RealLink extends Link {
     }
     switch (shape) {
       case Shape.bar:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.rectangle:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.square:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.circle:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.cShape:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.tShape:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
       case Shape.lShape:
-        bound = padding(2 * 5 / 50, bound);
+        bound = padding((2 * 5) / 50, bound);
         break;
     }
     // apply final adjustment
@@ -336,24 +323,24 @@ export class RealLink extends Link {
   }
 
   static rotateBounds(oldJoint1: Coord, oldJoint2: Coord, newJoint1: Coord, newJoint2: Coord, oldBound: Bound) {
-    const theta = Math.atan2(newJoint2.y - newJoint1.y, newJoint2.x - newJoint1.x) - Math.atan2(oldJoint2.y - oldJoint1.y,  oldJoint2.x - oldJoint1.x);
-    const x_diff = newJoint1.x - ((Math.cos(theta) * oldJoint1.x) - (Math.sin(theta) * oldJoint1.y));
-    const y_diff = newJoint1.y - ((Math.sin(theta) * oldJoint1.x) + (Math.cos(theta) * oldJoint1.y));
+    const theta = Math.atan2(newJoint2.y - newJoint1.y, newJoint2.x - newJoint1.x) - Math.atan2(oldJoint2.y - oldJoint1.y, oldJoint2.x - oldJoint1.x);
+    const x_diff = newJoint1.x - (Math.cos(theta) * oldJoint1.x - Math.sin(theta) * oldJoint1.y);
+    const y_diff = newJoint1.y - (Math.sin(theta) * oldJoint1.x + Math.cos(theta) * oldJoint1.y);
 
     function determineTransformation(oldBound: Coord, x_diff: number, y_diff: number, theta: number) {
       let newCoord = new Coord(0, 0);
-      newCoord.x = (Math.cos(theta) * oldBound.x) - (Math.sin(theta) * oldBound.y) + x_diff;
-      newCoord.y = (Math.sin(theta) * oldBound.x) + (Math.cos(theta) * oldBound.y) + y_diff;
+      newCoord.x = Math.cos(theta) * oldBound.x - Math.sin(theta) * oldBound.y + x_diff;
+      newCoord.y = Math.sin(theta) * oldBound.x + Math.cos(theta) * oldBound.y + y_diff;
       return newCoord;
     }
 
-    let bound: Bound = new class implements Bound {
+    let bound: Bound = new (class implements Bound {
       arrow: Coord = new Coord(0, 0);
       b1: Coord = new Coord(0, 0);
       b2: Coord = new Coord(0, 0);
       b3: Coord = new Coord(0, 0);
       b4: Coord = new Coord(0, 0);
-    };
+    })();
 
     bound.b1 = determineTransformation(oldBound.b1, x_diff, y_diff, theta);
     bound.b2 = determineTransformation(oldBound.b2, x_diff, y_diff, theta);
@@ -428,8 +415,8 @@ export class RealLink extends Link {
         const dy = bound.b2.y - bound.b1.y;
         const angle = Math.atan2(dy, dx);
         const width = Math.sqrt(dx * dx + dy * dy);
-        const cx = Math.cos(angle) * width / widthRatio;
-        const cy = Math.sin(angle) * width / widthRatio;
+        const cx = (Math.cos(angle) * width) / widthRatio;
+        const cy = (Math.sin(angle) * width) / widthRatio;
         const low2 = new Coord(bound.b3.x - cx, bound.b3.y - cy);
         const low1 = new Coord(bound.b4.x + cx, bound.b4.y + cy);
         const high2 = new Coord(bound.b2.x - cx + cy, bound.b2.y - cy - cx);
@@ -438,30 +425,30 @@ export class RealLink extends Link {
         break;
       }
       case Shape.tShape: {
-        const widthRatio = 5
+        const widthRatio = 5;
         const dx = bound.b2.x - bound.b1.x;
         const dy = bound.b2.y - bound.b1.y;
         const angle = Math.atan2(dy, dx);
         const width = Math.sqrt(dx * dx + dy * dy);
-        const cx = Math.cos(angle) * width / widthRatio;
-        const cy = Math.sin(angle) * width / widthRatio;
+        const cx = (Math.cos(angle) * width) / widthRatio;
+        const cy = (Math.sin(angle) * width) / widthRatio;
         const high4 = new Coord(bound.b2.x + cy, bound.b2.y - cx);
-        const high3 = new Coord(high4.x - cx * (widthRatio - 1) / 2, high4.y - cy * (widthRatio - 1) / 2);
-        const low2 = new Coord(bound.b3.x - cx * (widthRatio - 1) / 2, bound.b3.y - cy * (widthRatio - 1) / 2);
-        const low1 = new Coord(bound.b4.x + cx * (widthRatio - 1) / 2, bound.b4.y + cy * (widthRatio - 1) / 2);
+        const high3 = new Coord(high4.x - (cx * (widthRatio - 1)) / 2, high4.y - (cy * (widthRatio - 1)) / 2);
+        const low2 = new Coord(bound.b3.x - (cx * (widthRatio - 1)) / 2, bound.b3.y - (cy * (widthRatio - 1)) / 2);
+        const low1 = new Coord(bound.b4.x + (cx * (widthRatio - 1)) / 2, bound.b4.y + (cy * (widthRatio - 1)) / 2);
         const high1 = new Coord(bound.b1.x + cy, bound.b1.y - cx);
-        const high2 = new Coord(high1.x + cx * (widthRatio - 1) / 2, high1.y + cy * (widthRatio - 1) / 2);
+        const high2 = new Coord(high1.x + (cx * (widthRatio - 1)) / 2, high1.y + (cy * (widthRatio - 1)) / 2);
         points = [bound.b1, bound.b2, high4, high3, low2, low1, high2, high1];
         break;
       }
       case Shape.lShape: {
-        const widthRatio = 5
+        const widthRatio = 5;
         const dx = bound.b2.x - bound.b1.x;
         const dy = bound.b2.y - bound.b1.y;
         const angle = Math.atan2(dy, dx);
         const width = Math.sqrt(dx * dx + dy * dy);
-        const cx = Math.cos(angle) * width / widthRatio;
-        const cy = Math.sin(angle) * width / widthRatio;
+        const cx = (Math.cos(angle) * width) / widthRatio;
+        const cy = (Math.sin(angle) * width) / widthRatio;
         const high2 = new Coord(bound.b2.x + cy, bound.b2.y - cx);
         const high1 = new Coord(high2.x - cx * (widthRatio - 1), high2.y - cy * (widthRatio - 1));
         const low1 = new Coord(bound.b4.x + cx, bound.b4.y + cy);
@@ -479,7 +466,6 @@ export class RealLink extends Link {
       const xdiff = points[1].x - points[0].x;
       const ydiff = points[1].y - points[0].y;
       r = Math.sqrt(Math.pow(xdiff, 2) + Math.pow(ydiff, 2)) / 2;
-
     } else {
       r = 5 * 2 * AppConstants.scaleFactor;
     }
@@ -493,8 +479,8 @@ export class RealLink extends Link {
     // pre-process, fill the arrays
     for (let i = 0; i < points.length; i++) {
       let npHolder: Coord, lpHolder: Coord;
-      npHolder = (i + 1) < points.length ? points[i + 1] : points[0];
-      lpHolder = (i - 1) >= 0 ? points[i - 1] : points[points.length - 1];
+      npHolder = i + 1 < points.length ? points[i + 1] : points[0];
+      lpHolder = i - 1 >= 0 ? points[i - 1] : points[points.length - 1];
       // last point
       const lp = lpHolder;
       // current point
@@ -558,7 +544,7 @@ export class RealLink extends Link {
       const midY = cp.y - midYC;
 
       // construct the path from start to mid
-      pathString += (i === 0) ? `M ${startX} ${startY} L ${midX} ${midY} ` : `L ${startX} ${startY} L ${midX} ${midY} `;
+      pathString += i === 0 ? `M ${startX} ${startY} L ${midX} ${midY} ` : `L ${startX} ${startY} L ${midX} ${midY} `;
       // if (i === 0) {
       //   pathString += `M ${startX} ${startY} L ${midX} ${midY} `;
       // } else {
@@ -590,9 +576,10 @@ export class RealLink extends Link {
       const cp2y2 = nextYC * 0.551915;
 
       // find the shorter control line
-      pathString += (Math.sqrt(cp1x1 * cp1x1 + cp1y1 * cp1y1) < Math.sqrt(cp1x2 * cp1x2 + cp1y2 * cp1y2)) ?
-        pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${cp.x + nextXC - cp2x1} ${cp.y + nextYC - cp2y1} ` :
-        `C ${cp.x - midXC + cp1x2} ${cp.y - midYC + cp1y2} ${cp.x + nextXC - cp2x2} ${cp.y + nextYC - cp2y2} `;
+      pathString +=
+        Math.sqrt(cp1x1 * cp1x1 + cp1y1 * cp1y1) < Math.sqrt(cp1x2 * cp1x2 + cp1y2 * cp1y2)
+          ? (pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${cp.x + nextXC - cp2x1} ${cp.y + nextYC - cp2y1} `)
+          : `C ${cp.x - midXC + cp1x2} ${cp.y - midYC + cp1y2} ${cp.x + nextXC - cp2x2} ${cp.y + nextYC - cp2y2} `;
       // if (Math.sqrt(cp1x1 * cp1x1 + cp1y1 * cp1y1) < Math.sqrt(cp1x2 * cp1x2 + cp1y2 * cp1y2)) {
       //   pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${cp.x + nextXC - cp2x1} ${cp.y + nextYC - cp2y1} `;
       // } else {
@@ -609,7 +596,7 @@ export class RealLink extends Link {
     let com_x = 0;
     let com_y = 0;
     // TODO: Logic isn't exactly right but can change this once other logic is fully finished
-    joints.forEach(j => {
+    joints.forEach((j) => {
       com_x += j.x;
       com_y += j.y;
     });
@@ -664,7 +651,6 @@ export class RealLink extends Link {
     this._CoM = value;
   }
 
-
   get CoM_d1(): string {
     return this._CoM_d1;
   }
@@ -698,14 +684,14 @@ export class RealLink extends Link {
   }
 
   updateCoMDs() {
-    this._CoM_d1 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y + ' ' +
-      'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y + 0.25);
-    this._CoM_d2 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y + 0.25) + ' ' +
-      'A0.25 0.25 0 0 0 ' + (this.CoM.x + 0.25) + ' ' +  this.CoM.y;
-    this._CoM_d3 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x + 0.25)  + ' ' + this.CoM.y + ' ' +
-      'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y - 0.25);
-    this._CoM_d4 = 'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y - 0.25) + ' ' +
-      'A0.25 0.25 0 0 0 ' + (this.CoM.x - 0.25)  + ' ' +  this.CoM.y;
+    this._CoM_d1 =
+      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y + ' ' + 'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y + 0.25);
+    this._CoM_d2 =
+      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y + 0.25) + ' ' + 'A0.25 0.25 0 0 0 ' + (this.CoM.x + 0.25) + ' ' + this.CoM.y;
+    this._CoM_d3 =
+      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x + 0.25) + ' ' + this.CoM.y + ' ' + 'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y - 0.25);
+    this._CoM_d4 =
+      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y - 0.25) + ' ' + 'A0.25 0.25 0 0 0 ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y;
   }
 
   static getRectBoundsByRatio(refCoord1: Coord, refCoord2: Coord, ratio: number) {
@@ -728,9 +714,9 @@ export class RealLink extends Link {
     return {
       b1: new Coord(x1, y1),
       b2: new Coord(x2, y2),
-      b3: new Coord(x2 + xChangeBound,  y2 - yChangeBound),
+      b3: new Coord(x2 + xChangeBound, y2 - yChangeBound),
       b4: new Coord(x1 + xChangeBound, y1 - yChangeBound),
-      arrow: new Coord(xVal, yVal)
+      arrow: new Coord(xVal, yVal),
       // arrow: {x: 1, y: 1}
       // arrow: {x: 0, y: 0}
     };

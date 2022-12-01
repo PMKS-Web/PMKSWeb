@@ -1,18 +1,18 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Force} from "../../model/force";
-import {Piston, Link, RealLink, Shape} from "../../model/link";
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../../model/joint";
-import {Coord} from "../../model/coord";
-import {roundNumber} from "../../model/utils";
-import {Mechanism} from "../../model/mechanism/mechanism";
-import {InstantCenter} from "../../model/instant-center";
-import {GridComponent} from "../grid/grid.component";
-import {ToolbarComponent} from "../toolbar/toolbar.component";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Force } from '../../model/force';
+import { Piston, Link, RealLink, Shape } from '../../model/link';
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
+import { Coord } from '../../model/coord';
+import { roundNumber } from '../../model/utils';
+import { Mechanism } from '../../model/mechanism/mechanism';
+import { InstantCenter } from '../../model/instant-center';
+import { GridComponent } from '../grid/grid.component';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
 
 @Component({
   selector: 'app-linkage-table',
   templateUrl: './linkage-table.component.html',
-  styleUrls: ['./linkage-table.component.scss']
+  styleUrls: ['./linkage-table.component.scss'],
 })
 export class LinkageTableComponent implements OnInit {
   private static linkageTable: SVGElement;
@@ -21,7 +21,7 @@ export class LinkageTableComponent implements OnInit {
   private static forceButton: SVGElement;
   private static showLinkageTableButton: SVGElement;
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {}
 
@@ -34,86 +34,111 @@ export class LinkageTableComponent implements OnInit {
   }
 
   distFromJoint(joint1: Joint, joint2: Joint) {
-    return roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x , 2) +
-      Math.pow(joint1.y - joint2.y, 2)), 3);
+    return roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2)), 3);
   }
 
   changeJointProp($event: any, joint: Joint, jointProp: string) {
-    if (!(joint instanceof RealJoint)) {return}
+    if (!(joint instanceof RealJoint)) {
+      return;
+    }
     switch (jointProp) {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Joint X Value');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Joint X Value');
+        }
         joint.x = Number($event.target.value);
-        joint.links.forEach(l => {
-          if (!(l instanceof RealLink)) {return}
-          if (l.shape !== 'line') {return}
+        joint.links.forEach((l) => {
+          if (!(l instanceof RealLink)) {
+            return;
+          }
+          if (l.shape !== 'line') {
+            return;
+          }
           // TODO: delete this if this is not needed (verify this)
-          const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
+          const jointIndex = l.joints.findIndex((jt) => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.bound = RealLink.getBounds(
-            new Coord(l.joints[0].x, l.joints[0].y),
-            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
           l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          l.forces.forEach(f => {
+          l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
         });
         break;
       case 'y':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Joint Y Value');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Joint Y Value');
+        }
         joint.y = Number($event.target.value);
-        joint.links.forEach(l => {
-          if (!(l instanceof RealLink)) {return}
-          if (l.shape !== 'line') {return}
+        joint.links.forEach((l) => {
+          if (!(l instanceof RealLink)) {
+            return;
+          }
+          if (l.shape !== 'line') {
+            return;
+          }
           // TODO: delete this if this is not needed (verify this)
-          const jointIndex = l.joints.findIndex(jt => jt.id === joint.id);
+          const jointIndex = l.joints.findIndex((jt) => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.bound = RealLink.getBounds(
-            new Coord(l.joints[0].x, l.joints[0].y),
-            new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
           l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          l.forces.forEach(f => {
+          l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
         });
         break;
       case 'id':
-        if (!(typeof $event.target.value === 'string')) {return GridComponent.sendNotification('Check Joint ID');}
-        joint.links.forEach(l => {
+        if (!(typeof $event.target.value === 'string')) {
+          return GridComponent.sendNotification('Check Joint ID');
+        }
+        joint.links.forEach((l) => {
           l.id = l.id.replace(joint.id, $event.target.value);
         });
         joint.id = $event.target.value;
         break;
       case 'angle':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Angle Value');}
-        if (!(joint instanceof PrisJoint)) {return}
-        joint.angle = Number($event.target.value) * Math.PI / 180;
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Angle Value');
+        }
+        if (!(joint instanceof PrisJoint)) {
+          return;
+        }
+        joint.angle = (Number($event.target.value) * Math.PI) / 180;
     }
     GridComponent.updateMechanism();
   }
 
   changeLinkProp($event: any, link: Link, linkProp: string) {
-    if (!(link instanceof RealLink)) {return}
+    if (!(link instanceof RealLink)) {
+      return;
+    }
     switch (linkProp) {
       case 'mass':
-        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Link Mass');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Link Mass');
+        }
         link.mass = Number($event.target.value);
         break;
       case 'massMoI':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link Mass MoI');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Link Mass MoI');
+        }
         link.massMoI = Number($event.target.value);
         break;
       case 'CoMX':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link CoM Y');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Link CoM Y');
+        }
         link.CoM.x = Number($event.target.value);
         break;
       case 'CoMY':
-        if (isNaN(Number($event.target.value)))  {return GridComponent.sendNotification('Check Link CoM Y');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Link CoM Y');
+        }
         link.CoM.y = Number($event.target.value);
         break;
     }
@@ -125,23 +150,33 @@ export class LinkageTableComponent implements OnInit {
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
       case 'id':
-        if (!(typeof $event.target.value === 'string')) {return GridComponent.sendNotification('Check Force ID');}
+        if (!(typeof $event.target.value === 'string')) {
+          return GridComponent.sendNotification('Check Force ID');
+        }
         force.id = $event.target.value;
         break;
       case 'xPos':
-        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force X Position');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Force X Position');
+        }
         force.startCoord.x = Number($event.target.value);
         break;
       case 'yPos':
-        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Y Position');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Force Y Position');
+        }
         force.startCoord.y = Number($event.target.value);
         break;
       case 'mag':
-        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Magnitude');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Force Magnitude');
+        }
         force.mag = Number($event.target.value);
         break;
       case 'angle':
-        if (isNaN(Number($event.target.value))) {return GridComponent.sendNotification('Check Force Angle');}
+        if (isNaN(Number($event.target.value))) {
+          return GridComponent.sendNotification('Check Force Angle');
+        }
         force.angle = Number($event.target.value) * (Math.PI / 180);
         // TODO: Within commonClass, have radToDeg and degToRad
         force.endCoord.x = Math.cos(force.angle) + force.startCoord.x;
@@ -156,10 +191,10 @@ export class LinkageTableComponent implements OnInit {
   static linkageVisibility() {
     if (LinkageTableComponent.linkageTable.style.visibility === 'visible') {
       LinkageTableComponent.linkageTable.style.visibility = 'hidden';
-      LinkageTableComponent.showLinkageTableButton.textContent = 'Show Table'
+      LinkageTableComponent.showLinkageTableButton.textContent = 'Show Table';
     } else {
       LinkageTableComponent.linkageTable.style.visibility = 'visible';
-      LinkageTableComponent.showLinkageTableButton.textContent = 'Hide Table'
+      LinkageTableComponent.showLinkageTableButton.textContent = 'Hide Table';
     }
   }
 
@@ -168,7 +203,7 @@ export class LinkageTableComponent implements OnInit {
   }
 
   typeOfJoint(joint: Joint) {
-    switch(joint.constructor) {
+    switch (joint.constructor) {
       case Joint:
         return '?';
       case RealJoint:
@@ -187,16 +222,20 @@ export class LinkageTableComponent implements OnInit {
       case Piston:
         return 'P';
     }
-    return '?'
+    return '?';
   }
 
   getJointAngle(joint: Joint) {
-    if (!(joint instanceof PrisJoint)) {return}
-    return joint.angle * 180 / Math.PI;
+    if (!(joint instanceof PrisJoint)) {
+      return;
+    }
+    return (joint.angle * 180) / Math.PI;
   }
 
   getLinkProp(link: Link, propType: string) {
-    if (!(link instanceof RealLink)) {return}
+    if (!(link instanceof RealLink)) {
+      return;
+    }
     switch (propType) {
       case 'mass':
         return link.mass;
@@ -212,7 +251,9 @@ export class LinkageTableComponent implements OnInit {
   }
 
   connectedJoints(joint: Joint) {
-    if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {return}
+    if (!(joint instanceof PrisJoint || joint instanceof RevJoint)) {
+      return;
+    }
     return joint.connectedJoints;
   }
 

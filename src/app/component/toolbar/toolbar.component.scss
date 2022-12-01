@@ -15,7 +15,7 @@
     @include mat.elevation(2);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
     // background-color: mat.get-color-from-palette($background,'raised-button');
-    background-color: mat.get-color-from-palette($primary-palette,50);
+    background-color: mat.get-color-from-palette($primary-palette, 50);
 
     position: absolute;
     display: flex;
@@ -27,13 +27,13 @@
 
     .spacer {
       flex: 1 1 auto;
-    };
-  
+    }
+
     .mat-icon {
       vertical-align: middle;
-      color: mat.get-color-from-palette($foreground,'icon');
+      color: mat.get-color-from-palette($foreground, 'icon');
     }
-  
+
     .mat-button-wrapper {
       display: flex;
       align-items: center;
@@ -41,11 +41,9 @@
       gap: 10px;
     }
 
-    button{
+    button {
       @include mat.typography-level($typography-config, 'body-2');
       height: 100% !important;
     }
-
   }
-
 }

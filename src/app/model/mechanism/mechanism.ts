@@ -1,15 +1,15 @@
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
-import {Link, Piston, RealLink, Shape} from "../link";
-import {Force} from "../force";
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
+import { Link, Piston, RealLink, Shape } from '../link';
+import { Force } from '../force';
 // import {LoopSolver} from "./loop-solver";
-import {PositionSolver} from "./position-solver";
+import { PositionSolver } from './position-solver';
 // import {IcSolver} from "./ic-solver";
-import {InstantCenter} from "../instant-center";
-import {LoopSolver} from "./loop-solver";
-import {Coord} from "../coord";
-import {KinematicsSolver} from "./kinematic-solver";
-import {ForceSolver} from "./force-solver";
-import {roundNumber} from "../utils";
+import { InstantCenter } from '../instant-center';
+import { LoopSolver } from './loop-solver';
+import { Coord } from '../coord';
+import { KinematicsSolver } from './kinematic-solver';
+import { ForceSolver } from './force-solver';
+import { roundNumber } from '../utils';
 
 export class Mechanism {
   private _joints: Joint[][] = [[]];
@@ -19,26 +19,31 @@ export class Mechanism {
   private _internalTriangleSimLinkMap = new Map<string, number[]>();
 
   private _gravity: boolean;
-  private _unit: string
+  private _unit: string;
   private _dof: number;
   private _inputAngularVelocities: number[] = [];
   private _requiredLoops: string[] = [];
   private _allLoops: string[] = [];
 
-  constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[],
-              gravity: boolean, unit: string, inputAngVel: number) {
-    joints.forEach(j => {
+  constructor(joints: Joint[], links: Link[], forces: Force[], ics: InstantCenter[], gravity: boolean, unit: string, inputAngVel: number) {
+    joints.forEach((j) => {
       switch (j.constructor) {
         case RealJoint:
-          if (!(j instanceof RealJoint)) {return}
+          if (!(j instanceof RealJoint)) {
+            return;
+          }
           this._joints[0].push(new RealJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
           break;
         case RevJoint:
-          if (!(j instanceof RevJoint)) {return}
+          if (!(j instanceof RevJoint)) {
+            return;
+          }
           this._joints[0].push(new RevJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints));
           break;
         case PrisJoint:
-          if (!(j instanceof PrisJoint)) {return}
+          if (!(j instanceof PrisJoint)) {
+            return;
+          }
           const prisJoint = new PrisJoint(j.id, j.x, j.y, j.input, j.ground, j.links, j.connectedJoints);
           prisJoint.angle = j.angle;
           this._joints[0].push(prisJoint);
@@ -48,10 +53,12 @@ export class Mechanism {
           break;
       }
     });
-    links.forEach(l => {
+    links.forEach((l) => {
       switch (l.constructor) {
         case RealLink:
-          if (!(l instanceof RealLink)) {return}
+          if (!(l instanceof RealLink)) {
+            return;
+          }
           const newLink = new RealLink(l.id, l.joints);
           newLink.shape = l.shape;
           newLink.bound = l.bound;
@@ -61,12 +68,14 @@ export class Mechanism {
           this._links[0].push(newLink);
           break;
         case Piston:
-          if (!(l instanceof Piston)) {return}
+          if (!(l instanceof Piston)) {
+            return;
+          }
           this._links[0].push(new Piston(l.id, l.joints));
           break;
       }
     });
-    forces.forEach(f =>{
+    forces.forEach((f) => {
       this._forces[0].push(new Force(f.id, f.link, f.startCoord, f.endCoord, f.local, f.arrowOutward, f.mag));
     });
     // joints.forEach(j => { this._joints[0].push(j); });
@@ -78,7 +87,15 @@ export class Mechanism {
     this._dof = this.determineDegreesOfFreedom();
     this._inputAngularVelocities.push(inputAngVel);
     // no index found for input Joint
-    if (this._dof === 1 && joints.findIndex(j => { if (!(j instanceof RealJoint)) {return} return j.input}) !== -1) {
+    if (
+      this._dof === 1 &&
+      joints.findIndex((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        return j.input;
+      }) !== -1
+    ) {
       [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(joints, links);
       this.findFullMovementPos(inputAngVel);
     } else {
@@ -98,7 +115,7 @@ export class Mechanism {
     let J1 = 0;
     const J2 = 0;
     let groundNotFound = true;
-    this.links[0].forEach(l => {
+    this.links[0].forEach((l) => {
       N++;
       // TODO: Account for this case later
       // if (this.determineParallelLinkage(l)) {
@@ -107,11 +124,13 @@ export class Mechanism {
       // }
     });
 
-    this.joints[0].forEach(j => {
+    this.joints[0].forEach((j) => {
       // TODO: Account for this instance later
       switch (j.constructor) {
         case RevJoint:
-          if (!(j instanceof RevJoint)) {return}
+          if (!(j instanceof RevJoint)) {
+            return;
+          }
           if (j.ground) {
             J1 += j.links.length;
             if (groundNotFound) {
@@ -123,7 +142,9 @@ export class Mechanism {
           }
           break;
         case PrisJoint:
-          if (!(j instanceof  PrisJoint)) {return}
+          if (!(j instanceof PrisJoint)) {
+            return;
+          }
           J1 += j.links.length;
           break;
       }
@@ -131,7 +152,7 @@ export class Mechanism {
     if (groundNotFound) {
       return NaN;
     }
-    return (3 * (N - 1)) - (2 * J1) - J2;
+    return 3 * (N - 1) - 2 * J1 - J2;
   }
 
   private findFullMovementPos(inputAngVel: number) {
@@ -141,8 +162,10 @@ export class Mechanism {
     let currentTimeStamp = 0;
     const TOLERANCE = 0.008;
     let max_counter = 0;
-    this.joints[0].forEach(j => {
-      if (!(j instanceof RealJoint)) {return}
+    this.joints[0].forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
       if (!j.ground) {
         max_counter++;
       }
@@ -153,35 +176,41 @@ export class Mechanism {
     PositionSolver.setUpSolvingForces(this.forces[0]);
 
     const connectedJointMapIndices = new Map<string, number[]>();
-    this.links[0].forEach(l => {
+    this.links[0].forEach((l) => {
       const numArray: number[] = [];
       // if (!(l instanceof RealLink)) {return}
-      l.joints.forEach(j => {
-        const jointIndex = this.joints[0].findIndex(jt => jt.id === j.id);
+      l.joints.forEach((j) => {
+        const jointIndex = this.joints[0].findIndex((jt) => jt.id === j.id);
         numArray.push(jointIndex);
       });
       connectedJointMapIndices.set(l.id, numArray);
     });
 
-
     const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1);
-    const desiredJointIndex =this.joints[0].findIndex(j => j.id === desiredJointID);
-    if (desiredJointIndex === undefined) {return}
-    const desiredJoint = this.joints[0][desiredJointIndex]
+    const desiredJointIndex = this.joints[0].findIndex((j) => j.id === desiredJointID);
+    if (desiredJointIndex === undefined) {
+      return;
+    }
+    const desiredJoint = this.joints[0][desiredJointIndex];
     const startingPositionX = desiredJoint.x;
     const startingPositionY = desiredJoint.y;
-    let xDiff = Math.abs(startingPositionX - (Math.round(desiredJoint.x * 100) / 100));
-    let yDiff = Math.abs(startingPositionY - (Math.round(desiredJoint.y * 100) / 100));
+    let xDiff = Math.abs(startingPositionX - Math.round(desiredJoint.x * 100) / 100);
+    let yDiff = Math.abs(startingPositionY - Math.round(desiredJoint.y * 100) / 100);
 
     while (!simForward || currentTimeStamp === 0 || xDiff > TOLERANCE || yDiff > TOLERANCE) {
-      const possible = PositionSolver.determinePositionAnalysis(this._joints[currentTimeStamp],
-        this._links[currentTimeStamp], this._forces[currentTimeStamp], max_counter, inputAngVelDirection);
+      const possible = PositionSolver.determinePositionAnalysis(
+        this._joints[currentTimeStamp],
+        this._links[currentTimeStamp],
+        this._forces[currentTimeStamp],
+        max_counter,
+        inputAngVelDirection
+      );
       if (possible) {
         this._joints.push([]);
         this._links.push([]);
         this._forces.push([]);
         // Joint order matters at the moment
-        this.joints[0].forEach(j => {
+        this.joints[0].forEach((j) => {
           const jointCoord = PositionSolver.jointMapPositions.get(j.id)!;
           this._joints[currentTimeStamp + 1].push(new Joint(j.id, jointCoord[0], jointCoord[1]));
         });
@@ -195,7 +224,9 @@ export class Mechanism {
           });
           switch (l.constructor) {
             case RealLink:
-              if (!(l instanceof RealLink)) {return}
+              if (!(l instanceof RealLink)) {
+                return;
+              }
               // connectedJointIndices = connectedJointMapIndices.get(l.id)!;
               // connectedJointIndices.forEach((ji: number) => {
               //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
@@ -211,11 +242,19 @@ export class Mechanism {
               pushLink.shape = l.shape;
               // TODO: Update this to just one function later...
               if (pushLink.shape === 'line') {
-                pushLink.bound = RealLink.getBounds(new Coord(connectedJoints[0].x, connectedJoints[0].y),
-                  new Coord(connectedJoints[1].x, connectedJoints[1].y), l.shape);
+                pushLink.bound = RealLink.getBounds(
+                  new Coord(connectedJoints[0].x, connectedJoints[0].y),
+                  new Coord(connectedJoints[1].x, connectedJoints[1].y),
+                  l.shape
+                );
               } else {
-                pushLink.bound = RealLink.rotateBounds(l.joints[0], l.joints[1], new Coord(connectedJoints[0].x, connectedJoints[0].y),
-                  new Coord(connectedJoints[1].x, connectedJoints[1].y), l.bound);
+                pushLink.bound = RealLink.rotateBounds(
+                  l.joints[0],
+                  l.joints[1],
+                  new Coord(connectedJoints[0].x, connectedJoints[0].y),
+                  new Coord(connectedJoints[1].x, connectedJoints[1].y),
+                  l.bound
+                );
               }
               pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
               // TODO: When you insert a joint onto a link, be sure to utilize this function call
@@ -224,7 +263,9 @@ export class Mechanism {
               this._links[currentTimeStamp + 1].push(pushLink);
               break;
             case Piston:
-              if (!(l instanceof Piston)) {return}
+              if (!(l instanceof Piston)) {
+                return;
+              }
               // connectedJointIndices = connectedJointMapIndices.get(l.id)!;
               // connectedJointIndices.forEach((ji: number) => {
               //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
@@ -263,14 +304,23 @@ export class Mechanism {
           // this._links[currentTimeStamp + 1].push(pushLink);
         });
         // TODO: If forces are a part of links, is all of this info needed? Or just the positions?
-        this.forces[0].forEach(f => {
-          const link = this._links[currentTimeStamp + 1].find(l => l.id === f.link.id);
-          if (link === undefined || (!(link instanceof RealLink))) {return}
+        this.forces[0].forEach((f) => {
+          const link = this._links[currentTimeStamp + 1].find((l) => l.id === f.link.id);
+          if (link === undefined || !(link instanceof RealLink)) {
+            return;
+          }
           // TODO: Don't have forceMagnitudeMap within Position Solver
-          this._forces[currentTimeStamp + 1].push(new Force(
-            f.id, link, PositionSolver.forcePositionMap.get(f.id + 'start')!,
-            PositionSolver.forcePositionMap.get(f.id + 'end')!, f.local, f.arrowOutward,
-            PositionSolver.forceMagnitudeMap.get(f.id + 'x')));
+          this._forces[currentTimeStamp + 1].push(
+            new Force(
+              f.id,
+              link,
+              PositionSolver.forcePositionMap.get(f.id + 'start')!,
+              PositionSolver.forcePositionMap.get(f.id + 'end')!,
+              f.local,
+              f.arrowOutward,
+              PositionSolver.forceMagnitudeMap.get(f.id + 'x')
+            )
+          );
         });
         // this.links[0].forEach(l => {
         //   if (l instanceof RealLink) {
@@ -291,14 +341,14 @@ export class Mechanism {
         // }
         falseTwice = 0;
         currentTimeStamp++;
-        this._inputAngularVelocities.push(inputAngVel)
+        this._inputAngularVelocities.push(inputAngVel);
         // TODO: Create own function to determine this. Probably just utilize tracer joint logic
         // const ffs = this.calculateForces(this.SimulationLinks, this.SimulationForces);
         // adjust for linkAngle (for center of mass)
         // TODO: arguments passed in has to come from mechanism ICs and not from IC
         // const determined_ics = IcSolver.determineICPositions(ics, joints);
       } else {
-        if ((!simForward && currentTimeStamp === 0) || (falseTwice === 2)) {
+        if ((!simForward && currentTimeStamp === 0) || falseTwice === 2) {
           this.setMechanismInvalid();
           return;
         }
@@ -307,8 +357,8 @@ export class Mechanism {
         inputAngVel = inputAngVel * -1;
         inputAngVelDirection = !inputAngVelDirection;
       }
-      xDiff = Math.abs(startingPositionX - (roundNumber(this._joints[currentTimeStamp][desiredJointIndex].x, 2)));
-      yDiff = Math.abs(startingPositionY - (roundNumber(this._joints[currentTimeStamp][desiredJointIndex].y, 2)));
+      xDiff = Math.abs(startingPositionX - roundNumber(this._joints[currentTimeStamp][desiredJointIndex].x, 2));
+      yDiff = Math.abs(startingPositionY - roundNumber(this._joints[currentTimeStamp][desiredJointIndex].y, 2));
       if (currentTimeStamp === 750) {
         this.setMechanismInvalid();
         return;
@@ -325,7 +375,6 @@ export class Mechanism {
     this.allLoops = [];
     this.requiredLoops = [];
   }
-
 
   get internalTriangleSimLinkMap(): Map<string, number[]> {
     return this._internalTriangleSimLinkMap;
@@ -441,7 +490,7 @@ export class Mechanism {
         torqueUnit = 'N*m';
         break;
       default:
-        return
+        return;
       // case 'km':
       //   posUnit = 'km';
       //   forceUnit = 'N';
@@ -488,20 +537,20 @@ export class Mechanism {
     }
     forceTitleRow.push('Torque ' + torqueUnit);
     forceTitleRow.push(' ');
-    this.forces[0].forEach(f => {
+    this.forces[0].forEach((f) => {
       forceTitleRow.push('Force ' + f.id + ' x ' + '(' + posUnit + ')');
       forceTitleRow.push('Force ' + f.id + ' y ' + '(' + posUnit + ')');
     });
     forceTitleRow.push(' ');
     switch (analysisType) {
       case 'statics':
-        this.joints[0].forEach(j => {
+        this.joints[0].forEach((j) => {
           forceTitleRow.push('Joint ' + j.id + ' x ' + '(' + posUnit + ')');
           forceTitleRow.push('Joint ' + j.id + ' y ' + '(' + posUnit + ')');
         });
         break;
       case 'dynamics':
-        this.joints[0].forEach(j => {
+        this.joints[0].forEach((j) => {
           forceTitleRow.push('Joint ' + j.id + ' x ' + '(' + posUnit + ')');
           forceTitleRow.push('Joint ' + j.id + ' y ' + '(' + posUnit + ')');
           forceTitleRow.push('Joint ' + j.id + ' Vel x ' + '(' + velUnit + ')');
@@ -510,7 +559,7 @@ export class Mechanism {
           forceTitleRow.push('Joint ' + j.id + ' Acc y' + '(' + accUnit + ')');
         });
         forceTitleRow.push(' ');
-        this.links[0].forEach(l => {
+        this.links[0].forEach((l) => {
           if (l instanceof Piston) {
             return;
           }
@@ -522,7 +571,7 @@ export class Mechanism {
           forceTitleRow.push('Link ' + l.id + ' CoM Acc y ' + accUnit);
         });
         forceTitleRow.push(' ');
-        this.links[0].forEach(l => {
+        this.links[0].forEach((l) => {
           if (l instanceof Piston) {
             return;
           }
@@ -593,7 +642,7 @@ export class Mechanism {
     //     accUnit = 'in/s^2';
     //     break;
     // }
-    this.joints[0].forEach(j => {
+    this.joints[0].forEach((j) => {
       // if (j instanceof PrisJoint) {
       //   return;
       // }
@@ -605,7 +654,7 @@ export class Mechanism {
       kinematicTitleRow.push('Joint ' + j.id + ' ay ' + accUnit);
     });
     kinematicTitleRow.push(' ');
-    this.links[0].forEach(l => {
+    this.links[0].forEach((l) => {
       // if (l instanceof ImagLink) {
       //   return;
       // }
@@ -617,7 +666,7 @@ export class Mechanism {
       kinematicTitleRow.push('Link ' + l.id + ' CoM ' + 'ay ' + accUnit);
     });
     kinematicTitleRow.push(' ');
-    this.links[0].forEach(l => {
+    this.links[0].forEach((l) => {
       // if (l instanceof ImagLink) {
       //   return;
       // }
@@ -686,7 +735,7 @@ export class Mechanism {
       const force_row = Array<string>();
       // const A_row = Array<Array<string>>(); // unknown array
       // const B_row = Array<string>(); // known array
-      force_row.push((index * 10 * Math.PI / 180).toString());
+      force_row.push(((index * 10 * Math.PI) / 180).toString());
       // force_row.push((index * tsl.angular_velocity * Math.PI / 180).toString());
       if (analysisType === 'dynamics') {
         // determine kinematic analysis
@@ -719,7 +768,7 @@ export class Mechanism {
       //   // force_row.push('(' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[0] * accUnitConversion) +
       //   //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[1] * accUnitConversion) + ')');
       // });
-      this.forces[index].forEach(f => {
+      this.forces[index].forEach((f) => {
         force_row.push(roundNumber(f.startCoord.x, 4).toString());
         force_row.push(roundNumber(f.startCoord.y, 4).toString());
         // force_row.push(Simulator.roundToHundredThousandth(f.xLocOfForceOnLink).toString());
@@ -728,7 +777,7 @@ export class Mechanism {
       force_row.push(' ');
       switch (analysisType) {
         case 'statics':
-          this.joints[index].forEach(j => {
+          this.joints[index].forEach((j) => {
             force_row.push(roundNumber(j.x, 4).toString());
             force_row.push(roundNumber(j.y, 4).toString());
             // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[0] * accUnitConversion).toString());
@@ -746,9 +795,9 @@ export class Mechanism {
           // force_row.push(' ');
           break;
         case 'dynamics':
-          this.joints[index].forEach(j => {
-            force_row.push(roundNumber(j.x,4).toString());
-            force_row.push(roundNumber(j.y,4).toString());
+          this.joints[index].forEach((j) => {
+            force_row.push(roundNumber(j.x, 4).toString());
+            force_row.push(roundNumber(j.y, 4).toString());
             // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[0] * accUnitConversion).toString());
             // force_row.push(Simulator.roundToHundredThousandth(KinematicsSolver.jointIndexMap.get(j.id)[1] * accUnitConversion).toString());
             force_row.push(roundNumber(KinematicsSolver.jointVelMap.get(j.id)![0] * velUnitConversion, 4).toString());
@@ -759,7 +808,7 @@ export class Mechanism {
             //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.jointAccMap.get(j.id)[1] * accUnitConversion) + ')');
           });
           force_row.push(' ');
-          this.links[index].forEach(l => {
+          this.links[index].forEach((l) => {
             if (l instanceof Piston) {
               return;
             }
@@ -773,7 +822,7 @@ export class Mechanism {
             //   ',' + Simulator.roundToHundredThousandth(KinematicsSolver.linkAccMap.get(l.id)[1] * accUnitConversion) + ')');
           });
           force_row.push(' ');
-          this.links[index].forEach(l => {
+          this.links[index].forEach((l) => {
             if (l instanceof Piston) {
               return;
             }
@@ -795,7 +844,7 @@ export class Mechanism {
     this.joints.forEach((_, index) => {
       // const row = Array<number>();
       const row = Array<string>();
-      row.push((index * 10 * Math.PI / 180).toString());
+      row.push(((index * 10 * Math.PI) / 180).toString());
       KinematicsSolver.requiredLoops = this.requiredLoops;
       KinematicsSolver.determineKinematics(this.joints[index], this.links[index], this.inputAngularVelocities[index]);
       let posUnitConversion: number;
@@ -842,7 +891,7 @@ export class Mechanism {
       //     break;
       // }
 
-      this.joints[0].forEach(j => {
+      this.joints[0].forEach((j) => {
         // if (j instanceof ImagJoint) {
         //   return;
         // }
@@ -852,17 +901,15 @@ export class Mechanism {
         // row.push((KinematicsSolver.jointVelMap.get(j.id)[1] * velUnitConversion).toString());
         // row.push((KinematicsSolver.jointAccMap.get(j.id)[0] * accUnitConversion).toString());
         // row.push((KinematicsSolver.jointAccMap.get(j.id)[1] * accUnitConversion).toString());
-        row.push(roundNumber(
-          this.joints[index][KinematicsSolver.jointIndexMap.get(j.id)!].x * posUnitConversion, 4).toString());
-        row.push(roundNumber(
-          this.joints[index][KinematicsSolver.jointIndexMap.get(j.id)!].y * posUnitConversion, 4).toString());
+        row.push(roundNumber(this.joints[index][KinematicsSolver.jointIndexMap.get(j.id)!].x * posUnitConversion, 4).toString());
+        row.push(roundNumber(this.joints[index][KinematicsSolver.jointIndexMap.get(j.id)!].y * posUnitConversion, 4).toString());
         row.push(roundNumber(KinematicsSolver.jointVelMap.get(j.id)![0] * velUnitConversion, 4).toString());
         row.push(roundNumber(KinematicsSolver.jointVelMap.get(j.id)![1] * velUnitConversion, 4).toString());
         row.push(roundNumber(KinematicsSolver.jointAccMap.get(j.id)![0] * accUnitConversion, 4).toString());
         row.push(roundNumber(KinematicsSolver.jointAccMap.get(j.id)![1] * accUnitConversion, 4).toString());
       });
       row.push(' ');
-      this.links[0].forEach(l => {
+      this.links[0].forEach((l) => {
         // if (l instanceof ImagLink) {
         //   return;
         // }
@@ -880,7 +927,7 @@ export class Mechanism {
         row.push(roundNumber(KinematicsSolver.linkAccMap.get(l.id)![1] * accUnitConversion, 4).toString());
       });
       row.push(' ');
-      this.links[0].forEach(l => {
+      this.links[0].forEach((l) => {
         // if (l instanceof ImagLink) {
         //   return;
         // }

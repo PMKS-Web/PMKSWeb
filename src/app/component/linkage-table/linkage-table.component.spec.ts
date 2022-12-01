@@ -8,9 +8,8 @@ describe('LinkageTableComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ LinkageTableComponent ]
-    })
-    .compileComponents();
+      declarations: [LinkageTableComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {

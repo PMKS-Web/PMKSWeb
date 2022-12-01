@@ -1,32 +1,32 @@
 <div>
-    <div class="tabContainer">
-        <app-tab tabLabel="Synthesize" [tabID]=1 [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
-        <app-tab tabLabel="Edit" [tabID]=2 [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
-        <app-tab tabLabel="Analyze" [tabID]=3 [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
+  <div class="tabContainer">
+    <app-tab tabLabel="Synthesize" [tabID]="1" [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
+    <app-tab tabLabel="Edit" [tabID]="2" [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
+    <app-tab tabLabel="Analyze" [tabID]="3" [activeTab]="this.openTab" (pressedEvent)="tabClicked($event)"></app-tab>
+  </div>
+  <div *ngIf="this.openTab" class="panel" visible="false">
+    <div *ngIf="this.openTab === 1" class="page1">
+      Synth
+      <mat-form-field id="testInput">
+        <input matInput value="Sushi" />
+      </mat-form-field>
     </div>
-    <div *ngIf="this.openTab" class="panel" visible="false">
-        <div *ngIf="this.openTab===1" class="page1">
-            Synth
-            <mat-form-field id="testInput">
-                <input matInput value="Sushi">
-            </mat-form-field>
-        </div>
-        <div *ngIf="this.openTab===2" class="page2">
-            <app-edit-panel></app-edit-panel>
-        </div>
-        <div *ngIf="this.openTab===3" class="page3">
-            Analyze
-            <!-- <div id="headline-1">This is Headline 1</div> -->
-            <div id="headline-2">This is Headline 2</div>
-            <div id="headline-3">This is Headline 3</div>
-            <div id="headline-4">This is Headline 4</div>
-            <div id="headline-5">This is Headline 5</div>
-            <div id="headline-6">This is Headline 6</div>
-            <div id="subtitle-1">This is Subtitle 1</div>
-            <div id="subtitle-2">This is Subtitle 2</div>
-            <div id="body-1">This is Body 1</div>
-            <div id="body-2">This is Body 2</div>
-            <div id="caption">This is Caption</div>
-        </div>
+    <div *ngIf="this.openTab === 2" class="page2">
+      <app-edit-panel></app-edit-panel>
     </div>
+    <div *ngIf="this.openTab === 3" class="page3">
+      Analyze
+      <!-- <div id="headline-1">This is Headline 1</div> -->
+      <div id="headline-2">This is Headline 2</div>
+      <div id="headline-3">This is Headline 3</div>
+      <div id="headline-4">This is Headline 4</div>
+      <div id="headline-5">This is Headline 5</div>
+      <div id="headline-6">This is Headline 6</div>
+      <div id="subtitle-1">This is Subtitle 1</div>
+      <div id="subtitle-2">This is Subtitle 2</div>
+      <div id="body-1">This is Body 1</div>
+      <div id="body-2">This is Body 2</div>
+      <div id="caption">This is Caption</div>
+    </div>
+  </div>
 </div>

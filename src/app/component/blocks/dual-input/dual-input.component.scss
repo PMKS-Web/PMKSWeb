@@ -2,51 +2,46 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-    // Get the color config from the theme.
-    $color-config: mat.get-color-config($theme);
-    // Get the primary color palette from the color-config.
-    $primary-palette: map.get($color-config, 'primary');
-    $accent-palette: map.get($color-config, 'accent');
-    $typography-config: mat.get-typography-config($theme);
-    $background: map.get($theme, background);
-    $foreground: map.get($theme, foreground);
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
 
-    #dual-input-block{
+  #dual-input-block {
+    #block-input-box {
+      margin-left: 10px;
+      font-size: 14px;
+      font-weight: 200;
+      width: 80px;
+      border: 0;
+      outline: none;
+      background-color: mat.get-color-from-palette($primary-palette, 50);
+      border-radius: var(--border-radius);
+      padding: 5px;
 
-        #block-input-box{
-            margin-left: 10px;
-            font-size: 14px;
-            font-weight: 200;
-            width: 80px;
-            border: 0;
-            outline: none;
-            background-color: mat.get-color-from-palette($primary-palette,50);
-            border-radius: var(--border-radius);
-            padding: 5px;
-
-            //When the input is focused
-            &:focus{
-                background-color: mat.get-color-from-palette($primary-palette,100);
-                //add a bottom border
-                border-bottom: 2px solid mat.get-color-from-palette($primary-palette,500);
-                //no more roudned corners in for the bottom
-                border-radius: var(--border-radius) var(--border-radius) 0 0;
-            }
-          }
-        
-          #block-input-units{
-            font-size: 14px;
-            font-weight: 200;
-            color: mat.get-color-from-palette($foreground,'disabled-text');
-
-            text-align: right;
-            padding-right: 5px;
-            margin-left:-35px;
-            width: 30px; 
-            
-          }
-
+      //When the input is focused
+      &:focus {
+        background-color: mat.get-color-from-palette($primary-palette, 100);
+        //add a bottom border
+        border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
+        //no more roudned corners in for the bottom
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+      }
     }
 
+    #block-input-units {
+      font-size: 14px;
+      font-weight: 200;
+      color: mat.get-color-from-palette($foreground, 'disabled-text');
 
+      text-align: right;
+      padding-right: 5px;
+      margin-left: -35px;
+      width: 30px;
+    }
+  }
 }

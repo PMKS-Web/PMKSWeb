@@ -1,9 +1,8 @@
 <div id="toggle-block">
-    <div class="row">
-        <span class="label"><ng-content></ng-content></span>
-        <mat-icon matTooltip={{this.tooltip}}
-        [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
-        <div class="spacer"></div>
-        <mat-slide-toggle color="primary"></mat-slide-toggle>
-    </div>
+  <div class="row">
+    <span class="label"><ng-content></ng-content></span>
+    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
+    <div class="spacer"></div>
+    <mat-slide-toggle color="primary"></mat-slide-toggle>
+  </div>
 </div>

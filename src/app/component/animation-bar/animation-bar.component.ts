@@ -1,13 +1,13 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 // import {switchMapTo} from "rxjs";
-import {Mechanism} from "../../model/mechanism/mechanism";
-import {GridComponent} from "../grid/grid.component";
-import {ToolbarComponent} from "../toolbar/toolbar.component";
+import { Mechanism } from '../../model/mechanism/mechanism';
+import { GridComponent } from '../grid/grid.component';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
 
 @Component({
   selector: 'app-animation-bar',
   templateUrl: './animation-bar.component.html',
-  styleUrls: ['./animation-bar.component.scss']
+  styleUrls: ['./animation-bar.component.scss'],
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
   static showIdTags: boolean = false;
@@ -23,7 +23,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   static sliderContainer: HTMLInputElement;
   private static adjustAnimation: boolean;
 
-  constructor() { }
+  constructor() {}
   ngOnInit(): void {}
 
   ngAfterViewInit() {
@@ -63,14 +63,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
         GridComponent.mechanismAnimationIncrement = 3;
         break;
       case 'fast':
-        AnimationBarComponent.speed = 'slow'
+        AnimationBarComponent.speed = 'slow';
         GridComponent.mechanismAnimationIncrement = 1;
         break;
     }
   }
 
   startAnimation(state: string) {
-    if (GridComponent.mechanisms[0] === undefined) {return;}
+    if (GridComponent.mechanisms[0] === undefined) {
+      return;
+    }
     if (GridComponent.mechanisms[0].joints.length < 3) {
       return;
     }
@@ -114,12 +116,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   onZoomOutPressed() {
     GridComponent.adjustView('out');
-
   }
 
   onZoomResetPressed() {
     GridComponent.adjustView('reset');
-
   }
 
   getSpeed() {
@@ -154,7 +154,9 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   validMechanism() {
-    if (GridComponent.mechanisms[0] === undefined) {return true}
+    if (GridComponent.mechanisms[0] === undefined) {
+      return true;
+    }
     return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
   }
 }

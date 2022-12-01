@@ -1,10 +1,10 @@
 <nav class="navBar">
-  <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()">
+  <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()" />
   <button mat-button onclick="window.open(window.location.origin, '_blank');">
     <mat-icon>note_add</mat-icon>
     New
   </button>
-  <input #csvInput style="display:none" type="file" accept=".csv" (change)="upload($event)">
+  <input #csvInput style="display: none" type="file" accept=".csv" (change)="upload($event)" />
   <button mat-button (click)="csvInput.click()">
     <mat-icon>file_open</mat-icon>
     Open

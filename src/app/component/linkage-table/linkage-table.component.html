@@ -1,164 +1,164 @@
-<button class="secondaryButtons" id="showTable"
-        style="position: absolute; top: 95px; left: 10px; z-index: 1000;
-         font-size: 17px; width: 8em; cursor: pointer" (click)="getLinkageVisibility()">Hide table</button>
+<button
+  class="secondaryButtons"
+  id="showTable"
+  style="position: absolute; top: 95px; left: 10px; z-index: 1000; font-size: 17px; width: 8em; cursor: pointer"
+  (click)="getLinkageVisibility()"
+>
+  Hide table
+</button>
 <!--<body id="linkageTable" class="linkageTable" style="visibility: visible">-->
 
 <div class="linkageTabs" id="linkageTable" style="visibility: visible">
-  <input type="radio" id="tabJoint" name="linkageTabs" checked="checked">
+  <input type="radio" id="tabJoint" name="linkageTabs" checked="checked" />
   <label for="tabJoint">Joints</label>
   <table class="tab">
     <thead>
-    <tr>
-      <th>ID</th>
-      <!--          <th>Type</th>-->
-      <th>Linked To</th>
-      <!--        <div *ngIf="getUnit() === 'cm'">-->
-      <!--          <th>Dist From Joint (cm)</th>-->
-      <!--          <th>x (cm)</th>-->
-      <!--          <th>y (cm)</th>-->
-      <!--        </div>-->
-      <!--        <div *ngIf="getUnit() === 'm'">-->
-      <!--          <th>Dist From Joint (m)</th>-->
-      <!--          <th>x (m)</th>-->
-      <!--          <th>y (m)</th>-->
-      <!--        </div>-->
-      <th *ngIf="getUnit() === 'cm'">Dist From Joint (cm)</th>
-      <th *ngIf="getUnit() === 'm'">Dist From Joint (m)</th>
-      <th *ngIf="getUnit() === 'cm'">x (cm)</th>
-      <th *ngIf="getUnit() === 'm'">x (m)</th>
-      <th *ngIf="getUnit() === 'cm'">y (cm)</th>
-      <th *ngIf="getUnit() === 'm'">y (m)</th>
-      <th>angle (deg)</th>
-    </tr>
+      <tr>
+        <th>ID</th>
+        <!--          <th>Type</th>-->
+        <th>Linked To</th>
+        <!--        <div *ngIf="getUnit() === 'cm'">-->
+        <!--          <th>Dist From Joint (cm)</th>-->
+        <!--          <th>x (cm)</th>-->
+        <!--          <th>y (cm)</th>-->
+        <!--        </div>-->
+        <!--        <div *ngIf="getUnit() === 'm'">-->
+        <!--          <th>Dist From Joint (m)</th>-->
+        <!--          <th>x (m)</th>-->
+        <!--          <th>y (m)</th>-->
+        <!--        </div>-->
+        <th *ngIf="getUnit() === 'cm'">Dist From Joint (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Dist From Joint (m)</th>
+        <th *ngIf="getUnit() === 'cm'">x (cm)</th>
+        <th *ngIf="getUnit() === 'm'">x (m)</th>
+        <th *ngIf="getUnit() === 'cm'">y (cm)</th>
+        <th *ngIf="getUnit() === 'm'">y (m)</th>
+        <th>angle (deg)</th>
+      </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let joint of getJoints()">
-      <td>
-        <input type="text" width="18" value="{{joint.id}}" (change)="changeJointProp($event, joint, 'id')">
-      </td>
-      <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
-      <!-- <td>{{row[1]}}</td>  --> <!-- joint type -->
-      <!--          <td>-->
-      <!--            {{joint.type}}-->
-      <!--          </td>-->
-      <td>
-        <table *ngFor="let conJoints of connectedJoints(joint)">
-          <div>
-            {{conJoints.id}}
-          </div>
-        </table>
-      </td>
-      <td>
-        <table *ngFor="let conJoint of connectedJoints(joint)">
-          <div>
-            {{distFromJoint(conJoint, joint)}}
-          </div>
-        </table>
-      </td>
-      <td>
-        <input type="text" width="37px" value="{{joint.x}}" (change)="changeJointProp($event, joint, 'x')">
-      </td>
-      <td>
-        <input type="text" width="37px" value="{{joint.y}}" (change)="changeJointProp($event, joint, 'y')">
-      </td>
-      <td *ngIf="typeOfJoint(joint) === 'P'">
-        <input type="text" value="{{getJointAngle(joint)}}" (change)="changeJointProp($event, joint, 'angle')">
-      </td>
-      <td *ngIf="typeOfJoint(joint) === 'R'">
-      </td>
-    </tr>
+      <tr *ngFor="let joint of getJoints()">
+        <td>
+          <input type="text" width="18" value="{{ joint.id }}" (change)="changeJointProp($event, joint, 'id')" />
+        </td>
+        <!--                <td class="joint-table-item">{{row[0]}}</td> &lt;!&ndash; joint id&ndash;&gt;-->
+        <!-- <td>{{row[1]}}</td>  -->
+        <!-- joint type -->
+        <!--          <td>-->
+        <!--            {{joint.type}}-->
+        <!--          </td>-->
+        <td>
+          <table *ngFor="let conJoints of connectedJoints(joint)">
+            <div>
+              {{ conJoints.id }}
+            </div>
+          </table>
+        </td>
+        <td>
+          <table *ngFor="let conJoint of connectedJoints(joint)">
+            <div>
+              {{ distFromJoint(conJoint, joint) }}
+            </div>
+          </table>
+        </td>
+        <td>
+          <input type="text" width="37px" value="{{ joint.x }}" (change)="changeJointProp($event, joint, 'x')" />
+        </td>
+        <td>
+          <input type="text" width="37px" value="{{ joint.y }}" (change)="changeJointProp($event, joint, 'y')" />
+        </td>
+        <td *ngIf="typeOfJoint(joint) === 'P'">
+          <input type="text" value="{{ getJointAngle(joint) }}" (change)="changeJointProp($event, joint, 'angle')" />
+        </td>
+        <td *ngIf="typeOfJoint(joint) === 'R'"></td>
+      </tr>
     </tbody>
   </table>
 
-  <input type="radio" id="tabLink" name="linkageTabs">
+  <input type="radio" id="tabLink" name="linkageTabs" />
   <label for="tabLink">Links</label>
   <table class="tab">
     <thead>
-    <tr>
-      <th>ID</th>
-      <th *ngIf="getUnit() === 'cm'">Mass (g)</th>
-      <th *ngIf="getUnit() === 'm'">Mass (kg)</th>
-      <th *ngIf="getUnit() === 'cm'">MoI (kg * cm^2)</th>
-      <th *ngIf="getUnit() === 'm'">MoI (kg * m^2)</th>
-      <th *ngIf="getUnit() === 'cm'">X CoM (cm)</th>
-      <th *ngIf="getUnit() === 'm'">X CoM (m)</th>
-      <th *ngIf="getUnit() === 'cm'">Y CoM (cm)</th>
-      <th *ngIf="getUnit() === 'm'">Y CoM (m)</th>
-    </tr>
+      <tr>
+        <th>ID</th>
+        <th *ngIf="getUnit() === 'cm'">Mass (g)</th>
+        <th *ngIf="getUnit() === 'm'">Mass (kg)</th>
+        <th *ngIf="getUnit() === 'cm'">MoI (kg * cm^2)</th>
+        <th *ngIf="getUnit() === 'm'">MoI (kg * m^2)</th>
+        <th *ngIf="getUnit() === 'cm'">X CoM (cm)</th>
+        <th *ngIf="getUnit() === 'm'">X CoM (m)</th>
+        <th *ngIf="getUnit() === 'cm'">Y CoM (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Y CoM (m)</th>
+      </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let link of getLinks()">
-      <!-- ID -->
-      <td>
-        {{link.id}}
-      </td>
-      <!-- mass -->
-      <td *ngIf="typeofLink(link) !== 'P'">
-        <input type="text" value="{{getLinkProp(link, 'mass')}}" (change)="changeLinkProp($event, link, 'mass')">
-      </td>
-      <td *ngIf="typeofLink(link) === 'P'">
-      </td>
-      <!-- massMoI -->
-      <td *ngIf="typeofLink(link) !== 'P'">
-        <input type="text" value="{{getLinkProp(link, 'massMoI')}}" (change)="changeLinkProp($event, link, 'massMoI')">
-      </td>
-      <td *ngIf="typeofLink(link) === 'P'">
-      </td>
-      <!-- CoM_x -->
-      <td *ngIf="typeofLink(link) !== 'P'">
-        <input type="text" value="{{getLinkProp(link, 'CoMX')}}" (change)="changeLinkProp($event, link, 'CoMX')">
-      </td>
-      <td *ngIf="typeofLink(link) === 'P'">
-      </td>
-      <!-- CoM_y -->
-      <td *ngIf="typeofLink(link) !== 'P'">
-        <input type="text" value="{{getLinkProp(link, 'CoMY')}}" (change)="changeLinkProp($event, link, 'CoMY')">
-      </td>
-      <td *ngIf="typeofLink(link) === 'P'">
-      </td>
-    </tr>
+      <tr *ngFor="let link of getLinks()">
+        <!-- ID -->
+        <td>
+          {{ link.id }}
+        </td>
+        <!-- mass -->
+        <td *ngIf="typeofLink(link) !== 'P'">
+          <input type="text" value="{{ getLinkProp(link, 'mass') }}" (change)="changeLinkProp($event, link, 'mass')" />
+        </td>
+        <td *ngIf="typeofLink(link) === 'P'"></td>
+        <!-- massMoI -->
+        <td *ngIf="typeofLink(link) !== 'P'">
+          <input type="text" value="{{ getLinkProp(link, 'massMoI') }}" (change)="changeLinkProp($event, link, 'massMoI')" />
+        </td>
+        <td *ngIf="typeofLink(link) === 'P'"></td>
+        <!-- CoM_x -->
+        <td *ngIf="typeofLink(link) !== 'P'">
+          <input type="text" value="{{ getLinkProp(link, 'CoMX') }}" (change)="changeLinkProp($event, link, 'CoMX')" />
+        </td>
+        <td *ngIf="typeofLink(link) === 'P'"></td>
+        <!-- CoM_y -->
+        <td *ngIf="typeofLink(link) !== 'P'">
+          <input type="text" value="{{ getLinkProp(link, 'CoMY') }}" (change)="changeLinkProp($event, link, 'CoMY')" />
+        </td>
+        <td *ngIf="typeofLink(link) === 'P'"></td>
+      </tr>
     </tbody>
     <tfoot></tfoot>
   </table>
 
-  <input type="radio" id="tabForce" name="linkageTabs">
+  <input type="radio" id="tabForce" name="linkageTabs" />
   <label for="tabForce">Forces </label>
   <table class="tab">
     <thead>
-    <tr>
-      <th>ID</th>
-      <th>On Link</th>
-      <th>Angle (deg)</th>
-      <th>Mag (N)</th>
-      <th *ngIf="getUnit() === 'cm'">X Pos (cm)</th>
-      <th *ngIf="getUnit() === 'm'">X Pos (m)</th>
-      <th *ngIf="getUnit() === 'cm'">Y Pos (cm)</th>
-      <th *ngIf="getUnit() === 'm'">Y Pos (m)</th>
-    </tr>
+      <tr>
+        <th>ID</th>
+        <th>On Link</th>
+        <th>Angle (deg)</th>
+        <th>Mag (N)</th>
+        <th *ngIf="getUnit() === 'cm'">X Pos (cm)</th>
+        <th *ngIf="getUnit() === 'm'">X Pos (m)</th>
+        <th *ngIf="getUnit() === 'cm'">Y Pos (cm)</th>
+        <th *ngIf="getUnit() === 'm'">Y Pos (m)</th>
+      </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let force of getForces()">
-      <td>
-        <input type="text" value="{{force.id}}" (change)="changeForceProp($event, force, 'id')">
-      </td>
-      <td>
-        {{force.link.id}}
-      </td>
-      <td>
-        <input type="text" value="{{showForceAngle(force)}}" (change)="changeForceProp($event, force, 'angle')">
-      </td>
-      <td>
-        <input type="text" value="{{force.mag}}" (change)="changeForceProp($event, force, 'mag')">
-      </td>
-      <td>
-        <input type="text" value="{{force.startCoord.x}}" (change)="changeForceProp($event, force, 'xPos')">
-      </td>
-      <td>
-        <input type="text" value="{{force.startCoord.y}}" (change)="changeForceProp($event, force, 'yPos')">
-      </td>
-    </tr>
+      <tr *ngFor="let force of getForces()">
+        <td>
+          <input type="text" value="{{ force.id }}" (change)="changeForceProp($event, force, 'id')" />
+        </td>
+        <td>
+          {{ force.link.id }}
+        </td>
+        <td>
+          <input type="text" value="{{ showForceAngle(force) }}" (change)="changeForceProp($event, force, 'angle')" />
+        </td>
+        <td>
+          <input type="text" value="{{ force.mag }}" (change)="changeForceProp($event, force, 'mag')" />
+        </td>
+        <td>
+          <input type="text" value="{{ force.startCoord.x }}" (change)="changeForceProp($event, force, 'xPos')" />
+        </td>
+        <td>
+          <input type="text" value="{{ force.startCoord.y }}" (change)="changeForceProp($event, force, 'yPos')" />
+        </td>
+      </tr>
     </tbody>
-    <tfoot>
-    </tfoot>
+    <tfoot></tfoot>
   </table>
 </div>

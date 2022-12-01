@@ -1,9 +1,8 @@
-import {Joint} from "./joint";
-import {Coord} from "./coord";
-import {Shape} from "./link";
+import { Joint } from './joint';
+import { Coord } from './coord';
+import { Shape } from './link';
 
-export class Utils {
-}
+export class Utils {}
 
 // radToDeg
 
@@ -14,119 +13,110 @@ export function roundNumber(num: number, scale: number): number {
 }
 
 // https://jamesmccaffrey.wordpress.com/2020/04/24/matrix-inverse-with-javascript/
-export function vecMake(n: number, val: number)
-{
+export function vecMake(n: number, val: number) {
   let result = [];
   for (let i = 0; i < n; ++i) {
-  result[i] = val;
-}
+    result[i] = val;
+  }
   return result;
 }
 
-export function vecInit(s: string)
-{
+export function vecInit(s: string) {
   let vals = s.split(',');
   let result = [];
   for (let i = 0; i < vals.length; ++i) {
-  result[i] = parseFloat(vals[i]);
-}
+    result[i] = parseFloat(vals[i]);
+  }
   return result;
 }
 
-export function matMake(rows: number, cols: number, val: number)
-{
+export function matMake(rows: number, cols: number, val: number) {
   let result: Array<Array<number>> = [];
   for (let i = 0; i < rows; ++i) {
-  result[i] = [];
-  for (let j = 0; j < cols; ++j) {
-    result[i][j] = val;
+    result[i] = [];
+    for (let j = 0; j < cols; ++j) {
+      result[i][j] = val;
+    }
   }
-}
   return result;
 }
 
-export function matInit(rows: number, cols: number, s: string)
-{
+export function matInit(rows: number, cols: number, s: string) {
   // ex: let m = matInit(2, 3, "1,2,3, 4,5,6");
   let result = matMake(rows, cols, 0.0);
   let vals = s.split(',');
   let k = 0;
   for (let i = 0; i < rows; ++i) {
-  for (let j = 0; j < cols; ++j) {
-    result[i][j] = parseFloat(vals[k++]);
+    for (let j = 0; j < cols; ++j) {
+      result[i][j] = parseFloat(vals[k++]);
+    }
   }
-}
   return result;
 }
 
-export function matProduct(ma: Array<Array<number>>, mb: Array<Array<number>>)
-{
+export function matProduct(ma: Array<Array<number>>, mb: Array<Array<number>>) {
   let aRows = ma.length;
   let aCols = ma[0].length;
   let bRows = mb.length;
   let bCols = mb[0].length;
   if (aCols != bRows) {
-    throw "Non-conformable matrices";
+    throw 'Non-conformable matrices';
   }
 
   let result = matMake(aRows, bCols, 0.0);
 
-  for (let i = 0; i < aRows; ++i) { // each row of A
-  for (let j = 0; j < bCols; ++j) { // each col of B
-    for (let k = 0; k < aCols; ++k) { // could use bRows
-      result[i][j] += ma[i][k] * mb[k][j];
+  for (let i = 0; i < aRows; ++i) {
+    // each row of A
+    for (let j = 0; j < bCols; ++j) {
+      // each col of B
+      for (let k = 0; k < aCols; ++k) {
+        // could use bRows
+        result[i][j] += ma[i][k] * mb[k][j];
+      }
     }
   }
-}
 
   return result;
 }
 
-export function matInverse(m: Array<Array<number>>)
-{
+export function matInverse(m: Array<Array<number>>) {
   // assumes determinant is not 0
   // that is, the matrix does have an inverse
   let n = m.length;
   let result = matMake(n, n, 0.0); // make a copy
   for (let i = 0; i < n; ++i) {
-  for (let j = 0; j < n; ++j) {
-    result[i][j] = m[i][j];
+    for (let j = 0; j < n; ++j) {
+      result[i][j] = m[i][j];
+    }
   }
-}
 
   let lum = matMake(n, n, 0.0); // combined lower & upper
-  let perm = vecMake(n, 0.0);  // out parameter
-  matDecompose(m, lum, perm);  // ignore return
+  let perm = vecMake(n, 0.0); // out parameter
+  matDecompose(m, lum, perm); // ignore return
 
   let b = vecMake(n, 0.0);
   for (let i = 0; i < n; ++i) {
-  for (let j = 0; j < n; ++j) {
-    if (i == perm[j])
-      b[j] = 1.0;
-    else
-      b[j] = 0.0;
-  }
+    for (let j = 0; j < n; ++j) {
+      if (i == perm[j]) b[j] = 1.0;
+      else b[j] = 0.0;
+    }
 
-  let x = reduce(lum, b); //
-  for (let j = 0; j < n; ++j)
-  result[j][i] = x[j];
-}
+    let x = reduce(lum, b); //
+    for (let j = 0; j < n; ++j) result[j][i] = x[j];
+  }
   return result;
 }
 
-export function matDeterminant(m: Array<Array<number>>)
-{
+export function matDeterminant(m: Array<Array<number>>) {
   let n = m.length;
   let lum = matMake(n, n, 0.0);
   let perm = vecMake(n, 0.0);
-  let result = matDecompose(m, lum, perm);  // -1 or +1
-  for (let i = 0; i < n; ++i)
-  result *= lum[i][i];
+  let result = matDecompose(m, lum, perm); // -1 or +1
+  for (let i = 0; i < n; ++i) result *= lum[i][i];
   return result;
 }
 
-export function matDecompose(m: Array<Array<number>>, lum: Array<Array<number>>, perm: Array<number>)
-{
+export function matDecompose(m: Array<Array<number>>, lum: Array<Array<number>>, perm: Array<number>) {
   // Crout's LU decomposition for matrix determinant and inverse
   // stores combined lower & upper in lum[][]
   // stores row permuations into perm[]
@@ -140,80 +130,81 @@ export function matDecompose(m: Array<Array<number>>, lum: Array<Array<number>>,
   // make a copy of m[][] into result lum[][]
   //lum = matMake(n, n, 0.0);
   for (let i = 0; i < n; ++i) {
-  for (let j = 0; j < n; ++j) {
-    lum[i][j] = m[i][j];
+    for (let j = 0; j < n; ++j) {
+      lum[i][j] = m[i][j];
+    }
   }
-}
 
   // make perm[]
   //perm = vecMake(n, 0.0);
-  for (let i = 0; i < n; ++i)
-  perm[i] = i;
+  for (let i = 0; i < n; ++i) perm[i] = i;
 
-  for (let j = 0; j < n - 1; ++j) {  // note n-1
-  let max = Math.abs(lum[j][j]);
-  let piv = j;
+  for (let j = 0; j < n - 1; ++j) {
+    // note n-1
+    let max = Math.abs(lum[j][j]);
+    let piv = j;
 
-  for (let i = j + 1; i < n; ++i) {  // pivot index
-    let xij = Math.abs(lum[i][j]);
-    if (xij > max) {
-      max = xij;
-      piv = i;
-    }
-  } // i
-
-  if (piv != j) {
-    let tmp = lum[piv];  // swap rows j, piv
-    lum[piv] = lum[j];
-    lum[j] = tmp;
-
-    let t = perm[piv];  // swap perm elements
-    perm[piv] = perm[j];
-    perm[j] = t;
-
-    toggle = -toggle;
-  }
-
-  let xjj = lum[j][j];
-  if (xjj != 0.0) {  // TODO: fix bad compare here
     for (let i = j + 1; i < n; ++i) {
-      let xij = lum[i][j] / xjj;
-      lum[i][j] = xij;
-      for (let k = j + 1; k < n; ++k) {
-        lum[i][k] -= xij * lum[j][k];
+      // pivot index
+      let xij = Math.abs(lum[i][j]);
+      if (xij > max) {
+        max = xij;
+        piv = i;
+      }
+    } // i
+
+    if (piv != j) {
+      let tmp = lum[piv]; // swap rows j, piv
+      lum[piv] = lum[j];
+      lum[j] = tmp;
+
+      let t = perm[piv]; // swap perm elements
+      perm[piv] = perm[j];
+      perm[j] = t;
+
+      toggle = -toggle;
+    }
+
+    let xjj = lum[j][j];
+    if (xjj != 0.0) {
+      // TODO: fix bad compare here
+      for (let i = j + 1; i < n; ++i) {
+        let xij = lum[i][j] / xjj;
+        lum[i][j] = xij;
+        for (let k = j + 1; k < n; ++k) {
+          lum[i][k] -= xij * lum[j][k];
+        }
       }
     }
-  }
+  } // j
 
-} // j
-
-  return toggle;  // for determinant
+  return toggle; // for determinant
 } // matDecompose
 
-export function reduce(lum: Array<Array<number>>, b: Array<number>) // helper
-{
+export function reduce(lum: Array<Array<number>>, b: Array<number>) {
+  // helper
   let n = lum.length;
   let x = vecMake(n, 0.0);
   for (let i = 0; i < n; ++i) {
-  x[i] = b[i];
-}
+    x[i] = b[i];
+  }
 
   for (let i = 1; i < n; ++i) {
-  let sum = x[i];
-  for (let j = 0; j < i; ++j) {
-    sum -= lum[i][j] * x[j];
+    let sum = x[i];
+    for (let j = 0; j < i; ++j) {
+      sum -= lum[i][j] * x[j];
+    }
+    x[i] = sum;
   }
-  x[i] = sum;
-}
 
   x[n - 1] /= lum[n - 1][n - 1];
   for (let i = n - 2; i >= 0; --i) {
-  let sum = x[i];
-  for (let j = i + 1; j < n; ++j) {
-    sum -= lum[i][j] * x[j];
+    let sum = x[i];
+    for (let j = i + 1; j < n; ++j) {
+      sum -= lum[i][j] * x[j];
+    }
+    x[i] = sum / lum[i][i];
   }
-  x[i] = sum / lum[i][i];
-}
 
   return x;
 } // reduce
@@ -224,7 +215,7 @@ export function matLinearSystem(A: Array<Array<number>>, B: Array<Array<number>>
 }
 
 export function crossProduct(A: Array<number>, B: Array<number>) {
-  return [(A[1] * B[2] - A[2] * B[1]), -1 * (A[0] * B[2] - A[2] * B[0]), (A[0] * B[1] - A[1] * B[0])];
+  return [A[1] * B[2] - A[2] * B[1], -1 * (A[0] * B[2] - A[2] * B[0]), A[0] * B[1] - A[1] * B[0]];
 }
 
 export function getAngle(j1: Coord, j2: Coord) {
@@ -252,15 +243,15 @@ export function determineSlope(x1: number, y1: number, x2: number, y2: number) {
 }
 
 export function determineYIntersect(x: number, y: number, m: number) {
-  return y - (m * x);
+  return y - m * x;
 }
 
 export function determineX(m1: number, b1: number, m2: number, b2: number) {
-  return (b2 - b1) /  (m1 - m2);
+  return (b2 - b1) / (m1 - m2);
 }
 
 export function determineY(x: number, m: number, b: number) {
-  return (m * x) + b;
+  return m * x + b;
 }
 
 export function stringToFloat(str: string) {
@@ -281,7 +272,7 @@ export function stringToBoolean(str: string) {
     case 'false':
       return false;
     default:
-      throw new Error ('should be a boolean, file corrupted');
+      throw new Error('should be a boolean, file corrupted');
   }
 }
 
@@ -323,9 +314,13 @@ export function stringToShape(str: string) {
 export function splitURLInfo(str: string) {
   const decodedURL = decodeURI(window.location.href);
   let indexVal = decodedURL.indexOf(str);
-  if (indexVal === -1) {return []}
-  else if (str === 'j=') {indexVal += 2;}
-  else {indexVal += 3;}
+  if (indexVal === -1) {
+    return [];
+  } else if (str === 'j=') {
+    indexVal += 2;
+  } else {
+    indexVal += 3;
+  }
   let nextIndexVal: number;
   switch (str) {
     case 'j=':
@@ -341,7 +336,7 @@ export function splitURLInfo(str: string) {
       nextIndexVal = decodedURL.length;
       break;
     default:
-      throw new Error ('ummm??');
+      throw new Error('ummm??');
   }
   return decodedURL.substring(indexVal, nextIndexVal);
   // return settingArrayString.split(',');

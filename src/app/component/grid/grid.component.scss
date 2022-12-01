@@ -2,29 +2,28 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-    // Get the color config from the theme.
-    $color-config: mat.get-color-config($theme);
-    // Get the primary color palette from the color-config.
-    $primary-palette: map.get($color-config, 'primary');
-    $accent-palette: map.get($color-config, 'accent');
-    $background: map.get($theme, background);
-    $foreground: map.get($theme, foreground);
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
 
+  #grid_lines_small {
+    stroke: mat.get-color-from-palette($foreground, 'divider');
+  }
+  #grid_lines_mid {
+    stroke: mat.get-color-from-palette($primary-palette, 200);
+  }
+  #grid_lines_large {
+    stroke: mat.get-color-from-palette($primary-palette, 400);
+  }
+  #grid_bg {
+    fill: mat.get-color-from-palette($background, 'app-bar');
+  }
 
-  #grid_lines_small{
-    stroke: mat.get-color-from-palette($foreground,'divider')
-  }
-  #grid_lines_mid{
-    stroke: mat.get-color-from-palette($primary-palette,200);
-  }
-  #grid_lines_large{
-    stroke: mat.get-color-from-palette($primary-palette,400);
-  }
-  #grid_bg{
-    fill: mat.get-color-from-palette($background,'app-bar');
-  }
-
-  :host{
+  :host {
     .menu-entry {
       fill: rgb(244, 244, 244);
       display: none;
@@ -34,7 +33,4 @@
       fill: rgb(200, 200, 200);
     }
   }
-
-
-
 }

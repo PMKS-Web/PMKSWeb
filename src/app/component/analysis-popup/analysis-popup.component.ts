@@ -1,47 +1,35 @@
-import {AfterViewInit, Component, OnInit, ViewChild} from '@angular/core';
-import {Joint, RealJoint, RevJoint} from "../../model/joint";
-import {Link, RealLink} from "../../model/link";
-import {Force} from "../../model/force";
-import {GridComponent} from "../grid/grid.component";
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { Joint, RealJoint, RevJoint } from '../../model/joint';
+import { Link, RealLink } from '../../model/link';
+import { Force } from '../../model/force';
+import { GridComponent } from '../grid/grid.component';
 import * as XLSX from 'xlsx';
-import {DatePipe} from "@angular/common";
-import {ForceSolver} from "../../model/mechanism/force-solver";
-import {Coord} from "../../model/coord";
-import {KinematicsSolver} from "../../model/mechanism/kinematic-solver";
-import {ToolbarComponent} from "../toolbar/toolbar.component";
-import {crossProduct, roundNumber} from "../../model/utils";
-import {
-  ChartComponent,
-  ApexAxisChartSeries,
-  ApexChart,
-  ApexXAxis,
-  ApexYAxis,
-  ApexDataLabels,
-  ApexGrid,
-  ApexStroke,
-  ApexTitleSubtitle
-} from "ng-apexcharts";
-import {AbstractFormGroupDirective} from "@angular/forms";
+import { DatePipe } from '@angular/common';
+import { ForceSolver } from '../../model/mechanism/force-solver';
+import { Coord } from '../../model/coord';
+import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { crossProduct, roundNumber } from '../../model/utils';
+import { ChartComponent, ApexAxisChartSeries, ApexChart, ApexXAxis, ApexYAxis, ApexDataLabels, ApexGrid, ApexStroke, ApexTitleSubtitle } from 'ng-apexcharts';
+import { AbstractFormGroupDirective } from '@angular/forms';
 
 export type ChartOptions = {
   series: ApexAxisChartSeries;
   chart: ApexChart;
   xaxis: ApexXAxis;
   yaxis: ApexYAxis;
-  dataLabels: ApexDataLabels
-  grid: ApexGrid
-  stroke: ApexStroke
+  dataLabels: ApexDataLabels;
+  grid: ApexGrid;
+  stroke: ApexStroke;
   title: ApexTitleSubtitle;
 };
 
 @Component({
   selector: 'app-analysis-popup',
   templateUrl: './analysis-popup.component.html',
-  styleUrls: ['./analysis-popup.component.scss']
+  styleUrls: ['./analysis-popup.component.scss'],
 })
-
 export class AnalysisPopupComponent implements OnInit, AfterViewInit {
-
   // https://apexcharts.com/docs/angular-charts/
   public chartOptions: Partial<ChartOptions> = {};
 
@@ -126,19 +114,19 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   titleRow: Array<string> = [];
 
   kinematicAnalysis = {
-    selectedMechanismState: 'none'
+    selectedMechanismState: 'none',
   };
 
   forceMechanismState = {
-    selectedMechanismState: 'none'
+    selectedMechanismState: 'none',
   };
 
   forceAnalysis = {
-    selectedAnalysis: 'none'
+    selectedAnalysis: 'none',
   };
 
   kinematicPropertyAnalysis = {
-    selectedAnalysis: 'none'
+    selectedAnalysis: 'none',
   };
 
   // kinematicICAnalysis = {
@@ -146,22 +134,22 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   // };
 
   forceMagPlot = {
-    force: 'none'
+    force: 'none',
   };
 
   forceMechanismStates = [
-    {id: 'Static Equilibrium', label: 'Static Equilibrium'},
-    {id: 'Newton\'s II Law', label: 'Newton\'s II Law'},
+    { id: 'Static Equilibrium', label: 'Static Equilibrium' },
+    { id: "Newton's II Law", label: "Newton's II Law" },
   ];
 
   kinematicAnalyses = [
-    {id: 'loop', label: 'loop'},
-    {id: 'ic', label: 'ic'},
+    { id: 'loop', label: 'loop' },
+    { id: 'ic', label: 'ic' },
   ];
 
   jointAnalyses = [
-    {id: 'Joint Forces', label: 'Joint Forces'},
-    {id: 'Input Torque', label: 'Input Torque'},
+    { id: 'Joint Forces', label: 'Joint Forces' },
+    { id: 'Input Torque', label: 'Input Torque' },
     // {id: 'force_position', label: 'force_position'},
     // {id: 'joint_position', label: 'joint_position'},
     // { id: 'position', label: 'position'},
@@ -170,15 +158,15 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   ];
 
   kinematicLoopAnalyses = [
-    {id: 'Linear Joint Pos', label: 'Linear Joint Pos'},
-    {id: 'Linear Joint Vel', label: 'Linear Joint Vel'},
-    {id: 'Linear Joint Acc', label: 'Linear Joint Acc'},
-    {id: 'Linear Link\'s CoM Pos', label: 'Linear Link\'s CoM Pos'},
-    {id: 'Linear Link\'s CoM Vel', label: 'Linear Link\'s CoM Vel'},
-    {id: 'Linear Link\'s CoM Acc', label: 'Linear Link\'s CoM Acc'},
-    {id: 'Angular Link Pos', label: 'Angular Link Pos'},
-    {id: 'Angular Link Vel', label: 'Angular Link Vel'},
-    {id: 'Angular Link Acc', label: 'Angular Link Acc'},
+    { id: 'Linear Joint Pos', label: 'Linear Joint Pos' },
+    { id: 'Linear Joint Vel', label: 'Linear Joint Vel' },
+    { id: 'Linear Joint Acc', label: 'Linear Joint Acc' },
+    { id: "Linear Link's CoM Pos", label: "Linear Link's CoM Pos" },
+    { id: "Linear Link's CoM Vel", label: "Linear Link's CoM Vel" },
+    { id: "Linear Link's CoM Acc", label: "Linear Link's CoM Acc" },
+    { id: 'Angular Link Pos', label: 'Angular Link Pos' },
+    { id: 'Angular Link Vel', label: 'Angular Link Vel' },
+    { id: 'Angular Link Acc', label: 'Angular Link Acc' },
     // {id: 'Angular Velocity', label: 'Angular Velocity'},
     // {id: 'Angular Acceleration', label: 'Angular Acceleration'},
     // {id: 'Linear Velocity', label: 'Linear Velocity'},
@@ -186,35 +174,33 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   ];
 
   kinematicICAnalyses = [
-    {id: 'Instant Center Pos', label: 'Instant Center Pos'},
-    {id: 'Linear Joint Pos', label: 'Linear Joint Pos'},
-    {id: 'Linear Joint Vel', label: 'Linear Joint Vel'},
-    {id: 'Linear Link\'s CoM Pos', label: 'Linear Link\'s CoM Pos'},
-    {id: 'Linear Link\'s CoM Vel', label: 'Linear Link\'s CoM Vel'},
-    {id: 'Angular Link Pos', label: 'Angular Link Pos'},
-    {id: 'Angular Link Vel', label: 'Angular Link Vel'},
+    { id: 'Instant Center Pos', label: 'Instant Center Pos' },
+    { id: 'Linear Joint Pos', label: 'Linear Joint Pos' },
+    { id: 'Linear Joint Vel', label: 'Linear Joint Vel' },
+    { id: "Linear Link's CoM Pos", label: "Linear Link's CoM Pos" },
+    { id: "Linear Link's CoM Vel", label: "Linear Link's CoM Vel" },
+    { id: 'Angular Link Pos', label: 'Angular Link Pos' },
+    { id: 'Angular Link Vel', label: 'Angular Link Vel' },
   ];
 
   kinematicLoopLinearJoint = {
-    joint: 'none'
+    joint: 'none',
   };
 
   kinematicLoopLinearLink = {
-    link: 'none'
+    link: 'none',
   };
 
   kinematicLoopAngularLink = {
-    link: 'none'
+    link: 'none',
   };
 
   forceCondition = '';
   showChart = false;
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit(): void {
     AnalysisPopupComponent.popUpWindow = document.getElementById('analysisPopup') as unknown as SVGElement;
@@ -247,7 +233,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   getLoopPairs(loop: string) {
     const arr = [];
-    for (let index = 0; index < (loop.length - 1); index++) {
+    for (let index = 0; index < loop.length - 1; index++) {
       arr.push(loop[index] + loop[index + 1]);
     }
     return arr;
@@ -321,9 +307,13 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   pairContainInputJoint(pair: string) {
     for (let index = 0; index < pair.length; index++) {
       // TODO: Maybe have this in a map??? Or this may be okay...
-      const joint = GridComponent.joints.find(j => j.id === pair[index]);
-      if (!(joint instanceof RealJoint)) {continue}
-      if (joint.input) {return true}
+      const joint = GridComponent.joints.find((j) => j.id === pair[index]);
+      if (!(joint instanceof RealJoint)) {
+        continue;
+      }
+      if (joint.input) {
+        return true;
+      }
     }
     return false;
   }
@@ -350,76 +340,70 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         }
         break;
       case 'x':
-        if (!(jointOrCoM instanceof RealJoint)) {return}
+        if (!(jointOrCoM instanceof RealJoint)) {
+          return;
+        }
         otherLink = jointOrCoM.links[0].id === linkOrLoop!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
-        if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceXLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id ?
-          ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, otherLink.id) :
-          ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
-          ToolbarComponent.gravity, ToolbarComponent.unit);
+        if (otherLink === undefined) {
+          otherLink = new Link('', []);
+        }
+        ForceSolver.jointPositiveForceXLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id
+          ? ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, otherLink.id)
+          : ForceSolver.jointPositiveForceXLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'y':
-        if (!(jointOrCoM instanceof RealJoint)) {return}
+        if (!(jointOrCoM instanceof RealJoint)) {
+          return;
+        }
         otherLink = jointOrCoM.links[0].id === linkOrLoop!.id ? jointOrCoM.links[1] : jointOrCoM.links[0];
-        if (otherLink === undefined) {otherLink = new Link('', []);}
-        ForceSolver.jointPositiveForceYLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id ?
-          ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, otherLink.id) :
-          ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
-          ToolbarComponent.gravity, ToolbarComponent.unit);
+        if (otherLink === undefined) {
+          otherLink = new Link('', []);
+        }
+        ForceSolver.jointPositiveForceYLinkMap.get(jointOrCoM!.id) === linkOrLoop!.id
+          ? ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, otherLink.id)
+          : ForceSolver.jointPositiveForceYLinkMap.set(jointOrCoM!.id, linkOrLoop!.id);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       case 'moment':
         let value = jointOrCoM;
         linkOrLoop!.fixedLocation.fixedPoint = value;
         if (value === 'com') {
-          value = linkOrLoop!.id
+          value = linkOrLoop!.id;
         }
         AnalysisPopupComponent.firstRefWithinMomentMap = new Map<string, string>();
         ForceSolver.linkToFixedPositionMap.set(linkOrLoop!.id, value);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
-          ToolbarComponent.gravity, ToolbarComponent.unit);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
         break;
       default:
-        return
+        return;
     }
   }
-
 
   setTab(tabNum: number) {
     AnalysisPopupComponent.selectedTab = tabNum;
     // TODO: If possible, put this as hover within css
     switch (tabNum) {
       case 0:
-        AnalysisPopupComponent.exportButton.setAttribute('style',
-          'color: black; background-color: gray');
-        AnalysisPopupComponent.showPlotsButton.setAttribute('style',
-          'color: gray; background-color: white');
-        AnalysisPopupComponent.showEqsButton.setAttribute('style',
-          'color: gray; background-color: white');
+        AnalysisPopupComponent.exportButton.setAttribute('style', 'color: black; background-color: gray');
+        AnalysisPopupComponent.showPlotsButton.setAttribute('style', 'color: gray; background-color: white');
+        AnalysisPopupComponent.showEqsButton.setAttribute('style', 'color: gray; background-color: white');
         break;
       case 1:
-        AnalysisPopupComponent.exportButton.setAttribute('style',
-          'color: gray; background-color: white');
-        AnalysisPopupComponent.showPlotsButton.setAttribute('style',
-          'color: black; background-color: gray');
-        AnalysisPopupComponent.showEqsButton.setAttribute('style',
-          'color: gray; background-color: white');
+        AnalysisPopupComponent.exportButton.setAttribute('style', 'color: gray; background-color: white');
+        AnalysisPopupComponent.showPlotsButton.setAttribute('style', 'color: black; background-color: gray');
+        AnalysisPopupComponent.showEqsButton.setAttribute('style', 'color: gray; background-color: white');
         break;
       case 2:
-        AnalysisPopupComponent.exportButton.setAttribute('style',
-          'color: gray; background-color: white');
-        AnalysisPopupComponent.showPlotsButton.setAttribute('style',
-          'color: gray; background-color: white');
-        AnalysisPopupComponent.showEqsButton.setAttribute('style',
-          'color: black; background-color: gray');
+        AnalysisPopupComponent.exportButton.setAttribute('style', 'color: gray; background-color: white');
+        AnalysisPopupComponent.showPlotsButton.setAttribute('style', 'color: gray; background-color: white');
+        AnalysisPopupComponent.showEqsButton.setAttribute('style', 'color: black; background-color: gray');
         switch (AnalysisPopupComponent.selectedAnalysis) {
           case 'loop':
             break;
           case 'force':
             ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-            ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static',
-              ToolbarComponent.gravity, ToolbarComponent.unit);
+            ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
             break;
           case 'kinematic':
             KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
@@ -434,13 +418,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     }
   }
 
-  mouseOver(number: number) {
+  mouseOver(number: number) {}
 
-  }
-
-  mouseOut(number: number) {
-
-  }
+  mouseOut(number: number) {}
 
   setOption(e: any) {
     // TODO: Figure out what is e's type?
@@ -611,7 +591,9 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     // if (l instanceof ImagLink) {
     //   return
     // }
-    if (!(link instanceof RealLink)) {return}
+    if (!(link instanceof RealLink)) {
+      return;
+    }
     let top: number;
     let bot: number;
     let left: number;
@@ -646,10 +628,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         if (link.bound.b4.y < bot) {
           bot = link.bound.b4.y;
         }
-        center_cord = (GridComponent.scaleFactor * left) + GridComponent.gridOffset.x;
-        return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) +  ')';
+        center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
+        return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) + ')';
       case 'scale':
-        return 'scale(' + GridComponent.scaleFactor + ')'
+        return 'scale(' + GridComponent.scaleFactor + ')';
       case 'transform':
         left = link.bound.b1.x;
         bot = link.bound.b1.y;
@@ -672,8 +654,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         if (link.bound.b4.y < bot) {
           bot = link.bound.b4.y;
         }
-        center_cord = (GridComponent.scaleFactor * left) + GridComponent.gridOffset.x;
-
+        center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
 
         top = link.bound.b1.y;
         if (Math.abs(link.bound.b2.y - top) < 0.001) {
@@ -681,14 +662,14 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         } else {
           bot = link.bound.b2.y;
         }
-        const link_height =  (Math.abs(top - bot) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5);
+        const link_height = Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
         left = link.bound.b1.x;
         if (Math.abs(link.bound.b2.x - left) < 0.001) {
           right = link.bound.b4.x;
         } else {
           right = link.bound.b2.x;
         }
-        const link_width = (Math.abs(right - left) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5);
+        const link_width = Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
         // TODO: Need scale factor?? Or does this need to be 1 / AppConstants.scaleFactor?
         // TODO: Make sure that the conversion for screen grid matches
         // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * (1 / AppConstants.scaleFactor);
@@ -723,13 +704,13 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // TODO: Each screen width and height are different. Be sure to pull screens dimensions
         // const x_dist = link_center_x + dist_from_center_x + (link_width / 2);
         // const y_dist = link_center_y + dist_from_center_y + (link_height / 2);
-        const x_dist = link_center_x + (link_width / 2) + 25;
-        const y_dist = link_center_y + (link_height / 2) + 30;
+        const x_dist = link_center_x + link_width / 2 + 25;
+        const y_dist = link_center_y + link_height / 2 + 30;
         // // const x_dist = 0;
         // const y_dist = 0;
         // TODO: Be sure to account for the force that is added on the link as well
 
-        return 'translate(' + (x_dist) + ' ' + (y_dist) +  '), scale(' + GridComponent.scaleFactor + ')'
+        return 'translate(' + x_dist + ' ' + y_dist + '), scale(' + GridComponent.scaleFactor + ')';
       // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
       // return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  '), scale(' + this.scaleFactor + ')'
       case 'height':
@@ -739,7 +720,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         } else {
           bot = link.bound.b2.y;
         }
-        return (Math.abs(top - bot) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5) + 60;
+        return Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 60;
       case 'width':
         left = link.bound.b1.x;
         if (Math.abs(link.bound.b2.x - left) < 0.001) {
@@ -747,7 +728,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         } else {
           right = link.bound.b2.x;
         }
-        return (Math.abs(right - left) * GridComponent.scaleFactor) + (GridComponent.scaleFactor * 2 / 5) + 50;
+        return Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 50;
       default:
         return '?';
     }
@@ -760,11 +741,15 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     }
     switch (propType) {
       case 'ring':
-        if (!(joint instanceof RealJoint)) {return}
+        if (!(joint instanceof RealJoint)) {
+          return;
+        }
         return joint.r;
       case 'r':
-        if (!(joint instanceof RealJoint)) {return}
-        return joint.r * 7 / 5;
+        if (!(joint instanceof RealJoint)) {
+          return;
+        }
+        return (joint.r * 7) / 5;
       default:
         return;
     }
@@ -785,7 +770,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           return Force.createForceLine(joint, new Coord(joint.x, joint.y - 0.7));
         }
       default:
-        return
+        return;
     }
   }
 
@@ -804,7 +789,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           return Force.createForceArrow(joint, new Coord(joint.x, joint.y - 0.7));
         }
       default:
-        return
+        return;
     }
   }
 
@@ -825,7 +810,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           this.exportExcel('kinematic_loop');
         }
         if (this.instantCenterMethodCheck) {
-          this.exportExcel('kinematic_ic')
+          this.exportExcel('kinematic_ic');
         }
         break;
     }
@@ -860,30 +845,26 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         // determine whether to export force
         // ForceSolver.resetVariables();
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity,
-          ToolbarComponent.unit);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
         this.titleRow = GridComponent.mechanisms[0].forceTitleRow(analysisType)!;
         this.analysis = GridComponent.mechanisms[0].forceAnalysis(analysisType)!;
-        while (increment < (1 + (GridComponent.joints.length * 2))) {
+        while (increment < 1 + GridComponent.joints.length * 2) {
           this.staticForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // determine whether to export torque
         this.staticTorqueCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // determine whether to leave space in between analyses
-        ((this.staticForcesCheck || this.staticTorqueCheck) &&
-          (this.staticForcePositionsCheck || this.staticJointPositionsCheck)) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        (this.staticForcesCheck || this.staticTorqueCheck) && (this.staticForcePositionsCheck || this.staticJointPositionsCheck)
+          ? includeMapIndex.set(increment++, true)
+          : includeMapIndex.set(increment++, false);
         // determine whether to export force positions
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 +
-          (GridComponent.forces.length * 2))) {
+        while (increment < 1 + GridComponent.joints.length * 2 + 1 + 1 + GridComponent.forces.length * 2) {
           this.staticForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // determine whether to leave space in between analyses
-        (this.staticForcePositionsCheck && this.staticJointPositionsCheck) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.staticForcePositionsCheck && this.staticJointPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // determine whether to export joint positions
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 +
-          (GridComponent.forces.length * 2) + 1 + (GridComponent.joints.length * 2))) {
+        while (increment < 1 + GridComponent.joints.length * 2 + 1 + 1 + GridComponent.forces.length * 2 + 1 + GridComponent.joints.length * 2) {
           this.staticJointPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         break;
@@ -891,33 +872,32 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'dynamics', ToolbarComponent.gravity,
-          ToolbarComponent.unit);
+        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'dynamics', ToolbarComponent.gravity, ToolbarComponent.unit);
         this.titleRow = GridComponent.mechanisms[0].forceTitleRow(analysisType)!;
         this.analysis = GridComponent.mechanisms[0].forceAnalysis(analysisType)!;
         // check whether to put the internal force analysis occurring at joints
-        while (increment < (1 + (GridComponent.joints.length * 2))) {
+        while (increment < 1 + GridComponent.joints.length * 2) {
           this.dynamicForcesCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // check whether to put the torque analysis occurring for mechanism
         this.dynamicTorqueCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether to put space between analyses
-        (this.dynamicForcesCheck || this.dynamicTorqueCheck) && (this.dynamicForcePositionsCheck || this.dynamicJointKinematicsCheck ||
-          this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        (this.dynamicForcesCheck || this.dynamicTorqueCheck) &&
+        (this.dynamicForcePositionsCheck || this.dynamicJointKinematicsCheck || this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)
+          ? includeMapIndex.set(increment++, true)
+          : includeMapIndex.set(increment++, false);
         // check whether to put force positions
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2))) {
+        while (increment < 1 + GridComponent.joints.length * 2 + 1 + 1 + GridComponent.forces.length * 2) {
           this.dynamicForcePositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         }
         // check whether to put space between analyses
-        (this.dynamicForcePositionsCheck && (this.dynamicJointKinematicsCheck ||
-          this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.dynamicForcePositionsCheck && (this.dynamicJointKinematicsCheck || this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)
+          ? includeMapIndex.set(increment++, true)
+          : includeMapIndex.set(increment++, false);
 
         sub_increment = 0;
         // check whether linear kinematics for joints (p,v,a) have been asked for
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
-          (GridComponent.joints.length * 6))) {
+        while (increment < 1 + GridComponent.joints.length * 2 + 1 + 1 + GridComponent.forces.length * 2 + 1 + GridComponent.joints.length * 6) {
           if (this.dynamicJointKinematicsCheck) {
             switch (sub_increment % 6) {
               case 0:
@@ -948,12 +928,23 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         // check whether to add another space or not between analyses
-        (this.dynamicJointKinematicsCheck && (this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.dynamicJointKinematicsCheck && (this.dynamicLinkKinematicsCheck || this.dynamicAngLinkCheck)
+          ? includeMapIndex.set(increment++, true)
+          : includeMapIndex.set(increment++, false);
         // check whether linear kinematics for links have been asked for
         sub_increment = 0;
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
-          (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6))) {
+        while (
+          increment <
+          1 +
+            GridComponent.joints.length * 2 +
+            1 +
+            1 +
+            GridComponent.forces.length * 2 +
+            1 +
+            GridComponent.joints.length * 6 +
+            1 +
+            GridComponent.links.length * 6
+        ) {
           if (this.dynamicLinkKinematicsCheck) {
             switch (sub_increment % 6) {
               case 0:
@@ -975,7 +966,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                 condition = this.dynamicLinKinLinkAcc;
                 break;
               default:
-                return
+                return;
             }
             includeMapIndex.set(increment++, condition);
           } else {
@@ -984,12 +975,23 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         // account for empty space
-        (this.dynamicLinkKinematicsCheck && this.dynamicAngLinkCheck) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.dynamicLinkKinematicsCheck && this.dynamicAngLinkCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         sub_increment = 0;
         // check whether angular kinematics have been asked for
-        while (increment < (1 + (GridComponent.joints.length * 2) + (1) + 1 + (GridComponent.forces.length * 2) + 1 +
-          (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6) + 1 + (GridComponent.links.length * 3))) {
+        while (
+          increment <
+          1 +
+            GridComponent.joints.length * 2 +
+            1 +
+            1 +
+            GridComponent.forces.length * 2 +
+            1 +
+            GridComponent.joints.length * 6 +
+            1 +
+            GridComponent.links.length * 6 +
+            1 +
+            GridComponent.links.length * 3
+        ) {
           if (this.dynamicAngLinkCheck) {
             switch (sub_increment % 3) {
               case 0:
@@ -1002,7 +1004,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                 condition = this.dynamicAngKinLinkAcc;
                 break;
               default:
-                return
+                return;
             }
             includeMapIndex.set(increment++, condition);
           } else {
@@ -1017,7 +1019,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
         KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
         this.titleRow = GridComponent.mechanisms[0].kinematicLoopTitleRow();
         this.analysis = GridComponent.mechanisms[0].kinematicLoopAnalysis();
-        while (increment < (1 + (GridComponent.joints.length * 6))) {
+        while (increment < 1 + GridComponent.joints.length * 6) {
           if (this.linKinJointCheck) {
             switch (increment % 6) {
               case 0:
@@ -1039,7 +1041,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                 condition = this.linKinJointAcc;
                 break;
               default:
-                return
+                return;
             }
             includeMapIndex.set(increment++, condition);
           } else {
@@ -1047,10 +1049,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           }
         }
         // check whether to add another space or not between analyses
-        (this.linKinJointCheck && (this.linKinLinkCheck || this.dynamicAngLinkCheck)) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.linKinJointCheck && (this.linKinLinkCheck || this.dynamicAngLinkCheck)
+          ? includeMapIndex.set(increment++, true)
+          : includeMapIndex.set(increment++, false);
         // check whether linear kinematics for links have been asked for
-        while (increment < (1 + (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6))) {
+        while (increment < 1 + GridComponent.joints.length * 6 + 1 + GridComponent.links.length * 6) {
           if (this.linKinLinkCheck) {
             switch (increment % 6) {
               case 0:
@@ -1072,7 +1075,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                 condition = this.linKinLinkVel;
                 break;
               default:
-                return
+                return;
             }
             includeMapIndex.set(increment++, condition);
           } else {
@@ -1080,12 +1083,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           }
         }
         // account for empty space
-        (this.linKinLinkCheck && this.dynamicAngLinkCheck) ?
-          includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+        this.linKinLinkCheck && this.dynamicAngLinkCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
         // check whether angular kinematics have been asked for
         sub_increment = 0;
-        while (increment < (1 + (GridComponent.joints.length * 6) + 1 + (GridComponent.links.length * 6) + 1 +
-          (GridComponent.links.length * 3))) {
+        while (increment < 1 + GridComponent.joints.length * 6 + 1 + GridComponent.links.length * 6 + 1 + GridComponent.links.length * 3) {
           if (this.dynamicAngLinkCheck) {
             switch (sub_increment % 3) {
               case 0:
@@ -1098,7 +1099,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                 condition = this.angKinLinkAcc;
                 break;
               default:
-                return
+                return;
             }
             includeMapIndex.set(increment++, condition);
           } else {
@@ -1107,86 +1108,79 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           sub_increment++;
         }
         break;
-//       case 'kinematics_ic':
-//
-//         // check whether to export position of ICs
-//         while (increment < (1 + (this.icArray.length * 2))) {
-//           this.icPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment, false);
-//         }
-//         // check whether to put space in between analyses
-//         (this.icPositionsCheck && (this.linKinJointICCheck || this.angKinLinkICCheck)) ?
-//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
-//         // check whether linear kinematics for joints have been asked for
-//         sub_increment = 0;
-//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2))) {
-//           if (this.linKinJointICCheck) {
-//             switch (sub_increment % 4) {
-//               case 0:
-//                 condition = this.linKinJointICPos;
-//                 break;
-//               case 1:
-//                 condition = this.linKinJointICPos;
-//                 break;
-//               case 2:
-//                 condition = this.linKinJointICVel;
-//                 break;
-//               case 3:
-//                 condition = this.linKinJointICVel;
-//                 break;
-//             }
-//             includeMapIndex.set(increment++, condition);
-//           } else {
-//             includeMapIndex.set(increment++, false);
-//           }
-//           sub_increment++;
-//         }
-// // check whether to add another space or not between analyses
-//         (this.linKinJointICCheck && this.angKinLinkICCheck) ?
-//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
-// // check Kin Lin Velocities
-//         sub_increment = 0;
-//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2) + 1 + (this.linkArray.length * 2))) {
-//           if (this.angKinLinkICCheck) {
-//             switch (sub_increment % 2) {
-//               // TODO: Be sure to account for angular displacement
-//               // case 0:
-//               //   condition = this.angKinLinkICPos
-//               case 0:
-//                 condition = this.angKinLinkICVel;
-//                 break;
-//               case 1:
-//                 condition = this.angKinLinkICVel;
-//                 break;
-//             }
-//             includeMapIndex.set(increment++, condition);
-//           } else {
-//             includeMapIndex.set(increment++, false);
-//           }
-//           sub_increment++;
-//         }
-//         break;
+      //       case 'kinematics_ic':
+      //
+      //         // check whether to export position of ICs
+      //         while (increment < (1 + (this.icArray.length * 2))) {
+      //           this.icPositionsCheck ? includeMapIndex.set(increment++, true) : includeMapIndex.set(increment, false);
+      //         }
+      //         // check whether to put space in between analyses
+      //         (this.icPositionsCheck && (this.linKinJointICCheck || this.angKinLinkICCheck)) ?
+      //           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+      //         // check whether linear kinematics for joints have been asked for
+      //         sub_increment = 0;
+      //         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2))) {
+      //           if (this.linKinJointICCheck) {
+      //             switch (sub_increment % 4) {
+      //               case 0:
+      //                 condition = this.linKinJointICPos;
+      //                 break;
+      //               case 1:
+      //                 condition = this.linKinJointICPos;
+      //                 break;
+      //               case 2:
+      //                 condition = this.linKinJointICVel;
+      //                 break;
+      //               case 3:
+      //                 condition = this.linKinJointICVel;
+      //                 break;
+      //             }
+      //             includeMapIndex.set(increment++, condition);
+      //           } else {
+      //             includeMapIndex.set(increment++, false);
+      //           }
+      //           sub_increment++;
+      //         }
+      // // check whether to add another space or not between analyses
+      //         (this.linKinJointICCheck && this.angKinLinkICCheck) ?
+      //           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+      // // check Kin Lin Velocities
+      //         sub_increment = 0;
+      //         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.jointArray.length * 2) + 1 + (this.linkArray.length * 2))) {
+      //           if (this.angKinLinkICCheck) {
+      //             switch (sub_increment % 2) {
+      //               // TODO: Be sure to account for angular displacement
+      //               // case 0:
+      //               //   condition = this.angKinLinkICPos
+      //               case 0:
+      //                 condition = this.angKinLinkICVel;
+      //                 break;
+      //               case 1:
+      //                 condition = this.angKinLinkICVel;
+      //                 break;
+      //             }
+      //             includeMapIndex.set(increment++, condition);
+      //           } else {
+      //             includeMapIndex.set(increment++, false);
+      //           }
+      //           sub_increment++;
+      //         }
+      //         break;
 
-
-
-
-
-
-
-
-//           (this.linKinJointICCheck && this.linKinJointICVel) ?
-//             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
-//         }
-// // account for empty space
-//         ((this.linKinLinkCheck && this.linKinLinkICVel) && (this.angKinLinkICCheck)) ?
-//           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
-// // check whether angular kinematics have been asked for
-//
-//         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.icArray.length * 2) + 1
-//           + (this.linkArray.length * 2))) {
-//           (this.angKinLinkICCheck && this.angKinLinkICVel) ?
-//             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
-//         }
-//         break;
+      //           (this.linKinJointICCheck && this.linKinJointICVel) ?
+      //             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+      //         }
+      // // account for empty space
+      //         ((this.linKinLinkCheck && this.linKinLinkICVel) && (this.angKinLinkICCheck)) ?
+      //           includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+      // // check whether angular kinematics have been asked for
+      //
+      //         while (increment < (1 + (this.icArray.length * 2) + 1 + (this.icArray.length * 2) + 1
+      //           + (this.linkArray.length * 2))) {
+      //           (this.angKinLinkICCheck && this.angKinLinkICVel) ?
+      //             includeMapIndex.set(increment++, true) : includeMapIndex.set(increment++, false);
+      //         }
+      //         break;
     }
     // const tbl = document.getElementById('Excel-Table');
     const tbl = document.createElement('div');
@@ -1215,26 +1209,25 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     }
     table.appendChild(statTitle);
     for (let i = 0; i < rows; i++) {
-      const tr = document.createElement('tr');                 /*Create `tr` element*/
+      const tr = document.createElement('tr'); /*Create `tr` element*/
       for (let j = 0; j < cols; j++) {
         // have a map here to check whether to consider this element or not
         if (!includeMapIndex.get(j)) {
           continue;
         }
         const arr = this.analysis[i][j];
-        const td = document.createElement('td');             /*Create `td` element*/
-        const cellText = document.createTextNode('\t' + arr.toString());   /*Create text for `td` element*/
-        td.appendChild(cellText);                          /*Append text to `td` element*/
-        tr.appendChild(td);                                /*Append `td` to `tr` element*/
+        const td = document.createElement('td'); /*Create `td` element*/
+        const cellText = document.createTextNode('\t' + arr.toString()); /*Create text for `td` element*/
+        td.appendChild(cellText); /*Append text to `td` element*/
+        tr.appendChild(td); /*Append `td` to `tr` element*/
       }
-      table.appendChild(tr);                                 /*Append `tr` to `table` element*/
+      table.appendChild(tr); /*Append `tr` to `table` element*/
     }
     tbl.appendChild(table);
     // /* table id is passed over here */
     // const element = document.getElementById('StaticExcel-Table');
     // const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
     const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(tbl);
-
 
     /* generate workbook and add the worksheet */
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
@@ -1244,7 +1237,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
     const datepipe: DatePipe = new DatePipe('en-US');
     const formattedDate = datepipe.transform(date, 'dd-MMM HH:mm:ss');
 
-    const fileName = analysisType + 'Joints Links' + formattedDate + '.xlsx'
+    const fileName = analysisType + 'Joints Links' + formattedDate + '.xlsx';
     // this.fileName = analysisType + this.numJointsAndLinks[0] + 'Joints' + this.numJointsAndLinks[1] + 'Links' +
     //   formattedDate + '.xlsx';
     /* save to file*/
@@ -1278,17 +1271,21 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   }
 
   getLinkWeight(link: Link) {
-    if (!(link instanceof RealLink)) {return}
+    if (!(link instanceof RealLink)) {
+      return;
+    }
     return (link.mass * 9.81).toString();
   }
 
   getMomentDueToGravity(link: Link) {
-    if (!(link instanceof RealLink)) {return}
+    if (!(link instanceof RealLink)) {
+      return;
+    }
     const fixedJointID = ForceSolver.linkToFixedPositionMap.get(link.id);
     // TODO: Have map do this
-    const fixedJoint = link.joints.find(j => j.id === fixedJointID)!;
+    const fixedJoint = link.joints.find((j) => j.id === fixedJointID)!;
     const pos_vec = [link.CoM.x - fixedJoint.x, link.CoM.y - fixedJoint.y, 0];
-    const force_vec = [0, link.mass * 9.81, 0]
+    const force_vec = [0, link.mass * 9.81, 0];
     // TODO: Check for units...
     const vec = crossProduct(pos_vec, force_vec);
     const sign = vec[2] > 0 ? ' + ' : ' - ';
@@ -1296,8 +1293,10 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   }
 
   getMomentDueToForce(link: Link, force: Force) {
-    if (!(link instanceof RealLink)) {return}
-    const fixedJointIndex = GridComponent.joints.findIndex(j => j.id === link.fixedLocation.fixedPoint);
+    if (!(link instanceof RealLink)) {
+      return;
+    }
+    const fixedJointIndex = GridComponent.joints.findIndex((j) => j.id === link.fixedLocation.fixedPoint);
     const fixedJoint = fixedJointIndex === -1 ? link.CoM : GridComponent.joints[fixedJointIndex];
     const unitConversion = ToolbarComponent.unit === 'cm' ? 0.01 : 1;
     const pos_vec = [(force.startCoord.x - fixedJoint.x) * unitConversion, (force.startCoord.y - fixedJoint.y) * unitConversion, 0];
@@ -1325,9 +1324,13 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
 
   containInputJoint(link: Link) {
     let containInputJoint = false;
-    link.joints.forEach(j => {
-      if (containInputJoint) {return}
-      if (!(j instanceof RevJoint)) {return}
+    link.joints.forEach((j) => {
+      if (containInputJoint) {
+        return;
+      }
+      if (!(j instanceof RevJoint)) {
+        return;
+      }
       if (j.input) {
         containInputJoint = true;
       }
@@ -1371,285 +1374,284 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
-      let data1Title = '';
-      let data2Title = '';
-      let data3Title = '';
-      let chartTitle = '';
-      const xAxisTitle = 'Time-steps';
-      let yAxisTitle = '';
-      let datum: number[][] = [];
-      let categories: string[] = [];
-      const seriesData =  [];
-      let posLinUnit = '(cm)';
-      let velLinUnit = '(cm/s)';
-      let accLinUnit = '(cm/s^2)';
-      const posAngUnit = '(degrees)';
-      // const posAngUnit = '(rad)';
-      const velAngUnit = '((rad)/s)';
-      const accAngUnit = '((rad)/s^2)';
-      if (ToolbarComponent.unit === 'm') {
-        posLinUnit = 'm';
-        velLinUnit = 'm/s';
-        accLinUnit = 'm/s^2';
-      }
-      switch (analysis) {
-        case 'force':
-          switch (mechProp) {
-            case 'Input Torque':
-              chartTitle = 'Torque for Mechanism';
-              data1Title = 'Torque (Nm)';
-              yAxisTitle = 'Torque (Nm)';
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              break;
-            case 'Joint Forces':
-              chartTitle = 'Force Magnitudes';
-              data1Title = 'Force ' + mechPart + ' X-Magnitude (N)';
-              data2Title = 'Force ' + mechPart + ' Y-Magnitude (N)';
-              data3Title = 'Abs Force (N)';
-              yAxisTitle = 'Force (N)';
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-              break;
-          }
-          break;
-        case 'stress':
-          break;
-        case 'kinematic':
-          switch (mechProp) {
-            case 'Linear Joint Pos':
-              chartTitle = 'Joint\'s Linear Position';
-              data1Title = 'Joint ' + mechPart + ' X Position ' + posLinUnit;
-              data2Title = 'Joint ' + mechPart + ' Y Position ' + posLinUnit;
-              yAxisTitle = 'Position ' + posLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              break;
-            case 'Linear Joint Vel':
-              chartTitle = 'Joint\'s Linear Velocity';
-              data1Title = 'Joint ' + mechPart + ' X Velocity ' + velLinUnit;
-              data2Title = 'Joint ' + mechPart + ' Y Velocity ' + velLinUnit;
-              data3Title = 'Absolute Velocity ' + velLinUnit;
-              yAxisTitle = 'Velocity ' + velLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-              break;
-            case 'Linear Joint Acc':
-              chartTitle = 'Joint\'s Linear Acceleration';
-              data1Title = 'Joint ' + mechPart + ' X Acceleration ' + accLinUnit;
-              data2Title = 'Joint ' + mechPart + ' Y Acceleration ' + accLinUnit;
-              data3Title = 'Absolute Acceleration ' + accLinUnit;
-              yAxisTitle = 'Acceleration ' + accLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-              break;
-            case 'Linear Link\'s CoM Pos':
-              chartTitle = 'Link\'s Center of Mass Linear Position';
-              data1Title = 'Link ' + mechPart + ' (CoM) X Position ' + posLinUnit;
-              data2Title = 'Link ' + mechPart + ' (CoM) Y Position ' + posLinUnit;
-              yAxisTitle = 'Position (CoM) ' + posLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              break;
-            case 'Linear Link\'s CoM Vel':
-              chartTitle = 'Link\'s Center of Mass Linear Velocity';
-              data1Title = 'Link ' + mechPart + ' (CoM) X Velocity ' + velLinUnit;
-              data2Title = 'Link ' + mechPart + ' (CoM) Y Velocity ' + velLinUnit;
-              data3Title = 'Absolute Velocity ' + velLinUnit;
-              yAxisTitle = 'Velocity ' + velLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-              break;
-            case 'Linear Link\'s CoM Acc':
-              chartTitle = 'Link\'s Center of Mass Linear Acceleration';
-              data1Title = 'Link ' + mechPart + ' (CoM) X Acceleration ' + accLinUnit;
-              data2Title = 'Link ' + mechPart + ' (CoM) Y Acceleration ' + accLinUnit;
-              data3Title = 'Link Absolute Acceleration ' + accLinUnit;
-              yAxisTitle = 'Acceleration ' + accLinUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-              seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-              break;
-            case 'Angular Link Pos':
-              chartTitle = 'Link\'s Angular Position';
-              data1Title = 'Link ' + mechPart + ' Angle ' + posAngUnit;
-              yAxisTitle = 'Position ' + posAngUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              break;
-            case 'Angular Link Vel':
-              chartTitle = 'Link\'s Angular Velocity';
-              data1Title = 'Link ' + mechPart + ' Angular Velocity ' + velAngUnit;
-              yAxisTitle = 'Velocity ' + velAngUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              break;
-            case 'Angular Link Acc':
-              chartTitle = 'Link\'s Angular Acceleration';
-              data1Title = 'Link ' + mechPart + ' Angular Acceleration ' + accAngUnit;
-              yAxisTitle = 'Acceleration ' + accAngUnit;
-              [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
-              seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-              break;
-          }
-          break;
-        default:
-          return;
-      }
-      // switch (analysis) {
-      //   case 'Input Torque':
-      //     chartTitle = 'Torque for Mechanism';
-      //     data1Title = 'Torque (Nm)';
-      //     yAxisTitle = 'Torque (Nm)';
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     break;
-      //   case 'Joint Forces':
-      //     chartTitle = 'Force Magnitudes';
-      //     data1Title = 'Force ' + type_of + ' X-Magnitude (N)';
-      //     data2Title = 'Force ' + type_of + ' Y-Magnitude (N)';
-      //     data3Title = 'Abs Force (N)';
-      //     yAxisTitle = 'Force (N)';
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-      //     break;
-      //   case 'Linear Joint Pos':
-      //     chartTitle = 'Joint\'s Linear Position';
-      //     data1Title = 'Joint ' + type_of + ' X Position ' + posLinUnit;
-      //     data2Title = 'Joint ' + type_of + ' Y Position ' + posLinUnit;
-      //     yAxisTitle = 'Position ' + posLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     break;
-      //   case 'Linear Joint Vel':
-      //     chartTitle = 'Joint\'s Linear Velocity';
-      //     data1Title = 'Joint ' + type_of + ' X Velocity ' + velLinUnit;
-      //     data2Title = 'Joint ' + type_of + ' Y Velocity ' + velLinUnit;
-      //     data3Title = 'Absolute Velocity ' + velLinUnit;
-      //     yAxisTitle = 'Velocity ' + velLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-      //     break;
-      //   case 'Linear Joint Acc':
-      //     chartTitle = 'Joint\'s Linear Acceleration';
-      //     data1Title = 'Joint ' + type_of + ' X Acceleration ' + accLinUnit;
-      //     data2Title = 'Joint ' + type_of + ' Y Acceleration ' + accLinUnit;
-      //     data3Title = 'Absolute Acceleration ' + accLinUnit;
-      //     yAxisTitle = 'Acceleration ' + accLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-      //     break;
-      //   case 'Linear Link\'s CoM Pos':
-      //     chartTitle = 'Link\'s Center of Mass Linear Position';
-      //     data1Title = 'Link ' + type_of + ' (CoM) X Position ' + posLinUnit;
-      //     data2Title = 'Link ' + type_of + ' (CoM) Y Position ' + posLinUnit;
-      //     yAxisTitle = 'Position (CoM) ' + posLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     break;
-      //   case 'Linear Link\'s CoM Vel':
-      //     chartTitle = 'Link\'s Center of Mass Linear Velocity';
-      //     data1Title = 'Link ' + type_of + ' (CoM) X Velocity ' + velLinUnit;
-      //     data2Title = 'Link ' + type_of + ' (CoM) Y Velocity ' + velLinUnit;
-      //     data3Title = 'Absolute Velocity ' + velLinUnit;
-      //     yAxisTitle = 'Velocity ' + velLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-      //     break;
-      //   case 'Linear Link\'s CoM Acc':
-      //     chartTitle = 'Link\'s Center of Mass Linear Acceleration';
-      //     data1Title = 'Link ' + type_of + ' (CoM) X Acceleration ' + accLinUnit;
-      //     data2Title = 'Link ' + type_of + ' (CoM) Y Acceleration ' + accLinUnit;
-      //     data3Title = 'Link Absolute Acceleration ' + accLinUnit;
-      //     yAxisTitle = 'Acceleration ' + accLinUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
-      //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
-      //     break;
-      //   case 'Angular Link Pos':
-      //     chartTitle = 'Link\'s Angular Position';
-      //     data1Title = 'Link ' + type_of + ' Angle ' + posAngUnit;
-      //     yAxisTitle = 'Position ' + posAngUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     break;
-      //   case 'Angular Link Vel':
-      //     chartTitle = 'Link\'s Angular Velocity';
-      //     data1Title = 'Link ' + type_of + ' Angular Velocity ' + velAngUnit;
-      //     yAxisTitle = 'Velocity ' + velAngUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     break;
-      //   case 'Angular Link Acc':
-      //     chartTitle = 'Link\'s Angular Acceleration';
-      //     data1Title = 'Link ' + type_of + ' Angular Acceleration ' + accAngUnit;
-      //     yAxisTitle = 'Acceleration ' + accAngUnit;
-      //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
-      //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
-      //     break;
-      //   default:
-      //     break;
-      // }
-      this.chartOptions = {
-
-        series: seriesData,
-        chart: {
-          height: 350,
-          type: 'line',
-          zoom: {
-            enabled: false
-          }
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          curve: 'straight'
-        },
-        title: {
-          text: chartTitle,
-          align: 'left'
-        },
-        grid: {
-          row: {
-            colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-            opacity: 0.5
-          }
-        },
-        xaxis: {
-          categories: categories,
-          title: {
-            text: xAxisTitle
-          }
-        },
-        yaxis: {
-          title: {
-            text: yAxisTitle
-          },
+    let data1Title = '';
+    let data2Title = '';
+    let data3Title = '';
+    let chartTitle = '';
+    const xAxisTitle = 'Time-steps';
+    let yAxisTitle = '';
+    let datum: number[][] = [];
+    let categories: string[] = [];
+    const seriesData = [];
+    let posLinUnit = '(cm)';
+    let velLinUnit = '(cm/s)';
+    let accLinUnit = '(cm/s^2)';
+    const posAngUnit = '(degrees)';
+    // const posAngUnit = '(rad)';
+    const velAngUnit = '((rad)/s)';
+    const accAngUnit = '((rad)/s^2)';
+    if (ToolbarComponent.unit === 'm') {
+      posLinUnit = 'm';
+      velLinUnit = 'm/s';
+      accLinUnit = 'm/s^2';
+    }
+    switch (analysis) {
+      case 'force':
+        switch (mechProp) {
+          case 'Input Torque':
+            chartTitle = 'Torque for Mechanism';
+            data1Title = 'Torque (Nm)';
+            yAxisTitle = 'Torque (Nm)';
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            break;
+          case 'Joint Forces':
+            chartTitle = 'Force Magnitudes';
+            data1Title = 'Force ' + mechPart + ' X-Magnitude (N)';
+            data2Title = 'Force ' + mechPart + ' Y-Magnitude (N)';
+            data3Title = 'Abs Force (N)';
+            yAxisTitle = 'Force (N)';
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            break;
         }
-      };
+        break;
+      case 'stress':
+        break;
+      case 'kinematic':
+        switch (mechProp) {
+          case 'Linear Joint Pos':
+            chartTitle = "Joint's Linear Position";
+            data1Title = 'Joint ' + mechPart + ' X Position ' + posLinUnit;
+            data2Title = 'Joint ' + mechPart + ' Y Position ' + posLinUnit;
+            yAxisTitle = 'Position ' + posLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            break;
+          case 'Linear Joint Vel':
+            chartTitle = "Joint's Linear Velocity";
+            data1Title = 'Joint ' + mechPart + ' X Velocity ' + velLinUnit;
+            data2Title = 'Joint ' + mechPart + ' Y Velocity ' + velLinUnit;
+            data3Title = 'Absolute Velocity ' + velLinUnit;
+            yAxisTitle = 'Velocity ' + velLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            break;
+          case 'Linear Joint Acc':
+            chartTitle = "Joint's Linear Acceleration";
+            data1Title = 'Joint ' + mechPart + ' X Acceleration ' + accLinUnit;
+            data2Title = 'Joint ' + mechPart + ' Y Acceleration ' + accLinUnit;
+            data3Title = 'Absolute Acceleration ' + accLinUnit;
+            yAxisTitle = 'Acceleration ' + accLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            break;
+          case "Linear Link's CoM Pos":
+            chartTitle = "Link's Center of Mass Linear Position";
+            data1Title = 'Link ' + mechPart + ' (CoM) X Position ' + posLinUnit;
+            data2Title = 'Link ' + mechPart + ' (CoM) Y Position ' + posLinUnit;
+            yAxisTitle = 'Position (CoM) ' + posLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            break;
+          case "Linear Link's CoM Vel":
+            chartTitle = "Link's Center of Mass Linear Velocity";
+            data1Title = 'Link ' + mechPart + ' (CoM) X Velocity ' + velLinUnit;
+            data2Title = 'Link ' + mechPart + ' (CoM) Y Velocity ' + velLinUnit;
+            data3Title = 'Absolute Velocity ' + velLinUnit;
+            yAxisTitle = 'Velocity ' + velLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            break;
+          case "Linear Link's CoM Acc":
+            chartTitle = "Link's Center of Mass Linear Acceleration";
+            data1Title = 'Link ' + mechPart + ' (CoM) X Acceleration ' + accLinUnit;
+            data2Title = 'Link ' + mechPart + ' (CoM) Y Acceleration ' + accLinUnit;
+            data3Title = 'Link Absolute Acceleration ' + accLinUnit;
+            yAxisTitle = 'Acceleration ' + accLinUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            break;
+          case 'Angular Link Pos':
+            chartTitle = "Link's Angular Position";
+            data1Title = 'Link ' + mechPart + ' Angle ' + posAngUnit;
+            yAxisTitle = 'Position ' + posAngUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            break;
+          case 'Angular Link Vel':
+            chartTitle = "Link's Angular Velocity";
+            data1Title = 'Link ' + mechPart + ' Angular Velocity ' + velAngUnit;
+            yAxisTitle = 'Velocity ' + velAngUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            break;
+          case 'Angular Link Acc':
+            chartTitle = "Link's Angular Acceleration";
+            data1Title = 'Link ' + mechPart + ' Angular Acceleration ' + accAngUnit;
+            yAxisTitle = 'Acceleration ' + accAngUnit;
+            [datum, categories] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
+            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            break;
+        }
+        break;
+      default:
+        return;
+    }
+    // switch (analysis) {
+    //   case 'Input Torque':
+    //     chartTitle = 'Torque for Mechanism';
+    //     data1Title = 'Torque (Nm)';
+    //     yAxisTitle = 'Torque (Nm)';
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     break;
+    //   case 'Joint Forces':
+    //     chartTitle = 'Force Magnitudes';
+    //     data1Title = 'Force ' + type_of + ' X-Magnitude (N)';
+    //     data2Title = 'Force ' + type_of + ' Y-Magnitude (N)';
+    //     data3Title = 'Abs Force (N)';
+    //     yAxisTitle = 'Force (N)';
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+    //     break;
+    //   case 'Linear Joint Pos':
+    //     chartTitle = 'Joint\'s Linear Position';
+    //     data1Title = 'Joint ' + type_of + ' X Position ' + posLinUnit;
+    //     data2Title = 'Joint ' + type_of + ' Y Position ' + posLinUnit;
+    //     yAxisTitle = 'Position ' + posLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     break;
+    //   case 'Linear Joint Vel':
+    //     chartTitle = 'Joint\'s Linear Velocity';
+    //     data1Title = 'Joint ' + type_of + ' X Velocity ' + velLinUnit;
+    //     data2Title = 'Joint ' + type_of + ' Y Velocity ' + velLinUnit;
+    //     data3Title = 'Absolute Velocity ' + velLinUnit;
+    //     yAxisTitle = 'Velocity ' + velLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+    //     break;
+    //   case 'Linear Joint Acc':
+    //     chartTitle = 'Joint\'s Linear Acceleration';
+    //     data1Title = 'Joint ' + type_of + ' X Acceleration ' + accLinUnit;
+    //     data2Title = 'Joint ' + type_of + ' Y Acceleration ' + accLinUnit;
+    //     data3Title = 'Absolute Acceleration ' + accLinUnit;
+    //     yAxisTitle = 'Acceleration ' + accLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+    //     break;
+    //   case 'Linear Link\'s CoM Pos':
+    //     chartTitle = 'Link\'s Center of Mass Linear Position';
+    //     data1Title = 'Link ' + type_of + ' (CoM) X Position ' + posLinUnit;
+    //     data2Title = 'Link ' + type_of + ' (CoM) Y Position ' + posLinUnit;
+    //     yAxisTitle = 'Position (CoM) ' + posLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     break;
+    //   case 'Linear Link\'s CoM Vel':
+    //     chartTitle = 'Link\'s Center of Mass Linear Velocity';
+    //     data1Title = 'Link ' + type_of + ' (CoM) X Velocity ' + velLinUnit;
+    //     data2Title = 'Link ' + type_of + ' (CoM) Y Velocity ' + velLinUnit;
+    //     data3Title = 'Absolute Velocity ' + velLinUnit;
+    //     yAxisTitle = 'Velocity ' + velLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+    //     break;
+    //   case 'Linear Link\'s CoM Acc':
+    //     chartTitle = 'Link\'s Center of Mass Linear Acceleration';
+    //     data1Title = 'Link ' + type_of + ' (CoM) X Acceleration ' + accLinUnit;
+    //     data2Title = 'Link ' + type_of + ' (CoM) Y Acceleration ' + accLinUnit;
+    //     data3Title = 'Link Absolute Acceleration ' + accLinUnit;
+    //     yAxisTitle = 'Acceleration ' + accLinUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     seriesData.push({name: data2Title, type: 'line', data: datum[1]});
+    //     seriesData.push({name: data3Title, type: 'line', data: datum[2]});
+    //     break;
+    //   case 'Angular Link Pos':
+    //     chartTitle = 'Link\'s Angular Position';
+    //     data1Title = 'Link ' + type_of + ' Angle ' + posAngUnit;
+    //     yAxisTitle = 'Position ' + posAngUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     break;
+    //   case 'Angular Link Vel':
+    //     chartTitle = 'Link\'s Angular Velocity';
+    //     data1Title = 'Link ' + type_of + ' Angular Velocity ' + velAngUnit;
+    //     yAxisTitle = 'Velocity ' + velAngUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     break;
+    //   case 'Angular Link Acc':
+    //     chartTitle = 'Link\'s Angular Acceleration';
+    //     data1Title = 'Link ' + type_of + ' Angular Acceleration ' + accAngUnit;
+    //     yAxisTitle = 'Acceleration ' + accAngUnit;
+    //     [datum, categories] = this.determineAnalysis(analysis, type_of, more_type);
+    //     seriesData.push({name: data1Title, type: 'line', data: datum[0]});
+    //     break;
+    //   default:
+    //     break;
+    // }
+    this.chartOptions = {
+      series: seriesData,
+      chart: {
+        height: 350,
+        type: 'line',
+        zoom: {
+          enabled: false,
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        curve: 'straight',
+      },
+      title: {
+        text: chartTitle,
+        align: 'left',
+      },
+      grid: {
+        row: {
+          colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
+          opacity: 0.5,
+        },
+      },
+      xaxis: {
+        categories: categories,
+        title: {
+          text: xAxisTitle,
+        },
+      },
+      yaxis: {
+        title: {
+          text: yAxisTitle,
+        },
+      },
+    };
   }
 
   // determineChart(analysis: string, type_of: string, more_type: string) {
@@ -1824,7 +1826,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'force':
         switch (this.forceMechanismState.selectedMechanismState) {
           case 'Static Equilibrium':
-          case 'Newton\'s II Law':
+          case "Newton's II Law":
             const analysisType = this.forceMechanismState.selectedMechanismState === 'Static Equilibrium' ? 'statics' : 'dynamics';
             switch (this.forceAnalysis.selectedAnalysis) {
               case 'none':
@@ -1865,20 +1867,28 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                   case 'Linear Joint':
                     if (this.kinematicLoopLinearJoint.joint === 'none') {
                       this.showChart = false;
-                      return
+                      return;
                     }
                     this.showChart = true;
-                    this.determineChart(AnalysisPopupComponent.selectedAnalysis, this.kinematicAnalysis.selectedMechanismState,
-                      this.kinematicPropertyAnalysis.selectedAnalysis, this.kinematicLoopLinearJoint.joint);
+                    this.determineChart(
+                      AnalysisPopupComponent.selectedAnalysis,
+                      this.kinematicAnalysis.selectedMechanismState,
+                      this.kinematicPropertyAnalysis.selectedAnalysis,
+                      this.kinematicLoopLinearJoint.joint
+                    );
                     break;
-                  case 'Linear Link\'':
+                  case "Linear Link'":
                     if (this.kinematicLoopLinearLink.link === 'none') {
                       this.showChart = false;
                       return;
                     }
                     this.showChart = true;
-                    this.determineChart(AnalysisPopupComponent.selectedAnalysis, this.kinematicAnalysis.selectedMechanismState,
-                      this.kinematicPropertyAnalysis.selectedAnalysis, this.kinematicLoopLinearLink.link);
+                    this.determineChart(
+                      AnalysisPopupComponent.selectedAnalysis,
+                      this.kinematicAnalysis.selectedMechanismState,
+                      this.kinematicPropertyAnalysis.selectedAnalysis,
+                      this.kinematicLoopLinearLink.link
+                    );
                     break;
                   case 'Angular Link':
                     if (this.kinematicLoopAngularLink.link === 'none') {
@@ -1886,8 +1896,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
                       return;
                     }
                     this.showChart = true;
-                    this.determineChart(AnalysisPopupComponent.selectedAnalysis, this.kinematicAnalysis.selectedMechanismState,
-                      this.kinematicPropertyAnalysis.selectedAnalysis, this.kinematicLoopAngularLink.link);
+                    this.determineChart(
+                      AnalysisPopupComponent.selectedAnalysis,
+                      this.kinematicAnalysis.selectedMechanismState,
+                      this.kinematicPropertyAnalysis.selectedAnalysis,
+                      this.kinematicLoopAngularLink.link
+                    );
                     break;
                   default:
                     break;
@@ -1899,7 +1913,7 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
             break;
           default:
             // Should never reach here
-            return
+            return;
         }
         break;
     }
@@ -1964,21 +1978,37 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           if (analysisType === 'dynamics') {
             // TODO: Be sure to have each step within mechanism know its input angular velocity
             KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-            KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-              GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+            KinematicsSolver.determineKinematics(
+              GridComponent.mechanisms[0].joints[index],
+              GridComponent.mechanisms[0].links[index],
+              GridComponent.mechanisms[0].inputAngularVelocities[index]
+            );
           }
-          ForceSolver.determineForceAnalysis(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], analysisType, ToolbarComponent.gravity, ToolbarComponent.unit);
+          ForceSolver.determineForceAnalysis(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            analysisType,
+            ToolbarComponent.gravity,
+            ToolbarComponent.unit
+          );
           datum_X.push(roundNumber(ForceSolver.unknownVariableTorque, 3));
           break;
         case 'Joint Forces':
           if (analysisType === 'dynamics') {
             KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-            KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-              GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+            KinematicsSolver.determineKinematics(
+              GridComponent.mechanisms[0].joints[index],
+              GridComponent.mechanisms[0].links[index],
+              GridComponent.mechanisms[0].inputAngularVelocities[index]
+            );
           }
-          ForceSolver.determineForceAnalysis(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], analysisType, ToolbarComponent.gravity, ToolbarComponent.unit);
+          ForceSolver.determineForceAnalysis(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            analysisType,
+            ToolbarComponent.gravity,
+            ToolbarComponent.unit
+          );
           x = ForceSolver.unknownVariableForcesMap.get(mechPart)![0];
           y = ForceSolver.unknownVariableForcesMap.get(mechPart)![1];
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -1987,15 +2017,18 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           datum_Z.push(roundNumber(z, 3));
           break;
         case 'Linear Joint Pos':
-          const jt = GridComponent.mechanisms[0].joints[index].find(j => j.id === mechPart)!;
+          const jt = GridComponent.mechanisms[0].joints[index].find((j) => j.id === mechPart)!;
           x = jt.x;
           y = jt.y;
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
           break;
         case 'Linear Joint Vel':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.jointVelMap.get(mechPart)![0];
           y = KinematicsSolver.jointVelMap.get(mechPart)![1];
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -2004,8 +2037,11 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           datum_Z.push(roundNumber(z, 3));
           break;
         case 'Linear Joint Acc':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.jointAccMap.get(mechPart)![0];
           y = KinematicsSolver.jointAccMap.get(mechPart)![1];
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -2013,17 +2049,23 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           datum_Y.push(roundNumber(y, 3));
           datum_Z.push(roundNumber(z, 3));
           break;
-        case 'Linear Link\'s CoM Pos':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+        case "Linear Link's CoM Pos":
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkCoMMap.get(mechPart)![0];
           y = KinematicsSolver.linkCoMMap.get(mechPart)![1];
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
           break;
-        case 'Linear Link\'s CoM Vel':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+        case "Linear Link's CoM Vel":
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkVelMap.get(mechPart)![0];
           y = KinematicsSolver.linkVelMap.get(mechPart)![1];
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -2031,9 +2073,12 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           datum_Y.push(roundNumber(y, 3));
           datum_Z.push(roundNumber(z, 3));
           break;
-        case 'Linear Link\'s CoM Acc':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+        case "Linear Link's CoM Acc":
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkAccMap.get(mechPart)![0];
           y = KinematicsSolver.linkAccMap.get(mechPart)![1];
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
@@ -2042,20 +2087,29 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
           datum_Z.push(roundNumber(z, 3));
           break;
         case 'Angular Link Pos':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkAngPosMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));
           break;
         case 'Angular Link Vel':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkAngVelMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));
           break;
         case 'Angular Link Acc':
-          KinematicsSolver.determineKinematics(GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index], GridComponent.mechanisms[0].inputAngularVelocities[index]);
+          KinematicsSolver.determineKinematics(
+            GridComponent.mechanisms[0].joints[index],
+            GridComponent.mechanisms[0].links[index],
+            GridComponent.mechanisms[0].inputAngularVelocities[index]
+          );
           x = KinematicsSolver.linkAngAccMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));
           break;

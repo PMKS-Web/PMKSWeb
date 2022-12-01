@@ -1,8 +1,8 @@
-import {AppConstants} from "./app-constants";
-import {Link} from "./link";
-import {Coord} from "./coord";
+import { AppConstants } from './app-constants';
+import { Link } from './link';
+import { Coord } from './coord';
 
-export class Joint  extends Coord {
+export class Joint extends Coord {
   private _id: string;
   private _showHighlight: boolean = false;
 
@@ -35,8 +35,7 @@ export class RealJoint extends Joint {
   private _ground: boolean;
   private _links: Link[];
   private _connectedJoints: Joint[];
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
-              connectedJoints: Joint[] = []) {
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
     super(id, x, y);
     this._input = input;
     this._ground = ground;
@@ -95,8 +94,7 @@ export class RealJoint extends Joint {
 // }
 
 export class RevJoint extends RealJoint {
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
-              connectedJoints: Joint[] = []) {
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 }
@@ -104,8 +102,7 @@ export class RevJoint extends RealJoint {
 export class PrisJoint extends RealJoint {
   private _angle: number = 0;
 
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [],
-              connectedJoints: Joint[] = []) {
+  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 

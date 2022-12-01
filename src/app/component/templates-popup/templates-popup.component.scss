@@ -6,13 +6,13 @@
   left: 0;
   display: none;
   position: absolute;
-  background-color: rgba(204,204,204,0.8);
+  background-color: rgba(204, 204, 204, 0.8);
   color: #aaaaaa;
   text-align: center;
   font-size: 32px;
 }
 
-.popupTemplates{
+.popupTemplates {
   /*width: 450px;*/
   /*height: 500px;*/
   width: 700px;
@@ -41,40 +41,40 @@
 
 /*Get rid of this... Does not belong here... */
 .secondaryButtons {
-  -moz-box-shadow:inset 0 1px 0 0 #ffffff;
-  -webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
-  box-shadow:inset 0px 1px 0px 0px #ffffff;
-  background:-moz-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
-  background:-webkit-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
-  background:-o-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
-  background:-ms-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
-  background:linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
-  filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f9f9f9', endColorstr='#e9e9e9',GradientType=0);
-  background-color:#f9f9f9;
-  -moz-border-radius:6px;
-  -webkit-border-radius:6px;
-  border-radius:20px;
-  border:1px solid black;
-  display:inline-block;
-  cursor:pointer;
+  -moz-box-shadow: inset 0 1px 0 0 #ffffff;
+  -webkit-box-shadow: inset 0px 1px 0px 0px #ffffff;
+  box-shadow: inset 0px 1px 0px 0px #ffffff;
+  background: -moz-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
+  background: -webkit-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
+  background: -o-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
+  background: -ms-linear-gradient(top, #f9f9f9 5%, #e9e9e9 100%);
+  background: linear-gradient(to bottom, #f9f9f9 5%, #e9e9e9 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f9f9f9', endColorstr='#e9e9e9',GradientType=0);
+  background-color: #f9f9f9;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border-radius: 20px;
+  border: 1px solid black;
+  display: inline-block;
+  cursor: pointer;
   color: black;
-  font-size:17px;
-  padding:6px 24px;
-  text-decoration:none;
-  text-shadow:0px 1px 0px #ffffff;
+  font-size: 17px;
+  padding: 6px 24px;
+  text-decoration: none;
+  text-shadow: 0px 1px 0px #ffffff;
   margin: 8px 7px;
   outline: none;
 }
 .secondaryButtons:hover {
-  background:-moz-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
-  background:-webkit-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
-  background:-o-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
-  background:-ms-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
-  background:linear-gradient(to bottom, #e9e9e9 5%, #f9f9f9 100%);
-  filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#e9e9e9', endColorstr='#f9f9f9',GradientType=0);
-  background-color:#AAAAAA;
+  background: -moz-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
+  background: -webkit-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
+  background: -o-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
+  background: -ms-linear-gradient(top, #e9e9e9 5%, #f9f9f9 100%);
+  background: linear-gradient(to bottom, #e9e9e9 5%, #f9f9f9 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#e9e9e9', endColorstr='#f9f9f9',GradientType=0);
+  background-color: #aaaaaa;
 }
 .secondaryButtons:active {
-  position:relative;
-  top:1px;
+  position: relative;
+  top: 1px;
 }

@@ -2,30 +2,27 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-    // Get the color config from the theme.
-    $color-config: mat.get-color-config($theme);
-    // Get the primary color palette from the color-config.
-    $primary-palette: map.get($color-config, 'primary');
-    $accent-palette: map.get($color-config, 'accent');
-    $typography-config: mat.get-typography-config($theme);
-    $background: map.get($theme, background);
-    $foreground: map.get($theme, foreground);
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
 
-    #button-block{
-        width: 100%;
-        background-color: mat.get-color-from-palette($primary-palette,200);
-        font-size: 14px !important;
-        font-weight: 200 !important;
+  #button-block {
+    width: 100%;
+    background-color: mat.get-color-from-palette($primary-palette, 200);
+    font-size: 14px !important;
+    font-weight: 200 !important;
 
-        #spacer {
-            flex: 10 0 auto;
-          };
-
-        mat-icon{
-            color: mat.get-color-from-palette($foreground,'icon');
-        }
+    #spacer {
+      flex: 10 0 auto;
     }
-    
 
-
+    mat-icon {
+      color: mat.get-color-from-palette($foreground, 'icon');
+    }
+  }
 }

@@ -6,11 +6,11 @@ import { GridComponent } from './component/grid/grid.component';
 import { LinkageTableComponent } from './component/linkage-table/linkage-table.component';
 import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
-import { AnimationBarComponent} from "./component/animation-bar/animation-bar.component";
+import { AnimationBarComponent } from './component/animation-bar/animation-bar.component';
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
-import {FormsModule} from "@angular/forms";
-import {NgApexchartsModule} from "ng-apexcharts";
-import {TemplatesPopupComponent} from "./component/templates-popup/templates-popup.component";
+import { FormsModule } from '@angular/forms';
+import { NgApexchartsModule } from 'ng-apexcharts';
+import { TemplatesPopupComponent } from './component/templates-popup/templates-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MaterialModule } from './material/material.module';
@@ -30,38 +30,30 @@ import { DualInputComponent } from './component/blocks/dual-input/dual-input.com
 import { ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
-    declarations: [
-        AppComponent,
-        GridComponent,
-        LinkageTableComponent,
-        ToolbarComponent,
-        AnalysisPopupComponent,
-        AnimationBarComponent,
-        ShapeSelectorComponent,
-        TemplatesPopupComponent,
-        LeftTabsComponent,
-        TabComponent,
-        TitleBlock,
-        EditPanelComponent,
-        InputComponent,
-        ButtonComponent,
-        PanelSectionComponent,
-        PanelSectionCollapsibleComponent,
-        ToggleComponent,
-        SubtitleComponent,
-        RadioComponent,
-        DualInputComponent,
-    ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    NgApexchartsModule,
-    BrowserAnimationsModule,
-    MaterialModule,
-    ReactiveFormsModule,
+  declarations: [
+    AppComponent,
+    GridComponent,
+    LinkageTableComponent,
+    ToolbarComponent,
+    AnalysisPopupComponent,
+    AnimationBarComponent,
+    ShapeSelectorComponent,
+    TemplatesPopupComponent,
+    LeftTabsComponent,
+    TabComponent,
+    TitleBlock,
+    EditPanelComponent,
+    InputComponent,
+    ButtonComponent,
+    PanelSectionComponent,
+    PanelSectionCollapsibleComponent,
+    ToggleComponent,
+    SubtitleComponent,
+    RadioComponent,
+    DualInputComponent,
   ],
-  providers: [
-  ],
-  bootstrap: [AppComponent]
+  imports: [BrowserModule, FormsModule, NgApexchartsModule, BrowserAnimationsModule, MaterialModule, ReactiveFormsModule],
+  providers: [],
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

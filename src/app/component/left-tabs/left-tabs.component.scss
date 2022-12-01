@@ -12,32 +12,28 @@
 
   #testInput {
     font-size: 0.54rem;
-  
+
     input {
       font-size: 0.7rem;
     }
-  
+
     label.mat-form-field-label {
       font-size: 0.7rem;
       top: 1.45em;
     }
-  
+
     &.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label,
-    &.mat-form-field-can-float
-      .mat-input-server:focus
-      + .mat-form-field-label-wrapper
-      .mat-form-field-label {
+    &.mat-form-field-can-float .mat-input-server:focus + .mat-form-field-label-wrapper .mat-form-field-label {
       transform: translateY(-1.25em) scale(0.75);
       width: 133.33333%;
     }
   }
 
-
   // #testInput{
   //   font-size: 8px;
   // }
 
-  .panel{
+  .panel {
     position: absolute;
     top: 50px;
     left: 70px;
@@ -50,64 +46,64 @@
 
     @include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
-    background-color: mat.get-color-from-palette($background,'background');
-    .page1{
-        width: 100%;
-        height: 100%;
-        background-color: mat.get-color-from-palette($primary-palette,50);
-        border-radius: var(--border-radius);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+    background-color: mat.get-color-from-palette($background, 'background');
+    .page1 {
+      width: 100%;
+      height: 100%;
+      background-color: mat.get-color-from-palette($primary-palette, 50);
+      border-radius: var(--border-radius);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .page2{
-        width: 100%;
-        height: 100%;
-        background-color: mat.get-color-from-palette($primary-palette,50);
-        border-radius: var(--border-radius);
+    .page2 {
+      width: 100%;
+      height: 100%;
+      background-color: mat.get-color-from-palette($primary-palette, 50);
+      border-radius: var(--border-radius);
     }
-    .page3{
-        width: 100%;
-        height: 100%;
-        background-color: green;
-        background-color: mat.get-color-from-palette($primary-palette,50);
-        #headline-1{
-          @include mat.typography-level($typography-config, 'headline-1');
-        }
-        #headline-2{
-          @include mat.typography-level($typography-config, 'headline-2');
-        }
-        #headline-3{
-          @include mat.typography-level($typography-config, 'headline-3');
-        }
-        #headline-4{
-          @include mat.typography-level($typography-config, 'headline-4');
-        }
-        #headline-5{
-          @include mat.typography-level($typography-config, 'headline-5');
-        }
-        #headline-6{
-          @include mat.typography-level($typography-config, 'headline-6');
-        }
-        #subtitle-1{
-          @include mat.typography-level($typography-config, 'subtitle-1');
-        }
-        #subtitle-2{
-          @include mat.typography-level($typography-config, 'subtitle-2');
-        }
-        #body-1{
-          @include mat.typography-level($typography-config, 'body-1');
-        }
-        #body-2{
-          @include mat.typography-level($typography-config, 'body-2');
-        }
-        #caption{
-          @include mat.typography-level($typography-config, 'caption');
-        }
+    .page3 {
+      width: 100%;
+      height: 100%;
+      background-color: green;
+      background-color: mat.get-color-from-palette($primary-palette, 50);
+      #headline-1 {
+        @include mat.typography-level($typography-config, 'headline-1');
+      }
+      #headline-2 {
+        @include mat.typography-level($typography-config, 'headline-2');
+      }
+      #headline-3 {
+        @include mat.typography-level($typography-config, 'headline-3');
+      }
+      #headline-4 {
+        @include mat.typography-level($typography-config, 'headline-4');
+      }
+      #headline-5 {
+        @include mat.typography-level($typography-config, 'headline-5');
+      }
+      #headline-6 {
+        @include mat.typography-level($typography-config, 'headline-6');
+      }
+      #subtitle-1 {
+        @include mat.typography-level($typography-config, 'subtitle-1');
+      }
+      #subtitle-2 {
+        @include mat.typography-level($typography-config, 'subtitle-2');
+      }
+      #body-1 {
+        @include mat.typography-level($typography-config, 'body-1');
+      }
+      #body-2 {
+        @include mat.typography-level($typography-config, 'body-2');
+      }
+      #caption {
+        @include mat.typography-level($typography-config, 'caption');
+      }
     }
   }
 
-  .tabContainer{
+  .tabContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -121,10 +117,9 @@
     width: 50px;
     height: calc(100% - 60px);
 
-    app-tab{
-        flex-grow:1;
-        width: 100%;
+    app-tab {
+      flex-grow: 1;
+      width: 100%;
     }
   }
-
 }

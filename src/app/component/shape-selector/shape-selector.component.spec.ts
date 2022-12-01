@@ -8,9 +8,8 @@ describe('ShapeSelectorComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ShapeSelectorComponent ]
-    })
-    .compileComponents();
+      declarations: [ShapeSelectorComponent],
+    }).compileComponents();
   });
 
   beforeEach(() => {

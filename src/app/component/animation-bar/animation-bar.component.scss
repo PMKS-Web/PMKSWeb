@@ -2,8 +2,7 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-
-  #barContainer{
+  #barContainer {
     //Fix to the bottom left, make the it cover the entire width of the screen but give it a height of 50px. Use flex to center animation bar in the middle botttom.
     position: absolute;
     bottom: 0;
@@ -12,9 +11,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events:none;
-    #animationBar{
-      pointer-events:auto;
+    pointer-events: none;
+    #animationBar {
+      pointer-events: auto;
       margin: 10px;
       padding: 10px 20px;
       display: flex;
@@ -32,8 +31,6 @@
         width: 300px;
       }
     }
-
-
   }
 }
 
@@ -417,7 +414,6 @@
 //   display: flex;
 //   flex-direction: row;
 // }
-
 
 // #dofWrapper{
 //   top: 5px;

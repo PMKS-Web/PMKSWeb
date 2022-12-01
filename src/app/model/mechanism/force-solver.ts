@@ -1,7 +1,7 @@
-import {Joint, PrisJoint, RealJoint, RevJoint} from "../joint";
-import {Piston, Link, RealLink} from "../link";
-import {matLinearSystem} from "../utils";
-import {KinematicsSolver} from "./kinematic-solver";
+import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
+import { Piston, Link, RealLink } from '../link';
+import { matLinearSystem } from '../utils';
+import { KinematicsSolver } from './kinematic-solver';
 
 export class ForceSolver {
   private static loopLettersToLinkIndexMap = new Map<string, number>();
@@ -48,7 +48,7 @@ export class ForceSolver {
     // maybe also put this within utils
     // https://mathjs.org/docs/datatypes/matrices.html
     const sol = matLinearSystem(this.A_matrix, this.B_matrix);
-    joints.forEach(j => {
+    joints.forEach((j) => {
       this.unknownVariableForcesMap.set(j.id, [0, 0]);
     });
     // for (let i = 0; i < this.JointIDToUnknownArrayIndex.size; i++) {
@@ -72,10 +72,12 @@ export class ForceSolver {
       let realLinkCount = 0;
       let imagLinkCount = 0;
       let realJointCount = 0;
-      simJoints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
+      simJoints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
         // if (!(j instanceof RevJoint)) {return}
-        const tracerJointBoolean = (j.links.length === 1 && !j.ground);
+        const tracerJointBoolean = j.links.length === 1 && !j.ground;
         this.jointIDToTracerBooleanMap.set(j.id, tracerJointBoolean);
         if (!this.jointIDToTracerBooleanMap.get(j.id)) {
           this.jointIDToUsedBooleanMap.set(j.id, true);
@@ -84,10 +86,12 @@ export class ForceSolver {
           this.jointIDToUsedBooleanMap.set(j.id, false);
         }
       });
-      this.unknownVariableNum = (realJointCount * 2) + 1;
+      this.unknownVariableNum = realJointCount * 2 + 1;
 
-      simJoints.forEach(j => {
-        if (!(j instanceof RealJoint)) {return}
+      simJoints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
         if (j.links.length < 2 && !j.ground) {
           return;
         }
@@ -104,17 +108,21 @@ export class ForceSolver {
           unknown_variable_index++;
         }
       });
-      this.desiredLoopLetters.forEach(letters => {
+      this.desiredLoopLetters.forEach((letters) => {
         const joint1 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(0))!];
         const joint2 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(1))!];
-        this.loopLettersToLinkIndexMap.set(letters[0].charAt(0) + letters[0].charAt(1),
-          simLinks.findIndex(l => l.id.includes(letters[0].charAt(0)) && l.id.includes(letters[0].charAt(1))));
+        this.loopLettersToLinkIndexMap.set(
+          letters[0].charAt(0) + letters[0].charAt(1),
+          simLinks.findIndex((l) => l.id.includes(letters[0].charAt(0)) && l.id.includes(letters[0].charAt(1)))
+        );
         const link = simLinks[this.loopLettersToLinkIndexMap.get(letters[0].charAt(0) + letters[0].charAt(1))!];
         this.linkToFixedPositionMap.set(link.id, link.id);
         // commented out this part. Possibly this can be solved by utilizing initializing maps refresh
         // if (!this.linkIDToUnknownArrayIndexMap.has(link.id)) {
         this.linkIDToUnknownArrayIndexMap.set(link.id, 3 * realLinkCount + imagLinkCount);
-        if (!(joint1 instanceof RealJoint) || !(joint2 instanceof RealJoint))  {return}
+        if (!(joint1 instanceof RealJoint) || !(joint2 instanceof RealJoint)) {
+          return;
+        }
         if (joint1.input || joint2.input) {
           this.inputLinkIndex = 3 * realLinkCount + imagLinkCount + 2;
         }
@@ -152,7 +160,7 @@ export class ForceSolver {
       mass_conversion = 1 / 1000;
     }
 
-    this.desiredLoopLetters.forEach(letters => {
+    this.desiredLoopLetters.forEach((letters) => {
       // TODO: Determine where to insert logic for jointIdToJointIndexMap and loopLettersToLinkIndexMap
       const joint1 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(0))!];
       const joint2 = simJoints[this.jointIdToJointIndexMap.get(letters[0].charAt(1))!];
@@ -160,14 +168,16 @@ export class ForceSolver {
       let fixedJoint: any;
       if (this.linkToFixedPositionMap.get(link.id)!.length > 1) {
         const linkID = this.linkToFixedPositionMap.get(link.id);
-        const li = simLinks.find(l => l.id === linkID);
-        if (!(li instanceof RealLink)) {return}
-        fixedJoint = {x: li.CoM.x, y: li.CoM.y};
+        const li = simLinks.find((l) => l.id === linkID);
+        if (!(li instanceof RealLink)) {
+          return;
+        }
+        fixedJoint = { x: li.CoM.x, y: li.CoM.y };
       } else {
         const jointID = this.linkToFixedPositionMap.get(link.id);
-        fixedJoint = simJoints.find(j => j.id === jointID);
+        fixedJoint = simJoints.find((j) => j.id === jointID);
       }
-      link.joints.forEach(j => {
+      link.joints.forEach((j) => {
         if (this.jointIDToTracerBooleanMap.get(j.id)) {
           return;
         }
@@ -175,8 +185,8 @@ export class ForceSolver {
         let yForce: number;
         const xIndex = this.jointIDToUnknownArrayIndexMap.get(j.id)!;
         const yIndex = xIndex + 1;
-        xForce = this.jointPositiveForceXLinkMap.get(j.id) === link.id ? 1: -1;
-        yForce = this.jointPositiveForceYLinkMap.get(j.id) === link.id ? 1: -1;
+        xForce = this.jointPositiveForceXLinkMap.get(j.id) === link.id ? 1 : -1;
+        yForce = this.jointPositiveForceYLinkMap.get(j.id) === link.id ? 1 : -1;
         switch (link.constructor) {
           case RealLink:
             const torqueVal = this.determineMoment(fixedJoint, j.x, j.y, xForce, yForce);
@@ -188,26 +198,28 @@ export class ForceSolver {
           case Piston:
             const mu = 0.1;
             const desiredJoint = joint1;
-            if (!(desiredJoint instanceof PrisJoint)) {return}
+            if (!(desiredJoint instanceof PrisJoint)) {
+              return;
+            }
             const constant = xForce / (-mu * Math.cos(desiredJoint.angle) + Math.sin(desiredJoint.angle));
-            this.B_matrix[3 * realLinkCount + imagLinkCount][xIndex] = -mu * constant * Math.sin(desiredJoint.angle) +
-              constant * Math.cos(desiredJoint.angle);
+            this.B_matrix[3 * realLinkCount + imagLinkCount][xIndex] = -mu * constant * Math.sin(desiredJoint.angle) + constant * Math.cos(desiredJoint.angle);
             this.B_matrix[3 * realLinkCount + imagLinkCount][yIndex] = yForce;
             break;
         }
       });
       switch (link.constructor) {
         case RealLink:
-          if (!(link instanceof RealLink)) {return;}
+          if (!(link instanceof RealLink)) {
+            return;
+          }
           if (gravity) {
             // const gravity = 9.80665
             const gravity_val = -9.81;
             const calc_mass = link.mass * mass_conversion;
             // const gravity_val = 980.665; // cm/s^2
-            const torque_from_gravity = this.determineMoment(fixedJoint, link.CoM.x, link.CoM.y,
-              0, gravity_val * calc_mass);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (gravity_val * calc_mass * -1);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torque_from_gravity[0] * distance_conversion * -1);
+            const torque_from_gravity = this.determineMoment(fixedJoint, link.CoM.x, link.CoM.y, 0, gravity_val * calc_mass);
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += gravity_val * calc_mass * -1;
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += torque_from_gravity[0] * distance_conversion * -1;
           }
           // if (analysisType === 'dynamic' && consideredLink.findIndex(l => l === link.id) === -1) {
           if (analysisType === 'dynamics') {
@@ -220,8 +232,7 @@ export class ForceSolver {
             const desired_joint_index = this.jointIdToJointIndexMap.get(letters[0].charAt(0))!;
             const desired_joint = simJoints[desired_joint_index];
             const link_com = KinematicsSolver.linkCoMMap.get(link.id)!;
-            const dist = Math.sqrt(Math.pow(link_com[0] - desired_joint.x, 2) +
-              Math.pow(link_com[1] - desired_joint.y, 2)) * distance_conversion;
+            const dist = Math.sqrt(Math.pow(link_com[0] - desired_joint.x, 2) + Math.pow(link_com[1] - desired_joint.y, 2)) * distance_conversion;
             const angular_acc = KinematicsSolver.linkAngAccMap.get(link.id)!;
             const J = link.massMoI * Math.pow(distance_conversion, 2); // calc_mmoi
             const m_d_2 = calc_mass * Math.pow(dist, 2);
@@ -238,13 +249,12 @@ export class ForceSolver {
             break;
           }
           // TODO: Be sure force is updated within link
-          link.forces.forEach(f => {
-            const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y,
-              f.mag * Math.cos(f.angle), f.mag * Math.sin(f.angle));
-            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += (f.mag * Math.cos(f.angle) * -1);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += (f.mag * Math.sin(f.angle) * -1);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[1] * -1 * distance_conversion);
-            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += (torqueNum[0] * -1 * distance_conversion);
+          link.forces.forEach((f) => {
+            const torqueNum = this.determineMoment(fixedJoint, f.startCoord.x, f.startCoord.y, f.mag * Math.cos(f.angle), f.mag * Math.sin(f.angle));
+            this.B_matrix[3 * realLinkCount + imagLinkCount][0] += f.mag * Math.cos(f.angle) * -1;
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 1][0] += f.mag * Math.sin(f.angle) * -1;
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += torqueNum[1] * -1 * distance_conversion;
+            this.B_matrix[3 * realLinkCount + imagLinkCount + 2][0] += torqueNum[0] * -1 * distance_conversion;
           });
           realLinkCount++;
           break;
@@ -270,9 +280,9 @@ export class ForceSolver {
 
   static determineDesiredLoopLettersForce(requiredLoops: string[]) {
     const desiredForceLoops: Array<Array<string>> = [];
-    const utilizedFirstJointMap = new Map <string, number>();
-    const utilizedSecondJointMap = new Map <string, number>();
-    requiredLoops.forEach(loop => {
+    const utilizedFirstJointMap = new Map<string, number>();
+    const utilizedSecondJointMap = new Map<string, number>();
+    requiredLoops.forEach((loop) => {
       for (let i = 1; i < loop.length - 1; i++) {
         if (utilizedFirstJointMap.has(loop[i - 1]) || utilizedSecondJointMap.has(loop[i])) {
           continue;

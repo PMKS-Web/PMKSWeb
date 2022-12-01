@@ -1,2 +1,1 @@
-export class StressSolver {
-}
+export class StressSolver {}
