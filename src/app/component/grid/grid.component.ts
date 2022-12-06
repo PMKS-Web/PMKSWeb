@@ -148,9 +148,16 @@ export class GridComponent implements OnInit, AfterViewInit {
   static initialLink: RealLink;
   // static snackBar: MatSnackBar;
 
+  private static instance: GridComponent | null = null;
+
   // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
   constructor(private activeObjService: ActiveObjService) {
     // GridComponent.snackBar = snackBar;
+    if (GridComponent.instance) {
+      return GridComponent.instance;
+    } else {
+      GridComponent.instance = this;
+    }
   }
 
   ngOnInit(): void {

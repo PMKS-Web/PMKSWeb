@@ -11,8 +11,4 @@ export class ToggleComponent {
   @Input() formGroup!: FormGroup;
   @Input() _formControl!: string;
   @Input() value!: boolean;
-
-  x = () => {
-    console.log('Help');
-  };
 }

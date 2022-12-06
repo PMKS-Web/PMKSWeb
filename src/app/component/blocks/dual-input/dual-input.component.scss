@@ -25,6 +25,7 @@
 
       //When the input is focused
       &:focus {
+        margin-bottom: -2px;
         background-color: mat.get-color-from-palette($primary-palette, 100);
         //add a bottom border
         border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);

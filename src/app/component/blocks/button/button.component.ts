@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { ActiveObjService } from 'src/app/services/active-obj.service';
 
 @Component({
   selector: 'button-block',
@@ -6,5 +7,8 @@ import { Component, Input } from '@angular/core';
   styleUrls: ['./button.component.scss'],
 })
 export class ButtonComponent {
+  constructor(public activeSrv: ActiveObjService) {}
+
   @Input() icon: string | undefined;
+  @Input() click!: () => void;
 }

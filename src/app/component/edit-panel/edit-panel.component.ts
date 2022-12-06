@@ -21,41 +21,59 @@ export class EditPanelComponent implements OnInit {
     {
       xPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       yPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      ground: [false, [Validators.required]],
-      input: [false, [Validators.required]],
+      ground: [false, { updateOn: 'change' }],
+      input: [false, { updateOn: 'change' }],
+    },
+    { updateOn: 'blur' }
+  );
+
+  linkForm = this.fb.group(
+    {
+      length: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      angle: ['', [Validators.required, Validators.pattern(this.numRegex)]],
     },
     { updateOn: 'blur' }
   );
 
   ngOnInit(): void {
     console.log(this.jointForm);
+    console.log(this.activeSrv);
     // console.log(this.profileForm);
     this.onChanges();
   }
 
   onChanges(): void {
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
+      console.log(this.activeSrv);
       if (this.jointForm.controls['xPos'].invalid) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toString() });
       } else {
         this.activeSrv.Joint.x = parseFloat(val!);
-        GridComponent.dragJoint(this.activeSrv.Joint, new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y));
+        GridComponent.dragJoint(
+          this.activeSrv.Joint,
+          new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
+        );
       }
     });
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
-      console.warn(val);
       if (this.jointForm.controls['yPos'].invalid) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toString() });
       } else {
         this.activeSrv.Joint.y = parseFloat(val!);
-        GridComponent.dragJoint(this.activeSrv.Joint, new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y));
+        GridComponent.dragJoint(
+          this.activeSrv.Joint,
+          new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
+        );
       }
     });
 
     this.jointForm.controls['ground'].valueChanges.subscribe((val) => {
-      console.warn(val);
       this.activeSrv.Joint.ground = val!;
+    });
+
+    this.jointForm.controls['input'].valueChanges.subscribe((val) => {
+      this.activeSrv.Joint.input = val!;
     });
 
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
@@ -68,5 +86,16 @@ export class EditPanelComponent implements OnInit {
         });
       }
     });
+  }
+
+  deleteJoint() {
+    // console.log('delete Joint');
+    // console.log(this.activeSrv);
+    // tempActiveService.updateSelectedObj(undefined);
+    //Note: this funciton runs in the buttonBlock to 'this' refer to that, not the edit panel
+    //Therefore you need to have a activeSrv in button Block.ts
+    this.activeSrv.updateSelectedObj(undefined);
+    var temp = new GridComponent(this.activeSrv);
+    temp.deleteJoint();
   }
 }
