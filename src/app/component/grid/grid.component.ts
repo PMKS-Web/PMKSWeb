@@ -461,14 +461,18 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static getMousePosition(e: MouseEvent) {
     const svg = GridComponent.canvasSVGElement as SVGGraphicsElement;
+    // console.log(svg);
+    if (svg === null || svg === undefined) {
+      return new Coord(0, 0);
+    }
     const CTM = svg.getScreenCTM();
+    if (CTM === null || CTM === undefined) {
+      return new Coord(0, 0);
+    }
     // if (e.touches) { e = e.touches[0]; }
     const box = svg.getBoundingClientRect();
     // const width = box.right - box.left;
     const height = box.bottom - box.top;
-    if (CTM === null) {
-      return;
-    }
     const newX = roundNumber((e.clientX - CTM.e) / CTM.a, 0);
     let newY: number;
     // NOTE: CTM.f is the svg.ClientHeight + height of rest of elements. In Firefox, clientHeight does not work (returns 0) so we need to

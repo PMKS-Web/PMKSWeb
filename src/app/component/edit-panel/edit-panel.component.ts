@@ -28,6 +28,7 @@ export class EditPanelComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    console.log(this.jointForm);
     // console.log(this.profileForm);
     this.onChanges();
   }

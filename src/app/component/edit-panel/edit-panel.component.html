@@ -3,7 +3,7 @@
   <panel-section *ngIf="this.activeSrv.objType == 'Joint'">
     <title-block icon="edit">{{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}</title-block>
     <dual-input-block
-      [formGroup]="jointForm"
+      [formGroup]="this.jointForm"
       formControl1="xPos"
       [value1]="this.activeSrv.Joint.x"
       formControl2="yPos"
@@ -41,7 +41,7 @@
     <radio-block tooltip="Tooltip Info" option1="cm" option2="meter" option3="inches">Radio Block</radio-block>
     <!-- <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block> -->
     <subtitle-block icon="home">Subtitle Block</subtitle-block>
-    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
+    <!-- <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block> -->
   </panel-section-collapsible>
 
   <panel-section>
@@ -51,6 +51,6 @@
     <radio-block tooltip="Tooltip Info" option1="this" option2="that">Radio Block</radio-block>
     <!-- <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block> -->
     <subtitle-block icon="home" buttonLabel="back">Subtitle Block</subtitle-block>
-    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
+    <!-- <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block> -->
   </panel-section>
 </div>

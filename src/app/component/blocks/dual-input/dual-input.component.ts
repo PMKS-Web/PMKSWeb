@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 @Component({
@@ -15,7 +15,5 @@ export class DualInputComponent {
   @Input() formControl2!: string;
   @Input() formGroup!: FormGroup;
 
-  constructor() {
-    this.formGroup = new FormGroup({});
-  }
+  constructor() {}
 }

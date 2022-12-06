@@ -4,7 +4,7 @@
     <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
     <div class="spacer"></div>
   </div>
-  <div class="row" [formGroup]="this.formGroup">
+  <div class="row" [formGroup]="formGroup">
     <span class="label">X</span>
     <input id="block-input-box" type="text" [value]="this.value1" [formControlName]="this.formControl1" />
     <span id="block-input-units">{{ this.unit }}</span>
