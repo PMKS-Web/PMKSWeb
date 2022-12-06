@@ -116,7 +116,11 @@ export function matDeterminant(m: Array<Array<number>>) {
   return result;
 }
 
-export function matDecompose(m: Array<Array<number>>, lum: Array<Array<number>>, perm: Array<number>) {
+export function matDecompose(
+  m: Array<Array<number>>,
+  lum: Array<Array<number>>,
+  perm: Array<number>
+) {
   // Crout's LU decomposition for matrix determinant and inverse
   // stores combined lower & upper in lum[][]
   // stores row permuations into perm[]
@@ -228,6 +232,14 @@ export function getDistance(j1: Coord, j2: Coord) {
   const dx = j2.x - j1.x;
   const dy = j2.y - j1.y;
   return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+}
+
+export function radToDeg(rad: number) {
+  return (rad * 180) / Math.PI;
+}
+
+export function degToRad(deg: number) {
+  return (deg * Math.PI) / 180;
 }
 
 export function getXDistance(r: number, theta: number) {

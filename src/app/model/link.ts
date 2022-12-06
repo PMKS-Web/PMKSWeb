@@ -2,7 +2,15 @@ import { Joint } from './joint';
 import { Coord } from './coord';
 import { AppConstants } from './app-constants';
 import { Force } from './force';
-import { getAngle, getDistance, getXDistance, getYDistance, roundNumber } from './utils';
+import {
+  degToRad,
+  getAngle,
+  getDistance,
+  getXDistance,
+  getYDistance,
+  radToDeg,
+  roundNumber,
+} from './utils';
 
 export enum Shape {
   line = 'line',
@@ -94,30 +102,55 @@ export class Link {
 }
 
 export class RealLink extends Link {
-  private _fill: string;
-  private _shape: Shape;
-  private _bound: Bound;
-  private _d: string;
+  private _fill: string; //The fill color
+  private _shape: Shape; //Shape is the shape of the link
+  private _bound: Bound; //The rectengualr area the link is encompassed by
+  private _d: string; //SVG path
   // private _mass: number;
-  private _massMoI: number;
-  private _CoM: Coord;
-  private _CoM_d1: string = '';
+  private _massMoI: number; //The value passed in from the linakge table
+  private _CoM: Coord; //Same passed in from the linkage table
+  private _CoM_d1: string = ''; //
   private _CoM_d2: string = '';
   private _CoM_d3: string = '';
   private _CoM_d4: string = '';
 
+  private _length: number = 0;
+  private _angle: number = 0;
+
   // TODO: Have an optional argument of forces
-  constructor(id: string, joints: Joint[], mass?: number, massMoI?: number, shape?: Shape, bound?: Bound, CoM?: Coord) {
+  constructor(
+    id: string,
+    joints: Joint[],
+    mass?: number,
+    massMoI?: number,
+    shape?: Shape,
+    bound?: Bound,
+    CoM?: Coord
+  ) {
     super(id, joints, mass);
     // this._mass = mass !== undefined ? mass : 1;
     this._massMoI = massMoI !== undefined ? massMoI : 1;
     this._shape = shape !== undefined ? shape : Shape.line;
     this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
-    this._bound = bound !== undefined ? bound : RealLink.getBounds(new Coord(joints[0].x, joints[0].y), new Coord(joints[1].x, joints[1].y), Shape.line);
+    this._bound =
+      bound !== undefined
+        ? bound
+        : RealLink.getBounds(
+            new Coord(joints[0].x, joints[0].y),
+            new Coord(joints[1].x, joints[1].y),
+            Shape.line
+          );
     this._d = RealLink.getPointsFromBounds(this._bound, this._shape);
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     this._CoM = CoM !== undefined ? CoM : RealLink.determineCenterOfMass(joints);
     this.updateCoMDs();
+    this.updateLengthAndAngle();
+  }
+
+  updateLengthAndAngle() {
+    this._length = getDistance(this.joints[0], this.joints[1]);
+    this._angle = getAngle(this.joints[0], this.joints[1]);
+    // console.warn(this._length, this._angle);
   }
 
   static getBounds(coord1: Coord, coord2: Coord, shape: Shape) {
@@ -249,17 +282,49 @@ export class RealLink extends Link {
       case Shape.eTriangle:
         leftRightPad = (5 * 2) / Math.tan(Math.PI / 6);
         topBotPad = (leftRightPad / 2) * Math.sqrt(3);
-        bound.b1 = offset(-leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b1);
-        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b2);
-        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor, (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor, bound.b3);
-        bound.b4 = offset(-leftRightPad * AppConstants.scaleFactor, (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor, bound.b4);
+        bound.b1 = offset(
+          -leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor,
+          bound.b1
+        );
+        bound.b2 = offset(
+          leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor,
+          bound.b2
+        );
+        bound.b3 = offset(
+          leftRightPad * AppConstants.scaleFactor,
+          (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor,
+          bound.b3
+        );
+        bound.b4 = offset(
+          -leftRightPad * AppConstants.scaleFactor,
+          (5 * 2 - topBotPad * 2) * AppConstants.scaleFactor,
+          bound.b4
+        );
         break;
       case Shape.rTriangle:
         leftRightPad = (5 * 2) / Math.tan(Math.PI / 8);
-        bound.b1 = offset(-5 * 2 * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b1);
-        bound.b2 = offset(leftRightPad * AppConstants.scaleFactor, 5 * 2 * AppConstants.scaleFactor, bound.b2);
-        bound.b3 = offset(leftRightPad * AppConstants.scaleFactor, -leftRightPad * AppConstants.scaleFactor, bound.b3);
-        bound.b4 = offset(-5 * 2 * AppConstants.scaleFactor, -leftRightPad * AppConstants.scaleFactor, bound.b4);
+        bound.b1 = offset(
+          -5 * 2 * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor,
+          bound.b1
+        );
+        bound.b2 = offset(
+          leftRightPad * AppConstants.scaleFactor,
+          5 * 2 * AppConstants.scaleFactor,
+          bound.b2
+        );
+        bound.b3 = offset(
+          leftRightPad * AppConstants.scaleFactor,
+          -leftRightPad * AppConstants.scaleFactor,
+          bound.b3
+        );
+        bound.b4 = offset(
+          -5 * 2 * AppConstants.scaleFactor,
+          -leftRightPad * AppConstants.scaleFactor,
+          bound.b4
+        );
         break;
       case Shape.circle:
         const dx = bound.b2.x - bound.b1.x;
@@ -322,12 +387,25 @@ export class RealLink extends Link {
     return bound;
   }
 
-  static rotateBounds(oldJoint1: Coord, oldJoint2: Coord, newJoint1: Coord, newJoint2: Coord, oldBound: Bound) {
-    const theta = Math.atan2(newJoint2.y - newJoint1.y, newJoint2.x - newJoint1.x) - Math.atan2(oldJoint2.y - oldJoint1.y, oldJoint2.x - oldJoint1.x);
+  static rotateBounds(
+    oldJoint1: Coord,
+    oldJoint2: Coord,
+    newJoint1: Coord,
+    newJoint2: Coord,
+    oldBound: Bound
+  ) {
+    const theta =
+      Math.atan2(newJoint2.y - newJoint1.y, newJoint2.x - newJoint1.x) -
+      Math.atan2(oldJoint2.y - oldJoint1.y, oldJoint2.x - oldJoint1.x);
     const x_diff = newJoint1.x - (Math.cos(theta) * oldJoint1.x - Math.sin(theta) * oldJoint1.y);
     const y_diff = newJoint1.y - (Math.sin(theta) * oldJoint1.x + Math.cos(theta) * oldJoint1.y);
 
-    function determineTransformation(oldBound: Coord, x_diff: number, y_diff: number, theta: number) {
+    function determineTransformation(
+      oldBound: Coord,
+      x_diff: number,
+      y_diff: number,
+      theta: number
+    ) {
       let newCoord = new Coord(0, 0);
       newCoord.x = Math.cos(theta) * oldBound.x - Math.sin(theta) * oldBound.y + x_diff;
       newCoord.y = Math.sin(theta) * oldBound.x + Math.cos(theta) * oldBound.y + y_diff;
@@ -433,11 +511,23 @@ export class RealLink extends Link {
         const cx = (Math.cos(angle) * width) / widthRatio;
         const cy = (Math.sin(angle) * width) / widthRatio;
         const high4 = new Coord(bound.b2.x + cy, bound.b2.y - cx);
-        const high3 = new Coord(high4.x - (cx * (widthRatio - 1)) / 2, high4.y - (cy * (widthRatio - 1)) / 2);
-        const low2 = new Coord(bound.b3.x - (cx * (widthRatio - 1)) / 2, bound.b3.y - (cy * (widthRatio - 1)) / 2);
-        const low1 = new Coord(bound.b4.x + (cx * (widthRatio - 1)) / 2, bound.b4.y + (cy * (widthRatio - 1)) / 2);
+        const high3 = new Coord(
+          high4.x - (cx * (widthRatio - 1)) / 2,
+          high4.y - (cy * (widthRatio - 1)) / 2
+        );
+        const low2 = new Coord(
+          bound.b3.x - (cx * (widthRatio - 1)) / 2,
+          bound.b3.y - (cy * (widthRatio - 1)) / 2
+        );
+        const low1 = new Coord(
+          bound.b4.x + (cx * (widthRatio - 1)) / 2,
+          bound.b4.y + (cy * (widthRatio - 1)) / 2
+        );
         const high1 = new Coord(bound.b1.x + cy, bound.b1.y - cx);
-        const high2 = new Coord(high1.x + (cx * (widthRatio - 1)) / 2, high1.y + (cy * (widthRatio - 1)) / 2);
+        const high2 = new Coord(
+          high1.x + (cx * (widthRatio - 1)) / 2,
+          high1.y + (cy * (widthRatio - 1)) / 2
+        );
         points = [bound.b1, bound.b2, high4, high3, low2, low1, high2, high1];
         break;
       }
@@ -544,7 +634,10 @@ export class RealLink extends Link {
       const midY = cp.y - midYC;
 
       // construct the path from start to mid
-      pathString += i === 0 ? `M ${startX} ${startY} L ${midX} ${midY} ` : `L ${startX} ${startY} L ${midX} ${midY} `;
+      pathString +=
+        i === 0
+          ? `M ${startX} ${startY} L ${midX} ${midY} `
+          : `L ${startX} ${startY} L ${midX} ${midY} `;
       // if (i === 0) {
       //   pathString += `M ${startX} ${startY} L ${midX} ${midY} `;
       // } else {
@@ -578,8 +671,12 @@ export class RealLink extends Link {
       // find the shorter control line
       pathString +=
         Math.sqrt(cp1x1 * cp1x1 + cp1y1 * cp1y1) < Math.sqrt(cp1x2 * cp1x2 + cp1y2 * cp1y2)
-          ? (pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${cp.x + nextXC - cp2x1} ${cp.y + nextYC - cp2y1} `)
-          : `C ${cp.x - midXC + cp1x2} ${cp.y - midYC + cp1y2} ${cp.x + nextXC - cp2x2} ${cp.y + nextYC - cp2y2} `;
+          ? (pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${
+              cp.x + nextXC - cp2x1
+            } ${cp.y + nextYC - cp2y1} `)
+          : `C ${cp.x - midXC + cp1x2} ${cp.y - midYC + cp1y2} ${cp.x + nextXC - cp2x2} ${
+              cp.y + nextYC - cp2y2
+            } `;
       // if (Math.sqrt(cp1x1 * cp1x1 + cp1y1 * cp1y1) < Math.sqrt(cp1x2 * cp1x2 + cp1y2 * cp1y2)) {
       //   pathString += `C ${cp.x - midXC + cp1x1} ${cp.y - midYC + cp1y1} ${cp.x + nextXC - cp2x1} ${cp.y + nextYC - cp2y1} `;
       // } else {
@@ -625,6 +722,30 @@ export class RealLink extends Link {
 
   set d(value: string) {
     this._d = value;
+  }
+
+  get length(): number {
+    return this._length;
+  }
+
+  set length(value: number) {
+    this._length = value;
+  }
+
+  get angleRad(): number {
+    return this._angle;
+  }
+
+  set angleRad(value: number) {
+    this._angle = value;
+  }
+
+  get angleDeg(): number {
+    return radToDeg(this._angle);
+  }
+
+  set angleDeg(value: number) {
+    this._angle = degToRad(value);
   }
 
   get fill(): string {
@@ -685,13 +806,61 @@ export class RealLink extends Link {
 
   updateCoMDs() {
     this._CoM_d1 =
-      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y + ' ' + 'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y + 0.25);
+      'M' +
+      this.CoM.x +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      (this.CoM.x - 0.25) +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      'A0.25 0.25 0 0 0 ' +
+      this.CoM.x +
+      ' ' +
+      (this.CoM.y + 0.25);
     this._CoM_d2 =
-      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y + 0.25) + ' ' + 'A0.25 0.25 0 0 0 ' + (this.CoM.x + 0.25) + ' ' + this.CoM.y;
+      'M' +
+      this.CoM.x +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      this.CoM.x +
+      ' ' +
+      (this.CoM.y + 0.25) +
+      ' ' +
+      'A0.25 0.25 0 0 0 ' +
+      (this.CoM.x + 0.25) +
+      ' ' +
+      this.CoM.y;
     this._CoM_d3 =
-      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + (this.CoM.x + 0.25) + ' ' + this.CoM.y + ' ' + 'A0.25 0.25 0 0 0 ' + this.CoM.x + ' ' + (this.CoM.y - 0.25);
+      'M' +
+      this.CoM.x +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      (this.CoM.x + 0.25) +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      'A0.25 0.25 0 0 0 ' +
+      this.CoM.x +
+      ' ' +
+      (this.CoM.y - 0.25);
     this._CoM_d4 =
-      'M' + this.CoM.x + ' ' + this.CoM.y + ' ' + this.CoM.x + ' ' + (this.CoM.y - 0.25) + ' ' + 'A0.25 0.25 0 0 0 ' + (this.CoM.x - 0.25) + ' ' + this.CoM.y;
+      'M' +
+      this.CoM.x +
+      ' ' +
+      this.CoM.y +
+      ' ' +
+      this.CoM.x +
+      ' ' +
+      (this.CoM.y - 0.25) +
+      ' ' +
+      'A0.25 0.25 0 0 0 ' +
+      (this.CoM.x - 0.25) +
+      ' ' +
+      this.CoM.y;
   }
 
   static getRectBoundsByRatio(refCoord1: Coord, refCoord2: Coord, ratio: number) {
@@ -753,3 +922,7 @@ export class Piston extends Link {
     super(id, joints, mass);
   }
 }
+
+// export class BinaryLink extends RealLink {}
+
+// export class NonBinaryLink extends RealLink {}

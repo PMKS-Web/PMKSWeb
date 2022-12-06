@@ -9,7 +9,6 @@ import { FormGroup } from '@angular/forms';
 export class InputComponent {
   @Input() unit: string | undefined;
   @Input() tooltip: string | undefined;
-  @Input() value: number | undefined;
   @Input() _formControl!: string;
   @Input() formGroup!: FormGroup;
 }

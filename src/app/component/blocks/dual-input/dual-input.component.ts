@@ -8,8 +8,6 @@ import { FormGroup } from '@angular/forms';
 })
 export class DualInputComponent {
   @Input() tooltip!: string;
-  @Input() value1!: number;
-  @Input() value2!: number;
   @Input() unit!: string;
   @Input() formControl1!: string;
   @Input() formControl2!: string;

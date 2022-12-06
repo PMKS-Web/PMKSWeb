@@ -1,9 +1,11 @@
 <div id="input-block">
   <div class="row" [formGroup]="formGroup">
     <span class="label"><ng-content></ng-content></span>
-    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
+    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help"
+      >help</mat-icon
+    >
     <div class="spacer"></div>
-    <input id="block-input-box" type="text" [value]="this.value" [formControlName]="this._formControl" />
+    <input id="block-input-box" type="text" [formControlName]="this._formControl" />
     <span id="block-input-units">{{ this.unit }}</span>
   </div>
 </div>

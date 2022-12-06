@@ -10,5 +10,4 @@ export class ToggleComponent {
   @Input() tooltip: string | undefined;
   @Input() formGroup!: FormGroup;
   @Input() _formControl!: string;
-  @Input() value!: boolean;
 }
