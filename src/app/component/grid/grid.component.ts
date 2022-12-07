@@ -151,13 +151,22 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static instance: GridComponent | null = null;
 
   // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor(private activeObjService: ActiveObjService) {
+  constructor(public activeObjService: ActiveObjService) {
     // GridComponent.snackBar = snackBar;
     if (GridComponent.instance) {
       return GridComponent.instance;
     } else {
       GridComponent.instance = this;
     }
+  }
+
+  findEnlargedLinkHelper() {
+    // console.log(this.activeObjService.Link.bound);
+    return RealLink.getPointsFromBounds(
+      this.activeObjService.Link.bound,
+      this.activeObjService.Link.shape,
+      0.5
+    );
   }
 
   ngOnInit(): void {

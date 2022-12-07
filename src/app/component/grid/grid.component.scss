@@ -23,6 +23,11 @@
     fill: mat.get-color-from-palette($background, 'app-bar');
   }
 
+  #activeObjectHighlight {
+    fill: mat.get-color-from-palette($primary-palette, 500);
+    opacity: 0.3;
+  }
+
   :host {
     .menu-entry {
       fill: rgb(244, 244, 244);

@@ -1,4 +1,11 @@
-<svg id="canvas" display="block" width="100%" height="100%" (wheel)="scrollGrid($event)" (mouseup)="mouseUp()">
+<svg
+  id="canvas"
+  display="block"
+  width="100%"
+  height="100%"
+  (wheel)="scrollGrid($event)"
+  (mouseup)="mouseUp()"
+>
   <g
     id="transformMatrixGrid"
     (contextmenu)="contextMenu($event, 'grid'); (false)"
@@ -46,6 +53,7 @@
       (mousedown)="mouseDown($event, 'grid')"
       (mousemove)="mouseMove($event, 'grid')"
     />
+
     <g id="linkHolder" style="transform: scaleY(-1)">
       <path
         *ngFor="let link of getLinks()"
@@ -232,8 +240,18 @@
       (contextmenu)="contextMenu($event, 'force', force); (false)"
       (click)="disappearContext()"
     >
-      <g [attr.id]="force.id" (mousedown)="mouseDown($event, 'force', force)" (mouseover)="force.showHighlight = true" (mouseout)="force.showHighlight = false">
-        <path *ngIf="force.showHighlight" [attr.d]="force.forceLine" stroke="yellow" stroke-width="0.2"></path>
+      <g
+        [attr.id]="force.id"
+        (mousedown)="mouseDown($event, 'force', force)"
+        (mouseover)="force.showHighlight = true"
+        (mouseout)="force.showHighlight = false"
+      >
+        <path
+          *ngIf="force.showHighlight"
+          [attr.d]="force.forceLine"
+          stroke="yellow"
+          stroke-width="0.2"
+        ></path>
         <!-- Transpent thicker force to increase hitbox for the group for highliting-->
         <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
         <path [attr.d]="force.forceLine" stroke="transparent" stroke-width="0.4"></path>
@@ -315,30 +333,100 @@
     <!--TODO: Add case when dragging anything above the comTagHolder -->
     <g id="comTagHolder" style="transform: scaleY(-1)" *ngIf="showCoMTags()">
       <svg *ngFor="let link of getLinks()" style="overflow: visible" width="1.23" height="2.61">
-        <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0" [attr.d]="getLinkProp(link, 'CoM_d1')"></path>
-        <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0" [attr.d]="getLinkProp(link, 'CoM_d2')"></path>
-        <path stroke-width="2" stroke-linejoin="round" fill="black" opacity="1.0" [attr.d]="getLinkProp(link, 'CoM_d3')"></path>
-        <path stroke-width="2" stroke-linejoin="round" fill="white" opacity="1.0" [attr.d]="getLinkProp(link, 'CoM_d4')"></path>
+        <path
+          stroke-width="2"
+          stroke-linejoin="round"
+          fill="black"
+          opacity="1.0"
+          [attr.d]="getLinkProp(link, 'CoM_d1')"
+        ></path>
+        <path
+          stroke-width="2"
+          stroke-linejoin="round"
+          fill="white"
+          opacity="1.0"
+          [attr.d]="getLinkProp(link, 'CoM_d2')"
+        ></path>
+        <path
+          stroke-width="2"
+          stroke-linejoin="round"
+          fill="black"
+          opacity="1.0"
+          [attr.d]="getLinkProp(link, 'CoM_d3')"
+        ></path>
+        <path
+          stroke-width="2"
+          stroke-linejoin="round"
+          fill="white"
+          opacity="1.0"
+          [attr.d]="getLinkProp(link, 'CoM_d4')"
+        ></path>
       </svg>
     </g>
     <g id="pathPointHolder"></g>
     <g id="threePositionHolder"></g>
     <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
-      <line stroke="black" stroke-width="0.02" stroke-opacity="0.5" style="pointer-events: none"></line>
+      <line
+        stroke="black"
+        stroke-width="0.02"
+        stroke-opacity="0.5"
+        style="pointer-events: none"
+      ></line>
       <svg height="10" width="10" style="overflow: visible" cursor="move">
-        <circle r="0.14" cx="0%" cy="0%" fill="black" fill-opacity="0.5" stroke-opacity="0.5" (mousedown)="mouseDown($event, 'jointTemp')"></circle>
-        <circle r="0.1" cx="0%" cy="0%" fill="gray" stroke="#00000000" stroke-width="0.2" (mousedown)="mouseDown($event, 'jointTemp')"></circle>
+        <circle
+          r="0.14"
+          cx="0%"
+          cy="0%"
+          fill="black"
+          fill-opacity="0.5"
+          stroke-opacity="0.5"
+          (mousedown)="mouseDown($event, 'jointTemp')"
+        ></circle>
+        <circle
+          r="0.1"
+          cx="0%"
+          cy="0%"
+          fill="gray"
+          stroke="#00000000"
+          stroke-width="0.2"
+          (mousedown)="mouseDown($event, 'jointTemp')"
+        ></circle>
       </svg>
     </g>
-    <g id="forceTempHolder" opacity="0.5" style="display: none; pointer-events: none; transform: scaleY(-1)">
+    <g
+      id="forceTempHolder"
+      opacity="0.5"
+      style="display: none; pointer-events: none; transform: scaleY(-1)"
+    >
       <path stroke-width="0.04" stroke="black" d=""></path>
       <path fill="black" d=""></path>
+    </g>
+
+    <!-- This is the blue highligher for the active Object  -->
+    <g id="activeObjectHighlight" style="transform: scaleY(-1); pointer-events: none">
+      <circle
+        *ngIf="activeObjService.objType == 'Joint'"
+        [attr.r]="0.5"
+        [attr.cx]="activeObjService.Joint.x"
+        [attr.cy]="activeObjService.Joint.y"
+      />
+
+      <path
+        *ngIf="activeObjService.objType == 'Link'"
+        [attr.d]="findEnlargedLinkHelper()"
+        stroke-width="5"
+      ></path>
     </g>
 
     <!-- Only Shown when shape selector is open -->
     <g id="linkBoundingBox" *ngIf="getShowcaseShapeSelector()" style="transform: scaleY(-1)">
       <g *ngIf="getSelectedLinkProp('shape') !== 'line'">
-        <polygon [attr.points]="getSelectedLinkProp('points')" fill="none" stroke="purple" stroke-width="0.02"></polygon>
+        <polygon
+          [attr.points]="getSelectedLinkProp('points')"
+          fill="none"
+          stroke="purple"
+          stroke-width="0.02"
+        ></polygon>
         <svg
           [attr.x]="getSelectedLinkProp('bound', 'b1', 'x')"
           [attr.y]="getSelectedLinkProp('bound', 'b1', 'y')"
@@ -346,7 +434,15 @@
           (mousedown)="mouseDown($event, 'link', 'b1')"
           (mousemove)="mouseMove($event, 'bound', 'b1')"
         >
-          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02" cursor="move"></circle>
+          <circle
+            [attr.cx]="0"
+            [attr.cy]="0"
+            [attr.r]="0.1"
+            fill="white"
+            stroke="black"
+            stroke-width="0.02"
+            cursor="move"
+          ></circle>
         </svg>
         <svg
           [attr.x]="getSelectedLinkProp('bound', 'b2', 'x')"
@@ -355,7 +451,15 @@
           (mousedown)="mouseDown($event, 'link', 'b2')"
           (mousemove)="mouseMove($event, 'bound', 'b2')"
         >
-          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02" cursor="move"></circle>
+          <circle
+            [attr.cx]="0"
+            [attr.cy]="0"
+            [attr.r]="0.1"
+            fill="white"
+            stroke="black"
+            stroke-width="0.02"
+            cursor="move"
+          ></circle>
         </svg>
         <svg
           [attr.x]="getSelectedLinkProp('bound', 'b3', 'x')"
@@ -364,7 +468,15 @@
           (mousedown)="mouseDown($event, 'link', 'b3')"
           (mousemove)="mouseMove($event, 'bound', 'b3')"
         >
-          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02" cursor="move"></circle>
+          <circle
+            [attr.cx]="0"
+            [attr.cy]="0"
+            [attr.r]="0.1"
+            fill="white"
+            stroke="black"
+            stroke-width="0.02"
+            cursor="move"
+          ></circle>
         </svg>
         <svg
           [attr.x]="getSelectedLinkProp('bound', 'b4', 'x')"
@@ -373,7 +485,15 @@
           (mousedown)="mouseDown($event, 'link', 'b4')"
           (mousemove)="mouseMove($event, 'bound', 'b4')"
         >
-          <circle [attr.cx]="0" [attr.cy]="0" [attr.r]="0.1" fill="white" stroke="black" stroke-width="0.02" cursor="move"></circle>
+          <circle
+            [attr.cx]="0"
+            [attr.cy]="0"
+            [attr.r]="0.1"
+            fill="white"
+            stroke="black"
+            stroke-width="0.02"
+            cursor="move"
+          ></circle>
         </svg>
         <svg
           [attr.x]="getSelectedLinkProp('bound', 'arrow', 'x')"
@@ -408,7 +528,9 @@
   <g class="context-menu-joint" style="cursor: pointer">
     <g class="menu-entry" id="menuEntryAddInput" (click)="createInput($event)">
       <rect x="400" y="400" width="120" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Add Input</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Add Input
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryAddLinkOnJoint" (click)="createLink($event, 'joint')">
       <rect x="400" y="400" width="120" height="20"></rect>
@@ -416,57 +538,92 @@
     </g>
     <g class="menu-entry" id="menuEntryCreateGround" (click)="createGround()">
       <rect x="400" y="400" width="120" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Create Ground</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Create Ground
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryCreateSlider" (click)="createSlider()">
       <rect x="400" y="400" width="120" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Create Slider</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Create Slider
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryDeleteJoint" (click)="deleteJoint()">
       <rect x="400" y="400" width="120" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Joint</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Delete Joint
+      </text>
     </g>
   </g>
   <g class="context-menu-link" style="cursor: pointer">
     <g class="menu-entry" id="menuEntryAddLinkOnLink" (click)="createLink($event, 'link')">
       <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Link</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Attach Link
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryAddForce" (click)="createForce($event)">
       <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Force</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Attach Force
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryAddTracerPoint" (click)="addJoint()">
       <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Attach Tracer Point</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Attach Tracer Point
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryEditShape" (click)="editShape()">
       <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Edit Shape</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Edit Shape
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink()">
       <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Link</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Delete Link
+      </text>
     </g>
   </g>
   <g class="context-menu-force" style="cursor: pointer">
     <g class="menu-entry" id="menuEntryChangeForceDirection" (click)="changeForceDirection()">
       <rect x="400" y="400" width="150" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Switch Force Direction</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Switch Force Direction
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryChangeForceLocal" (click)="changeForceLocal()">
       <rect x="400" y="400" width="150" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Change Force Local</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Change Force Local
+      </text>
     </g>
     <g class="menu-entry" id="menuEntryDeleteForce" (click)="deleteForce()">
       <rect x="400" y="400" width="150" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">Delete Force</text>
+      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
+        Delete Force
+      </text>
     </g>
   </g>
   <g class="notification-wrapper" id="notificationWrapper" style="display: none">
     <!--    <rect width="150" height="50" x="750" y="750" style="display: flex; color: red"></rect>-->
-    <rect width="150" height="50" x="750" y="750" style="fill: black; stroke: black; stroke-width: 1px"></rect>
-    <text x="825" y="775" dx="0" dy="0" text-anchor="middle" style="fill: white; font-size: 16px"></text>
+    <rect
+      width="150"
+      height="50"
+      x="750"
+      y="750"
+      style="fill: black; stroke: black; stroke-width: 1px"
+    ></rect>
+    <text
+      x="825"
+      y="775"
+      dx="0"
+      dy="0"
+      text-anchor="middle"
+      style="fill: white; font-size: 16px"
+    ></text>
     <!--    <text x="750" y="750" dx="15" dy="15" style="background-color: black; color: white; display: inline-block;-->
     <!--     padding: 3px; margin: 1px; border: 2px solid black"> Ummmm</text>-->
   </g>

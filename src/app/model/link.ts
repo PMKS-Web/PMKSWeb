@@ -427,7 +427,7 @@ export class RealLink extends Link {
     return bound;
   }
 
-  static getPointsFromBounds(bound: Bound, shape: Shape) {
+  static getPointsFromBounds(bound: Bound, shape: Shape, _width?: number) {
     let points: Coord[];
     switch (shape) {
       // fall through switch
@@ -436,7 +436,11 @@ export class RealLink extends Link {
         const y1 = bound.b4.y;
         const x2 = bound.b2.x;
         const y2 = bound.b2.y;
-        const width = 5 * 2 * AppConstants.scaleFactor;
+        //If the optional width paramter is not provided, use the default width
+        if (!_width) {
+          _width = 5 * 2 * AppConstants.scaleFactor;
+        }
+        const width = _width;
         // Find angle of rotation for link
         const dx = x2 - x1;
         const dy = y2 - y1;
