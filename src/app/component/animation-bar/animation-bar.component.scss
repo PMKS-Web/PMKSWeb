@@ -2,6 +2,33 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
+  //This another container for the view control buttons on the right button on the screen
+  #viewContainer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    #viewButtons {
+      pointer-events: auto;
+      margin: 10px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      // width: 400px;
+      border-radius: var(--border-radius);
+      //Set the elevation of the animation bar to 2.
+      @include mat.elevation(2);
+      //Set the background color of the animation bar to the background color of the raised button.
+      background-color: white;
+    }
+  }
+
   #barContainer {
     //Fix to the bottom left, make the it cover the entire width of the screen but give it a height of 50px. Use flex to center animation bar in the middle botttom.
     position: absolute;

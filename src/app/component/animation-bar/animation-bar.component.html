@@ -1,14 +1,78 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
 <div id="barContainer">
   <div id="animationBar">
-    <button mat-fab color="primary" aria-label="Example icon button with a home icon">
+    <button *ngIf="!animating" mat-fab color="primary" (click)="startAnimation('pause')">
       <mat-icon>play_arrow</mat-icon>
     </button>
-    <button mat-fab color="primary" aria-label="Example icon button with a home icon">
+    <button *ngIf="animating" mat-fab color="primary" (click)="startAnimation('play')">
+      <mat-icon>pause</mat-icon>
+    </button>
+    <button mat-fab color="primary" (click)="startAnimation('stop')">
       <mat-icon>stop</mat-icon>
     </button>
-    <mat-slider>
-      <input matSliderThumb />
+    <mat-slider
+      min="0"
+      max="{{ maxTimeSteps() }}"
+      (mousedown)="adjustMechanismAnimation(true)"
+      (mousemove)="setAnim()"
+      (mouseup)="adjustMechanismAnimation(false)"
+    >
+      <input id="slider" matSliderThumb value="{{ getMechanismTimeStep() }}" />
     </mat-slider>
+  </div>
+</div>
+
+<div id="viewContainer">
+  <div id="viewButtons">
+    <button
+      matTooltip="Show Center of Mass"
+      matTooltipPosition="left"
+      [matTooltipShowDelay]="1000"
+      mat-icon-button
+      color="primary"
+      (click)="showCenterOfMass()"
+    >
+      <mat-icon>adjust</mat-icon>
+    </button>
+    <button
+      matTooltip="Show ID Labels"
+      matTooltipPosition="left"
+      [matTooltipShowDelay]="1000"
+      mat-icon-button
+      color="primary"
+      (click)="onShowIDPressed()"
+    >
+      <mat-icon>label</mat-icon>
+    </button>
+    <button
+      matTooltip="Zoom In"
+      matTooltipPosition="left"
+      [matTooltipShowDelay]="1000"
+      mat-icon-button
+      color="primary"
+      (click)="onZoomInPressed()"
+    >
+      <mat-icon>zoom_in</mat-icon>
+    </button>
+    <button
+      matTooltip="Zoom Out"
+      matTooltipPosition="left"
+      [matTooltipShowDelay]="1000"
+      mat-icon-button
+      color="primary"
+      (click)="onZoomOutPressed()"
+    >
+      <mat-icon>zoom_out</mat-icon>
+    </button>
+    <button
+      matTooltip="Reset View"
+      matTooltipPosition="left"
+      [matTooltipShowDelay]="1000"
+      mat-icon-button
+      color="primary"
+      (click)="onZoomResetPressed()"
+    >
+      <mat-icon>crop_free</mat-icon>
+    </button>
   </div>
 </div>

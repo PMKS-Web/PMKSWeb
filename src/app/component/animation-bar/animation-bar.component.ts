@@ -10,6 +10,8 @@ import { ToolbarComponent } from '../toolbar/toolbar.component';
   styleUrls: ['./animation-bar.component.scss'],
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
+  animating: boolean = false;
+
   static showIdTags: boolean = false;
   static showCoMTags: boolean = false;
   static animate: boolean = false;
@@ -31,7 +33,9 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     AnimationBarComponent.pauseButton = <HTMLInputElement>document.getElementById('pauseBtn');
     AnimationBarComponent.stopButton = <HTMLInputElement>document.getElementById('stopBtn');
     AnimationBarComponent.slider = <HTMLInputElement>document.getElementById('slider');
-    AnimationBarComponent.sliderContainer = <HTMLInputElement>document.getElementById('sliderContainer');
+    AnimationBarComponent.sliderContainer = <HTMLInputElement>(
+      document.getElementById('sliderContainer')
+    );
   }
 
   maxTimeSteps() {
@@ -79,14 +83,17 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     switch (state) {
       case 'play':
         AnimationBarComponent.animate = false;
+        this.animating = false;
         GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
         break;
       case 'pause':
         AnimationBarComponent.animate = true;
+        this.animating = true;
         GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
+        this.animating = false;
         GridComponent.animate(0, AnimationBarComponent.animate);
         break;
     }
@@ -94,7 +101,10 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   setAnim() {
     if (AnimationBarComponent.adjustAnimation) {
-      GridComponent.animate(Number(AnimationBarComponent.slider.value), AnimationBarComponent.animate);
+      GridComponent.animate(
+        Number(AnimationBarComponent.slider.value),
+        AnimationBarComponent.animate
+      );
     }
   }
 
@@ -154,9 +164,11 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   validMechanism() {
+    console.warn('Help');
     if (GridComponent.mechanisms[0] === undefined) {
       return true;
     }
+    // return false;
     return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
   }
 }

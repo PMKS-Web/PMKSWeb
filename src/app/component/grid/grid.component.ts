@@ -628,11 +628,11 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.sendNotification('Cannot edit while animation is running');
       return;
     }
-    if (GridComponent.mechanismTimeStep !== 0) {
-      GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
-      this.disappearContext();
-      return;
-    }
+    // if (GridComponent.mechanismTimeStep !== 0) {
+    //   GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
+    //   this.disappearContext();
+    //   return;
+    // }
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
         // console.log(thing);

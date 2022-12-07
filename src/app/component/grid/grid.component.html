@@ -282,7 +282,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the jointTagHolder -->
-    <g id="jointTagHolder" *ngIf="showIDTags()">
+    <g id="jointTagHolder" *ngIf="showIDTags()" style="pointer-events: none">
       <svg
         *ngFor="let joint of getJoints()"
         [attr.x]="joint.x - 0.2"
@@ -297,7 +297,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
-    <g id="linkTagHolder" *ngIf="showIDTags()">
+    <g id="linkTagHolder" *ngIf="showIDTags()" style="pointer-events: none">
       <svg
         *ngFor="let link of getLinks()"
         [attr.x]="getLinkProp(link, 'CoMX')"
@@ -312,7 +312,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the forceTagHolder -->
-    <g id="forceTagHolder" *ngIf="showIDTags()">
+    <g id="forceTagHolder" *ngIf="showIDTags()" style="pointer-events: none">
       <svg
         *ngFor="let force of getForces()"
         [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
@@ -328,7 +328,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the comTagHolder -->
-    <g id="comTagHolder" style="transform: scaleY(-1)" *ngIf="showCoMTags()">
+    <g id="comTagHolder" style="transform: scaleY(-1); pointer-events: none" *ngIf="showCoMTags()">
       <svg *ngFor="let link of getLinks()" style="overflow: visible" width="1.23" height="2.61">
         <path
           stroke-width="2"
