@@ -164,7 +164,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   validMechanism() {
-    console.warn('Help');
     if (GridComponent.mechanisms[0] === undefined) {
       return true;
     }

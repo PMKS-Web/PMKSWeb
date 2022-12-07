@@ -1,16 +1,34 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
 <div id="barContainer">
   <div id="animationBar">
-    <button *ngIf="!animating" mat-fab color="primary" (click)="startAnimation('pause')">
+    <button
+      [attr.disabled]="validMechanism()"
+      *ngIf="!animating"
+      mat-fab
+      color="primary"
+      (click)="startAnimation('pause')"
+    >
       <mat-icon>play_arrow</mat-icon>
     </button>
-    <button *ngIf="animating" mat-fab color="primary" (click)="startAnimation('play')">
+    <button
+      [attr.disabled]="validMechanism()"
+      *ngIf="animating"
+      mat-fab
+      color="primary"
+      (click)="startAnimation('play')"
+    >
       <mat-icon>pause</mat-icon>
     </button>
-    <button mat-fab color="primary" (click)="startAnimation('stop')">
+    <button
+      mat-fab
+      color="primary"
+      [attr.disabled]="validMechanism()"
+      (click)="startAnimation('stop')"
+    >
       <mat-icon>stop</mat-icon>
     </button>
     <mat-slider
+      [disabled]="validMechanism()"
       min="0"
       max="{{ maxTimeSteps() }}"
       (mousedown)="adjustMechanismAnimation(true)"

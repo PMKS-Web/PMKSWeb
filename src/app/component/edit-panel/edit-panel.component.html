@@ -18,7 +18,11 @@
       >Ground
     </toggle-block>
 
-    <toggle-block [formGroup]="jointForm" _formControl="input" tooltip="Should joint be the input?"
+    <toggle-block
+      *ngIf="this.activeSrv.Joint.ground"
+      [formGroup]="jointForm"
+      _formControl="input"
+      tooltip="Should joint be the input?"
       >Input
     </toggle-block>
 

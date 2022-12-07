@@ -70,10 +70,12 @@ export class EditPanelComponent implements OnInit {
 
     this.jointForm.controls['ground'].valueChanges.subscribe((val) => {
       this.activeSrv.Joint.ground = val!;
+      GridComponent.updateMechanism();
     });
 
     this.jointForm.controls['input'].valueChanges.subscribe((val) => {
       this.activeSrv.Joint.input = val!;
+      GridComponent.updateMechanism();
     });
 
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
