@@ -234,6 +234,13 @@ export function getDistance(j1: Coord, j2: Coord) {
   return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 }
 
+//A helper function to solve the position of the other joint given the position of the first joint, the angle of the first joint, and the distance between the two joints
+export function getNewOtherJointPos(j1: Coord, angle: number, distance: number) {
+  const x = j1.x + distance * Math.cos(angle);
+  const y = j1.y + distance * Math.sin(angle);
+  return new Coord(x, y);
+}
+
 export function radToDeg(rad: number) {
   return (rad * 180) / Math.PI;
 }

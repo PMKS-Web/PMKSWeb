@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
-import { RealJoint } from 'src/app/model/joint';
+import { RealJoint, RevJoint } from 'src/app/model/joint';
 import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { GridComponent } from '../grid/grid.component';
 import { Coord } from 'src/app/model/coord';
+import { getNewOtherJointPos } from 'src/app/model/utils';
 
 @Component({
   selector: 'app-edit-panel',
@@ -83,6 +84,7 @@ export class EditPanelComponent implements OnInit {
         });
       } else {
         this.activeSrv.Link.length = parseFloat(val!);
+        this.resolveNewLink();
       }
     });
 
@@ -93,6 +95,7 @@ export class EditPanelComponent implements OnInit {
         });
       } else {
         this.activeSrv.Link.angleDeg = parseFloat(val!);
+        this.resolveNewLink();
       }
     });
 
@@ -113,6 +116,25 @@ export class EditPanelComponent implements OnInit {
     });
   }
 
+  resolveNewLink() {
+    //If the first joint is ground, then the second joint is dragged
+    if ((this.activeSrv.Link.joints[1] as RevJoint).ground) {
+      let newJ1 = getNewOtherJointPos(
+        this.activeSrv.Link.joints[1],
+        this.activeSrv.Link.angleRad + Math.PI,
+        this.activeSrv.Link.length
+      );
+      GridComponent.dragJoint(this.activeSrv.Link.joints[0] as RevJoint, newJ1);
+    } else {
+      let newJ2 = getNewOtherJointPos(
+        this.activeSrv.Link.joints[0],
+        this.activeSrv.Link.angleRad,
+        this.activeSrv.Link.length
+      );
+      GridComponent.dragJoint(this.activeSrv.Link.joints[1] as RevJoint, newJ2);
+    }
+  }
+
   deleteJoint() {
     // console.log('delete Joint');
     // console.log(this.activeSrv);
@@ -129,6 +151,7 @@ export class EditPanelComponent implements OnInit {
     //Therefore you need to have a activeSrv in button Block.ts
     this.activeSrv.updateSelectedObj(undefined);
     var temp = new GridComponent(this.activeSrv);
+    console.log(this.activeSrv.Link.id);
     temp.deleteLink();
   }
 }
