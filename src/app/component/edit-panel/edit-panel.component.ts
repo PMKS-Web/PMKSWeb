@@ -45,7 +45,6 @@ export class EditPanelComponent implements OnInit {
 
   onChanges(): void {
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
-      console.log(this.activeSrv);
       if (this.jointForm.controls['xPos'].invalid) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toString() });
       } else {

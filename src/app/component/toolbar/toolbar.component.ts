@@ -3,7 +3,13 @@ import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { roundNumber, splitURLInfo, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
+import {
+  roundNumber,
+  splitURLInfo,
+  stringToBoolean,
+  stringToFloat,
+  stringToShape,
+} from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { GridComponent } from '../grid/grid.component';
@@ -80,12 +86,20 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     ToolbarComponent.fileButton = document.getElementById('fileButton') as unknown as SVGElement;
-    ToolbarComponent.analysisButton = document.getElementById('analysisButton') as unknown as SVGElement;
+    ToolbarComponent.analysisButton = document.getElementById(
+      'analysisButton'
+    ) as unknown as SVGElement;
     ToolbarComponent.loopButton = document.getElementById('loopButton') as unknown as SVGElement;
     ToolbarComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
-    ToolbarComponent.stressButton = document.getElementById('stressButton') as unknown as SVGElement;
-    ToolbarComponent.kinematicButton = document.getElementById('kinematicButton') as unknown as SVGElement;
-    ToolbarComponent.settingsButton = document.getElementById('settingsButton') as unknown as SVGElement;
+    ToolbarComponent.stressButton = document.getElementById(
+      'stressButton'
+    ) as unknown as SVGElement;
+    ToolbarComponent.kinematicButton = document.getElementById(
+      'kinematicButton'
+    ) as unknown as SVGElement;
+    ToolbarComponent.settingsButton = document.getElementById(
+      'settingsButton'
+    ) as unknown as SVGElement;
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
@@ -183,14 +197,24 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       case 'force':
         ForceSolver.resetVariables();
         ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(GridComponent.joints, GridComponent.links, 'static', ToolbarComponent.gravity, ToolbarComponent.unit);
+        ForceSolver.determineForceAnalysis(
+          GridComponent.joints,
+          GridComponent.links,
+          'static',
+          ToolbarComponent.gravity,
+          ToolbarComponent.unit
+        );
         break;
       case 'stress':
         break;
       case 'kinematic':
         KinematicsSolver.resetVariables();
         KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-        KinematicsSolver.determineKinematics(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
+        KinematicsSolver.determineKinematics(
+          GridComponent.joints,
+          GridComponent.links,
+          ToolbarComponent.inputAngularVelocity
+        );
         // Be sure to include IC method
         break;
       default:
@@ -580,7 +604,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
         keyArray.forEach((eid, index) => {
           content += `${roundNumber(eid.x, 3)},`;
-          content += index === keyArray.length - 1 ? `${roundNumber(eid.y, 3)}` : `${roundNumber(eid.y, 3)},`;
+          content +=
+            index === keyArray.length - 1
+              ? `${roundNumber(eid.y, 3)}`
+              : `${roundNumber(eid.y, 3)},`;
         });
       }
       content += '\n';
@@ -638,6 +665,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     document.body.removeChild(toolman);
 
     GridComponent.sendNotification('URL Copied');
+  }
+
+  alertNotAvailable() {
+    //Use GridComponent.sendNotification() instead
+    GridComponent.sendNotification('This feature is not available yet');
   }
 
   downloadLinkage() {
@@ -870,7 +902,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     });
 
     result += 'links\n';
-    result += 'id,type,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
+    result +=
+      'id,type,mass,mass_moi,center_of_mass_x,center_of_mass_y,joints,forces,shape,b1x,b1y,b2x,b2y,b3x,b3y,b4x,b4y\n';
 
     let relatedJointIDs: any;
     let relatedForceIDs: any;

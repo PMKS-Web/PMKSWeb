@@ -21,6 +21,7 @@ import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
+import { MatSnackBar } from '@angular/material/snack-bar';
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
 
@@ -88,7 +89,6 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
-  static notificationWrapper: SVGElement;
   private static transformMatrixGridSVGElement: SVGElement;
   private static transformMatrixSVG: SVGElement;
   private static pathsHolderSVG: SVGElement;
@@ -128,6 +128,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static moveModes: moveModes;
   static scaleFactor = 50;
 
+  //To distinguish between a click and a drag
+  public delta: number = 6;
+  private startX!: number;
+  private startY!: number;
+
   private static panOffset = {
     x: 0,
     y: 0,
@@ -147,12 +152,13 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static selectedForceEndPoint: string;
   static initialLink: RealLink;
   // static snackBar: MatSnackBar;
+  static _snackBar: MatSnackBar;
 
   private static instance: GridComponent | null = null;
 
   // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor(public activeObjService: ActiveObjService) {
-    // GridComponent.snackBar = snackBar;
+  constructor(public activeObjService: ActiveObjService, private snackBar?: MatSnackBar) {
+    GridComponent._snackBar = snackBar!;
     if (GridComponent.instance) {
       return GridComponent.instance;
     } else {
@@ -386,9 +392,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       'forceTempHolder'
     ) as unknown as SVGElement;
     GridComponent.canvasSVGElement = document.getElementById('canvas') as unknown as SVGElement;
-    GridComponent.notificationWrapper = document.getElementById(
-      'notificationWrapper'
-    ) as unknown as SVGElement;
 
     // context Menu for Grid
     GridComponent.contextMenuAddLinkOntoGrid = document.getElementById(
@@ -562,7 +565,36 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.zoomPoint(wheelAmount, rawSVGCoords.x, rawSVGCoords.y * -1);
   }
 
-  mouseUp() {
+  mouseUp($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
+    //This is for more targeted mouseUp evnets, only one should be called for each object
+    switch ($event.button) {
+      case 0: // Handle Left-Click on canvas
+        // console.warn('mouseUp');
+        // console.log(typeChosen);
+        // console.log(thing);
+
+        switch (typeChosen) {
+          case 'grid':
+            const diffX = Math.abs($event.pageX - this.startX);
+            const diffY = Math.abs($event.pageY - this.startY);
+
+            if (diffX < this.delta && diffY < this.delta) {
+              // console.warn('this is a simple click');
+              //Deselect all objects since gird was clcicked
+              this.activeObjService.updateSelectedObj(undefined);
+            }
+
+            break;
+          default:
+            this.activeObjService.updateSelectedObj(thing);
+            break;
+        }
+        break;
+    }
+  }
+
+  mouseUpOld($event: MouseEvent, typeChosen: string) {
+    //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
     GridComponent.gridStates = gridStates.waiting;
     GridComponent.jointStates = jointStates.waiting;
@@ -572,6 +604,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.updateMechanism();
     }
     GridComponent.showPathHolder = false;
+    // this.activeObjService.updateSelectedObj(thing);
   }
 
   getShowPathHolder() {
@@ -580,9 +613,14 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   //This really needs a comment, what is 'thing?'
   mouseDown($event: MouseEvent, typeChosen: string, thing?: any, forcePoint?: string) {
+    // console.warn('mouseDown');
+    // console.log(typeChosen);
+    // console.log(thing);
     $event.preventDefault();
     $event.stopPropagation();
     this.disappearContext();
+    this.startX = $event.pageX;
+    this.startY = $event.pageY;
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink;
@@ -597,8 +635,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        console.log(thing);
-        this.activeObjService.updateSelectedObj(thing);
+        // console.log(thing);
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
@@ -907,8 +944,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   mouseMove($event: MouseEvent, typeChosen: string, bound?: string) {
-    $event.preventDefault();
-    $event.stopPropagation();
+    // console.warn('mouseMove');
+    // console.log(typeChosen);
+    // $event.preventDefault();
+    // $event.stopPropagation();
     // TODO: Possibly put this somewhere else so don't have to copy/paste?
     const rawCoord = GridComponent.getMousePosition($event)!;
     const trueCoord = GridComponent.screenToGrid(rawCoord.x, -1 * rawCoord.y);
@@ -965,6 +1004,8 @@ export class GridComponent implements OnInit, AfterViewInit {
           trueCoord
         );
         GridComponent.updateMechanism();
+        //So that the panel values update continously
+        this.activeObjService.updateSelectedObj(GridComponent.selectedJoint);
         if (GridComponent.mechanisms[0].joints[0].length !== 0) {
           GridComponent.showPathHolder = GridComponent.mechanisms[0].dof === 1;
         }
@@ -977,6 +1018,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         break;
       case linkStates.dragging:
         // TODO: Add logic when dragging a link within edit shape mode
+
         const offsetX = trueCoord.x - GridComponent.initialLinkMouseCoord.x;
         const offsetY = trueCoord.y - GridComponent.initialLinkMouseCoord.y;
         GridComponent.selectedLink.bound.b1.x += offsetX;
@@ -2568,8 +2610,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   static sendNotification(text: string) {
     console.log(text);
-    // this.snackBar.open(text,'',{
-    //   duration: 2000,
-    // });
+    this._snackBar.open(text, '', {
+      panelClass: 'my-custom-snackbar',
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      duration: 2000,
+    });
   }
 }

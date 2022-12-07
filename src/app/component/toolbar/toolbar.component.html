@@ -1,5 +1,10 @@
 <nav class="navBar">
-  <img class="pmksImage" alt="PMKS+" src="assets/PMKS_logo.png" onClick="window.location.reload()" />
+  <img
+    class="pmksImage"
+    alt="PMKS+"
+    src="assets/PMKS_logo.png"
+    onClick="window.location.reload()"
+  />
   <button mat-button onclick="window.open(window.location.origin, '_blank');">
     <mat-icon>note_add</mat-icon>
     New
@@ -22,15 +27,15 @@
     Copy URL
   </button>
   <div class="spacer"></div>
-  <button mat-button>
+  <button mat-button (click)="alertNotAvailable()">
     <mat-icon>settings</mat-icon>
     Settings
   </button>
-  <button mat-button>
+  <button mat-button (click)="alertNotAvailable()">
     <mat-icon>format_list_numbered</mat-icon>
     Equations
   </button>
-  <button mat-button>
+  <button mat-button (click)="alertNotAvailable()">
     <mat-icon>help</mat-icon>
     Help
   </button>

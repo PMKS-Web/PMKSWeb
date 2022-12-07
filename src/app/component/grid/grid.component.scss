@@ -28,14 +28,25 @@
     opacity: 0.3;
   }
 
-  :host {
-    .menu-entry {
-      fill: rgb(244, 244, 244);
-      display: none;
-    }
-    .menu-entry:hover {
-      background: rgb(200, 200, 200);
-      fill: rgb(200, 200, 200);
-    }
+  .menu-entry {
+    fill: rgb(244, 244, 244);
+    display: none;
+  }
+  .menu-entry:hover {
+    background: rgb(200, 200, 200);
+    fill: rgb(200, 200, 200);
+  }
+
+  .my-custom-snackbar {
+    // margin: 0 !important;
+    // position: absolute !important;
+    // right: 25px !important;
+    // top: 60px !important;
+    margin-top: 50px !important;
+    // transform: translateY(40px) !important;
+    // pointer-events: none !important;
+  }
+  .cdk-overlay-pane {
+    pointer-events: none !important;
   }
 }
