@@ -1,5 +1,11 @@
 <div class="editPanel">
-  <h1 *ngIf="this.activeSrv.objType == 'Nothing'">Select Joint to see details</h1>
+  <!-- <h1 *ngIf="this.activeSrv.objType == 'Nothing'">Select Joint to see details</h1> -->
+  <div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing'">
+    <p id="placeholderText">
+      Create and select a joint, link, tracer, or force to view or edit properties.
+    </p>
+    <img id="placeholder" src="assets/placeholder.svg" />
+  </div>
   <panel-section *ngIf="this.activeSrv.objType == 'Joint'">
     <title-block icon="edit">
       {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
@@ -52,17 +58,18 @@
     Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
-  <!-- <panel-section-collapsible>
-    <title-block alwaysShown icon="expand_less">Collapsable Section</title-block>
-    <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
+  <panel-section-collapsible>
+    <title-block alwaysShown icon="expand_less">Debug Menu</title-block>
+    <button (click)="debug()">Debug</button>
+    <!-- <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
     <button-block icon="edit">Button Label</button-block>
     <radio-block tooltip="Tooltip Info" option1="cm" option2="meter" option3="inches"
       >Radio Block</radio-block
     >
     <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block>
     <subtitle-block icon="home">Subtitle Block</subtitle-block>
-    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
-  </panel-section-collapsible> -->
+    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block> -->
+  </panel-section-collapsible>
 
   <!-- <panel-section>
     <title-block icon="edit">Normal Section</title-block>

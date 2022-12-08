@@ -20,4 +20,21 @@
     overflow-y: scroll;
     overflow-x: hidden;
   }
+
+  #placeholderContainer {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #placeholder {
+    width: 80%;
+  }
+
+  #placeholderText {
+    margin: 30px;
+    @include mat.typography-level($typography-config, 'headline-6');
+  }
 }

@@ -36,6 +36,12 @@ export class EditPanelComponent implements OnInit {
     { updateOn: 'blur' }
   );
 
+  debug() {
+    GridComponent.animate(5, false);
+    GridComponent.mechanismTimeStep = 0;
+    GridComponent.updateMechanism();
+  }
+
   ngOnInit(): void {
     console.log(this.jointForm);
     console.log(this.activeSrv);
