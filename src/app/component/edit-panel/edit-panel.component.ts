@@ -52,7 +52,7 @@ export class EditPanelComponent implements OnInit {
   onChanges(): void {
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.jointForm.controls['xPos'].invalid) {
-        this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toString() });
+        this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toFixed(2).toString() });
       } else {
         this.activeSrv.Joint.x = parseFloat(val!);
         GridComponent.dragJoint(
@@ -64,7 +64,7 @@ export class EditPanelComponent implements OnInit {
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
       if (this.jointForm.controls['yPos'].invalid) {
-        this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toString() });
+        this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toFixed(2).toString() });
       } else {
         this.activeSrv.Joint.y = parseFloat(val!);
         GridComponent.dragJoint(
@@ -109,8 +109,8 @@ export class EditPanelComponent implements OnInit {
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
         this.jointForm.patchValue({
-          xPos: this.activeSrv.Joint.x.toString(),
-          yPos: this.activeSrv.Joint.y.toString(),
+          xPos: this.activeSrv.Joint.x.toFixed(2).toString(),
+          yPos: this.activeSrv.Joint.y.toFixed(2).toString(),
           ground: this.activeSrv.Joint.ground,
           input: this.activeSrv.Joint.input,
         });
