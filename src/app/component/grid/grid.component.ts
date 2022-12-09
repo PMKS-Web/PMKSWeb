@@ -601,7 +601,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
             if (clickOnlyWithoutDrag) {
               //Revert the joint to its original position
-              // console.warn('click only without drag');
+              console.warn('click only without drag');
               if (thing.x !== this.jointXatMouseDown || thing.y !== this.jointYatMouseDown) {
                 // console.warn('Diff exsits');
                 thing.x = this.jointXatMouseDown;
@@ -672,6 +672,10 @@ export class GridComponent implements OnInit, AfterViewInit {
         // console.log(thing);
         switch (typeChosen) {
           case 'grid':
+            // console.warn('reset position');
+            //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
+            this.startY = 9999999;
+            this.startX = 9999999;
             switch (GridComponent.gridStates) {
               case gridStates.waiting:
                 const mPos = GridComponent.getMousePosition($event)!;
