@@ -133,6 +133,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   private startX!: number;
   private startY!: number;
 
+  private jointXatMouseDown!: number;
+  private jointYatMouseDown!: number;
+
   private static panOffset = {
     x: 0,
     y: 0,
@@ -572,20 +575,45 @@ export class GridComponent implements OnInit, AfterViewInit {
         // console.warn('mouseUp');
         // console.log(typeChosen);
         // console.log(thing);
+        let clickOnlyWithoutDrag: boolean = false;
+
+        const diffX = Math.abs($event.pageX - this.startX);
+        const diffY = Math.abs($event.pageY - this.startY);
+        if (diffX < this.delta && diffY < this.delta) {
+          clickOnlyWithoutDrag = true;
+        }
 
         switch (typeChosen) {
           case 'grid':
-            const diffX = Math.abs($event.pageX - this.startX);
-            const diffY = Math.abs($event.pageY - this.startY);
-
-            if (diffX < this.delta && diffY < this.delta) {
-              // console.warn('this is a simple click');
-              //Deselect all objects since gird was clcicked
+            if (clickOnlyWithoutDrag) {
               this.activeObjService.updateSelectedObj(undefined);
+            }
+            break;
+          case 'joint':
+            //If the animation is running or the mechansim is not at t=0, don't allow selection
+            if (AnimationBarComponent.animate === true) {
+              return;
+            }
+            if (GridComponent.mechanismTimeStep !== 0) {
+              return;
+            }
+            this.activeObjService.updateSelectedObj(thing);
+
+            if (clickOnlyWithoutDrag) {
+              //Revert the joint to its original position
+              // console.warn('click only without drag');
+              if (thing.x !== this.jointXatMouseDown || thing.y !== this.jointYatMouseDown) {
+                // console.warn('Diff exsits');
+                thing.x = this.jointXatMouseDown;
+                thing.y = this.jointYatMouseDown;
+                GridComponent.updateMechanism();
+                this.activeObjService.updateSelectedObj(thing);
+              }
             }
 
             break;
           default:
+            //If the animation is running or the mechansim is not at t=0, don't allow selection
             if (AnimationBarComponent.animate === true) {
               return;
             }
@@ -770,6 +798,8 @@ export class GridComponent implements OnInit, AfterViewInit {
             }
             break;
           case 'joint':
+            this.jointXatMouseDown = thing.x;
+            this.jointYatMouseDown = thing.y;
             switch (GridComponent.gridStates) {
               case gridStates.waiting:
                 break;
