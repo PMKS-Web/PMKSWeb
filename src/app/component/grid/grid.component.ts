@@ -2667,37 +2667,37 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     if ($event.keyCode == 13) {
       GridComponent.sendNotification(
-        'You pressed the "Enter" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "Enter" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
 
     if ($event.keyCode == 27) {
       GridComponent.sendNotification(
-        'You pressed the "Escape" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "Escape" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
 
     if ($event.keyCode == 46) {
       GridComponent.sendNotification(
-        'You pressed the "Delete" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "Delete" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
 
     if ($event.keyCode == 32) {
       GridComponent.sendNotification(
-        'You pressed the "space" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "space" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
 
     if ($event.keyCode == 38) {
       GridComponent.sendNotification(
-        'You pressed the "Up" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "Up" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
 
     if ($event.keyCode == 40) {
       GridComponent.sendNotification(
-        'You pressed the "Down" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+        'You pressed the "Down" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
   }
