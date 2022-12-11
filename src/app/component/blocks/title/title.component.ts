@@ -1,4 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { GridComponent } from '../../grid/grid.component';
 
 @Component({
   selector: 'title-block',
@@ -19,6 +20,9 @@ export class TitleBlock implements OnInit {
   constructor() {}
 
   toggleExpand() {
+    GridComponent.sendNotification(
+      "You pressed the 'edit' button. What did you expect this button to do? What do you want it to do? (This is an Easter Egg. Please talk about in the final question of the survey.)"
+    );
     this.nestedComponentChange.emit(1);
     if (this.shownIcon == this.defaultIcon) {
       this.shownIcon = this.altIcon;

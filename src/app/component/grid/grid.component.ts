@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, Input, OnInit } from '@angular/core';
 import { Coord } from '../../model/coord';
 import { AppConstants } from '../../model/app-constants';
 import { Joint, RevJoint, PrisJoint, RealJoint } from '../../model/joint';
@@ -2654,7 +2654,51 @@ export class GridComponent implements OnInit, AfterViewInit {
       panelClass: 'my-custom-snackbar',
       horizontalPosition: 'center',
       verticalPosition: 'top',
-      duration: 2000,
+      duration: 4000,
     });
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (($event.ctrlKey || $event.metaKey) && $event.keyCode == 90) {
+      GridComponent.sendNotification(
+        'You attempted to undo. What were you trying to undo? If this feature important to you? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+    if ($event.keyCode == 13) {
+      GridComponent.sendNotification(
+        'You pressed the "Enter" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+
+    if ($event.keyCode == 27) {
+      GridComponent.sendNotification(
+        'You pressed the "Escape" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+
+    if ($event.keyCode == 46) {
+      GridComponent.sendNotification(
+        'You pressed the "Delete" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+
+    if ($event.keyCode == 32) {
+      GridComponent.sendNotification(
+        'You pressed the "space" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+
+    if ($event.keyCode == 38) {
+      GridComponent.sendNotification(
+        'You pressed the "Up" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
+
+    if ($event.keyCode == 40) {
+      GridComponent.sendNotification(
+        'You pressed the "Down" key. What were you trying to do in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      );
+    }
   }
 }
