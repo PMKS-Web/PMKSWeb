@@ -601,7 +601,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
             if (clickOnlyWithoutDrag) {
               //Revert the joint to its original position
-              console.warn('click only without drag');
+              // console.warn('click only without drag');
               if (thing.x !== this.jointXatMouseDown || thing.y !== this.jointYatMouseDown) {
                 // console.warn('Diff exsits');
                 thing.x = this.jointXatMouseDown;
