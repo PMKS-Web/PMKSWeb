@@ -360,3 +360,61 @@ export function splitURLInfo(str: string) {
   return decodedURL.substring(indexVal, nextIndexVal);
   // return settingArrayString.split(',');
 }
+
+// TODO: In future, can replace with this: https://www.gatevidyalay.com/2d-rotation-in-computer-graphics-definition-examples/
+// Easier to understand, less variables to account for, and computationally faster
+export function determineUnknownJointUsingTriangulation(x1: number, y1: number, x2: number, y2: number, r1: number,
+                                                        prevJoint_x: number, prevJoint_y: number,
+                                                        angle: number, internal_angle: number ) {
+  let x_calc: number;
+  let y_calc: number;
+  let x_calc1: number;
+  let y_calc1: number;
+  let x_calc2: number;
+  let y_calc2: number;
+  if (x1 > x2) {
+    // A to the right of B
+    if (y1 > y2) {
+      // A on top of B (good)
+      x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle + (Math.PI + angle)));
+      y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle + (Math.PI + angle)));
+      x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle - (Math.PI + angle)));
+      y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle - (Math.PI + angle)));
+    } else {
+      // A below B (good)
+      x_calc1 = x1 + r1 * Math.cos(Math.PI + (internal_angle - (Math.PI - angle)));
+      y_calc1 = y1 + r1 * Math.sin(Math.PI + (internal_angle - (Math.PI - angle)));
+      x_calc2 = x1 + r1 * Math.cos(Math.PI - (internal_angle + (Math.PI - angle)));
+      y_calc2 = y1 + r1 * Math.sin(Math.PI - (internal_angle + (Math.PI - angle)));
+    }
+  } else {
+    // A to the left of B
+    if (y1 > y2) {
+      // A on top of B (good)
+      x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (Math.abs(angle) + internal_angle));
+      y_calc1 = y1 + r1 * Math.sin(2 * Math.PI - (Math.abs(angle) + internal_angle));
+      x_calc2 = x1 + r1 * Math.cos(internal_angle - Math.abs(angle));
+      y_calc2 = y1 + r1 * Math.sin(internal_angle - Math.abs(angle));
+    } else {
+      // A below B (good)
+      x_calc1 = x1 + r1 * Math.cos(2 * Math.PI - (angle - internal_angle));
+      y_calc1 = y1 + r1 * Math.sin(angle - internal_angle);
+      x_calc2 = x1 + r1 * Math.cos(internal_angle + angle);
+      y_calc2 = y1 + r1 * Math.sin(internal_angle + angle);
+    }
+  }
+  const dist1 = euclideanDistance(x_calc1, y_calc1, prevJoint_x, prevJoint_y);
+  const dist2 = euclideanDistance(x_calc2, y_calc2, prevJoint_x, prevJoint_y);
+  if (dist1 < dist2) {
+    x_calc = x_calc1;
+    y_calc = y_calc1;
+  } else {
+    x_calc = x_calc2;
+    y_calc = y_calc2;
+  }
+  return [x_calc, y_calc];
+}
+
+export function euclideanDistance(x1: number, y1: number, x2: number, y2: number) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+}

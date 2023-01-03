@@ -7,10 +7,10 @@ import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { InstantCenter } from '../../model/instant-center';
 import {
-  determineSlope,
+  determineSlope, determineUnknownJointUsingTriangulation,
   determineX,
   determineY,
-  determineYIntersect,
+  determineYIntersect, euclideanDistance,
   roundNumber,
   splitURLInfo,
   stringToBoolean,
@@ -22,6 +22,8 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import {ForceSolver} from "../../model/mechanism/force-solver";
+import {PositionSolver} from "../../model/mechanism/position-solver";
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
 
@@ -794,6 +796,8 @@ export class GridComponent implements OnInit, AfterViewInit {
                 );
                 GridComponent.selectedLink.forces.push(force);
                 GridComponent.forces.push(force);
+                PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces); // needed to determine force position when dragging a joint
+                // PositionSolver.setUpInitialJointLocations(GridComponent.selectedLink.joints);
                 GridComponent.updateMechanism();
                 GridComponent.gridStates = gridStates.waiting;
                 GridComponent.forceStates = forceStates.waiting;
@@ -827,6 +831,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 this.mergeToJoints([joint1]);
                 this.mergeToLinks([link]);
                 GridComponent.updateMechanism();
+                // PositionSolver.setUpSolvingForces(link.forces); // needed to determine force location when dragging a joint
                 GridComponent.gridStates = gridStates.waiting;
                 GridComponent.linkStates = linkStates.waiting;
                 GridComponent.jointTempHolderSVG.style.display = 'none';
@@ -902,7 +907,6 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
                 this.mergeToJoints([joint1]);
                 this.mergeToLinks([link]);
-
                 GridComponent.updateMechanism();
                 GridComponent.gridStates = gridStates.waiting;
                 GridComponent.linkStates = linkStates.waiting;
@@ -2196,8 +2200,18 @@ export class GridComponent implements OnInit, AfterViewInit {
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();
+          // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
+          PositionSolver.setUpInitialJointLocations(l.joints);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
+            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
+            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+            f.endCoord.x = PositionSolver.forcePositionMap.get(f.id + 'end')!.x;
+            f.endCoord.y = PositionSolver.forcePositionMap.get(f.id + 'end')!.y;
+            f.startCoord.x = PositionSolver.forcePositionMap.get(f.id + 'start')!.x;
+            f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
+            f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+            f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
           });
         });
         break;
