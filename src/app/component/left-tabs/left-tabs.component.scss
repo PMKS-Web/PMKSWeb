@@ -23,7 +23,10 @@
     }
 
     &.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label,
-    &.mat-form-field-can-float .mat-input-server:focus + .mat-form-field-label-wrapper .mat-form-field-label {
+    &.mat-form-field-can-float
+      .mat-input-server:focus
+      + .mat-form-field-label-wrapper
+      .mat-form-field-label {
       transform: translateY(-1.25em) scale(0.75);
       width: 133.33333%;
     }
@@ -43,6 +46,8 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--border-radius);
+
+    animation-duration: 4s;
 
     @include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
