@@ -1,3 +1,8 @@
-<div matRipple (click)="this.pressedEvent.emit(this.tabID)" class="tab" [ngClass]="{ active: this.tabID == this.activeTab }">
+<div
+  matRipple
+  (click)="this.pressedEvent.emit(this.tabID)"
+  class="tab"
+  [ngClass]="{ active: this.tabID == this.activeTab }"
+>
   <button color="primary">{{ tabLabel }}</button>
 </div>

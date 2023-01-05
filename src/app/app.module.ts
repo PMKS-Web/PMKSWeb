@@ -52,7 +52,14 @@ import { ReactiveFormsModule } from '@angular/forms';
     RadioComponent,
     DualInputComponent,
   ],
-  imports: [BrowserModule, FormsModule, NgApexchartsModule, BrowserAnimationsModule, MaterialModule, ReactiveFormsModule],
+  imports: [
+    BrowserModule,
+    FormsModule,
+    NgApexchartsModule,
+    BrowserAnimationsModule,
+    MaterialModule,
+    ReactiveFormsModule,
+  ],
   providers: [],
   bootstrap: [AppComponent],
 })
