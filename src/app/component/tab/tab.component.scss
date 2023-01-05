@@ -15,7 +15,10 @@
     @include mat.elevation(4);
     &:hover {
       @include mat.elevation(8);
+      //make background color lighter
+      filter: brightness(104%);
     }
+    transition: 0.2s;
 
     &.active {
       background-color: mat.get-color-from-palette($primary-palette, 50);

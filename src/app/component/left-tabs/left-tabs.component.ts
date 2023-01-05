@@ -21,7 +21,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
       state(
         'closed',
         style({
-          transform: 'translateX(-140%)',
+          transform: 'translateX(calc(-100% - 70px))',
         })
       ),
 
