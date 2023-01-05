@@ -28,6 +28,7 @@ import { RadioComponent } from './component/blocks/radio/radio.component';
 import { DualInputComponent } from './component/blocks/dual-input/dual-input.component';
 
 import { ReactiveFormsModule } from '@angular/forms';
+import { AnalysisPanelComponent } from './component/analysis-panel/analysis-panel.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     SubtitleComponent,
     RadioComponent,
     DualInputComponent,
+    AnalysisPanelComponent,
   ],
   imports: [
     BrowserModule,

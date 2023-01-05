@@ -9,12 +9,14 @@
 @use 'src/app/component/blocks/button/button.component.scss' as button-block;
 @use 'src/app/component/blocks/input/input.component.scss' as input-block;
 @use 'src/app/component/blocks/panel-section/panel-section.component.scss' as panel-section;
-@use 'src/app/component/blocks/panel-section-collapsible/panel-section-collapsible.component.scss' as panel-section-collapsible;
+@use 'src/app/component/blocks/panel-section-collapsible/panel-section-collapsible.component.scss'
+  as panel-section-collapsible;
 @use 'src/app/component/blocks/dual-input/dual-input.component.scss' as dual-input-block;
 @use 'src/app/component/blocks/radio/radio.component.scss' as radio-block;
 @use 'src/app/component/blocks/subtitle/subtitle.component.scss' as subtitle-block;
 @use 'src/app/component/blocks/toggle/toggle.component.scss' as toggle-block;
 @use 'src/app/component/blocks/blocks.common.scss' as blocks-common;
+@use 'src/app/component/analysis-panel/analysis-panel.component.scss' as analysis-panel;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -40,6 +42,7 @@ $my-theme: mat.define-light-theme(
 @include animation-bar.css($my-theme);
 @include grid.css($my-theme);
 @include edit-panel.css($my-theme);
+@include analysis-panel.css($my-theme);
 
 @include blocks-common.css($my-theme);
 @include panel-section.css($my-theme);

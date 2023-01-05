@@ -40,7 +40,8 @@
     position: absolute;
     top: 50px;
     left: 70px;
-    width: 300px;
+    // width: 300px;
+    overflow: hidden;
     height: calc(100vh - 60px);
     display: flex;
     align-items: center;
@@ -51,27 +52,33 @@
 
     @include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
-    background-color: mat.get-color-from-palette($background, 'background');
+    // background-color: mat.get-color-from-palette($background, 'background');
+    background-color: mat.get-color-from-palette($primary-palette, 50);
     .page1 {
-      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 300px;
       height: 100%;
-      background-color: mat.get-color-from-palette($primary-palette, 50);
       border-radius: var(--border-radius);
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     .page2 {
-      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 300px;
       height: 100%;
-      background-color: mat.get-color-from-palette($primary-palette, 50);
       border-radius: var(--border-radius);
     }
     .page3 {
-      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 400px;
       height: 100%;
-      background-color: green;
-      background-color: mat.get-color-from-palette($primary-palette, 50);
       #headline-1 {
         @include mat.typography-level($typography-config, 'headline-1');
       }

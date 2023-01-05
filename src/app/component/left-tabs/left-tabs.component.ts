@@ -16,6 +16,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
         'open',
         style({
           transform: 'translateX(0)',
+          width: '300px',
         })
       ),
       state(
@@ -24,14 +25,21 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
           transform: 'translateX(calc(-100% - 70px))',
         })
       ),
+      state(
+        'openWide',
+        style({
+          width: '400px', //Be careful, there are multiple places to change this value
+        })
+      ),
 
-      transition('open => closed', [animate('0.3s ease-in-out')]),
-      transition('closed => open', [animate('0.3s ease-in-out')]),
+      transition('open => openWide', [animate('0.1s ease-in-out')]),
+      transition('openWide => open', [animate('0.1s ease-in-out')]),
+      transition('* => *', [animate('0.3s ease-in-out')]),
     ]),
   ],
 })
 export class LeftTabsComponent {
-  openTab = 2; //Default open tab to "Edit" /
+  openTab = 3; //Default open tab to "Edit" /
   isOpen = true; // Is the tab open?
 
   tabClicked(tabID: number) {
