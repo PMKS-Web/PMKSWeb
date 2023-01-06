@@ -22,6 +22,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { join } from 'path';
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
 
@@ -572,16 +573,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        console.warn('mouseUp');
-        console.log(typeChosen);
-        console.log(thing);
-        console.log(this.activeObjService.objType);
+        // console.warn('mouseUp');
+        // console.log(typeChosen);
+        // console.log(thing);
+        // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
         const diffY = Math.abs($event.pageY - this.startY);
-        console.log($event.pageX);
-        console.log(this.startX);
         if (diffX < this.delta && diffY < this.delta) {
           clickOnlyWithoutDrag = true;
         }
@@ -607,9 +606,10 @@ export class GridComponent implements OnInit, AfterViewInit {
               // console.warn('click only without drag');
               if (thing.x !== this.jointXatMouseDown || thing.y !== this.jointYatMouseDown) {
                 // console.warn('Diff exsits');
-                thing.x = this.jointXatMouseDown;
-                thing.y = this.jointYatMouseDown;
-                GridComponent.updateMechanism();
+                GridComponent.dragJoint(
+                  thing,
+                  new Coord(this.jointXatMouseDown, this.jointYatMouseDown)
+                );
                 this.activeObjService.updateSelectedObj(thing);
               }
             }
@@ -1875,6 +1875,14 @@ export class GridComponent implements OnInit, AfterViewInit {
   deleteJoint() {
     this.disappearContext();
     const jointIndex = this.findJointIDIndex(GridComponent.selectedJoint.id, GridComponent.joints);
+    //if the joint that is meant to be deleted is the one selected in activeObjectSrv, set the activeObjectSrv to undefined
+    if (
+      this.activeObjService.objType === 'Joint' &&
+      this.activeObjService.Joint.id === GridComponent.selectedJoint.id
+    ) {
+      this.activeObjService.updateSelectedObj(undefined);
+    }
+
     GridComponent.selectedJoint.links.forEach((l) => {
       // TODO: May wanna check this to be sure...
       if (l instanceof Piston) {
@@ -2083,6 +2091,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   deleteSelectedLink() {
+    //Selected means selected in the activeObj Service
     this.disappearContext();
     // console.warn(this.activeObjService.Link);
     const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
@@ -2124,6 +2133,12 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   deleteLink() {
     this.disappearContext();
+    if (
+      this.activeObjService.objType === 'Link' &&
+      this.activeObjService.Link.id === GridComponent.selectedLink.id
+    ) {
+      this.activeObjService.updateSelectedObj(undefined);
+    }
     // console.warn(this.activeObjService.Link);
     const linkIndex = GridComponent.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
     GridComponent.links[linkIndex].joints.forEach((j) => {
