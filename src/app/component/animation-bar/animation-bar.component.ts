@@ -112,8 +112,24 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     AnimationBarComponent.adjustAnimation = condition;
   }
 
+  noJointExsits() {
+    return GridComponent.joints.length == 0;
+  }
+
+  noLinkExsits() {
+    return GridComponent.links.length == 0;
+  }
+
   showCenterOfMass() {
     AnimationBarComponent.showCoMTags = !AnimationBarComponent.showCoMTags;
+  }
+
+  comIconName() {
+    return AnimationBarComponent.showCoMTags ? 'com_off' : 'com';
+  }
+
+  idLabelIconName() {
+    return AnimationBarComponent.showIdTags ? 'abc_off' : 'abc';
   }
 
   onShowIDPressed() {

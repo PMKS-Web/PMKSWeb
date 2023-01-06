@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { GridComponent } from './component/grid/grid.component';
@@ -56,6 +57,7 @@ import { AnalysisPanelComponent } from './component/analysis-panel/analysis-pane
   ],
   imports: [
     BrowserModule,
+    HttpClientModule,
     FormsModule,
     NgApexchartsModule,
     BrowserAnimationsModule,
