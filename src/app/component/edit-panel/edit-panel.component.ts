@@ -159,6 +159,6 @@ export class EditPanelComponent implements OnInit {
     this.activeSrv.updateSelectedObj(undefined);
     var temp = new GridComponent(this.activeSrv);
     console.log(this.activeSrv.Link.id);
-    temp.deleteLink();
+    temp.deleteSelectedLink();
   }
 }

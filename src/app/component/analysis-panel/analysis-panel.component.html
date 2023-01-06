@@ -6,6 +6,12 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <apx-chart
+      [series]="chartOptions.series"
+      [chart]="chartOptions.chart"
+      [xaxis]="chartOptions.xaxis"
+      [title]="chartOptions.title"
+    ></apx-chart>
   </mat-expansion-panel>
 
   <mat-expansion-panel>
@@ -15,14 +21,26 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <apx-chart
+      [series]="chartOptions.series"
+      [chart]="chartOptions.chart"
+      [xaxis]="chartOptions.xaxis"
+      [title]="chartOptions.title"
+    ></apx-chart>
   </mat-expansion-panel>
 
-  <mat-expansion-panel>
+  <mat-expansion-panel expanded>
     <mat-expansion-panel-header>
       <mat-panel-title> Angular Acceleration of Joint B </mat-panel-title>
       <mat-panel-description>
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <apx-chart
+      [series]="chartOptions.series"
+      [chart]="chartOptions.chart"
+      [xaxis]="chartOptions.xaxis"
+      [title]="chartOptions.title"
+    ></apx-chart>
   </mat-expansion-panel>
 </div>

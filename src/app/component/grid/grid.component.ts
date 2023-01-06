@@ -572,13 +572,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // console.warn('mouseUp');
-        // console.log(typeChosen);
-        // console.log(thing);
+        console.warn('mouseUp');
+        console.log(typeChosen);
+        console.log(thing);
+        console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
         const diffY = Math.abs($event.pageY - this.startY);
+        console.log($event.pageX);
+        console.log(this.startX);
         if (diffX < this.delta && diffY < this.delta) {
           clickOnlyWithoutDrag = true;
         }
@@ -672,10 +675,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         // console.log(thing);
         switch (typeChosen) {
           case 'grid':
-            // console.warn('reset position');
-            //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
-            this.startY = 9999999;
-            this.startX = 9999999;
             switch (GridComponent.gridStates) {
               case gridStates.waiting:
                 const mPos = GridComponent.getMousePosition($event)!;
@@ -684,6 +683,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.gridStates = gridStates.dragging;
                 break;
               case gridStates.createJointFromGrid:
+                // console.warn('reset position');
+                //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
+                this.startY = 9999999;
+                this.startX = 9999999;
                 joint1 = this.createRevJoint(
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('y1')!
@@ -707,6 +710,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.jointTempHolderSVG.style.display = 'none';
                 break;
               case gridStates.createJointFromJoint:
+                // console.warn('reset position');
+                //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
+                this.startY = 9999999;
+                this.startX = 9999999;
                 joint2 = this.createRevJoint(
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('x2')!,
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('y2')!
@@ -728,6 +735,10 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.jointTempHolderSVG.style.display = 'none';
                 break;
               case gridStates.createJointFromLink:
+                // console.warn('reset position');
+                //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
+                this.startY = 9999999;
+                this.startX = 9999999;
                 // TODO: set context Link as a part of joint 1 or joint 2
                 joint1 = this.createRevJoint(
                   GridComponent.jointTempHolderSVG.children[0].getAttribute('x1')!,
@@ -2071,7 +2082,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.showcaseShapeSelector = !GridComponent.showcaseShapeSelector;
   }
 
-  deleteLink() {
+  deleteSelectedLink() {
     this.disappearContext();
     // console.warn(this.activeObjService.Link);
     const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
@@ -2080,6 +2091,46 @@ export class GridComponent implements OnInit, AfterViewInit {
         return;
       }
       const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+      j.links.splice(delLinkIndex, 1);
+    });
+    for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
+      for (
+        let next_j_i = j_i + 1;
+        next_j_i < GridComponent.links[linkIndex].joints.length;
+        next_j_i++
+      ) {
+        // TODO: Should recreate a function for this... (kinda too lazy atm)
+        const joint = GridComponent.links[linkIndex].joints[j_i];
+        if (!(joint instanceof RealJoint)) {
+          return;
+        }
+        const desiredJointIndex = joint.connectedJoints.findIndex(
+          (jj) => jj.id === GridComponent.links[linkIndex].joints[next_j_i].id
+        );
+        joint.connectedJoints.splice(desiredJointIndex, 1);
+        const otherJoint = GridComponent.links[linkIndex].joints[next_j_i];
+        if (!(otherJoint instanceof RealJoint)) {
+          return;
+        }
+        const otherDesiredJointIndex = joint.connectedJoints.findIndex(
+          (jj) => jj.id === GridComponent.links[linkIndex].joints[j_i].id
+        );
+        otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
+      }
+    }
+    GridComponent.links.splice(linkIndex, 1);
+    GridComponent.updateMechanism();
+  }
+
+  deleteLink() {
+    this.disappearContext();
+    // console.warn(this.activeObjService.Link);
+    const linkIndex = GridComponent.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
+    GridComponent.links[linkIndex].joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
       j.links.splice(delLinkIndex, 1);
     });
     for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
