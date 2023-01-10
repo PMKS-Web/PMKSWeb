@@ -7,6 +7,7 @@ import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { GridComponent } from '../grid/grid.component';
 import { Coord } from 'src/app/model/coord';
 import { getNewOtherJointPos } from 'src/app/model/utils';
+import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 
 @Component({
   selector: 'app-edit-panel',
@@ -14,6 +15,9 @@ import { getNewOtherJointPos } from 'src/app/model/utils';
   styleUrls: ['./edit-panel.component.scss'],
 })
 export class EditPanelComponent implements OnInit {
+  hideEditPanel() {
+    return AnimationBarComponent.animate === true || GridComponent.mechanismTimeStep !== 0;
+  }
   constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {}
 
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
@@ -51,6 +55,7 @@ export class EditPanelComponent implements OnInit {
 
   onChanges(): void {
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) return;
       if (this.jointForm.controls['xPos'].invalid) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toFixed(2).toString() });
       } else {
@@ -63,6 +68,7 @@ export class EditPanelComponent implements OnInit {
     });
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) return;
       if (this.jointForm.controls['yPos'].invalid) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toFixed(2).toString() });
       } else {
@@ -75,11 +81,17 @@ export class EditPanelComponent implements OnInit {
     });
 
     this.jointForm.controls['ground'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
       this.activeSrv.Joint.ground = val!;
       GridComponent.updateMechanism();
     });
 
     this.jointForm.controls['input'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
       this.activeSrv.Joint.input = val!;
       GridComponent.updateMechanism();
     });
@@ -124,21 +136,23 @@ export class EditPanelComponent implements OnInit {
   }
 
   resolveNewLink() {
-    //If the first joint is ground, then the second joint is dragged
-    if ((this.activeSrv.Link.joints[1] as RevJoint).ground) {
-      let newJ1 = getNewOtherJointPos(
-        this.activeSrv.Link.joints[1],
-        this.activeSrv.Link.angleRad + Math.PI,
-        this.activeSrv.Link.length
-      );
-      GridComponent.dragJoint(this.activeSrv.Link.joints[0] as RevJoint, newJ1);
-    } else {
-      let newJ2 = getNewOtherJointPos(
-        this.activeSrv.Link.joints[0],
-        this.activeSrv.Link.angleRad,
-        this.activeSrv.Link.length
-      );
-      GridComponent.dragJoint(this.activeSrv.Link.joints[1] as RevJoint, newJ2);
+    if (!this.hideEditPanel()) {
+      //If the first joint is ground, then the second joint is dragged
+      if ((this.activeSrv.Link.joints[1] as RevJoint).ground) {
+        let newJ1 = getNewOtherJointPos(
+          this.activeSrv.Link.joints[1],
+          this.activeSrv.Link.angleRad + Math.PI,
+          this.activeSrv.Link.length
+        );
+        GridComponent.dragJoint(this.activeSrv.Link.joints[0] as RevJoint, newJ1);
+      } else {
+        let newJ2 = getNewOtherJointPos(
+          this.activeSrv.Link.joints[0],
+          this.activeSrv.Link.angleRad,
+          this.activeSrv.Link.length
+        );
+        GridComponent.dragJoint(this.activeSrv.Link.joints[1] as RevJoint, newJ2);
+      }
     }
   }
 

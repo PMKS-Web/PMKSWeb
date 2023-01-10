@@ -118,6 +118,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static contextMenuDeleteForce: SVGElement;
   // Edit shape, delete link, add force
   static showcaseShapeSelector: boolean = false;
+  static lastNotificationTime: number = Date.now();
   // static snackBar: any;
 
   static get gridOffset(): { x: number; y: number } {
@@ -595,12 +596,12 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
           case 'joint':
             //If the animation is running or the mechansim is not at t=0, don't allow selection
-            if (AnimationBarComponent.animate === true) {
-              return;
-            }
-            if (GridComponent.mechanismTimeStep !== 0) {
-              return;
-            }
+            // if (AnimationBarComponent.animate === true) {
+            //   return;
+            // }
+            // if (GridComponent.mechanismTimeStep !== 0) {
+            //   return;
+            // }
             this.activeObjService.updateSelectedObj(thing);
 
             if (clickOnlyWithoutDrag) {
@@ -619,12 +620,12 @@ export class GridComponent implements OnInit, AfterViewInit {
             break;
           default:
             //If the animation is running or the mechansim is not at t=0, don't allow selection
-            if (AnimationBarComponent.animate === true) {
-              return;
-            }
-            if (GridComponent.mechanismTimeStep !== 0) {
-              return;
-            }
+            // if (AnimationBarComponent.animate === true) {
+            //   return;
+            // }
+            // if (GridComponent.mechanismTimeStep !== 0) {
+            //   return;
+            // }
             this.activeObjService.updateSelectedObj(thing);
             break;
         }
@@ -663,15 +664,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink;
-    if (AnimationBarComponent.animate === true) {
-      GridComponent.sendNotification('Cannot edit while animation is running');
-      return;
-    }
-    if (GridComponent.mechanismTimeStep !== 0) {
-      GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
-      this.disappearContext();
-      return;
-    }
+
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
         // console.log(thing);
@@ -1052,6 +1045,15 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.jointTempHolderSVG.children[0].setAttribute('y2', trueCoord.y.toString());
         break;
       case jointStates.dragging:
+        if (AnimationBarComponent.animate === true) {
+          GridComponent.sendNotification('Cannot edit while animation is running');
+          return;
+        }
+        if (GridComponent.mechanismTimeStep !== 0) {
+          GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
+          this.disappearContext();
+          return;
+        }
         GridComponent.selectedJoint = GridComponent.dragJoint(
           GridComponent.selectedJoint,
           trueCoord
@@ -1314,6 +1316,15 @@ export class GridComponent implements OnInit, AfterViewInit {
         this.createForce($event);
         break;
       case forceStates.dragging:
+        if (AnimationBarComponent.animate === true) {
+          GridComponent.sendNotification('Cannot edit while animation is running');
+          return;
+        }
+        if (GridComponent.mechanismTimeStep !== 0) {
+          GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
+          this.disappearContext();
+          return;
+        }
         GridComponent.selectedForce = GridComponent.dragForce(
           GridComponent.selectedForce,
           trueCoord
@@ -1382,6 +1393,17 @@ export class GridComponent implements OnInit, AfterViewInit {
     $event.preventDefault();
     $event.stopPropagation();
     this.disappearContext();
+
+    if (AnimationBarComponent.animate === true) {
+      GridComponent.sendNotification('Cannot edit while animation is running');
+      return;
+    }
+    if (GridComponent.mechanismTimeStep !== 0) {
+      GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
+      this.disappearContext();
+      return;
+    }
+
     const offsetX = $event.clientX;
     const offsetY = $event.clientY;
 
@@ -2718,13 +2740,16 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   static sendNotification(text: string) {
-    console.log(text);
-    this._snackBar.open(text, '', {
-      panelClass: 'my-custom-snackbar',
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      duration: 4000,
-    });
+    //If there is more than one notification in the last seccond, ingore all but the first
+    if (GridComponent.lastNotificationTime + 1000 < Date.now()) {
+      GridComponent.lastNotificationTime = Date.now();
+      this._snackBar.open(text, '', {
+        panelClass: 'my-custom-snackbar',
+        horizontalPosition: 'center',
+        verticalPosition: 'top',
+        duration: 4000,
+      });
+    }
   }
 
   @HostListener('window:keydown', ['$event'])

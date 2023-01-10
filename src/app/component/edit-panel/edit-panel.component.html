@@ -1,12 +1,13 @@
 <div class="editPanel">
-  <!-- <h1 *ngIf="this.activeSrv.objType == 'Nothing'">Select Joint to see details</h1> -->
-  <div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing'">
-    <p id="placeholderText">
-      Create and select a joint, link, tracer, or force to view or edit properties.
-    </p>
+  <div id="placeholderContainer" *ngIf="hideEditPanel()">
+    <p id="placeholderText">Stop animation or reset position slider to 0 to edit properties.</p>
     <img id="placeholder" src="assets/placeholder.svg" />
   </div>
-  <panel-section *ngIf="this.activeSrv.objType == 'Joint'">
+  <div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing' && !hideEditPanel()">
+    <p id="placeholderText">Right click on the grid to create a link and click on it to edit it.</p>
+    <img id="placeholder" src="assets/placeholder.svg" />
+  </div>
+  <panel-section *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">
     <title-block icon="edit">
       {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
     </title-block>
@@ -42,7 +43,7 @@
     Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
-  <panel-section *ngIf="this.activeSrv.objType == 'Link'">
+  <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <title-block
       icon="edit"
       description="Changing the length or angle will change location of the non-grounded joint to make sure the new length or angle is met. If neither joint is grounded, the second joint (the one that was created last) will be moved."
