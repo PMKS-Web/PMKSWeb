@@ -9,6 +9,10 @@ import {
   ApexGrid,
   ApexStroke,
   ApexTitleSubtitle,
+  ApexMarkers,
+  ApexFill,
+  ApexTooltip,
+  ApexAnnotations,
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { GridComponent } from '../grid/grid.component';
@@ -17,14 +21,20 @@ import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 
 export type ChartOptions = {
+  annotations: ApexAnnotations;
   series: ApexAxisChartSeries;
-  chart: ApexChart;
-  xaxis: ApexXAxis;
-  yaxis: ApexYAxis;
+  chart: any; //ApexChart;
   dataLabels: ApexDataLabels;
-  grid: ApexGrid;
-  stroke: ApexStroke;
+  markers: ApexMarkers;
   title: ApexTitleSubtitle;
+  fill: ApexFill;
+  yaxis: ApexYAxis;
+  xaxis: ApexXAxis;
+  tooltip: ApexTooltip;
+  stroke: ApexStroke;
+  grid: any; //ApexGrid;
+  colors: any;
+  toolbar: any;
 };
 
 @Component({
@@ -249,11 +259,27 @@ export class AnalysisPanelComponent {
 
     this.chartOptions = {
       series: seriesData,
+      annotations: {
+        xaxis: [
+          {
+            x: 200,
+            borderColor: '#00E396',
+            label: {
+              borderColor: '#00E396',
+              orientation: 'horizontal',
+              text: 'X Annotation',
+            },
+          },
+        ],
+      },
       chart: {
         height: 350,
         type: 'line',
         zoom: {
           enabled: false,
+        },
+        toolbar: {
+          show: false,
         },
       },
       dataLabels: {
@@ -262,9 +288,22 @@ export class AnalysisPanelComponent {
       stroke: {
         curve: 'straight',
       },
-      title: {
-        text: chartTitle,
-        align: 'left',
+      tooltip: {
+        followCursor: false,
+        theme: 'dark',
+        x: {
+          show: false,
+        },
+        marker: {
+          show: false,
+        },
+        y: {
+          title: {
+            formatter: function () {
+              return '';
+            },
+          },
+        },
       },
       grid: {
         row: {
@@ -273,7 +312,13 @@ export class AnalysisPanelComponent {
         },
       },
       xaxis: {
+        position: 'bottom',
         categories: categories,
+        labels: {
+          rotate: 0,
+          rotateAlways: true,
+          trim: false,
+        },
         title: {
           text: xAxisTitle,
         },
@@ -455,7 +500,7 @@ export class AnalysisPanelComponent {
         case 'ic':
           break;
       }
-      categories.push('Timestep ' + index);
+      // categories.push(index.toString());
     });
     return [[datum_X, datum_Y, datum_Z], categories];
   }

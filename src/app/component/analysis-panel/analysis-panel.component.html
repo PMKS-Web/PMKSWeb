@@ -1,5 +1,5 @@
 <div id="analysis-panel">
-  <mat-expansion-panel>
+  <mat-expansion-panel expanded>
     <mat-expansion-panel-header>
       <mat-panel-title> Angle of Joint B </mat-panel-title>
       <mat-panel-description>
@@ -8,13 +8,16 @@
     </mat-expansion-panel-header>
     <apx-chart
       [series]="chartOptions.series!"
-      [chart]="chartOptions.chart!"
-      [xaxis]="chartOptions.xaxis!"
+      [annotations]="chartOptions.annotations!"
+      [chart]="chartOptions.chart"
+      [colors]="chartOptions.colors"
       [yaxis]="chartOptions.yaxis!"
       [dataLabels]="chartOptions.dataLabels!"
-      [grid]="chartOptions.grid!"
+      [markers]="chartOptions.markers!"
       [stroke]="chartOptions.stroke!"
-      [title]="chartOptions.title!"
+      [grid]="chartOptions.grid"
+      [xaxis]="chartOptions.xaxis!"
+      [tooltip]="chartOptions.tooltip!"
     >
     </apx-chart>
   </mat-expansion-panel>
