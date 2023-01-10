@@ -7,11 +7,16 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
     <apx-chart
-      [series]="chartOptions.series"
-      [chart]="chartOptions.chart"
-      [xaxis]="chartOptions.xaxis"
-      [title]="chartOptions.title"
-    ></apx-chart>
+      [series]="chartOptions.series!"
+      [chart]="chartOptions.chart!"
+      [xaxis]="chartOptions.xaxis!"
+      [yaxis]="chartOptions.yaxis!"
+      [dataLabels]="chartOptions.dataLabels!"
+      [grid]="chartOptions.grid!"
+      [stroke]="chartOptions.stroke!"
+      [title]="chartOptions.title!"
+    >
+    </apx-chart>
   </mat-expansion-panel>
 
   <mat-expansion-panel>
@@ -21,12 +26,6 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000" svgIcon="com"></mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <apx-chart
-      [series]="chartOptions.series"
-      [chart]="chartOptions.chart"
-      [xaxis]="chartOptions.xaxis"
-      [title]="chartOptions.title"
-    ></apx-chart>
   </mat-expansion-panel>
 
   <mat-expansion-panel>
@@ -36,11 +35,5 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help_outline</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <apx-chart
-      [series]="chartOptions.series"
-      [chart]="chartOptions.chart"
-      [xaxis]="chartOptions.xaxis"
-      [title]="chartOptions.title"
-    ></apx-chart>
   </mat-expansion-panel>
 </div>

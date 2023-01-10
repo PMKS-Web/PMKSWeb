@@ -32,7 +32,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   static inputAngularVelocity: number = 10;
   static clockwise: boolean = false;
-  static gravity: boolean = false;
+  static gravity: boolean = true; //Kohmei set this to true for testing, normally false
   private static fileButton: SVGElement;
   static analysisButton: SVGElement;
   static loopButton: SVGElement;
@@ -78,7 +78,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.inputAngularVelocity = input_speed_mag;
     ToolbarComponent.clockwise = clockwise;
     AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    ToolbarComponent.gravity = gravity;
+    // ToolbarComponent.gravity = gravity; Temp commneted out by Kohmei for testing
     this.localUnit.selectedUnit = unit;
     ToolbarComponent.unit = unit;
     GridComponent.updateMechanism();
