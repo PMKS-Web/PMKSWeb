@@ -4,7 +4,7 @@
     <button
       [attr.disabled]="validMechanism()"
       *ngIf="!animating"
-      mat-fab
+      mat-mini-fab
       color="primary"
       (click)="startAnimation('pause')"
     >
@@ -13,20 +13,26 @@
     <button
       [attr.disabled]="validMechanism()"
       *ngIf="animating"
-      mat-fab
+      mat-mini-fab
       color="primary"
       (click)="startAnimation('play')"
     >
       <mat-icon>pause</mat-icon>
     </button>
     <button
-      mat-fab
-      color="primary"
+      mat-mini-fab
+      color="warn"
       [attr.disabled]="validMechanism()"
       (click)="startAnimation('stop')"
     >
       <mat-icon>stop</mat-icon>
     </button>
+  </div>
+  <div id="animationBar">
+    <form #simpleForm="ngForm" (ngSubmit)="onSubmit(simpleForm)">
+      <input id="animationBar-input" name="timestep" type="number" [(ngModel)]="timestepDisplay" />
+    </form>
+
     <mat-slider
       [disabled]="validMechanism()"
       min="0"
@@ -38,14 +44,11 @@
       <input id="slider" matSliderThumb value="{{ getMechanismTimeStep() }}" />
     </mat-slider>
   </div>
-</div>
-
-<div id="viewContainer">
   <div id="viewButtons">
     <button
       disabled="{{ noLinkExsits() }}"
       matTooltip="Show Center of Mass"
-      matTooltipPosition="left"
+      matTooltipPosition="above"
       [matTooltipShowDelay]="1000"
       mat-icon-button
       color="primary"
@@ -56,7 +59,7 @@
     <button
       disabled="{{ noJointExsits() }}"
       matTooltip="Show ID Labels"
-      matTooltipPosition="left"
+      matTooltipPosition="above"
       [matTooltipShowDelay]="1000"
       mat-icon-button
       color="primary"
@@ -66,7 +69,7 @@
     </button>
     <button
       matTooltip="Zoom In"
-      matTooltipPosition="left"
+      matTooltipPosition="above"
       [matTooltipShowDelay]="1000"
       mat-icon-button
       color="primary"
@@ -76,7 +79,7 @@
     </button>
     <button
       matTooltip="Zoom Out"
-      matTooltipPosition="left"
+      matTooltipPosition="above"
       [matTooltipShowDelay]="1000"
       mat-icon-button
       color="primary"
@@ -86,7 +89,7 @@
     </button>
     <button
       matTooltip="Reset View"
-      matTooltipPosition="left"
+      matTooltipPosition="above"
       [matTooltipShowDelay]="1000"
       mat-icon-button
       color="primary"

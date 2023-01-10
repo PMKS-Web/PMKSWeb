@@ -337,11 +337,11 @@ export class AnalysisPanelComponent {
     mechProp: string,
     mechPart: string
   ): [[number[], number[], number[]], string[]] {
-    console.warn('At determineAnalysis');
-    console.log(analysis);
-    console.log(analysisType);
-    console.log(mechProp);
-    console.log(mechPart);
+    // console.warn('At determineAnalysis');
+    // console.log(analysis);
+    // console.log(analysisType);
+    // console.log(mechProp);
+    // console.log(mechPart);
     const datum_X: number[] = [];
     const datum_Y: number[] = [];
     const datum_Z: number[] = [];
@@ -362,12 +362,12 @@ export class AnalysisPanelComponent {
               GridComponent.mechanisms[0].inputAngularVelocities[index]
             );
           }
-          console.warn('@ Input Torque');
-          console.log(GridComponent.mechanisms[0].joints[index]);
-          console.log(GridComponent.mechanisms[0].links[index]);
-          console.log(analysisType);
-          console.log(ToolbarComponent.gravity);
-          console.log(ToolbarComponent.unit);
+          // console.warn('@ Input Torque');
+          // console.log(GridComponent.mechanisms[0].joints[index]);
+          // console.log(GridComponent.mechanisms[0].links[index]);
+          // console.log(analysisType);
+          // console.log(ToolbarComponent.gravity);
+          // console.log(ToolbarComponent.unit);
           ForceSolver.determineForceAnalysis(
             GridComponent.mechanisms[0].joints[index],
             GridComponent.mechanisms[0].links[index],

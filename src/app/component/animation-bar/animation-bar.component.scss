@@ -2,32 +2,14 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-  //This another container for the view control buttons on the right button on the screen
-  #viewContainer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    #viewButtons {
-      pointer-events: auto;
-      margin: 10px;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      // width: 400px;
-      border-radius: var(--border-radius);
-      //Set the elevation of the animation bar to 2.
-      @include mat.elevation(2);
-      //Set the background color of the animation bar to the background color of the raised button.
-      background-color: white;
-    }
-  }
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
 
   #barContainer {
     //Fix to the bottom left, make the it cover the entire width of the screen but give it a height of 50px. Use flex to center animation bar in the middle botttom.
@@ -37,14 +19,32 @@
     width: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     pointer-events: none;
+
+    #viewButtons {
+      pointer-events: auto;
+      margin: 10px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: row;
+      // width: 400px;
+      border-radius: var(--border-radius);
+      //Set the elevation of the animation bar to 2.
+      @include mat.elevation(2);
+      //Set the background color of the animation bar to the background color of the raised button.
+      background-color: white;
+    }
+
     #animationBar {
+      height: 48px;
       pointer-events: auto;
       margin: 10px;
       padding: 10px 20px;
       display: flex;
-      gap: 20px;
+      gap: 10px;
       align-items: center;
       justify-content: center;
       // width: 400px;
@@ -54,8 +54,32 @@
       //Set the background color of the animation bar to the background color of the raised button.
       background-color: white;
 
+      /* Chrome, Safari, Edge, Opera */
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      /* Firefox */
+      input[type='number'] {
+        -moz-appearance: textfield;
+      }
+
+      #animationBar-input {
+        font-size: 20px;
+        font-weight: 400;
+        width: 40px;
+        border: 0;
+        outline: none;
+        background-color: mat.get-color-from-palette($primary-palette, 50);
+        border-radius: var(--border-radius);
+        padding: 5px;
+      }
+
       mat-slider {
-        width: 300px;
+        margin-left: 15px;
+        width: 35vw;
       }
     }
   }

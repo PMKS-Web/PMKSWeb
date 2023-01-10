@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnInit } from '@angular/core';
 import { Coord } from '../../model/coord';
 import { AppConstants } from '../../model/app-constants';
 import { Joint, RevJoint, PrisJoint, RealJoint } from '../../model/joint';
@@ -87,6 +87,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   static mechanisms: Mechanism[] = [];
 
   static screenCoord: string = '';
+
+  static onMechPositionChange = new EventEmitter<number>();
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -2525,6 +2527,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   static animate(progress: number, animationState?: boolean) {
+    GridComponent.onMechPositionChange.emit(progress);
     GridComponent.mechanismTimeStep = progress;
     GridComponent.showPathHolder = !(GridComponent.mechanismTimeStep === 0 && !animationState);
     if (animationState !== undefined) {

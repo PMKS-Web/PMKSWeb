@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { NgForm } from '@angular/forms';
 // import {switchMapTo} from "rxjs";
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { GridComponent } from '../grid/grid.component';
@@ -25,8 +26,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   static sliderContainer: HTMLInputElement;
   private static adjustAnimation: boolean;
 
+  @Input() timestepDisplay: number = 0;
+
   constructor() {}
-  ngOnInit(): void {}
+
+  ngOnInit(): void {
+    //Subscribte to the emitter inside mechanismStateService
+    GridComponent.onMechPositionChange.subscribe((data) => {
+      this.timestepDisplay = data;
+    });
+  }
 
   ngAfterViewInit() {
     AnimationBarComponent.playButton = <HTMLInputElement>document.getElementById('playBtn');
@@ -36,6 +45,15 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     AnimationBarComponent.sliderContainer = <HTMLInputElement>(
       document.getElementById('sliderContainer')
     );
+  }
+
+  onSubmit(simpleForm: any) {
+    if (simpleForm.value.timestep > this.maxTimeSteps()) {
+      simpleForm.value.timestep = this.maxTimeSteps();
+    } else if (simpleForm.value.timestep < 0) {
+      simpleForm.value.timestep = 0;
+    }
+    GridComponent.animate(Number(simpleForm.value.timestep), AnimationBarComponent.animate);
   }
 
   maxTimeSteps() {
@@ -110,6 +128,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   adjustMechanismAnimation(condition: boolean) {
     AnimationBarComponent.adjustAnimation = condition;
+    this.setAnim();
   }
 
   noJointExsits() {
