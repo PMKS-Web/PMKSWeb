@@ -19,6 +19,7 @@ import { GridComponent } from '../grid/grid.component';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
 import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -45,7 +46,30 @@ export type ChartOptions = {
 export class AnalysisPanelComponent {
   public chartOptions: Partial<ChartOptions> = {};
 
-  @ViewChild('chart') chart!: ChartComponent;
+  @ViewChild('chart', { static: true }) chart!: ChartComponent;
+
+  animationTimestep: number = 0;
+
+  ngOnInit(): void {
+    //Subscribte to the emitter inside mechanismStateService
+    GridComponent.onMechPositionChange.subscribe((data) => {
+      this.chart.updateOptions({
+        annotations: {
+          xaxis: [
+            {
+              x: data,
+              borderColor: '#00E396',
+              label: {
+                borderColor: '#00E396',
+                orientation: 'horizontal',
+                text: 'X Annotation',
+              },
+            },
+          ],
+        },
+      });
+    });
+  }
 
   constructor() {
     this.testSetChart();
@@ -262,7 +286,7 @@ export class AnalysisPanelComponent {
       annotations: {
         xaxis: [
           {
-            x: 200,
+            x: this.animationTimestep,
             borderColor: '#00E396',
             label: {
               borderColor: '#00E396',
@@ -273,7 +297,6 @@ export class AnalysisPanelComponent {
         ],
       },
       chart: {
-        height: 350,
         type: 'line',
         zoom: {
           enabled: false,
@@ -286,7 +309,7 @@ export class AnalysisPanelComponent {
         enabled: false,
       },
       stroke: {
-        curve: 'straight',
+        curve: 'smooth',
       },
       tooltip: {
         followCursor: false,
@@ -306,9 +329,23 @@ export class AnalysisPanelComponent {
         },
       },
       grid: {
-        row: {
-          colors: ['#f3f3f3', 'transparent'], // takes an array which will be repeated on columns
-          opacity: 0.5,
+        position: 'back',
+        show: true,
+        xaxis: {
+          lines: {
+            show: true,
+          },
+        },
+        yaxis: {
+          lines: {
+            show: true,
+          },
+        },
+        padding: {
+          top: 10,
+          right: 0,
+          bottom: 0,
+          left: 0,
         },
       },
       xaxis: {
@@ -317,8 +354,9 @@ export class AnalysisPanelComponent {
         labels: {
           rotate: 0,
           rotateAlways: true,
-          trim: false,
+          trim: true,
         },
+        tickAmount: 2,
         title: {
           text: xAxisTitle,
         },
@@ -500,7 +538,7 @@ export class AnalysisPanelComponent {
         case 'ic':
           break;
       }
-      // categories.push(index.toString());
+      categories.push(index.toString());
     });
     return [[datum_X, datum_Y, datum_Z], categories];
   }

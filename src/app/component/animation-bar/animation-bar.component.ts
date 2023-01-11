@@ -26,7 +26,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   static sliderContainer: HTMLInputElement;
   private static adjustAnimation: boolean;
 
-  @Input() timestepDisplay: number = 0;
+  timestepDisplay: number = 0;
 
   constructor() {}
 
