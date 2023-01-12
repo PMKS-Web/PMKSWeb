@@ -44,8 +44,85 @@ export type ChartOptions = {
   styleUrls: ['./analysis-panel.component.scss'],
 })
 export class AnalysisPanelComponent {
-  public chartOptions: Partial<ChartOptions> = {};
+  public chartOptions: Partial<ChartOptions> = {
+    chart: {
+      width: '100%', //380
+      height: '250px', //300
+      animations: {
+        enabled: false,
+      },
+      type: 'line',
+      zoom: {
+        enabled: false,
+      },
+      toolbar: {
+        show: false,
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: 'straight',
+    },
+    colors: ['#313aa7', '#ea2b29', '#fdb50e'],
+    tooltip: {
+      followCursor: false,
+      theme: 'dark',
+      x: {
+        show: false,
+      },
+      marker: {
+        show: false,
+      },
+      y: {
+        title: {
+          formatter: function () {
+            return '';
+          },
+        },
+      },
+    },
+    grid: {
+      position: 'back',
+      show: true,
+      xaxis: {
+        lines: {
+          show: true,
+        },
+      },
+      yaxis: {
+        lines: {
+          show: true,
+        },
+      },
+    },
+    xaxis: {
+      type: 'numeric',
+      position: 'bottom',
+      // categories: categories,
+      labels: {
+        rotate: 0,
+        rotateAlways: true,
+        trim: true,
+        formatter: function (val) {
+          return String(Number(val) - 1);
+        },
+      },
+      tickAmount: 2,
+      title: {
+        text: 'setLater',
+        offsetY: 85,
+      },
+    },
+    yaxis: {
+      title: {
+        text: 'setLater',
+      },
+    },
+  };
 
+  //Get the child element in the template with "#chart"
   @ViewChild('chart', { static: true }) chart!: ChartComponent;
 
   animationTimestep: number = 0;
@@ -53,19 +130,51 @@ export class AnalysisPanelComponent {
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
     GridComponent.onMechPositionChange.subscribe((data) => {
-      this.chart.updateOptions({
-        annotations: {
-          xaxis: [
-            {
-              x: data,
-              borderColor: '#00E396',
-              label: {
-                borderColor: '#00E396',
-                orientation: 'horizontal',
-                text: 'X Annotation',
-              },
-            },
-          ],
+      this.chart.clearAnnotations();
+      this.chart.addXaxisAnnotation({
+        x: data,
+        borderColor: '#313aa7',
+      });
+      this.chart.addPointAnnotation({
+        x: data,
+        y: this.chartOptions.series![0].data[data],
+        marker: {
+          strokeColor: '#313aa7',
+          shape: 'square',
+        },
+        label: {
+          borderColor: '#313aa7',
+          fillColor: '#000000',
+          orientation: 'horizontal',
+          text: String(this.chartOptions.series![0].data[data]),
+        },
+      });
+      this.chart.addPointAnnotation({
+        x: data,
+        y: this.chartOptions.series![1].data[data],
+        marker: {
+          strokeColor: '#ea2b29',
+          shape: 'square',
+        },
+        label: {
+          borderColor: '#ea2b29',
+          fillColor: '#000000',
+          orientation: 'horizontal',
+          text: String(this.chartOptions.series![0].data[data]),
+        },
+      });
+      this.chart.addPointAnnotation({
+        x: data,
+        y: this.chartOptions.series![2].data[data],
+        marker: {
+          strokeColor: '#fdb50e',
+          shape: 'square',
+        },
+        label: {
+          borderColor: '#fdb50e',
+          fillColor: '#000000',
+          orientation: 'horizontal',
+          text: String(this.chartOptions.series![0].data[data]),
         },
       });
     });
@@ -84,7 +193,7 @@ export class AnalysisPanelComponent {
       ToolbarComponent.gravity,
       ToolbarComponent.unit
     );
-    this.determineChart('force', 'statics', 'Input Torque', '');
+    this.determineChart('force', 'statics', 'Joint Forces', 'a');
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
@@ -281,92 +390,9 @@ export class AnalysisPanelComponent {
         return;
     }
 
-    this.chartOptions = {
-      series: seriesData,
-      annotations: {
-        xaxis: [
-          {
-            x: this.animationTimestep,
-            borderColor: '#00E396',
-            label: {
-              borderColor: '#00E396',
-              orientation: 'horizontal',
-              text: 'X Annotation',
-            },
-          },
-        ],
-      },
-      chart: {
-        type: 'line',
-        zoom: {
-          enabled: false,
-        },
-        toolbar: {
-          show: false,
-        },
-      },
-      dataLabels: {
-        enabled: false,
-      },
-      stroke: {
-        curve: 'smooth',
-      },
-      tooltip: {
-        followCursor: false,
-        theme: 'dark',
-        x: {
-          show: false,
-        },
-        marker: {
-          show: false,
-        },
-        y: {
-          title: {
-            formatter: function () {
-              return '';
-            },
-          },
-        },
-      },
-      grid: {
-        position: 'back',
-        show: true,
-        xaxis: {
-          lines: {
-            show: true,
-          },
-        },
-        yaxis: {
-          lines: {
-            show: true,
-          },
-        },
-        padding: {
-          top: 10,
-          right: 0,
-          bottom: 0,
-          left: 0,
-        },
-      },
-      xaxis: {
-        position: 'bottom',
-        categories: categories,
-        labels: {
-          rotate: 0,
-          rotateAlways: true,
-          trim: true,
-        },
-        tickAmount: 2,
-        title: {
-          text: xAxisTitle,
-        },
-      },
-      yaxis: {
-        title: {
-          text: yAxisTitle,
-        },
-      },
-    };
+    this.chartOptions = { ...this.chartOptions, series: seriesData };
+    this.chartOptions.xaxis!.title = { ...this.chartOptions.xaxis!.title, text: xAxisTitle };
+    this.chartOptions.yaxis!.title = { ...this.chartOptions.yaxis!.title, text: yAxisTitle };
   }
 
   determineAnalysis(

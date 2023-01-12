@@ -24,7 +24,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   static stopButton: HTMLInputElement;
   static slider: HTMLInputElement;
   static sliderContainer: HTMLInputElement;
-  private static adjustAnimation: boolean;
+  static adjustAnimation: boolean;
 
   timestepDisplay: number = 0;
 
@@ -126,6 +126,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     }
   }
 
+  //Where true means the user is dragging the animation bar
   adjustMechanismAnimation(condition: boolean) {
     AnimationBarComponent.adjustAnimation = condition;
     this.setAnim();
@@ -199,6 +200,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   validMechanism() {
+    //True means the linkage is invalid
     if (GridComponent.mechanisms[0] === undefined) {
       return true;
     }

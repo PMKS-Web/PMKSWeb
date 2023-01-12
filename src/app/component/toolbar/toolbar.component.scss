@@ -45,5 +45,9 @@
       @include mat.typography-level($typography-config, 'body-2');
       height: 100% !important;
     }
+
+    img {
+      margin-left: 10px;
+    }
   }
 }
