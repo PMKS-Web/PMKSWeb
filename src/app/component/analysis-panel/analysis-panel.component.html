@@ -6,6 +6,11 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <div id="graph-checkbox-list">
+      <mat-checkbox checked (change)="toggleSeries('Magnitude')">Magnitude</mat-checkbox>
+      <mat-checkbox checked (change)="toggleSeries('X')" color="primary">X Comp</mat-checkbox>
+      <mat-checkbox checked (change)="toggleSeries('Y')" color="warn">Y Comp</mat-checkbox>
+    </div>
     <apx-chart
       #chart
       [series]="chartOptions.series!"
@@ -19,8 +24,10 @@
       [grid]="chartOptions.grid"
       [xaxis]="chartOptions.xaxis!"
       [tooltip]="chartOptions.tooltip!"
+      [legend]="chartOptions.legend!"
     >
     </apx-chart>
+    <!-- <div id="testBox">Test Box</div> -->
   </mat-expansion-panel>
 
   <mat-expansion-panel>

@@ -13,6 +13,7 @@ import {
   ApexFill,
   ApexTooltip,
   ApexAnnotations,
+  ApexLegend,
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { GridComponent } from '../grid/grid.component';
@@ -36,6 +37,7 @@ export type ChartOptions = {
   grid: any; //ApexGrid;
   colors: any;
   toolbar: any;
+  legend: ApexLegend;
 };
 
 @Component({
@@ -49,7 +51,7 @@ export class AnalysisPanelComponent {
       width: '100%', //380
       height: '250px', //300
       animations: {
-        enabled: false,
+        // enabled: false,
       },
       type: 'line',
       zoom: {
@@ -64,6 +66,7 @@ export class AnalysisPanelComponent {
     },
     stroke: {
       curve: 'straight',
+      width: 2,
     },
     colors: ['#313aa7', '#ea2b29', '#fdb50e'],
     tooltip: {
@@ -99,7 +102,9 @@ export class AnalysisPanelComponent {
     },
     xaxis: {
       type: 'numeric',
-      position: 'bottom',
+      position: 'top',
+      offsetY: 20,
+      // floating: true,
       // categories: categories,
       labels: {
         rotate: 0,
@@ -109,15 +114,28 @@ export class AnalysisPanelComponent {
           return String(Number(val) - 1);
         },
       },
-      tickAmount: 2,
+      tickAmount: 1,
       title: {
         text: 'setLater',
-        offsetY: 85,
+        offsetY: 5,
+        offsetX: -10,
       },
     },
     yaxis: {
       title: {
         text: 'setLater',
+      },
+    },
+    legend: {
+      show: false,
+      position: 'top',
+      floating: true,
+      offsetY: -3,
+      // customLegendItems: ['X', 'Y', 'Magnitude'],
+      markers: {
+        // customHTML: function () {
+        //   return '<input type="checkbox" checked="true"> </input>';
+        // },
       },
     },
   };
@@ -184,6 +202,10 @@ export class AnalysisPanelComponent {
     this.testSetChart();
   }
 
+  toggleSeries(seriesName: string) {
+    this.chart.toggleSeries(seriesName);
+  }
+
   testSetChart() {
     ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
@@ -193,6 +215,13 @@ export class AnalysisPanelComponent {
       ToolbarComponent.gravity,
       ToolbarComponent.unit
     );
+    //Param 1: analysis: "force","stress","kinematic"
+    //Param 2: analysisType: "statics","dynamic" (Only valid for Torque)
+    //Param 3: mechProp: IF analysis == force: "Input Torque","Joint Forces"
+    //Param 3: mechProp: IF analysis == kinemaics: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
+    //"Linear Link's CoM Pos","Linear Link's CoM Vel","Linear Link's CoM Acc",
+    //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
+    //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'...
     this.determineChart('force', 'statics', 'Joint Forces', 'a');
   }
 
@@ -246,9 +275,9 @@ export class AnalysisPanelComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
-            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            seriesData.push({ name: 'Magnitude', type: 'line', data: datum[2] });
             break;
         }
         break;
