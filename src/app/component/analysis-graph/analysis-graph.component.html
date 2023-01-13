@@ -1,0 +1,21 @@
+<div id="graph-checkbox-list">
+  <mat-checkbox checked (change)="toggleSeries('Magnitude')">Magnitude</mat-checkbox>
+  <mat-checkbox checked (change)="toggleSeries('X')" color="primary">X Comp</mat-checkbox>
+  <mat-checkbox checked (change)="toggleSeries('Y')" color="warn">Y Comp</mat-checkbox>
+</div>
+<apx-chart
+  #chart
+  [series]="chartOptions.series!"
+  [annotations]="chartOptions.annotations!"
+  [chart]="chartOptions.chart"
+  [colors]="chartOptions.colors"
+  [yaxis]="chartOptions.yaxis!"
+  [dataLabels]="chartOptions.dataLabels!"
+  [markers]="chartOptions.markers!"
+  [stroke]="chartOptions.stroke!"
+  [grid]="chartOptions.grid"
+  [xaxis]="chartOptions.xaxis!"
+  [tooltip]="chartOptions.tooltip!"
+  [legend]="chartOptions.legend!"
+>
+</apx-chart>

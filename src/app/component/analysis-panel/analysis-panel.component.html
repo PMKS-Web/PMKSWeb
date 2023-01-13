@@ -6,28 +6,25 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <div id="graph-checkbox-list">
-      <mat-checkbox checked (change)="toggleSeries('Magnitude')">Magnitude</mat-checkbox>
-      <mat-checkbox checked (change)="toggleSeries('X')" color="primary">X Comp</mat-checkbox>
-      <mat-checkbox checked (change)="toggleSeries('Y')" color="warn">Y Comp</mat-checkbox>
-    </div>
-    <apx-chart
-      #chart
-      [series]="chartOptions.series!"
-      [annotations]="chartOptions.annotations!"
-      [chart]="chartOptions.chart"
-      [colors]="chartOptions.colors"
-      [yaxis]="chartOptions.yaxis!"
-      [dataLabels]="chartOptions.dataLabels!"
-      [markers]="chartOptions.markers!"
-      [stroke]="chartOptions.stroke!"
-      [grid]="chartOptions.grid"
-      [xaxis]="chartOptions.xaxis!"
-      [tooltip]="chartOptions.tooltip!"
-      [legend]="chartOptions.legend!"
-    >
-    </apx-chart>
-    <!-- <div id="testBox">Test Box</div> -->
+    <!-- 
+    //Param 1: analysis: "force","stress","kinematic"
+
+    //Param 2: analysisType: IF analysis == force: "statics","dynamic"
+    //Param 2: analysisType: IF analysis == kinematic: "loop","ic"
+
+    //Param 3: mechProp: IF analysis == force: "Input Torque","Joint Forces"
+    //Param 3: mechProp: IF analysis == kinemaics: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
+    //"Linear Link's CoM Pos","Linear Link's CoM Vel","Linear Link's CoM Acc",
+    //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
+
+    //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
+  -->
+    <app-analysis-graph
+      analysis="kinematic"
+      analysisType="loop"
+      mechProp="Linear Joint Pos"
+      mechPart="b"
+    ></app-analysis-graph>
   </mat-expansion-panel>
 
   <mat-expansion-panel>

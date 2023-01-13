@@ -11,25 +11,18 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
-  #analysis-panel {
+  #graph-checkbox-list {
+    position: absolute;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    .mat-expansion-panel-header-title {
-      flex-grow: 0;
-      flex-basis: auto;
-    }
-
-    .mat-expansion-panel-body {
-      padding: 0 10px;
-      // height: 230px;
-      // padding-bottom: -100px !important;
-    }
-
-    // .mat-expansion-panel-header-description {
-    //   justify-content: space-between;
-    //   align-items: center;
-    // }
+    width: 350px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-left: 4px;
+    // padding-right: 20px;
+    margin-top: -10px;
+    // margin-bottom: -25px;
+    // background-color: blue;
+    z-index: 99;
   }
 }

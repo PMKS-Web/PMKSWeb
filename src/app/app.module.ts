@@ -30,6 +30,7 @@ import { DualInputComponent } from './component/blocks/dual-input/dual-input.com
 
 import { ReactiveFormsModule } from '@angular/forms';
 import { AnalysisPanelComponent } from './component/analysis-panel/analysis-panel.component';
+import { AnalysisGraphComponent } from './component/analysis-graph/analysis-graph.component';
 
 @NgModule({
   declarations: [
@@ -54,6 +55,7 @@ import { AnalysisPanelComponent } from './component/analysis-panel/analysis-pane
     RadioComponent,
     DualInputComponent,
     AnalysisPanelComponent,
+    AnalysisGraphComponent,
   ],
   imports: [
     BrowserModule,
