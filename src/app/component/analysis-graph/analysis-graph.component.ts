@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ChartComponent,
   ApexAxisChartSeries,
@@ -45,7 +45,7 @@ export type ChartOptions = {
   templateUrl: './analysis-graph.component.html',
   styleUrls: ['./analysis-graph.component.scss'],
 })
-export class AnalysisGraphComponent {
+export class AnalysisGraphComponent implements OnInit, AfterViewInit {
   public chartOptions: Partial<ChartOptions> = {
     chart: {
       width: '100%', //380
@@ -71,7 +71,7 @@ export class AnalysisGraphComponent {
     colors: ['#313aa7', '#ea2b29', '#fdb50e'],
     tooltip: {
       followCursor: false,
-      theme: 'dark',
+      // theme: 'dark',
       x: {
         show: false,
       },
@@ -102,8 +102,8 @@ export class AnalysisGraphComponent {
     },
     xaxis: {
       type: 'numeric',
-      position: 'top',
-      offsetY: 20,
+      position: 'bottom',
+      offsetY: -190,
       // floating: true,
       // categories: categories,
       labels: {
@@ -116,12 +116,20 @@ export class AnalysisGraphComponent {
       },
       tickAmount: 1,
       title: {
-        text: 'setLater',
-        offsetY: 5,
+        text: 'Timesteps',
+        offsetY: 55,
         offsetX: -10,
       },
     },
     yaxis: {
+      showForNullSeries: false,
+      forceNiceScale: true,
+      min: function (min) {
+        return min - 0.01;
+      },
+      max: function (max) {
+        return max + 0.01;
+      },
       title: {
         text: 'setLater',
       },
@@ -149,6 +157,17 @@ export class AnalysisGraphComponent {
   @ViewChild('chart', { static: true }) chart!: ChartComponent;
 
   animationTimestep: number = 0;
+  numberOfSeries: number = 0;
+
+  ngAfterViewInit(): void {
+    //Delay this call by 1ms to make sure the chart is initialized
+    setTimeout(() => {
+      if (this.numberOfSeries === 3) {
+        this.chart.hideSeries('X');
+        this.chart.hideSeries('Y');
+      }
+    }, 1);
+  }
 
   ngOnInit(): void {
     //Param 1: analysis: "force","stress","kinematic"
@@ -187,6 +206,7 @@ export class AnalysisGraphComponent {
           text: String(this.chartOptions.series![0].data[data]),
         },
       });
+      if (this.numberOfSeries < 2) return;
       this.chart.addPointAnnotation({
         x: data,
         y: this.chartOptions.series![1].data[data],
@@ -201,6 +221,7 @@ export class AnalysisGraphComponent {
           text: String(this.chartOptions.series![0].data[data]),
         },
       });
+      if (this.numberOfSeries < 3) return;
       this.chart.addPointAnnotation({
         x: data,
         y: this.chartOptions.series![2].data[data],
@@ -218,23 +239,8 @@ export class AnalysisGraphComponent {
     });
   }
 
-  constructor() {
-    this.testSetChart();
-  }
-
   toggleSeries(seriesName: string) {
     this.chart.toggleSeries(seriesName);
-  }
-
-  testSetChart() {
-    ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-    ForceSolver.determineForceAnalysis(
-      GridComponent.joints,
-      GridComponent.links,
-      'static',
-      ToolbarComponent.gravity,
-      ToolbarComponent.unit
-    );
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
@@ -263,8 +269,6 @@ export class AnalysisGraphComponent {
       case 'force':
         switch (mechProp) {
           case 'Input Torque':
-            chartTitle = 'Torque for Mechanism';
-            data1Title = 'Torque (Nm)';
             yAxisTitle = 'Torque (Nm)';
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -272,14 +276,10 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            console.error(seriesData);
+            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            this.numberOfSeries = 1;
             break;
           case 'Joint Forces':
-            chartTitle = 'Force Magnitudes';
-            data1Title = 'Force ' + mechPart + ' X-Magnitude (N)';
-            data2Title = 'Force ' + mechPart + ' Y-Magnitude (N)';
-            data3Title = 'Abs Force (N)';
             yAxisTitle = 'Force (N)';
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -289,7 +289,8 @@ export class AnalysisGraphComponent {
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Magnitude', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            this.numberOfSeries = 3;
             break;
         }
         break;
@@ -298,9 +299,6 @@ export class AnalysisGraphComponent {
       case 'kinematic':
         switch (mechProp) {
           case 'Linear Joint Pos':
-            chartTitle = "Joint's Linear Position";
-            data1Title = 'Joint ' + mechPart + ' X Position ' + posLinUnit;
-            data2Title = 'Joint ' + mechPart + ' Y Position ' + posLinUnit;
             yAxisTitle = 'Position ' + posLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -308,14 +306,11 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            this.numberOfSeries = 2;
             break;
           case 'Linear Joint Vel':
-            chartTitle = "Joint's Linear Velocity";
-            data1Title = 'Joint ' + mechPart + ' X Velocity ' + velLinUnit;
-            data2Title = 'Joint ' + mechPart + ' Y Velocity ' + velLinUnit;
-            data3Title = 'Absolute Velocity ' + velLinUnit;
             yAxisTitle = 'Velocity ' + velLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -323,15 +318,12 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
-            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            this.numberOfSeries = 3;
             break;
           case 'Linear Joint Acc':
-            chartTitle = "Joint's Linear Acceleration";
-            data1Title = 'Joint ' + mechPart + ' X Acceleration ' + accLinUnit;
-            data2Title = 'Joint ' + mechPart + ' Y Acceleration ' + accLinUnit;
-            data3Title = 'Absolute Acceleration ' + accLinUnit;
             yAxisTitle = 'Acceleration ' + accLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -339,14 +331,11 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
-            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
             break;
           case "Linear Link's CoM Pos":
-            chartTitle = "Link's Center of Mass Linear Position";
-            data1Title = 'Link ' + mechPart + ' (CoM) X Position ' + posLinUnit;
-            data2Title = 'Link ' + mechPart + ' (CoM) Y Position ' + posLinUnit;
             yAxisTitle = 'Position (CoM) ' + posLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -354,14 +343,11 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            this.numberOfSeries = 2;
             break;
           case "Linear Link's CoM Vel":
-            chartTitle = "Link's Center of Mass Linear Velocity";
-            data1Title = 'Link ' + mechPart + ' (CoM) X Velocity ' + velLinUnit;
-            data2Title = 'Link ' + mechPart + ' (CoM) Y Velocity ' + velLinUnit;
-            data3Title = 'Absolute Velocity ' + velLinUnit;
             yAxisTitle = 'Velocity ' + velLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -369,15 +355,12 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
-            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            this.numberOfSeries = 3;
             break;
           case "Linear Link's CoM Acc":
-            chartTitle = "Link's Center of Mass Linear Acceleration";
-            data1Title = 'Link ' + mechPart + ' (CoM) X Acceleration ' + accLinUnit;
-            data2Title = 'Link ' + mechPart + ' (CoM) Y Acceleration ' + accLinUnit;
-            data3Title = 'Link Absolute Acceleration ' + accLinUnit;
             yAxisTitle = 'Acceleration ' + accLinUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -385,13 +368,12 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
-            seriesData.push({ name: data2Title, type: 'line', data: datum[1] });
-            seriesData.push({ name: data3Title, type: 'line', data: datum[2] });
+            seriesData.push({ name: 'X', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            this.numberOfSeries = 3;
             break;
           case 'Angular Link Pos':
-            chartTitle = "Link's Angular Position";
-            data1Title = 'Link ' + mechPart + ' Angle ' + posAngUnit;
             yAxisTitle = 'Position ' + posAngUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -399,11 +381,10 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            this.numberOfSeries = 1;
             break;
           case 'Angular Link Vel':
-            chartTitle = "Link's Angular Velocity";
-            data1Title = 'Link ' + mechPart + ' Angular Velocity ' + velAngUnit;
             yAxisTitle = 'Velocity ' + velAngUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -411,11 +392,10 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            this.numberOfSeries = 1;
             break;
           case 'Angular Link Acc':
-            chartTitle = "Link's Angular Acceleration";
-            data1Title = 'Link ' + mechPart + ' Angular Acceleration ' + accAngUnit;
             yAxisTitle = 'Acceleration ' + accAngUnit;
             [datum, categories] = this.determineAnalysis(
               analysis,
@@ -423,7 +403,8 @@ export class AnalysisGraphComponent {
               mechProp,
               mechPart
             );
-            seriesData.push({ name: data1Title, type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            this.numberOfSeries = 1;
             break;
         }
         break;
@@ -432,7 +413,6 @@ export class AnalysisGraphComponent {
     }
 
     this.chartOptions = { ...this.chartOptions, series: seriesData };
-    this.chartOptions.xaxis!.title = { ...this.chartOptions.xaxis!.title, text: xAxisTitle };
     this.chartOptions.yaxis!.title = { ...this.chartOptions.yaxis!.title, text: yAxisTitle };
   }
 
@@ -458,7 +438,6 @@ export class AnalysisGraphComponent {
       switch (mechProp) {
         case 'Input Torque':
           if (analysisType === 'dynamics') {
-            console.warn('@ Input Torque - Dynamics');
             // TODO: Be sure to have each step within mechanism know its input angular velocity
             KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(
@@ -467,12 +446,6 @@ export class AnalysisGraphComponent {
               GridComponent.mechanisms[0].inputAngularVelocities[index]
             );
           }
-          // console.warn('@ Input Torque');
-          // console.log(GridComponent.mechanisms[0].joints[index]);
-          // console.log(GridComponent.mechanisms[0].links[index]);
-          // console.log(analysisType);
-          // console.log(ToolbarComponent.gravity);
-          // console.log(ToolbarComponent.unit);
           ForceSolver.determineForceAnalysis(
             GridComponent.mechanisms[0].joints[index],
             GridComponent.mechanisms[0].links[index],
@@ -605,7 +578,6 @@ export class AnalysisGraphComponent {
         case 'ic':
           break;
       }
-      categories.push(index.toString());
     });
     return [[datum_X, datum_Y, datum_Z], categories];
   }

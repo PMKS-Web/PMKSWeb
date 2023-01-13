@@ -45,4 +45,22 @@ export type ChartOptions = {
   templateUrl: './analysis-panel.component.html',
   styleUrls: ['./analysis-panel.component.scss'],
 })
-export class AnalysisPanelComponent {}
+export class AnalysisPanelComponent {
+  constructor() {
+    ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+    ForceSolver.determineForceAnalysis(
+      GridComponent.joints,
+      GridComponent.links,
+      'static',
+      ToolbarComponent.gravity,
+      ToolbarComponent.unit
+    );
+
+    KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+    KinematicsSolver.determineKinematics(
+      GridComponent.joints,
+      GridComponent.links,
+      ToolbarComponent.inputAngularVelocity
+    );
+  }
+}

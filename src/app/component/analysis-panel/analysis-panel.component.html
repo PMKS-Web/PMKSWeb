@@ -13,16 +13,16 @@
     //Param 2: analysisType: IF analysis == kinematic: "loop","ic"
 
     //Param 3: mechProp: IF analysis == force: "Input Torque","Joint Forces"
-    //Param 3: mechProp: IF analysis == kinemaics: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
+    //Param 3: mechProp: IF analysis == kinematic: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
     //"Linear Link's CoM Pos","Linear Link's CoM Vel","Linear Link's CoM Acc",
     //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
 
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
   -->
     <app-analysis-graph
-      analysis="kinematic"
-      analysisType="loop"
-      mechProp="Linear Joint Pos"
+      analysis="force"
+      analysisType="statics"
+      mechProp="Input Torque"
       mechPart="b"
     ></app-analysis-graph>
   </mat-expansion-panel>
@@ -34,6 +34,12 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000" svgIcon="com"></mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <app-analysis-graph
+      analysis="kinematic"
+      analysisType="loop"
+      mechProp="Linear Joint Pos"
+      mechPart="b"
+    ></app-analysis-graph>
   </mat-expansion-panel>
 
   <mat-expansion-panel>
@@ -43,5 +49,11 @@
         <mat-icon matTooltip="test tooltip!" [matTooltipShowDelay]="1000">help_outline</mat-icon>
       </mat-panel-description>
     </mat-expansion-panel-header>
+    <app-analysis-graph
+      analysis="kinematic"
+      analysisType="loop"
+      mechProp="Linear Joint Vel"
+      mechPart="b"
+    ></app-analysis-graph>
   </mat-expansion-panel>
 </div>
