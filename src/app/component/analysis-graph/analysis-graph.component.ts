@@ -70,19 +70,22 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
     },
     colors: ['#313aa7', '#ea2b29', '#fdb50e'],
     tooltip: {
-      followCursor: false,
+      // followCursor: false,
       // theme: 'dark',
       x: {
-        show: false,
+        // show: false,
+        formatter: function (val) {
+          return 'T = ' + val;
+        },
       },
       marker: {
-        show: false,
+        // show: false,
       },
       y: {
         title: {
-          formatter: function () {
-            return '';
-          },
+          // formatter: function () {
+          //   return 'T = ';
+          // },
         },
       },
     },
@@ -119,6 +122,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
         text: 'Timesteps',
         offsetY: 55,
         offsetX: -10,
+      },
+      tooltip: {
+        enabled: false,
       },
     },
     yaxis: {
@@ -158,6 +164,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
 
   animationTimestep: number = 0;
   numberOfSeries: number = 0;
+  seriesXHidden: boolean = false;
+  seriesYHidden: boolean = false;
+  seriesZHidden: boolean = false;
 
   ngAfterViewInit(): void {
     //Delay this call by 1ms to make sure the chart is initialized
@@ -165,6 +174,14 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
       if (this.numberOfSeries === 3) {
         this.chart.hideSeries('X');
         this.chart.hideSeries('Y');
+        this.seriesXHidden = true;
+        this.seriesYHidden = true;
+      }
+      if (this.numberOfSeries === 2) {
+        this.seriesZHidden = true;
+      }
+      if (this.numberOfSeries === 1) {
+        this.seriesZHidden = true;
       }
     }, 1);
   }
@@ -188,59 +205,74 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
     //Subscribte to the emitter inside mechanismStateService
     GridComponent.onMechPositionChange.subscribe((data) => {
       this.chart.clearAnnotations();
-      this.chart.addXaxisAnnotation({
-        x: data,
-        borderColor: '#313aa7',
-      });
-      this.chart.addPointAnnotation({
-        x: data,
-        y: this.chartOptions.series![0].data[data],
-        marker: {
-          strokeColor: '#313aa7',
-          shape: 'square',
-        },
-        label: {
+      (!this.seriesYHidden || !this.seriesXHidden || this.seriesZHidden) &&
+        this.chart.addXaxisAnnotation({
+          x: data,
           borderColor: '#313aa7',
-          fillColor: '#000000',
-          orientation: 'horizontal',
-          text: String(this.chartOptions.series![0].data[data]),
-        },
-      });
-      if (this.numberOfSeries < 2) return;
-      this.chart.addPointAnnotation({
-        x: data,
-        y: this.chartOptions.series![1].data[data],
-        marker: {
-          strokeColor: '#ea2b29',
-          shape: 'square',
-        },
-        label: {
-          borderColor: '#ea2b29',
-          fillColor: '#000000',
-          orientation: 'horizontal',
-          text: String(this.chartOptions.series![0].data[data]),
-        },
-      });
-      if (this.numberOfSeries < 3) return;
-      this.chart.addPointAnnotation({
-        x: data,
-        y: this.chartOptions.series![2].data[data],
-        marker: {
-          strokeColor: '#fdb50e',
-          shape: 'square',
-        },
-        label: {
-          borderColor: '#fdb50e',
-          fillColor: '#000000',
-          orientation: 'horizontal',
-          text: String(this.chartOptions.series![0].data[data]),
-        },
-      });
+        });
+
+      !this.seriesXHidden &&
+        this.chart.addPointAnnotation({
+          x: data,
+          y: this.chartOptions.series![0].data[data],
+          marker: {
+            strokeColor: '#313aa7',
+            shape: 'square',
+          },
+          label: {
+            borderColor: '#313aa7',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(this.chartOptions.series![0].data[data]),
+          },
+        });
+
+      !this.seriesYHidden &&
+        this.chart.addPointAnnotation({
+          x: data,
+          y: this.chartOptions.series![1].data[data],
+          marker: {
+            strokeColor: '#ea2b29',
+            shape: 'square',
+          },
+          label: {
+            borderColor: '#ea2b29',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(this.chartOptions.series![1].data[data]),
+          },
+        });
+
+      !this.seriesZHidden &&
+        this.chart.addPointAnnotation({
+          x: data,
+          y: this.chartOptions.series![2].data[data],
+          marker: {
+            strokeColor: '#fdb50e',
+            shape: 'square',
+          },
+          label: {
+            borderColor: '#fdb50e',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(this.chartOptions.series![2].data[data]),
+          },
+        });
     });
   }
 
   toggleSeries(seriesName: string) {
     this.chart.toggleSeries(seriesName);
+    if (seriesName === 'X') {
+      this.seriesXHidden = !this.seriesXHidden;
+    }
+    if (seriesName === 'Y') {
+      this.seriesYHidden = !this.seriesYHidden;
+    }
+    if (seriesName === 'Z') {
+      this.seriesZHidden = !this.seriesZHidden;
+    }
+    this.chart.clearAnnotations();
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
