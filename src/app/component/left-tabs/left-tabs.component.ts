@@ -53,7 +53,7 @@ export class LeftTabsComponent {
         this.openTab = tabID;
       }
     }
-    console.warn(this.openTab);
-    console.warn(this.isOpen);
+    // console.warn(this.openTab);
+    // console.warn(this.isOpen);
   }
 }

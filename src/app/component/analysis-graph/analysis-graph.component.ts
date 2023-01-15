@@ -180,13 +180,12 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   newSubscription: any;
 
-  seriesDataCopy: any = [];
-
   ngOnChanges(changes: SimpleChanges): void {
+    //We don't want to resubscribe to things when the component is first initialized
+    //Since onInit and ngAfterView will be called on initialization, double calling leads to too many subscriptions
     if (changes['mechPart'].isFirstChange()) {
       return;
     }
-    console.log('onChanges');
     this.ngOnDestroy();
     this.ngOnInit();
     this.ngAfterViewInit();
@@ -233,11 +232,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     //Subscribte to the emitter inside mechanismStateService
-    console.log('Subscribed', this.analysis, this.analysisType, this.mechProp, this.mechPart);
     this.newSubscription = GridComponent.onMechPositionChange.subscribe((data) => {
-      console.warn('Subscription callback');
-      console.log(this.seriesXHidden, this.seriesYHidden, this.seriesZHidden);
-
       if (!this.seriesYHidden || !this.seriesXHidden || !this.seriesZHidden) {
         this.chart.clearAnnotations();
         this.chart.addXaxisAnnotation({
@@ -316,10 +311,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   }
 
   ngOnDestroy(): void {
-    console.log('ngOnDestroy');
     if (this.newSubscription) {
       this.newSubscription.unsubscribe();
-      console.log('unsubscribed');
     }
   }
 
@@ -507,8 +500,6 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         return;
     }
 
-    this.seriesDataCopy = seriesData;
-
     this.chartOptions = { ...this.chartOptions, series: seriesData };
     this.chartOptions.yaxis!.title = { ...this.chartOptions.yaxis!.title, text: yAxisTitle };
   }
@@ -519,11 +510,6 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     mechProp: string,
     mechPart: string
   ): [[number[], number[], number[]], string[]] {
-    // console.warn('At determineAnalysis');
-    // console.log(analysis);
-    // console.log(analysisType);
-    // console.log(mechProp);
-    // console.log(mechPart);
     const datum_X: number[] = [];
     const datum_Y: number[] = [];
     const datum_Z: number[] = [];
