@@ -23,6 +23,7 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { join } from 'path';
+import { Observable, Subject } from 'rxjs';
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
 
@@ -88,7 +89,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   static screenCoord: string = '';
 
-  static onMechPositionChange = new EventEmitter<number>();
+  static onMechPositionChange = new Subject<number>();
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -2549,7 +2550,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   static animate(progress: number, animationState?: boolean) {
-    GridComponent.onMechPositionChange.emit(progress);
+    // GridComponent.onMechPositionChange.next(progress);
+    GridComponent.onMechPositionChange.next(progress);
     GridComponent.mechanismTimeStep = progress;
     GridComponent.showPathHolder = !(GridComponent.mechanismTimeStep === 0 && !animationState);
     if (animationState !== undefined) {

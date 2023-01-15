@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChange,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import {
   ChartComponent,
   ApexAxisChartSeries,
@@ -45,7 +55,7 @@ export type ChartOptions = {
   templateUrl: './analysis-graph.component.html',
   styleUrls: ['./analysis-graph.component.scss'],
 })
-export class AnalysisGraphComponent implements OnInit, AfterViewInit {
+export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   public chartOptions: Partial<ChartOptions> = {
     chart: {
       width: '100%', //380
@@ -168,20 +178,40 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
   seriesYHidden: boolean = false;
   seriesZHidden: boolean = false;
 
+  newSubscription: any;
+
+  seriesDataCopy: any = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mechPart'].isFirstChange()) {
+      return;
+    }
+    console.log('onChanges');
+    this.ngOnDestroy();
+    this.ngOnInit();
+    this.ngAfterViewInit();
+  }
+
   ngAfterViewInit(): void {
     //Delay this call by 1ms to make sure the chart is initialized
     setTimeout(() => {
+      this.chart.clearAnnotations();
       if (this.numberOfSeries === 3) {
         this.chart.hideSeries('X');
         this.chart.hideSeries('Y');
         this.seriesXHidden = true;
         this.seriesYHidden = true;
+        this.seriesZHidden = false;
       }
       if (this.numberOfSeries === 2) {
+        this.seriesXHidden = false;
+        this.seriesYHidden = false;
         this.seriesZHidden = true;
       }
       if (this.numberOfSeries === 1) {
-        this.seriesZHidden = true;
+        this.seriesXHidden = true;
+        this.seriesYHidden = true;
+        this.seriesZHidden = false;
       }
     }, 1);
   }
@@ -198,18 +228,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
     //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
 
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'...
-    console.log(this.analysis, this.analysisType, this.mechProp, this.mechPart);
+    // console.log(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     //Subscribte to the emitter inside mechanismStateService
-    GridComponent.onMechPositionChange.subscribe((data) => {
-      this.chart.clearAnnotations();
-      (!this.seriesYHidden || !this.seriesXHidden || this.seriesZHidden) &&
+    console.log('Subscribed', this.analysis, this.analysisType, this.mechProp, this.mechPart);
+    this.newSubscription = GridComponent.onMechPositionChange.subscribe((data) => {
+      console.warn('Subscription callback');
+      console.log(this.seriesXHidden, this.seriesYHidden, this.seriesZHidden);
+
+      if (!this.seriesYHidden || !this.seriesXHidden || !this.seriesZHidden) {
+        this.chart.clearAnnotations();
         this.chart.addXaxisAnnotation({
           x: data,
           borderColor: '#313aa7',
         });
+      }
 
       !this.seriesXHidden &&
         this.chart.addPointAnnotation({
@@ -243,22 +278,49 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
           },
         });
 
-      !this.seriesZHidden &&
-        this.chart.addPointAnnotation({
-          x: data,
-          y: this.chartOptions.series![2].data[data],
-          marker: {
-            strokeColor: '#fdb50e',
-            shape: 'square',
-          },
-          label: {
-            borderColor: '#fdb50e',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(this.chartOptions.series![2].data[data]),
-          },
-        });
+      if (this.numberOfSeries === 3) {
+        !this.seriesZHidden &&
+          this.chart.addPointAnnotation({
+            x: data,
+            y: this.chartOptions.series![2].data[data],
+            marker: {
+              strokeColor: '#fdb50e',
+              shape: 'square',
+            },
+            label: {
+              borderColor: '#fdb50e',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(this.chartOptions.series![2].data[data]),
+            },
+          });
+      } else {
+        //When there is only z, z is the 0th series
+        !this.seriesZHidden &&
+          this.chart.addPointAnnotation({
+            x: data,
+            y: this.chartOptions.series![0].data[data],
+            marker: {
+              strokeColor: '#313aa7',
+              shape: 'square',
+            },
+            label: {
+              borderColor: '#313aa7',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(this.chartOptions.series![0].data[data]),
+            },
+          });
+      }
     });
+  }
+
+  ngOnDestroy(): void {
+    console.log('ngOnDestroy');
+    if (this.newSubscription) {
+      this.newSubscription.unsubscribe();
+      console.log('unsubscribed');
+    }
   }
 
   toggleSeries(seriesName: string) {
@@ -444,6 +506,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
       default:
         return;
     }
+
+    this.seriesDataCopy = seriesData;
 
     this.chartOptions = { ...this.chartOptions, series: seriesData };
     this.chartOptions.yaxis!.title = { ...this.chartOptions.yaxis!.title, text: yAxisTitle };
