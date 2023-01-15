@@ -1,6 +1,6 @@
 import { Injectable, EventEmitter } from '@angular/core';
 import { Force } from '../model/force';
-import { RealJoint } from '../model/joint';
+import { RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
 
 @Injectable({
@@ -16,12 +16,16 @@ export class ActiveObjService {
 
   onActiveObjChange = new EventEmitter<string>();
 
+  fakeUpdateSelectedObj() {
+    this.onActiveObjChange.emit(this.objType);
+  }
+
   updateSelectedObj(newActiveObj: any) {
     if (newActiveObj === undefined) {
       this.objType = 'Nothing';
     } else {
       switch (newActiveObj.constructor) {
-        case RealJoint: {
+        case RevJoint: {
           this.objType = 'Joint';
           this.Joint = newActiveObj;
           break;
@@ -38,19 +42,6 @@ export class ActiveObjService {
         }
       }
     }
-
-    // if (newActiveObj instanceof RealJoint) {
-    //   this.objType = 'Joint';
-    //   this.Joint = newActiveObj;
-    // } else if (newActiveObj instanceof RealLink) {
-    //   this.objType = 'Link';
-    //   this.Link = newActiveObj;
-    // } else if (newActiveObj instanceof Force) {
-    //   this.objType = 'Force';
-    //   this.Force = newActiveObj;
-    // } else {
-    //   this.objType = 'Nothing';
-    // }
     this.onActiveObjChange.emit(this.objType);
   }
 }

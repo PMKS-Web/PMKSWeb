@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterContentInit, AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RealJoint, RevJoint } from 'src/app/model/joint';
 import { RealLink } from 'src/app/model/link';
@@ -14,7 +14,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
   templateUrl: './edit-panel.component.html',
   styleUrls: ['./edit-panel.component.scss'],
 })
-export class EditPanelComponent implements OnInit {
+export class EditPanelComponent implements OnInit, AfterContentInit {
   hideEditPanel() {
     return AnimationBarComponent.animate === true || GridComponent.mechanismTimeStep !== 0;
   }
@@ -51,6 +51,10 @@ export class EditPanelComponent implements OnInit {
     // console.log(this.activeSrv);
     // console.log(this.profileForm);
     this.onChanges();
+  }
+
+  ngAfterContentInit() {
+    this.activeSrv.fakeUpdateSelectedObj();
   }
 
   onChanges(): void {
