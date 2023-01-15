@@ -46,7 +46,7 @@
   <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <title-block
       icon="edit"
-      description="Changing the length or angle will change location of the non-grounded joint to make sure the new length or angle is met. If neither joint is grounded, the second joint (the one that was created last) will be moved."
+      description="Changing the length or angle will change location of the non-grounded joint."
       >{{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
     >
     <input-block
