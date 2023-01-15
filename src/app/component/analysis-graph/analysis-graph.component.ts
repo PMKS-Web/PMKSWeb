@@ -366,6 +366,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit {
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
             seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            this.numberOfSeries = 3;
             break;
           case "Linear Link's CoM Pos":
             yAxisTitle = 'Position (CoM) ' + posLinUnit;

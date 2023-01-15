@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'radio-block',
@@ -10,4 +11,6 @@ export class RadioComponent {
   @Input() option1: string | undefined;
   @Input() option2: string | undefined;
   @Input() option3: string | undefined;
+  @Input() _formControl!: string;
+  @Input() formGroup!: FormGroup;
 }

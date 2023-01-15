@@ -21,6 +21,8 @@ import { ForceSolver } from 'src/app/model/mechanism/force-solver';
 import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { ActiveObjService } from 'src/app/services/active-obj.service';
+import { FormBuilder } from '@angular/forms';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -46,7 +48,7 @@ export type ChartOptions = {
   styleUrls: ['./analysis-panel.component.scss'],
 })
 export class AnalysisPanelComponent {
-  constructor() {
+  constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {
     ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
       GridComponent.joints,
@@ -62,5 +64,11 @@ export class AnalysisPanelComponent {
       GridComponent.links,
       ToolbarComponent.inputAngularVelocity
     );
+
+    this.inputSpeedFormGroup.patchValue({ speed: 'One' });
   }
+
+  inputSpeedFormGroup = this.fb.group({
+    speed: ['', { updateOn: 'change' }],
+  });
 }

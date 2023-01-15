@@ -1,18 +1,16 @@
 <div id="radio-block">
   <div class="row">
     <span class="label"><ng-content></ng-content></span>
-    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help">help</mat-icon>
+    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help"
+      >help</mat-icon
+    >
     <div class="spacer"></div>
   </div>
-  <div class="row">
-    <mat-button-toggle-group *ngIf="this.option3" id="radio-buttons">
-      <mat-button-toggle>{{ this.option1 }}</mat-button-toggle>
-      <mat-button-toggle>{{ this.option2 }}</mat-button-toggle>
-      <mat-button-toggle>{{ this.option3 }}</mat-button-toggle>
-    </mat-button-toggle-group>
-    <mat-button-toggle-group *ngIf="!this.option3" id="radio-buttons">
-      <mat-button-toggle>{{ this.option1 }}</mat-button-toggle>
-      <mat-button-toggle>{{ this.option2 }}</mat-button-toggle>
+  <div class="row" [formGroup]="formGroup">
+    <mat-button-toggle-group id="radio-buttons" [formControlName]="this._formControl">
+      <mat-button-toggle value="One">{{ this.option1 }}</mat-button-toggle>
+      <mat-button-toggle value="Two">{{ this.option2 }}</mat-button-toggle>
+      <mat-button-toggle *ngIf="this.option3" value="Three">{{ this.option3 }}</mat-button-toggle>
     </mat-button-toggle-group>
   </div>
 </div>

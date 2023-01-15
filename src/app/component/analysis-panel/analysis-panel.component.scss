@@ -27,6 +27,11 @@
       // padding-bottom: -100px !important;
     }
 
+    #graph-help {
+      transform: scale(0.75);
+      color: mat.get-color-from-palette($foreground, 'icon');
+    }
+
     // .mat-expansion-panel-header-description {
     //   justify-content: space-between;
     //   align-items: center;
