@@ -606,129 +606,129 @@ export class AnalysisPopupComponent implements OnInit, AfterViewInit {
       case 'fill':
         return link.fill;
       // translate not used, can delete
-      case 'translate':
-        left = link.bound.b1.x;
-        bot = link.bound.b1.y;
-        // TODO: Figure out way to simplify this later
-        if (link.bound.b2.x < left) {
-          left = link.bound.b2.x;
-        }
-        if (link.bound.b3.x < left) {
-          left = link.bound.b3.x;
-        }
-        if (link.bound.b4.x < left) {
-          left = link.bound.b4.x;
-        }
-        if (link.bound.b2.y < bot) {
-          bot = link.bound.b2.y;
-        }
-        if (link.bound.b3.y < bot) {
-          bot = link.bound.b3.y;
-        }
-        if (link.bound.b4.y < bot) {
-          bot = link.bound.b4.y;
-        }
-        center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
-        return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) + ')';
+      // case 'translate':
+        // left = link.bound.b1.x;
+        // bot = link.bound.b1.y;
+        // // TODO: Figure out way to simplify this later
+        // if (link.bound.b2.x < left) {
+        //   left = link.bound.b2.x;
+        // }
+        // if (link.bound.b3.x < left) {
+        //   left = link.bound.b3.x;
+        // }
+        // if (link.bound.b4.x < left) {
+        //   left = link.bound.b4.x;
+        // }
+        // if (link.bound.b2.y < bot) {
+        //   bot = link.bound.b2.y;
+        // }
+        // if (link.bound.b3.y < bot) {
+        //   bot = link.bound.b3.y;
+        // }
+        // if (link.bound.b4.y < bot) {
+        //   bot = link.bound.b4.y;
+        // }
+        // center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
+        // return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) + ')';
       case 'scale':
         return 'scale(' + GridComponent.scaleFactor + ')';
-      case 'transform':
-        left = link.bound.b1.x;
-        bot = link.bound.b1.y;
-        // TODO: Figure out way to simplify this later
-        if (link.bound.b2.x < left) {
-          left = link.bound.b2.x;
-        }
-        if (link.bound.b3.x < left) {
-          left = link.bound.b3.x;
-        }
-        if (link.bound.b4.x < left) {
-          left = link.bound.b4.x;
-        }
-        if (link.bound.b2.y < bot) {
-          bot = link.bound.b2.y;
-        }
-        if (link.bound.b3.y < bot) {
-          bot = link.bound.b3.y;
-        }
-        if (link.bound.b4.y < bot) {
-          bot = link.bound.b4.y;
-        }
-        center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
-
-        top = link.bound.b1.y;
-        if (Math.abs(link.bound.b2.y - top) < 0.001) {
-          bot = link.bound.b4.y;
-        } else {
-          bot = link.bound.b2.y;
-        }
-        const link_height = Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
-        left = link.bound.b1.x;
-        if (Math.abs(link.bound.b2.x - left) < 0.001) {
-          right = link.bound.b4.x;
-        } else {
-          right = link.bound.b2.x;
-        }
-        const link_width = Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
-        // TODO: Need scale factor?? Or does this need to be 1 / AppConstants.scaleFactor?
-        // TODO: Make sure that the conversion for screen grid matches
-        // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * (1 / AppConstants.scaleFactor);
-        // const link_center_y = ((link.bound.b1.y + link.bound.b3.y) / 2) * (1 / AppConstants.scaleFactor);
-        // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * -50;
-        // const link_center_y = ((link.bound.b1.y + link.bound.b3.y) / 2) * -50;
-        const link_center_x = ((left + right) / 2) * (-1 * GridComponent.scaleFactor);
-        const link_center_y = ((top + bot) / 2) * (-1 * GridComponent.scaleFactor);
-        // const link_center_x = 0;
-        // const link_center_y = 0;
-        // const grid_center_x =
-        // const dist_from_center_x = link_center_x - ((1 / AppConstants.scaleFactor) * -1 * this.gridOffset.x);
-        // const dist_from_center_y = link_center_y - ((1 / AppConstants.scaleFactor) * this.gridOffset.y);
-        // const link_center_x = 0;
-        // const link_center_y = 0;
-
-        // const box = GridComponent.canvasSVGElement.getBoundingClientRect();
-        // const grid_width = box.width;
-        // const grid_height = box.height;
-        // const grid_center_x = 528 - GridComponent._gridOffset.x;
-        // const grid_center_y = 470.5 - GridComponent._gridOffset.y;
-        // const grid_center_x = (528 - GridComponent._gridOffset.x) * AppConstants.scaleFactor;
-        // const grid_center_y = (470.5 - GridComponent._gridOffset.y) * AppConstants.scaleFactor;
-        // const x_dist = (grid_center_x - (link_width / 2)) * AppConstants.scaleFactor;
-        // const y_dist = (grid_center_y - (link_height / 2)) * AppConstants.scaleFactor;
-        // const x_dist = (grid_center_x - link_width) * AppConstants.scaleFactor;
-        // const y_dist = (grid_center_y - link_height) * AppConstants.scaleFactor;
-        // const x_dist = ((link_center_x - grid_center_x)) + (link_width / 2);
-        // const y_dist = ((link_center_y - grid_center_y)) + (link_height / 2);
-        // const x_dist = (grid_center_x - link_center_x) * AppConstants.scaleFactor;
-        // const y_dist = (grid_center_y - link_center_y) * AppConstants.scaleFactor;
-        // TODO: Each screen width and height are different. Be sure to pull screens dimensions
-        // const x_dist = link_center_x + dist_from_center_x + (link_width / 2);
-        // const y_dist = link_center_y + dist_from_center_y + (link_height / 2);
-        const x_dist = link_center_x + link_width / 2 + 25;
-        const y_dist = link_center_y + link_height / 2 + 30;
-        // // const x_dist = 0;
-        // const y_dist = 0;
-        // TODO: Be sure to account for the force that is added on the link as well
-
-        return 'translate(' + x_dist + ' ' + y_dist + '), scale(' + GridComponent.scaleFactor + ')';
+      // case 'transform':
+      //   left = link.bound.b1.x;
+      //   bot = link.bound.b1.y;
+      //   // TODO: Figure out way to simplify this later
+      //   if (link.bound.b2.x < left) {
+      //     left = link.bound.b2.x;
+      //   }
+      //   if (link.bound.b3.x < left) {
+      //     left = link.bound.b3.x;
+      //   }
+      //   if (link.bound.b4.x < left) {
+      //     left = link.bound.b4.x;
+      //   }
+      //   if (link.bound.b2.y < bot) {
+      //     bot = link.bound.b2.y;
+      //   }
+      //   if (link.bound.b3.y < bot) {
+      //     bot = link.bound.b3.y;
+      //   }
+      //   if (link.bound.b4.y < bot) {
+      //     bot = link.bound.b4.y;
+      //   }
+      //   center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
+      //
+      //   top = link.bound.b1.y;
+      //   if (Math.abs(link.bound.b2.y - top) < 0.001) {
+      //     bot = link.bound.b4.y;
+      //   } else {
+      //     bot = link.bound.b2.y;
+      //   }
+      //   const link_height = Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
+      //   left = link.bound.b1.x;
+      //   if (Math.abs(link.bound.b2.x - left) < 0.001) {
+      //     right = link.bound.b4.x;
+      //   } else {
+      //     right = link.bound.b2.x;
+      //   }
+      //   const link_width = Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5;
+      //   // TODO: Need scale factor?? Or does this need to be 1 / AppConstants.scaleFactor?
+      //   // TODO: Make sure that the conversion for screen grid matches
+      //   // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * (1 / AppConstants.scaleFactor);
+      //   // const link_center_y = ((link.bound.b1.y + link.bound.b3.y) / 2) * (1 / AppConstants.scaleFactor);
+      //   // const link_center_x = ((link.bound.b1.x + link.bound.b3.x) / 2) * -50;
+      //   // const link_center_y = ((link.bound.b1.y + link.bound.b3.y) / 2) * -50;
+      //   const link_center_x = ((left + right) / 2) * (-1 * GridComponent.scaleFactor);
+      //   const link_center_y = ((top + bot) / 2) * (-1 * GridComponent.scaleFactor);
+      //   // const link_center_x = 0;
+      //   // const link_center_y = 0;
+      //   // const grid_center_x =
+      //   // const dist_from_center_x = link_center_x - ((1 / AppConstants.scaleFactor) * -1 * this.gridOffset.x);
+      //   // const dist_from_center_y = link_center_y - ((1 / AppConstants.scaleFactor) * this.gridOffset.y);
+      //   // const link_center_x = 0;
+      //   // const link_center_y = 0;
+      //
+      //   // const box = GridComponent.canvasSVGElement.getBoundingClientRect();
+      //   // const grid_width = box.width;
+      //   // const grid_height = box.height;
+      //   // const grid_center_x = 528 - GridComponent._gridOffset.x;
+      //   // const grid_center_y = 470.5 - GridComponent._gridOffset.y;
+      //   // const grid_center_x = (528 - GridComponent._gridOffset.x) * AppConstants.scaleFactor;
+      //   // const grid_center_y = (470.5 - GridComponent._gridOffset.y) * AppConstants.scaleFactor;
+      //   // const x_dist = (grid_center_x - (link_width / 2)) * AppConstants.scaleFactor;
+      //   // const y_dist = (grid_center_y - (link_height / 2)) * AppConstants.scaleFactor;
+      //   // const x_dist = (grid_center_x - link_width) * AppConstants.scaleFactor;
+      //   // const y_dist = (grid_center_y - link_height) * AppConstants.scaleFactor;
+      //   // const x_dist = ((link_center_x - grid_center_x)) + (link_width / 2);
+      //   // const y_dist = ((link_center_y - grid_center_y)) + (link_height / 2);
+      //   // const x_dist = (grid_center_x - link_center_x) * AppConstants.scaleFactor;
+      //   // const y_dist = (grid_center_y - link_center_y) * AppConstants.scaleFactor;
+      //   // TODO: Each screen width and height are different. Be sure to pull screens dimensions
+      //   // const x_dist = link_center_x + dist_from_center_x + (link_width / 2);
+      //   // const y_dist = link_center_y + dist_from_center_y + (link_height / 2);
+      //   const x_dist = link_center_x + link_width / 2 + 25;
+      //   const y_dist = link_center_y + link_height / 2 + 30;
+      //   // // const x_dist = 0;
+      //   // const y_dist = 0;
+      //   // TODO: Be sure to account for the force that is added on the link as well
+      //
+      //   return 'translate(' + x_dist + ' ' + y_dist + '), scale(' + GridComponent.scaleFactor + ')';
       // return 'translate(' + (this.gridOffset.x - center_cord) + ' ' + (this.gridOffset.y - center_cord) +  '), scale(' + this.scaleFactor + ')'
       // return 'translate(' + (this.gridOffset.x - center_cord + 60) + ' ' + (this.gridOffset.y - center_cord + 45) +  '), scale(' + this.scaleFactor + ')'
-      case 'height':
-        top = link.bound.b1.y;
-        if (Math.abs(link.bound.b2.y - top) < 0.1) {
-          bot = link.bound.b4.y;
-        } else {
-          bot = link.bound.b2.y;
-        }
-        return Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 60;
-      case 'width':
-        left = link.bound.b1.x;
-        if (Math.abs(link.bound.b2.x - left) < 0.001) {
-          right = link.bound.b4.x;
-        } else {
-          right = link.bound.b2.x;
-        }
-        return Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 50;
+      // case 'height':
+      //   top = link.bound.b1.y;
+      //   if (Math.abs(link.bound.b2.y - top) < 0.1) {
+      //     bot = link.bound.b4.y;
+      //   } else {
+      //     bot = link.bound.b2.y;
+      //   }
+      //   return Math.abs(top - bot) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 60;
+      // case 'width':
+      //   left = link.bound.b1.x;
+      //   if (Math.abs(link.bound.b2.x - left) < 0.001) {
+      //     right = link.bound.b4.x;
+      //   } else {
+      //     right = link.bound.b2.x;
+      //   }
+      //   return Math.abs(right - left) * GridComponent.scaleFactor + (GridComponent.scaleFactor * 2) / 5 + 50;
       default:
         return '?';
     }

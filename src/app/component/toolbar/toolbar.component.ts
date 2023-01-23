@@ -589,27 +589,27 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
       content += `${relatedJointIDs.join('|')},`;
       content += `${relatedForceIDs.join('|')},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.shape},`;
-      if (!(link instanceof RealLink)) {
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null,`;
-        content += `Null`;
-      } else {
-        const bounds = link.bound;
-        const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-        keyArray.forEach((eid, index) => {
-          content += `${roundNumber(eid.x, 3)},`;
-          content +=
-            index === keyArray.length - 1
-              ? `${roundNumber(eid.y, 3)}`
-              : `${roundNumber(eid.y, 3)},`;
-        });
-      }
+      // content += !(link instanceof RealLink) ? `Null,` : `${link.shape},`;
+      // if (!(link instanceof RealLink)) {
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null,`;
+      //   content += `Null`;
+      // } else {
+      //   // const bounds = link.bound;
+      //   // const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+      //   // keyArray.forEach((eid, index) => {
+      //   //   content += `${roundNumber(eid.x, 3)},`;
+      //   //   content +=
+      //   //     index === keyArray.length - 1
+      //   //       ? `${roundNumber(eid.y, 3)}`
+      //   //       : `${roundNumber(eid.y, 3)},`;
+      //   // });
+      // }
       content += '\n';
     });
 
@@ -802,14 +802,14 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
       result += `${relatedJointIDs.join('|')},`;
       result += `${relatedForceIDs.join('|')},`;
-      result += `${link.shape},`;
+      // result += `${link.shape},`;
       // result += `${this.shapeFullnameToNickname(link.uiShape)}`;
-      const bounds = link.bound;
-      const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      keyArray.forEach((eid) => {
-        result += `,${roundNumber(eid.x, 3)}`;
-        result += `,${roundNumber(eid.y, 3)}`;
-      });
+      // const bounds = link.bound;
+      // const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+      // keyArray.forEach((eid) => {
+      //   result += `,${roundNumber(eid.x, 3)}`;
+      //   result += `,${roundNumber(eid.y, 3)}`;
+      // });
       result += '\n';
     });
 
@@ -927,13 +927,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           });
           result += `"${relatedJointIDs.join(',')}",`;
           result += `"${relatedForceIDs.join(',')}",`;
-          result += `${link.shape}`;
-          const bounds = link.bound;
-          const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-          keyArray.forEach((eid) => {
-            result += `,${eid.x}`;
-            result += `,${eid.y}`;
-          });
+          // result += `${link.shape}`;
+          // const bounds = link.bound;
+          // const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
+          // keyArray.forEach((eid) => {
+          //   result += `,${eid.x}`;
+          //   result += `,${eid.y}`;
+          // });
           result += '\n';
           break;
         case Piston:

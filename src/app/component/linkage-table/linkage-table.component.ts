@@ -52,16 +52,14 @@ export class LinkageTableComponent implements OnInit {
           if (!(l instanceof RealLink)) {
             return;
           }
-          if (l.shape !== 'line') {
-            return;
-          }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex((jt) => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
+          // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          l.d = RealLink.getD(l.joints);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -76,16 +74,12 @@ export class LinkageTableComponent implements OnInit {
           if (!(l instanceof RealLink)) {
             return;
           }
-          if (l.shape !== 'line') {
-            return;
-          }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex((jt) => jt.id === joint.id);
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
-          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          l.d = RealLink.getD(l.joints)
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });

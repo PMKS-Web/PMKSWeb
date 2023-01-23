@@ -60,8 +60,6 @@ export class Mechanism {
             return;
           }
           const newLink = new RealLink(l.id, l.joints);
-          newLink.shape = l.shape;
-          newLink.bound = l.bound;
           newLink.d = l.d;
           newLink.CoM = l.CoM;
           newLink.forces = l.forces;
@@ -239,24 +237,9 @@ export class Mechanism {
               //   connectedJoints.push(joint);
               // });
               const pushLink = new RealLink(l.id, connectedJoints);
-              pushLink.shape = l.shape;
-              // TODO: Update this to just one function later...
-              if (pushLink.shape === 'line') {
-                pushLink.bound = RealLink.getBounds(
-                  new Coord(connectedJoints[0].x, connectedJoints[0].y),
-                  new Coord(connectedJoints[1].x, connectedJoints[1].y),
-                  l.shape
-                );
-              } else {
-                pushLink.bound = RealLink.rotateBounds(
-                  l.joints[0],
-                  l.joints[1],
-                  new Coord(connectedJoints[0].x, connectedJoints[0].y),
-                  new Coord(connectedJoints[1].x, connectedJoints[1].y),
-                  l.bound
-                );
-              }
-              pushLink.d = RealLink.getPointsFromBounds(pushLink.bound, pushLink.shape);
+              // TODO: Prob wanna put the realLink.getD within constructor of RealLink
+                pushLink.d = RealLink.getD(pushLink.joints);
+              // pushLink.d = RealLink.getD(l.joints);
               // TODO: When you insert a joint onto a link, be sure to utilize this function call
               pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
               pushLink.forces = l.forces;

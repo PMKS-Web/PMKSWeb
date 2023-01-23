@@ -64,7 +64,7 @@ export class ShapeSelectorComponent implements OnInit {
 
   cancel() {
     if (GridComponent.initialLink !== undefined) {
-      GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+      // GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
       GridComponent.selectedLink.d = GridComponent.initialLink.d;
       GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
     }
@@ -74,22 +74,9 @@ export class ShapeSelectorComponent implements OnInit {
 
   revert() {
     // TODO: Fix a bug where a binary link returns bound when it shouldn't
-    GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
+    // GridComponent.selectedLink.bound = GridComponent.initialLink.bound;
     GridComponent.selectedLink.d = GridComponent.initialLink.d;
     GridComponent.selectedLink.CoM = GridComponent.initialLink.CoM;
-    GridComponent.updateMechanism();
-  }
-
-  changeShape(shape: Shape) {
-    GridComponent.selectedLink.shape = shape;
-    GridComponent.selectedLink.bound = RealLink.getBounds(
-      new Coord(GridComponent.selectedLink.joints[0].x, GridComponent.selectedLink.joints[0].y),
-      new Coord(GridComponent.selectedLink.joints[1].x, GridComponent.selectedLink.joints[1].y),
-      shape
-    );
-    GridComponent.selectedLink.d = RealLink.getPointsFromBounds(GridComponent.selectedLink.bound, shape);
-    // TODO: When you insert a joint onto a link, be sure to utilize this function call
-    GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(GridComponent.selectedLink.joints);
     GridComponent.updateMechanism();
   }
 }
