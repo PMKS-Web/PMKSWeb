@@ -722,7 +722,13 @@ export class RealLink extends Link {
       // if (desiredJointsIDs.length > 1) {
       //   return desiredJointsIDs;
       // }
-      const secondRow = findBiggestAngle(firstRow[0] as RealJoint, allJoints as RealJoint[]);
+      let secondRow: Joint[];
+      if (desiredJointsIDs.indexOf(firstRow[0].id) === -1) {
+        secondRow = findBiggestAngle(firstRow[0] as RealJoint, allJoints as RealJoint[]);
+      } else {
+        secondRow = findBiggestAngle(firstRow[1] as RealJoint, allJoints as RealJoint[]);
+      }
+
       const desiredJoint = determineMatch(joint.id, secondRow);
       if (desiredJoint !== '') { // should this be desiredJoint or desiredJointIDs
         desiredJointsIDs += desiredJoint.id;

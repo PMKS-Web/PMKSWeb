@@ -424,7 +424,7 @@ export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
   if (allJoints.length === 2) {
     return [allJoints[0], allJoints[1]];
   }
-  const curJoint = joint.connectedJoints[0] as RealJoint;
+  const curJoint = allJoints.find(j => joint.id === j.id) as RealJoint;
   let biggestAngle = 0;
   // TODO: Change this where desiredJoint1 and desiredJoint2 are not same
   let desiredJoint1: Joint = curJoint;
