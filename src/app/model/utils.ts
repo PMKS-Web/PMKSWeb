@@ -228,6 +228,7 @@ export function getAngle(j1: Coord, j2: Coord) {
   return Math.atan2(dy, dx);
 }
 
+// same as getEuclideandistance... :P
 export function getDistance(j1: Coord, j2: Coord) {
   const dx = j2.x - j1.x;
   const dy = j2.y - j1.y;
@@ -490,3 +491,36 @@ export function insertStringWithinString(a: string, index: number, b: string) {
 export function pullStringWithinString(a: string, firstIndex: number, secondIndex: number) {
   return a.substring(firstIndex, secondIndex);
 }
+
+// https://stackoverflow.com/questions/13937782/calculating-the-point-of-intersection-of-two-lines
+export function line_intersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number)
+{
+  var ua, ub, denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
+  if (denom == 0) {
+    return [-9999, -9999];
+    // return null;
+  }
+  ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
+  ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
+  return [x1 + ua * (x2 - x1), y1 + ua * (y2 - y1)];
+  // return {
+  //   x: x1 + ua * (x2 - x1),
+  //   y: y1 + ua * (y2 - y1),
+  //   seg1: ua >= 0 && ua <= 1,
+  //   seg2: ub >= 0 && ub <= 1
+  // };
+}
+
+
+// returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
+// function intersects(a,b,c,d,p,q,r,s) {
+//   var det, gamma, lambda;
+//   det = (c - a) * (s - q) - (r - p) * (d - b);
+//   if (det === 0) {
+//     return false;
+//   } else {
+//     lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+//     gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+//     return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+//   }
+// };

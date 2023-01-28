@@ -7,7 +7,7 @@ import {
   getAngle,
   getDistance, getPosition,
   getXDistance,
-  getYDistance, insertStringWithinString, pullStringWithinString,
+  getYDistance, insertStringWithinString, line_intersect, pullStringWithinString,
   radToDeg,
   roundNumber,
 } from './utils';
@@ -700,7 +700,6 @@ export class RealLink extends Link {
   static getD(allJoints: Joint[]) {
     const hi = 'hello :)';
     let d = '';
-    // Setup
     // determine path of link (https://stackoverflow.com/questions/21778506/finding-largest-subset-of-points-forming-a-convex-polygon)
     // 1st option: have set axis and extract members from this axis
     // 2nd option: Create link with the biggest area
@@ -715,13 +714,6 @@ export class RealLink extends Link {
       }
     }
     function findDesiredJointIDOrder(joint: Joint, allJoints: Joint[], firstRow: RealJoint[], desiredJointsIDs: string) {
-      // TODO: Don't think second part is necessary since this will never happen
-      // if (desiredJointsIDs.length > 1 && desiredJointsIDs[desiredJointsIDs.length -1] === desiredJointsIDs[0]) {
-      //   return desiredJointsIDs;
-      // }
-      // if (desiredJointsIDs.length > 1) {
-      //   return desiredJointsIDs;
-      // }
       let secondRow: Joint[];
       if (desiredJointsIDs.indexOf(firstRow[0].id) === -1) {
         secondRow = findBiggestAngle(firstRow[0] as RealJoint, allJoints as RealJoint[]);
@@ -816,7 +808,7 @@ export class RealLink extends Link {
       }
       return d;
     }
-    function determineC(d: string, index: number, point1?: Coord, point2?: Coord) : [string, Coord, Coord] {
+    function determineC(d: string, index: number, desiredJoint: Joint, point1?: Coord, point2?: Coord) : [string, Coord, Coord] {
       let point3: Coord;
       let point4: Coord;
 
@@ -863,12 +855,15 @@ export class RealLink extends Link {
       const angle1 = Math.atan2(point2.y - point1.y, point2.x - point1.x);
       const angle2 = Math.atan2(point4.y - point3.y, point4.x - point3.x);
 
-      // TODO: Figure out logic how to determine constant to use. Sometimes better with 0.1 or 0.3
-      const fillet_radius = 0.3;
+      const [x_intersect, y_intersect] = line_intersect(point1.x, point1.y, point2.x, point2.y, point3.x, point3.y, point4.x, point4.y);
+      let fillet_radius: number;
+        fillet_radius = getDistance(desiredJoint, new Coord(x_intersect, y_intersect)) / 3;
+      if (fillet_radius > 0.3) {
+          fillet_radius = 0.3;
+        }
+
       const bez_point1 = new Coord(fillet_radius * Math.cos(angle1) + point2.x, fillet_radius * Math.sin(angle1) + point2.y);
       const bez_point2 = new Coord(fillet_radius * -Math.cos(angle2) + point3.x, fillet_radius * -Math.sin(angle2) + point3.y);
-      // const bez_point1 = new Coord(0.3 * Math.cos(angle1) + point2.x, 0.3 * Math.sin(angle1) + point2.y);
-      // const bez_point2 = new Coord(0.3 * -Math.cos(angle2) + point3.x, 0.3 * -Math.sin(angle2) + point3.y);
       // find point within d that contains the desired C and insert
       const desiredIndex = getPosition(d, 'C', index + 1) + 2;
       d = insertStringWithinString(d, desiredIndex, bez_point1.x.toString() + ' ' + bez_point1.y.toString() + ' ' +
@@ -897,10 +892,12 @@ export class RealLink extends Link {
     let point1: Coord;
     let point2: Coord;
     for (let i = 0;  i < desiredJointsIDs.length; i++) {
+      const desiredJointID = desiredJointsIDs[(i + 1) % desiredJointsIDs.length];
+      const desiredJoint = allJoints.find(j => j.id ===desiredJointID);
       if (i === 0) {
-        [d, point1, point2] = determineC(d, i);
+        [d, point1, point2] = determineC(d, i, desiredJoint!);
       } else {
-        [d, point1, point2] = determineC(d, i, point1!, point2!);
+        [d, point1, point2] = determineC(d, i, desiredJoint!, point1!, point2!);
       }
     }
     return d;
