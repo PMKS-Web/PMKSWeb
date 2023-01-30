@@ -58,7 +58,6 @@
         [attr.d]="getLinkProp(link, 'd')"
         [attr.id]="link.id"
         [attr.fill]="getLinkProp(link, 'fill')"
-        style="opacity: 0.8"
       ></path>
     </g>
     <g id="jointHolder" style="transform: scaleY(-1)">
@@ -403,15 +402,19 @@
     <g id="activeObjectHighlight" style="transform: scaleY(-1); pointer-events: none">
       <circle
         *ngIf="activeObjService.objType == 'Joint'"
-        [attr.r]="0.5"
+        [attr.r]="0.01"
         [attr.cx]="activeObjService.Joint.x"
         [attr.cy]="activeObjService.Joint.y"
       />
 
+      <!-- <filter id="dilate">
+        <feMorphology operator="dilate" in="SourceGraphic" radius="1" />
+      </filter> -->
+
       <path
         *ngIf="activeObjService.objType == 'Link'"
         [attr.d]="findEnlargedLinkHelper()"
-        stroke-width="5"
+        stroke-width="0.5"
       ></path>
     </g>
   </g>
@@ -470,12 +473,6 @@
       <rect x="400" y="400" width="140" height="20"></rect>
       <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
         Attach Tracer Point
-      </text>
-    </g>
-    <g class="menu-entry" id="menuEntryEditShape" (click)="editShape()">
-      <rect x="400" y="400" width="140" height="20"></rect>
-      <text x="400" y="400" dx="15" dy="15" style="fill: steelblue; font-size: 13px">
-        Edit Shape
       </text>
     </g>
     <g class="menu-entry" id="menuEntryDeleteLink" (click)="deleteLink()">

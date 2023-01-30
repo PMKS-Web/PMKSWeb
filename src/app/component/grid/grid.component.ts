@@ -179,6 +179,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   findEnlargedLinkHelper() {
+    return this.getLinkProp(this.activeObjService.Link, 'd');
     // console.log(this.activeObjService.Link.bound);
     // return RealLink.getPointsFromBounds(
     //   this.activeObjService.Link.bound,
@@ -783,12 +784,12 @@ export class GridComponent implements OnInit, AfterViewInit {
                 //   screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
                 //   screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
                 // } else {
-                  screenX = Number(
-                    GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x')
-                  );
-                  screenY = Number(
-                    GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y')
-                  );
+                screenX = Number(
+                  GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x')
+                );
+                screenY = Number(
+                  GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y')
+                );
                 // }
                 startCoord = GridComponent.screenToGrid(screenX, screenY);
                 const endCoordRaw = GridComponent.getMousePosition($event);
@@ -1216,7 +1217,6 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.contextMenuAddLinkOntoLink.style.display = 'none';
     GridComponent.contextMenuAddForce.style.display = 'none';
     GridComponent.contextMenuAddTracerPoint.style.display = 'none';
-    GridComponent.contextMenuEditShape.style.display = 'none';
     GridComponent.contextMenuDeleteLink.style.display = 'none';
     GridComponent.contextMenuChangeForceDirection.style.display = 'none';
     GridComponent.contextMenuChangeForceLocal.style.display = 'none';
@@ -1538,29 +1538,10 @@ export class GridComponent implements OnInit, AfterViewInit {
       case 'link':
         const link = thing;
         GridComponent.selectedLink = link;
-        if (link.shape === Shape.line) {
-          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 0, 0);
-          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 20, 20);
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 40, 40);
-        } else {
-          this.showcaseContextMenu(
-            GridComponent.contextMenuAddLinkOntoLink,
-            offsetX,
-            offsetY,
-            0,
-            0
-          );
-          this.showcaseContextMenu(
-            GridComponent.contextMenuAddTracerPoint,
-            offsetX,
-            offsetY,
-            20,
-            20
-          );
-          this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 40, 40);
-          this.showcaseContextMenu(GridComponent.contextMenuEditShape, offsetX, offsetY, 60, 60);
-          this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 80, 80);
-        }
+        this.showcaseContextMenu(GridComponent.contextMenuAddLinkOntoLink, offsetX, offsetY, 0, 0);
+        this.showcaseContextMenu(GridComponent.contextMenuAddTracerPoint, offsetX, offsetY, 20, 20);
+        this.showcaseContextMenu(GridComponent.contextMenuAddForce, offsetX, offsetY, 40, 40);
+        this.showcaseContextMenu(GridComponent.contextMenuDeleteLink, offsetX, offsetY, 60, 60);
         break;
       case 'force':
         // const force = thing;
@@ -1912,13 +1893,9 @@ export class GridComponent implements OnInit, AfterViewInit {
   createForce($event: MouseEvent) {
     this.disappearContext();
     let startCoord: Coord;
-      const screenX = Number(
-        GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x')
-      );
-      const screenY = Number(
-        GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y')
-      );
-      startCoord = GridComponent.screenToGrid(screenX, screenY);
+    const screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
+    startCoord = GridComponent.screenToGrid(screenX, screenY);
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) {
       return;
@@ -2165,8 +2142,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
     // TODO: Determine how to optimize this so screen is more fluid
     if (GridComponent.selectedForceEndPoint === 'startPoint') {
-        selectedForce.startCoord.x = trueCoord.x;
-        selectedForce.startCoord.y = trueCoord.y;
+      selectedForce.startCoord.x = trueCoord.x;
+      selectedForce.startCoord.y = trueCoord.y;
     } else {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;

@@ -25,7 +25,8 @@
   }
 
   #activeObjectHighlight {
-    fill: mat.get-color-from-palette($primary-palette, 500);
+    fill: mat.get-color-from-palette($accent-palette, 500);
+    stroke: mat.get-color-from-palette($accent-palette, 500);
     opacity: 0.3;
   }
 
