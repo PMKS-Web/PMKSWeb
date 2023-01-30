@@ -20,6 +20,7 @@ import { Coord } from '../../model/coord';
 import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
+import { RightPanelComponent } from '../right-panel/right-panel.component';
 const parseCSV = require('papaparse');
 
 @Component({
@@ -28,6 +29,15 @@ const parseCSV = require('papaparse');
   styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
+  openRightPanelEquations() {
+    RightPanelComponent.tabClicked(2);
+  }
+  openRightPanelHelp() {
+    RightPanelComponent.tabClicked(3);
+  }
+  openRightPanelSettings() {
+    RightPanelComponent.tabClicked(1);
+  }
   animate: boolean = false;
 
   static inputAngularVelocity: number = 10;

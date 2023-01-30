@@ -18,6 +18,7 @@
 @use 'src/app/component/blocks/blocks.common.scss' as blocks-common;
 @use 'src/app/component/analysis-panel/analysis-panel.component.scss' as analysis-panel;
 @use 'src/app/component/analysis-graph/analysis-graph.component.scss' as analysis-graph;
+@use 'src/app/component/right-panel/right-panel.component.scss' as right-panel;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -45,6 +46,7 @@ $my-theme: mat.define-light-theme(
 @include edit-panel.css($my-theme);
 @include analysis-panel.css($my-theme);
 @include analysis-graph.css($my-theme);
+@include right-panel.css($my-theme);
 
 @include blocks-common.css($my-theme);
 @include panel-section.css($my-theme);

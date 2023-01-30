@@ -1,0 +1,22 @@
+<div>
+  <div
+    [@openClose]="getIsOpen() ? (getOpenTab() === 1 ? 'open' : 'openWide') : 'closed'"
+    id="rightPanel"
+  >
+    <div *ngIf="getOpenTab() === 1" class="page1">
+      <p style="margin: 30px">
+        Settings! This page is not ready yet. Here is what this screen could look like:
+      </p>
+    </div>
+    <div *ngIf="getOpenTab() === 2" class="page2">
+      <p style="margin: 30px">
+        Equations! This page is not ready yet. Here is what this screen could look like:
+      </p>
+    </div>
+    <div *ngIf="getOpenTab() === 3" class="page3">
+      <p style="margin: 30px">
+        Help! This page is not ready yet. Here is what this screen could look like:
+      </p>
+    </div>
+  </div>
+</div>
