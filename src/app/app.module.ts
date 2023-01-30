@@ -32,6 +32,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { AnalysisPanelComponent } from './component/analysis-panel/analysis-panel.component';
 import { AnalysisGraphComponent } from './component/analysis-graph/analysis-graph.component';
 import { RightPanelComponent } from './component/right-panel/right-panel.component';
+import { SettingsPanelComponent } from './component/settings-panel/settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -58,6 +59,7 @@ import { RightPanelComponent } from './component/right-panel/right-panel.compone
     AnalysisPanelComponent,
     AnalysisGraphComponent,
     RightPanelComponent,
+    SettingsPanelComponent,
   ],
   imports: [
     BrowserModule,
