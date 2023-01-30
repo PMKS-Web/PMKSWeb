@@ -4,7 +4,7 @@
     <table id="shape-selector-table">
       <tr *ngFor="let shape of shapes">
         <td style="height: 120px; border-bottom: 1px solid black; text-align: center" class="shape-on-wrapper">
-          <img src="{{ getURL(shape) }}" (click)="changeShape(shape)" />
+          <img src="{{ getURL(shape) }}"/>
         </td>
       </tr>
     </table>

@@ -158,7 +158,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // remove this if this is possible
   private static selectedJoint: RealJoint;
   static selectedLink: RealLink;
-  static selectedBound: string;
+  // static selectedBound: string;
   private static initialLinkMouseCoord: Coord;
   private static selectedForce: Force;
   private static selectedForceEndPoint: string;
@@ -180,11 +180,11 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   findEnlargedLinkHelper() {
     // console.log(this.activeObjService.Link.bound);
-    return RealLink.getPointsFromBounds(
-      this.activeObjService.Link.bound,
-      this.activeObjService.Link.shape,
-      0.5
-    );
+    // return RealLink.getPointsFromBounds(
+    //   this.activeObjService.Link.bound,
+    //   this.activeObjService.Link.shape,
+    //   0.5
+    // );
   }
 
   ngOnInit(): void {
@@ -769,7 +769,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.selectedLink.id = GridComponent.selectedLink.id.concat(joint1.id);
                 this.mergeToJoints([joint1, joint2]);
                 this.mergeToLinks([link]);
-
+                GridComponent.selectedLink.d = RealLink.getD(GridComponent.selectedLink.joints);
                 GridComponent.updateMechanism();
                 GridComponent.gridStates = gridStates.waiting;
                 GridComponent.linkStates = linkStates.waiting;
@@ -779,17 +779,17 @@ export class GridComponent implements OnInit, AfterViewInit {
                 let startCoord = new Coord(0, 0);
                 let screenX: number;
                 let screenY: number;
-                if (GridComponent.selectedLink.shape === Shape.line) {
-                  screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
-                  screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
-                } else {
+                // if (GridComponent.selectedLink.shape === Shape.line) {
+                //   screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
+                //   screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
+                // } else {
                   screenX = Number(
                     GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x')
                   );
                   screenY = Number(
                     GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y')
                   );
-                }
+                // }
                 startCoord = GridComponent.screenToGrid(screenX, screenY);
                 const endCoordRaw = GridComponent.getMousePosition($event);
                 if (endCoordRaw === undefined) {
@@ -943,7 +943,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 }
                 if (thing !== undefined) {
                   GridComponent.linkStates = linkStates.resizing;
-                  GridComponent.selectedBound = thing;
+                  // GridComponent.selectedBound = thing;
                 } else {
                   GridComponent.linkStates = linkStates.dragging;
                   const rawCoord = GridComponent.getMousePosition($event)!;
@@ -1083,20 +1083,9 @@ export class GridComponent implements OnInit, AfterViewInit {
 
         const offsetX = trueCoord.x - GridComponent.initialLinkMouseCoord.x;
         const offsetY = trueCoord.y - GridComponent.initialLinkMouseCoord.y;
-        GridComponent.selectedLink.bound.b1.x += offsetX;
-        GridComponent.selectedLink.bound.b1.y += offsetY;
-        GridComponent.selectedLink.bound.b2.x += offsetX;
-        GridComponent.selectedLink.bound.b2.y += offsetY;
-        GridComponent.selectedLink.bound.b3.x += offsetX;
-        GridComponent.selectedLink.bound.b3.y += offsetY;
-        GridComponent.selectedLink.bound.b4.x += offsetX;
-        GridComponent.selectedLink.bound.b4.y += offsetY;
         GridComponent.initialLinkMouseCoord.x = trueCoord.x;
         GridComponent.initialLinkMouseCoord.y = trueCoord.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
-          GridComponent.selectedLink.bound,
-          GridComponent.selectedLink.shape
-        );
+        GridComponent.selectedLink.d = RealLink.getD(GridComponent.selectedLink.joints);
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(
           GridComponent.selectedLink.joints
         );
@@ -1119,117 +1108,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         let b1, closest_b, b2, b3, b4, b5: number;
 
         const typeOfBoundToCoordMap = new Map<string, Coord>();
-        let fixedBound: string;
-
-        switch (GridComponent.selectedBound) {
-          case 'b1':
-            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b3);
-            fixedBound = 'b3';
-            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b1);
-            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b2);
-            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b4);
-            break;
-          case 'b2':
-            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b4);
-            fixedBound = 'b4';
-            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b2);
-            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b1);
-            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b3);
-            break;
-          case 'b3':
-            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b1);
-            fixedBound = 'b1';
-            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b3);
-            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b2);
-            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b4);
-            break;
-          case 'b4':
-            typeOfBoundToCoordMap.set('fixed', GridComponent.selectedLink.bound.b2);
-            fixedBound = 'b2';
-            typeOfBoundToCoordMap.set('drag', GridComponent.selectedLink.bound.b4);
-            typeOfBoundToCoordMap.set('sideCoord1', GridComponent.selectedLink.bound.b1);
-            typeOfBoundToCoordMap.set('sideCoord2', GridComponent.selectedLink.bound.b3);
-            break;
-          default:
-            fixedBound = 'none';
-            const centerx =
-              (GridComponent.selectedLink.bound.b1.x +
-                GridComponent.selectedLink.bound.b2.x +
-                GridComponent.selectedLink.bound.b3.x +
-                GridComponent.selectedLink.bound.b4.x) /
-              4;
-            const centery =
-              (GridComponent.selectedLink.bound.b1.y +
-                GridComponent.selectedLink.bound.b2.y +
-                GridComponent.selectedLink.bound.b3.y +
-                GridComponent.selectedLink.bound.b4.y) /
-              4;
-
-            const dox = GridComponent.selectedLink.bound.b1.x - centerx;
-            const doy = GridComponent.selectedLink.bound.b1.y - centery;
-            const orotation = Math.atan2(doy, dox);
-
-            const dnx = trueCoord.x - centerx;
-            const dny = trueCoord.y - centery;
-            const distn = Math.sqrt(dox * dox + doy * doy);
-            const nrotation = Math.atan2(dny, dnx);
-
-            const drotation = nrotation - orotation;
-
-            const d1x = GridComponent.selectedLink.bound.b1.x - centerx;
-            const d1y = GridComponent.selectedLink.bound.b1.y - centery;
-            const rot1 = Math.atan2(d1y, d1x);
-            const xc1 = Math.cos(rot1 + drotation) * distn;
-            const yc1 = Math.sin(rot1 + drotation) * distn;
-            b1n = new Coord(centerx + xc1, centery + yc1);
-
-            const d2x = GridComponent.selectedLink.bound.b2.x - centerx;
-            const d2y = GridComponent.selectedLink.bound.b2.y - centery;
-            const rot2 = Math.atan2(d2y, d2x);
-            const xc2 = Math.cos(rot2 + drotation) * distn;
-            const yc2 = Math.sin(rot2 + drotation) * distn;
-            b2n = new Coord(centerx + xc2, centery + yc2);
-
-            const d3x = GridComponent.selectedLink.bound.b3.x - centerx;
-            const d3y = GridComponent.selectedLink.bound.b3.y - centery;
-            const rot3 = Math.atan2(d3y, d3x);
-            const xc3 = Math.cos(rot3 + drotation) * distn;
-            const yc3 = Math.sin(rot3 + drotation) * distn;
-            b3n = new Coord(centerx + xc3, centery + yc3);
-
-            const d4x = GridComponent.selectedLink.bound.b4.x - centerx;
-            const d4y = GridComponent.selectedLink.bound.b4.y - centery;
-            const rot4 = Math.atan2(d4y, d4x);
-            const xc4 = Math.cos(rot4 + drotation) * distn;
-            const yc4 = Math.sin(rot4 + drotation) * distn;
-            b4n = new Coord(centerx + xc4, centery + yc4);
-
-            arrow5n = new Coord(centerx, centery);
-
-            // TODO: Determine new logic for this since there can't be return here...
-            arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
-            arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
-            arrow5n = new Coord(arrow5n_x, arrow5n_y);
-            GridComponent.selectedLink.bound.b1.x = b1n.x;
-            GridComponent.selectedLink.bound.b1.y = b1n.y;
-            GridComponent.selectedLink.bound.b2.x = b2n.x;
-            GridComponent.selectedLink.bound.b2.y = b2n.y;
-            GridComponent.selectedLink.bound.b3.x = b3n.x;
-            GridComponent.selectedLink.bound.b3.y = b3n.y;
-            GridComponent.selectedLink.bound.b4.x = b4n.x;
-            GridComponent.selectedLink.bound.b4.y = b4n.y;
-            GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
-            GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-            GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
-              GridComponent.selectedLink.bound,
-              GridComponent.selectedLink.shape
-            );
-            GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(
-              GridComponent.selectedLink.joints
-            );
-            GridComponent.selectedLink.updateCoMDs();
-            return;
-        }
 
         // TOOD: Put this within function call to do all this logic
         const fixedCoord = typeOfBoundToCoordMap.get('fixed')!;
@@ -1262,56 +1140,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         side_coord_x_2 = determineX(m4, b4, m5, b5);
         side_coord_y_2 = determineY(side_coord_x_2, m4, b4);
 
-        switch (fixedBound) {
-          case 'b1':
-            b1n = new Coord(fixedCoord.x, fixedCoord.y);
-            b2n = new Coord(side_coord_x_1, side_coord_y_1);
-            b3n = new Coord(drag_coord_x, drag_coord_y);
-            b4n = new Coord(side_coord_x_2, side_coord_y_2);
-            break;
-          case 'b2':
-            b1n = new Coord(side_coord_x_1, side_coord_y_1);
-            b2n = new Coord(fixedCoord.x, fixedCoord.y);
-            b3n = new Coord(side_coord_x_2, side_coord_y_2);
-            b4n = new Coord(drag_coord_x, drag_coord_y);
-            break;
-          case 'b3':
-            b1n = new Coord(drag_coord_x, drag_coord_y);
-            b2n = new Coord(side_coord_x_1, side_coord_y_1);
-            b3n = new Coord(fixedCoord.x, fixedCoord.y);
-            b4n = new Coord(side_coord_x_2, side_coord_y_2);
-            break;
-          case 'b4':
-            b1n = new Coord(side_coord_x_1, side_coord_y_1);
-            b2n = new Coord(drag_coord_x, drag_coord_y);
-            b3n = new Coord(side_coord_x_2, side_coord_y_2);
-            b4n = new Coord(fixedCoord.x, fixedCoord.y);
-            break;
-          default:
-            // TODO: Adjust logic when you determine arrow position
-            b1n = new Coord(side_coord_x_1, side_coord_y_1);
-            b2n = new Coord(drag_coord_x, drag_coord_y);
-            b3n = new Coord(side_coord_x_2, side_coord_y_2);
-            b4n = new Coord(fixedCoord.x, fixedCoord.y);
-            break;
-        }
-        arrow5n_x = (b1n.x + b2n.x + b3n.x + b4n.x) / 4;
-        arrow5n_y = (b1n.y + b2n.y + b3n.y + b4n.y) / 4;
-        arrow5n = new Coord(arrow5n_x, arrow5n_y);
-        GridComponent.selectedLink.bound.b1.x = b1n.x;
-        GridComponent.selectedLink.bound.b1.y = b1n.y;
-        GridComponent.selectedLink.bound.b2.x = b2n.x;
-        GridComponent.selectedLink.bound.b2.y = b2n.y;
-        GridComponent.selectedLink.bound.b3.x = b3n.x;
-        GridComponent.selectedLink.bound.b3.y = b3n.y;
-        GridComponent.selectedLink.bound.b4.x = b4n.x;
-        GridComponent.selectedLink.bound.b4.y = b4n.y;
-        GridComponent.selectedLink.bound.arrow.x = arrow5n.x;
-        GridComponent.selectedLink.bound.arrow.y = arrow5n.y;
-        GridComponent.selectedLink.d = RealLink.getPointsFromBounds(
-          GridComponent.selectedLink.bound,
-          GridComponent.selectedLink.shape
-        );
         GridComponent.selectedLink.CoM = RealLink.determineCenterOfMass(
           GridComponent.selectedLink.joints
         );
@@ -1773,8 +1601,10 @@ export class GridComponent implements OnInit, AfterViewInit {
   addJoint() {
     this.disappearContext();
     // const newJoint = this.createRevJoint()
-    const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
-    const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
+    // const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
+    // const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
+    const screenX = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x'));
+    const screenY = Number(GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y'));
     const coord = GridComponent.screenToGrid(screenX, screenY);
     // TODO: Add logic to add joint to selectedLink. Also, add adjacent joint to tracer joint
     const newId = this.determineNextLetter();
@@ -1789,6 +1619,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     newJoint.links.push(GridComponent.selectedLink);
     GridComponent.selectedLink.joints.push(newJoint);
     GridComponent.selectedLink.id += newJoint.id;
+    GridComponent.selectedLink.d = RealLink.getD(GridComponent.selectedLink.joints);
     GridComponent.joints.push(newJoint);
     GridComponent.updateMechanism();
   }
@@ -1974,10 +1805,14 @@ export class GridComponent implements OnInit, AfterViewInit {
       }
     });
     GridComponent.joints.splice(jointIndex, 1);
+    if (GridComponent.selectedLink !== undefined) {
+      GridComponent.selectedLink.d = RealLink.getD(GridComponent.selectedLink.joints);
+    }
     GridComponent.updateMechanism();
   }
 
   //This is only used for context menu link creation
+  // TODO: This should all be done within HTML and not within TS, but do this last when cleaning up code
   createLink($event: MouseEvent, gridOrJoint: string) {
     this.disappearContext();
     let startX: number;
@@ -2077,11 +1912,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   createForce($event: MouseEvent) {
     this.disappearContext();
     let startCoord: Coord;
-    if (GridComponent.selectedLink.shape === Shape.line) {
-      const screenX = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('x'));
-      const screenY = Number(GridComponent.contextMenuAddForce.children[0].getAttribute('y'));
-      startCoord = GridComponent.screenToGrid(screenX, screenY);
-    } else {
       const screenX = Number(
         GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('x')
       );
@@ -2089,7 +1919,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.contextMenuAddLinkOntoLink.children[0].getAttribute('y')
       );
       startCoord = GridComponent.screenToGrid(screenX, screenY);
-    }
     const mouseRawPos = GridComponent.getMousePosition($event);
     if (mouseRawPos === undefined) {
       return;
@@ -2115,7 +1944,6 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedLink.id,
       GridComponent.selectedLink.joints
     );
-    GridComponent.initialLink.bound = GridComponent.selectedLink.bound;
     GridComponent.initialLink.d = GridComponent.selectedLink.d;
     GridComponent.initialLink.CoM = GridComponent.selectedLink.CoM;
     GridComponent.showcaseShapeSelector = !GridComponent.showcaseShapeSelector;
@@ -2125,12 +1953,14 @@ export class GridComponent implements OnInit, AfterViewInit {
     //Selected means selected in the activeObj Service
     this.disappearContext();
     // console.warn(this.activeObjService.Link);
-    const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+    // const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+    const linkIndex = GridComponent.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
     GridComponent.links[linkIndex].joints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
       }
-      const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+      const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
+      // const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
       j.links.splice(delLinkIndex, 1);
     });
     for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
@@ -2277,19 +2107,11 @@ export class GridComponent implements OnInit, AfterViewInit {
           if (!(l instanceof RealLink)) {
             return;
           }
-          if (l.shape !== Shape.line) {
-            return;
-          }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-          l.bound = RealLink.getBounds(
-            new Coord(l.joints[0].x, l.joints[0].y),
-            new Coord(l.joints[1].x, l.joints[1].y),
-            Shape.line
-          );
-          l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+          l.d = RealLink.getD(l.joints);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();
@@ -2327,12 +2149,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             const jointIndex = l.joints.findIndex((jt) => jt.id === j.id);
             l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
             l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-            l.bound = RealLink.getBounds(
-              new Coord(l.joints[0].x, l.joints[0].y),
-              new Coord(l.joints[1].x, l.joints[1].y),
-              Shape.line
-            );
-            l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
+            l.d = RealLink.getD(l.joints);
             l.CoM = RealLink.determineCenterOfMass(l.joints);
             l.updateCoMDs();
             l.forces.forEach((f) => {
@@ -2348,29 +2165,8 @@ export class GridComponent implements OnInit, AfterViewInit {
   private static dragForce(selectedForce: Force, trueCoord: Coord) {
     // TODO: Determine how to optimize this so screen is more fluid
     if (GridComponent.selectedForceEndPoint === 'startPoint') {
-      if (selectedForce.link.shape === 'line') {
-        const jointOne = selectedForce.link.joints[0];
-        const jointTwo = selectedForce.link.joints[1];
-        const smallestX = jointOne.x < jointTwo.x ? jointOne.x : jointTwo.x;
-        const biggestX = jointOne.x > jointTwo.x ? jointOne.x : jointTwo.x;
-        // TODO: Check to see whether these roundNumbers here are necessary or not
-        if (smallestX > trueCoord.x) {
-          selectedForce.startCoord.x = roundNumber(smallestX, 3);
-        } else if (biggestX < trueCoord.x) {
-          selectedForce.startCoord.x = roundNumber(biggestX, 3);
-        } else {
-          selectedForce.startCoord.x = roundNumber(trueCoord.x, 3);
-        }
-        const slope = (jointTwo.y - jointOne.y) / (jointTwo.x - jointOne.x);
-        const b = jointOne.y;
-        selectedForce.startCoord.y = roundNumber(
-          jointOne.y + (selectedForce.startCoord.x - jointOne.x) * slope,
-          3
-        );
-      } else {
         selectedForce.startCoord.x = trueCoord.x;
         selectedForce.startCoord.y = trueCoord.y;
-      }
     } else {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;
@@ -2586,7 +2382,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       if (!(link instanceof RealLink)) {
         return;
       }
-      l.bound = link.bound;
+      // l.d = RealLink.getD(l.joints);
       l.d = link.d;
       l.CoM = link.CoM;
       l.updateCoMDs();
@@ -2656,81 +2452,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         GridComponent.mechanisms[0].joints[j_index][jointIndex].y.toString();
     }
     return string;
-  }
-
-  getSelectedLinkProp(prop: string, type?: string, xOrY?: string) {
-    switch (prop) {
-      case 'shape':
-        return GridComponent.selectedLink.shape;
-      case 'bound':
-        switch (type) {
-          case 'b1':
-            if (xOrY === 'x') {
-              return GridComponent.selectedLink.bound.b1.x;
-            } else {
-              return GridComponent.selectedLink.bound.b1.y;
-            }
-          case 'b2':
-            if (xOrY === 'x') {
-              return GridComponent.selectedLink.bound.b2.x;
-            } else {
-              return GridComponent.selectedLink.bound.b2.y;
-            }
-          case 'b3':
-            if (xOrY === 'x') {
-              return GridComponent.selectedLink.bound.b3.x;
-            } else {
-              return GridComponent.selectedLink.bound.b3.y;
-            }
-          case 'b4':
-            if (xOrY === 'x') {
-              return GridComponent.selectedLink.bound.b4.x;
-            } else {
-              return GridComponent.selectedLink.bound.b4.y;
-            }
-          case 'arrow':
-            if (xOrY === 'x') {
-              return (
-                (GridComponent.selectedLink.bound.b1.x +
-                  GridComponent.selectedLink.bound.b2.x +
-                  GridComponent.selectedLink.bound.b3.x +
-                  GridComponent.selectedLink.bound.b4.x) /
-                4
-              );
-            } else {
-              return (
-                (GridComponent.selectedLink.bound.b1.y +
-                  GridComponent.selectedLink.bound.b2.y +
-                  GridComponent.selectedLink.bound.b3.y +
-                  GridComponent.selectedLink.bound.b4.y) /
-                4
-              );
-            }
-          default:
-            return;
-        }
-      case 'points':
-        const b = GridComponent.selectedLink.bound;
-        return (
-          b.b1.x.toString() +
-          ',' +
-          b.b1.y.toString() +
-          ' ' +
-          b.b2.x.toString() +
-          ',' +
-          b.b2.y.toString() +
-          ' ' +
-          b.b3.x.toString() +
-          ',' +
-          b.b3.y.toString() +
-          ' ' +
-          b.b4.x.toString() +
-          ',' +
-          b.b4.y.toString()
-        );
-      default:
-        return;
-    }
   }
 
   getJoints() {

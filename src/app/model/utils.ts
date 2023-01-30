@@ -1,4 +1,4 @@
-import { Joint } from './joint';
+import {Joint, RealJoint} from './joint';
 import { Coord } from './coord';
 import { Shape } from './link';
 
@@ -117,9 +117,9 @@ export function matDeterminant(m: Array<Array<number>>) {
 }
 
 export function matDecompose(
-  m: Array<Array<number>>,
-  lum: Array<Array<number>>,
-  perm: Array<number>
+    m: Array<Array<number>>,
+    lum: Array<Array<number>>,
+    perm: Array<number>
 ) {
   // Crout's LU decomposition for matrix determinant and inverse
   // stores combined lower & upper in lum[][]
@@ -228,6 +228,7 @@ export function getAngle(j1: Coord, j2: Coord) {
   return Math.atan2(dy, dx);
 }
 
+// same as getEuclideandistance... :P
 export function getDistance(j1: Coord, j2: Coord) {
   const dx = j2.x - j1.x;
   const dy = j2.y - j1.y;
@@ -319,14 +320,14 @@ export function stringToShape(str: string) {
       return Shape.lShape;
     default:
       return Shape.line;
-    // case Shape.horizontalLine:
-    // case Shape.verticalLine:
-    // case Shape.slantedLineForward:
-    // case Shape.slantedLineBackward:
-    // case Shape.beanShape:
-    // case Shape.infinityShape:
-    // case Shape.eightShape:
-    // case Shape.customShape:
+      // case Shape.horizontalLine:
+      // case Shape.verticalLine:
+      // case Shape.slantedLineForward:
+      // case Shape.slantedLineBackward:
+      // case Shape.beanShape:
+      // case Shape.infinityShape:
+      // case Shape.eightShape:
+      // case Shape.customShape:
   }
 }
 
@@ -418,3 +419,108 @@ export function determineUnknownJointUsingTriangulation(x1: number, y1: number, 
 export function euclideanDistance(x1: number, y1: number, x2: number, y2: number) {
   return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
+
+export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
+  // TODO: check for condition that first condition is not met... (with imagJoints)
+  if (allJoints.length === 2) {
+    return [allJoints[0], allJoints[1]];
+  }
+  const curJoint = allJoints.find(j => joint.id === j.id) as RealJoint;
+  let biggestAngle = 0;
+  // TODO: Change this where desiredJoint1 and desiredJoint2 are not same
+  let desiredJoint1: Joint = curJoint;
+  let desiredJoint2: Joint = curJoint;
+
+  const curJointIndex = allJoints.findIndex((j) => j.id === joint.id);
+  for (let i = 0; i < allJoints.length; i++) {
+    if (i === curJointIndex) {
+      continue;
+    }
+    const joint1 = allJoints[i];
+    for (let j = i + 1; j < allJoints.length; j++) {
+      if (j === curJointIndex) {
+        continue;
+      }
+      const joint2 = allJoints[j];
+      const angle = find_angle(allJoints[curJointIndex], joint1, joint2);
+      if (angle > biggestAngle) {
+      // if (biggestAngle === 0 || angle > biggestAngle) {
+        biggestAngle = angle;
+        desiredJoint1 = joint1;
+        desiredJoint2 = joint2;
+      }
+    }
+  }
+  return [desiredJoint1, desiredJoint2];
+}
+
+// https://stackoverflow.com/questions/17763392/how-to-calculate-in-javascript-angle-between-3-points (wrong)
+// http://phrogz.net/angle-between-three-points
+export function find_angle(B: Coord, A: Coord, C:Coord) {
+  var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));
+  var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2));
+  var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
+  return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+  // const a = Math.pow(p1.x-p0.x,2) + Math.pow(p1.y-p0.y,2),
+  //     b = Math.pow(p1.x-p2.x,2) + Math.pow(p1.y-p2.y,2),
+  //     c = Math.pow(p2.x-p0.x,2) + Math.pow(p2.y-p0.y,2);
+  // return Math.acos( (a+b-c) / Math.sqrt(4*a*b) ) * 180 / Math.PI;
+}
+
+// TODO: Should put this all over the code...
+export function find_slope(point1: Coord, point2: Coord) {
+  return (point1.y - point2.y) / (point1.x - point2.x)
+}
+
+// TODO: Should put this all over the code...
+export function find_y_intercept(point1: Coord, slope: number) {
+  return point1.y - (slope * point1.x);
+}
+
+// https://stackoverflow.com/questions/14480345/how-to-get-the-nth-occurrence-in-a-string
+export function getPosition(string: string, subString: string, index: number) {
+  return string.split(subString, index).join(subString).length;
+}
+
+// https://stackoverflow.com/questions/4364881/inserting-string-at-position-x-of-another-string
+export function insertStringWithinString(a: string, index: number, b: string) {
+  return [a.slice(0, index), b, a.slice(index)].join('');
+}
+
+// https://www.tutorialspoint.com/typescript/typescript_string_substr.htm
+export function pullStringWithinString(a: string, firstIndex: number, secondIndex: number) {
+  return a.substring(firstIndex, secondIndex);
+}
+
+// https://stackoverflow.com/questions/13937782/calculating-the-point-of-intersection-of-two-lines
+export function line_intersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number)
+{
+  var ua, ub, denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
+  if (denom == 0) {
+    return [-9999, -9999];
+    // return null;
+  }
+  ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
+  ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
+  return [x1 + ua * (x2 - x1), y1 + ua * (y2 - y1)];
+  // return {
+  //   x: x1 + ua * (x2 - x1),
+  //   y: y1 + ua * (y2 - y1),
+  //   seg1: ua >= 0 && ua <= 1,
+  //   seg2: ub >= 0 && ub <= 1
+  // };
+}
+
+
+// returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
+// function intersects(a,b,c,d,p,q,r,s) {
+//   var det, gamma, lambda;
+//   det = (c - a) * (s - q) - (r - p) * (d - b);
+//   if (det === 0) {
+//     return false;
+//   } else {
+//     lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+//     gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+//     return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+//   }
+// };
