@@ -68,6 +68,10 @@ export class AnalysisPanelComponent {
     this.inputSpeedFormGroup.patchValue({ speed: 'One' });
   }
 
+  handleDebugButton() {
+    KinematicsSolver.resetVariables();
+  }
+
   inputSpeedFormGroup = this.fb.group({
     speed: ['', { updateOn: 'change' }],
   });
