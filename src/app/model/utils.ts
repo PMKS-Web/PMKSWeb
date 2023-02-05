@@ -1,10 +1,26 @@
-import {Joint, RealJoint} from './joint';
+import { Joint, RealJoint } from './joint';
 import { Coord } from './coord';
 import { Shape } from './link';
 
 export class Utils {}
 
 // radToDeg
+export enum LengthUnit {
+  INCH,
+  CM,
+  METER,
+}
+
+export enum AngleUnit {
+  DEGREE,
+  RADIAN,
+}
+
+export enum TorqueUnit {
+  INCH_LB,
+  CM_N,
+  METER_N,
+}
 
 // degToRad
 
@@ -117,9 +133,9 @@ export function matDeterminant(m: Array<Array<number>>) {
 }
 
 export function matDecompose(
-    m: Array<Array<number>>,
-    lum: Array<Array<number>>,
-    perm: Array<number>
+  m: Array<Array<number>>,
+  lum: Array<Array<number>>,
+  perm: Array<number>
 ) {
   // Crout's LU decomposition for matrix determinant and inverse
   // stores combined lower & upper in lum[][]
@@ -320,14 +336,14 @@ export function stringToShape(str: string) {
       return Shape.lShape;
     default:
       return Shape.line;
-      // case Shape.horizontalLine:
-      // case Shape.verticalLine:
-      // case Shape.slantedLineForward:
-      // case Shape.slantedLineBackward:
-      // case Shape.beanShape:
-      // case Shape.infinityShape:
-      // case Shape.eightShape:
-      // case Shape.customShape:
+    // case Shape.horizontalLine:
+    // case Shape.verticalLine:
+    // case Shape.slantedLineForward:
+    // case Shape.slantedLineBackward:
+    // case Shape.beanShape:
+    // case Shape.infinityShape:
+    // case Shape.eightShape:
+    // case Shape.customShape:
   }
 }
 
@@ -364,9 +380,17 @@ export function splitURLInfo(str: string) {
 
 // TODO: In future, can replace with this: https://www.gatevidyalay.com/2d-rotation-in-computer-graphics-definition-examples/
 // Easier to understand, less variables to account for, and computationally faster
-export function determineUnknownJointUsingTriangulation(x1: number, y1: number, x2: number, y2: number, r1: number,
-                                                        prevJoint_x: number, prevJoint_y: number,
-                                                        angle: number, internal_angle: number ) {
+export function determineUnknownJointUsingTriangulation(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  r1: number,
+  prevJoint_x: number,
+  prevJoint_y: number,
+  angle: number,
+  internal_angle: number
+) {
   let x_calc: number;
   let y_calc: number;
   let x_calc1: number;
@@ -425,7 +449,7 @@ export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
   if (allJoints.length === 2) {
     return [allJoints[0], allJoints[1]];
   }
-  const curJoint = allJoints.find(j => joint.id === j.id) as RealJoint;
+  const curJoint = allJoints.find((j) => joint.id === j.id) as RealJoint;
   let biggestAngle = 0;
   // TODO: Change this where desiredJoint1 and desiredJoint2 are not same
   let desiredJoint1: Joint = curJoint;
@@ -444,7 +468,7 @@ export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
       const joint2 = allJoints[j];
       const angle = find_angle(allJoints[curJointIndex], joint1, joint2);
       if (angle > biggestAngle) {
-      // if (biggestAngle === 0 || angle > biggestAngle) {
+        // if (biggestAngle === 0 || angle > biggestAngle) {
         biggestAngle = angle;
         desiredJoint1 = joint1;
         desiredJoint2 = joint2;
@@ -456,11 +480,11 @@ export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
 
 // https://stackoverflow.com/questions/17763392/how-to-calculate-in-javascript-angle-between-3-points (wrong)
 // http://phrogz.net/angle-between-three-points
-export function find_angle(B: Coord, A: Coord, C:Coord) {
-  var AB = Math.sqrt(Math.pow(B.x-A.x,2)+ Math.pow(B.y-A.y,2));
-  var BC = Math.sqrt(Math.pow(B.x-C.x,2)+ Math.pow(B.y-C.y,2));
-  var AC = Math.sqrt(Math.pow(C.x-A.x,2)+ Math.pow(C.y-A.y,2));
-  return Math.acos((BC*BC+AB*AB-AC*AC)/(2*BC*AB));
+export function find_angle(B: Coord, A: Coord, C: Coord) {
+  var AB = Math.sqrt(Math.pow(B.x - A.x, 2) + Math.pow(B.y - A.y, 2));
+  var BC = Math.sqrt(Math.pow(B.x - C.x, 2) + Math.pow(B.y - C.y, 2));
+  var AC = Math.sqrt(Math.pow(C.x - A.x, 2) + Math.pow(C.y - A.y, 2));
+  return Math.acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB));
   // const a = Math.pow(p1.x-p0.x,2) + Math.pow(p1.y-p0.y,2),
   //     b = Math.pow(p1.x-p2.x,2) + Math.pow(p1.y-p2.y,2),
   //     c = Math.pow(p2.x-p0.x,2) + Math.pow(p2.y-p0.y,2);
@@ -469,12 +493,12 @@ export function find_angle(B: Coord, A: Coord, C:Coord) {
 
 // TODO: Should put this all over the code...
 export function find_slope(point1: Coord, point2: Coord) {
-  return (point1.y - point2.y) / (point1.x - point2.x)
+  return (point1.y - point2.y) / (point1.x - point2.x);
 }
 
 // TODO: Should put this all over the code...
 export function find_y_intercept(point1: Coord, slope: number) {
-  return point1.y - (slope * point1.x);
+  return point1.y - slope * point1.x;
 }
 
 // https://stackoverflow.com/questions/14480345/how-to-get-the-nth-occurrence-in-a-string
@@ -493,15 +517,25 @@ export function pullStringWithinString(a: string, firstIndex: number, secondInde
 }
 
 // https://stackoverflow.com/questions/13937782/calculating-the-point-of-intersection-of-two-lines
-export function line_intersect(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number)
-{
-  var ua, ub, denom = (y4 - y3)*(x2 - x1) - (x4 - x3)*(y2 - y1);
+export function line_intersect(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  x3: number,
+  y3: number,
+  x4: number,
+  y4: number
+) {
+  var ua,
+    ub,
+    denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
   if (denom == 0) {
     return [-9999, -9999];
     // return null;
   }
-  ua = ((x4 - x3)*(y1 - y3) - (y4 - y3)*(x1 - x3))/denom;
-  ub = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3))/denom;
+  ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
   return [x1 + ua * (x2 - x1), y1 + ua * (y2 - y1)];
   // return {
   //   x: x1 + ua * (x2 - x1),
@@ -510,7 +544,6 @@ export function line_intersect(x1: number, y1: number, x2: number, y2: number, x
   //   seg2: ub >= 0 && ub <= 1
   // };
 }
-
 
 // returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
 // function intersects(a,b,c,d,p,q,r,s) {
