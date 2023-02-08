@@ -21,7 +21,7 @@ export class ActiveObjService {
   }
 
   updateSelectedObj(newActiveObj: any) {
-    if (newActiveObj === undefined) {
+    if (newActiveObj === undefined || newActiveObj === null) {
       this.objType = 'Nothing';
     } else {
       switch (newActiveObj.constructor) {

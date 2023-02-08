@@ -8,11 +8,23 @@
   </div>
   <div class="row" [formGroup]="formGroup">
     <span class="label">X</span>
-    <input id="block-input-box" type="text" [formControlName]="this.formControl1" />
+    <input
+      id="block-input-box"
+      type="text"
+      [formControlName]="this.formControl1"
+      #field
+      (keyup.enter)="field.blur()"
+    />
     <span id="block-input-units">{{ this.unit }}</span>
     <div class="spacer"></div>
     <span class="label">Y</span>
-    <input id="block-input-box" type="text" [formControlName]="this.formControl2" />
+    <input
+      id="block-input-box"
+      type="text"
+      [formControlName]="this.formControl2"
+      #field2
+      (keyup.enter)="field2.blur()"
+    />
     <span id="block-input-units">{{ this.unit }}</span>
   </div>
 </div>

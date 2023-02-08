@@ -1926,18 +1926,20 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.showcaseShapeSelector = !GridComponent.showcaseShapeSelector;
   }
 
+  //Only to be used when deleting a selected (by panel) link from the edit panel, use delete Link otherwise
+  //Alex had a issue with this before when implementing multi-joint links.
   deleteSelectedLink() {
     //Selected means selected in the activeObj Service
     this.disappearContext();
-    // console.warn(this.activeObjService.Link);
-    // const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
-    const linkIndex = GridComponent.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
+
+    const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+
     GridComponent.links[linkIndex].joints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
       }
-      const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
-      // const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+      // const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
+      const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
       j.links.splice(delLinkIndex, 1);
     });
     for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
@@ -2475,22 +2477,26 @@ export class GridComponent implements OnInit, AfterViewInit {
         'You attempted to undo. What were you trying to undo? If this feature important to you? (This is an Easter Egg. Please talk about in the final question of the survey.)'
       );
     }
-    if ($event.keyCode == 13) {
-      GridComponent.sendNotification(
-        'You pressed the "Enter" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
-      );
-    }
 
     if ($event.keyCode == 27) {
-      GridComponent.sendNotification(
-        'You pressed the "Escape" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
-      );
+      // GridComponent.sendNotification(
+      //   'You pressed the "Escape" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      // );
+      this.activeObjService.updateSelectedObj(undefined);
     }
 
     if ($event.keyCode == 46) {
-      GridComponent.sendNotification(
-        'You pressed the "Delete" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
-      );
+      if (this.activeObjService.objType === 'Nothing') {
+        GridComponent.sendNotification('Select an object to delete.');
+        return;
+      }
+      if (this.activeObjService.objType === 'Joint') {
+        this.deleteJoint();
+      } else if (this.activeObjService.objType === 'Link') {
+        this.deleteSelectedLink();
+      }
+      this.activeObjService.updateSelectedObj(undefined);
+      GridComponent.sendNotification('Deleted Selected Object.');
     }
 
     if ($event.keyCode == 32) {

@@ -5,7 +5,13 @@
       >help_outline</mat-icon
     >
     <div class="spacer"></div>
-    <input id="block-input-box" type="text" [formControlName]="this._formControl" />
+    <input
+      id="block-input-box"
+      type="text"
+      #field
+      (keyup.enter)="field.blur()"
+      [formControlName]="this._formControl"
+    />
     <span id="block-input-units">{{ this.unit }}</span>
   </div>
 </div>
