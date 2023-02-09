@@ -2,7 +2,7 @@
 <div id="barContainer">
   <div id="animationBar">
     <button
-      [attr.disabled]="validMechanism()"
+      [disabled]="invalidMechanism()"
       *ngIf="!animating"
       mat-mini-fab
       color="primary"
@@ -11,7 +11,7 @@
       <mat-icon>play_arrow</mat-icon>
     </button>
     <button
-      [attr.disabled]="validMechanism()"
+      [disabled]="invalidMechanism()"
       *ngIf="animating"
       mat-mini-fab
       color="primary"
@@ -22,7 +22,7 @@
     <button
       mat-mini-fab
       color="warn"
-      [attr.disabled]="validMechanism()"
+      [disabled]="invalidMechanism()"
       (click)="startAnimation('stop')"
     >
       <mat-icon>stop</mat-icon>
@@ -34,7 +34,7 @@
     </form>
 
     <mat-slider
-      [disabled]="validMechanism()"
+      [disabled]="invalidMechanism()"
       min="0"
       max="{{ maxTimeSteps() }}"
       (mousedown)="adjustMechanismAnimation(true)"

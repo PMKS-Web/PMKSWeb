@@ -39,7 +39,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
   ],
 })
 export class LeftTabsComponent {
-  openTab = 3; //Default open tab to "Edit" /
+  openTab = 2; //Default open tab to "Edit" /
   isOpen = true; // Is the tab open?
 
   tabClicked(tabID: number) {

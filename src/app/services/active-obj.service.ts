@@ -1,4 +1,5 @@
 import { Injectable, EventEmitter } from '@angular/core';
+import { GridComponent } from '../component/grid/grid.component';
 import { Force } from '../model/force';
 import { RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
@@ -43,5 +44,9 @@ export class ActiveObjService {
       }
     }
     this.onActiveObjChange.emit(this.objType);
+    console.log(this.objType);
+    console.log(GridComponent.mechanisms.length);
+    console.log(GridComponent.joints);
+    console.log(GridComponent.links);
   }
 }

@@ -1,3 +1,10 @@
+<div id="placeholderContainer" *ngIf="invalidLinkage()">
+  <p id="placeholderText">
+    This linkage is not valid. It could be missing an input or have too many / little DOfs.
+  </p>
+  <img id="placeholder" src="assets/placeholder.svg" />
+</div>
+
 <div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing'">
   <p id="placeholderText">Select a part of the linkage to analyze it.</p>
   <img id="placeholder" src="assets/placeholder.svg" />

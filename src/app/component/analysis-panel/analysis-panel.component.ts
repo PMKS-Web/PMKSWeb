@@ -49,6 +49,30 @@ export type ChartOptions = {
 })
 export class AnalysisPanelComponent {
   constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {
+    if (!this.invalidLinkage) {
+      ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+      ForceSolver.determineForceAnalysis(
+        GridComponent.joints,
+        GridComponent.links,
+        'static',
+        ToolbarComponent.gravity,
+        ToolbarComponent.unit
+      );
+
+      KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+      console.log(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
+      KinematicsSolver.determineKinematics(
+        GridComponent.joints,
+        GridComponent.links,
+        ToolbarComponent.inputAngularVelocity
+      );
+    }
+
+    this.inputSpeedFormGroup.patchValue({ speed: 'One' });
+  }
+
+  handleDebugButton() {
+    KinematicsSolver.resetVariables();
     ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
       GridComponent.joints,
@@ -59,17 +83,24 @@ export class AnalysisPanelComponent {
     );
 
     KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+    console.log(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
     KinematicsSolver.determineKinematics(
       GridComponent.joints,
       GridComponent.links,
       ToolbarComponent.inputAngularVelocity
     );
-
-    this.inputSpeedFormGroup.patchValue({ speed: 'One' });
   }
 
-  handleDebugButton() {
-    KinematicsSolver.resetVariables();
+  invalidLinkage() {
+    if (GridComponent.mechanisms.length == 0) {
+      return true;
+    }
+    //True means the linkage is invalid
+    if (GridComponent.mechanisms[0] === undefined) {
+      return true;
+    }
+    // return null instead of false
+    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
   }
 
   inputSpeedFormGroup = this.fb.group({
