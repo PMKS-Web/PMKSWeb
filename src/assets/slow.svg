@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" baseProfile="full" viewBox="0 0 512.00 512.00" enable-background="new 0 0 512.00 512.00" xml:space="preserve">
-	<ellipse fill="#D2D2D2" fill-opacity="1" stroke-width="5" stroke-linejoin="round" stroke="#000000" stroke-opacity="1" cx="256" cy="256" rx="253.5" ry="253.5"/>
-	<g>
-		<path fill="#000000" fill-opacity="1" stroke-linejoin="round" d="M 80.7403,310.613L 132.26,257.707L 80.7403,204.8L 101.007,180.907L 154.127,235.253L 207.034,180.907L 227.3,204.8L 175.78,257.707L 227.3,310.613L 207.034,334.507L 154.127,280.16L 101.007,334.507L 80.7403,310.613 Z "/>
-		<path fill="#000000" fill-opacity="1" stroke-linejoin="round" d="M 380.9,378.88L 350.18,378.88L 350.18,187.36C 342.785,194.258 333.087,201.164 321.087,208.08C 309.087,214.996 298.305,220.178 288.74,223.627L 288.74,194.56C 305.914,186.667 320.936,177.093 333.807,165.84C 346.678,154.587 355.78,143.68 361.114,133.12L 380.9,133.12L 380.9,378.88 Z "/>
-	</g>
-</svg>
