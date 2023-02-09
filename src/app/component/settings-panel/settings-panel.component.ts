@@ -10,7 +10,7 @@ import { BehaviorSubject } from 'rxjs';
   styleUrls: ['./settings-panel.component.scss'],
 })
 export class SettingsPanelComponent {
-  constructor(public settingsService: SettingsService, private fb: FormBuilder) {}
+  constructor(public settingsService: SettingsService, private fb: FormBuilder) { }
   currentLengthUnit!: LengthUnit;
   currentAngleUnit!: AngleUnit;
   currentTorqueUnit!: TorqueUnit;
