@@ -560,6 +560,13 @@ export class GridComponent implements OnInit, AfterViewInit {
     return new Coord(newX, newY);
   }
 
+  public static oneValidMechanismExists() {
+    if (GridComponent.mechanisms.length == 0 || GridComponent.mechanisms[0] === undefined) {
+      return false;
+    }
+    return GridComponent.mechanisms[0].isMechanismValid();
+  }
+
   scrollGrid($event: WheelEvent) {
     $event.preventDefault();
     $event.stopPropagation();
@@ -2007,7 +2014,7 @@ export class GridComponent implements OnInit, AfterViewInit {
         if (!(otherJoint instanceof RealJoint)) {
           return;
         }
-        const otherDesiredJointIndex = joint.connectedJoints.findIndex(
+        const otherDesiredJointIndex = otherJoint.connectedJoints.findIndex(
           (jj) => jj.id === GridComponent.links[linkIndex].joints[j_i].id
         );
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);

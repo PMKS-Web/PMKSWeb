@@ -200,14 +200,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   invalidMechanism() {
-    //True means the linkage is invalid
-    if (GridComponent.mechanisms.length == 0) {
-      return true;
-    }
-    if (GridComponent.mechanisms[0] === undefined) {
-      return true;
-    }
-    // return null instead of false
-    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
+    return !GridComponent.oneValidMechanismExists();
   }
 }

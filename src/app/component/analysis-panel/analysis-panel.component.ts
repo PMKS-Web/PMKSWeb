@@ -49,7 +49,7 @@ export type ChartOptions = {
 })
 export class AnalysisPanelComponent {
   constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {
-    if (!this.invalidLinkage) {
+    if (GridComponent.oneValidMechanismExists()) {
       ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
       ForceSolver.determineForceAnalysis(
         GridComponent.joints,
@@ -91,16 +91,8 @@ export class AnalysisPanelComponent {
     );
   }
 
-  invalidLinkage() {
-    if (GridComponent.mechanisms.length == 0) {
-      return true;
-    }
-    //True means the linkage is invalid
-    if (GridComponent.mechanisms[0] === undefined) {
-      return true;
-    }
-    // return null instead of false
-    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
+  noValidMechanisms() {
+    return !GridComponent.oneValidMechanismExists();
   }
 
   inputSpeedFormGroup = this.fb.group({

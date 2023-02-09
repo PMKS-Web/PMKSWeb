@@ -39,7 +39,7 @@
   .panel {
     position: absolute;
     top: 50px;
-    left: 70px;
+    left: 60px;
     // width: 300px;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -128,7 +128,7 @@
     position: absolute;
     top: 40px;
     left: 10px;
-    width: 50px;
+    width: 40px;
     height: calc(100% - 60px);
 
     app-tab {

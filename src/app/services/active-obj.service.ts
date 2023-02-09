@@ -44,9 +44,5 @@ export class ActiveObjService {
       }
     }
     this.onActiveObjChange.emit(this.objType);
-    console.log(this.objType);
-    console.log(GridComponent.mechanisms.length);
-    console.log(GridComponent.joints);
-    console.log(GridComponent.links);
   }
 }
