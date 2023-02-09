@@ -28,9 +28,9 @@ export class SettingsPanelComponent {
     this.settingsForm.controls['speed'].setValue('0');
     this.settingsForm.controls['gravity'].setValue(true);
     this.settingsForm.controls['rotation'].setValue("One");
-    this.settingsForm.controls['lengthunit'].setValue("One");
+    this.settingsForm.controls['lengthunit'].setValue("Two");
     this.settingsForm.controls['angleunit'].setValue("One");
-    this.settingsForm.controls['torqueunit'].setValue("One");
+    this.settingsForm.controls['torqueunit'].setValue("Two");
     this.onChanges();
   }
 
