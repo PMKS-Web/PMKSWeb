@@ -178,16 +178,25 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   seriesYHidden: boolean = false;
   seriesZHidden: boolean = false;
 
-  newSubscription: any;
+  mechPositionSub: any;
+  mechStateSub: any;
+
+  loading: boolean = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     //We don't want to resubscribe to things when the component is first initialized
     //Since onInit and ngAfterView will be called on initialization, double calling leads to too many subscriptions
-    if (changes['mechPart'].isFirstChange()) {
-      return;
-    }
-    this.ngOnDestroy();
-    this.ngOnInit();
+    // if (changes['mechPart'].isFirstChange()) {
+    //   return;
+    // }
+    // this.ngOnDestroy();
+    // this.ngOnInit();
+    // this.ngAfterViewInit();
+    this.updateChartData();
+  }
+
+  updateChartData() {
+    this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
     this.ngAfterViewInit();
   }
 
@@ -230,9 +239,24 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // console.log(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
-
-    //Subscribte to the emitter inside mechanismStateService
-    this.newSubscription = GridComponent.onMechPositionChange.subscribe((data) => {
+    this.mechStateSub = GridComponent.onMechUpdateState.subscribe((data) => {
+      switch (data) {
+        case 0:
+          this.loading = false;
+          break;
+        case 1:
+          //Apply css class to the chart to make it look like it's loading
+          this.loading = true;
+          break;
+        case 2:
+          if (GridComponent.oneValidMechanismExists()) {
+            this.updateChartData();
+            GridComponent.onMechUpdateState.next(0);
+          }
+          break;
+      }
+    });
+    this.mechPositionSub = GridComponent.onMechPositionChange.subscribe((data) => {
       if (!this.seriesYHidden || !this.seriesXHidden || !this.seriesZHidden) {
         this.chart.clearAnnotations();
         this.chart.addXaxisAnnotation({
@@ -311,8 +335,11 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   }
 
   ngOnDestroy(): void {
-    if (this.newSubscription) {
-      this.newSubscription.unsubscribe();
+    if (this.mechPositionSub) {
+      this.mechPositionSub.unsubscribe();
+    }
+    if (this.mechStateSub) {
+      this.mechStateSub.unsubscribe();
     }
   }
 

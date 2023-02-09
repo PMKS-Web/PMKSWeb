@@ -48,30 +48,34 @@ export type ChartOptions = {
   styleUrls: ['./analysis-panel.component.scss'],
 })
 export class AnalysisPanelComponent {
+  mechStateSub: any;
+
   constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {
     if (GridComponent.oneValidMechanismExists()) {
-      ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-      ForceSolver.determineForceAnalysis(
-        GridComponent.joints,
-        GridComponent.links,
-        'static',
-        ToolbarComponent.gravity,
-        ToolbarComponent.unit
-      );
-
-      KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-      console.log(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
-      KinematicsSolver.determineKinematics(
-        GridComponent.joints,
-        GridComponent.links,
-        ToolbarComponent.inputAngularVelocity
-      );
+      this.resetVariablesAndSolve();
     }
 
     this.inputSpeedFormGroup.patchValue({ speed: 'One' });
   }
 
-  handleDebugButton() {
+  ngOnInit(): void {
+    this.mechStateSub = GridComponent.onMechUpdateState.subscribe((data) => {
+      switch (data) {
+        case 3:
+          if (GridComponent.oneValidMechanismExists()) {
+            this.resetVariablesAndSolve();
+            GridComponent.onMechUpdateState.next(2);
+          }
+          break;
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.mechStateSub.unsubscribe();
+  }
+
+  resetVariablesAndSolve() {
     KinematicsSolver.resetVariables();
     ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
@@ -91,8 +95,12 @@ export class AnalysisPanelComponent {
     );
   }
 
-  noValidMechanisms() {
-    return !GridComponent.oneValidMechanismExists();
+  handleDebugButton() {
+    this.resetVariablesAndSolve();
+  }
+
+  validMechanisms() {
+    return GridComponent.oneValidMechanismExists();
   }
 
   inputSpeedFormGroup = this.fb.group({

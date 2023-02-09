@@ -25,7 +25,7 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { type } from 'os';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { join } from 'path';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 // import {MatSnackBar} from "@angular/material/snack-bar";
@@ -93,7 +93,15 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   static screenCoord: string = '';
 
+  // This is the position of the mechanism
   static onMechPositionChange = new Subject<number>();
+
+  // This is the state of the mechanism
+  // 0 is normal, no changes, no pending analysis
+  // 1 is actively being dragged, no pending analysis, disable graphs
+  // 2 is pending graph draws
+  // 3 is pending analysis due to add or remove
+  static onMechUpdateState = new BehaviorSubject<number>(3);
 
   // holders
   static canvasSVGElement: SVGElement; // Reference to the SVG canvas (coordinate grid)
@@ -189,11 +197,6 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // don't forget to add "#" CSS selector to the name of the DOM element.
-    // var draw = SVG().addTo('#canvas').size(1000, 1000).panZoom();
-    // var rect = draw.rect(100, 100).attr({ fill: '#f06' });
-    // rect.draggable();
-
     const jointPropsString = splitURLInfo('j=');
     const linkPropsString = splitURLInfo('&l=');
     const forcePropsString = splitURLInfo('&f=');
@@ -656,6 +659,9 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.forceStates = forceStates.waiting;
       GridComponent.updateMechanism();
     }
+    if (GridComponent.showPathHolder) {
+      GridComponent.onMechUpdateState.next(2);
+    }
     GridComponent.showPathHolder = false;
     // this.activeObjService.updateSelectedObj(thing);
   }
@@ -1077,7 +1083,12 @@ export class GridComponent implements OnInit, AfterViewInit {
         //So that the panel values update continously
         this.activeObjService.updateSelectedObj(GridComponent.selectedJoint);
         if (GridComponent.mechanisms[0].joints[0].length !== 0) {
-          GridComponent.showPathHolder = GridComponent.mechanisms[0].dof === 1;
+          if (GridComponent.mechanisms[0].dof === 1) {
+            if (GridComponent.showPathHolder == false) {
+              GridComponent.onMechUpdateState.next(1);
+            }
+            GridComponent.showPathHolder = true;
+          }
         }
         break;
     }
@@ -1797,6 +1808,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       GridComponent.selectedLink.d = RealLink.getD(GridComponent.selectedLink.joints);
     }
     GridComponent.updateMechanism();
+    GridComponent.onMechUpdateState.next(3);
   }
 
   //This is only used for context menu link creation
@@ -1845,6 +1857,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
     GridComponent.jointTempHolderSVG.children[1].setAttribute('y', startCoord.y.toString());
     GridComponent.jointTempHolderSVG.style.display = 'block';
+    GridComponent.onMechUpdateState.next(3);
   }
 
   createInput($event: MouseEvent) {
@@ -1895,6 +1908,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     //   }
     // }
     GridComponent.updateMechanism();
+    GridComponent.onMechUpdateState.next(3);
   }
 
   createForce($event: MouseEvent) {
@@ -1919,6 +1933,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.forceStates = forceStates.creating;
     GridComponent.gridStates = gridStates.createForce;
     GridComponent.forceTempHolderSVG.style.display = 'block';
+    GridComponent.onMechUpdateState.next(3);
   }
 
   editShape() {
@@ -1976,6 +1991,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.links.splice(linkIndex, 1);
     GridComponent.updateMechanism();
+    GridComponent.onMechUpdateState.next(3);
   }
 
   deleteLink() {
@@ -2022,6 +2038,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
     GridComponent.links.splice(linkIndex, 1);
     GridComponent.updateMechanism();
+    GridComponent.onMechUpdateState.next(3);
   }
 
   changeForceDirection() {

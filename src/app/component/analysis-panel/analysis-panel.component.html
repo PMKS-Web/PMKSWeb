@@ -1,16 +1,16 @@
-<div id="placeholderContainer" *ngIf="noValidMechanisms()">
+<div id="placeholderContainer" *ngIf="!validMechanisms()">
   <p id="placeholderText">
     This linkage is not valid. It could be missing an input or have too many / little DOfs.
   </p>
   <img id="placeholder" src="assets/placeholder.svg" />
 </div>
 
-<div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing'">
+<div id="placeholderContainer" *ngIf="validMechanisms() && this.activeSrv.objType == 'Nothing'">
   <p id="placeholderText">Select a part of the linkage to analyze it.</p>
   <img id="placeholder" src="assets/placeholder.svg" />
 </div>
 
-<panel-section id="analysis-panel" *ngIf="this.activeSrv.objType == 'Joint'">
+<panel-section id="analysis-panel" *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'">
   <title-block icon="edit">
     {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
   </title-block>

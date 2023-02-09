@@ -68,6 +68,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
+        GridComponent.onMechUpdateState.next(2);
       }
     });
 
@@ -81,6 +82,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
+        GridComponent.onMechUpdateState.next(2);
       }
     });
 
@@ -90,6 +92,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       }
       this.activeSrv.Joint.ground = val!;
       GridComponent.updateMechanism();
+      GridComponent.onMechUpdateState.next(2);
     });
 
     this.jointForm.controls['input'].valueChanges.subscribe((val) => {
@@ -98,6 +101,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       }
       this.activeSrv.Joint.input = val!;
       GridComponent.updateMechanism();
+      GridComponent.onMechUpdateState.next(2);
     });
 
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
@@ -108,6 +112,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       } else {
         this.activeSrv.Link.length = parseFloat(val!);
         this.resolveNewLink();
+        GridComponent.onMechUpdateState.next(2);
       }
     });
 
@@ -119,22 +124,29 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       } else {
         this.activeSrv.Link.angleDeg = parseFloat(val!);
         this.resolveNewLink();
+        GridComponent.onMechUpdateState.next(2);
       }
     });
 
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
-        this.jointForm.patchValue({
-          xPos: this.activeSrv.Joint.x.toFixed(2).toString(),
-          yPos: this.activeSrv.Joint.y.toFixed(2).toString(),
-          ground: this.activeSrv.Joint.ground,
-          input: this.activeSrv.Joint.input,
-        });
+        this.jointForm.patchValue(
+          {
+            xPos: this.activeSrv.Joint.x.toFixed(2).toString(),
+            yPos: this.activeSrv.Joint.y.toFixed(2).toString(),
+            ground: this.activeSrv.Joint.ground,
+            input: this.activeSrv.Joint.input,
+          },
+          { emitEvent: false }
+        );
       } else if (newObjType == 'Link') {
-        this.linkForm.patchValue({
-          length: this.activeSrv.Link.length.toFixed(2).toString(),
-          angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
-        });
+        this.linkForm.patchValue(
+          {
+            length: this.activeSrv.Link.length.toFixed(2).toString(),
+            angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
+          },
+          { emitEvent: false }
+        );
       }
     });
   }
