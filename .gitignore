@@ -21,7 +21,7 @@ yarn-error.log
 *.sublime-workspace
 
 # Visual Studio Code
-.vs
+.vs/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
