@@ -25,6 +25,24 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = AngleUnit.DEGREE;
     this.rotateDirection = false;
     this.currentSpeedSetting = 0;
+    this.settingsService.inputSpeed.subscribe({
+      next: (inputSpeed) => (this.currentSpeedSetting = inputSpeed),
+    });
+    this.settingsService.length.subscribe({
+      next: (length) => (this.currentLengthUnit = length),
+    });
+    this.settingsService.inputTorque.subscribe({
+      next: (inputTorque) => (this.currentTorqueUnit = inputTorque),
+    });
+    this.settingsService.angle.subscribe({
+      next: (angle) => (this.currentAngleUnit = angle),
+    });
+    this.settingsService.isInputCW.subscribe({
+      next: (isInputCW) => (this.rotateDirection = isInputCW),
+    });
+    this.settingsService.isGravity.subscribe({
+      next: (isGravity) => (this.gravityEnabled = isGravity),
+    });
     this.onChanges();
   }
 
