@@ -1,12 +1,42 @@
 <panel-section>
-  <title-block> Settings </title-block>
-  <radio-block option1="Inches" option2="cm" option3="Meters">Length Units</radio-block>
-  <radio-block option1="Degrees" option2="Radians">Angle Units</radio-block>
-  <radio-block option1="Clockwise" option2="Counter-Clockwise">Input Direction</radio-block>
-  <subtitle-block>Force Settings</subtitle-block>
-  <toggle-block>Gravity</toggle-block>
-  <input-block unit="deg/sec">Input Speed</input-block>
-  <radio-block option1="lbf-in" option2="N-cm" option3="N-m">Torque Units</radio-block>
-  <button-block icon="edit">Edit Force Directions</button-block>
-  <button-block icon="edit">Edit Moment Centers</button-block>
+    Length: {{this.settingsService.length.value}}
+    <br />
+    Angle: {{this.settingsService.angle.value}}
+    <br />
+    Torque: {{this.settingsService.inputTorque.value}}
+    <br />
+    Rotation: {{this.settingsService.isInputCW.value}}
+    <br />
+    Speed: {{this.settingsService.inputSpeed.value}}
+    <br />
+    Gravity: {{this.settingsService.isGravity.value}}
+    <br />
+    <title-block> Settings </title-block>
+    <radio-block option1="Inches"
+                 option2="cm"
+                 option3="Meters"
+                 [formGroup]="this.settingsForm"
+                 _formControl="lengthunit">Length Units</radio-block>
+    <radio-block option1="Degrees"
+                 option2="Radians"
+                 [formGroup]="this.settingsForm"
+                 _formControl="angleunit">Angle Units</radio-block>
+    <radio-block option1="Clockwise"
+                 option2="Counter-Clockwise"
+                 [formGroup]="this.settingsForm"
+                 _formControl="rotation">Input Direction</radio-block>
+    <subtitle-block>Force Settings</subtitle-block>
+    <toggle-block [formGroup]="this.settingsForm"
+                  _formControl="gravity">Gravity</toggle-block>
+    <input-block unit="deg/sec"
+                 type="number"
+                 [formGroup]="this.settingsForm"
+                 _formControl="speed">Input Speed</input-block>
+    <radio-block option1="lbf-in"
+                 option2="N-cm"
+                 option3="N-m"
+                 [formGroup]="this.settingsForm"
+                 _formControl="torqueunit">Torque Units</radio-block>
+    <button-block icon="edit">Edit Force Directions</button-block>
+    <button-block icon="edit">Edit Moment Centers</button-block>
 </panel-section>
