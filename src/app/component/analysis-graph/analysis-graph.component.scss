@@ -39,6 +39,32 @@
     background-color: red;
   }
 
+  #graphHide {
+    background-color: rgba(0, 0, 0, 0.7);
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    width: 100%;
+    height: 240px;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+  }
+
+  .show {
+    opacity: 1;
+    transition: all 1s;
+    -webkit-transition: all 1s;
+  }
+
+  .hide {
+    opacity: 0;
+    transition: all 1s;
+    -webkit-transition: all 1s;
+  }
+
   .apexcharts-canvas {
     //   margin-top: -50px;
     //   background-color: red;
