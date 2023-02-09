@@ -25,24 +25,12 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = AngleUnit.DEGREE;
     this.rotateDirection = false;
     this.currentSpeedSetting = 0;
-    this.settingsService.inputSpeed.subscribe({
-      next: (inputSpeed) => (this.currentSpeedSetting = inputSpeed),
-    });
-    this.settingsService.length.subscribe({
-      next: (length) => (this.currentLengthUnit = length),
-    });
-    this.settingsService.inputTorque.subscribe({
-      next: (inputTorque) => (this.currentTorqueUnit = inputTorque),
-    });
-    this.settingsService.angle.subscribe({
-      next: (angle) => (this.currentAngleUnit = angle),
-    });
-    this.settingsService.isInputCW.subscribe({
-      next: (isInputCW) => (this.rotateDirection = isInputCW),
-    });
-    this.settingsService.isGravity.subscribe({
-      next: (isGravity) => (this.gravityEnabled = isGravity),
-    });
+    this.settingsForm.controls['speed'].setValue('0');
+    this.settingsForm.controls['gravity'].setValue(true);
+    this.settingsForm.controls['rotation'].setValue("One");
+    this.settingsForm.controls['lengthunit'].setValue("One");
+    this.settingsForm.controls['angleunit'].setValue("One");
+    this.settingsForm.controls['torqueunit'].setValue("One");
     this.onChanges();
   }
 
@@ -76,11 +64,11 @@ export class SettingsPanelComponent {
   settingsForm = this.fb.group(
     {
       gravity: [false, { updateOn: 'change' }],
-      speed: [0, { updateOn: 'change' }],
+      speed: ['', { updateOn: 'change' }],
       rotation: ['', { updateOn: 'change' }],
-      lengthunit: [LengthUnit.CM, { updateOn: 'change' }],
-      angleunit: [AngleUnit.DEGREE, { updateOn: 'change' }],
-      torqueunit: [TorqueUnit.INCH_LB, { updateOn: 'change' }],
+      lengthunit: ['', { updateOn: 'change' }],
+      angleunit: ['', { updateOn: 'change' }],
+      torqueunit: ['', { updateOn: 'change' }],
     },
     { updateOn: 'change' }
   );
