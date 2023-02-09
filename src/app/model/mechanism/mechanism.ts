@@ -210,7 +210,7 @@ export class Mechanism {
 
     const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1);
     const desiredJointIndex = this.joints[0].findIndex((j) => j.id === desiredJointID);
-    if (desiredJointIndex === undefined) {
+    if (desiredJointIndex === -1) {
       return;
     }
     const desiredJoint = this.joints[0][desiredJointIndex];

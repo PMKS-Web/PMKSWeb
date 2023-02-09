@@ -31,6 +31,7 @@ import { ForceSolver } from 'src/app/model/mechanism/force-solver';
 import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { animate, state, style, transition, trigger } from '@angular/animations';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -54,6 +55,24 @@ export type ChartOptions = {
   selector: 'app-analysis-graph',
   templateUrl: './analysis-graph.component.html',
   styleUrls: ['./analysis-graph.component.scss'],
+  animations: [
+    trigger('showHide', [
+      // ...
+      state(
+        'graphShown',
+        style({
+          opacity: 0,
+        })
+      ),
+      state(
+        'graphHidden',
+        style({
+          opacity: 1,
+        })
+      ),
+      transition('* => *', [animate('0.3s ease-in-out')]),
+    ]),
+  ],
 })
 export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   public chartOptions: Partial<ChartOptions> = {

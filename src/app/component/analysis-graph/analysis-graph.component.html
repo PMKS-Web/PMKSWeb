@@ -23,4 +23,6 @@
   [legend]="chartOptions.legend!"
 >
 </apx-chart>
-<div [ngClass]="loading ? 'show' : 'hide'" id="graphHide">Graph unavailable while dragging.</div>
+<div [@showHide]="loading ? 'graphHidden' : 'graphShown'" id="graphHide">
+  Graph unavailable while dragging.
+</div>

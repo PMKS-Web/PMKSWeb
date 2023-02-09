@@ -87,7 +87,6 @@ export class AnalysisPanelComponent {
     );
 
     KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-    console.log(GridComponent.joints, GridComponent.links, ToolbarComponent.inputAngularVelocity);
     KinematicsSolver.determineKinematics(
       GridComponent.joints,
       GridComponent.links,

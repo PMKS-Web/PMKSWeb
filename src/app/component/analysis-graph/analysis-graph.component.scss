@@ -51,24 +51,10 @@
     justify-content: center;
     align-items: center;
     color: white;
-  }
-
-  .show {
-    opacity: 1;
-    transition: all 1s;
-    -webkit-transition: all 1s;
-  }
-
-  .hide {
-    opacity: 0;
-    transition: all 1s;
-    -webkit-transition: all 1s;
+    border-radius: 4px;
   }
 
   .apexcharts-canvas {
-    //   margin-top: -50px;
-    //   background-color: red;
-    //   z-index: 0;
     margin-bottom: -50px;
   }
 }
