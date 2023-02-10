@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
 import { LengthUnit, AngleUnit, TorqueUnit } from 'src/app/model/utils';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
@@ -69,10 +69,11 @@ export class SettingsPanelComponent {
     });
   }
 
+  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
   settingsForm = this.fb.group(
     {
       gravity: [false, { updateOn: 'change' }],
-      speed: ['', { updateOn: 'change' }],
+      speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],
       lengthunit: ['', { updateOn: 'change' }],
       angleunit: ['', { updateOn: 'change' }],
