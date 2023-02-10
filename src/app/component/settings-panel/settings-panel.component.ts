@@ -38,26 +38,32 @@ export class SettingsPanelComponent {
 
   onChanges(): void {
     this.settingsForm.controls['gravity'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.gravityEnabled = Boolean(val);
       this.settingsService.isGravity.next(this.gravityEnabled);
     });
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.rotateDirection = String(val) === 'One' ? true : false;
       this.settingsService.isInputCW.next(this.rotateDirection);
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.currentSpeedSetting = Number(val);
       this.settingsService.inputSpeed.next(this.currentSpeedSetting);
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.currentLengthUnit = ParseLengthUnit(String(val));
       this.settingsService.length.next(this.currentLengthUnit);
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angle.next(this.currentAngleUnit);
     });
     this.settingsForm.controls['torqueunit'].valueChanges.subscribe((val) => {
+      console.log(val)
       this.currentTorqueUnit = ParseTorqueUnit(String(val));
       this.settingsService.inputTorque.next(this.currentTorqueUnit);
     });
