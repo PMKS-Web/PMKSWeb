@@ -25,12 +25,14 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = AngleUnit.DEGREE;
     this.rotateDirection = false;
     this.currentSpeedSetting = 0;
-    this.settingsForm.controls['speed'].setValue('0');
-    this.settingsForm.controls['gravity'].setValue(false);
-    this.settingsForm.controls['rotation'].setValue("One");
-    this.settingsForm.controls['lengthunit'].setValue("Two");
-    this.settingsForm.controls['angleunit'].setValue("One");
-    this.settingsForm.controls['torqueunit'].setValue("Two");
+    this.settingsForm.patchValue({
+      speed: '0',
+      gravity: false,
+      rotation: "One",
+      lengthunit: "Two",
+      angleunit: "One",
+      torqueunit: "Two"
+    })
     this.onChanges();
   }
 
