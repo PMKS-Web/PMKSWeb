@@ -49,8 +49,12 @@ export class SettingsPanelComponent {
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
       console.log(val)
-      this.currentSpeedSetting = Number(val);
-      this.settingsService.inputSpeed.next(this.currentSpeedSetting);
+      if (this.settingsForm.controls['speed'].invalid) {
+        this.settingsForm.patchValue({ speed: this.currentSpeedSetting.toString() });
+      } else {
+        this.currentSpeedSetting = Number(val);
+        this.settingsService.inputSpeed.next(this.currentSpeedSetting);
+      }
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
       console.log(val)
@@ -79,7 +83,7 @@ export class SettingsPanelComponent {
       angleunit: ['', { updateOn: 'change' }],
       torqueunit: ['', { updateOn: 'change' }],
     },
-    { updateOn: 'change' }
+    { updateOn: 'blur' }
   );
 }
 function ParseLengthUnit(val: string | null): LengthUnit {
