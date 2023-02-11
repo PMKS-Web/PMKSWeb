@@ -104,7 +104,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       x: {
         // show: false,
         formatter: function (val) {
-          return 'T = ' + val;
+          return 'T = ' + (val - 1);
         },
       },
       marker: {

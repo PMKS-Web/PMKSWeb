@@ -10,7 +10,7 @@ import { BehaviorSubject } from 'rxjs';
   styleUrls: ['./settings-panel.component.scss'],
 })
 export class SettingsPanelComponent {
-  constructor(public settingsService: SettingsService, private fb: FormBuilder) { }
+  constructor(public settingsService: SettingsService, private fb: FormBuilder) {}
   currentLengthUnit!: LengthUnit;
   currentAngleUnit!: AngleUnit;
   currentTorqueUnit!: TorqueUnit;
@@ -19,36 +19,33 @@ export class SettingsPanelComponent {
   gravityEnabled!: boolean;
 
   ngOnInit(): void {
-    this.gravityEnabled = false;
-    this.currentTorqueUnit = TorqueUnit.INCH_LB;
-    this.currentLengthUnit = LengthUnit.INCH;
-    this.currentAngleUnit = AngleUnit.DEGREE;
-    this.rotateDirection = false;
-    this.currentSpeedSetting = 0;
+    this.gravityEnabled = this.settingsService.isGravity.value;
+    this.currentTorqueUnit = this.settingsService.inputTorque.value;
+    this.currentLengthUnit = this.settingsService.length.value;
+    this.currentAngleUnit = this.settingsService.angle.value;
+    this.rotateDirection = this.settingsService.isInputCW.value;
+    this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.settingsForm.patchValue({
-      speed: '0',
-      gravity: false,
-      rotation: "One",
-      lengthunit: "Two",
-      angleunit: "One",
-      torqueunit: "Two"
-    })
+      speed: this.currentSpeedSetting.toString(),
+      gravity: this.gravityEnabled,
+      rotation: this.rotateDirection ? '0' : '1',
+      lengthunit: this.currentLengthUnit.toString(),
+      angleunit: this.currentAngleUnit.toString(),
+      torqueunit: this.currentTorqueUnit.toString(),
+    });
     this.onChanges();
   }
 
   onChanges(): void {
     this.settingsForm.controls['gravity'].valueChanges.subscribe((val) => {
-      console.log(val)
       this.gravityEnabled = Boolean(val);
       this.settingsService.isGravity.next(this.gravityEnabled);
     });
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
-      console.log(val)
-      this.rotateDirection = String(val) === 'One' ? true : false;
+      this.rotateDirection = String(val) === '0' ? true : false;
       this.settingsService.isInputCW.next(this.rotateDirection);
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
-      console.log(val)
       if (this.settingsForm.controls['speed'].invalid) {
         this.settingsForm.patchValue({ speed: this.currentSpeedSetting.toString() });
       } else {
@@ -57,17 +54,17 @@ export class SettingsPanelComponent {
       }
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
-      console.log(val)
+      console.log(val);
       this.currentLengthUnit = ParseLengthUnit(String(val));
       this.settingsService.length.next(this.currentLengthUnit);
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
-      console.log(val)
+      console.log(val);
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angle.next(this.currentAngleUnit);
     });
     this.settingsForm.controls['torqueunit'].valueChanges.subscribe((val) => {
-      console.log(val)
+      console.log(val);
       this.currentTorqueUnit = ParseTorqueUnit(String(val));
       this.settingsService.inputTorque.next(this.currentTorqueUnit);
     });
@@ -88,11 +85,11 @@ export class SettingsPanelComponent {
 }
 function ParseLengthUnit(val: string | null): LengthUnit {
   switch (val) {
-    case 'One':
+    case '0':
       return LengthUnit.INCH;
-    case 'Two':
+    case '1':
       return LengthUnit.CM;
-    case 'Three':
+    case '2':
       return LengthUnit.METER;
     default:
       return LengthUnit.NULL;
@@ -101,9 +98,9 @@ function ParseLengthUnit(val: string | null): LengthUnit {
 
 function ParseAngleUnit(val: string | null): AngleUnit {
   switch (val) {
-    case 'One':
+    case '0':
       return AngleUnit.DEGREE;
-    case 'Two':
+    case '1':
       return AngleUnit.RADIAN;
     default:
       return AngleUnit.NULL;
@@ -112,11 +109,11 @@ function ParseAngleUnit(val: string | null): AngleUnit {
 
 function ParseTorqueUnit(val: string | null): TorqueUnit {
   switch (val) {
-    case 'One':
+    case '0':
       return TorqueUnit.INCH_LB;
-    case 'Two':
+    case '1':
       return TorqueUnit.CM_N;
-    case 'Three':
+    case '2':
       return TorqueUnit.METER_N;
     default:
       return TorqueUnit.NULL;
