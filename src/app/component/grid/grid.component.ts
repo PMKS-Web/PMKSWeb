@@ -2525,9 +2525,9 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
 
     if ($event.keyCode == 32) {
-      GridComponent.sendNotification(
-        'You pressed the "space" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
-      );
+      // GridComponent.sendNotification(
+      //   'You pressed the "space" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      // );
     }
 
     if ($event.keyCode == 38) {

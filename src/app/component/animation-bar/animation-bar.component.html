@@ -29,16 +29,19 @@
     </button>
   </div>
   <div id="animationBar">
-    <div id="tLabel">T=</div>
-    <form #simpleForm="ngForm" (ngSubmit)="onSubmit(simpleForm)">
-      <input
-        [disabled]="invalidMechanism()"
-        id="animationBar-input"
-        name="timestep"
-        type="number"
-        [(ngModel)]="timestepDisplay"
-      />
-    </form>
+    <div id="timeInputWrapper">
+      <div id="tLabel">T:</div>
+      <form #simpleForm="ngForm" (ngSubmit)="onSubmit(simpleForm)">
+        <input
+          [disabled]="invalidMechanism()"
+          id="animationBar-input"
+          name="timestep"
+          type="number"
+          [(ngModel)]="timestepDisplay"
+        />
+      </form>
+      <span id="secLabel">sec</span>
+    </div>
 
     <mat-slider
       [disabled]="invalidMechanism()"

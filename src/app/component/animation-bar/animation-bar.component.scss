@@ -64,13 +64,22 @@
         margin: 0;
       }
 
-      #tLabel {
-        @include mat.typography-level($typography-config, 'headline-6');
+      #timeInputWrapper {
+        display: flex;
+        font-size: 20px;
+        font-weight: 200;
+        align-items: baseline;
+        // @include mat.typography-level($typography-config, 'headline-6');
+        #tLabel {
+          margin-right: 10px;
+        }
+        #secLabel {
+        }
       }
 
       #animationBar-input {
         font-size: 20px;
-        font-weight: 400;
+        font-weight: 200;
         width: 40px;
         border: 0;
         outline: none;
