@@ -55,7 +55,7 @@ export class AnalysisPanelComponent {
       this.resetVariablesAndSolve();
     }
 
-    this.inputSpeedFormGroup.patchValue({ speed: 'One' });
+    this.inputSpeedFormGroup.patchValue({ speed: '0' });
   }
 
   ngOnInit(): void {

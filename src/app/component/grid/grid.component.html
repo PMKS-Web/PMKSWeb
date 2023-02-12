@@ -55,6 +55,8 @@
         (mousedown)="mouseDown($event, 'link', link)"
         (mouseup)="mouseUp($event, 'link', link)"
         (mousemove)="mouseMove($event, 'link')"
+        (mouseover)="link.showHighlight = true"
+        (mouseout)="link.showHighlight = false"
         [attr.d]="getLinkProp(link, 'd')"
         [attr.id]="link.id"
         [attr.fill]="getLinkProp(link, 'fill')"
@@ -281,7 +283,7 @@
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the jointTagHolder -->
-    <g id="jointTagHolder" *ngIf="showIDTags()" style="pointer-events: none">
+    <g id="jointTagHolder" style="pointer-events: none">
       <svg
         *ngFor="let joint of getJoints()"
         [attr.x]="joint.x - 0.2"
@@ -290,13 +292,16 @@
         [attr.width]="10"
         style="overflow: visible; text-anchor: middle"
       >
-        <text *ngIf="typeOfJoint(joint) !== 'P'" style="font-size: 0.7px; text-anchor: middle">
+        <text
+          *ngIf="(typeOfJoint(joint) !== 'P' && showIDTags()) || joint.showHighlight"
+          style="font-size: 0.7px; text-anchor: middle"
+        >
           {{ joint.id | uppercase }}
         </text>
       </svg>
     </g>
     <!--TODO: Add case when dragging anything above the linkTagHolder -->
-    <g id="linkTagHolder" *ngIf="showIDTags()" style="pointer-events: none">
+    <g id="linkTagHolder" style="pointer-events: none">
       <svg
         *ngFor="let link of getLinks()"
         [attr.x]="getLinkProp(link, 'CoMX')"
@@ -305,7 +310,10 @@
         [attr.width]="10"
         style="overflow: visible; text-anchor: middle"
       >
-        <text *ngIf="typeOfLink(link) !== 'P'" style="font-size: 0.7px; text-anchor: middle">
+        <text
+          *ngIf="(typeOfLink(link) !== 'P' && showIDTags()) || link.showHighlight"
+          style="font-size: 0.7px; text-anchor: middle"
+        >
           {{ link.id | uppercase }}
         </text>
       </svg>

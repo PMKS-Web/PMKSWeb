@@ -11,7 +11,7 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
-  .editPanel {
+  #editPanel {
     height: 100%;
     background-color: transparent;
     display: flex;

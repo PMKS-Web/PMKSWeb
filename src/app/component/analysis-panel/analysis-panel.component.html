@@ -11,11 +11,10 @@
 </div>
 
 <panel-section id="analysis-panel" *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'">
-  <title-block icon="edit">
-    {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
+  <title-block>
+    Kinematic Analysis Results for {{ this.activeSrv.objType }}
+    {{ this.activeSrv.Joint.id | uppercase }}
   </title-block>
-
-  <subtitle-block>Kinematics</subtitle-block>
 
   <!-- 
     //Param 1: analysis: "force","stress","kinematic"
@@ -96,8 +95,14 @@
       mechPart="{{ this.activeSrv.Joint.id }}"
     ></app-analysis-graph>
   </mat-expansion-panel>
+</panel-section>
 
-  <subtitle-block>Forces</subtitle-block>
+<panel-section id="analysis-panel" *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'">
+  <title-block>
+    Force Analysis Results for {{ this.activeSrv.objType }}
+    {{ this.activeSrv.Joint.id | uppercase }}
+  </title-block>
+
   <radio-block
     tooltip="Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other."
     option1="Global (20 rpm)"
@@ -149,17 +154,14 @@
       mechPart="{{ this.activeSrv.Joint.id }}"
     ></app-analysis-graph>
   </mat-expansion-panel>
-  <button-block icon="download">
-    Export Analysis for Joint {{ this.activeSrv.Joint.id | uppercase }}
-  </button-block>
 </panel-section>
 
 <panel-section id="analysis-panel" *ngIf="this.activeSrv.objType == 'Link'">
-  <title-block icon="edit">
-    {{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}
+  <title-block>
+    Kinematic Results for {{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}
   </title-block>
 
-  <subtitle-block>Kinematics</subtitle-block>
+  <!-- <subtitle-block>Kinematics</subtitle-block> -->
 
   <!-- 
     //Param 1: analysis: "force","stress","kinematic"
@@ -318,8 +320,14 @@
       mechPart="{{ this.activeSrv.Link.id }}"
     ></app-analysis-graph>
   </mat-expansion-panel>
+</panel-section>
 
-  <subtitle-block>Forces (Not Available)</subtitle-block>
+<panel-section id="analysis-panel" *ngIf="this.activeSrv.objType == 'Link'">
+  <title-block>
+    Force Analysis Results for {{ this.activeSrv.objType }}
+    {{ this.activeSrv.Link.id | uppercase }}
+  </title-block>
+
   <radio-block
     tooltip="Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other."
     option1="Global (20 rpm)"
@@ -375,7 +383,6 @@
       mechPart="{{ this.activeSrv.Joint.id }}"
     ></app-analysis-graph> -->
   </mat-expansion-panel>
-  <button-block icon="download">
-    Export Analysis for Link {{ this.activeSrv.Link.id | uppercase }}
-  </button-block>
 </panel-section>
+
+<button-block icon="download"> Export Analysis for {{ this.activeSrv.objType }} </button-block>
