@@ -291,7 +291,7 @@
         style="overflow: visible; text-anchor: middle"
       >
         <text *ngIf="typeOfJoint(joint) !== 'P'" style="font-size: 0.7px; text-anchor: middle">
-          {{ joint.id }}
+          {{ joint.id | uppercase }}
         </text>
       </svg>
     </g>
@@ -306,7 +306,7 @@
         style="overflow: visible; text-anchor: middle"
       >
         <text *ngIf="typeOfLink(link) !== 'P'" style="font-size: 0.7px; text-anchor: middle">
-          {{ link.id }}
+          {{ link.id | uppercase }}
         </text>
       </svg>
     </g>
