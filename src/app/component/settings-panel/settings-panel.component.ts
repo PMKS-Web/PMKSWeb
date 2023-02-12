@@ -3,6 +3,7 @@ import { SettingsService } from 'src/app/services/settings.service';
 import { LengthUnit, AngleUnit, TorqueUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
+import { GridComponent } from '../grid/grid.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -30,8 +31,8 @@ export class SettingsPanelComponent {
       gravity: this.gravityEnabled,
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
-      angleunit: this.currentAngleUnit.toString(),
-      torqueunit: this.currentTorqueUnit.toString(),
+      angleunit: (this.currentAngleUnit - 10).toString(),
+      torqueunit: (this.currentTorqueUnit - 20).toString(),
     });
     this.onChanges();
   }
@@ -54,17 +55,14 @@ export class SettingsPanelComponent {
       }
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
-      console.log(val);
       this.currentLengthUnit = ParseLengthUnit(String(val));
       this.settingsService.length.next(this.currentLengthUnit);
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
-      console.log(val);
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angle.next(this.currentAngleUnit);
     });
     this.settingsForm.controls['torqueunit'].valueChanges.subscribe((val) => {
-      console.log(val);
       this.currentTorqueUnit = ParseTorqueUnit(String(val));
       this.settingsService.inputTorque.next(this.currentTorqueUnit);
     });
@@ -82,7 +80,12 @@ export class SettingsPanelComponent {
     },
     { updateOn: 'blur' }
   );
+
+  sendComingSoon(): void {
+    GridComponent.sendNotification('This feature is coming soon!');
+  }
 }
+
 function ParseLengthUnit(val: string | null): LengthUnit {
   switch (val) {
     case '0':

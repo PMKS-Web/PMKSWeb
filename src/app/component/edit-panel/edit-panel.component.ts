@@ -6,8 +6,9 @@ import { Force } from 'src/app/model/force';
 import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { GridComponent } from '../grid/grid.component';
 import { Coord } from 'src/app/model/coord';
-import { getNewOtherJointPos } from 'src/app/model/utils';
+import { AngleUnit, getNewOtherJointPos, LengthUnit } from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
 
 @Component({
   selector: 'app-edit-panel',
@@ -18,14 +19,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   hideEditPanel() {
     return AnimationBarComponent.animate === true || GridComponent.mechanismTimeStep !== 0;
   }
-  constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {}
-
-  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
+  constructor(
+    public activeSrv: ActiveObjService,
+    private fb: FormBuilder,
+    private nup: NumberUnitParserService
+  ) {}
 
   jointForm = this.fb.group(
     {
-      xPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      yPos: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      xPos: [''],
+      yPos: [''],
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
     },
@@ -34,8 +37,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   linkForm = this.fb.group(
     {
-      length: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      angle: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      length: [''],
+      angle: [''],
     },
     { updateOn: 'blur' }
   );
@@ -60,28 +63,32 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   onChanges(): void {
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      if (this.jointForm.controls['xPos'].invalid) {
+      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      if (!success) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toFixed(2).toString() });
       } else {
-        this.activeSrv.Joint.x = parseFloat(val!);
+        this.activeSrv.Joint.x = value;
         GridComponent.dragJoint(
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
+        this.jointForm.patchValue({ xPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
         GridComponent.onMechUpdateState.next(2);
       }
     });
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      if (this.jointForm.controls['yPos'].invalid) {
+      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      if (!success) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toFixed(2).toString() });
       } else {
-        this.activeSrv.Joint.y = parseFloat(val!);
+        this.activeSrv.Joint.y = value;
         GridComponent.dragJoint(
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
+        this.jointForm.patchValue({ yPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
         GridComponent.onMechUpdateState.next(2);
       }
     });
@@ -105,19 +112,22 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     });
 
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
-      if (this.linkForm.controls['length'].invalid) {
+      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      if (!success) {
         this.linkForm.patchValue({
           length: this.activeSrv.Link.length.toFixed(2).toString(),
         });
       } else {
-        this.activeSrv.Link.length = parseFloat(val!);
+        this.activeSrv.Link.length = value;
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
+        this.linkForm.patchValue({ length: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
       }
     });
 
     this.linkForm.controls['angle'].valueChanges.subscribe((val) => {
-      if (this.linkForm.controls['angle'].invalid) {
+      const [success, value] = this.nup.parseAngleString(val!, AngleUnit.DEGREE);
+      if (!success) {
         this.linkForm.patchValue({
           angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
         });
@@ -125,6 +135,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.activeSrv.Link.angleDeg = parseFloat(val!);
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
+        this.linkForm.patchValue({ angle: this.nup.formatValueAndUnit(value, AngleUnit.DEGREE) });
       }
     });
 
@@ -132,8 +143,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (newObjType == 'Joint') {
         this.jointForm.patchValue(
           {
-            xPos: this.activeSrv.Joint.x.toFixed(2).toString(),
-            yPos: this.activeSrv.Joint.y.toFixed(2).toString(),
+            xPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.x, LengthUnit.CM),
+            yPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.y, LengthUnit.CM),
             ground: this.activeSrv.Joint.ground,
             input: this.activeSrv.Joint.input,
           },
@@ -142,8 +153,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       } else if (newObjType == 'Link') {
         this.linkForm.patchValue(
           {
-            length: this.activeSrv.Link.length.toFixed(2).toString(),
-            angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
+            length: this.nup.formatValueAndUnit(this.activeSrv.Link.length, LengthUnit.CM),
+            angle: this.nup.formatValueAndUnit(this.activeSrv.Link.angleDeg, AngleUnit.DEGREE),
           },
           { emitEvent: false }
         );

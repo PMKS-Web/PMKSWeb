@@ -1,5 +1,6 @@
 <div id="settingsWrapper">
   <panel-section>
+    <!-- {{ this.currentAngleUnit }} -->
     <title-block> Settings </title-block>
     <radio-block
       option1="Inches"
@@ -52,7 +53,7 @@
       tooltip="Select the torque units to be used for the analysis. Change the base length units for different torque units."
       >Torque Units</radio-block
     >
-    <button-block icon="edit">Edit Force Directions</button-block>
-    <button-block icon="edit">Edit Moment Centers</button-block>
+    <button-block icon="edit" [click]="sendComingSoon">Edit Force Directions</button-block>
+    <button-block icon="edit" [click]="sendComingSoon">Edit Moment Centers</button-block>
   </panel-section>
 </div>
