@@ -45,8 +45,8 @@
 
     button {
       //set the text size and make it bold
-      font-size: 2em;
-      font-weight: bold;
+      @include mat.typography-level($typography-config, 'headline-5');
+      font-weight: 500;
       background-color: transparent;
       border: none;
       //rotate -90 deg around the center

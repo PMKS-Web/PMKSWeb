@@ -46,7 +46,7 @@
   <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <title-block
       icon="edit"
-      description="Changing the length or angle will change location of the non-grounded joint."
+      description="Changing the length or angle will change the non-grounded joint."
       >{{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
     >
     <input-block
@@ -64,12 +64,7 @@
       tooltip="The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule)."
       >Link Angle</input-block
     >
-
-    <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->
     <button-block icon="delete" [click]="deleteLink">Delete Link</button-block>
-    <!-- <p>Value: {{ jointForm.value | json }}</p>
-    <p>Valid: {{ jointForm.valid }}</p>
-    Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
   <!-- <panel-section-collapsible>

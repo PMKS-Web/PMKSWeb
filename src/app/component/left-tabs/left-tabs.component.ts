@@ -16,7 +16,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
         'open',
         style({
           transform: 'translateX(0)',
-          width: '300px',
+          width: '250px',
         })
       ),
       state(
