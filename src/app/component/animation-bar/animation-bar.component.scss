@@ -77,6 +77,15 @@
         background-color: mat.get-color-from-palette($primary-palette, 50);
         border-radius: var(--border-radius);
         padding: 5px;
+        //When the input is focused
+        &:focus {
+          margin-bottom: 0;
+          background-color: mat.get-color-from-palette($primary-palette, 100);
+          //add a bottom border
+          border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
+          //no more roudned corners in for the bottom
+          border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
       }
 
       mat-slider {

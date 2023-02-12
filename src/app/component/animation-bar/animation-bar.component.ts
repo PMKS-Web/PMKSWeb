@@ -53,7 +53,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     } else if (simpleForm.value.timestep < 0) {
       simpleForm.value.timestep = 0;
     }
-    GridComponent.animate(Number(simpleForm.value.timestep), AnimationBarComponent.animate);
+    GridComponent.animate(Number(simpleForm.value.timestep) * 125, AnimationBarComponent.animate);
   }
 
   maxTimeSteps() {
