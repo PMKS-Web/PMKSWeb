@@ -630,6 +630,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                   new Coord(this.jointXatMouseDown, this.jointYatMouseDown)
                 );
                 this.activeObjService.updateSelectedObj(thing);
+                GridComponent.onMechUpdateState.next(0);
               }
             }
 

@@ -149,6 +149,9 @@
       mechPart="{{ this.activeSrv.Joint.id }}"
     ></app-analysis-graph>
   </mat-expansion-panel>
+  <button-block icon="download">
+    Export Analysis for Joint {{ this.activeSrv.Joint.id | uppercase }}
+  </button-block>
 </panel-section>
 
 <panel-section id="analysis-panel" *ngIf="this.activeSrv.objType == 'Link'">
@@ -372,4 +375,7 @@
       mechPart="{{ this.activeSrv.Joint.id }}"
     ></app-analysis-graph> -->
   </mat-expansion-panel>
+  <button-block icon="download">
+    Export Analysis for Link {{ this.activeSrv.Link.id | uppercase }}
+  </button-block>
 </panel-section>

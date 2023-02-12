@@ -143,12 +143,12 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         rotateAlways: true,
         trim: true,
         formatter: function (val) {
-          return String(Number(val) - 1);
+          return String((Number(val) - 1) / 125);
         },
       },
       tickAmount: 1,
       title: {
-        text: 'Timesteps',
+        text: 'Time (seconds)',
         offsetY: 55,
         offsetX: -10,
       },
@@ -278,64 +278,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.mechPositionSub = GridComponent.onMechPositionChange.subscribe((data) => {
       if (!this.seriesYHidden || !this.seriesXHidden || !this.seriesZHidden) {
         this.chart.clearAnnotations();
-        this.chart.addXaxisAnnotation({
-          x: data,
-          borderColor: '#313aa7',
-        });
+        this.chart.addXaxisAnnotation(
+          {
+            x: data,
+            borderColor: '#313aa7',
+            label: {
+              text: 'T= ' + String((data / 125).toFixed(2)),
+              orientation: 'horizontal',
+              offsetY: -20,
+            },
+          },
+          false
+        );
       }
 
       !this.seriesXHidden &&
-        this.chart.addPointAnnotation({
-          x: data,
-          y: this.chartOptions.series![0].data[data],
-          marker: {
-            strokeColor: '#313aa7',
-            shape: 'square',
-          },
-          label: {
-            borderColor: '#313aa7',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(this.chartOptions.series![0].data[data]),
-          },
-        });
-
-      !this.seriesYHidden &&
-        this.chart.addPointAnnotation({
-          x: data,
-          y: this.chartOptions.series![1].data[data],
-          marker: {
-            strokeColor: '#ea2b29',
-            shape: 'square',
-          },
-          label: {
-            borderColor: '#ea2b29',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(this.chartOptions.series![1].data[data]),
-          },
-        });
-
-      if (this.numberOfSeries === 3) {
-        !this.seriesZHidden &&
-          this.chart.addPointAnnotation({
-            x: data,
-            y: this.chartOptions.series![2].data[data],
-            marker: {
-              strokeColor: '#fdb50e',
-              shape: 'square',
-            },
-            label: {
-              borderColor: '#fdb50e',
-              fillColor: '#000000',
-              orientation: 'horizontal',
-              text: String(this.chartOptions.series![2].data[data]),
-            },
-          });
-      } else {
-        //When there is only z, z is the 0th series
-        !this.seriesZHidden &&
-          this.chart.addPointAnnotation({
+        this.chart.addPointAnnotation(
+          {
             x: data,
             y: this.chartOptions.series![0].data[data],
             marker: {
@@ -348,7 +307,68 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               orientation: 'horizontal',
               text: String(this.chartOptions.series![0].data[data]),
             },
-          });
+          },
+          false
+        );
+
+      !this.seriesYHidden &&
+        this.chart.addPointAnnotation(
+          {
+            x: data,
+            y: this.chartOptions.series![1].data[data],
+            marker: {
+              strokeColor: '#ea2b29',
+              shape: 'square',
+            },
+            label: {
+              borderColor: '#ea2b29',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(this.chartOptions.series![1].data[data]),
+            },
+          },
+          false
+        );
+
+      if (this.numberOfSeries === 3) {
+        !this.seriesZHidden &&
+          this.chart.addPointAnnotation(
+            {
+              x: data,
+              y: this.chartOptions.series![2].data[data],
+              marker: {
+                strokeColor: '#fdb50e',
+                shape: 'square',
+              },
+              label: {
+                borderColor: '#fdb50e',
+                fillColor: '#000000',
+                orientation: 'horizontal',
+                text: String(this.chartOptions.series![2].data[data]),
+              },
+            },
+            false
+          );
+      } else {
+        //When there is only z, z is the 0th series
+        !this.seriesZHidden &&
+          this.chart.addPointAnnotation(
+            {
+              x: data,
+              y: this.chartOptions.series![0].data[data],
+              marker: {
+                strokeColor: '#313aa7',
+                shape: 'square',
+              },
+              label: {
+                borderColor: '#313aa7',
+                fillColor: '#000000',
+                orientation: 'horizontal',
+                text: String(this.chartOptions.series![0].data[data]),
+              },
+            },
+            false
+          );
       }
     });
   }
@@ -391,8 +411,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let accLinUnit = '(cm/s^2)';
     const posAngUnit = '(degrees)';
     // const posAngUnit = '(rad)';
-    const velAngUnit = '((rad)/s)';
-    const accAngUnit = '((rad)/s^2)';
+    const velAngUnit = '(rad/s)';
+    const accAngUnit = '(rad/s^2)';
     if (ToolbarComponent.unit === 'm') {
       posLinUnit = 'm';
       velLinUnit = 'm/s';

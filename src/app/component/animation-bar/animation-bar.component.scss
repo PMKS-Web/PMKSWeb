@@ -64,6 +64,10 @@
         margin: 0;
       }
 
+      #tLabel {
+        @include mat.typography-level($typography-config, 'headline-6');
+      }
+
       #animationBar-input {
         font-size: 20px;
         font-weight: 400;

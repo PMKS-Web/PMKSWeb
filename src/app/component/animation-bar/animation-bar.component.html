@@ -29,6 +29,7 @@
     </button>
   </div>
   <div id="animationBar">
+    <div id="tLabel">T=</div>
     <form #simpleForm="ngForm" (ngSubmit)="onSubmit(simpleForm)">
       <input id="animationBar-input" name="timestep" type="number" [(ngModel)]="timestepDisplay" />
     </form>
