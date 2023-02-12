@@ -48,6 +48,27 @@ export type ChartOptions = {
   styleUrls: ['./analysis-panel.component.scss'],
 })
 export class AnalysisPanelComponent {
+  //A dictionary for wether each graph is expanded or not
+  graphExpanded: { [key: string]: boolean } = {
+    LKineAna: true,
+    LForceAna: true,
+    JKineAna: true,
+    JForceAna: true,
+    LAng: false,
+    LAngVel: false,
+    LAngAcc: false,
+    LPos: false,
+    LVel: false,
+    LAcc: false,
+    LForce: false,
+    LStress: false,
+    JPos: false,
+    JVel: false,
+    JAcc: false,
+    JForce: false,
+    JInputForce: false,
+  };
+
   mechStateSub: any;
 
   constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {

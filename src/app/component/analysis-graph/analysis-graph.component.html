@@ -1,11 +1,11 @@
-<div id="graph-checkbox-list-three" *ngIf="numberOfSeries === 3">
-  <mat-checkbox checked (change)="toggleSeries('Z')">Magnitude</mat-checkbox>
-  <mat-checkbox (change)="toggleSeries('X')" color="primary">X-Comp</mat-checkbox>
-  <mat-checkbox (change)="toggleSeries('Y')" color="warn">Y-Comp</mat-checkbox>
+<div id="graph-checkbox-list-three" *ngIf="numberOfSeries === 3" [formGroup]="seriesCheckboxForm">
+  <mat-checkbox formControlName="z">Magnitude</mat-checkbox>
+  <mat-checkbox formControlName="x" color="primary">X-Comp</mat-checkbox>
+  <mat-checkbox formControlName="y" color="warn">Y-Comp</mat-checkbox>
 </div>
-<div id="graph-checkbox-list-two" *ngIf="numberOfSeries === 2">
-  <mat-checkbox (change)="toggleSeries('X')" color="primary" checked="">X-Comp</mat-checkbox>
-  <mat-checkbox (change)="toggleSeries('Y')" color="warn" checked="">Y-Comp</mat-checkbox>
+<div id="graph-checkbox-list-two" *ngIf="numberOfSeries === 2" [formGroup]="seriesCheckboxForm">
+  <mat-checkbox formControlName="x" color="primary">X-Comp</mat-checkbox>
+  <mat-checkbox formControlName="y" color="warn">Y-Comp</mat-checkbox>
 </div>
 <apx-chart
   #chart

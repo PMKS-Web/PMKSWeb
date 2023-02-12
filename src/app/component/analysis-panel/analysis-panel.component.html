@@ -1,4 +1,18 @@
 <div id="analysisWrapper">
+  <!-- 
+    //Param 1: analysis: "force","stress","kinematic"
+
+    //Param 2: analysisType: IF analysis == force: "statics","dynamic"
+    //Param 2: analysisType: IF analysis == kinematic: "loop","ic"
+
+    //Param 3: mechProp: IF analysis == force: "Input Torque","Joint Forces"
+    //Param 3: mechProp: IF analysis == kinematic: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
+    //"Linear Link's CoM Pos","Linear Link's CoM Vel","Linear Link's CoM Acc",
+    //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
+
+    //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
+  -->
+
   <!-- Invalid Mech-->
   <panel-section id="placeholderContainer" *ngIf="!validMechanisms()">
     <p id="placeholderText">
@@ -20,27 +34,20 @@
   <panel-section-collapsible
     id="analysis-panel"
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'"
+    [expanded]="graphExpanded['JKineAna']"
+    (opened)="graphExpanded['JKineAna'] = true"
+    (closed)="graphExpanded['JKineAna'] = false"
   >
     <title-block alwaysShown icon="expand_less">
       Kinematic Analysis for {{ this.activeSrv.objType }}
       {{ this.activeSrv.Joint.id | uppercase }}
     </title-block>
 
-    <!-- 
-    //Param 1: analysis: "force","stress","kinematic"
-
-    //Param 2: analysisType: IF analysis == force: "statics","dynamic"
-    //Param 2: analysisType: IF analysis == kinematic: "loop","ic"
-
-    //Param 3: mechProp: IF analysis == force: "Input Torque","Joint Forces"
-    //Param 3: mechProp: IF analysis == kinematic: "Linear Joint Pos","Linear Joint Vel","Linear Joint Acc",
-    //"Linear Link's CoM Pos","Linear Link's CoM Vel","Linear Link's CoM Acc",
-    //"Angular Link Pos","Angular Link Vel",Angular Link Acc"
-
-    //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
-  -->
-
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['JPos']"
+      (opened)="graphExpanded['JPos'] = true"
+      (closed)="graphExpanded['Jpos'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Position of Joint {{ this.activeSrv.Joint.id | uppercase }}
@@ -62,7 +69,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['JVel']"
+      (opened)="graphExpanded['JVel'] = true"
+      (closed)="graphExpanded['JVel'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Velocity of Joint {{ this.activeSrv.Joint.id | uppercase }}
@@ -84,7 +95,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['JAcc']"
+      (opened)="graphExpanded['JAcc'] = true"
+      (closed)="graphExpanded['JAcc'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Acceleration of Joint {{ this.activeSrv.Joint.id | uppercase }}
@@ -109,6 +124,9 @@
 
   <!-- Joint Forces-->
   <panel-section-collapsible
+    [expanded]="graphExpanded['JForceAna']"
+    (opened)="graphExpanded['JForceAna'] = true"
+    (closed)="graphExpanded['JForceAna'] = false"
     id="analysis-panel"
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'"
   >
@@ -127,7 +145,11 @@
       >Input Speed</radio-block
     >
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['JForce']"
+      (opened)="graphExpanded['JForce'] = true"
+      (closed)="graphExpanded['JForce'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Force on Joint {{ this.activeSrv.Joint.id | uppercase }}
@@ -149,7 +171,12 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel *ngIf="this.activeSrv.Joint.input">
+    <mat-expansion-panel
+      *ngIf="this.activeSrv.Joint.input"
+      [expanded]="graphExpanded['JInputForce']"
+      (opened)="graphExpanded['JInputForce'] = true"
+      (closed)="graphExpanded['JInputForce'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Input Torque at Joint {{ this.activeSrv.Joint.id | uppercase }}
@@ -174,6 +201,9 @@
 
   <!-- Link Kinematics-->
   <panel-section-collapsible
+    [expanded]="graphExpanded['LKineAna']"
+    (opened)="graphExpanded['LKineAna'] = true"
+    (closed)="graphExpanded['LKineAna'] = false"
     id="analysis-panel"
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
@@ -197,12 +227,16 @@
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
   -->
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LAng']"
+      (opened)="graphExpanded['LAng'] = true"
+      (closed)="graphExpanded['LAng'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title> Angle of Link {{ this.activeSrv.Link.id | uppercase }} </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The X and Y position of the selected joint graphed over time"
+            matTooltip="The angle of the selected above the horizontal of the link graphed over time"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -217,7 +251,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LAngVel']"
+      (opened)="graphExpanded['LAngVel'] = true"
+      (closed)="graphExpanded['LAngVel'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
@@ -226,7 +264,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The velocity of the selected joint graphed"
+            matTooltip="The angular velocity of the selected link graphed"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -241,7 +279,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LAngAcc']"
+      (opened)="graphExpanded['LAngAcc'] = true"
+      (closed)="graphExpanded['LAngAcc'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
@@ -250,7 +292,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The acceleration of the selected joint graphed"
+            matTooltip="The angular acceleration of the selected link graphed"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -269,7 +311,11 @@
       >Center of Mass (COM) of Link {{ this.activeSrv.Link.id | uppercase }}</subtitle-block
     >
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LPos']"
+      (opened)="graphExpanded['LPos'] = true"
+      (closed)="graphExpanded['LPos'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
@@ -278,7 +324,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The acceleration of the selected joint graphed"
+            matTooltip="The position of the selected link's COM graphed"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -293,7 +339,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LVel']"
+      (opened)="graphExpanded['LVel'] = true"
+      (closed)="graphExpanded['LVel'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
@@ -302,7 +352,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The acceleration of the selected joint graphed"
+            matTooltip="The velocity of the selected link's COM graphed"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -317,7 +367,11 @@
       ></app-analysis-graph>
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LAcc']"
+      (opened)="graphExpanded['LAcc'] = true"
+      (closed)="graphExpanded['LAcc'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
@@ -326,7 +380,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The acceleration of the selected joint graphed"
+            matTooltip="The acceleration of the selected link's COM graphed"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -344,6 +398,9 @@
 
   <!-- Link Forces-->
   <panel-section-collapsible
+    [expanded]="graphExpanded['LForceAna']"
+    (opened)="graphExpanded['LForceAna'] = true"
+    (closed)="graphExpanded['LForceAna'] = false"
     id="analysis-panel"
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
@@ -362,14 +419,18 @@
       >Input Speed</radio-block
     >
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LForce']"
+      (opened)="graphExpanded['LForce'] = true"
+      (closed)="graphExpanded['LForce'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Axial Force on Link {{ this.activeSrv.Link.id | uppercase }}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The force applied at the selected joint graphed over time"
+            matTooltip="The axial force applied at the selected link's cross section graphed over time"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon
@@ -385,14 +446,18 @@
     ></app-analysis-graph> -->
     </mat-expansion-panel>
 
-    <mat-expansion-panel>
+    <mat-expansion-panel
+      [expanded]="graphExpanded['LStress']"
+      (opened)="graphExpanded['LStress'] = true"
+      (closed)="graphExpanded['LStress'] = false"
+    >
       <mat-expansion-panel-header>
         <mat-panel-title>
           Axial Stress on Link {{ this.activeSrv.Link.id | uppercase }}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
-            matTooltip="The toque applied to the mechanism by the input joint graphed over time. Only available if the selected joint is grounded and is an input."
+            matTooltip="The axial stress applied at the selected link's minimum cross section graphed over time"
             [matTooltipShowDelay]="1000"
             id="graph-help"
             >help_outline</mat-icon

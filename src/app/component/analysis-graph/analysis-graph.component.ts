@@ -32,6 +32,7 @@ import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { FormBuilder } from '@angular/forms';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -193,14 +194,22 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   animationTimestep: number = 0;
   numberOfSeries: number = 0;
-  seriesXHidden: boolean = false;
-  seriesYHidden: boolean = false;
-  seriesZHidden: boolean = false;
 
   mechPositionSub: any;
   mechStateSub: any;
 
   loading: boolean = false;
+
+  constructor(private fb: FormBuilder) {}
+
+  seriesCheckboxForm = this.fb.group(
+    {
+      x: [false],
+      y: [false],
+      z: [false],
+    },
+    { updateOn: 'change' }
+  );
 
   ngOnChanges(changes: SimpleChanges): void {
     //We don't want to resubscribe to things when the component is first initialized
@@ -216,7 +225,17 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   updateChartData() {
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
-    this.ngAfterViewInit();
+    // this.ngAfterViewInit();
+    setTimeout(() => {
+      this.seriesCheckboxForm.patchValue(
+        {
+          x: this.seriesCheckboxForm.value.x,
+          y: this.seriesCheckboxForm.value.y,
+          z: this.seriesCheckboxForm.value.z,
+        },
+        { emitEvent: true }
+      );
+    }, 1);
   }
 
   ngAfterViewInit(): void {
@@ -224,21 +243,25 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     setTimeout(() => {
       this.chart.clearAnnotations();
       if (this.numberOfSeries === 3) {
-        this.chart.hideSeries('X');
-        this.chart.hideSeries('Y');
-        this.seriesXHidden = true;
-        this.seriesYHidden = true;
-        this.seriesZHidden = false;
+        this.seriesCheckboxForm.patchValue({
+          x: false,
+          y: false,
+          z: true,
+        });
       }
       if (this.numberOfSeries === 2) {
-        this.seriesXHidden = false;
-        this.seriesYHidden = false;
-        this.seriesZHidden = true;
+        this.seriesCheckboxForm.patchValue({
+          x: true,
+          y: true,
+          z: false,
+        });
       }
       if (this.numberOfSeries === 1) {
-        this.seriesXHidden = true;
-        this.seriesYHidden = true;
-        this.seriesZHidden = false;
+        this.seriesCheckboxForm.patchValue({
+          x: false,
+          y: false,
+          z: true,
+        });
       }
     }, 1);
   }
@@ -258,6 +281,47 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // console.log(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
+
+    this.seriesCheckboxForm.valueChanges.subscribe((data) => {
+      if (this.numberOfSeries === 3) {
+        if (data.x) {
+          this.chart.showSeries('X');
+        } else {
+          this.chart.hideSeries('X');
+        }
+        if (data.y) {
+          this.chart.showSeries('Y');
+        } else {
+          this.chart.hideSeries('Y');
+        }
+        if (data.z) {
+          this.chart.showSeries('Z');
+        } else {
+          this.chart.hideSeries('Z');
+        }
+      }
+      if (this.numberOfSeries === 2) {
+        if (data.x) {
+          this.chart.showSeries('X');
+        } else {
+          this.chart.hideSeries('X');
+        }
+        if (data.y) {
+          this.chart.showSeries('Y');
+        } else {
+          this.chart.hideSeries('Y');
+        }
+      }
+
+      if (this.numberOfSeries === 1) {
+        if (data.z) {
+          this.chart.showSeries('Z');
+        } else {
+          this.chart.hideSeries('Z');
+        }
+      }
+    });
+
     this.mechStateSub = GridComponent.onMechUpdateState.subscribe((data) => {
       switch (data) {
         case 0:
@@ -276,7 +340,11 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
     });
     this.mechPositionSub = GridComponent.onMechPositionChange.subscribe((data) => {
-      if (!this.seriesYHidden || !this.seriesXHidden || !this.seriesZHidden) {
+      if (
+        !this.seriesCheckboxForm.value.x ||
+        !this.seriesCheckboxForm.value.y ||
+        !this.seriesCheckboxForm.value.z
+      ) {
         this.chart.clearAnnotations();
         this.chart.addXaxisAnnotation(
           {
@@ -292,7 +360,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         );
       }
 
-      !this.seriesXHidden &&
+      !this.seriesCheckboxForm.value.x &&
         this.chart.addPointAnnotation(
           {
             x: data,
@@ -311,7 +379,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           false
         );
 
-      !this.seriesYHidden &&
+      !this.seriesCheckboxForm.value.y &&
         this.chart.addPointAnnotation(
           {
             x: data,
@@ -331,7 +399,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         );
 
       if (this.numberOfSeries === 3) {
-        !this.seriesZHidden &&
+        !this.seriesCheckboxForm.value.z &&
           this.chart.addPointAnnotation(
             {
               x: data,
@@ -351,7 +419,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           );
       } else {
         //When there is only z, z is the 0th series
-        !this.seriesZHidden &&
+        !this.seriesCheckboxForm.value.z &&
           this.chart.addPointAnnotation(
             {
               x: data,
@@ -380,20 +448,6 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     if (this.mechStateSub) {
       this.mechStateSub.unsubscribe();
     }
-  }
-
-  toggleSeries(seriesName: string) {
-    this.chart.toggleSeries(seriesName);
-    if (seriesName === 'X') {
-      this.seriesXHidden = !this.seriesXHidden;
-    }
-    if (seriesName === 'Y') {
-      this.seriesYHidden = !this.seriesYHidden;
-    }
-    if (seriesName === 'Z') {
-      this.seriesZHidden = !this.seriesZHidden;
-    }
-    this.chart.clearAnnotations();
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
@@ -567,6 +621,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     }
 
     this.chartOptions = { ...this.chartOptions, series: seriesData };
+    // this.chart.updateOptions({ ...this.chartOptions, series: seriesData });
+    // this.chart.updateOptions({ ...this.chartOptions.yaxis!.title, text: yAxisTitle });
     this.chartOptions.yaxis!.title = { ...this.chartOptions.yaxis!.title, text: yAxisTitle };
   }
 

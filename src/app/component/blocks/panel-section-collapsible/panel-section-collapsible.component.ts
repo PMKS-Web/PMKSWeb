@@ -1,4 +1,4 @@
-import { Component, ContentChildren, Input, QueryList } from '@angular/core';
+import { Component, ContentChildren, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { TitleBlock } from '../title/title.component';
 
 @Component({
@@ -7,15 +7,23 @@ import { TitleBlock } from '../title/title.component';
   styleUrls: ['./panel-section-collapsible.component.scss'],
 })
 export class PanelSectionCollapsibleComponent {
-  @Input() expanded: number = 1;
+  @Input() expanded: boolean = true;
 
   @ContentChildren(TitleBlock) titleBlock?: QueryList<TitleBlock>;
+
+  @Output() closed: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() opened: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   ngAfterContentInit() {
     this.titleBlock?.first.nestedComponentChange.subscribe(() => this.toggleExpand());
   }
 
   toggleExpand() {
-    this.expanded = this.expanded == 1 ? 0 : 1;
+    this.expanded = !this.expanded;
+    if (this.expanded) {
+      this.opened.emit(true);
+    } else {
+      this.closed.emit(true);
+    }
   }
 }
