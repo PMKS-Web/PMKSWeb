@@ -11,6 +11,13 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  #analysisWrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+  }
+
   #analysis-panel {
     display: flex;
     flex-direction: column;

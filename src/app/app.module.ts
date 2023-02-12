@@ -33,6 +33,7 @@ import { AnalysisPanelComponent } from './component/analysis-panel/analysis-pane
 import { AnalysisGraphComponent } from './component/analysis-graph/analysis-graph.component';
 import { RightPanelComponent } from './component/right-panel/right-panel.component';
 import { SettingsPanelComponent } from './component/settings-panel/settings-panel.component';
+import { SynthesisPanelComponent } from './component/synthesis-panel/synthesis-panel.component';
 
 @NgModule({
   declarations: [
@@ -60,6 +61,7 @@ import { SettingsPanelComponent } from './component/settings-panel/settings-pane
     AnalysisGraphComponent,
     RightPanelComponent,
     SettingsPanelComponent,
+    SynthesisPanelComponent,
   ],
   imports: [
     BrowserModule,

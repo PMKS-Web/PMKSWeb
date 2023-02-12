@@ -1,15 +1,20 @@
-<div id="editPanel">
-  <div id="placeholderContainer" *ngIf="hideEditPanel()">
+<div id="editWrapper">
+  <panel-section id="placeholderContainer" *ngIf="hideEditPanel()">
     <p id="placeholderText">Stop animation or reset position slider to 0 to edit properties.</p>
     <img id="placeholder" src="assets/placeholder.svg" />
-  </div>
-  <div id="placeholderContainer" *ngIf="this.activeSrv.objType == 'Nothing' && !hideEditPanel()">
+  </panel-section>
+
+  <panel-section
+    id="placeholderContainer"
+    *ngIf="this.activeSrv.objType == 'Nothing' && !hideEditPanel()"
+  >
     <p id="placeholderText">Right click on the grid to create a link and click on it to edit it.</p>
     <img id="placeholder" src="assets/placeholder.svg" />
-  </div>
+  </panel-section>
+
   <panel-section *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">
     <title-block icon="edit">
-      {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
+      Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
     </title-block>
 
     <dual-input-block
@@ -47,7 +52,7 @@
     <title-block
       icon="edit"
       description="Changing the length or angle will change the non-grounded joint."
-      >{{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
+      >Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
     >
     <input-block
       [formGroup]="linkForm"

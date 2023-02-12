@@ -16,7 +16,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
         'open',
         style({
           transform: 'translateX(0)',
-          width: '250px',
+          width: '270px', //Be careful, there are multiple places to change this value
         })
       ),
       state(
@@ -28,7 +28,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
       state(
         'openWide',
         style({
-          width: '400px', //Be careful, there are multiple places to change this value
+          width: '420px', //Be careful, there are multiple places to change this value
         })
       ),
 

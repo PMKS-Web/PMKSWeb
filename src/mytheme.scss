@@ -20,6 +20,7 @@
 @use 'src/app/component/analysis-graph/analysis-graph.component.scss' as analysis-graph;
 @use 'src/app/component/right-panel/right-panel.component.scss' as right-panel;
 @use 'src/app/component/settings-panel/settings-panel.component.scss' as settings-panel;
+@use 'src/app/component/synthesis-panel/synthesis-panel.component.scss' as synthesis-panel;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -49,6 +50,7 @@ $my-theme: mat.define-light-theme(
 @include analysis-graph.css($my-theme);
 @include right-panel.css($my-theme);
 @include settings-panel.css($my-theme);
+@include synthesis-panel.css($my-theme);
 
 @include blocks-common.css($my-theme);
 @include panel-section.css($my-theme);

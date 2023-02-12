@@ -1,56 +1,58 @@
-<panel-section>
-  <title-block> Settings </title-block>
-  <radio-block
-    option1="Inches"
-    option2="cm"
-    option3="Meters"
-    [formGroup]="this.settingsForm"
-    _formControl="lengthunit"
-    tooltip="Select the units to be used for length. This updates units for derived units as well (e.g. velocity, area, etc.)"
-    >Length Units</radio-block
-  >
-  <radio-block
-    option1="Degrees"
-    option2="Radians"
-    [formGroup]="this.settingsForm"
-    _formControl="angleunit"
-    tooltip="Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)"
-    >Angle Units</radio-block
-  >
-  <radio-block
-    option1="Clockwise"
-    option2="Counter-Clockwise"
-    [formGroup]="this.settingsForm"
-    _formControl="rotation"
-    tooltip="Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise."
-    >Input Direction</radio-block
-  >
+<div id="settingsWrapper">
+  <panel-section>
+    <title-block> Settings </title-block>
+    <radio-block
+      option1="Inches"
+      option2="cm"
+      option3="Meters"
+      [formGroup]="this.settingsForm"
+      _formControl="lengthunit"
+      tooltip="Select the units to be used for length. This updates units for derived units as well (e.g. velocity, area, etc.)"
+      >Length Units</radio-block
+    >
+    <radio-block
+      option1="Degrees"
+      option2="Radians"
+      [formGroup]="this.settingsForm"
+      _formControl="angleunit"
+      tooltip="Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)"
+      >Angle Units</radio-block
+    >
+    <radio-block
+      option1="Clockwise"
+      option2="Counter-Clockwise"
+      [formGroup]="this.settingsForm"
+      _formControl="rotation"
+      tooltip="Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise."
+      >Input Direction</radio-block
+    >
 
-  <input-block
-    unit="deg/sec"
-    type="number"
-    [formGroup]="this.settingsForm"
-    _formControl="speed"
-    tooltip="The speed that the animation will run at."
-    >Input Speed
-  </input-block>
+    <input-block
+      unit="deg/sec"
+      type="number"
+      [formGroup]="this.settingsForm"
+      _formControl="speed"
+      tooltip="The speed that the animation will run at."
+      >Input Speed
+    </input-block>
 
-  <subtitle-block>Force Settings</subtitle-block>
-  <toggle-block
-    [formGroup]="this.settingsForm"
-    _formControl="gravity"
-    tooltip="Allows users to assign weights to links and enables analysis options for torque and forces."
-    >Gravity</toggle-block
-  >
-  <radio-block
-    option1="lbf-in"
-    option2="N-cm"
-    option3="N-m"
-    [formGroup]="this.settingsForm"
-    _formControl="torqueunit"
-    tooltip="Select the torque units to be used for the analysis. Change the base length units for different torque units."
-    >Torque Units</radio-block
-  >
-  <button-block icon="edit">Edit Force Directions</button-block>
-  <button-block icon="edit">Edit Moment Centers</button-block>
-</panel-section>
+    <subtitle-block>Force Settings</subtitle-block>
+    <toggle-block
+      [formGroup]="this.settingsForm"
+      _formControl="gravity"
+      tooltip="Allows users to assign weights to links and enables analysis options for torque and forces."
+      >Gravity</toggle-block
+    >
+    <radio-block
+      option1="lbf-in"
+      option2="N-cm"
+      option3="N-m"
+      [formGroup]="this.settingsForm"
+      _formControl="torqueunit"
+      tooltip="Select the torque units to be used for the analysis. Change the base length units for different torque units."
+      >Torque Units</radio-block
+    >
+    <button-block icon="edit">Edit Force Directions</button-block>
+    <button-block icon="edit">Edit Moment Centers</button-block>
+  </panel-section>
+</div>

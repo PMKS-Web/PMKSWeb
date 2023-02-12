@@ -21,21 +21,7 @@
   </div>
   <div [@openClose]="isOpen ? (this.openTab === 3 ? 'openWide' : 'open') : 'closed'" class="panel">
     <div *ngIf="this.openTab === 1" class="page1">
-      <p style="margin: 30px">
-        This page is not ready yet. Here is what this screen could look like:
-      </p>
-      <img src="assets/PlaceholderS.png" />
-      <!-- <div id="headline-1">This is Headline 1</div> -->
-      <div id="headline-2">This is Headline 2</div>
-      <div id="headline-3">This is Headline 3</div>
-      <div id="headline-4">This is Headline 4</div>
-      <div id="headline-5">This is Headline 5</div>
-      <div id="headline-6">This is Headline 6</div>
-      <div id="subtitle-1">This is Subtitle 1</div>
-      <div id="subtitle-2">This is Subtitle 2</div>
-      <div id="body-1">This is Body 1</div>
-      <div id="body-2">This is Body 2</div>
-      <div id="caption">This is Caption</div>
+      <app-synthesis-panel></app-synthesis-panel>
     </div>
     <div *ngIf="this.openTab === 2" class="page2">
       <app-edit-panel></app-edit-panel>
