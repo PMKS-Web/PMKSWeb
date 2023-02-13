@@ -83,6 +83,22 @@
     <button-block icon="delete" [click]="deleteLink">Delete Link</button-block>
   </panel-section>
 
+  <panel-section-collapsible *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
+    <title-block alwaysShown icon="expand_less">Related Objects</title-block>
+    <ng-container *ngFor="let joint of this.activeSrv.Link.joints">
+      <subtitle-block icon="open_in_new" style="margin-bottom: -10px"
+        >Joint {{ joint.id | uppercase }}</subtitle-block
+      >
+      <dual-input-block
+        formControl1="xPos"
+        formControl2="yPos"
+        unit="cm"
+        tooltip="The location of the joint in cm."
+        >Joint {{ joint.id | uppercase }} Position
+      </dual-input-block>
+    </ng-container>
+  </panel-section-collapsible>
+
   <!-- <panel-section-collapsible>
     <title-block alwaysShown icon="expand_less">Debug Menu</title-block>
     <button (click)="debug()">Debug</button> -->
