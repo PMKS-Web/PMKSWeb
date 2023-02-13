@@ -1,15 +1,26 @@
 <div id="editWrapper">
   <panel-section id="placeholderContainer" *ngIf="hideEditPanel()">
-    <p id="placeholderText">Stop animation or reset position slider to 0 to edit properties.</p>
-    <img id="placeholder" src="assets/placeholder.svg" />
+    <title-block>Edit Panel</title-block>
+    <img src="assets/gifs/Stop.gif" />
+    <div id="errorMessage">Stop animation or reset the time slider to 0 to edit.</div>
   </panel-section>
 
   <panel-section
     id="placeholderContainer"
-    *ngIf="this.activeSrv.objType == 'Nothing' && !hideEditPanel()"
+    *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint == 0 && !hideEditPanel()"
   >
-    <p id="placeholderText">Right click on the grid to create a link and click on it to edit it.</p>
-    <img id="placeholder" src="assets/placeholder.svg" />
+    <title-block>Edit Panel</title-block>
+    <img src="assets/gifs/Create.gif" />
+    <div id="errorMessage">Right click on the grid to create a link.</div>
+  </panel-section>
+
+  <panel-section
+    id="placeholderContainer"
+    *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint != 0 && !hideEditPanel()"
+  >
+    <title-block>Edit Panel</title-block>
+    <img src="assets/gifs/Click.gif" />
+    <div id="errorMessage">Select a joint or link to edit properties.</div>
   </panel-section>
 
   <panel-section *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">

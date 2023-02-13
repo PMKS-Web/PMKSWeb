@@ -16,6 +16,7 @@ import { NumberUnitParserService } from 'src/app/services/number-unit-parser.ser
   styleUrls: ['./edit-panel.component.scss'],
 })
 export class EditPanelComponent implements OnInit, AfterContentInit {
+  numberOfJoint: number = 0;
   hideEditPanel() {
     return AnimationBarComponent.animate === true || GridComponent.mechanismTimeStep !== 0;
   }
@@ -58,6 +59,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   ngAfterContentInit() {
     this.activeSrv.fakeUpdateSelectedObj();
+    this.numberOfJoint = GridComponent.joints.length;
+    console.log(this.numberOfJoint);
   }
 
   onChanges(): void {
