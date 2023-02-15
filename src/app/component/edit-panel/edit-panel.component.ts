@@ -75,7 +75,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
-        this.jointForm.patchValue({ xPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
+        this.jointForm.patchValue(
+          { xPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { emitEvent: false }
+        );
         GridComponent.onMechUpdateState.next(2);
       }
     });
@@ -91,7 +94,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           this.activeSrv.Joint,
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
-        this.jointForm.patchValue({ yPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
+        this.jointForm.patchValue(
+          { yPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { emitEvent: false }
+        );
         GridComponent.onMechUpdateState.next(2);
       }
     });
@@ -124,7 +130,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.activeSrv.Link.length = value;
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
-        this.linkForm.patchValue({ length: this.nup.formatValueAndUnit(value, LengthUnit.CM) });
+        this.linkForm.patchValue(
+          { length: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { emitEvent: false }
+        );
       }
     });
 
@@ -138,7 +147,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.activeSrv.Link.angleDeg = parseFloat(val!);
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
-        this.linkForm.patchValue({ angle: this.nup.formatValueAndUnit(value, AngleUnit.DEGREE) });
+        this.linkForm.patchValue(
+          { angle: this.nup.formatValueAndUnit(value, AngleUnit.DEGREE) },
+          { emitEvent: false }
+        );
       }
     });
 
