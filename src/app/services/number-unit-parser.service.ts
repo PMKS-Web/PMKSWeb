@@ -5,7 +5,7 @@ import { LengthUnit, AngleUnit, TorqueUnit } from '../model/utils';
   providedIn: 'root',
 })
 export class NumberUnitParserService {
-  constructor() {}
+  constructor() { }
 
   public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit): string {
     switch (units) {
@@ -23,7 +23,7 @@ export class NumberUnitParserService {
     return 'Error in formatValueAndUnit()';
   }
 
-  private preProcessInput(input: string): [number, string] {
+  public preProcessInput(input: string): [number, string] {
     //Remove all spaces
     input = input.replace(/\s/g, '');
     //Find the first non-digit character
@@ -70,6 +70,24 @@ export class NumberUnitParserService {
     return [true, value];
   }
 
+  public getLengthUnit(input: string): LengthUnit {
+    switch (input) {
+      case 'cm':
+      case 'centimeter':
+      case 'centimeters':
+        return LengthUnit.CM;
+      case 'm':
+      case 'meter':
+      case 'meters':
+        return LengthUnit.METER;
+      case 'in':
+      case 'inch':
+      case 'inches':
+        return LengthUnit.INCH;
+      default:
+        return LengthUnit.NULL;
+    }
+  }
   public parseLengthString(input: string, desiredUnits: LengthUnit): [boolean, number] {
     let [value, unit] = this.preProcessInput(input);
 
@@ -102,7 +120,7 @@ export class NumberUnitParserService {
     return [true, value];
   }
 
-  private convertLength(value: number, givenUnits: LengthUnit, desiredUnits: LengthUnit): number {
+  public convertLength(value: number, givenUnits: LengthUnit, desiredUnits: LengthUnit): number {
     switch (givenUnits) {
       case LengthUnit.CM:
         switch (desiredUnits) {

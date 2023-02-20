@@ -9,6 +9,7 @@ import { Coord } from 'src/app/model/coord';
 import { AngleUnit, getNewOtherJointPos, LengthUnit } from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-edit-panel',
@@ -22,9 +23,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
   constructor(
     public activeSrv: ActiveObjService,
+    private settingsService: SettingsService,
     private fb: FormBuilder,
     private nup: NumberUnitParserService
-  ) {}
+  ) { }
 
   jointForm = this.fb.group(
     {
@@ -64,9 +66,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
 
   onChanges(): void {
+    this.settingsService.length.subscribe((val) => {
+      var [num, str] = this.nup.preProcessInput(this.linkForm.controls['length'].value!);
+      var unit = this.nup.getLengthUnit(str);
+      if (unit !== this.settingsService.length.value) {
+        this.linkForm.controls['length'].patchValue(this.nup.formatValueAndUnit(this.nup.convertLength(num, unit, this.settingsService.length.value), this.settingsService.length.value))
+      }
+    })
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
       if (!success) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toFixed(2).toString() });
       } else {
@@ -76,7 +85,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
         this.jointForm.patchValue(
-          { xPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { xPos: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
           { emitEvent: false }
         );
         GridComponent.onMechUpdateState.next(2);
@@ -85,7 +94,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
       if (!success) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toFixed(2).toString() });
       } else {
@@ -95,7 +104,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           new Coord(this.activeSrv.Joint.x, this.activeSrv.Joint.y)
         );
         this.jointForm.patchValue(
-          { yPos: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { yPos: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
           { emitEvent: false }
         );
         GridComponent.onMechUpdateState.next(2);
@@ -121,7 +130,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     });
 
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
-      const [success, value] = this.nup.parseLengthString(val!, LengthUnit.CM);
+      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
       if (!success) {
         this.linkForm.patchValue({
           length: this.activeSrv.Link.length.toFixed(2).toString(),
@@ -131,14 +140,14 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
         this.linkForm.patchValue(
-          { length: this.nup.formatValueAndUnit(value, LengthUnit.CM) },
+          { length: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
           { emitEvent: false }
         );
       }
     });
 
     this.linkForm.controls['angle'].valueChanges.subscribe((val) => {
-      const [success, value] = this.nup.parseAngleString(val!, AngleUnit.DEGREE);
+      const [success, value] = this.nup.parseAngleString(val!, this.settingsService.angle.getValue());
       if (!success) {
         this.linkForm.patchValue({
           angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
@@ -148,7 +157,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.resolveNewLink();
         GridComponent.onMechUpdateState.next(2);
         this.linkForm.patchValue(
-          { angle: this.nup.formatValueAndUnit(value, AngleUnit.DEGREE) },
+          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angle.getValue()) },
           { emitEvent: false }
         );
       }
@@ -158,8 +167,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (newObjType == 'Joint') {
         this.jointForm.patchValue(
           {
-            xPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.x, LengthUnit.CM),
-            yPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.y, LengthUnit.CM),
+            xPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.x, this.settingsService.length.getValue()),
+            yPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.y, this.settingsService.length.getValue()),
             ground: this.activeSrv.Joint.ground,
             input: this.activeSrv.Joint.input,
           },
@@ -168,8 +177,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       } else if (newObjType == 'Link') {
         this.linkForm.patchValue(
           {
-            length: this.nup.formatValueAndUnit(this.activeSrv.Link.length, LengthUnit.CM),
-            angle: this.nup.formatValueAndUnit(this.activeSrv.Link.angleDeg, AngleUnit.DEGREE),
+            length: this.nup.formatValueAndUnit(this.activeSrv.Link.length, this.settingsService.length.getValue()),
+            angle: this.nup.formatValueAndUnit(this.activeSrv.Link.angleDeg, this.settingsService.angle.getValue()),
           },
           { emitEvent: false }
         );
