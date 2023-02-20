@@ -6,7 +6,7 @@ import { Force } from 'src/app/model/force';
 import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import { GridComponent } from '../grid/grid.component';
 import { Coord } from 'src/app/model/coord';
-import { AngleUnit, getNewOtherJointPos, LengthUnit } from 'src/app/model/utils';
+import { AngleUnit, getNewOtherJointPos, LengthUnit, TorqueUnit } from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
 import { SettingsService } from '../../services/settings.service';
@@ -23,11 +23,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
   constructor(
     public activeSrv: ActiveObjService,
-    private settingsService: SettingsService,
+    protected settingsService: SettingsService,
     private fb: FormBuilder,
     private nup: NumberUnitParserService
   ) { }
-
+  lengthUnit: LengthUnit = this.settingsService.length.value;
+  angleUnit: AngleUnit = this.settingsService.angle.value;
+  torqueUnit: TorqueUnit = this.settingsService.inputTorque.value;
   jointForm = this.fb.group(
     {
       xPos: [''],
@@ -51,7 +53,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     GridComponent.mechanismTimeStep = 0;
     GridComponent.updateMechanism();
   }
-
+  disableDelete(): void {
+    GridComponent.canDelete = false;
+  }
   ngOnInit(): void {
     // console.log(this.jointForm);
     // console.log(this.activeSrv);
@@ -64,15 +68,47 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     this.numberOfJoint = GridComponent.joints.length;
     console.log(this.numberOfJoint);
   }
-
+  mouseDown(): void {
+    console.log('test')
+  }
   onChanges(): void {
     this.settingsService.length.subscribe((val) => {
-      var [num, str] = this.nup.preProcessInput(this.linkForm.controls['length'].value!);
-      var unit = this.nup.getLengthUnit(str);
-      if (unit !== this.settingsService.length.value) {
-        this.linkForm.controls['length'].patchValue(this.nup.formatValueAndUnit(this.nup.convertLength(num, unit, this.settingsService.length.value), this.settingsService.length.value))
+      switch (val) {
+        //when length unit changes, rescale grid?
       }
-    })
+      var unit = this.settingsService.length.value;
+      if (unit !== this.lengthUnit) {
+        GridComponent.joints.forEach(joint => {
+          this.activeSrv.updateSelectedObj(joint)
+          GridComponent.dragJoint(
+            this.activeSrv.Joint,
+            new Coord(this.nup.convertLength(joint.x, this.lengthUnit, unit),
+              this.nup.convertLength(joint.y, this.lengthUnit, unit))
+          )
+        })
+        this.lengthUnit = this.settingsService.length.value;
+        this.activeSrv.fakeUpdateSelectedObj();
+      }
+    });
+
+    this.settingsService.angle.subscribe((val) => {
+      var unit = this.settingsService.angle.value;
+      var [num, str] = this.nup.preProcessInput(this.linkForm.controls['angle'].value!);
+      var unit2 = this.nup.getAngleUnit(str);
+      if (unit !== this.angleUnit) {
+      }
+      this.angleUnit = this.settingsService.angle.value;
+      this.activeSrv.fakeUpdateSelectedObj();
+    });
+
+    this.settingsService.inputTorque.subscribe((val) => {
+      var unit = this.settingsService.inputTorque.value;
+      if (unit !== this.torqueUnit) {
+      }
+      this.torqueUnit = this.settingsService.inputTorque.value;
+      this.activeSrv.fakeUpdateSelectedObj();
+    });
+
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
       const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());

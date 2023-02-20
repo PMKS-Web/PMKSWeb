@@ -90,6 +90,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   static forces: Force[] = [];
   static ics: InstantCenter[] = [];
   static mechanisms: Mechanism[] = [];
+  static canDelete: boolean = false;
 
   static screenCoord: string = '';
 
@@ -619,6 +620,7 @@ export class GridComponent implements OnInit, AfterViewInit {
             //   return;
             // }
             this.activeObjService.updateSelectedObj(thing);
+            GridComponent.canDelete = true;
 
             if (clickOnlyWithoutDrag) {
               //Revert the joint to its original position
@@ -633,9 +635,9 @@ export class GridComponent implements OnInit, AfterViewInit {
                 GridComponent.onMechUpdateState.next(0);
               }
             }
-
             break;
           default:
+            GridComponent.canDelete = true;
             //If the animation is running or the mechansim is not at t=0, don't allow selection
             // if (AnimationBarComponent.animate === true) {
             //   return;
@@ -1224,7 +1226,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
   }
 
-  mergeToForces() {}
+  mergeToForces() { }
 
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';
@@ -2511,17 +2513,21 @@ export class GridComponent implements OnInit, AfterViewInit {
     }
 
     if ($event.keyCode == 46) {
-      if (this.activeObjService.objType === 'Nothing') {
-        GridComponent.sendNotification('Select an object to delete.');
+      if (GridComponent.canDelete) {
+        if (this.activeObjService.objType === 'Nothing') {
+          GridComponent.sendNotification('Select an object to delete.');
+          return;
+        }
+        if (this.activeObjService.objType === 'Joint') {
+          this.deleteJoint();
+        } else if (this.activeObjService.objType === 'Link') {
+          this.deleteSelectedLink();
+        }
+        this.activeObjService.updateSelectedObj(undefined);
+        GridComponent.sendNotification('Deleted Selected Object.');
+      } else {
         return;
       }
-      if (this.activeObjService.objType === 'Joint') {
-        this.deleteJoint();
-      } else if (this.activeObjService.objType === 'Link') {
-        this.deleteSelectedLink();
-      }
-      this.activeObjService.updateSelectedObj(undefined);
-      GridComponent.sendNotification('Deleted Selected Object.');
     }
 
     if ($event.keyCode == 32) {

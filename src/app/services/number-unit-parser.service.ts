@@ -70,6 +70,22 @@ export class NumberUnitParserService {
     return [true, value];
   }
 
+  public getAngleUnit(input: string): AngleUnit {
+    switch (input) {
+      case '°':
+      case 'deg':
+      case 'degree':
+      case 'degrees':
+        return AngleUnit.DEGREE;
+      case 'rad':
+      case 'radian':
+      case 'radians':
+        return AngleUnit.RADIAN;
+      default:
+        return AngleUnit.NULL;
+    }
+  }
+
   public getLengthUnit(input: string): LengthUnit {
     switch (input) {
       case 'cm':
@@ -151,7 +167,7 @@ export class NumberUnitParserService {
     return value;
   }
 
-  private convertAngle(value: number, givenUnits: AngleUnit, desiredUnits: AngleUnit): number {
+  public convertAngle(value: number, givenUnits: AngleUnit, desiredUnits: AngleUnit): number {
     switch (givenUnits) {
       case AngleUnit.DEGREE:
         switch (desiredUnits) {

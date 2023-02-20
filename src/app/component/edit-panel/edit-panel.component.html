@@ -1,5 +1,7 @@
-<div id="editWrapper">
-  <panel-section id="placeholderContainer" *ngIf="hideEditPanel()">
+<div
+  id="editWrapper"
+  (click)="disableDelete()">
+  <panel-section id="placeholderContainer" *ngIf="hideEditPanel()" (click)="disableDelete()">
     <title-block>Edit Panel</title-block>
     <img src="assets/gifs/Stop.gif" />
     <div id="errorMessage">Stop animation or reset the time slider to 0 to edit.</div>
@@ -8,6 +10,7 @@
   <panel-section
     id="placeholderContainer"
     *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint == 0 && !hideEditPanel()"
+    (click)="disableDelete()"
   >
     <title-block>Edit Panel</title-block>
     <img src="assets/gifs/Create.gif" />
@@ -17,27 +20,32 @@
   <panel-section
     id="placeholderContainer"
     *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint != 0 && !hideEditPanel()"
+    (click)="disableDelete()"
   >
     <title-block>Edit Panel</title-block>
     <img src="assets/gifs/Click.gif" />
     <div id="errorMessage">Select a joint or link to edit properties.</div>
   </panel-section>
 
-  <panel-section *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">
+  <panel-section 
+    *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()"
+    (click)="disableDelete()">
     <title-block icon="edit">
       Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
     </title-block>
 
     <dual-input-block
+      (click)="disableDelete()"
       [formGroup]="this.jointForm"
       formControl1="xPos"
       formControl2="yPos"
       unit="cm"
-      tooltip="The location of the joint in cm."
+      tooltip="The location of the joint in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
       >Joint Position
     </dual-input-block>
 
     <toggle-block
+      (click)="disableDelete()"
       [formGroup]="jointForm"
       _formControl="ground"
       tooltip="Ground this joint, making it non-moving."
@@ -45,6 +53,7 @@
     </toggle-block>
 
     <toggle-block
+      (click)="disableDelete()"
       *ngIf="this.activeSrv.Joint.ground"
       [formGroup]="jointForm"
       _formControl="input"
@@ -59,28 +68,32 @@
     Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
-  <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
+  <panel-section 
+    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"
+    (click)="disableDelete()">
     <title-block
       icon="edit"
       description="Changing the length or angle will change the non-grounded joint."
       >Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
     >
     <input-block
+      (click)="disableDelete()"
       [formGroup]="linkForm"
       _formControl="length"
       unit="cm"
-      tooltip="The length of the link in cm."
+      tooltip="The length of the link in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
       >Link Length</input-block
     >
 
     <input-block
+      (click)="disableDelete()"
       [formGroup]="linkForm"
       _formControl="angle"
       unit="deg"
       tooltip="The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule)."
       >Link Angle</input-block
     >
-    <button-block icon="delete" [click]="deleteLink">Delete Link</button-block>
+    <button-block icon="delete"[click]="deleteLink">Delete Link</button-block>
   </panel-section>
 
   <panel-section-collapsible
