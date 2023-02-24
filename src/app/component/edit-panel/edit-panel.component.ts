@@ -1,4 +1,10 @@
-import { AfterContentInit, AfterViewInit, Component, OnInit } from '@angular/core';
+import {
+  AfterContentInit,
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+} from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RealJoint, RevJoint } from 'src/app/model/joint';
 import { RealLink } from 'src/app/model/link';
@@ -25,8 +31,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     public activeSrv: ActiveObjService,
     protected settingsService: SettingsService,
     private fb: FormBuilder,
-    private nup: NumberUnitParserService
-  ) { }
+    private nup: NumberUnitParserService,
+    private cd: ChangeDetectorRef
+  ) {}
   lengthUnit: LengthUnit = this.settingsService.length.value;
   angleUnit: AngleUnit = this.settingsService.angle.value;
   torqueUnit: TorqueUnit = this.settingsService.inputTorque.value;
@@ -69,23 +76,27 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     console.log(this.numberOfJoint);
   }
   mouseDown(): void {
-    console.log('test')
+    console.log('test');
   }
   onChanges(): void {
     this.settingsService.length.subscribe((val) => {
-      switch (val) {
+      switch (
+        val
         //when length unit changes, rescale grid?
+      ) {
       }
       var unit = this.settingsService.length.value;
       if (unit !== this.lengthUnit) {
-        GridComponent.joints.forEach(joint => {
-          this.activeSrv.updateSelectedObj(joint)
+        GridComponent.joints.forEach((joint) => {
+          this.activeSrv.updateSelectedObj(joint);
           GridComponent.dragJoint(
             this.activeSrv.Joint,
-            new Coord(this.nup.convertLength(joint.x, this.lengthUnit, unit),
-              this.nup.convertLength(joint.y, this.lengthUnit, unit))
-          )
-        })
+            new Coord(
+              this.nup.convertLength(joint.x, this.lengthUnit, unit),
+              this.nup.convertLength(joint.y, this.lengthUnit, unit)
+            )
+          );
+        });
         this.lengthUnit = this.settingsService.length.value;
         this.activeSrv.fakeUpdateSelectedObj();
       }
@@ -111,7 +122,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
+      const [success, value] = this.nup.parseLengthString(
+        val!,
+        this.settingsService.length.getValue()
+      );
       if (!success) {
         this.jointForm.patchValue({ xPos: this.activeSrv.Joint.x.toFixed(2).toString() });
       } else {
@@ -130,7 +144,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
     this.jointForm.controls['yPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
-      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
+      const [success, value] = this.nup.parseLengthString(
+        val!,
+        this.settingsService.length.getValue()
+      );
       if (!success) {
         this.jointForm.patchValue({ yPos: this.activeSrv.Joint.y.toFixed(2).toString() });
       } else {
@@ -166,7 +183,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     });
 
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
-      const [success, value] = this.nup.parseLengthString(val!, this.settingsService.length.getValue());
+      const [success, value] = this.nup.parseLengthString(
+        val!,
+        this.settingsService.length.getValue()
+      );
       if (!success) {
         this.linkForm.patchValue({
           length: this.activeSrv.Link.length.toFixed(2).toString(),
@@ -183,7 +203,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     });
 
     this.linkForm.controls['angle'].valueChanges.subscribe((val) => {
-      const [success, value] = this.nup.parseAngleString(val!, this.settingsService.angle.getValue());
+      const [success, value] = this.nup.parseAngleString(
+        val!,
+        this.settingsService.angle.getValue()
+      );
       if (!success) {
         this.linkForm.patchValue({
           angle: this.activeSrv.Link.angleDeg.toFixed(2).toString(),
@@ -203,8 +226,14 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (newObjType == 'Joint') {
         this.jointForm.patchValue(
           {
-            xPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.x, this.settingsService.length.getValue()),
-            yPos: this.nup.formatValueAndUnit(this.activeSrv.Joint.y, this.settingsService.length.getValue()),
+            xPos: this.nup.formatValueAndUnit(
+              this.activeSrv.Joint.x,
+              this.settingsService.length.getValue()
+            ),
+            yPos: this.nup.formatValueAndUnit(
+              this.activeSrv.Joint.y,
+              this.settingsService.length.getValue()
+            ),
             ground: this.activeSrv.Joint.ground,
             input: this.activeSrv.Joint.input,
           },
@@ -213,8 +242,14 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       } else if (newObjType == 'Link') {
         this.linkForm.patchValue(
           {
-            length: this.nup.formatValueAndUnit(this.activeSrv.Link.length, this.settingsService.length.getValue()),
-            angle: this.nup.formatValueAndUnit(this.activeSrv.Link.angleDeg, this.settingsService.angle.getValue()),
+            length: this.nup.formatValueAndUnit(
+              this.activeSrv.Link.length,
+              this.settingsService.length.getValue()
+            ),
+            angle: this.nup.formatValueAndUnit(
+              this.activeSrv.Link.angleDeg,
+              this.settingsService.angle.getValue()
+            ),
           },
           { emitEvent: false }
         );
@@ -250,7 +285,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     //Note: this funciton runs in the buttonBlock to 'this' refer to that, not the edit panel
     //Therefore you need to have a activeSrv in button Block.ts
     this.activeSrv.updateSelectedObj(undefined);
-    var temp = new GridComponent(this.activeSrv);
+    var temp = new GridComponent(this.activeSrv, this.cd);
     temp.deleteJoint();
   }
 
@@ -258,7 +293,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     //Note: this funciton runs in the buttonBlock to 'this' refer to that, not the edit panel
     //Therefore you need to have a activeSrv in button Block.ts
     this.activeSrv.updateSelectedObj(undefined);
-    var temp = new GridComponent(this.activeSrv);
+    var temp = new GridComponent(this.activeSrv, this.cd);
     console.log(this.activeSrv.Link.id);
     temp.deleteSelectedLink();
   }

@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+} from '@angular/core';
 import { Coord } from '../../model/coord';
 import { AppConstants } from '../../model/app-constants';
 import { Joint, RevJoint, PrisJoint, RealJoint } from '../../model/joint';
@@ -30,6 +38,8 @@ import { ForceSolver } from '../../model/mechanism/force-solver';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 // import {MatSnackBar} from "@angular/material/snack-bar";
 // import { MatIcon } from '@angular/material/icon';
+import * as svgPanZoom from 'svg-pan-zoom';
+import { reportUnhandledError } from 'rxjs/internal/util/reportUnhandledError';
 
 // The possible states the program could be in.
 enum gridStates {
@@ -177,8 +187,22 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   private static instance: GridComponent | null = null;
 
+  //These are SVG visible coordinates
+  public svgMinX: number = 0;
+  public svgMaxX: number = 0;
+  public svgMinY: number = 0;
+  public svgMaxY: number = 0;
+
+  public static panZoomObject: SvgPanZoom.Instance;
+
+  step = 10; // distance between each line
+
   // TODO: ADD LOGIC FOR INSTANT CENTERS AND GEARS AFTER FINISHING SIMJOINTS AND SIMLINKS!
-  constructor(public activeObjService: ActiveObjService, private snackBar?: MatSnackBar) {
+  constructor(
+    public activeObjService: ActiveObjService,
+    public cd: ChangeDetectorRef,
+    private snackBar?: MatSnackBar
+  ) {
     GridComponent._snackBar = snackBar!;
     if (GridComponent.instance) {
       return GridComponent.instance;
@@ -197,7 +221,34 @@ export class GridComponent implements OnInit, AfterViewInit {
     // );
   }
 
+  updateVisibleCoords(unused: any) {
+    let zoomLevel = GridComponent.panZoomObject.getZoom();
+    const { width, height } = GridComponent.panZoomObject.getSizes(); // get SVG size
+    const { x, y } = GridComponent.panZoomObject.getPan(); // get pan position
+    const visibleWidth = width / zoomLevel; // calculate visible width
+    const visibleHeight = height / zoomLevel; // calculate visible height
+    const visibleX = -x / zoomLevel; // calculate visible X position
+    const visibleY = -y / zoomLevel; // calculate visible Y position
+    this.svgMinX = visibleX;
+    this.svgMaxX = visibleX + visibleWidth;
+    this.svgMinY = visibleY;
+    this.svgMaxY = visibleY + visibleHeight;
+    console.log(this);
+    this.cd.detectChanges();
+    // console.log(this.svgMaxX, this.svgMaxY);
+  }
+
   ngOnInit(): void {
+    const svgElement = document.getElementById('canvas') as HTMLElement;
+
+    GridComponent.panZoomObject = svgPanZoom(svgElement, {
+      zoomEnabled: true,
+      fit: false,
+      center: false,
+      onPan: this.updateVisibleCoords,
+      onZoom: this.updateVisibleCoords,
+    });
+
     const jointPropsString = splitURLInfo('j=');
     const linkPropsString = splitURLInfo('&l=');
     const forcePropsString = splitURLInfo('&f=');
@@ -389,6 +440,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     // });
     // linkArray.forEach(l => {});
     // forceArray.forEach(f => {});
+  }
+
+  scaleUnitsToZoom(number: number) {
+    return number / GridComponent.panZoomObject.getZoom();
   }
 
   ngAfterViewInit() {
@@ -693,12 +748,6 @@ export class GridComponent implements OnInit, AfterViewInit {
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
-              case gridStates.waiting:
-                const mPos = GridComponent.getMousePosition($event)!;
-                GridComponent.panOffset.x = mPos.x;
-                GridComponent.panOffset.y = mPos.y;
-                GridComponent.gridStates = gridStates.dragging;
-                break;
               case gridStates.createJointFromGrid:
                 // console.warn('reset position');
                 //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
@@ -1226,7 +1275,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
   }
 
-  mergeToForces() { }
+  mergeToForces() {}
 
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';

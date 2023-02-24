@@ -34,6 +34,7 @@ import { AnalysisGraphComponent } from './component/analysis-graph/analysis-grap
 import { RightPanelComponent } from './component/right-panel/right-panel.component';
 import { SettingsPanelComponent } from './component/settings-panel/settings-panel.component';
 import { SynthesisPanelComponent } from './component/synthesis-panel/synthesis-panel.component';
+import { NewGridComponent } from './component/new-grid/new-grid.component';
 
 @NgModule({
   declarations: [
@@ -62,6 +63,7 @@ import { SynthesisPanelComponent } from './component/synthesis-panel/synthesis-p
     RightPanelComponent,
     SettingsPanelComponent,
     SynthesisPanelComponent,
+    NewGridComponent,
   ],
   imports: [
     BrowserModule,
