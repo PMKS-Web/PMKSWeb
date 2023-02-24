@@ -1,42 +1,55 @@
 <svg id='canvas' display='block' width='100%' height='100%'>
 
-  <!--  X and Y axis lines-->
 
-  <circle cx='0' cy='0' r='10' fill='green' />
+  <!--  The Major Axes-->
+  <ng-container>
+    <ng-container *ngFor='let line of svgGrid.verticalLinesMinor'>
+      <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
+            stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
+    </ng-container>
+    <ng-container *ngFor='let line of svgGrid.horizontalLinesMinor'>
+      <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
+            stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
+    </ng-container>
+  </ng-container>
 
-  <!--  Rectanlge between viewBoxMinX and viewBoxMaxX and viewBoxMinY and viewBoxMaxY-->
-  <!--  <rect [attr.x]="svgGrid.viewBoxMinX" [attr.y]="svgGrid.viewBoxMinY" [attr.width]="svgGrid.viewBoxMaxX - svgGrid.viewBoxMinX"-->
-  <!--        [attr.height]="svgGrid.viewBoxMaxY - svgGrid.viewBoxMinY"-->
-  <!--        fill="green"></rect>-->
+  <!--  The Major Axes-->
   <ng-container>
     <ng-container *ngFor='let line of svgGrid.verticalLines'>
       <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
-            stroke='red' [attr.stroke-width]='svgGrid.scaleWithZoom(1)'></line>
+            stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
     </ng-container>
     <ng-container *ngFor='let line of svgGrid.horizontalLines'>
       <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
-            stroke='red' [attr.stroke-width]='svgGrid.scaleWithZoom(1)'></line>
+            stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
     </ng-container>
   </ng-container>
 
-  <line [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0' stroke='blue'
-        [attr.stroke-width]='svgGrid.scaleWithZoom(2)'></line>
 
-  <line x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY' stroke='blue'
-        [attr.stroke-width]='svgGrid.scaleWithZoom(2)'></line>
+  <!--  The X and Y Axis-->
+  <line [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0' stroke='#000'
+        [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
 
+  <line x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY' stroke='#000'
+        [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
 
+  <!-- Axes Labels -->
   <ng-container>
     <ng-container *ngFor='let line of svgGrid.verticalLines'>
-      <text [attr.x]='line' y='0' fill='black' paint-order='stroke' stroke='white' stroke-linejoin='round'
-            stroke-linecap='round' [attr.stroke-width]='svgGrid.scaleWithZoom(5)' text-anchor='middle'
-            alignment-baseline='middle' [attr.font-size]='svgGrid.scaleWithZoom(20)'>{{line}}</text>
+      <text id='axes_numbers' text-anchor='middle' [attr.x]='line' [attr.y]='svgGrid.scaleWithZoom(20)'
+            [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+            [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{line}}</text>
     </ng-container>
     <ng-container *ngFor='let line of svgGrid.horizontalLines'>
-      <text [attr.y]='line' x='0' fill='black' paint-order='stroke' stroke='white' stroke-linejoin='round'
-            stroke-linecap='round' [attr.stroke-width]='svgGrid.scaleWithZoom(5)' text-anchor='middle'
-            alignment-baseline='middle' [attr.font-size]='svgGrid.scaleWithZoom(20)'>{{line}}</text>
+      <text id='axes_numbers' text-anchor='end' [attr.y]='line' [attr.x]='svgGrid.scaleWithZoom(-10)'
+            [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+            [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{line}}</text>
     </ng-container>
+    <text id='axes_numbers' text-anchor='end' [attr.y]='svgGrid.scaleWithZoom(20)'
+          [attr.x]='svgGrid.scaleWithZoom(-10)'
+          [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+          [attr.font-size]='svgGrid.scaleWithZoom(15)'>
+      0
+    </text>
   </ng-container>
-  <!--  <circle [attr.cx]='tempX' [attr.cy]='tempY' [attr.r]='scaleUnitsToZoom(5)' fill='red' />-->
 </svg>

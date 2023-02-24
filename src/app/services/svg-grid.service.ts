@@ -11,9 +11,12 @@ export class SvgGridService {
   public viewBoxMinY: number = 0;
   public viewBoxMaxY: number = 0;
   verticalLines: number[] = [];
+  verticalLinesMinor: number[] = [];
   horizontalLines: number[] = [];
+  horizontalLinesMinor: number[] = [];
   private defualtCellSize: number = 200;
   private cellSize: number = this.defualtCellSize;
+
   constructor() {}
 
   updateVisibleCoords() {
@@ -38,15 +41,37 @@ export class SvgGridService {
     this.verticalLines = [];
     let currentLine = Math.floor(this.viewBoxMinX / this.cellSize) * this.cellSize;
     while (currentLine < this.viewBoxMaxX) {
+      if (currentLine === 0) {
+        currentLine += this.cellSize;
+        continue;
+      }
       this.verticalLines.push(currentLine);
       currentLine += this.cellSize;
+    }
+
+    this.verticalLinesMinor = [];
+    currentLine = Math.floor(this.viewBoxMinX / (this.cellSize / 4)) * (this.cellSize / 4);
+    while (currentLine < this.viewBoxMaxX) {
+      this.verticalLinesMinor.push(currentLine);
+      currentLine += this.cellSize / 4;
     }
 
     this.horizontalLines = [];
     currentLine = Math.floor(this.viewBoxMinY / this.cellSize) * this.cellSize;
     while (currentLine < this.viewBoxMaxY) {
+      if (currentLine === 0) {
+        currentLine += this.cellSize;
+        continue;
+      }
       this.horizontalLines.push(currentLine);
       currentLine += this.cellSize;
+    }
+
+    this.horizontalLinesMinor = [];
+    currentLine = Math.floor(this.viewBoxMinY / (this.cellSize / 4)) * (this.cellSize / 4);
+    while (currentLine < this.viewBoxMaxY) {
+      this.horizontalLinesMinor.push(currentLine);
+      currentLine += this.cellSize / 4;
     }
   }
 

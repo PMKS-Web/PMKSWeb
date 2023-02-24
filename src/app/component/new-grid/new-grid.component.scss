@@ -1,0 +1,22 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $typography-config: mat.get-typography-config($theme);
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  #axes_numbers {
+    fill: mat.get-color-from-palette($foreground, 'text');
+    paint-order: stroke;
+    stroke: white;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    alignment-baseline: middle;
+  }
+}
