@@ -19,6 +19,19 @@ export class SvgGridService {
 
   constructor() {}
 
+  setNewElement(root: HTMLElement) {
+    this.panZoomObject = svgPanZoom(root, {
+      zoomEnabled: true,
+      fit: false,
+      center: false,
+      zoomScaleSensitivity: 0.15,
+      dblClickZoomEnabled: false,
+      onPan: this.handlePan.bind(this),
+      onZoom: this.handleZoom.bind(this),
+    });
+    this.panZoomObject.center();
+  }
+
   updateVisibleCoords() {
     let zoomLevel = this.getZoom();
     const { width, height } = this.getSizes();
@@ -76,20 +89,6 @@ export class SvgGridService {
   }
 
   handleZoom() {
-    // From viewBox min to viewbox max make a line every 100px centered on 0
-    // this.verticalLines = [];
-    // let cellSize = 400;
-    // while (this.verticalLines.length < 10) {
-    //   this.verticalLines = [];
-    //   let currentLine = Math.floor(this.viewBoxMinX / cellSize) * cellSize;
-    //   while (currentLine < this.viewBoxMaxX) {
-    //     this.verticalLines.push(currentLine);
-    //     currentLine += cellSize;
-    //   }
-    //   cellSize /= 2;
-    //   console.log(cellSize);
-    // }
-
     this.cellSize = this.defualtCellSize;
     while (this.cellSize * this.getZoom() > 200) {
       this.cellSize /= 2;
@@ -103,18 +102,6 @@ export class SvgGridService {
 
   zoomOut() {
     this.panZoomObject.zoomOut();
-  }
-
-  setNewElement(root: HTMLElement) {
-    this.panZoomObject = svgPanZoom(root, {
-      zoomEnabled: true,
-      fit: false,
-      center: false,
-      zoomScaleSensitivity: 0.15,
-      onPan: this.handlePan.bind(this),
-      onZoom: this.handleZoom.bind(this),
-    });
-    this.panZoomObject.center();
   }
 
   getZoom() {

@@ -36,8 +36,6 @@ import { join } from 'path';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { PositionSolver } from '../../model/mechanism/position-solver';
-// import {MatSnackBar} from "@angular/material/snack-bar";
-// import { MatIcon } from '@angular/material/icon';
 import * as svgPanZoom from 'svg-pan-zoom';
 import { reportUnhandledError } from 'rxjs/internal/util/reportUnhandledError';
 
@@ -143,6 +141,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   // Edit shape, delete link, add force
   static showcaseShapeSelector: boolean = false;
   static lastNotificationTime: number = Date.now();
+
   // static snackBar: any;
 
   static get gridOffset(): { x: number; y: number } {
@@ -1920,6 +1919,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     GridComponent.selectedJoint.connectedJoints.forEach((j) => {
       jointsTraveled = checkConnectedJoints(j, jointsTraveled);
     });
+
     function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
       if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {
         return jointsTraveled;
@@ -1931,6 +1931,7 @@ export class GridComponent implements OnInit, AfterViewInit {
       });
       return jointsTraveled;
     }
+
     // TODO: Set this logic somewhere else
     // if (GridComponent.selectedJoint.input) {
     //   this.joints.forEach(j => {
@@ -2271,6 +2272,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
   // TODO: Figure out where to put this function so this doesn't have to be copied pasted into different classes
   static showPathHolder: boolean = false;
+
   getLinkProp(l: Link, propType: string) {
     if (l instanceof Piston) {
       return;

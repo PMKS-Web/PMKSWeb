@@ -1,23 +1,513 @@
-<svg id="canvas" display="block" width="100%" height="100%">
-  <!-- lines for x axis -->
-<!--  <ng-container *ngFor="let x of xAxis">-->
-<!--    <line *ngIf="x.show" [attr.x1]="x.pos" y1="0" [attr.x2]="x.pos" y2="500"></line>-->
-<!--  </ng-container>-->
+<svg
+  id='canvas'
+  display='block'
+  width='100%'
+  height='100%'
+  (wheel)='scrollGrid($event)'
+  (mouseup)="mouseUpOld($event, 'grid')"
+>
+  <g
+    id='transformMatrixGrid'
+    (contextmenu)="contextMenu($event, 'grid'); (false)"
+    (click)='disappearContext()'
+    (mousedown)="mouseDown($event, 'grid')"
+    (mouseup)="mouseUp($event, 'grid')"
+    (mousemove)="mouseMove($event, 'grid')"
+  >
+    <defs>
+      <pattern id='smallGrid' width='10' height='10' patternUnits='userSpaceOnUse'>
+        <path d='M 10 0 L 0 0 0 10' fill='none' id='grid_lines_small' stroke-width='0.5' />
+      </pattern>
+      <pattern id='grid' width='50' height='50' patternUnits='userSpaceOnUse'>
+        <rect width='50' height='50' fill='url(#smallGrid)' />
+        <path d='M 50 0 L 0 0 0 50' fill='none' id='grid_lines_mid' stroke-width='1' />
+      </pattern>
+    </defs>
+    <rect x='-5000' y='-5000' width='10000px' height='10000px' id='grid_bg' />
+    <rect x='-5000' y='-5000' width='10000px' height='10000px' fill='url(#grid)' />
+  </g>
 
-<!--  &lt;!&ndash; lines for y axis &ndash;&gt;-->
-<!--  <ng-container *ngFor="let y of yAxis">-->
-<!--    <line *ngIf="y.show" x1="0" [attr.y1]="y.pos" x2="500" [attr.y2]="y.pos"></line>-->
-<!--  </ng-container>-->
+  <g id='transformMatrix'>
+    <line
+      id='yAxis'
+      id='grid_lines_large'
+      x1='0'
+      y1='-99999'
+      x2='0'
+      y2='99999'
+      style='stroke-width: 0.04px; pointer-events: none'
+    />
+    <line
+      id='xAxis'
+      id='grid_lines_large'
+      x1='-99999'
+      y1='0'
+      x2='99999'
+      y2='0'
+      style='stroke-width: 0.04px; pointer-events: none'
+    />
 
-<!--  X and Y axis lines-->
+    <g id='linkHolder' style='transform: scaleY(-1)'>
+      <path
+        *ngFor='let link of getLinks()'
+        (contextmenu)="contextMenu($event, 'link', link); (false)"
+        (click)='disappearContext()'
+        (mousedown)="mouseDown($event, 'link', link)"
+        (mouseup)="mouseUp($event, 'link', link)"
+        (mousemove)="mouseMove($event, 'link')"
+        (mouseover)='link.showHighlight = true'
+        (mouseout)='link.showHighlight = false'
+        [attr.d]="getLinkProp(link, 'd')"
+        [attr.id]='link.id'
+        [attr.fill]="getLinkProp(link, 'fill')"
+      ></path>
+    </g>
+    <g id='jointHolder' style='transform: scaleY(-1)'>
+      <svg
+        *ngFor='let joint of getJoints()'
+        (contextmenu)="contextMenu($event, 'joint', joint); (false)"
+        (click)='disappearContext()'
+        [attr.x]='joint.x'
+        [attr.y]='joint.y'
+        (mousedown)="mouseDown($event, 'joint', joint)"
+        (mouseup)="mouseUp($event, 'joint', joint)"
+        (mousemove)="mouseMove($event, 'joint')"
+        (mouseover)='joint.showHighlight = true'
+        (mouseout)='joint.showHighlight = false'
+        width='10'
+        height='10'
+        style='overflow: visible'
+        cursor='move'
+      >
+        <!-- condition with regular revolute joint -->
+        <circle
+          *ngIf='!getGround(joint) && !containsSlider(joint)'
+          id='joint_{{ joint.id }}_ring'
+          [attr.r]='(getJointR(joint) * 7) / 5'
+          [attr.cx]='0'
+          [attr.cy]='0'
+          [attr.fill]='getJointColor(joint)'
+        />
+        <circle
+          *ngIf='!getGround(joint) && !containsSlider(joint)'
+          id='joint_{{ joint.id }}'
+          [attr.r]='getJointR(joint)'
+          [attr.cx]='0'
+          [attr.cy]='0'
+          fill='gray'
+          stroke='#00000000'
+          [attr.stroke-width]='getJointR(joint) * 2'
+        />
+        <!-- condition for slider crank -->
+        <circle
+          *ngIf="typeOfJoint(joint) === 'P' && getGround(joint) && !getInput(joint)"
+          r='0.06667'
+          cx='0%'
+          cy='0%'
+          [attr.fill]='getJointColor(joint)'
+          stroke='#00000000'
+          stroke-width='0.2'
+        ></circle>
+        <circle
+          *ngIf="typeOfJoint(joint) === 'P' && getGround(joint) && getInput(joint)"
+          r='0.06667'
+          cx='0%'
+          cy='0%'
+          fill='green'
+          stroke='#00000000'
+          stroke-width='0.2'
+        ></circle>
+        <path
+          *ngIf="typeOfJoint(joint) === 'P' && getGround(joint)"
+          d='M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
+         L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
+          -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.04'
+          fill-opacity='0'
+        ></path>
+        <!-- condition for ground revolute joint -->
+        <!-- TODO: Make all of this within one g container -->
+        <circle
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R' && !getInput(joint)"
+          r='0.06667'
+          cx='0%'
+          cy='0%'
+          fill='black'
+          stroke='#00000000'
+          stroke-width='0.2'
+        ></circle>
+        <circle
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R' && getInput(joint)"
+          r='0.06667'
+          cx='0%'
+          cy='0%'
+          fill='green'
+          stroke='#00000000'
+          stroke-width='0.2'
+        ></circle>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='-0.15'
+          y1='-0.15'
+          x2='-0.225'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='-0.075'
+          y1='-0.15'
+          x2='-0.15'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='0'
+          y1='-0.15'
+          x2='-0.075'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='0.075'
+          y1='-0.15'
+          x2='0'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='0.15'
+          y1='-0.15'
+          x2='0.075'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='0.225'
+          y1='-0.15'
+          x2='0.15'
+          y2='-0.225'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.03'
+        ></line>
+        <line
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          x1='-0.3'
+          y1='-0.15'
+          x2='0.3'
+          y2='-0.15'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.05'
+        ></line>
+        <path
+          *ngIf="getGround(joint) && typeOfJoint(joint) === 'R'"
+          d='M -0.225 -0.15 L -0.15 0.15 L 0.15 0.15 L 0.225 -0.15'
+          [attr.stroke]='getJointColor(joint)'
+          stroke-width='0.05'
+          fill='transparent'
+        ></path>
+      </svg>
+    </g>
+    <g id='pathsHolder' *ngIf='getShowPathHolder()'>
+      <path
+        *ngFor='let joint of getJoints()'
+        [attr.d]='getJointPath(joint)'
+        stroke='green'
+        fill='none'
+        stroke-width='0.04'
+        style='transform: scaleY(-1); pointer-events: none'
+      ></path>
+    </g>
+    <g id='pathsPathPointHolder'></g>
+    <g
+      id='forcesHolder'
+      style='transform: scaleY(-1)'
+      *ngFor='let force of getForces()'
+      (contextmenu)="contextMenu($event, 'force', force); (false)"
+      (click)='disappearContext()'
+    >
+      <g
+        [attr.id]='force.id'
+        (mousedown)="mouseDown($event, 'force', force)"
+        (mouseover)='force.showHighlight = true'
+        (mouseout)='force.showHighlight = false'
+      >
+        <path
+          *ngIf='force.showHighlight'
+          [attr.d]='force.forceLine'
+          stroke='yellow'
+          stroke-width='0.2'
+        ></path>
+        <!-- Transpent thicker force to increase hitbox for the group for highliting-->
+        <path [attr.d]='force.forceLine' [attr.stroke]='force.stroke' stroke-width='0.04'></path>
+        <path [attr.d]='force.forceLine' stroke='transparent' stroke-width='0.4'></path>
+        <path [attr.d]='force.forceArrow' [attr.fill]='force.fill'></path>
+      </g>
+      <svg
+        id='startForceEndpoint'
+        (mousedown)="mouseDown($event, 'force', force, 'startPoint')"
+        (mouseup)="mouseUp($event, 'force', force, 'startPoint')"
+        (mousemove)="mouseMove($event, 'force')"
+        [attr.x]='force.startCoord.x'
+        [attr.y]='force.startCoord.y'
+        height='10'
+        width='10'
+        style='overflow: visible; cursor: move'
+      >
+        <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+        <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      </svg>
+      <svg
+        id='endForceEndpoint'
+        (mousedown)="mouseDown($event, 'force', force, 'endPoint')"
+        (mouseup)="mouseUp($event, 'force', force, 'startPoint')"
+        (mousemove)="mouseMove($event, 'force')"
+        [attr.x]='force.endCoord.x'
+        [attr.y]='force.endCoord.y'
+        height='10'
+        width='10'
+        style='overflow: visible; cursor: move'
+      >
+        <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+        <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      </svg>
+    </g>
+    <!--TODO: Add case when dragging anything above the jointTagHolder -->
+    <g id='jointTagHolder' style='pointer-events: none'>
+      <svg
+        *ngFor='let joint of getJoints()'
+        [attr.x]='joint.x - 0.2'
+        [attr.y]='-1 * joint.y - 0.2'
+        [attr.height]='10'
+        [attr.width]='10'
+        style='overflow: visible; text-anchor: middle'
+      >
+        <text
+          *ngIf="(typeOfJoint(joint) !== 'P' && showIDTags()) || joint.showHighlight"
+          style='font-size: 0.7px; text-anchor: middle'
+        >
+          {{ joint.id | uppercase }}
+        </text>
+      </svg>
+    </g>
+    <!--TODO: Add case when dragging anything above the linkTagHolder -->
+    <g id='linkTagHolder' style='pointer-events: none'>
+      <svg
+        *ngFor='let link of getLinks()'
+        [attr.x]="getLinkProp(link, 'CoMX')"
+        [attr.y]="getLinkProp(link, 'CoMY')"
+        [attr.height]='10'
+        [attr.width]='10'
+        style='overflow: visible; text-anchor: middle'
+      >
+        <text
+          *ngIf="(typeOfLink(link) !== 'P' && showIDTags()) || link.showHighlight"
+          style='font-size: 0.7px; text-anchor: middle'
+        >
+          {{ link.id | uppercase }}
+        </text>
+      </svg>
+    </g>
+    <!--TODO: Add case when dragging anything above the forceTagHolder -->
+    <g id='forceTagHolder' *ngIf='showIDTags()' style='pointer-events: none'>
+      <svg
+        *ngFor='let force of getForces()'
+        [attr.x]='(force.startCoord.x + force.endCoord.x) / 2'
+        [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1'
+        [attr.height]='10'
+        [attr.width]='10'
+        style='overflow: visible; text-anchor: middle'
+      >
+        <!-- should font-size have px??? -->
+        <text style='font-size: 0.7px; text-anchor: middle'>
+          {{ force.id }}
+        </text>
+      </svg>
+    </g>
+    <!--TODO: Add case when dragging anything above the comTagHolder -->
+    <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='showCoMTags()'>
+      <svg *ngFor='let link of getLinks()' style='overflow: visible' width='1.23' height='2.61'>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='black'
+          opacity='1.0'
+          [attr.d]="getLinkProp(link, 'CoM_d1')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='white'
+          opacity='1.0'
+          [attr.d]="getLinkProp(link, 'CoM_d2')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='black'
+          opacity='1.0'
+          [attr.d]="getLinkProp(link, 'CoM_d3')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='white'
+          opacity='1.0'
+          [attr.d]="getLinkProp(link, 'CoM_d4')"
+        ></path>
+      </svg>
+    </g>
+    <g id='pathPointHolder'></g>
+    <g id='threePositionHolder'></g>
+    <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
+      <line
+        stroke='black'
+        stroke-width='0.02'
+        stroke-opacity='0.5'
+        style='pointer-events: none'
+      ></line>
+      <svg height='10' width='10' style='overflow: visible' cursor='move'>
+        <circle
+          r='0.14'
+          cx='0%'
+          cy='0%'
+          fill='black'
+          fill-opacity='0.5'
+          stroke-opacity='0.5'
+          (mousedown)="mouseDown($event, 'jointTemp')"
+        ></circle>
+        <circle
+          r='0.1'
+          cx='0%'
+          cy='0%'
+          fill='gray'
+          stroke='#00000000'
+          stroke-width='0.2'
+          (mousedown)="mouseDown($event, 'jointTemp')"
+        ></circle>
+      </svg>
+    </g>
+    <g
+      id='forceTempHolder'
+      opacity='0.5'
+      style='display: none; pointer-events: none; transform: scaleY(-1)'
+    >
+      <path stroke-width='0.04' stroke='black' d=''></path>
+      <path fill='black' d=''></path>
+    </g>
 
-  <circle cx='0' cy='0' r='10' fill='green' />
+    <!-- This is the blue highligher for the active Object  -->
+    <g id='activeObjectHighlight' style='transform: scaleY(-1); pointer-events: none'>
+      <circle
+        *ngIf="activeObjService.objType == 'Joint'"
+        [attr.r]='0.01'
+        [attr.cx]='activeObjService.Joint.x'
+        [attr.cy]='activeObjService.Joint.y'
+      />
 
-  <text x="0" y="0" fill="red">{{svgMinX}}</text>
-  <line [attr.x1]="svgMinX" y1="0" [attr.x2]='svgMaxX' y2="0" stroke="blue" [attr.stroke-width]="scaleUnitsToZoom(2)"></line>
+      <!-- <filter id="dilate">
+        <feMorphology operator="dilate" in="SourceGraphic" radius="1" />
+      </filter> -->
 
-  <line x1="0" y1="-500" x2="0" y2="500" stroke="blue" [attr.stroke-width]="scaleUnitsToZoom(2)"></line>
+      <path
+        *ngIf="activeObjService.objType == 'Link'"
+        [attr.d]='findEnlargedLinkHelper()'
+        stroke-width='0.5'
+      ></path>
+    </g>
+  </g>
 
-
-<!--  <circle [attr.cx]='tempX' [attr.cy]='tempY' [attr.r]='scaleUnitsToZoom(5)' fill='red' />-->
+  <!-- TODO: Set all of the context menu within one g container-->
+  <g class='context-menu-canvas' style='cursor: pointer'>
+    <g class='menu-entry' id='menuEntryAddLinkOnGrid' (click)="createLink($event, 'grid')">
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>Add Link</text>
+    </g>
+  </g>
+  <g class='context-menu-joint' style='cursor: pointer'>
+    <g class='menu-entry' id='menuEntryAddInput' (click)='createInput($event)'>
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Add Input
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryAddLinkOnJoint' (click)="createLink($event, 'joint')">
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>Add Link</text>
+    </g>
+    <g class='menu-entry' id='menuEntryCreateGround' (click)='createGround()'>
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Create Ground
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryCreateSlider' (click)='createSlider()'>
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Create Slider
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryDeleteJoint' (click)='deleteJoint()'>
+      <rect x='400' y='400' width='120' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Delete Joint
+      </text>
+    </g>
+  </g>
+  <g class='context-menu-link' style='cursor: pointer'>
+    <g class='menu-entry' id='menuEntryAddLinkOnLink' (click)="createLink($event, 'link')">
+      <rect x='400' y='400' width='140' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Attach Link
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryAddForce' (click)='createForce($event)'>
+      <rect x='400' y='400' width='140' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Attach Force
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryAddTracerPoint' (click)='addJoint()'>
+      <rect x='400' y='400' width='140' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Attach Tracer Point
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryDeleteLink' (click)='deleteLink()'>
+      <rect x='400' y='400' width='140' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Delete Link
+      </text>
+    </g>
+  </g>
+  <g class='context-menu-force' style='cursor: pointer'>
+    <g class='menu-entry' id='menuEntryChangeForceDirection' (click)='changeForceDirection()'>
+      <rect x='400' y='400' width='150' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Switch Force Direction
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryChangeForceLocal' (click)='changeForceLocal()'>
+      <rect x='400' y='400' width='150' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Change Force Local
+      </text>
+    </g>
+    <g class='menu-entry' id='menuEntryDeleteForce' (click)='deleteForce()'>
+      <rect x='400' y='400' width='150' height='20'></rect>
+      <text x='400' y='400' dx='15' dy='15' style='fill: steelblue; font-size: 13px'>
+        Delete Force
+      </text>
+    </g>
+  </g>
 </svg>
