@@ -4,6 +4,7 @@ import { NgForm } from '@angular/forms';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { SvgGridService } from '../../services/svg-grid.service';
 
 @Component({
   selector: 'app-animation-bar',
@@ -28,7 +29,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   timestepDisplay: number = 0;
 
-  constructor() {}
+  constructor(private svgGrid: SvgGridService) {}
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
@@ -157,15 +158,16 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onZoomInPressed() {
-    GridComponent.adjustView('in');
+    this.svgGrid.zoomIn();
   }
 
   onZoomOutPressed() {
-    GridComponent.adjustView('out');
+    this.svgGrid.zoomOut();
   }
 
   onZoomResetPressed() {
-    GridComponent.adjustView('reset');
+    this.svgGrid.panZoomObject.center();
+    this.svgGrid.panZoomObject.zoom(1);
   }
 
   getSpeed() {

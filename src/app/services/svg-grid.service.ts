@@ -5,14 +5,18 @@ import * as svgPanZoom from 'svg-pan-zoom';
   providedIn: 'root',
 })
 export class SvgGridService {
-  private panZoomObject: any;
+  public panZoomObject: any;
   public viewBoxMinX: number = 0;
   public viewBoxMaxX: number = 0;
   public viewBoxMinY: number = 0;
   public viewBoxMaxY: number = 0;
+  verticalLines: number[] = [];
+  horizontalLines: number[] = [];
+  private defualtCellSize: number = 200;
+  private cellSize: number = this.defualtCellSize;
   constructor() {}
 
-  updateVisibleCoords(unused: any) {
+  updateVisibleCoords() {
     let zoomLevel = this.getZoom();
     const { width, height } = this.getSizes();
     const { x, y } = this.getPan();
@@ -24,8 +28,48 @@ export class SvgGridService {
     this.viewBoxMaxX = visibleX + visibleWidth;
     this.viewBoxMinY = visibleY;
     this.viewBoxMaxY = visibleY + visibleHeight;
-    // console.log(this);
+    // this.panZoomObject.updateBBox(); // Update viewport bounding box
+    // console.log(viewBox);
     // console.log(this.viewBoxMinX, this.viewBoxMaxX);
+  }
+
+  handlePan() {
+    this.updateVisibleCoords();
+    this.verticalLines = [];
+    let currentLine = Math.floor(this.viewBoxMinX / this.cellSize) * this.cellSize;
+    while (currentLine < this.viewBoxMaxX) {
+      this.verticalLines.push(currentLine);
+      currentLine += this.cellSize;
+    }
+
+    this.horizontalLines = [];
+    currentLine = Math.floor(this.viewBoxMinY / this.cellSize) * this.cellSize;
+    while (currentLine < this.viewBoxMaxY) {
+      this.horizontalLines.push(currentLine);
+      currentLine += this.cellSize;
+    }
+  }
+
+  handleZoom() {
+    // From viewBox min to viewbox max make a line every 100px centered on 0
+    // this.verticalLines = [];
+    // let cellSize = 400;
+    // while (this.verticalLines.length < 10) {
+    //   this.verticalLines = [];
+    //   let currentLine = Math.floor(this.viewBoxMinX / cellSize) * cellSize;
+    //   while (currentLine < this.viewBoxMaxX) {
+    //     this.verticalLines.push(currentLine);
+    //     currentLine += cellSize;
+    //   }
+    //   cellSize /= 2;
+    //   console.log(cellSize);
+    // }
+
+    this.cellSize = this.defualtCellSize;
+    while (this.cellSize * this.getZoom() > 200) {
+      this.cellSize /= 2;
+    }
+    this.handlePan();
   }
 
   zoomIn() {
@@ -41,13 +85,15 @@ export class SvgGridService {
       zoomEnabled: true,
       fit: false,
       center: false,
-      onPan: this.updateVisibleCoords.bind(this),
-      onZoom: this.updateVisibleCoords.bind(this),
+      zoomScaleSensitivity: 0.15,
+      onPan: this.handlePan.bind(this),
+      onZoom: this.handleZoom.bind(this),
     });
+    this.panZoomObject.center();
   }
 
   getZoom() {
-    return this.panZoomObject.getZoom();
+    return this.panZoomObject.getSizes().realZoom;
   }
 
   getPan() {
