@@ -1,4 +1,4 @@
-import { Joint, RealJoint } from './joint';
+import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
 import { Coord } from './coord';
 import { Shape } from './link';
 
@@ -23,6 +23,52 @@ export enum TorqueUnit {
   CM_N = 21,
   METER_N = 22,
   NULL = 23,
+}
+
+// The possible states the program could be in.
+export enum gridStates {
+  waiting,
+  createJointFromGrid,
+  createJointFromJoint,
+  createJointFromLink,
+  createForce,
+  dragging,
+}
+
+export enum jointStates {
+  waiting,
+  creating,
+  dragging,
+}
+
+export enum linkStates {
+  waiting,
+  dragging,
+  creating,
+  resizing,
+}
+
+export enum forceStates {
+  waiting,
+  creating,
+  dragging,
+}
+
+export enum shapeEditModes {
+  move,
+  resize,
+}
+
+export enum createModes {
+  link,
+  force,
+}
+
+export enum moveModes {
+  joint,
+  forceEndpoint,
+  threePosition,
+  pathPoint,
 }
 
 // degToRad
@@ -348,37 +394,6 @@ export function stringToShape(str: string) {
     // case Shape.eightShape:
     // case Shape.customShape:
   }
-}
-
-export function splitURLInfo(str: string) {
-  const decodedURL = decodeURI(window.location.href);
-  let indexVal = decodedURL.indexOf(str);
-  if (indexVal === -1) {
-    return [];
-  } else if (str === 'j=') {
-    indexVal += 2;
-  } else {
-    indexVal += 3;
-  }
-  let nextIndexVal: number;
-  switch (str) {
-    case 'j=':
-      nextIndexVal = decodedURL.indexOf('&l=');
-      break;
-    case '&l=':
-      nextIndexVal = decodedURL.indexOf('&f=');
-      break;
-    case '&f=':
-      nextIndexVal = decodedURL.indexOf('&s=');
-      break;
-    case '&s=':
-      nextIndexVal = decodedURL.length;
-      break;
-    default:
-      throw new Error('ummm??');
-  }
-  return decodedURL.substring(indexVal, nextIndexVal);
-  // return settingArrayString.split(',');
 }
 
 // TODO: In future, can replace with this: https://www.gatevidyalay.com/2d-rotation-in-computer-graphics-definition-examples/

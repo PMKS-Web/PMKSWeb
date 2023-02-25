@@ -167,7 +167,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   onZoomResetPressed() {
     this.svgGrid.panZoomObject.center();
-    this.svgGrid.panZoomObject.zoom(1);
+    this.svgGrid.panZoomObject.zoom(this.svgGrid.defaultZoom);
   }
 
   getSpeed() {

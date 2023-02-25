@@ -12,5 +12,10 @@ export class SettingsService {
   isGravity = new BehaviorSubject(false);
   inputSpeed = new BehaviorSubject(20);
   inputTorque = new BehaviorSubject(TorqueUnit.CM_N);
-  constructor() {}
+
+  isShowID = new BehaviorSubject(false);
+  isShowCOM = new BehaviorSubject(false);
+
+  constructor() {
+  }
 }

@@ -17,7 +17,10 @@ export class SvgGridService {
   private defualtCellSize: number = 200;
   private cellSize: number = this.defualtCellSize;
 
-  constructor() {}
+  defaultZoom: number = 80;
+
+  constructor() {
+  }
 
   setNewElement(root: HTMLElement) {
     this.panZoomObject = svgPanZoom(root, {
@@ -26,10 +29,12 @@ export class SvgGridService {
       center: false,
       zoomScaleSensitivity: 0.15,
       dblClickZoomEnabled: false,
+      maxZoom: 100,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
     });
     this.panZoomObject.center();
+    this.panZoomObject.zoom(this.defaultZoom);
   }
 
   updateVisibleCoords() {

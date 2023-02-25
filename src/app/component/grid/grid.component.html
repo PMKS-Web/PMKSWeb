@@ -415,10 +415,6 @@
         [attr.cy]='activeObjService.Joint.y'
       />
 
-      <!-- <filter id="dilate">
-        <feMorphology operator="dilate" in="SourceGraphic" radius="1" />
-      </filter> -->
-
       <path
         *ngIf="activeObjService.objType == 'Link'"
         [attr.d]='findEnlargedLinkHelper()'

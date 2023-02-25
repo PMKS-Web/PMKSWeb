@@ -1,5 +1,4 @@
-<svg id='canvas' display='block' width='100%' height='100%'>
-
+<svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'>
   <!-- Axes and Grid-->
   <ng-container>
     <!--  The Major Axes-->
@@ -55,5 +54,313 @@
     </ng-container>
   </ng-container>
 
+  <g id='linkHolder' style='transform: scaleY(-1)'>
+    <path
+      *ngFor='let link of mechanismSrv.getLinks()'
+      (mouseover)='link.showHighlight = true'
+      (mouseout)='link.showHighlight = false'
+      [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
+      [attr.id]='link.id'
+      [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
+    ></path>
+  </g>
+  <g id='jointHolder' style='transform: scaleY(-1)'>
+    <svg
+      *ngFor='let joint of mechanismSrv.getJoints()'
+      [attr.x]='joint.x' [attr.y]='joint.y'
+      (mouseover)='joint.showHighlight = true'
+      (mouseout)='joint.showHighlight = false'
+      width='10'
+      height='10'
+      style='overflow: visible'
+      cursor='move'
+    >
+      <!-- condition with regular revolute joint -->
+      <circle
+        *ngIf='!gridUtils.getGround(joint) && !gridUtils.containsSlider(joint)'
+        id='joint_{{ joint.id }}_ring'
+        [attr.r]='(gridUtils.getJointR(joint) * 7) / 5'
+        [attr.cx]='0'
+        [attr.cy]='0'
+        [attr.fill]='mechanismSrv.getJointColor(joint)'
+      />
+      <circle
+        *ngIf='!gridUtils.getGround(joint) && !gridUtils.containsSlider(joint)'
+        id='joint_{{ joint.id }}'
+        [attr.r]='gridUtils.getJointR(joint)'
+        [attr.cx]='0'
+        [attr.cy]='0'
+        fill='gray'
+        stroke='#00000000'
+        [attr.stroke-width]='gridUtils.getJointR(joint) * 2'
+      />
+      <!-- condition for slider crank -->
+      <circle
+        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
+        r='0.06667'
+        cx='0%'
+        cy='0%'
+        [attr.fill]='mechanismSrv.getJointColor(joint)'
+        stroke='#00000000'
+        stroke-width='0.2'
+      ></circle>
+      <circle
+        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && gridUtils.getInput(joint)"
+        r='0.06667'
+        cx='0%'
+        cy='0%'
+        fill='green'
+        stroke='#00000000'
+        stroke-width='0.2'
+      ></circle>
+      <path
+        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint)"
+        d='M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12
+           L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077
+            -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.04'
+        fill-opacity='0'
+      ></path>
+      <!-- condition for ground revolute joint -->
+      <!-- TODO: Make all of this within one g container -->
+      <circle
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R' && !gridUtils.getInput(joint)"
+        r='0.06667'
+        cx='0%'
+        cy='0%'
+        fill='black'
+        stroke='#00000000'
+        stroke-width='0.2'
+      ></circle>
+      <circle
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R' && gridUtils.getInput(joint)"
+        r='0.06667'
+        cx='0%'
+        cy='0%'
+        fill='green'
+        stroke='#00000000'
+        stroke-width='0.2'
+      ></circle>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='-0.15'
+        y1='-0.15'
+        x2='-0.225'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='-0.075'
+        y1='-0.15'
+        x2='-0.15'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='0'
+        y1='-0.15'
+        x2='-0.075'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='0.075'
+        y1='-0.15'
+        x2='0'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='0.15'
+        y1='-0.15'
+        x2='0.075'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='0.225'
+        y1='-0.15'
+        x2='0.15'
+        y2='-0.225'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.03'
+      ></line>
+      <line
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        x1='-0.3'
+        y1='-0.15'
+        x2='0.3'
+        y2='-0.15'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.05'
+      ></line>
+      <path
+        *ngIf="gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) === 'R'"
+        d='M -0.225 -0.15 L -0.15 0.15 L 0.15 0.15 L 0.225 -0.15'
+        [attr.stroke]='mechanismSrv.getJointColor(joint)'
+        stroke-width='0.05'
+        fill='transparent'
+      ></path>
+    </svg>
+  </g>
+  <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
+    <path
+      *ngFor='let joint of mechanismSrv.getJoints()'
+      [attr.d]='mechanismSrv.getJointPath(joint)'
+      stroke='green'
+      fill='none'
+      stroke-width='0.04'
+      style='transform: scaleY(-1); pointer-events: none'
+    ></path>
+  </g>
+  <!--TODO: Add case when dragging anything above the jointTagHolder -->
+  <g id='jointTagHolder' style='pointer-events: none'>
+    <svg
+      *ngFor='let joint of mechanismSrv.getJoints()'
+      [attr.x]='joint.x - 0.2'
+      [attr.y]='-1 * joint.y - 0.2'
+      [attr.height]='10'
+      [attr.width]='10'
+      style='overflow: visible; text-anchor: middle'
+    >
+      <text
+        *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight"
+        style='font-size: 0.7px; text-anchor: middle'
+      >
+        {{ joint.id | uppercase }}
+      </text>
+    </svg>
+  </g>
+  <!--TODO: Add case when dragging anything above the linkTagHolder -->
+  <g id='linkTagHolder' style='pointer-events: none'>
+    <svg
+      *ngFor='let link of mechanismSrv.getLinks()'
+      [attr.x]="mechanismSrv.getLinkProp(link, 'CoMX')"
+      [attr.y]="mechanismSrv.getLinkProp(link, 'CoMY')"
+      [attr.height]='10'
+      [attr.width]='10'
+      style='overflow: visible; text-anchor: middle'
+    >
+      <text
+        *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight"
+        style='font-size: 0.7px; text-anchor: middle'
+      >
+        {{ link.id | uppercase }}
+      </text>
+    </svg>
+  </g>
+  <!--TODO: Add case when dragging anything above the forceTagHolder -->
+  <g id='forceTagHolder' *ngIf='settings.isShowID.value' style='pointer-events: none'>
+    <svg
+      *ngFor='let force of mechanismSrv.getForces()'
+      [attr.x]='(force.startCoord.x + force.endCoord.x) / 2'
+      [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1'
+      [attr.height]='10'
+      [attr.width]='10'
+      style='overflow: visible; text-anchor: middle'
+    >
+      <!-- should font-size have px??? -->
+      <text style='font-size: 0.7px; text-anchor: middle'>
+        {{ force.id }}
+      </text>
+    </svg>
+  </g>
+  <!--TODO: Add case when dragging anything above the comTagHolder -->
+  <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
+    <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible' width='1.23' height='2.61'>
+      <path
+        stroke-width='2'
+        stroke-linejoin='round'
+        fill='black'
+        opacity='1.0'
+        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+      ></path>
+      <path
+        stroke-width='2'
+        stroke-linejoin='round'
+        fill='white'
+        opacity='1.0'
+        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
+      ></path>
+      <path
+        stroke-width='2'
+        stroke-linejoin='round'
+        fill='black'
+        opacity='1.0'
+        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
+      ></path>
+      <path
+        stroke-width='2'
+        stroke-linejoin='round'
+        fill='white'
+        opacity='1.0'
+        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
+      ></path>
+    </svg>
+  </g>
+  <g id='pathPointHolder'></g>
+  <g id='threePositionHolder'></g>
+  <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
+    <line
+      stroke='black'
+      stroke-width='0.02'
+      stroke-opacity='0.5'
+      style='pointer-events: none'
+    ></line>
+    <svg height='10' width='10' style='overflow: visible' cursor='move'>
+      <circle
+        r='0.14'
+        cx='0%'
+        cy='0%'
+        fill='black'
+        fill-opacity='0.5'
+        stroke-opacity='0.5'
+      ></circle>
+      <!--      (mousedown)="mouseDown($event, 'jointTemp')"-->
+      <circle
+        r='0.1'
+        cx='0%'
+        cy='0%'
+        fill='gray'
+        stroke='#00000000'
+        stroke-width='0.2'
+      ></circle>
+    </svg>
+  </g>
+  <g id='forceTempHolder'
+     opacity='0.5'
+     style='display: none; pointer-events: none; transform: scaleY(-1)'
+  >
+    <path stroke-width='0.04' stroke='black' d=''></path>
+    <path fill='black' d=''></path>
+  </g>
 
+  <g id='activeObjectHighlight' style='transform: scaleY(-1); pointer-events: none'>
+    <circle
+      *ngIf="activeObjService.objType == 'Joint'"
+      [attr.r]='0.01'
+      [attr.cx]='activeObjService.Joint.x'
+      [attr.cy]='activeObjService.Joint.y'
+    />
+
+    <path
+      *ngIf="activeObjService.objType == 'Link'"
+      [attr.d]='mechanismSrv.getLinkProp(activeObjService.Link, "d")'
+      stroke-width='0.5'
+    ></path>
+  </g>
 </svg>
+<ng-template #context_menu>
+  <app-context-menu></app-context-menu>
+</ng-template>

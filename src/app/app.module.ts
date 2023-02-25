@@ -35,6 +35,8 @@ import { RightPanelComponent } from './component/right-panel/right-panel.compone
 import { SettingsPanelComponent } from './component/settings-panel/settings-panel.component';
 import { SynthesisPanelComponent } from './component/synthesis-panel/synthesis-panel.component';
 import { NewGridComponent } from './component/new-grid/new-grid.component';
+import { CdkMenuModule } from '@angular/cdk/menu';
+import { ContextMenuComponent } from './component/context-menu/context-menu.component';
 
 @NgModule({
   declarations: [
@@ -64,6 +66,7 @@ import { NewGridComponent } from './component/new-grid/new-grid.component';
     SettingsPanelComponent,
     SynthesisPanelComponent,
     NewGridComponent,
+    ContextMenuComponent,
   ],
   imports: [
     BrowserModule,
@@ -73,6 +76,7 @@ import { NewGridComponent } from './component/new-grid/new-grid.component';
     BrowserAnimationsModule,
     MaterialModule,
     ReactiveFormsModule,
+    CdkMenuModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

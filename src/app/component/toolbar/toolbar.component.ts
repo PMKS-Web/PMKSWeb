@@ -3,13 +3,7 @@ import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import {
-  roundNumber,
-  splitURLInfo,
-  stringToBoolean,
-  stringToFloat,
-  stringToShape,
-} from '../../model/utils';
+import { roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { GridComponent } from '../grid/grid.component';
@@ -21,6 +15,7 @@ import { TemplatesPopupComponent } from '../templates-popup/templates-popup.comp
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
+
 const parseCSV = require('papaparse');
 
 @Component({
@@ -32,12 +27,15 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   openRightPanelEquations() {
     RightPanelComponent.tabClicked(2);
   }
+
   openRightPanelHelp() {
     RightPanelComponent.tabClicked(3);
   }
+
   openRightPanelSettings() {
     RightPanelComponent.tabClicked(1);
   }
+
   animate: boolean = false;
 
   static inputAngularVelocity: number = 10;
@@ -73,25 +71,26 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   constructor(private activeObjService: ActiveObjService) {}
 
   ngOnInit(): void {
-    const settingsPropsString = splitURLInfo('&s=');
-    if (!(typeof settingsPropsString === 'string')) {
-      return;
-    }
-    const settingsPropsArray = settingsPropsString.split(',');
-    if (settingsPropsArray.length === 0) {
-      return;
-    }
-    const input_speed_mag = stringToFloat(settingsPropsArray[0]);
-    const clockwise = stringToBoolean(settingsPropsArray[1]);
-    const gravity = stringToBoolean(settingsPropsArray[2]);
-    const unit = settingsPropsArray[3];
-    ToolbarComponent.inputAngularVelocity = input_speed_mag;
-    ToolbarComponent.clockwise = clockwise;
-    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    // ToolbarComponent.gravity = gravity; Temp commneted out by Kohmei for testing
-    this.localUnit.selectedUnit = unit;
-    ToolbarComponent.unit = unit;
-    GridComponent.updateMechanism();
+    //This will need to move to settings service
+    // const settingsPropsString = splitURLInfo('&s=');
+    // if (!(typeof settingsPropsString === 'string')) {
+    //   return;
+    // }
+    // const settingsPropsArray = settingsPropsString.split(',');
+    // if (settingsPropsArray.length === 0) {
+    //   return;
+    // }
+    // const input_speed_mag = stringToFloat(settingsPropsArray[0]);
+    // const clockwise = stringToBoolean(settingsPropsArray[1]);
+    // const gravity = stringToBoolean(settingsPropsArray[2]);
+    // const unit = settingsPropsArray[3];
+    // ToolbarComponent.inputAngularVelocity = input_speed_mag;
+    // ToolbarComponent.clockwise = clockwise;
+    // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+    // // ToolbarComponent.gravity = gravity; Temp commneted out by Kohmei for testing
+    // this.localUnit.selectedUnit = unit;
+    // ToolbarComponent.unit = unit;
+    // GridComponent.updateMechanism();
   }
 
   ngAfterViewInit() {
