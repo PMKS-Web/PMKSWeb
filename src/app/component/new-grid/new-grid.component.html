@@ -1,7 +1,15 @@
-<svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'>
+<svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
+     (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)'>>
   <!-- Axes and Grid-->
-  <ng-container>
-    <!--  The Major Axes-->
+  <g id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'>
+
+    <!--  The Background-->
+    <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
+          [attr.width]='svgGrid.viewBoxMaxX-svgGrid.viewBoxMinX'
+          [attr.height]='svgGrid.viewBoxMaxY-svgGrid.viewBoxMinY' fill='#ffffff' stroke='#00000000'>
+
+    </rect>
+    <!--  The Minor Axes-->
     <ng-container>
       <ng-container *ngFor='let line of svgGrid.verticalLinesMinor'>
         <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
@@ -52,13 +60,14 @@
         0
       </text>
     </ng-container>
-  </ng-container>
+  </g>
 
   <g id='linkHolder' style='transform: scaleY(-1)'>
     <path
       *ngFor='let link of mechanismSrv.getLinks()'
       (mouseover)='link.showHighlight = true'
       (mouseout)='link.showHighlight = false'
+      (contextmenu)='setLastRightClick(link)'
       [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
       [attr.id]='link.id'
       [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
@@ -70,6 +79,7 @@
       [attr.x]='joint.x' [attr.y]='joint.y'
       (mouseover)='joint.showHighlight = true'
       (mouseout)='joint.showHighlight = false'
+      (contextmenu)='setLastRightClick(joint)'
       width='10'
       height='10'
       style='overflow: visible'
@@ -362,5 +372,6 @@
   </g>
 </svg>
 <ng-template #context_menu>
-  <app-context-menu></app-context-menu>
+  <app-context-menu [menuItems]='cMenuItems'>
+  </app-context-menu>
 </ng-template>

@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import * as svgPanZoom from 'svg-pan-zoom';
+import { Coord } from '../model/coord';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SvgGridService {
   public panZoomObject: any;
+  public CTM!: SVGMatrix;
   public viewBoxMinX: number = 0;
   public viewBoxMaxX: number = 0;
   public viewBoxMinY: number = 0;
@@ -14,15 +16,16 @@ export class SvgGridService {
   verticalLinesMinor: number[] = [];
   horizontalLines: number[] = [];
   horizontalLinesMinor: number[] = [];
-  private defualtCellSize: number = 200;
+  private defualtCellSize: number = 500;
+
   private cellSize: number = this.defualtCellSize;
 
   defaultZoom: number = 80;
 
-  constructor() {
-  }
+  constructor() {}
 
   setNewElement(root: HTMLElement) {
+    //This is like the constructor, and allows you to set the root element where the library is loaded
     this.panZoomObject = svgPanZoom(root, {
       zoomEnabled: true,
       fit: false,
@@ -32,9 +35,18 @@ export class SvgGridService {
       maxZoom: 100,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
+      onUpdatedCTM: this.handleUpdatedCTM.bind(this),
     });
     this.panZoomObject.center();
     this.panZoomObject.zoom(this.defaultZoom);
+  }
+
+  screenToSVG(screenPos: Coord): Coord {
+    const CTM: SVGMatrix = this.CTM;
+    const inverseCTM = CTM.inverse();
+    const svgPos = screenPos.applyMatrix(inverseCTM);
+    svgPos.y = svgPos.y * -1;
+    return svgPos;
   }
 
   updateVisibleCoords() {
@@ -95,10 +107,17 @@ export class SvgGridService {
 
   handleZoom() {
     this.cellSize = this.defualtCellSize;
+    const divisionSequnece: number[] = [2.5, 2, 2];
+    let i = 0;
     while (this.cellSize * this.getZoom() > 200) {
-      this.cellSize /= 2;
+      this.cellSize = this.cellSize / divisionSequnece[i % divisionSequnece.length];
+      i++;
     }
     this.handlePan();
+  }
+
+  handleUpdatedCTM(newCTM: SVGMatrix) {
+    this.CTM = newCTM;
   }
 
   zoomIn() {

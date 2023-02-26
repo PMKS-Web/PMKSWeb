@@ -182,7 +182,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     // );
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+  }
 
   ngAfterViewInit() {
     GridComponent.transformMatrixSVG = document.getElementById(
@@ -386,10 +387,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // console.warn('mouseUp');
-        // console.log(typeChosen);
-        // console.log(thing);
-        // console.log(this.activeObjService.objType);
+              // console.warn('mouseUp');
+              // console.log(typeChosen);
+              // console.log(thing);
+              // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
@@ -482,7 +483,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // console.log(thing);
+              // console.log(thing);
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
@@ -1013,7 +1014,8 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
   }
 
-  mergeToForces() {}
+  mergeToForces() {
+  }
 
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';
@@ -2263,11 +2265,11 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   showIDTags() {
-    return AnimationBarComponent.showIdTags;
+    // return AnimationBarComponent.showIdTags;
   }
 
   showCoMTags() {
-    return AnimationBarComponent.showCoMTags;
+    // return AnimationBarComponent.showCoMTags;
   }
 
   getShowcaseShapeSelector() {

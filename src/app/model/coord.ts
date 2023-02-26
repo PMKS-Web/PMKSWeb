@@ -24,4 +24,10 @@ export class Coord {
   set y(value: number) {
     this._y = value;
   }
+
+  applyMatrix(inverseCTM: DOMMatrix) {
+    const x = this.x * inverseCTM.a + this.y * inverseCTM.c + inverseCTM.e;
+    const y = this.x * inverseCTM.b + this.y * inverseCTM.d + inverseCTM.f;
+    return new Coord(x, y);
+  }
 }

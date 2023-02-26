@@ -5,6 +5,8 @@ import { Mechanism } from '../../model/mechanism/mechanism';
 import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { SvgGridService } from '../../services/svg-grid.service';
+import { MechanismService } from '../../services/mechanism.service';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-animation-bar',
@@ -14,8 +16,6 @@ import { SvgGridService } from '../../services/svg-grid.service';
 export class AnimationBarComponent implements OnInit, AfterViewInit {
   animating: boolean = false;
 
-  static showIdTags: boolean = false;
-  static showCoMTags: boolean = false;
   static animate: boolean = false;
 
   static direction: string = 'ccw';
@@ -29,7 +29,11 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   timestepDisplay: number = 0;
 
-  constructor(private svgGrid: SvgGridService) {}
+  constructor(
+    private svgGrid: SvgGridService,
+    private mechanismService: MechanismService,
+    private settingsService: SettingsService
+  ) {}
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
@@ -134,27 +138,27 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   noJointExsits() {
-    return GridComponent.joints.length == 0;
+    return this.mechanismService.joints.length == 0;
   }
 
   noLinkExsits() {
-    return GridComponent.links.length == 0;
+    return this.mechanismService.links.length == 0;
   }
 
   showCenterOfMass() {
-    AnimationBarComponent.showCoMTags = !AnimationBarComponent.showCoMTags;
+    this.settingsService.isShowCOM.next(!this.settingsService.isShowCOM.value);
   }
 
   comIconName() {
-    return AnimationBarComponent.showCoMTags ? 'com_off' : 'com';
+    return this.settingsService.isShowCOM.value ? 'com_off' : 'com';
   }
 
   idLabelIconName() {
-    return AnimationBarComponent.showIdTags ? 'abc_off' : 'abc';
+    return this.settingsService.isShowID.value ? 'abc_off' : 'abc';
   }
 
   onShowIDPressed() {
-    AnimationBarComponent.showIdTags = !AnimationBarComponent.showIdTags;
+    this.settingsService.isShowID.next(!this.settingsService.isShowID.value);
   }
 
   onZoomInPressed() {
@@ -174,17 +178,8 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     return AnimationBarComponent.speed;
   }
 
-  onResetLinkagePressed() {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const pathname = window.location.pathname;
-    const port = window.location.port;
-    const urlString = `${protocol}//${hostname}${port ? `:${port}` : ''}${pathname}`;
-    window.location.href = encodeURI(urlString);
-  }
-
   getMechanismTimeStep() {
-    return GridComponent.mechanismTimeStep;
+    return this.mechanismService.mechanismTimeStep;
   }
 
   getScreenCoord() {
@@ -202,6 +197,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   invalidMechanism() {
-    return !GridComponent.oneValidMechanismExists();
+    return this.mechanismService.oneValidMechanismExists();
   }
 }

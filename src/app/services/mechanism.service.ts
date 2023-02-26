@@ -35,8 +35,7 @@ export class MechanismService {
   // private moveModes: moveModes = moveModes;
   private selectedJoint!: RealJoint;
 
-  constructor() {
-  }
+  constructor() {}
 
   getJoints() {
     return this.joints;
@@ -128,5 +127,12 @@ export class MechanismService {
         this.mechanisms[0].joints[j_index][jointIndex].y.toString();
     }
     return string;
+  }
+
+  oneValidMechanismExists() {
+    if (this.mechanisms.length == 0 || this.mechanisms[0] === undefined) {
+      return false;
+    }
+    return this.mechanisms[0].isMechanismValid();
   }
 }
