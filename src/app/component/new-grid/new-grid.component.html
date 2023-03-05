@@ -239,6 +239,54 @@
       style='transform: scaleY(-1); pointer-events: none'
     ></path>
   </g>
+  <g
+    id='forcesHolder'
+    style='transform: scaleY(-1)'
+    *ngFor='let force of mechanismSrv.getForces()'
+    (contextmenu)='setLastRightClick(force)'
+    (mousedown)='activeObjService.updateSelectedObj(force)'
+  >
+    <g
+      [attr.id]='force.id'
+      (mouseover)='force.showHighlight = true'
+      (mouseout)='force.showHighlight = false'
+    >
+      <path
+        *ngIf='force.showHighlight'
+        [attr.d]='force.forceLine'
+        stroke='yellow'
+        stroke-width='0.2'
+      ></path>
+      <!-- Transpent thicker force to increase hitbox for the group for highliting-->
+      <path [attr.d]='force.forceLine' [attr.stroke]='force.stroke' stroke-width='0.04'></path>
+      <path [attr.d]='force.forceLine' stroke='transparent' stroke-width='0.4'></path>
+      <path [attr.d]='force.forceArrow' [attr.fill]='force.fill'></path>
+    </g>
+    <svg
+      id='startForceEndpoint'
+      [attr.x]='force.startCoord.x'
+      [attr.y]='force.startCoord.y'
+      (mousedown)='activeObjService.updateSelectedObj(force.startCoord, force); mouseDown($event); $event.stopPropagation()'
+      height='10'
+      width='10'
+      style='overflow: visible; cursor: move'
+    >
+      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+    </svg>
+    <svg
+      id='endForceEndpoint'
+      [attr.x]='force.endCoord.x'
+      [attr.y]='force.endCoord.y'
+      (mousedown)='activeObjService.updateSelectedObj(force.endCoord, force); mouseDown($event); $event.stopPropagation()'
+      height='10'
+      width='10'
+      style='overflow: visible; cursor: move'
+    >
+      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+    </svg>
+  </g>
   <!--TODO: Add case when dragging anything above the jointTagHolder -->
   <g id='jointTagHolder' style='pointer-events: none'>
     <svg

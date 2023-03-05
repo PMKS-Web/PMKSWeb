@@ -272,6 +272,43 @@ export class MechanismService {
     this.onMechUpdateState.next(3);
   }
 
+  deleteForce() {
+    const forceIndex = this.forces.findIndex(
+      (f) => f.id === this.activeObjService.selectedForce.id
+    );
+    this.forces.splice(forceIndex, 1);
+    this.updateMechanism();
+  }
+
+  changeForceDirection() {
+    this.activeObjService.selectedForce.arrowOutward =
+      !this.activeObjService.selectedForce.arrowOutward;
+    if (this.activeObjService.selectedForce.arrowOutward) {
+      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
+        this.activeObjService.selectedForce.startCoord,
+        this.activeObjService.selectedForce.endCoord
+      );
+    } else {
+      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
+        this.activeObjService.selectedForce.endCoord,
+        this.activeObjService.selectedForce.startCoord
+      );
+    }
+    this.updateMechanism();
+  }
+
+  changeForceLocal() {
+    this.activeObjService.selectedForce.local = !this.activeObjService.selectedForce.local;
+    if (this.activeObjService.selectedForce.local) {
+      this.activeObjService.selectedForce.stroke = 'blue';
+      this.activeObjService.selectedForce.fill = 'blue';
+    } else {
+      this.activeObjService.selectedForce.stroke = 'black';
+      this.activeObjService.selectedForce.fill = 'black';
+    }
+    this.updateMechanism();
+  }
+
   deleteLink() {
     console.log(this.activeObjService);
     if (

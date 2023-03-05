@@ -8,7 +8,7 @@ import { GridUtilsService } from '../../services/grid-utils.service';
 import { SettingsService } from '../../services/settings.service';
 import { ActiveObjService } from '../../services/active-obj.service';
 import { cMenuItem } from '../context-menu/context-menu.component';
-import { Link, Piston, RealLink } from '../../model/link';
+import { Link, RealLink } from '../../model/link';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Coord } from '../../model/coord';
 import { forceStates, gridStates, jointStates, linkStates } from '../../model/utils';
@@ -37,7 +37,7 @@ export class NewGridComponent {
   }
 
   public cMenuItems: cMenuItem[] = [];
-  public lastRightClick: Joint | Link | String = '';
+  public lastRightClick: Joint | Link | Force | String = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
 
   //TODO: These states should be a one stateMachine that is a service
@@ -104,6 +104,30 @@ export class NewGridComponent {
     this.cMenuItems = [];
     console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
+      case 'Force':
+        //Swtich force direction, switch force local, delete Force
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'delete'
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Switch Force Direction',
+            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
+            'delete'
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
+            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
+            'delete'
+          )
+        );
+        break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         this.cMenuItems.push(
@@ -113,6 +137,7 @@ export class NewGridComponent {
             'delete'
           )
         );
+        this.cMenuItems.push(new cMenuItem('Attach Force', this.createForce.bind(this), 'edit'));
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'edit'));
         this.cMenuItems.push(
           new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'edit')
@@ -137,23 +162,13 @@ export class NewGridComponent {
               'delete'
             )
           );
-          if ((this.lastRightClick as RealJoint).input) {
-            this.cMenuItems.push(
-              new cMenuItem(
-                'Remove Input',
-                this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
-                'delete'
-              )
-            );
-          } else {
-            this.cMenuItems.push(
-              new cMenuItem(
-                'Add Input',
-                this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
-                'delete'
-              )
-            );
-          }
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
+              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              'delete'
+            )
+          );
         } else {
           this.cMenuItems.push(
             new cMenuItem(
@@ -163,30 +178,21 @@ export class NewGridComponent {
             )
           );
         }
-        if (this.lastRightClick instanceof PrisJoint) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Remove Slider',
-              this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-              'circle'
-            )
-          );
-        } else {
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Add Slider',
-              this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-              'circle'
-            )
-          );
-        }
+        this.cMenuItems.push(
+          new cMenuItem(
+            (this.lastRightClick instanceof PrisJoint) ? 'Remove Slider' : 'Add Slider',
+            this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
+            'circle'
+          )
+        );
+
         break;
       case 'String': //This means grid
         this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'add'));
     }
   }
 
-  setLastRightClick(clickedObj: Joint | Link | String) {
+  setLastRightClick(clickedObj: Joint | Link | String | Force) {
     this.lastRightClick = clickedObj;
     this.updateContextMenuItems();
   }
@@ -217,7 +223,14 @@ export class NewGridComponent {
     this.mechanismSrv.updateMechanism();
   }
 
-  createForce($event: MouseEvent) {
+  createForce() {
+    this.forceStates = forceStates.creating;
+    this.gridStates = gridStates.createForce;
+    this.forceTempHolderSVG.style.display = 'block';
+    this.mechanismSrv.onMechUpdateState.next(3);
+  }
+
+  creatingForce($event: MouseEvent) {
     const startCoord = this.svgGrid.screenToSVGfromXY(
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y
@@ -231,10 +244,6 @@ export class NewGridComponent {
       'd',
       Force.createForceArrow(startCoord, mousePos)
     );
-    this.forceStates = forceStates.creating;
-    this.gridStates = gridStates.createForce;
-    this.forceTempHolderSVG.style.display = 'block';
-    this.mechanismSrv.onMechUpdateState.next(3);
   }
 
   createLink() {
@@ -400,9 +409,21 @@ export class NewGridComponent {
     }
     switch (this.forceStates) {
       case forceStates.creating:
-        this.createForce($event);
+        this.creatingForce($event);
         break;
-      case forceStates.dragging:
+      case forceStates.draggingEnd:
+        if (AnimationBarComponent.animate) {
+          this.sendNotification('Cannot edit while animation is running');
+          return;
+        }
+        if (this.mechanismSrv.mechanismTimeStep !== 0) {
+          this.sendNotification('Stop animation (or reset to 0 position) to edit');
+          return;
+        }
+        //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
+        this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
+        break;
+      case forceStates.draggingStart:
         if (AnimationBarComponent.animate) {
           this.sendNotification('Cannot edit while animation is running');
           return;
@@ -443,10 +464,10 @@ export class NewGridComponent {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // console.warn('mouseUp');
-        // console.log(typeChosen);
-        // console.log(thing);
-        // console.log(this.activeObjService.objType);
+              // console.warn('mouseUp');
+              // console.log(typeChosen);
+              // console.log(thing);
+              // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
@@ -620,13 +641,9 @@ export class NewGridComponent {
               case gridStates.createForce:
                 const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
                 // const endCoordRaw = this.getMousePosition($event);
-                const endCoordRaw = this.svgGrid.screenToSVG(
+                const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                if (endCoordRaw === undefined) {
-                  return;
-                }
-                const endCoord = this.svgGrid.screenToSVGfromXY(endCoordRaw.x, endCoordRaw.y * -1);
                 // TODO: Be sure the force added is at correct position for binary link
                 const force = new Force(
                   'F' + (this.mechanismSrv.forces.length + 1).toString(),
@@ -798,7 +815,12 @@ export class NewGridComponent {
                 // if (forcePoint === undefined) {
                 //   return;
                 // }
-                this.forceStates = forceStates.dragging;
+                console.log(this.activeObjService.selectedForce);
+                if (this.activeObjService.selectedForce.isStartSelected) {
+                  this.forceStates = forceStates.draggingStart;
+                } else if (this.activeObjService.selectedForce.isEndSelected) {
+                  this.forceStates = forceStates.draggingEnd;
+                }
               //TODO: Fix this to update activeObjService on which part of the force is being dragged
               // this.activeObjService.selectedForceEndPoint = forcePoint;
               // this.activeObjService.selectedForce = thing;

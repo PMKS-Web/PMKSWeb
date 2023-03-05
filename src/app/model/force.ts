@@ -17,8 +17,18 @@ export class Force {
   private _angle: number;
 
   private _showHighlight: boolean = false;
+  isEndSelected: boolean = false;
+  isStartSelected: boolean = false;
 
-  constructor(id: string, link: RealLink, startCoord: Coord, endCoord: Coord, local: boolean = false, arrowOutward: boolean = true, mag: number = 1) {
+  constructor(
+    id: string,
+    link: RealLink,
+    startCoord: Coord,
+    endCoord: Coord,
+    local: boolean = false,
+    arrowOutward: boolean = true,
+    mag: number = 1
+  ) {
     // TODO: Have to have local argument since some forces can be created that are local or global
     this._id = id;
     this._link = link;
@@ -37,7 +47,17 @@ export class Force {
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
-    return 'M ' + startCoord.x.toString() + ' ' + startCoord.y.toString() + ' L ' + endCoord.x.toString() + ' ' + endCoord.y.toString() + ' Z';
+    return (
+      'M ' +
+      startCoord.x.toString() +
+      ' ' +
+      startCoord.y.toString() +
+      ' L ' +
+      endCoord.x.toString() +
+      ' ' +
+      endCoord.y.toString() +
+      ' Z'
+    );
   }
 
   static createForceArrow(startCoord: Coord, endCoord: Coord) {

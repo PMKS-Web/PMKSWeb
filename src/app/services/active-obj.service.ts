@@ -3,6 +3,7 @@ import { GridComponent } from '../component/grid/grid.component';
 import { Force } from '../model/force';
 import { RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
+import { Coord } from '../model/coord';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +15,7 @@ export class ActiveObjService {
   selectedForce!: Force;
   selectedLink!: RealLink;
   selectedForceEndPoint: string = '';
+  private skipThisSeleciton: boolean = false;
 
   constructor() {}
 
@@ -23,7 +25,7 @@ export class ActiveObjService {
     this.onActiveObjChange.emit(this.objType);
   }
 
-  updateSelectedObj(newActiveObj: any) {
+  updateSelectedObj(newActiveObj: any, forceParent: Force | null = null) {
     this.prevSelectedJoint = this.selectedJoint;
     if (newActiveObj === undefined || newActiveObj === null) {
       this.objType = 'Grid';
@@ -40,8 +42,23 @@ export class ActiveObjService {
           break;
         }
         case Force: {
+          console.log('Force selected');
           this.objType = 'Force';
           this.selectedForce = newActiveObj;
+          this.selectedForce.isStartSelected = false;
+          this.selectedForce.isEndSelected = false;
+          break;
+        }
+        case Coord: {
+          console.log('Force endpoint selected');
+          this.objType = 'Force';
+          this.selectedForce = forceParent!;
+          //This is only for when a force endpoint is slected
+          if (this.selectedForce.startCoord === newActiveObj) {
+            this.selectedForce.isStartSelected = true;
+          } else if (this.selectedForce.endCoord === newActiveObj) {
+            this.selectedForce.isEndSelected = true;
+          }
           break;
         }
       }

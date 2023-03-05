@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import * as svgPanZoom from 'svg-pan-zoom';
 import { Coord } from '../model/coord';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
-import { jointStates } from '../model/utils';
+import { forceStates, jointStates } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -74,7 +74,11 @@ export class SvgGridService {
   }
 
   handleBeforePan(oldPan: any, newPan: any) {
-    if (NewGridComponent.debugGetJointState() == jointStates.dragging) {
+    if (
+      NewGridComponent.debugGetJointState() == jointStates.dragging ||
+      NewGridComponent.debugGetForceState() == forceStates.draggingStart ||
+      NewGridComponent.debugGetForceState() == forceStates.draggingEnd
+    ) {
       return oldPan;
     }
     return newPan;

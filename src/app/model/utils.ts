@@ -51,7 +51,8 @@ export enum linkStates {
 export enum forceStates {
   waiting,
   creating,
-  dragging,
+  draggingStart,
+  draggingEnd,
 }
 
 export enum shapeEditModes {

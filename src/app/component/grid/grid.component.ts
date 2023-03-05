@@ -771,7 +771,7 @@ export class GridComponent implements OnInit, AfterViewInit {
                 if (forcePoint === undefined) {
                   return;
                 }
-                GridComponent.forceStates = forceStates.dragging;
+                // GridComponent.forceStates = forceStates.dragging;
                 GridComponent.selectedForceEndPoint = forcePoint;
                 GridComponent.selectedForce = thing;
             }
@@ -960,21 +960,21 @@ export class GridComponent implements OnInit, AfterViewInit {
       case forceStates.creating:
         this.createForce($event);
         break;
-      case forceStates.dragging:
-        if (AnimationBarComponent.animate === true) {
-          GridComponent.sendNotification('Cannot edit while animation is running');
-          return;
-        }
-        if (GridComponent.mechanismTimeStep !== 0) {
-          GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
-          this.disappearContext();
-          return;
-        }
-        GridComponent.selectedForce = GridComponent.dragForce(
-          GridComponent.selectedForce,
-          trueCoord
-        );
-        break;
+      // case forceStates.dragging:
+      // if (AnimationBarComponent.animate === true) {
+      //   GridComponent.sendNotification('Cannot edit while animation is running');
+      //   return;
+      // }
+      // if (GridComponent.mechanismTimeStep !== 0) {
+      //   GridComponent.sendNotification('Stop animation (or reset to 0 position) to edit');
+      //   this.disappearContext();
+      //   return;
+      // }
+      // GridComponent.selectedForce = GridComponent.dragForce(
+      //   GridComponent.selectedForce,
+      //   trueCoord
+      // );
+      // break;
     }
   }
 
