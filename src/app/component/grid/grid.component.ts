@@ -173,7 +173,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   findEnlargedLinkHelper() {
-    return this.getLinkProp(this.activeObjService.Link, 'd');
+    return this.getLinkProp(this.activeObjService.selectedLink, 'd');
     // console.log(this.activeObjService.Link.bound);
     // return RealLink.getPointsFromBounds(
     //   this.activeObjService.Link.bound,
@@ -182,8 +182,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     // );
   }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
     GridComponent.transformMatrixSVG = document.getElementById(
@@ -331,6 +330,7 @@ export class GridComponent implements OnInit, AfterViewInit {
   }
 
   private static getMousePosition(e: MouseEvent) {
+    //This is crazy
     const svg = GridComponent.canvasSVGElement as SVGGraphicsElement;
     // console.log(svg);
     if (svg === null || svg === undefined) {
@@ -387,10 +387,10 @@ export class GridComponent implements OnInit, AfterViewInit {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-              // console.warn('mouseUp');
-              // console.log(typeChosen);
-              // console.log(thing);
-              // console.log(this.activeObjService.objType);
+        // console.warn('mouseUp');
+        // console.log(typeChosen);
+        // console.log(thing);
+        // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
@@ -483,7 +483,7 @@ export class GridComponent implements OnInit, AfterViewInit {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-              // console.log(thing);
+        // console.log(thing);
         switch (typeChosen) {
           case 'grid':
             switch (GridComponent.gridStates) {
@@ -1014,8 +1014,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     });
   }
 
-  mergeToForces() {
-  }
+  mergeToForces() {}
 
   disappearContext() {
     GridComponent.contextMenuAddInputJoint.style.display = 'none';
@@ -1531,7 +1530,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     //if the joint that is meant to be deleted is the one selected in activeObjectSrv, set the activeObjectSrv to undefined
     if (
       this.activeObjService.objType === 'Joint' &&
-      this.activeObjService.Joint.id === GridComponent.selectedJoint.id
+      this.activeObjService.selectedJoint.id === GridComponent.selectedJoint.id
     ) {
       this.activeObjService.updateSelectedObj(undefined);
     }
@@ -1748,14 +1747,16 @@ export class GridComponent implements OnInit, AfterViewInit {
     //Selected means selected in the activeObj Service
     this.disappearContext();
 
-    const linkIndex = GridComponent.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+    const linkIndex = GridComponent.links.findIndex(
+      (l) => l.id === this.activeObjService.selectedLink.id
+    );
 
     GridComponent.links[linkIndex].joints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
       }
       // const delLinkIndex = j.links.findIndex((l) => l.id === GridComponent.selectedLink.id);
-      const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.Link.id);
+      const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.selectedLink.id);
       j.links.splice(delLinkIndex, 1);
     });
     for (let j_i = 0; j_i < GridComponent.links[linkIndex].joints.length - 1; j_i++) {
@@ -1792,7 +1793,7 @@ export class GridComponent implements OnInit, AfterViewInit {
     this.disappearContext();
     if (
       this.activeObjService.objType === 'Link' &&
-      this.activeObjService.Link.id === GridComponent.selectedLink.id
+      this.activeObjService.selectedLink.id === GridComponent.selectedLink.id
     ) {
       this.activeObjService.updateSelectedObj(undefined);
     }

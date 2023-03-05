@@ -8,6 +8,7 @@ import { Mechanism } from '../../model/mechanism/mechanism';
 import { InstantCenter } from '../../model/instant-center';
 import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { MechanismService } from '../../services/mechanism.service';
 
 @Component({
   selector: 'app-linkage-table',
@@ -21,9 +22,12 @@ export class LinkageTableComponent implements OnInit {
   private static forceButton: SVGElement;
   private static showLinkageTableButton: SVGElement;
 
-  constructor() {}
+  constructor(private mechanismService: MechanismService) {
 
-  ngOnInit(): void {}
+  }
+
+  ngOnInit(): void {
+  }
 
   ngAfterViewInit() {
     LinkageTableComponent.linkageTable = document.getElementById('linkageTable') as unknown as SVGElement;
@@ -138,9 +142,11 @@ export class LinkageTableComponent implements OnInit {
     }
     GridComponent.updateMechanism();
   }
+
   showForceAngle(force: Force) {
     return force.angle * (180 / Math.PI);
   }
+
   changeForceProp($event: any, force: Force, forceProp: string) {
     switch (forceProp) {
       case 'id':
@@ -209,6 +215,7 @@ export class LinkageTableComponent implements OnInit {
     }
     return '?';
   }
+
   typeofLink(link: Link) {
     switch (link.constructor) {
       case RealLink:
@@ -252,15 +259,15 @@ export class LinkageTableComponent implements OnInit {
   }
 
   getJoints() {
-    return GridComponent.joints;
+    return this.mechanismService.joints;
   }
 
   getLinks() {
-    return GridComponent.links;
+    return this.mechanismService.links;
   }
 
   getForces() {
-    return GridComponent.forces;
+    return this.mechanismService.forces;
   }
 
   getUnit() {

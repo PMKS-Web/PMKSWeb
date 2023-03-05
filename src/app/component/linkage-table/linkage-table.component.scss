@@ -85,9 +85,9 @@
   display: flex;
   flex-wrap: wrap;
   max-width: 400px;
-  position: absolute;
-  top: 130px;
-  left: 10px;
+  //position: absolute;
+  //top: 130px;
+  //left: 10px;
   opacity: 1;
   border: 1px solid;
   overflow: visible;
@@ -105,7 +105,7 @@
   font-weight: lighter;
   border: 1px solid;
   text-align: center;
-  width: 131.2px;
+  width: 110px;
   font-family: Arial, sans-serif;
   font-size: 22px;
   cursor: pointer;
@@ -136,9 +136,11 @@
 .linkageTabs input[type='radio']:checked + label + .tab thead {
   background: gray;
 }
+
 .linkageTabs input[type='radio']:checked + label + .tab th {
   border: 1px solid black;
 }
+
 .linkageTabs input[type='radio']:checked + label + .tab input {
   display: table-cell;
   width: 80%;

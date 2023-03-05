@@ -9,9 +9,11 @@ import { RealLink } from '../model/link';
 })
 export class ActiveObjService {
   objType: string = 'Nothing';
-  Joint!: RealJoint;
-  Force!: Force;
-  Link!: RealLink;
+  selectedJoint!: RealJoint;
+  prevSelectedJoint!: RealJoint;
+  selectedForce!: Force;
+  selectedLink!: RealLink;
+  selectedForceEndPoint: string = '';
 
   constructor() {}
 
@@ -22,23 +24,24 @@ export class ActiveObjService {
   }
 
   updateSelectedObj(newActiveObj: any) {
+    this.prevSelectedJoint = this.selectedJoint;
     if (newActiveObj === undefined || newActiveObj === null) {
-      this.objType = 'Nothing';
+      this.objType = 'Grid';
     } else {
       switch (newActiveObj.constructor) {
         case RevJoint: {
           this.objType = 'Joint';
-          this.Joint = newActiveObj;
+          this.selectedJoint = newActiveObj;
           break;
         }
         case RealLink: {
           this.objType = 'Link';
-          this.Link = newActiveObj;
+          this.selectedLink = newActiveObj;
           break;
         }
         case Force: {
           this.objType = 'Force';
-          this.Force = newActiveObj;
+          this.selectedForce = newActiveObj;
           break;
         }
       }

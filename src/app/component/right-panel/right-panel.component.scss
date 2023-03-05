@@ -11,6 +11,7 @@
   $foreground: map.get($theme, foreground);
 
   #rightPanel {
+    pointer-events: none;
     position: absolute;
     top: 30px;
     right: 0px;
@@ -38,19 +39,23 @@
       flex-direction: column;
       gap: 10px;
     }
+
     .page2 {
       position: absolute;
       top: 0;
       right: 0;
-      width: 400px;
+      width: 500px;
+      ////Be careful, there are multiple places to change this value
       height: 100%;
       // border-radius: var(--border-radius);
     }
+
     .page3 {
       position: absolute;
       top: 0;
       right: 0;
-      width: 400px;
+      width: 500px;
+      //Be careful, there are multiple places to change this value
       height: 100%;
     }
   }

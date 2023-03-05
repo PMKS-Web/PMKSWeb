@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as svgPanZoom from 'svg-pan-zoom';
 import { Coord } from '../model/coord';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { jointStates } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -35,6 +37,7 @@ export class SvgGridService {
       maxZoom: 100,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
+      beforePan: this.handleBeforePan.bind(this),
       onUpdatedCTM: this.handleUpdatedCTM.bind(this),
     });
     this.panZoomObject.center();
@@ -47,6 +50,10 @@ export class SvgGridService {
     const svgPos = screenPos.applyMatrix(inverseCTM);
     svgPos.y = svgPos.y * -1;
     return svgPos;
+  }
+
+  screenToSVGfromXY(screenX: number, screenY: number): Coord {
+    return this.screenToSVG(new Coord(screenX, screenY));
   }
 
   updateVisibleCoords() {
@@ -64,6 +71,13 @@ export class SvgGridService {
     // this.panZoomObject.updateBBox(); // Update viewport bounding box
     // console.log(viewBox);
     // console.log(this.viewBoxMinX, this.viewBoxMaxX);
+  }
+
+  handleBeforePan(oldPan: any, newPan: any) {
+    if (NewGridComponent.debugGetJointState() == jointStates.dragging) {
+      return oldPan;
+    }
+    return newPan;
   }
 
   handlePan() {

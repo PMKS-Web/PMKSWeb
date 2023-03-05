@@ -1,5 +1,21 @@
 import { Component } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { NewGridComponent } from '../new-grid/new-grid.component';
+import {
+  gridStates,
+  jointStates,
+  linkStates,
+  forceStates,
+  shapeEditModes,
+  createModes,
+  moveModes,
+  roundNumber,
+  determineSlope,
+  determineYIntersect,
+  determineX,
+  determineY,
+} from '../../model/utils';
+import { ActiveObjService } from '../../services/active-obj.service';
 
 @Component({
   selector: 'app-right-panel',
@@ -24,7 +40,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
       state(
         'openWide',
         style({
-          width: '400px', //Be careful, there are multiple places to change this value
+          width: '500px', //Be careful, there are multiple places to change this value
         })
       ),
 
@@ -37,6 +53,8 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 export class RightPanelComponent {
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
+
+  constructor(public activeObjService: ActiveObjService) {}
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -59,5 +77,41 @@ export class RightPanelComponent {
 
   getIsOpen() {
     return RightPanelComponent.isOpen;
+  }
+
+  debugGetGridState() {
+    return (
+      NewGridComponent.debugGetGridState() +
+      ' (' +
+      gridStates[NewGridComponent.debugGetGridState()] +
+      ')'
+    );
+  }
+
+  debugGetJointState() {
+    return (
+      NewGridComponent.debugGetJointState() +
+      ' (' +
+      jointStates[NewGridComponent.debugGetJointState()] +
+      ')'
+    );
+  }
+
+  debugGetLinkState() {
+    return (
+      NewGridComponent.debugGetLinkState() +
+      ' (' +
+      linkStates[NewGridComponent.debugGetLinkState()] +
+      ')'
+    );
+  }
+
+  debugGetForceState() {
+    return (
+      NewGridComponent.debugGetForceState() +
+      ' (' +
+      forceStates[NewGridComponent.debugGetForceState()] +
+      ')'
+    );
   }
 }

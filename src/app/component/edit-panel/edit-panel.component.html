@@ -1,106 +1,108 @@
 <div
-  id="editWrapper"
-  (click)="disableDelete()">
-  <panel-section id="placeholderContainer" *ngIf="hideEditPanel()" (click)="disableDelete()">
+  id='editWrapper'
+  (click)='disableDelete()'>
+  <panel-section id='placeholderContainer' *ngIf='hideEditPanel()' (click)='disableDelete()'>
     <title-block>Edit Panel</title-block>
-    <img src="assets/gifs/Stop.gif" />
-    <div id="errorMessage">Stop animation or reset the time slider to 0 to edit.</div>
+    <img src='assets/gifs/Stop.gif' />
+    <div id='errorMessage'>Stop animation or reset the time slider to 0 to edit.</div>
   </panel-section>
 
   <panel-section
-    id="placeholderContainer"
+    id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint == 0 && !hideEditPanel()"
-    (click)="disableDelete()"
+    (click)='disableDelete()'
   >
     <title-block>Edit Panel</title-block>
-    <img src="assets/gifs/Create.gif" />
-    <div id="errorMessage">Right click on the grid to create a link.</div>
+    <img src='assets/gifs/Create.gif' />
+    <div id='errorMessage'>Right click on the grid to create a link.</div>
   </panel-section>
 
   <panel-section
-    id="placeholderContainer"
+    id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Nothing' && this.numberOfJoint != 0 && !hideEditPanel()"
-    (click)="disableDelete()"
+    (click)='disableDelete()'
   >
     <title-block>Edit Panel</title-block>
-    <img src="assets/gifs/Click.gif" />
-    <div id="errorMessage">Select a joint or link to edit properties.</div>
+    <img src='assets/gifs/Click.gif' />
+    <div id='errorMessage'>Select a joint or link to edit properties.</div>
   </panel-section>
 
-  <panel-section 
+  <panel-section
     *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()"
-    (click)="disableDelete()">
-    <title-block icon="edit">
-      Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Joint.id | uppercase }}
+    (click)='disableDelete()'>
+    <title-block icon='edit'>
+      Edit {{ this.activeSrv.objType }} {{ this.activeSrv.selectedJoint.id | uppercase }}
     </title-block>
 
     <dual-input-block
-      (click)="disableDelete()"
-      [formGroup]="this.jointForm"
-      formControl1="xPos"
-      formControl2="yPos"
-      unit="cm"
+      (click)='disableDelete()'
+      [formGroup]='this.jointForm'
+      formControl1='xPos'
+      formControl2='yPos'
+      unit='cm'
       tooltip="The location of the joint in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
-      >Joint Position
+    >Joint Position
     </dual-input-block>
 
     <toggle-block
-      (click)="disableDelete()"
-      [formGroup]="jointForm"
-      _formControl="ground"
-      tooltip="Ground this joint, making it non-moving."
-      >Ground
+      (click)='disableDelete()'
+      [formGroup]='jointForm'
+      _formControl='ground'
+      tooltip='Ground this joint, making it non-moving.'
+    >Ground
     </toggle-block>
 
     <toggle-block
-      (click)="disableDelete()"
-      *ngIf="this.activeSrv.Joint.ground"
-      [formGroup]="jointForm"
-      _formControl="input"
-      tooltip="Make this joint the driven. Only one joint can be a input at a time."
-      >Input
+      (click)='disableDelete()'
+      *ngIf='this.activeSrv.selectedJoint.ground'
+      [formGroup]='jointForm'
+      _formControl='input'
+      tooltip='Make this joint the driven. Only one joint can be a input at a time.'
+    >Input
     </toggle-block>
 
     <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->
-    <button-block icon="delete" [click]="deleteJoint">Delete Joint</button-block>
+    <button-block icon='delete' [click]='deleteJoint'>Delete Joint</button-block>
     <!-- <p>Value: {{ jointForm.value | json }}</p>
     <p>Valid: {{ jointForm.valid }}</p>
     Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
-  <panel-section 
+  <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"
-    (click)="disableDelete()">
+    (click)='disableDelete()'>
     <title-block
-      icon="edit"
-      description="Changing the length or angle will change the non-grounded joint."
-      >Edit {{ this.activeSrv.objType }} {{ this.activeSrv.Link.id | uppercase }}</title-block
+      icon='edit'
+      description='Changing the length or angle will change the non-grounded joint.'
+    >Edit {{ this.activeSrv.objType }} {{ this.activeSrv.selectedLink.id | uppercase }}</title-block
     >
     <input-block
-      (click)="disableDelete()"
-      [formGroup]="linkForm"
-      _formControl="length"
-      unit="cm"
+      (click)='disableDelete()'
+      [formGroup]='linkForm'
+      _formControl='length'
+      unit='cm'
       tooltip="The length of the link in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
-      >Link Length</input-block
+    >Link Length
+    </input-block
     >
 
     <input-block
-      (click)="disableDelete()"
-      [formGroup]="linkForm"
-      _formControl="angle"
-      unit="deg"
-      tooltip="The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule)."
-      >Link Angle</input-block
+      (click)='disableDelete()'
+      [formGroup]='linkForm'
+      _formControl='angle'
+      unit='deg'
+      tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'
+    >Link Angle
+    </input-block
     >
-    <button-block icon="delete"[click]="deleteLink">Delete Link</button-block>
+    <button-block icon='delete' [click]='deleteLink'>Delete Link</button-block>
   </panel-section>
 
   <panel-section-collapsible
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"
-    [expanded]="false"
+    [expanded]='false'
   >
-    <title-block alwaysShown icon="expand_more">Related Objects</title-block>
+    <title-block alwaysShown icon='expand_more'>Related Objects</title-block>
     <!-- <ng-container *ngFor="let joint of this.activeSrv.Link.joints">
       <subtitle-block icon="open_in_new" style="margin-bottom: -10px"
         >Joint {{ joint.id | uppercase }}</subtitle-block

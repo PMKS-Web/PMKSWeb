@@ -1,19 +1,33 @@
 <div>
   <div
     [@openClose]="getIsOpen() ? (getOpenTab() === 1 ? 'open' : 'openWide') : 'closed'"
-    id="rightPanel"
+    id='rightPanel'
   >
-    <div *ngIf="getOpenTab() === 1" class="page1">
+    <div *ngIf='getOpenTab() === 1' class='page1'>
       <app-settings-panel></app-settings-panel>
     </div>
-    <div *ngIf="getOpenTab() === 2" class="page2">
-      <p style="margin: 30px">
-        Equations! This page is not ready yet. Here is what this screen could look like:
+    <div *ngIf='getOpenTab() === 2' class='page2'>
+      <p style='margin: 30px'>
+        <panel-section>
+          Equations! This page is not ready yet. Here is what this screen could look like:
+        </panel-section>
       </p>
     </div>
-    <div *ngIf="getOpenTab() === 3" class="page3">
-      <p style="margin: 30px">
-        Help! This page is not ready yet. Here is what this screen could look like:
+    <div *ngIf='getOpenTab() === 3' class='page3'>
+      <p style='margin: 30px'>
+        <panel-section>
+          <app-linkage-table></app-linkage-table>
+
+          <li>GridState: {{debugGetGridState()}}</li>
+          <li>LinkState: {{debugGetLinkState()}}</li>
+          <li>JointState: {{debugGetJointState()}}</li>
+          <li>ForceState: {{debugGetForceState()}}</li>
+          <li>AOS.objType: <b>{{activeObjService.objType}}</b></li>
+          <li>AOS.selectedJoint.id: <b>{{activeObjService.selectedJoint?.id}}</b></li>
+          <li>AOS.selectedLink.id: <b>{{activeObjService.selectedLink?.id}}</b></li>
+          <li>AOS.selectedForce.id: <b>{{activeObjService.selectedForce?.id}}</b></li>
+          <li>AOS.prevSelectedJoint.id: <b>{{activeObjService.prevSelectedJoint?.id}}</b></li>
+        </panel-section>
       </p>
     </div>
   </div>

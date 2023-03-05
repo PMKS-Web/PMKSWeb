@@ -411,8 +411,8 @@
       <circle
         *ngIf="activeObjService.objType == 'Joint'"
         [attr.r]='0.01'
-        [attr.cx]='activeObjService.Joint.x'
-        [attr.cy]='activeObjService.Joint.y'
+        [attr.cx]='activeObjService.selectedJoint.x'
+        [attr.cy]='activeObjService.selectedJoint.y'
       />
 
       <path

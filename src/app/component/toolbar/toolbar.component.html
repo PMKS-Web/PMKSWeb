@@ -1,42 +1,42 @@
-<nav class="navBar">
+<nav class='navBar'>
   <img
-    class="pmksImage"
-    alt="PMKS+"
-    src="assets/PMKS_logo.png"
-    onClick="window.location.reload()"
+    class='pmksImage'
+    alt='PMKS+'
+    src='assets/PMKS_logo.png'
+    onClick='window.location.reload()'
   />
   <button mat-button onclick="window.open(window.location.origin, '_blank');">
     <mat-icon>note_add</mat-icon>
     New
   </button>
-  <input #csvInput style="display: none" type="file" accept=".csv" (change)="upload($event)" />
-  <button mat-button (click)="csvInput.click()">
+  <input #csvInput style='display: none' type='file' accept='.csv' (change)='upload($event)' />
+  <button mat-button (click)='csvInput.click()'>
     <mat-icon>file_open</mat-icon>
     Open
   </button>
-  <button mat-button (click)="popUpTemplates()">
+  <button mat-button (click)='popUpTemplates()'>
     <mat-icon>apps</mat-icon>
     Templates
   </button>
-  <button mat-button (click)="downloadLinkage()">
+  <button mat-button (click)='downloadLinkage()'>
     <mat-icon>save</mat-icon>
     Save
   </button>
-  <button mat-button (click)="copyURL()">
+  <button mat-button (click)='copyURL()'>
     <mat-icon>link</mat-icon>
     Share Project
   </button>
-  <div class="spacer"></div>
-  <button mat-button (click)="openRightPanelSettings()">
+  <div class='spacer'></div>
+  <button mat-button (click)='openRightPanelSettings()'>
     <mat-icon>settings</mat-icon>
     Settings
   </button>
-  <button mat-button (click)="openRightPanelEquations()">
+  <button mat-button (click)='openRightPanelEquations()'>
     <mat-icon>format_list_numbered</mat-icon>
     Equations
   </button>
-  <button mat-button (click)="openRightPanelHelp()">
-    <mat-icon>help</mat-icon>
-    Help
+  <button mat-button (click)='openRightPanelHelp()'>
+    <mat-icon>bug_report</mat-icon>
+    Debug
   </button>
 </nav>

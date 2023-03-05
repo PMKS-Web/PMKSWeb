@@ -1,7 +1,9 @@
 <svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
-     (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)'>>
+     (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)' (mouseup)='mouseUp($event)'
+     (mousedown)='mouseDown($event)'>>
   <!-- Axes and Grid-->
-  <g id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'>
+  <g id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
+     (mousedown)='activeObjService.updateSelectedObj(undefined)'>
 
     <!--  The Background-->
     <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
@@ -67,11 +69,13 @@
       *ngFor='let link of mechanismSrv.getLinks()'
       (mouseover)='link.showHighlight = true'
       (mouseout)='link.showHighlight = false'
+      (mousedown)='activeObjService.updateSelectedObj(link)'
       (contextmenu)='setLastRightClick(link)'
       [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
       [attr.id]='link.id'
       [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
-    ></path>
+    >
+    </path>
   </g>
   <g id='jointHolder' style='transform: scaleY(-1)'>
     <svg
@@ -80,6 +84,7 @@
       (mouseover)='joint.showHighlight = true'
       (mouseout)='joint.showHighlight = false'
       (contextmenu)='setLastRightClick(joint)'
+      (mousedown)='activeObjService.updateSelectedObj(joint)'
       width='10'
       height='10'
       style='overflow: visible'
@@ -360,13 +365,13 @@
     <circle
       *ngIf="activeObjService.objType == 'Joint'"
       [attr.r]='0.01'
-      [attr.cx]='activeObjService.Joint.x'
-      [attr.cy]='activeObjService.Joint.y'
+      [attr.cx]='activeObjService.selectedJoint.x'
+      [attr.cy]='activeObjService.selectedJoint.y'
     />
 
     <path
       *ngIf="activeObjService.objType == 'Link'"
-      [attr.d]='mechanismSrv.getLinkProp(activeObjService.Link, "d")'
+      [attr.d]='mechanismSrv.getLinkProp(activeObjService.selectedLink, "d")'
       stroke-width='0.5'
     ></path>
   </g>

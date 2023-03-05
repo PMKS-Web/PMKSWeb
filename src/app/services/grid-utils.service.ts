@@ -8,8 +8,15 @@ import {
   shapeEditModes,
   createModes,
   moveModes,
+  roundNumber,
 } from '../model/utils';
 import { Link, Piston, RealLink } from '../model/link';
+import { MechanismService } from './mechanism.service';
+import { ToolbarComponent } from '../component/toolbar/toolbar.component';
+import { Mechanism } from '../model/mechanism/mechanism';
+import { Coord } from '../model/coord';
+import { PositionSolver } from '../model/mechanism/position-solver';
+import { Force } from '../model/force';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +30,10 @@ export class GridUtilsService {
       return;
     }
     return joint.ground;
+  }
+
+  createRealLink(id: string, joints: Joint[]) {
+    return new RealLink(id, joints);
   }
 
   containsSlider(joint: Joint) {
@@ -81,5 +92,102 @@ export class GridUtilsService {
       default:
         return '?';
     }
+  }
+
+  dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
+    // TODO: have the round Number be integrated within function for determining trueCoord
+    selectedJoint.x = roundNumber(trueCoord.x, 3);
+    selectedJoint.y = roundNumber(trueCoord.y, 3);
+    switch (selectedJoint.constructor) {
+      case RevJoint:
+        selectedJoint.links.forEach((l) => {
+          if (!(l instanceof RealLink)) {
+            return;
+          }
+          // TODO: delete this if this is not needed (verify this)
+          const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
+          l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+          l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+          l.d = RealLink.getD(l.joints);
+          l.CoM = RealLink.determineCenterOfMass(l.joints);
+          l.updateCoMDs();
+          l.updateLengthAndAngle();
+          // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
+          PositionSolver.setUpInitialJointLocations(l.joints);
+          l.forces.forEach((f) => {
+            // TODO: adjust the location of force endpoints and update the line and arrow
+            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
+            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+            f.endCoord.x = PositionSolver.forcePositionMap.get(f.id + 'end')!.x;
+            f.endCoord.y = PositionSolver.forcePositionMap.get(f.id + 'end')!.y;
+            f.startCoord.x = PositionSolver.forcePositionMap.get(f.id + 'start')!.x;
+            f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
+            f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+            f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+          });
+        });
+        break;
+      case PrisJoint:
+        selectedJoint.connectedJoints.forEach((j) => {
+          if (!(j instanceof RealJoint)) {
+            return;
+          }
+          if (j.ground) {
+            return;
+          }
+          j.x = selectedJoint.x;
+          j.y = selectedJoint.y;
+
+          j.links.forEach((l) => {
+            if (!(l instanceof RealLink)) {
+              return;
+            }
+            // TODO: delete this if this is not needed (verify this)
+            const jointIndex = l.joints.findIndex((jt) => jt.id === j.id);
+            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+            l.d = RealLink.getD(l.joints);
+            l.CoM = RealLink.determineCenterOfMass(l.joints);
+            l.updateCoMDs();
+            l.forces.forEach((f) => {
+              // TODO: adjust the location of force endpoints and update the line and arrow
+            });
+          });
+        });
+        break;
+    }
+    return selectedJoint;
+  }
+
+  findJointIDIndex(id: string, joints: Joint[]) {
+    return joints.findIndex((j) => j.id === id);
+  }
+
+  dragForce(selectedForce: Force, trueCoord: Coord, isStartSelected: boolean) {
+    // TODO: Determine how to optimize this so screen is more fluid
+    if (isStartSelected) {
+      selectedForce.startCoord.x = trueCoord.x;
+      selectedForce.startCoord.y = trueCoord.y;
+    } else {
+      selectedForce.endCoord.x = trueCoord.x;
+      selectedForce.endCoord.y = trueCoord.y;
+    }
+    selectedForce.forceLine = Force.createForceLine(
+      selectedForce.startCoord,
+      selectedForce.endCoord
+    );
+    if (selectedForce.arrowOutward) {
+      selectedForce.forceArrow = Force.createForceArrow(
+        selectedForce.startCoord,
+        selectedForce.endCoord
+      );
+    } else {
+      selectedForce.forceArrow = Force.createForceArrow(
+        selectedForce.endCoord,
+        selectedForce.startCoord
+      );
+    }
+    selectedForce.angle = Force.updateAngle(selectedForce.startCoord, selectedForce.endCoord);
+    return selectedForce;
   }
 }
