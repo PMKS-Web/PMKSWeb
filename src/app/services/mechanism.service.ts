@@ -15,9 +15,10 @@ import {
   moveModes,
   roundNumber,
 } from '../model/utils';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
 import { ActiveObjService } from './active-obj.service';
+import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 
 @Injectable({
   providedIn: 'root',
@@ -45,6 +46,9 @@ export class MechanismService {
   // 2 is pending graph draws
   // 3 is pending analysis due to add or remove
   onMechUpdateState = new BehaviorSubject<number>(3);
+
+  //The which timestep the mechanims is in
+  onMechPositionChange = new Subject<number>();
 
   constructor(public gridUtils: GridUtilsService, public activeObjService: ActiveObjService) {}
 
@@ -492,5 +496,53 @@ export class MechanismService {
       }
       return j.input;
     });
+  }
+
+  animate(progress: number, animationState?: boolean) {
+    this.onMechPositionChange.next(progress);
+    this.mechanismTimeStep = progress;
+    this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
+    if (animationState !== undefined) {
+      AnimationBarComponent.animate = animationState;
+    }
+
+    this.joints.forEach((j, j_index) => {
+      j.x = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].x;
+      j.y = this.mechanisms[0].joints[this.mechanismTimeStep][j_index].y;
+    });
+    this.links.forEach((l, l_index) => {
+      if (!(l instanceof RealLink)) {
+        return;
+      }
+      const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
+      if (!(link instanceof RealLink)) {
+        return;
+      }
+      // l.d = RealLink.getD(l.joints);
+      l.d = link.d;
+      l.CoM = link.CoM;
+      l.updateCoMDs();
+    });
+    this.forces.forEach((f, f_index) => {
+      f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
+      f.startCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.y;
+      f.endCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.x;
+      f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
+      f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
+      f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
+      f.angle = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
+      f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
+      f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+    });
+    if (!AnimationBarComponent.animate) {
+      return;
+    }
+    this.mechanismTimeStep += this.mechanismAnimationIncrement;
+    if (this.mechanismTimeStep >= this.mechanisms[0].joints.length) {
+      this.mechanismTimeStep = 0;
+    }
+    setTimeout(() => {
+      this.animate(this.mechanismTimeStep);
+    }, 8);
   }
 }

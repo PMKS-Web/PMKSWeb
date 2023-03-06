@@ -37,7 +37,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
-    GridComponent.onMechPositionChange.subscribe({
+    this.mechanismService.onMechPositionChange.subscribe({
       next: (v) => (this.timestepDisplay = Number((v / 125).toFixed(2))),
     });
   }
@@ -58,21 +58,24 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     } else if (simpleForm.value.timestep < 0) {
       simpleForm.value.timestep = 0;
     }
-    GridComponent.animate(Number(simpleForm.value.timestep) * 125, AnimationBarComponent.animate);
+    this.mechanismService.animate(
+      Number(simpleForm.value.timestep) * 125,
+      AnimationBarComponent.animate
+    );
   }
 
   maxTimeSteps() {
-    if (GridComponent.mechanisms.length === 0) {
+    if (this.mechanismService.mechanisms.length === 0) {
       return 0;
     } else {
-      return GridComponent.mechanisms[0].joints.length - 1;
+      return this.mechanismService.mechanisms[0].joints.length - 1;
     }
   }
 
   onDirectionChange() {
     AnimationBarComponent.direction = AnimationBarComponent.direction === 'ccw' ? 'cw' : 'ccw';
     ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   getDirection() {
@@ -83,48 +86,54 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     switch (AnimationBarComponent.speed) {
       case 'slow':
         AnimationBarComponent.speed = 'medium';
-        GridComponent.mechanismAnimationIncrement = 2;
+        this.mechanismService.mechanismAnimationIncrement = 2;
         break;
       case 'medium':
         AnimationBarComponent.speed = 'fast';
-        GridComponent.mechanismAnimationIncrement = 3;
+        this.mechanismService.mechanismAnimationIncrement = 3;
         break;
       case 'fast':
         AnimationBarComponent.speed = 'slow';
-        GridComponent.mechanismAnimationIncrement = 1;
+        this.mechanismService.mechanismAnimationIncrement = 1;
         break;
     }
   }
 
   startAnimation(state: string) {
-    if (GridComponent.mechanisms[0] === undefined) {
+    if (this.mechanismService.mechanisms[0] === undefined) {
       return;
     }
-    if (GridComponent.mechanisms[0].joints.length < 3) {
+    if (this.mechanismService.mechanisms[0].joints.length < 3) {
       return;
     }
     switch (state) {
       case 'play':
         AnimationBarComponent.animate = false;
         this.animating = false;
-        GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
+        this.mechanismService.animate(
+          this.mechanismService.mechanismTimeStep,
+          AnimationBarComponent.animate
+        );
         break;
       case 'pause':
         AnimationBarComponent.animate = true;
         this.animating = true;
-        GridComponent.animate(GridComponent.mechanismTimeStep, AnimationBarComponent.animate);
+        this.mechanismService.animate(
+          this.mechanismService.mechanismTimeStep,
+          AnimationBarComponent.animate
+        );
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
         this.animating = false;
-        GridComponent.animate(0, AnimationBarComponent.animate);
+        this.mechanismService.animate(0, AnimationBarComponent.animate);
         break;
     }
   }
 
   setAnim() {
     if (AnimationBarComponent.adjustAnimation) {
-      GridComponent.animate(
+      this.mechanismService.animate(
         Number(AnimationBarComponent.slider.value),
         AnimationBarComponent.animate
       );
@@ -182,21 +191,11 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     return this.mechanismService.mechanismTimeStep;
   }
 
-  getScreenCoord() {
-    return GridComponent.screenCoord;
-  }
-
-  getDoF() {
-    // TODO: Have DOF soon
-    return '';
-    // return GridComponent.
-  }
-
   getAnimate() {
     return AnimationBarComponent.animate;
   }
 
   invalidMechanism() {
-    return this.mechanismService.oneValidMechanismExists();
+    return !this.mechanismService.oneValidMechanismExists();
   }
 }
