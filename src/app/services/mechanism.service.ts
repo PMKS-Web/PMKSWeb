@@ -19,6 +19,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
 import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 @Injectable({
   providedIn: 'root',
@@ -32,10 +33,6 @@ export class MechanismService {
   public ics: InstantCenter[] = [];
   public mechanisms: Mechanism[] = [];
   public showPathHolder: boolean = true;
-  private gridStates: gridStates = gridStates.waiting;
-  private jointStates: jointStates = jointStates.waiting;
-  private linkStates: linkStates = linkStates.waiting;
-  private forceStates: forceStates = forceStates.waiting;
 
   // private moveModes: moveModes = moveModes;
   // private selectedJoint!: RealJoint;
@@ -117,10 +114,10 @@ export class MechanismService {
   }
 
   getJointColor(joint: Joint) {
-    if (this.jointStates !== jointStates.dragging) {
-      return joint.showHighlight ? 'yellow' : 'black';
+    if (NewGridComponent.debugGetJointState() !== jointStates.dragging) {
+      return joint.showHighlight ? 'yellow' : 'transparent';
     } else {
-      return joint.id == this.activeObjService.selectedJoint.id ? 'red' : 'black';
+      return joint.id === this.activeObjService.selectedJoint.id ? 'red' : 'transparent';
     }
   }
 

@@ -56,8 +56,6 @@ export class NewGridComponent {
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
-  private jointXatMouseDown!: number;
-  private jointYatMouseDown!: number;
 
   //This is for debug purposes, do not make anything else static!
 
@@ -135,13 +133,15 @@ export class NewGridComponent {
           new cMenuItem(
             'Delete Link',
             this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-            'delete'
+            'remove'
           )
         );
-        this.cMenuItems.push(new cMenuItem('Attach Force', this.createForce.bind(this), 'edit'));
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'edit'));
         this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'edit')
+          new cMenuItem('Attach Force', this.createForce.bind(this), 'reduce_capacity')
+        );
+        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'add_link'));
+        this.cMenuItems.push(
+          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'remove_done')
         );
         break;
       case 'PrisJoint':
@@ -539,7 +539,7 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        console.log(this.activeObjService.objType);
+        console.warn(this.activeObjService.objType);
         switch (this.activeObjService.objType) {
           case 'Grid':
             switch (this.gridStates) {
@@ -781,50 +781,25 @@ export class NewGridComponent {
                 break;
             }
             break;
-          //I belive this is old stuff to resziing link shpaes
-          // case 'Link':
-          //   // console.log(this.linkStates);
-          //   switch (this.linkStates) {
-          //     case linkStates.waiting:
-          //       //If the shapeselector is not open
-          //       if (!this.showcaseShapeSelector) {
-          //         // this.sendNotification("Cannot link to a bar. Please select a joint");
-          //         this.gridStates = gridStates.waiting;
-          //         this.jointStates = jointStates.waiting;
-          //         this.jointTempHolderSVG.style.display = 'none';
-          //         break;
-          //       }
-          //       if (thing !== undefined) {
-          //         this.linkStates = linkStates.resizing;
-          //         // this.selectedBound = thing;
-          //       } else {
-          //         this.linkStates = linkStates.dragging;
-          //         const rawCoord = this.getMousePosition($event)!;
-          //         this.initialLinkMouseCoord = this.screenToGrid(rawCoord.x, -1 * rawCoord.y);
-          //         // this.initialLink = new RealLink(this.selectedLink.id, this.selectedLink.joints);
-          //         // if (this.selectedLink.bound)
-          //         // this.initialLink.bound = this.selectedLink.bound;
-          //         // this.initialLink.d = this.selectedLink.d;
-          //         // this.initialLink.CoM = this.selectedLink.CoM;
-          //       }
-          //       break;
-          //   }
-          //   break;
+          case 'Link':
+            // if (this.gridStates === gridStates.createJointFromGrid) {
+            //   this.sendNotification(
+            //     'Cannot link to a bar. Please create and select a tracer point on the link.'
+            //   );
+            //   this.gridStates = gridStates.waiting;
+            //   this.jointStates = jointStates.waiting;
+            //   this.jointTempHolderSVG.style.display = 'none';
+            // }
+            break;
           case 'Force':
             switch (this.forceStates) {
               case forceStates.waiting:
-                // if (forcePoint === undefined) {
-                //   return;
-                // }
                 console.log(this.activeObjService.selectedForce);
                 if (this.activeObjService.selectedForce.isStartSelected) {
                   this.forceStates = forceStates.draggingStart;
                 } else if (this.activeObjService.selectedForce.isEndSelected) {
                   this.forceStates = forceStates.draggingEnd;
                 }
-              //TODO: Fix this to update activeObjService on which part of the force is being dragged
-              // this.activeObjService.selectedForceEndPoint = forcePoint;
-              // this.activeObjService.selectedForce = thing;
             }
             break;
           case 'JointTemp':

@@ -135,6 +135,18 @@ export class RealLink extends Link {
   private _length: number = 0;
   private _angle: number = 0;
 
+  private colorOptions = [
+    '#1a227e',
+    // '#283493',
+    '#303e9f',
+    // '#3948ab',
+    // '#3f50b5',
+    '#5c6ac0',
+    // '#7986cb',
+    // '#9fa8da',
+    '#c5cae9',
+  ];
+
   // TODO: Have an optional argument of forces
   constructor(
     id: string,
@@ -149,7 +161,8 @@ export class RealLink extends Link {
     // this._mass = mass !== undefined ? mass : 1;
     this._massMoI = massMoI !== undefined ? massMoI : 1;
     // this._shape = shape !== undefined ? shape : Shape.line;
-    this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
+    // this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
+    this._fill = this.colorOptions[Math.floor(Math.random() * this.colorOptions.length)];
     // this._bound =
     //   bound !== undefined
     //     ? bound
@@ -203,6 +216,7 @@ export class RealLink extends Link {
       p4.y -= yChangeBound;
       return [p3, p4];
     }
+
     switch (shape) {
       case Shape.eTriangle: {
         [bound.b3, bound.b4] = determineRectPoint(Math.cos(Math.PI / 6), bound.b3, bound.b4);
@@ -277,6 +291,7 @@ export class RealLink extends Link {
       //   break;
       // }
     }
+
     // Adjust points
     function firstAdjustment(c1: Coord, c2: Coord, angle: number) {
       const dist = getDistance(c1, c2);
@@ -284,6 +299,7 @@ export class RealLink extends Link {
       const angDiff = ang1 - angle;
       return new Coord(Math.cos(angDiff) * dist, Math.sin(angDiff) * dist);
     }
+
     bound.b1 = firstAdjustment(coord1, bound.b1, coordAng);
     bound.b2 = firstAdjustment(coord1, bound.b2, coordAng);
     bound.b3 = firstAdjustment(coord1, bound.b3, coordAng);
@@ -293,10 +309,12 @@ export class RealLink extends Link {
     let topBotPad: number;
     // TODO: Maybe put jointRadius within AppConstants? (Unless it has to be part of grid)
     const jointRadius = 5;
+
     function offset(offsetX: number, offsetY: number, coord: Coord) {
       coord = new Coord(coord.x + offsetX, coord.y + offsetY);
       return coord;
     }
+
     switch (shape) {
       case Shape.eTriangle:
         leftRightPad = (5 * 2) / Math.tan(Math.PI / 6);
@@ -355,6 +373,7 @@ export class RealLink extends Link {
         bound.b4 = offset(-r * AppConstants.scaleFactor, 0, bound.b4);
         break;
     }
+
     // apply padding
     function padding(pad: number, bound: Bound) {
       bound.b1.x -= pad;
@@ -367,6 +386,7 @@ export class RealLink extends Link {
       bound.b4.y -= pad;
       return bound;
     }
+
     switch (shape) {
       case Shape.bar:
         bound = padding((2 * 5) / 50, bound);
@@ -390,6 +410,7 @@ export class RealLink extends Link {
         bound = padding((2 * 5) / 50, bound);
         break;
     }
+
     // apply final adjustment
     function finalAdjustment(c1: Coord, c2: Coord, angle: number) {
       const d = Math.sqrt(Math.pow(c2.x, 2) + Math.pow(c2.y, 2));
@@ -399,6 +420,7 @@ export class RealLink extends Link {
       const ry = d * Math.sin(added_angle);
       return new Coord(c1.x + rx, c1.y + ry);
     }
+
     bound.b1 = finalAdjustment(coord1, bound.b1, coordAng);
     bound.b2 = finalAdjustment(coord1, bound.b2, coordAng);
     bound.b3 = finalAdjustment(coord1, bound.b3, coordAng);
@@ -730,6 +752,7 @@ export class RealLink extends Link {
         return '';
       }
     }
+
     function findDesiredJointIDOrder(
       joint: Joint,
       allJoints: Joint[],
@@ -774,6 +797,7 @@ export class RealLink extends Link {
       }
       return desiredJointsIDs;
     }
+
     const desiredJointsIDs =
       allJoints.length === 2
         ? allJoints[0].id + allJoints[1].id
@@ -783,6 +807,7 @@ export class RealLink extends Link {
             findBiggestAngle(allJoints[0] as RealJoint, allJoints as RealJoint[]) as RealJoint[],
             ''
           );
+
     // Draw link given the desiredJointIDs
     function determineL(d: string, coord1: Joint, coord2: Joint, coord3?: Joint) {
       // find slope between two points
@@ -799,6 +824,7 @@ export class RealLink extends Link {
       // determine the point further away from third point
       let point1: Coord;
       let point2: Coord;
+
       // TODO: think of better way to create this more universally
       function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
         // Maybe it is atan2 that is desired...
@@ -826,6 +852,7 @@ export class RealLink extends Link {
         // return [new Coord(0.2 * Math.acos(angle) + c1,0.2 * Math.asin(angle) + b1),
         //         new Coord(0.2 * Math.acos(angle) + b2, 0.2 * Math.asin(angle) + b2)]
       }
+
       if (coord3 === undefined) {
         if (d === '') {
           [point1, point2] = determinePoint(normal_angle, coord1, coord2, 'neg');
@@ -866,6 +893,7 @@ export class RealLink extends Link {
       }
       return d;
     }
+
     function determineC(
       d: string,
       index: number,
@@ -966,6 +994,7 @@ export class RealLink extends Link {
       );
       return [d, point3, point4];
     }
+
     const jointIDtoIndex = new Map<string, number>();
     allJoints.forEach((j, ind) => {
       jointIDtoIndex.set(j.id, ind);
