@@ -26,13 +26,13 @@ import {
   ApexLegend,
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
-import { GridComponent } from '../grid/grid.component';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
 import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { FormBuilder } from '@angular/forms';
+import { MechanismService } from '../../services/mechanism.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -200,7 +200,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   loading: boolean = false;
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private mechanismSerivce: MechanismService) {}
 
   seriesCheckboxForm = this.fb.group(
     {
@@ -322,7 +322,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
     });
 
-    this.mechStateSub = GridComponent.onMechUpdateState.subscribe((data) => {
+    this.mechStateSub = this.mechanismSerivce.onMechUpdateState.subscribe((data) => {
       switch (data) {
         case 0:
           this.loading = false;
@@ -332,14 +332,14 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           this.loading = true;
           break;
         case 2:
-          if (GridComponent.oneValidMechanismExists()) {
+          if (this.mechanismSerivce.oneValidMechanismExists()) {
             this.updateChartData();
-            GridComponent.onMechUpdateState.next(0);
+            this.mechanismSerivce.onMechUpdateState.next(0);
           }
           break;
       }
     });
-    this.mechPositionSub = GridComponent.onMechPositionChange.subscribe((data) => {
+    this.mechPositionSub = this.mechanismSerivce.onMechPositionChange.subscribe((data) => {
       if (
         !this.seriesCheckboxForm.value.x ||
         !this.seriesCheckboxForm.value.y ||
@@ -639,21 +639,21 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let y = 0;
     let z = 0;
     const categories: string[] = [];
-    GridComponent.mechanisms[0].joints.forEach((_, index) => {
+    this.mechanismSerivce.mechanisms[0].joints.forEach((_, index) => {
       switch (mechProp) {
         case 'Input Torque':
           if (analysisType === 'dynamics') {
             // TODO: Be sure to have each step within mechanism know its input angular velocity
-            KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+            KinematicsSolver.requiredLoops = this.mechanismSerivce.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(
-              GridComponent.mechanisms[0].joints[index],
-              GridComponent.mechanisms[0].links[index],
-              GridComponent.mechanisms[0].inputAngularVelocities[index]
+              this.mechanismSerivce.mechanisms[0].joints[index],
+              this.mechanismSerivce.mechanisms[0].links[index],
+              this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
             );
           }
           ForceSolver.determineForceAnalysis(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
             analysisType,
             ToolbarComponent.gravity,
             ToolbarComponent.unit
@@ -662,16 +662,16 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case 'Joint Forces':
           if (analysisType === 'dynamics') {
-            KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+            KinematicsSolver.requiredLoops = this.mechanismSerivce.mechanisms[0].requiredLoops;
             KinematicsSolver.determineKinematics(
-              GridComponent.mechanisms[0].joints[index],
-              GridComponent.mechanisms[0].links[index],
-              GridComponent.mechanisms[0].inputAngularVelocities[index]
+              this.mechanismSerivce.mechanisms[0].joints[index],
+              this.mechanismSerivce.mechanisms[0].links[index],
+              this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
             );
           }
           ForceSolver.determineForceAnalysis(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
             analysisType,
             ToolbarComponent.gravity,
             ToolbarComponent.unit
@@ -684,7 +684,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           datum_Z.push(roundNumber(z, 3));
           break;
         case 'Linear Joint Pos':
-          const jt = GridComponent.mechanisms[0].joints[index].find((j) => j.id === mechPart)!;
+          const jt = this.mechanismSerivce.mechanisms[0].joints[index].find(
+            (j) => j.id === mechPart
+          )!;
           x = jt.x;
           y = jt.y;
           datum_X.push(roundNumber(x, 3));
@@ -692,9 +694,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case 'Linear Joint Vel':
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.jointVelMap.get(mechPart)![0];
           y = KinematicsSolver.jointVelMap.get(mechPart)![1];
@@ -705,9 +707,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case 'Linear Joint Acc':
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.jointAccMap.get(mechPart)![0];
           y = KinematicsSolver.jointAccMap.get(mechPart)![1];
@@ -718,9 +720,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case "Linear Link's CoM Pos":
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkCoMMap.get(mechPart)![0];
           y = KinematicsSolver.linkCoMMap.get(mechPart)![1];
@@ -729,9 +731,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case "Linear Link's CoM Vel":
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkVelMap.get(mechPart)![0];
           y = KinematicsSolver.linkVelMap.get(mechPart)![1];
@@ -742,9 +744,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case "Linear Link's CoM Acc":
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkAccMap.get(mechPart)![0];
           y = KinematicsSolver.linkAccMap.get(mechPart)![1];
@@ -755,27 +757,27 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case 'Angular Link Pos':
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkAngPosMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));
           break;
         case 'Angular Link Vel':
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkAngVelMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));
           break;
         case 'Angular Link Acc':
           KinematicsSolver.determineKinematics(
-            GridComponent.mechanisms[0].joints[index],
-            GridComponent.mechanisms[0].links[index],
-            GridComponent.mechanisms[0].inputAngularVelocities[index]
+            this.mechanismSerivce.mechanisms[0].joints[index],
+            this.mechanismSerivce.mechanisms[0].links[index],
+            this.mechanismSerivce.mechanisms[0].inputAngularVelocities[index]
           );
           x = KinematicsSolver.linkAngAccMap.get(mechPart)!;
           datum_X.push(roundNumber(x, 3));

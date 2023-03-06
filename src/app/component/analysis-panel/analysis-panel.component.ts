@@ -16,13 +16,13 @@ import {
   ApexLegend,
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
-import { GridComponent } from '../grid/grid.component';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
 import { crossProduct, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { FormBuilder } from '@angular/forms';
+import { MechanismService } from '../../services/mechanism.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -71,8 +71,12 @@ export class AnalysisPanelComponent {
 
   mechStateSub: any;
 
-  constructor(public activeSrv: ActiveObjService, private fb: FormBuilder) {
-    if (GridComponent.oneValidMechanismExists()) {
+  constructor(
+    public activeSrv: ActiveObjService,
+    private fb: FormBuilder,
+    private mechanismService: MechanismService
+  ) {
+    if (this.mechanismService.oneValidMechanismExists()) {
       this.resetVariablesAndSolve();
     }
 
@@ -80,12 +84,12 @@ export class AnalysisPanelComponent {
   }
 
   ngOnInit(): void {
-    this.mechStateSub = GridComponent.onMechUpdateState.subscribe((data) => {
+    this.mechStateSub = this.mechanismService.onMechUpdateState.subscribe((data) => {
       switch (data) {
         case 3:
-          if (GridComponent.oneValidMechanismExists()) {
+          if (this.mechanismService.oneValidMechanismExists()) {
             this.resetVariablesAndSolve();
-            GridComponent.onMechUpdateState.next(2);
+            this.mechanismService.onMechUpdateState.next(2);
           }
           break;
       }
@@ -98,19 +102,19 @@ export class AnalysisPanelComponent {
 
   resetVariablesAndSolve() {
     KinematicsSolver.resetVariables();
-    ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
+    ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
-      GridComponent.joints,
-      GridComponent.links,
+      this.mechanismService.joints,
+      this.mechanismService.links,
       'static',
       ToolbarComponent.gravity,
       ToolbarComponent.unit
     );
 
-    KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
+    KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
     KinematicsSolver.determineKinematics(
-      GridComponent.joints,
-      GridComponent.links,
+      this.mechanismService.joints,
+      this.mechanismService.links,
       ToolbarComponent.inputAngularVelocity
     );
   }
@@ -120,7 +124,7 @@ export class AnalysisPanelComponent {
   }
 
   validMechanisms() {
-    return GridComponent.oneValidMechanismExists();
+    return this.mechanismService.oneValidMechanismExists();
   }
 
   inputSpeedFormGroup = this.fb.group({

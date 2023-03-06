@@ -16,6 +16,7 @@ import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { GridComponent } from '../grid/grid.component';
 
 @Component({
   selector: 'app-new-grid',
@@ -180,7 +181,7 @@ export class NewGridComponent {
         }
         this.cMenuItems.push(
           new cMenuItem(
-            (this.lastRightClick instanceof PrisJoint) ? 'Remove Slider' : 'Add Slider',
+            this.lastRightClick instanceof PrisJoint ? 'Remove Slider' : 'Add Slider',
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
             'circle'
           )
@@ -464,10 +465,10 @@ export class NewGridComponent {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-              // console.warn('mouseUp');
-              // console.log(typeChosen);
-              // console.log(thing);
-              // console.log(this.activeObjService.objType);
+        // console.warn('mouseUp');
+        // console.log(typeChosen);
+        // console.log(thing);
+        // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
@@ -849,6 +850,10 @@ export class NewGridComponent {
         this.jointTempHolderSVG.style.display = 'none';
         break;
     }
+  }
+
+  static sendNotification(text: string) {
+    NewGridComponent.instance.sendNotification(text);
   }
 
   sendNotification(text: string) {

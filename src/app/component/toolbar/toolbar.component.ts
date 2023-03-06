@@ -6,7 +6,6 @@ import { Mechanism } from '../../model/mechanism/mechanism';
 import { roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { GridComponent } from '../grid/grid.component';
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
 import { AnalysisPopupComponent } from '../analysis-popup/analysis-popup.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
@@ -15,6 +14,8 @@ import { TemplatesPopupComponent } from '../templates-popup/templates-popup.comp
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
+import { MechanismService } from '../../services/mechanism.service';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 const parseCSV = require('papaparse');
 
@@ -68,7 +69,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   window: any;
   url: any;
 
-  constructor(private activeObjService: ActiveObjService) {}
+  constructor(
+    private activeObjService: ActiveObjService,
+    private mechanismService: MechanismService
+  ) {}
 
   ngOnInit(): void {
     //This will need to move to settings service
@@ -90,7 +94,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // // ToolbarComponent.gravity = gravity; Temp commneted out by Kohmei for testing
     // this.localUnit.selectedUnit = unit;
     // ToolbarComponent.unit = unit;
-    // GridComponent.updateMechanism();
+    // this.mechanismService.updateMechanism();
   }
 
   ngAfterViewInit() {
@@ -112,126 +116,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
-  showTable() {
-    LinkageTableComponent.linkageVisibility();
-  }
-
-  // setTab(analysis: string) {
-  //   // TODO: adjust each of the analysis button when mechanism cannot be analyzed
-  //   switch (analysis) {
-  //     case 'file':
-  //       ToolbarComponent.fileButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-  //       ToolbarComponent.analysisButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.settingsButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.helpButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       break;
-  //     case 'analysis':
-  //       if (GridComponent.mechanisms[0].joints.length < 3) {return;}
-  //       ToolbarComponent.fileButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.analysisButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-  //       ToolbarComponent.settingsButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.helpButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       break;
-  //     case 'settings':
-  //       ToolbarComponent.fileButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.analysisButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.settingsButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-  //       ToolbarComponent.helpButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       break;
-  //     case 'help':
-  //       ToolbarComponent.fileButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.analysisButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.settingsButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: gray; background-color: white');
-  //       ToolbarComponent.helpButton.setAttribute('style',
-  //         'height: 34px; width: 160px; font-size: 24px;\n' +
-  //         '     font-family: Arial, sans-serif; cursor: pointer;color: black; background-color: gray');
-  //       break;
-  //   }
-  //   // this.selectedTab = analysis;
-  // }
-
-  changeIdTag() {
-    // this.showIdTags = !this.showIdTags;
-  }
-
-  changeCoMTag() {
-    // this.showCoMTags = !this.showCoMTags;
-  }
-
-  animateMechanism() {
-    console.log('animateMechanism');
-    this.animate = !this.animate;
-  }
-
-  determineForceAnalysis() {
-    // ForceSolver.determineDesiredLoopLettersForce(this.mechanisms[0].requiredLoops);
-    // ForceSolver.determineForceAnalysis(this.joints, this.links, 'static', this.gravity, this.unit);
-  }
-
-  popUpAnalysis(analysisType: string) {
-    switch (analysisType) {
-      // TODO: add logic for determining each logic and determine whether analysis can be done
-      case 'loop':
-        break;
-      case 'force':
-        ForceSolver.resetVariables();
-        ForceSolver.determineDesiredLoopLettersForce(GridComponent.mechanisms[0].requiredLoops);
-        ForceSolver.determineForceAnalysis(
-          GridComponent.joints,
-          GridComponent.links,
-          'static',
-          ToolbarComponent.gravity,
-          ToolbarComponent.unit
-        );
-        break;
-      case 'stress':
-        break;
-      case 'kinematic':
-        KinematicsSolver.resetVariables();
-        KinematicsSolver.requiredLoops = GridComponent.mechanisms[0].requiredLoops;
-        KinematicsSolver.determineKinematics(
-          GridComponent.joints,
-          GridComponent.links,
-          ToolbarComponent.inputAngularVelocity
-        );
-        // Be sure to include IC method
-        break;
-      default:
-        return;
-    }
-    AnalysisPopupComponent.showAnalysis(analysisType);
-  }
-
   popUpTemplates() {
     TemplatesPopupComponent.showTemplates();
   }
@@ -245,7 +129,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // const that = this;
     let selectedUnit: string = '';
 
-    reader.onload = function () {
+    reader.onload = () => {
       const newFile = reader.result as string;
       const csv = parseCSV(newFile);
 
@@ -519,10 +403,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
             break;
         }
       }
-      GridComponent.joints = jointArray;
-      GridComponent.links = linkArray;
-      GridComponent.forces = forceArray;
-      GridComponent.updateMechanism();
+      this.mechanismService.joints = jointArray;
+      this.mechanismService.links = linkArray;
+      this.mechanismService.forces = forceArray;
+      this.mechanismService.updateMechanism();
     };
     reader.readAsText(input.files[0]);
     // if (selectedUnit !== '') {
@@ -531,11 +415,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   copyURL() {
-    // const content = this.generateExportURL(GridComponent.joints, GridComponent.links, GridComponent.forces, [],
+    // const content = this.generateExportURL(this.mechanismService.joints, this.mechanismService.links, this.mechanismService.forces, [],
     //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
     let content = '';
     content += `j=`;
-    GridComponent.joints.forEach((joint) => {
+    this.mechanismService.joints.forEach((joint) => {
       if (!(joint instanceof RealJoint)) {
         return;
       }
@@ -580,7 +464,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       content += '\n';
     });
     content += `&l=`;
-    GridComponent.links.forEach((link) => {
+    this.mechanismService.links.forEach((link) => {
       content += `${link.id},`;
       content += !(link instanceof RealLink) ? `P,` : `R,`;
       // if (!(link instanceof RealLink)) {return}
@@ -623,7 +507,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     });
 
     content += `&f=`;
-    GridComponent.forces.forEach((force) => {
+    this.mechanismService.forces.forEach((force) => {
       content += `${force.id},`;
       content += `${force.link.id},`;
       content += `${roundNumber(force.startCoord.x, 3)},`;
@@ -673,22 +557,22 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     document.execCommand('copy');
     document.body.removeChild(toolman);
 
-    GridComponent.sendNotification(
+    NewGridComponent.sendNotification(
       'URL copied. If you make additional changes, copy the URL again.'
     );
   }
 
   alertNotAvailable() {
-    //Use GridComponent.sendNotification() instead
-    GridComponent.sendNotification('This feature is not available yet');
+    //Use this.mechanismService.sendNotification() instead
+    NewGridComponent.sendNotification('This feature is not available yet');
   }
 
   downloadLinkage() {
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(
-      GridComponent.joints,
-      GridComponent.links,
-      GridComponent.forces,
+      this.mechanismService.joints,
+      this.mechanismService.links,
+      this.mechanismService.forces,
       [],
       [],
       ToolbarComponent.inputAngularVelocity,
@@ -1023,7 +907,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   setInputMagnitudeAngVel($event: any) {
     ToolbarComponent.inputAngularVelocity = $event.target.value;
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   getClockwise() {
@@ -1033,7 +917,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   setClockwise(cond: boolean) {
     ToolbarComponent.clockwise = cond;
     AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   getGravity() {
@@ -1042,13 +926,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   setGravity(cond: boolean) {
     ToolbarComponent.gravity = cond;
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   changeUnit(selectedUnit: string) {
     this.localUnit.selectedUnit = selectedUnit;
     ToolbarComponent.unit = this.localUnit.selectedUnit;
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   getInputAngVel() {
@@ -1056,9 +940,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   validMechanism() {
-    if (GridComponent.mechanisms[0] === undefined) {
+    if (this.mechanismService.mechanisms[0] === undefined) {
       return true;
     }
-    return GridComponent.mechanisms[0].joints.length > 3 ? null : true;
+    return this.mechanismService.mechanisms[0].joints.length > 3 ? null : true;
   }
 }

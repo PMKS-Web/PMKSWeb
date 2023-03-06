@@ -9,6 +9,7 @@ import { InstantCenter } from '../../model/instant-center';
 import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { MechanismService } from '../../services/mechanism.service';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 @Component({
   selector: 'app-linkage-table',
@@ -22,23 +23,33 @@ export class LinkageTableComponent implements OnInit {
   private static forceButton: SVGElement;
   private static showLinkageTableButton: SVGElement;
 
-  constructor(private mechanismService: MechanismService) {
+  constructor(private mechanismService: MechanismService) {}
 
-  }
-
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   ngAfterViewInit() {
-    LinkageTableComponent.linkageTable = document.getElementById('linkageTable') as unknown as SVGElement;
-    LinkageTableComponent.jointButton = document.getElementById('jointButton') as unknown as SVGElement;
-    LinkageTableComponent.linkButton = document.getElementById('linkButton') as unknown as SVGElement;
-    LinkageTableComponent.forceButton = document.getElementById('forceButton') as unknown as SVGElement;
-    LinkageTableComponent.showLinkageTableButton = document.getElementById('showTable') as unknown as SVGElement;
+    LinkageTableComponent.linkageTable = document.getElementById(
+      'linkageTable'
+    ) as unknown as SVGElement;
+    LinkageTableComponent.jointButton = document.getElementById(
+      'jointButton'
+    ) as unknown as SVGElement;
+    LinkageTableComponent.linkButton = document.getElementById(
+      'linkButton'
+    ) as unknown as SVGElement;
+    LinkageTableComponent.forceButton = document.getElementById(
+      'forceButton'
+    ) as unknown as SVGElement;
+    LinkageTableComponent.showLinkageTableButton = document.getElementById(
+      'showTable'
+    ) as unknown as SVGElement;
   }
 
   distFromJoint(joint1: Joint, joint2: Joint) {
-    return roundNumber(Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2)), 3);
+    return roundNumber(
+      Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2)),
+      3
+    );
   }
 
   changeJointProp($event: any, joint: Joint, jointProp: string) {
@@ -49,7 +60,7 @@ export class LinkageTableComponent implements OnInit {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Joint X Value');
+          return NewGridComponent.sendNotification('Check Joint X Value');
         }
         joint.x = Number($event.target.value);
         joint.links.forEach((l) => {
@@ -71,7 +82,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'y':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Joint Y Value');
+          return NewGridComponent.sendNotification('Check Joint Y Value');
         }
         joint.y = Number($event.target.value);
         joint.links.forEach((l) => {
@@ -83,7 +94,7 @@ export class LinkageTableComponent implements OnInit {
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.d = RealLink.getD(l.joints)
+          l.d = RealLink.getD(l.joints);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -91,7 +102,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'id':
         if (!(typeof $event.target.value === 'string')) {
-          return GridComponent.sendNotification('Check Joint ID');
+          return NewGridComponent.sendNotification('Check Joint ID');
         }
         joint.links.forEach((l) => {
           l.id = l.id.replace(joint.id, $event.target.value);
@@ -100,14 +111,14 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'angle':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Angle Value');
+          return NewGridComponent.sendNotification('Check Angle Value');
         }
         if (!(joint instanceof PrisJoint)) {
           return;
         }
         joint.angle = (Number($event.target.value) * Math.PI) / 180;
     }
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   changeLinkProp($event: any, link: Link, linkProp: string) {
@@ -117,30 +128,30 @@ export class LinkageTableComponent implements OnInit {
     switch (linkProp) {
       case 'mass':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Link Mass');
+          return NewGridComponent.sendNotification('Check Link Mass');
         }
         link.mass = Number($event.target.value);
         break;
       case 'massMoI':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Link Mass MoI');
+          return NewGridComponent.sendNotification('Check Link Mass MoI');
         }
         link.massMoI = Number($event.target.value);
         break;
       case 'CoMX':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Link CoM Y');
+          return NewGridComponent.sendNotification('Check Link CoM Y');
         }
         link.CoM.x = Number($event.target.value);
         break;
       case 'CoMY':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Link CoM Y');
+          return NewGridComponent.sendNotification('Check Link CoM Y');
         }
         link.CoM.y = Number($event.target.value);
         break;
     }
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   showForceAngle(force: Force) {
@@ -151,31 +162,31 @@ export class LinkageTableComponent implements OnInit {
     switch (forceProp) {
       case 'id':
         if (!(typeof $event.target.value === 'string')) {
-          return GridComponent.sendNotification('Check Force ID');
+          return NewGridComponent.sendNotification('Check Force ID');
         }
         force.id = $event.target.value;
         break;
       case 'xPos':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Force X Position');
+          return NewGridComponent.sendNotification('Check Force X Position');
         }
         force.startCoord.x = Number($event.target.value);
         break;
       case 'yPos':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Force Y Position');
+          return NewGridComponent.sendNotification('Check Force Y Position');
         }
         force.startCoord.y = Number($event.target.value);
         break;
       case 'mag':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Force Magnitude');
+          return NewGridComponent.sendNotification('Check Force Magnitude');
         }
         force.mag = Number($event.target.value);
         break;
       case 'angle':
         if (isNaN(Number($event.target.value))) {
-          return GridComponent.sendNotification('Check Force Angle');
+          return NewGridComponent.sendNotification('Check Force Angle');
         }
         force.angle = Number($event.target.value) * (Math.PI / 180);
         // TODO: Within commonClass, have radToDeg and degToRad
@@ -185,7 +196,7 @@ export class LinkageTableComponent implements OnInit {
     }
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
     force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
-    GridComponent.updateMechanism();
+    this.mechanismService.updateMechanism();
   }
 
   static linkageVisibility() {

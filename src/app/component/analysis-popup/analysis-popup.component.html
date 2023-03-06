@@ -1,1089 +1,1089 @@
-<div id="analysisPopup" class="ontop">
-  <div class="popupAnalysis" style="border-style: solid; border-width: 10px">
-    <div>
-      <div *ngIf="getSelectedAnalysis() === 'loop'">Loops</div>
-      <div *ngIf="getSelectedAnalysis() === 'force'">Forces</div>
-      <div *ngIf="getSelectedAnalysis() === 'stress'">Stress</div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-        Kinematics
-        <!--        Kinematics (Loop Method)-->
-      </div>
-      <!--      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'">-->
-      <!--        Kinematics (Ics)-->
-      <!--      </div>-->
+<!--<div id="analysisPopup" class="ontop">-->
+<!--  <div class="popupAnalysis" style="border-style: solid; border-width: 10px">-->
+<!--    <div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'loop'">Loops</div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'force'">Forces</div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'stress'">Stress</div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'kinematic'">-->
+<!--        Kinematics-->
+<!--        &lt;!&ndash;        Kinematics (Loop Method)&ndash;&gt;-->
+<!--      </div>-->
+<!--      &lt;!&ndash;      <div *ngIf="getSelectedAnalysis() === 'kinematic_ic'">&ndash;&gt;-->
+<!--      &lt;!&ndash;        Kinematics (Ics)&ndash;&gt;-->
+<!--      &lt;!&ndash;      </div>&ndash;&gt;-->
 
-      <div class="buttonContainer">
-        <button class="closeAnalysis" (click)="closeAnalysis()" (mouseover)="mouseOver(99999)" (mouseout)="mouseOut(99999)">X</button>
-        <button id="exportButton" (click)="setTab(0)" (mouseover)="mouseOver(0)" (mouseout)="mouseOut(0)" style="color: black; background-color: gray">
-          Export
-        </button>
-        <button id="showPlotsButton" (click)="setTab(1)" (mouseover)="mouseOver(1)" (mouseout)="mouseOut(1)">Plots Charts</button>
-        <button id="showEqsButton" (click)="setTab(2)" (mouseover)="mouseOver(2)" (mouseout)="mouseOut(2)">Show Eqns</button>
-      </div>
-    </div>
-    <div
-      class="tabPanel"
-      *ngIf="getSelectedTab() === 0"
-      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"
-    >
-      <div *ngIf="getSelectedAnalysis() === 'loop'">
-        <div>
-          <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck" />
-          <label> Required Loops </label>
-        </div>
-        <div>
-          <input type="checkbox" value="allLoopCheck" (change)="setOption($event)" [checked]="allLoopCheck" />
-          <label> All Loops </label>
-        </div>
-        <div>
-          <button class="secondaryButtons" (click)="exportExcel('loops')">Export Data on the Selected Analysis</button>
-        </div>
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'force'">
-        <div>
-          <input type="checkbox" value="staticMethodCheck" (change)="setOption($event)" [checked]="staticMethodCheck" />
-          <label> Static </label>
-        </div>
-        <div *ngIf="staticMethodCheck">
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck" />
-            <label> Reactionary Forces </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="staticTorqueCheck" (change)="setOption($event)" [checked]="staticTorqueCheck" />
-            <label> Torque </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="staticForcePositionsCheck" (change)="setOption($event)" [checked]="staticForcePositionsCheck" />
-            <label> Force Positions </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="staticJointPositionsCheck" (change)="setOption($event)" [checked]="staticJointPositionsCheck" />
-            <label> Joint Positions </label>
-          </div>
-        </div>
-        <div>
-          <input type="checkbox" value="dynamicMethodCheck" (change)="setOption($event)" [checked]="dynamicMethodCheck" />
-          <label> Newton's II Law </label>
-        </div>
-        <div *ngIf="dynamicMethodCheck">
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="dynamicForcesCheck" (change)="setOption($event)" [checked]="dynamicForcesCheck" />
-            <label> Reactionary Forces </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="dynamicTorqueCheck" (change)="setOption($event)" [checked]="dynamicTorqueCheck" />
-            <label> Torque </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="dynamicForcePositionsCheck" (change)="setOption($event)" [checked]="dynamicForcePositionsCheck" />
-            <label> Force Positions </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck" />
-            <label> Linear Kinematics at Joint </label>
-          </div>
-          <!-- TODO: Maybe change the name of this ??? -->
-          <div *ngIf="this.linKinJointCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck" />
-            <label> Linear Kinematics at Link (Center of Mass) </label>
-          </div>
-          <div *ngIf="this.linKinLinkCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck" />
-            <label> Angular Kinematics at Link </label>
-          </div>
-          <div *ngIf="this.angKinLinkCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-        </div>
-        <div *ngIf="this.staticMethodCheck || this.dynamicMethodCheck">
-          <button class="secondaryButtons" (click)="exportAnalysis('force')">Export Data on the Selected Analysis</button>
-        </div>
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'stress'">
-        <!-- TODO: Do this once this is determined -->
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-        <div>
-          <input type="checkbox" value="loopMethodCheck" (change)="setOption($event)" [checked]="loopMethodCheck" />
-          <label> Loop Method </label>
-        </div>
-        <div *ngIf="this.loopMethodCheck">
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck" />
-            <label> Linear Kinematics at Joint </label>
-          </div>
-          <div *ngIf="this.linKinJointCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck" />
-            <label> Linear Kinematics at Link (Center of Mass) </label>
-          </div>
-          <div *ngIf="this.linKinLinkCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck" />
-            <label> Angular Kinematics at Link </label>
-          </div>
-          <div *ngIf="this.angKinLinkCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel" />
-              <label>Velocity</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc" />
-              <label>Acceleration</label>
-            </div>
-          </div>
-        </div>
-        <div>
-          <input type="checkbox" value="instantCenterMethodCheck" (change)="setOption($event)" [checked]="instantCenterMethodCheck" />
-          <label> Instant Center Method </label>
-        </div>
-        <div *ngIf="this.instantCenterMethodCheck" style="text-indent: 30px">
-          <div>
-            <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck" />
-            <label> Position of ICs </label>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck" />
-            <label> Linear Kinematics at Joint </label>
-          </div>
-          <div *ngIf="this.linKinJointICCheck">
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos" />
-              <label>Position</label>
-            </div>
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel" />
-              <label>Velocity</label>
-            </div>
-          </div>
-          <div style="text-indent: 30px">
-            <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]="angKinLinkICCheck" />
-            <label> Angular Kinematics at Link </label>
-          </div>
-          <div *ngIf="this.angKinLinkICCheck">
-            <!--            <div style="text-indent: 60px">-->
-            <!--              <input type="checkbox" value="angKinLinkICPos" (change)="setOption($event)" [checked]="angKinLinkICPos">-->
-            <!--              <label>Position</label>-->
-            <!--            </div>-->
-            <div style="text-indent: 60px">
-              <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel" />
-              <label>Velocity</label>
-            </div>
-          </div>
-        </div>
-        <div *ngIf="this.instantCenterMethodCheck || this.loopMethodCheck" style="text-indent: 100px">
-          <button class="secondaryButtons" (click)="exportAnalysis('kinematic')">Export Data on the Selected Analysis</button>
-        </div>
-      </div>
-      <!--      <div *ngIf="getSelectedAnalysis() === 'ic'">-->
-      <!--        <div>-->
-      <!--          <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">-->
-      <!--          <label>-->
-      <!--            Position of ICs-->
-      <!--          </label>-->
-      <!--        </div>-->
-      <!--        <div>-->
-      <!--          <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck">-->
-      <!--          <label>-->
-      <!--            Linear Kinematics at Joint-->
-      <!--          </label>-->
-      <!--        </div>-->
-      <!--        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">-->
-      <!--          <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos">-->
-      <!--          <label>Position</label>-->
-      <!--        </div>-->
-      <!--        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">-->
-      <!--          <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel">-->
-      <!--          <label>Velocity</label>-->
-      <!--        </div>-->
-      <!--        <div>-->
-      <!--          <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]=angKinLinkICCheck>-->
-      <!--          <label>-->
-      <!--            Angular Kinematics at Link-->
-      <!--          </label>-->
-      <!--        </div>-->
-      <!--        <div *ngIf="this.angKinLinkICCheck" style="text-indent: 30px">-->
-      <!--          <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">-->
-      <!--          <label>Velocity</label>-->
-      <!--        </div>-->
-      <!--        <div>-->
-      <!--          <button class="secondaryButtons" (click)="exportExcel('ics')">Export-->
-      <!--            Data on the Selected Analysis-->
-      <!--          </button>-->
-      <!--        </div>-->
-      <!--      </div>-->
-    </div>
-    <div
-      class="tabPanel"
-      *ngIf="getSelectedTab() === 1"
-      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"
-    >
-      <div *ngIf="getSelectedAnalysis() === 'force'">
-        <label> Mechanism State</label>
-        <select name="selectedForceAnalysis" [(ngModel)]="forceMechanismState.selectedMechanismState" (ngModelChange)="changePlotAnalysis()">
-          <option *ngFor="let states of forceMechanismStates" [value]="states.id">
-            {{ states.label }}
-          </option>
-        </select>
-        <div *ngIf="forceMechanismState.selectedMechanismState !== 'none'">
-          <label> Type of Analysis</label>
-          <select name="selectedStaticAnalysis" [(ngModel)]="forceAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">
-              {{ analysis.label }}
-            </option>
-          </select>
-          <div *ngIf="forceAnalysis.selectedAnalysis === 'Joint Forces'">
-            <label> Joint</label>
-            <select name="selectedStaticJoint" [(ngModel)]="forceMagPlot.force" (ngModelChange)="changePlotAnalysis()">
-              <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">
-                {{ stat_joint.id }}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-        <label> Kinematic Analysis</label>
-        <select name="selectedKinematicAnalysis" [(ngModel)]="kinematicAnalysis.selectedMechanismState" (ngModelChange)="changePlotAnalysis()">
-          <option *ngFor="let analysis of kinematicAnalyses" [value]="analysis.id">
-            {{ analysis.label }}
-          </option>
-        </select>
-        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'loop'">
-          <label> Kinematic Property</label>
-          <select name="selectedKinematicLoopAnalysis" [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let analysis of kinematicLoopAnalyses" [value]="analysis.id">
-              {{ analysis.label }}
-            </option>
-          </select>
-        </div>
-        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'ic'">
-          <label> Kinematic Property</label>
-          <select name="selectedKinematicLoopAnalysis" [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let analysis of kinematicICAnalyses" [value]="analysis.id">
-              {{ analysis.label }}
-            </option>
-          </select>
-        </div>
-        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Linear Joint'">
-          <label> Linear Joint</label>
-          <select name="selectedKinematicLoopLinearJoint" [(ngModel)]="kinematicLoopLinearJoint.joint" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let joint of getJoints()" [value]="joint.id">
-              {{ joint.id }}
-            </option>
-          </select>
-        </div>
-        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 11) === 'Linear Link'">
-          <label> Linear Link</label>
-          <select name="selectedKinematicLoopLinearLink" [(ngModel)]="kinematicLoopLinearLink.link" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let link of getLinks()" [value]="link.id">
-              {{ link.id }}
-            </option>
-          </select>
-        </div>
-        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Angular Link'">
-          <label> Angular Link</label>
-          <select name="selectedKinematicLoopAngularLink" [(ngModel)]="kinematicLoopAngularLink.link" (ngModelChange)="changePlotAnalysis()">
-            <option *ngFor="let link of getLinks()" [value]="link.id">
-              {{ link.id }}
-            </option>
-          </select>
-        </div>
-      </div>
-      <div *ngIf="showChart">
-        <apx-chart
-          [series]="chartOptions.series!"
-          [chart]="chartOptions.chart!"
-          [xaxis]="chartOptions.xaxis!"
-          [yaxis]="chartOptions.yaxis!"
-          [dataLabels]="chartOptions.dataLabels!"
-          [grid]="chartOptions.grid!"
-          [stroke]="chartOptions.stroke!"
-          [title]="chartOptions.title!"
-        >
-        </apx-chart>
-      </div>
-    </div>
-    <div
-      class="tabPanel"
-      *ngIf="getSelectedTab() === 2"
-      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"
-    >
-      <div *ngIf="getSelectedAnalysis() === 'loop'"></div>
-      <div *ngIf="getSelectedAnalysis() === 'force'">
-        <div>
-          <!-- Statics -->
-          <input type="checkbox" value="showcaseStaticFBD" (change)="setOption($event)" [checked]="showcaseStaticFBD" />
-          <label> Static Equilibrium </label>
-        </div>
-        <!-- TODO: utilize ng-container instead of div with ngIf and ngFor -->
-        <div *ngIf="showcaseStaticFBD">
-          <div
-            id="div_static{{ link.id }}"
-            *ngFor="let link of getLinks()"
-            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"
-          >
-            <input type="checkbox" id="checkbox_{{ link.id }}" (click)="updateTable('changeHeight', 'static', link.id)" />
-            <!--                   style="display: block; float: left">-->
-            <label>Link {{ link.id }}</label>
-            <svg
-              [attr.height]="getLinkProp(link, 'height')"
-              [attr.width]="getLinkProp(link, 'width')"
-              style="transform: scaleY(-1); display: none; margin: auto"
-            >
-              <!-- TODO: Make sure scale works accordingly -->
-              <g [attr.transform]="getLinkProp(link, 'transform')" [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">
-                <path [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')"></path>
-                <!-- TODO: Determine logic when the link shape is too big to showcase -->
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black" />
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray" />
-                <svg
-                  *ngFor="let joint of link.joints"
-                  [attr.x]="joint.x - 0.3"
-                  [attr.y]="joint.y + 0.3"
-                  style="font-size: 1px; text-anchor: middle; overflow: visible"
-                >
-                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">
-                    {{ joint.id }}
-                  </text>
-                </svg>
-                <g *ngFor="let force of link.forces">
-                  <g [attr.id]="force.id">
-                    <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
-                    <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
-                  </g>
-                  <svg
-                    [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
-                    [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"
-                    style="font-size: 1px; text-anchor: middle; overflow: visible"
-                  >
-                    <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">
-                      {{ force.id }}
-                    </text>
-                  </svg>
-                </g>
-                <g *ngFor="let joint of link.joints">
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1" [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04"></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                    [attr.d]="getForceLine(joint, 'neg', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path *ngIf="getForceAssumption(link, joint, 'y') === 1" [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04"></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                    [attr.d]="getForceLine(joint, 'neg', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === 1"
-                    [attr.d]="getForceArrow(joint, 'pos', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                    [attr.d]="getForceArrow(joint, 'neg', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                    [attr.d]="getForceArrow(joint, 'pos', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                    [attr.d]="getForceArrow(joint, 'neg', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                </g>
-              </g>
-            </svg>
-            <div *ngFor="let joint of link.joints" style="display: none">
-              <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">-->
-              <label> Direction of Force {{ joint.id }}x</label>
-              <br />
-              <input type="radio" (change)="updateTable('x', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1" />
-              <label> Positive (+) </label>
-              <input type="radio" (change)="updateTable('x', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1" />
-              <label> Negative (-) </label>
-              <br />
+<!--      <div class="buttonContainer">-->
+<!--        <button class="closeAnalysis" (click)="closeAnalysis()" (mouseover)="mouseOver(99999)" (mouseout)="mouseOut(99999)">X</button>-->
+<!--        <button id="exportButton" (click)="setTab(0)" (mouseover)="mouseOver(0)" (mouseout)="mouseOut(0)" style="color: black; background-color: gray">-->
+<!--          Export-->
+<!--        </button>-->
+<!--        <button id="showPlotsButton" (click)="setTab(1)" (mouseover)="mouseOver(1)" (mouseout)="mouseOut(1)">Plots Charts</button>-->
+<!--        <button id="showEqsButton" (click)="setTab(2)" (mouseover)="mouseOver(2)" (mouseout)="mouseOut(2)">Show Eqns</button>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div-->
+<!--      class="tabPanel"-->
+<!--      *ngIf="getSelectedTab() === 0"-->
+<!--      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"-->
+<!--    >-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'loop'">-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="requiredLoopCheck" (change)="setOption($event)" [checked]="requiredLoopCheck" />-->
+<!--          <label> Required Loops </label>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="allLoopCheck" (change)="setOption($event)" [checked]="allLoopCheck" />-->
+<!--          <label> All Loops </label>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          <button class="secondaryButtons" (click)="exportExcel('loops')">Export Data on the Selected Analysis</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'force'">-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="staticMethodCheck" (change)="setOption($event)" [checked]="staticMethodCheck" />-->
+<!--          <label> Static </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="staticMethodCheck">-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="staticForcesCheck" (change)="setOption($event)" [checked]="staticForcesCheck" />-->
+<!--            <label> Reactionary Forces </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="staticTorqueCheck" (change)="setOption($event)" [checked]="staticTorqueCheck" />-->
+<!--            <label> Torque </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="staticForcePositionsCheck" (change)="setOption($event)" [checked]="staticForcePositionsCheck" />-->
+<!--            <label> Force Positions </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="staticJointPositionsCheck" (change)="setOption($event)" [checked]="staticJointPositionsCheck" />-->
+<!--            <label> Joint Positions </label>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="dynamicMethodCheck" (change)="setOption($event)" [checked]="dynamicMethodCheck" />-->
+<!--          <label> Newton's II Law </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="dynamicMethodCheck">-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="dynamicForcesCheck" (change)="setOption($event)" [checked]="dynamicForcesCheck" />-->
+<!--            <label> Reactionary Forces </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="dynamicTorqueCheck" (change)="setOption($event)" [checked]="dynamicTorqueCheck" />-->
+<!--            <label> Torque </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="dynamicForcePositionsCheck" (change)="setOption($event)" [checked]="dynamicForcePositionsCheck" />-->
+<!--            <label> Force Positions </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck" />-->
+<!--            <label> Linear Kinematics at Joint </label>-->
+<!--          </div>-->
+<!--          &lt;!&ndash; TODO: Maybe change the name of this ??? &ndash;&gt;-->
+<!--          <div *ngIf="this.linKinJointCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck" />-->
+<!--            <label> Linear Kinematics at Link (Center of Mass) </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.linKinLinkCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck" />-->
+<!--            <label> Angular Kinematics at Link </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.angKinLinkCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div *ngIf="this.staticMethodCheck || this.dynamicMethodCheck">-->
+<!--          <button class="secondaryButtons" (click)="exportAnalysis('force')">Export Data on the Selected Analysis</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'stress'">-->
+<!--        &lt;!&ndash; TODO: Do this once this is determined &ndash;&gt;-->
+<!--      </div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'kinematic'">-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="loopMethodCheck" (change)="setOption($event)" [checked]="loopMethodCheck" />-->
+<!--          <label> Loop Method </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="this.loopMethodCheck">-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="linKinJointCheck" (change)="setOption($event)" [checked]="linKinJointCheck" />-->
+<!--            <label> Linear Kinematics at Joint </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.linKinJointCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointPos" (change)="setOption($event)" [checked]="linKinJointPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointVel" (change)="setOption($event)" [checked]="linKinJointVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointAcc" (change)="setOption($event)" [checked]="linKinJointAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="linKinLinkCheck" (change)="setOption($event)" [checked]="linKinLinkCheck" />-->
+<!--            <label> Linear Kinematics at Link (Center of Mass) </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.linKinLinkCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkPos" (change)="setOption($event)" [checked]="linKinLinkPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkVel" (change)="setOption($event)" [checked]="linKinLinkVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinLinkAcc" (change)="setOption($event)" [checked]="linKinLinkAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="angKinLinkCheck" (change)="setOption($event)" [checked]="angKinLinkCheck" />-->
+<!--            <label> Angular Kinematics at Link </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.angKinLinkCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkPos" (change)="setOption($event)" [checked]="angKinLinkPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkVel" (change)="setOption($event)" [checked]="angKinLinkVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkAcc" (change)="setOption($event)" [checked]="angKinLinkAcc" />-->
+<!--              <label>Acceleration</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          <input type="checkbox" value="instantCenterMethodCheck" (change)="setOption($event)" [checked]="instantCenterMethodCheck" />-->
+<!--          <label> Instant Center Method </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="this.instantCenterMethodCheck" style="text-indent: 30px">-->
+<!--          <div>-->
+<!--            <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck" />-->
+<!--            <label> Position of ICs </label>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck" />-->
+<!--            <label> Linear Kinematics at Joint </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.linKinJointICCheck">-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos" />-->
+<!--              <label>Position</label>-->
+<!--            </div>-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div style="text-indent: 30px">-->
+<!--            <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]="angKinLinkICCheck" />-->
+<!--            <label> Angular Kinematics at Link </label>-->
+<!--          </div>-->
+<!--          <div *ngIf="this.angKinLinkICCheck">-->
+<!--            &lt;!&ndash;            <div style="text-indent: 60px">&ndash;&gt;-->
+<!--            &lt;!&ndash;              <input type="checkbox" value="angKinLinkICPos" (change)="setOption($event)" [checked]="angKinLinkICPos">&ndash;&gt;-->
+<!--            &lt;!&ndash;              <label>Position</label>&ndash;&gt;-->
+<!--            &lt;!&ndash;            </div>&ndash;&gt;-->
+<!--            <div style="text-indent: 60px">-->
+<!--              <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel" />-->
+<!--              <label>Velocity</label>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div *ngIf="this.instantCenterMethodCheck || this.loopMethodCheck" style="text-indent: 100px">-->
+<!--          <button class="secondaryButtons" (click)="exportAnalysis('kinematic')">Export Data on the Selected Analysis</button>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      &lt;!&ndash;      <div *ngIf="getSelectedAnalysis() === 'ic'">&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div>&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="icPositionsCheck" (change)="setOption($event)" [checked]="icPositionsCheck">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>&ndash;&gt;-->
+<!--      &lt;!&ndash;            Position of ICs&ndash;&gt;-->
+<!--      &lt;!&ndash;          </label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div>&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="linKinJointICCheck" (change)="setOption($event)" [checked]="linKinJointICCheck">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>&ndash;&gt;-->
+<!--      &lt;!&ndash;            Linear Kinematics at Joint&ndash;&gt;-->
+<!--      &lt;!&ndash;          </label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="linKinJointICPos" (change)="setOption($event)" [checked]="linKinJointICPos">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>Position</label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div *ngIf="this.linKinJointICCheck" style="text-indent: 30px">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="linKinJointICVel" (change)="setOption($event)" [checked]="linKinJointICVel">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>Velocity</label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div>&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="angKinLinkICCheck" (change)="setOption($event)" [checked]=angKinLinkICCheck>&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>&ndash;&gt;-->
+<!--      &lt;!&ndash;            Angular Kinematics at Link&ndash;&gt;-->
+<!--      &lt;!&ndash;          </label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div *ngIf="this.angKinLinkICCheck" style="text-indent: 30px">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <input type="checkbox" value="angKinLinkICVel" (change)="setOption($event)" [checked]="angKinLinkICVel">&ndash;&gt;-->
+<!--      &lt;!&ndash;          <label>Velocity</label>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;        <div>&ndash;&gt;-->
+<!--      &lt;!&ndash;          <button class="secondaryButtons" (click)="exportExcel('ics')">Export&ndash;&gt;-->
+<!--      &lt;!&ndash;            Data on the Selected Analysis&ndash;&gt;-->
+<!--      &lt;!&ndash;          </button>&ndash;&gt;-->
+<!--      &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--      &lt;!&ndash;      </div>&ndash;&gt;-->
+<!--    </div>-->
+<!--    <div-->
+<!--      class="tabPanel"-->
+<!--      *ngIf="getSelectedTab() === 1"-->
+<!--      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"-->
+<!--    >-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'force'">-->
+<!--        <label> Mechanism State</label>-->
+<!--        <select name="selectedForceAnalysis" [(ngModel)]="forceMechanismState.selectedMechanismState" (ngModelChange)="changePlotAnalysis()">-->
+<!--          <option *ngFor="let states of forceMechanismStates" [value]="states.id">-->
+<!--            {{ states.label }}-->
+<!--          </option>-->
+<!--        </select>-->
+<!--        <div *ngIf="forceMechanismState.selectedMechanismState !== 'none'">-->
+<!--          <label> Type of Analysis</label>-->
+<!--          <select name="selectedStaticAnalysis" [(ngModel)]="forceAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let analysis of jointAnalyses" [value]="analysis.id">-->
+<!--              {{ analysis.label }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--          <div *ngIf="forceAnalysis.selectedAnalysis === 'Joint Forces'">-->
+<!--            <label> Joint</label>-->
+<!--            <select name="selectedStaticJoint" [(ngModel)]="forceMagPlot.force" (ngModelChange)="changePlotAnalysis()">-->
+<!--              <option *ngFor="let stat_joint of getJoints()" [value]="stat_joint.id">-->
+<!--                {{ stat_joint.id }}-->
+<!--              </option>-->
+<!--            </select>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'kinematic'">-->
+<!--        <label> Kinematic Analysis</label>-->
+<!--        <select name="selectedKinematicAnalysis" [(ngModel)]="kinematicAnalysis.selectedMechanismState" (ngModelChange)="changePlotAnalysis()">-->
+<!--          <option *ngFor="let analysis of kinematicAnalyses" [value]="analysis.id">-->
+<!--            {{ analysis.label }}-->
+<!--          </option>-->
+<!--        </select>-->
+<!--        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'loop'">-->
+<!--          <label> Kinematic Property</label>-->
+<!--          <select name="selectedKinematicLoopAnalysis" [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let analysis of kinematicLoopAnalyses" [value]="analysis.id">-->
+<!--              {{ analysis.label }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--        </div>-->
+<!--        <div *ngIf="kinematicAnalysis.selectedMechanismState === 'ic'">-->
+<!--          <label> Kinematic Property</label>-->
+<!--          <select name="selectedKinematicLoopAnalysis" [(ngModel)]="kinematicPropertyAnalysis.selectedAnalysis" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let analysis of kinematicICAnalyses" [value]="analysis.id">-->
+<!--              {{ analysis.label }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--        </div>-->
+<!--        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Linear Joint'">-->
+<!--          <label> Linear Joint</label>-->
+<!--          <select name="selectedKinematicLoopLinearJoint" [(ngModel)]="kinematicLoopLinearJoint.joint" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let joint of getJoints()" [value]="joint.id">-->
+<!--              {{ joint.id }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--        </div>-->
+<!--        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 11) === 'Linear Link'">-->
+<!--          <label> Linear Link</label>-->
+<!--          <select name="selectedKinematicLoopLinearLink" [(ngModel)]="kinematicLoopLinearLink.link" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let link of getLinks()" [value]="link.id">-->
+<!--              {{ link.id }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--        </div>-->
+<!--        <div *ngIf="kinematicPropertyAnalysis.selectedAnalysis.substring(0, 12) === 'Angular Link'">-->
+<!--          <label> Angular Link</label>-->
+<!--          <select name="selectedKinematicLoopAngularLink" [(ngModel)]="kinematicLoopAngularLink.link" (ngModelChange)="changePlotAnalysis()">-->
+<!--            <option *ngFor="let link of getLinks()" [value]="link.id">-->
+<!--              {{ link.id }}-->
+<!--            </option>-->
+<!--          </select>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div *ngIf="showChart">-->
+<!--        <apx-chart-->
+<!--          [series]="chartOptions.series!"-->
+<!--          [chart]="chartOptions.chart!"-->
+<!--          [xaxis]="chartOptions.xaxis!"-->
+<!--          [yaxis]="chartOptions.yaxis!"-->
+<!--          [dataLabels]="chartOptions.dataLabels!"-->
+<!--          [grid]="chartOptions.grid!"-->
+<!--          [stroke]="chartOptions.stroke!"-->
+<!--          [title]="chartOptions.title!"-->
+<!--        >-->
+<!--        </apx-chart>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--    <div-->
+<!--      class="tabPanel"-->
+<!--      *ngIf="getSelectedTab() === 2"-->
+<!--      style="margin: 4px 4px; padding: 4px; width: 500px; height: 500px; overflow-x: hidden; overflow-y: auto; text-align: justify"-->
+<!--    >-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'loop'"></div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'force'">-->
+<!--        <div>-->
+<!--          &lt;!&ndash; Statics &ndash;&gt;-->
+<!--          <input type="checkbox" value="showcaseStaticFBD" (change)="setOption($event)" [checked]="showcaseStaticFBD" />-->
+<!--          <label> Static Equilibrium </label>-->
+<!--        </div>-->
+<!--        &lt;!&ndash; TODO: utilize ng-container instead of div with ngIf and ngFor &ndash;&gt;-->
+<!--        <div *ngIf="showcaseStaticFBD">-->
+<!--          <div-->
+<!--            id="div_static{{ link.id }}"-->
+<!--            *ngFor="let link of getLinks()"-->
+<!--            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"-->
+<!--          >-->
+<!--            <input type="checkbox" id="checkbox_{{ link.id }}" (click)="updateTable('changeHeight', 'static', link.id)" />-->
+<!--            &lt;!&ndash;                   style="display: block; float: left">&ndash;&gt;-->
+<!--            <label>Link {{ link.id }}</label>-->
+<!--            <svg-->
+<!--              [attr.height]="getLinkProp(link, 'height')"-->
+<!--              [attr.width]="getLinkProp(link, 'width')"-->
+<!--              style="transform: scaleY(-1); display: none; margin: auto"-->
+<!--            >-->
+<!--              &lt;!&ndash; TODO: Make sure scale works accordingly &ndash;&gt;-->
+<!--              <g [attr.transform]="getLinkProp(link, 'transform')" [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">-->
+<!--                <path [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')"></path>-->
+<!--                &lt;!&ndash; TODO: Determine logic when the link shape is too big to showcase &ndash;&gt;-->
+<!--                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black" />-->
+<!--                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray" />-->
+<!--                <svg-->
+<!--                  *ngFor="let joint of link.joints"-->
+<!--                  [attr.x]="joint.x - 0.3"-->
+<!--                  [attr.y]="joint.y + 0.3"-->
+<!--                  style="font-size: 1px; text-anchor: middle; overflow: visible"-->
+<!--                >-->
+<!--                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">-->
+<!--                    {{ joint.id }}-->
+<!--                  </text>-->
+<!--                </svg>-->
+<!--                <g *ngFor="let force of link.forces">-->
+<!--                  <g [attr.id]="force.id">-->
+<!--                    <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>-->
+<!--                    <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>-->
+<!--                  </g>-->
+<!--                  <svg-->
+<!--                    [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"-->
+<!--                    [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"-->
+<!--                    style="font-size: 1px; text-anchor: middle; overflow: visible"-->
+<!--                  >-->
+<!--                    <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">-->
+<!--                      {{ force.id }}-->
+<!--                    </text>-->
+<!--                  </svg>-->
+<!--                </g>-->
+<!--                <g *ngFor="let joint of link.joints">-->
+<!--                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1" [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04"></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === -1"-->
+<!--                    [attr.d]="getForceLine(joint, 'neg', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path *ngIf="getForceAssumption(link, joint, 'y') === 1" [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04"></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === -1"-->
+<!--                    [attr.d]="getForceLine(joint, 'neg', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === 1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'pos', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === -1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'neg', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === 1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'pos', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === -1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'neg', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                </g>-->
+<!--              </g>-->
+<!--            </svg>-->
+<!--            <div *ngFor="let joint of link.joints" style="display: none">-->
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">&ndash;&gt;-->
+<!--              <label> Direction of Force {{ joint.id }}x</label>-->
+<!--              <br />-->
+<!--              <input type="radio" (change)="updateTable('x', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1" />-->
+<!--              <label> Positive (+) </label>-->
+<!--              <input type="radio" (change)="updateTable('x', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1" />-->
+<!--              <label> Negative (-) </label>-->
+<!--              <br />-->
 
-              <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">-->
-              <!--            <label> Neg Direction of Force {{joint.id}}x</label>-->
-              <!--            <br>-->
-              <label> Direction of Force {{ joint.id }}y</label>
-              <br />
-              <input type="radio" (change)="updateTable('y', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1" />
-              <label> Positive (+) </label>
-              <input type="radio" (change)="updateTable('y', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1" />
-              <label> Negative (-) </label>
-              <!--            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">-->
-              <!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
-              <!--            <br>-->
-            </div>
-            <div style="display: none">
-              <label>Moment reference</label>
-              <select [(ngModel)]="link.fixedLocation.fixedPoint" (ngModelChange)="updateTable('moment', 'static', link, link.fixedLocation.fixedPoint)">
-                <option *ngFor="let fixedPoint of link.fixedLocations" [value]="fixedPoint.id">
-                  {{ fixedPoint.label }}
-                </option>
-              </select>
-            </div>
-            <!-- General Force Equations -->
-            <div style="display: none">
-              &sum;F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Force Equations -->
-            <div style="display: none">
-              <!-- Display internal forces at joints -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ joint.id }}</sub>
-              </span>
-              <!-- Display forces due to gravity -->
-              <span *ngIf="gravityOn()">
-                + F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>grav</sub>
-              </span>
-              <!-- Display external forces -->
-              <span *ngFor="let force of link.forces">
-                + F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ force.id }}</sub>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Force Solutions X -->
-            <div style="display: none">
-              <!-- Display internal forces Equations at joints (x)-->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1"> + </span>
-                <span *ngIf="getForceAssumption(link, joint, 'x') !== 1"> - </span>
-                F
-                <sub>{{ joint.id }}x</sub>
-              </span>
-              <span *ngFor="let force of link.forces">
-                <span *ngIf="getForce(force, 'x') > 0"> + </span>
-                <span *ngIf="getForce(force, 'x') <= 0"> - </span>
-                {{ getForce(force, 'x') }}
-              </span>
-              = 0
-              <br />
-            </div>
-            <!-- Force Solutions Y -->
-            <div style="display: none">
-              <!-- Display internal forces Equations at joints (y)-->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1"> + </span>
-                <span *ngIf="getForceAssumption(link, joint, 'y') !== 1"> - </span>
-                F
-                <sub>{{ joint.id }}y</sub>
-              </span>
-              <!-- Display forces due to gravity -->
-              <span *ngIf="gravityOn()"> - {{ getLinkWeight(link) }} </span>
-              <!-- Display external forces equations (y) -->
-              <span *ngFor="let force of link.forces">
-                <span *ngIf="getForce(force, 'x') > 0"> + </span>
-                <span *ngIf="getForce(force, 'x') <= 0"> - </span>
-                {{ getForce(force, 'x') }}
-              </span>
-              = 0
-              <br />
-            </div>
-            <hr style="border-color: blue; display: none" />
-            <!-- General Moment -->
-            <div style="display: none">
-              &sum;M
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>{{ link.fixedLocation.fixedPoint }}</sub>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Moment Equations -->
-            <div style="display: none">
-              <!-- Showcase moment due to the reactionary forces occurring within each link's joint -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
-                  {{ getMomentSignEqs(joint, link) }} r
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>
-                  X F
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ joint.id }}</sub>
-                </span>
-              </span>
-              <!-- Showcase moment due to the gravity -->
-              <span *ngIf="gravityOn()">
-                <span *ngFor="let joint of link.joints">
-                  <span *ngIf="link.fixedLocation.fixedPoint !== joint.id">
-                    + r
-                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                    <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>
-                    X F
-                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                    <sub>grav</sub>
-                  </span>
-                </span>
-                <span *ngIf="link.fixedLocation.fixedPoint !== 'com'">
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ 'com' }}</sub>
-                  X F
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>grav</sub>
-                </span>
-              </span>
-              <!-- Showcase moment due to external forces being applied to a link -->
-              <span *ngFor="let force of link.forces">
-                + r
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ link.fixedLocation.fixedPoint }}-{{ force.id }}</sub>
-                X F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ force.id }}</sub>
-              </span>
-              <!-- Showcase torque due to input torque -->
-              <span *ngIf="containInputJoint(link)">
-                + T
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!-- Moment Solution  -->
-            <div style="display: none">
-              <!-- Moment due to the joint Equation -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
-                  {{ getMoment(joint, link, 'x') }}F
-                  <sub>{{ joint.id }}x</sub>
-                  {{ getMoment(joint, link, 'y') }}F
-                  <sub>{{ joint.id }}y</sub>
-                </span>
-              </span>
-              <!-- Moment due to the gravity -->
-              <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
-                {{ getMomentDueToGravity(link) }}
-              </span>
-              <!-- Moment due to external force -->
-              <span *ngFor="let force of link.forces">
-                {{ getMomentDueToForce(link, force) }}
-              </span>
-              <span *ngIf="containInputJoint(link)"> + T </span>
-              = 0
-            </div>
-          </div>
-        </div>
-        <div>
-          <!-- Dynamics -->
-          <input type="checkbox" value="showcaseDynamicFBD" (change)="setOption($event)" [checked]="showcaseDynamicFBD" />
-          <label> Utilizing Newton's II Law </label>
-        </div>
-        <div *ngIf="showcaseDynamicFBD">
-          <div
-            id="div_dynamic{{ link.id }}"
-            *ngFor="let link of getLinks()"
-            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"
-          >
-            <input type="checkbox" id="checkbox_{{ link.id }}" (click)="updateTable('changeHeight', 'dynamic', link.id)" />
-            <!--                   style="display: block; float: left">-->
-            <label>Link {{ link.id }}</label>
-            <svg
-              [attr.height]="getLinkProp(link, 'height')"
-              [attr.width]="getLinkProp(link, 'width')"
-              style="transform: scaleY(-1); display: none; margin: auto"
-            >
-              <!-- TODO: Make sure scale works accordingly -->
-              <g [attr.transform]="getLinkProp(link, 'transform')" [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">
-                <path [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')"></path>
-                <!-- TODO: Determine logic when the link shape is too big to showcase -->
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black" />
-                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray" />
-                <svg
-                  *ngFor="let joint of link.joints"
-                  [attr.x]="joint.x - 0.3"
-                  [attr.y]="joint.y + 0.3"
-                  style="font-size: 1px; text-anchor: middle; overflow: visible"
-                >
-                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">
-                    {{ joint.id }}
-                  </text>
-                </svg>
-                <g *ngFor="let force of link.forces">
-                  <g [attr.id]="force.id">
-                    <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>
-                    <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>
-                  </g>
-                  <svg
-                    [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"
-                    [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"
-                    style="font-size: 1px; text-anchor: middle; overflow: visible"
-                  >
-                    <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">
-                      {{ force.id }}
-                    </text>
-                  </svg>
-                </g>
-                <g *ngFor="let joint of link.joints">
-                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1" [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04"></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                    [attr.d]="getForceLine(joint, 'neg', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path *ngIf="getForceAssumption(link, joint, 'y') === 1" [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04"></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                    [attr.d]="getForceLine(joint, 'neg', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === 1"
-                    [attr.d]="getForceArrow(joint, 'pos', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'x') === -1"
-                    [attr.d]="getForceArrow(joint, 'neg', 'x')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === 1"
-                    [attr.d]="getForceArrow(joint, 'pos', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                  <path
-                    *ngIf="getForceAssumption(link, joint, 'y') === -1"
-                    [attr.d]="getForceArrow(joint, 'neg', 'y')"
-                    stroke="black"
-                    stroke-width="0.04"
-                  ></path>
-                </g>
-              </g>
-            </svg>
-            <div *ngFor="let joint of link.joints" style="display: none">
-              <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">-->
-              <label> Direction of Force {{ joint.id }}x</label>
-              <br />
-              <input type="radio" (change)="updateTable('x', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1" />
-              <label> Positive (+) </label>
-              <input type="radio" (change)="updateTable('x', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1" />
-              <label> Negative (-) </label>
-              <br />
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">&ndash;&gt;-->
+<!--              &lt;!&ndash;            <label> Neg Direction of Force {{joint.id}}x</label>&ndash;&gt;-->
+<!--              &lt;!&ndash;            <br>&ndash;&gt;-->
+<!--              <label> Direction of Force {{ joint.id }}y</label>-->
+<!--              <br />-->
+<!--              <input type="radio" (change)="updateTable('y', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1" />-->
+<!--              <label> Positive (+) </label>-->
+<!--              <input type="radio" (change)="updateTable('y', 'static', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1" />-->
+<!--              <label> Negative (-) </label>-->
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">&ndash;&gt;-->
+<!--              &lt;!&ndash;            <label> Neg Direction of Force {{joint.id}}y</label>&ndash;&gt;-->
+<!--              &lt;!&ndash;            <br>&ndash;&gt;-->
+<!--            </div>-->
+<!--            <div style="display: none">-->
+<!--              <label>Moment reference</label>-->
+<!--              <select [(ngModel)]="link.fixedLocation.fixedPoint" (ngModelChange)="updateTable('moment', 'static', link, link.fixedLocation.fixedPoint)">-->
+<!--                <option *ngFor="let fixedPoint of link.fixedLocations" [value]="fixedPoint.id">-->
+<!--                  {{ fixedPoint.label }}-->
+<!--                </option>-->
+<!--              </select>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; General Force Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &sum;F-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces at joints &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ joint.id }}</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display forces due to gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()">-->
+<!--                + F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>grav</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display external forces &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                + F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ force.id }}</sub>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Solutions X &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces Equations at joints (x)&ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1"> + </span>-->
+<!--                <span *ngIf="getForceAssumption(link, joint, 'x') !== 1"> - </span>-->
+<!--                F-->
+<!--                <sub>{{ joint.id }}x</sub>-->
+<!--              </span>-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                <span *ngIf="getForce(force, 'x') > 0"> + </span>-->
+<!--                <span *ngIf="getForce(force, 'x') <= 0"> - </span>-->
+<!--                {{ getForce(force, 'x') }}-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Solutions Y &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces Equations at joints (y)&ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1"> + </span>-->
+<!--                <span *ngIf="getForceAssumption(link, joint, 'y') !== 1"> - </span>-->
+<!--                F-->
+<!--                <sub>{{ joint.id }}y</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display forces due to gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()"> - {{ getLinkWeight(link) }} </span>-->
+<!--              &lt;!&ndash; Display external forces equations (y) &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                <span *ngIf="getForce(force, 'x') > 0"> + </span>-->
+<!--                <span *ngIf="getForce(force, 'x') <= 0"> - </span>-->
+<!--                {{ getForce(force, 'x') }}-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            <hr style="border-color: blue; display: none" />-->
+<!--            &lt;!&ndash; General Moment &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &sum;M-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <sub>{{ link.fixedLocation.fixedPoint }}</sub>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Moment Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Showcase moment due to the reactionary forces occurring within each link's joint &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">-->
+<!--                  {{ getMomentSignEqs(joint, link) }} r-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>-->
+<!--                  X F-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ joint.id }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase moment due to the gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()">-->
+<!--                <span *ngFor="let joint of link.joints">-->
+<!--                  <span *ngIf="link.fixedLocation.fixedPoint !== joint.id">-->
+<!--                    + r-->
+<!--                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                    <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>-->
+<!--                    X F-->
+<!--                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                    <sub>grav</sub>-->
+<!--                  </span>-->
+<!--                </span>-->
+<!--                <span *ngIf="link.fixedLocation.fixedPoint !== 'com'">-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ 'com' }}</sub>-->
+<!--                  X F-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>grav</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase moment due to external forces being applied to a link &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                + r-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ link.fixedLocation.fixedPoint }}-{{ force.id }}</sub>-->
+<!--                X F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ force.id }}</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase torque due to input torque &ndash;&gt;-->
+<!--              <span *ngIf="containInputJoint(link)">-->
+<!--                + T-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Moment Solution  &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Moment due to the joint Equation &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">-->
+<!--                  {{ getMoment(joint, link, 'x') }}F-->
+<!--                  <sub>{{ joint.id }}x</sub>-->
+<!--                  {{ getMoment(joint, link, 'y') }}F-->
+<!--                  <sub>{{ joint.id }}y</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Moment due to the gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">-->
+<!--                {{ getMomentDueToGravity(link) }}-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Moment due to external force &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                {{ getMomentDueToForce(link, force) }}-->
+<!--              </span>-->
+<!--              <span *ngIf="containInputJoint(link)"> + T </span>-->
+<!--              = 0-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          &lt;!&ndash; Dynamics &ndash;&gt;-->
+<!--          <input type="checkbox" value="showcaseDynamicFBD" (change)="setOption($event)" [checked]="showcaseDynamicFBD" />-->
+<!--          <label> Utilizing Newton's II Law </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="showcaseDynamicFBD">-->
+<!--          <div-->
+<!--            id="div_dynamic{{ link.id }}"-->
+<!--            *ngFor="let link of getLinks()"-->
+<!--            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"-->
+<!--          >-->
+<!--            <input type="checkbox" id="checkbox_{{ link.id }}" (click)="updateTable('changeHeight', 'dynamic', link.id)" />-->
+<!--            &lt;!&ndash;                   style="display: block; float: left">&ndash;&gt;-->
+<!--            <label>Link {{ link.id }}</label>-->
+<!--            <svg-->
+<!--              [attr.height]="getLinkProp(link, 'height')"-->
+<!--              [attr.width]="getLinkProp(link, 'width')"-->
+<!--              style="transform: scaleY(-1); display: none; margin: auto"-->
+<!--            >-->
+<!--              &lt;!&ndash; TODO: Make sure scale works accordingly &ndash;&gt;-->
+<!--              <g [attr.transform]="getLinkProp(link, 'transform')" [attr.height]="getLinkProp(link, 'height')" [attr.width]="getLinkProp(link, 'width')">-->
+<!--                <path [attr.d]="getLinkProp(link, 'd')" [attr.id]="link.id" [attr.fill]="getLinkProp(link, 'fill')"></path>-->
+<!--                &lt;!&ndash; TODO: Determine logic when the link shape is too big to showcase &ndash;&gt;-->
+<!--                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'r')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="black" />-->
+<!--                <circle *ngFor="let joint of link.joints" [attr.r]="getJointProp(joint, 'ring')" [attr.cx]="joint.x" [attr.cy]="joint.y" fill="gray" />-->
+<!--                <svg-->
+<!--                  *ngFor="let joint of link.joints"-->
+<!--                  [attr.x]="joint.x - 0.3"-->
+<!--                  [attr.y]="joint.y + 0.3"-->
+<!--                  style="font-size: 1px; text-anchor: middle; overflow: visible"-->
+<!--                >-->
+<!--                  <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">-->
+<!--                    {{ joint.id }}-->
+<!--                  </text>-->
+<!--                </svg>-->
+<!--                <g *ngFor="let force of link.forces">-->
+<!--                  <g [attr.id]="force.id">-->
+<!--                    <path [attr.d]="force.forceLine" [attr.stroke]="force.stroke" stroke-width="0.04"></path>-->
+<!--                    <path [attr.d]="force.forceArrow" [attr.fill]="force.fill"></path>-->
+<!--                  </g>-->
+<!--                  <svg-->
+<!--                    [attr.x]="(force.startCoord.x + force.endCoord.x) / 2"-->
+<!--                    [attr.y]="(force.startCoord.y + force.endCoord.y) / 2"-->
+<!--                    style="font-size: 1px; text-anchor: middle; overflow: visible"-->
+<!--                  >-->
+<!--                    <text style="font-size: 0.7px; text-anchor: middle; transform: scaleY(-1)">-->
+<!--                      {{ force.id }}-->
+<!--                    </text>-->
+<!--                  </svg>-->
+<!--                </g>-->
+<!--                <g *ngFor="let joint of link.joints">-->
+<!--                  <path *ngIf="getForceAssumption(link, joint, 'x') === 1" [attr.d]="getForceLine(joint, 'pos', 'x')" stroke="black" stroke-width="0.04"></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === -1"-->
+<!--                    [attr.d]="getForceLine(joint, 'neg', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path *ngIf="getForceAssumption(link, joint, 'y') === 1" [attr.d]="getForceLine(joint, 'pos', 'y')" stroke="black" stroke-width="0.04"></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === -1"-->
+<!--                    [attr.d]="getForceLine(joint, 'neg', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === 1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'pos', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'x') === -1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'neg', 'x')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === 1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'pos', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                  <path-->
+<!--                    *ngIf="getForceAssumption(link, joint, 'y') === -1"-->
+<!--                    [attr.d]="getForceArrow(joint, 'neg', 'y')"-->
+<!--                    stroke="black"-->
+<!--                    stroke-width="0.04"-->
+<!--                  ></path>-->
+<!--                </g>-->
+<!--              </g>-->
+<!--            </svg>-->
+<!--            <div *ngFor="let joint of link.joints" style="display: none">-->
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1">&ndash;&gt;-->
+<!--              <label> Direction of Force {{ joint.id }}x</label>-->
+<!--              <br />-->
+<!--              <input type="radio" (change)="updateTable('x', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === 1" />-->
+<!--              <label> Positive (+) </label>-->
+<!--              <input type="radio" (change)="updateTable('x', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1" />-->
+<!--              <label> Negative (-) </label>-->
+<!--              <br />-->
 
-              <!--            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">-->
-              <!--            <label> Neg Direction of Force {{joint.id}}x</label>-->
-              <!--            <br>-->
-              <label> Direction of Force {{ joint.id }}y</label>
-              <br />
-              <input type="radio" (change)="updateTable('y', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1" />
-              <label> Positive (+) </label>
-              <input type="radio" (change)="updateTable('y', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1" />
-              <label> Negative (-) </label>
-              <!--            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">-->
-              <!--            <label> Neg Direction of Force {{joint.id}}y</label>-->
-              <!--            <br>-->
-            </div>
-            <div style="display: none">
-              <label>Moment reference</label>
-              <select [(ngModel)]="link.fixedLocation.fixedPoint" (ngModelChange)="updateTable('moment', 'dynamic', link, link.fixedLocation.fixedPoint)">
-                <option *ngFor="let fixedPoint of link.fixedLocations" [value]="fixedPoint.id">
-                  {{ fixedPoint.label }}
-                </option>
-              </select>
-            </div>
-            <!-- General Force Equations -->
-            <div style="display: none">
-              &sum;F
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              = m * a
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Force Equations -->
-            <div style="display: none">
-              <!-- Display internal forces at joints -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ joint.id }}</sub>
-              </span>
-              <!-- Display forces due to gravity -->
-              <span *ngIf="gravityOn()">
-                + F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>grav</sub>
-              </span>
-              <!-- Display external forces -->
-              <span *ngFor="let force of link.forces">
-                + F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ force.id }}</sub>
-              </span>
-              = m * a
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Force Solutions X -->
-            <div style="display: none">
-              <!-- Display internal forces Equations at joints (x)-->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1"> + </span>
-                <span *ngIf="getForceAssumption(link, joint, 'x') !== 1"> - </span>
-                F
-                <sub>{{ joint.id }}x</sub>
-              </span>
-              <span *ngFor="let force of link.forces">
-                <span *ngIf="getForce(force, 'x') > 0"> + </span>
-                <span *ngIf="getForce(force, 'x') <= 0"> - </span>
-                {{ getForce(force, 'x') }}
-              </span>
-              = m * a
-              <br />
-            </div>
-            <!-- Force Solutions Y -->
-            <div style="display: none">
-              <!-- Display internal forces Equations at joints (y)-->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1"> + </span>
-                <span *ngIf="getForceAssumption(link, joint, 'y') !== 1"> - </span>
-                F
-                <sub>{{ joint.id }}y</sub>
-              </span>
-              <!-- Display forces due to gravity -->
-              <span *ngIf="gravityOn()"> - {{ getLinkWeight(link) }} </span>
-              <!-- Display external forces equations (y) -->
-              <span *ngFor="let force of link.forces">
-                <span *ngIf="getForce(force, 'x') > 0"> + </span>
-                <span *ngIf="getForce(force, 'x') <= 0"> - </span>
-                {{ getForce(force, 'x') }}
-              </span>
-              = m * a
-              <br />
-            </div>
-            <hr style="border-color: blue; display: none" />
-            <!-- General Moment -->
-            <div style="display: none">
-              &sum;M
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <sub>{{ link.fixedLocation.fixedPoint }}</sub>
-              = I * alpha
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              <br />
-            </div>
-            <!-- Moment Equations -->
-            <div style="display: none">
-              <!-- Showcase moment due to the reactionary forces occurring within each link's joint -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
-                  {{ getMomentSignEqs(joint, link) }} r
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>
-                  X F
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ joint.id }}</sub>
-                </span>
-              </span>
-              <!-- Showcase moment due to the gravity -->
-              <span *ngIf="gravityOn()">
-                <span *ngFor="let joint of link.joints">
-                  <span *ngIf="link.fixedLocation.fixedPoint !== joint.id">
-                    + r
-                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                    <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>
-                    X F
-                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                    <sub>grav</sub>
-                  </span>
-                </span>
-                <span *ngIf="link.fixedLocation.fixedPoint !== 'com'">
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ 'com' }}</sub>
-                  X F
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>grav</sub>
-                </span>
-              </span>
-              <!-- Showcase moment due to external forces being applied to a link -->
-              <span *ngFor="let force of link.forces">
-                + r
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ link.fixedLocation.fixedPoint }}-{{ force.id }}</sub>
-                X F
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ force.id }}</sub>
-              </span>
-              <!-- Showcase torque due to input torque -->
-              <span *ngIf="containInputJoint(link)">
-                + T
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-              </span>
-              = I * alpha
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!-- Moment Solution  -->
-            <div style="display: none">
-              <!-- Moment due to the joint Equation -->
-              <span *ngFor="let joint of link.joints; let indexOfElement = index">
-                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">
-                  {{ getMoment(joint, link, 'x') }}F
-                  <sub>{{ joint.id }}x</sub>
-                  {{ getMoment(joint, link, 'y') }}F
-                  <sub>{{ joint.id }}y</sub>
-                </span>
-              </span>
-              <!-- Moment due to the gravity -->
-              <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">
-                {{ getMomentDueToGravity(link) }}
-              </span>
-              <!-- Moment due to external force -->
-              <span *ngFor="let force of link.forces">
-                {{ getMomentDueToForce(link, force) }}
-              </span>
-              <span *ngIf="containInputJoint(link)"> + T </span>
-              = I * alpha
-            </div>
-          </div>
-        </div>
-        <!-- Copy and paste within statics -->
-      </div>
-      <div *ngIf="getSelectedAnalysis() === 'stress'"></div>
-      <div *ngIf="getSelectedAnalysis() === 'kinematic'">
-        <div>
-          <!-- Position Analysis -->
-          <input type="checkbox" value="showEqsPosition" (change)="setOption($event)" [checked]="showEqsPosition" />
-          <label> Position Analysis </label>
-        </div>
-        <div>
-          <!-- Kinematics utilizing Loops -->
-          <input type="checkbox" value="showEqsLoopMethod" (change)="setOption($event)" [checked]="showEqsLoopMethod" />
-          <label> Loop Method </label>
-        </div>
-        <div *ngIf="showEqsLoopMethod">
-          <div
-            id="div_kinematic{{ loop }}"
-            *ngFor="let loop of getKinematicLoops()"
-            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"
-          >
-            <input type="checkbox" id="checkbox_{{ loop }}" (click)="updateTable('changeHeight', 'kinematic', loop)" />
-            <!--                 style="display: block; float: left">-->
-            <label>Loop {{ loop }}</label>
-            <!-- General Velocity Equations -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                V
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[1] }}/{{ pair[0] }}</sub>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!--  w x r Equations -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                <!-- TODO: Be sure to replace certain characters with their actual /u character! -->
-                ω
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                X r
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair }}</sub>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!-- w x r (x) Solutions -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="pairContainInputJoint(pair)">
-                  {{ determineInputVel(pair, 'x') }}
-                </span>
-                <span *ngIf="!pairContainInputJoint(pair)">
-                  {{ determineUnknownVel(pair, 'x') }}ω
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                </span>
-              </span>
-              = 0
-            </div>
-            <!-- w x r (y) Solutions -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="pairContainInputJoint(pair)">
-                  {{ determineInputVel(pair, 'y') }}
-                </span>
-                <span *ngIf="!pairContainInputJoint(pair)">
-                  {{ determineUnknownVel(pair, 'y') }}ω
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                </span>
-              </span>
-              = 0
-            </div>
-            <hr style="border-color: blue; display: none" />
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                A
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[1] }}/{{ pair[0] }}</sub>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!--  w x w x r + a x r Equations -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="indexOfElement !== 0"> + </span>
-                <!-- TODO: Be sure to replace certain characters with their actual /u character! -->
-                ω
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                X ω
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                X r
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair }}</sub>
-                + α
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                X r
-                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                <sub>{{ pair }}</sub>
-              </span>
-              = 0
-              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-            </div>
-            <!-- w x w x r + a x r (x) Solutions -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="pairContainInputJoint(pair)">
-                  {{ determineInputAcc(pair, 'x') }}
-                </span>
-                <span *ngIf="!pairContainInputJoint(pair)">
-                  {{ determineUnknownAcc(pair, 'x') }}α
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                </span>
-              </span>
-              = 0
-            </div>
-            <!-- w x w x r + a x r (y) Solutions -->
-            <div>
-              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">
-                <span *ngIf="pairContainInputJoint(pair)">
-                  {{ determineInputAcc(pair, 'y') }}
-                </span>
-                <span *ngIf="!pairContainInputJoint(pair)">
-                  {{ determineUnknownAcc(pair, 'y') }}α
-                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>
-                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>
-                </span>
-              </span>
-              = 0
-            </div>
-          </div>
-        </div>
-        <div>
-          <!-- Kinematics utilizing Instant Centers -->
-          <input type="checkbox" value="" (change)="setOption($event)" [checked]="" />
-          <label> Instant Center Method </label>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('x', link, joint)" [checked]="getForceAssumption(link, joint, 'x') === -1">&ndash;&gt;-->
+<!--              &lt;!&ndash;            <label> Neg Direction of Force {{joint.id}}x</label>&ndash;&gt;-->
+<!--              &lt;!&ndash;            <br>&ndash;&gt;-->
+<!--              <label> Direction of Force {{ joint.id }}y</label>-->
+<!--              <br />-->
+<!--              <input type="radio" (change)="updateTable('y', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === 1" />-->
+<!--              <label> Positive (+) </label>-->
+<!--              <input type="radio" (change)="updateTable('y', 'dynamic', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1" />-->
+<!--              <label> Negative (-) </label>-->
+<!--              &lt;!&ndash;            <input type="radio" (change)="updateTable('y', link, joint)" [checked]="getForceAssumption(link, joint, 'y') === -1">&ndash;&gt;-->
+<!--              &lt;!&ndash;            <label> Neg Direction of Force {{joint.id}}y</label>&ndash;&gt;-->
+<!--              &lt;!&ndash;            <br>&ndash;&gt;-->
+<!--            </div>-->
+<!--            <div style="display: none">-->
+<!--              <label>Moment reference</label>-->
+<!--              <select [(ngModel)]="link.fixedLocation.fixedPoint" (ngModelChange)="updateTable('moment', 'dynamic', link, link.fixedLocation.fixedPoint)">-->
+<!--                <option *ngFor="let fixedPoint of link.fixedLocations" [value]="fixedPoint.id">-->
+<!--                  {{ fixedPoint.label }}-->
+<!--                </option>-->
+<!--              </select>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; General Force Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &sum;F-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              = m * a-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces at joints &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ joint.id }}</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display forces due to gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()">-->
+<!--                + F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>grav</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display external forces &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                + F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ force.id }}</sub>-->
+<!--              </span>-->
+<!--              = m * a-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Solutions X &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces Equations at joints (x)&ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'x') === 1"> + </span>-->
+<!--                <span *ngIf="getForceAssumption(link, joint, 'x') !== 1"> - </span>-->
+<!--                F-->
+<!--                <sub>{{ joint.id }}x</sub>-->
+<!--              </span>-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                <span *ngIf="getForce(force, 'x') > 0"> + </span>-->
+<!--                <span *ngIf="getForce(force, 'x') <= 0"> - </span>-->
+<!--                {{ getForce(force, 'x') }}-->
+<!--              </span>-->
+<!--              = m * a-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Force Solutions Y &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Display internal forces Equations at joints (y)&ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0 && getForceAssumption(link, joint, 'y') === 1"> + </span>-->
+<!--                <span *ngIf="getForceAssumption(link, joint, 'y') !== 1"> - </span>-->
+<!--                F-->
+<!--                <sub>{{ joint.id }}y</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Display forces due to gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()"> - {{ getLinkWeight(link) }} </span>-->
+<!--              &lt;!&ndash; Display external forces equations (y) &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                <span *ngIf="getForce(force, 'x') > 0"> + </span>-->
+<!--                <span *ngIf="getForce(force, 'x') <= 0"> - </span>-->
+<!--                {{ getForce(force, 'x') }}-->
+<!--              </span>-->
+<!--              = m * a-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            <hr style="border-color: blue; display: none" />-->
+<!--            &lt;!&ndash; General Moment &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &sum;M-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <sub>{{ link.fixedLocation.fixedPoint }}</sub>-->
+<!--              = I * alpha-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              <br />-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Moment Equations &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Showcase moment due to the reactionary forces occurring within each link's joint &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">-->
+<!--                  {{ getMomentSignEqs(joint, link) }} r-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>-->
+<!--                  X F-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ joint.id }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase moment due to the gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn()">-->
+<!--                <span *ngFor="let joint of link.joints">-->
+<!--                  <span *ngIf="link.fixedLocation.fixedPoint !== joint.id">-->
+<!--                    + r-->
+<!--                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                    <sub>{{ link.fixedLocation.fixedPoint }}-{{ joint.id }}</sub>-->
+<!--                    X F-->
+<!--                    <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                    <sub>grav</sub>-->
+<!--                  </span>-->
+<!--                </span>-->
+<!--                <span *ngIf="link.fixedLocation.fixedPoint !== 'com'">-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ link.fixedLocation.fixedPoint }}-{{ 'com' }}</sub>-->
+<!--                  X F-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>grav</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase moment due to external forces being applied to a link &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                + r-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ link.fixedLocation.fixedPoint }}-{{ force.id }}</sub>-->
+<!--                X F-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ force.id }}</sub>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Showcase torque due to input torque &ndash;&gt;-->
+<!--              <span *ngIf="containInputJoint(link)">-->
+<!--                + T-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--              </span>-->
+<!--              = I * alpha-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; Moment Solution  &ndash;&gt;-->
+<!--            <div style="display: none">-->
+<!--              &lt;!&ndash; Moment due to the joint Equation &ndash;&gt;-->
+<!--              <span *ngFor="let joint of link.joints; let indexOfElement = index">-->
+<!--                <span *ngIf="joint.id !== link.fixedLocation.fixedPoint">-->
+<!--                  {{ getMoment(joint, link, 'x') }}F-->
+<!--                  <sub>{{ joint.id }}x</sub>-->
+<!--                  {{ getMoment(joint, link, 'y') }}F-->
+<!--                  <sub>{{ joint.id }}y</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Moment due to the gravity &ndash;&gt;-->
+<!--              <span *ngIf="gravityOn() && link.fixedLocation.fixedPoint !== 'com'">-->
+<!--                {{ getMomentDueToGravity(link) }}-->
+<!--              </span>-->
+<!--              &lt;!&ndash; Moment due to external force &ndash;&gt;-->
+<!--              <span *ngFor="let force of link.forces">-->
+<!--                {{ getMomentDueToForce(link, force) }}-->
+<!--              </span>-->
+<!--              <span *ngIf="containInputJoint(link)"> + T </span>-->
+<!--              = I * alpha-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        &lt;!&ndash; Copy and paste within statics &ndash;&gt;-->
+<!--      </div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'stress'"></div>-->
+<!--      <div *ngIf="getSelectedAnalysis() === 'kinematic'">-->
+<!--        <div>-->
+<!--          &lt;!&ndash; Position Analysis &ndash;&gt;-->
+<!--          <input type="checkbox" value="showEqsPosition" (change)="setOption($event)" [checked]="showEqsPosition" />-->
+<!--          <label> Position Analysis </label>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          &lt;!&ndash; Kinematics utilizing Loops &ndash;&gt;-->
+<!--          <input type="checkbox" value="showEqsLoopMethod" (change)="setOption($event)" [checked]="showEqsLoopMethod" />-->
+<!--          <label> Loop Method </label>-->
+<!--        </div>-->
+<!--        <div *ngIf="showEqsLoopMethod">-->
+<!--          <div-->
+<!--            id="div_kinematic{{ loop }}"-->
+<!--            *ngFor="let loop of getKinematicLoops()"-->
+<!--            style="margin: 4px; padding: 4px; height: 50px; width: 500px; overflow: scroll; text-align: justify; display: block; text-indent: 30px"-->
+<!--          >-->
+<!--            <input type="checkbox" id="checkbox_{{ loop }}" (click)="updateTable('changeHeight', 'kinematic', loop)" />-->
+<!--            &lt;!&ndash;                 style="display: block; float: left">&ndash;&gt;-->
+<!--            <label>Loop {{ loop }}</label>-->
+<!--            &lt;!&ndash; General Velocity Equations &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                V-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[1] }}/{{ pair[0] }}</sub>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash;  w x r Equations &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                &lt;!&ndash; TODO: Be sure to replace certain characters with their actual /u character! &ndash;&gt;-->
+<!--                ω-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                X r-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair }}</sub>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; w x r (x) Solutions &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="pairContainInputJoint(pair)">-->
+<!--                  {{ determineInputVel(pair, 'x') }}-->
+<!--                </span>-->
+<!--                <span *ngIf="!pairContainInputJoint(pair)">-->
+<!--                  {{ determineUnknownVel(pair, 'x') }}ω-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--            </div>-->
+<!--            &lt;!&ndash; w x r (y) Solutions &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="pairContainInputJoint(pair)">-->
+<!--                  {{ determineInputVel(pair, 'y') }}-->
+<!--                </span>-->
+<!--                <span *ngIf="!pairContainInputJoint(pair)">-->
+<!--                  {{ determineUnknownVel(pair, 'y') }}ω-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--            </div>-->
+<!--            <hr style="border-color: blue; display: none" />-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                A-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[1] }}/{{ pair[0] }}</sub>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash;  w x w x r + a x r Equations &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="indexOfElement !== 0"> + </span>-->
+<!--                &lt;!&ndash; TODO: Be sure to replace certain characters with their actual /u character! &ndash;&gt;-->
+<!--                ω-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                X ω-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                X r-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair }}</sub>-->
+<!--                + α-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                X r-->
+<!--                <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                <sub>{{ pair }}</sub>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--              <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--            </div>-->
+<!--            &lt;!&ndash; w x w x r + a x r (x) Solutions &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="pairContainInputJoint(pair)">-->
+<!--                  {{ determineInputAcc(pair, 'x') }}-->
+<!--                </span>-->
+<!--                <span *ngIf="!pairContainInputJoint(pair)">-->
+<!--                  {{ determineUnknownAcc(pair, 'x') }}α-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--            </div>-->
+<!--            &lt;!&ndash; w x w x r + a x r (y) Solutions &ndash;&gt;-->
+<!--            <div>-->
+<!--              <span *ngFor="let pair of getLoopPairs(loop); let indexOfElement = index">-->
+<!--                <span *ngIf="pairContainInputJoint(pair)">-->
+<!--                  {{ determineInputAcc(pair, 'y') }}-->
+<!--                </span>-->
+<!--                <span *ngIf="!pairContainInputJoint(pair)">-->
+<!--                  {{ determineUnknownAcc(pair, 'y') }}α-->
+<!--                  <span [innerHTML]="'\u20d7'" style="vertical-align: 8px"></span>-->
+<!--                  <sub>{{ pair[0] }}/{{ pair[1] }}</sub>-->
+<!--                </span>-->
+<!--              </span>-->
+<!--              = 0-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div>-->
+<!--          &lt;!&ndash; Kinematics utilizing Instant Centers &ndash;&gt;-->
+<!--          <input type="checkbox" value="" (change)="setOption($event)" [checked]="" />-->
+<!--          <label> Instant Center Method </label>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->

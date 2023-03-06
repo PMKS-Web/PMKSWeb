@@ -12,10 +12,13 @@ import { Coord } from '../../model/coord';
 })
 export class TemplatesPopupComponent implements OnInit {
   private static popUpWindow: SVGElement;
+
   constructor() {}
 
   ngOnInit(): void {
-    TemplatesPopupComponent.popUpWindow = document.getElementById('templatesPopup') as unknown as SVGElement;
+    TemplatesPopupComponent.popUpWindow = document.getElementById(
+      'templatesPopup'
+    ) as unknown as SVGElement;
   }
 
   static showTemplates() {
@@ -135,7 +138,7 @@ export class TemplatesPopupComponent implements OnInit {
       //   center_cord = GridComponent.scaleFactor * left + GridComponent.gridOffset.x;
       //   return 'translate(' + (GridComponent.gridOffset.x - center_cord) + ' ' + (GridComponent.gridOffset.y - center_cord) + ')';
       case 'scale':
-        return 'scale(' + GridComponent.scaleFactor + ')';
+      // return 'scale(' + GridComponent.scaleFactor + ')';
       // case 'transform':
       //   left = link.bound.b1.x;
       //   bot = link.bound.b1.y;

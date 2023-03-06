@@ -4,6 +4,7 @@ import { LengthUnit, AngleUnit, TorqueUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { GridComponent } from '../grid/grid.component';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -12,6 +13,7 @@ import { GridComponent } from '../grid/grid.component';
 })
 export class SettingsPanelComponent {
   constructor(public settingsService: SettingsService, private fb: FormBuilder) {}
+
   currentLengthUnit!: LengthUnit;
   currentAngleUnit!: AngleUnit;
   currentTorqueUnit!: TorqueUnit;
@@ -82,7 +84,7 @@ export class SettingsPanelComponent {
   );
 
   sendComingSoon(): void {
-    GridComponent.sendNotification('This feature is coming soon!');
+    NewGridComponent.sendNotification('This feature is coming soon!');
   }
 }
 
