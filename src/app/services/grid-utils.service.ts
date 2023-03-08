@@ -94,6 +94,10 @@ export class GridUtilsService {
     }
   }
 
+  getPrisAngle(joint: Joint) {
+    return (joint as PrisJoint).angle;
+  }
+
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 3);
