@@ -109,22 +109,27 @@
     </svg>
   </g>
   <g id='linkHolder' style='transform: scaleY(-1)'>
-    <path
-      *ngFor='let link of mechanismSrv.getLinks()'
-      (mouseover)='link.showHighlight = true'
-      (mouseout)='link.showHighlight = false'
-      (mousedown)='activeObjService.updateSelectedObj(link)'
-      (contextmenu)='setLastRightClick(link)'
-      [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
-      [attr.id]='link.id'
-      [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
-      [attr.fill-opacity]=0.7
-      [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
-      [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-    >
-    </path>
+    <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+      <path
+        *ngIf='gridUtils.typeOfLink(link) == "R"'
+        (mouseover)='link.showHighlight = true'
+        (mouseout)='link.showHighlight = false'
+        (mousedown)='activeObjService.updateSelectedObj(link)'
+        (contextmenu)='setLastRightClick(link)'
+        [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
+        [attr.id]='link.id'
+        [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
+        [attr.fill-opacity]=0.7
+        [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
+        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+      >
+      </path>
+      <image *ngIf='gridUtils.typeOfLink(link) == "P"'
+             xlink:href='../../../assets/SliderTrackMid.svg'
+             width='3.6' x='-1.8' y='-1.8' height='3.6' style='transform: scaleY(-1)' />
+    </ng-container>
   </g>
-  <g id='jointBGHolder' style='transform: scaleY(-1)'>
+  <g id='jointHolder' style='transform: scaleY(-1)'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
       [attr.x]='joint.x' [attr.y]='joint.y'
@@ -137,7 +142,7 @@
       style='overflow: visible'
       cursor='move'
     >
-      <!-- condition with regular revolute joint -->
+      <!--       condition with regular revolute joint -->
       <circle
         id='joint_{{ joint.id }}_ring'
         [attr.r]='(gridUtils.getJointR(joint) * 7) / 5'
@@ -154,6 +159,34 @@
         stroke='#00000000'
         [attr.stroke-width]='gridUtils.getJointR(joint) * 2'
       />
+
+      <!--      <circle-->
+      <!--        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"-->
+      <!--        r='0.06667'-->
+      <!--        cx='0%'-->
+      <!--        cy='0%'-->
+      <!--        [attr.fill]='"black"'-->
+      <!--        stroke='#00000000'-->
+      <!--        stroke-width='0.2'-->
+      <!--      ></circle>-->
+      <!--      <circle-->
+      <!--        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && gridUtils.getInput(joint)"-->
+      <!--        r='0.06667'-->
+      <!--        cx='0%'-->
+      <!--        cy='0%'-->
+      <!--        fill='green'-->
+      <!--        stroke='#00000000'-->
+      <!--        stroke-width='0.2'-->
+      <!--      ></circle>-->
+      <!--      <path-->
+      <!--        *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint)"-->
+      <!--        d='M -0.16 -0.16 L 0.16 -0.16 C 0.182077 -0.16 0.2 -0.142077 0.2 -0.12 L 0.2 -0.12-->
+      <!--                 L 0.2 0.12 C 0.2 0.142077 0.182077 0.16 0.16 0.16 L 0.16 0.16 L -0.16 0.16 C -0.182077 0.16 -0.2 0.142077-->
+      <!--                  -0.2 0.12 L -0.2 0.12 L -0.2 -0.12 C -0.2 -0.142077 -0.182077 -0.16 -0.16 -0.16 Z'-->
+      <!--        [attr.stroke]='"black"'-->
+      <!--        stroke-width='0.04'-->
+      <!--        fill-opacity='0'-->
+      <!--      ></path>-->
     </svg>
   </g>
   <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>

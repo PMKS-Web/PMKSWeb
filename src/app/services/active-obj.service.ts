@@ -45,14 +45,14 @@ export class ActiveObjService {
           console.log('Force selected');
           this.objType = 'Force';
           this.selectedForce = newActiveObj;
-          this.selectedForce.isStartSelected = false;
-          this.selectedForce.isEndSelected = false;
           break;
         }
         case Coord: {
           console.log('Force endpoint selected');
           this.objType = 'Force';
           this.selectedForce = forceParent!;
+          this.selectedForce.isStartSelected = false;
+          this.selectedForce.isEndSelected = false;
           //This is only for when a force endpoint is slected
           if (this.selectedForce.startCoord === newActiveObj) {
             this.selectedForce.isStartSelected = true;
