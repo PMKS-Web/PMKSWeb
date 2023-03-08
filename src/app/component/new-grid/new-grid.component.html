@@ -124,7 +124,7 @@
     >
     </path>
   </g>
-  <g id='jointBGHolder' style='transform: scaleY(-1)'>
+  <g id='jointHolder' style='transform: scaleY(-1)'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
       [attr.x]='joint.x' [attr.y]='joint.y'
@@ -150,7 +150,7 @@
         [attr.r]='gridUtils.getJointR(joint)'
         [attr.cx]='0'
         [attr.cy]='0'
-        fill='white'
+        fill='black'
         stroke='#00000000'
         [attr.stroke-width]='gridUtils.getJointR(joint) * 2'
       />

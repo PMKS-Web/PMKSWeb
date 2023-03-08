@@ -738,7 +738,7 @@ export class RealLink extends Link {
   // }
 
   static getD(allJoints: Joint[]) {
-    const hi = 'hello :)';
+    let width: number = 0.5;
     let d = '';
     // determine path of link (https://stackoverflow.com/questions/21778506/finding-largest-subset-of-points-forming-a-convex-polygon)
     // 1st option: have set axis and extract members from this axis
@@ -833,18 +833,18 @@ export class RealLink extends Link {
           // const b2 = c1.y - Math.tan(angle) * c1.x;
           return [
             new Coord(
-              0.2 * Math.cos(angle + Math.PI) + c1.x,
-              0.2 * Math.sin(angle + Math.PI) + c1.y
+              width * Math.cos(angle + Math.PI) + c1.x,
+              width * Math.sin(angle + Math.PI) + c1.y
             ),
             new Coord(
-              0.2 * Math.cos(angle + Math.PI) + c2.x,
-              0.2 * Math.sin(angle + Math.PI) + c2.y
+              width * Math.cos(angle + Math.PI) + c2.x,
+              width * Math.sin(angle + Math.PI) + c2.y
             ),
           ];
         } else {
           return [
-            new Coord(0.2 * Math.cos(angle) + c1.x, 0.2 * Math.sin(angle) + c1.y),
-            new Coord(0.2 * Math.cos(angle) + c2.x, 0.2 * Math.sin(angle) + c2.y),
+            new Coord(width * Math.cos(angle) + c1.x, width * Math.sin(angle) + c1.y),
+            new Coord(width * Math.cos(angle) + c2.x, width * Math.sin(angle) + c2.y),
           ];
         }
         // const b1 = determineYIntersect(c1.x, c1.y, Math.atan(angle));
@@ -864,10 +864,18 @@ export class RealLink extends Link {
         const point1c = new Coord((point1a.x + point1b.x) / 2, (point1a.y + point1b.y) / 2);
         const [point2a, point2b] = determinePoint(normal_angle, coord1, coord2, 'neg');
         const point2c = new Coord((point2a.x + point2b.x) / 2, (point2a.y + point2b.y) / 2);
-        [point1, point2] =
-          getDistance(coord3, point1c) > getDistance(coord3, point2c)
-            ? [point1a, point1b]
-            : [point2a, point2b];
+
+        if (getDistance(coord3, point1c) > getDistance(coord3, point2c)) {
+          [point1, point2] = [point1a, point1b];
+          if (clockWiseToggle == -1) {
+            clockWiseToggle = 1;
+          }
+        } else {
+          [point1, point2] = [point2a, point2b];
+          if (clockWiseToggle == -1) {
+            clockWiseToggle = 0;
+          }
+        }
         // if (getDistance(new Coord(coord3.y * 0.2 * Math.cos(normal_angle),coord3.y * 0.2 * Math.sin(normal_angle)),
         //         new Coord(coord1.x + coord2.x, coord1.y + coord2.y)) >
         //     getDistance(new Coord(coord3.y * 0.2 * Math.cos(normal_angle + (Math.PI / 2)),coord3.y * 0.2 * Math.sin(normal_angle + (Math.PI / 2))),
@@ -888,117 +896,31 @@ export class RealLink extends Link {
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
       } else {
         // The end position is being inserted here
-        d += ' C ' + point1.x.toString() + ' ' + point1.y.toString();
+        d +=
+          ' A ' +
+          width.toString() +
+          ' ' +
+          width.toString() +
+          ' 0 0 ' +
+          clockWise +
+          ' ' +
+          point1.x.toString() +
+          ' ' +
+          point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
       }
       return d;
-    }
-
-    function determineC(
-      d: string,
-      index: number,
-      desiredJoint: Joint,
-      point1?: Coord,
-      point2?: Coord
-    ): [string, Coord, Coord] {
-      let point3: Coord;
-      let point4: Coord;
-
-      function getDesiredString(d: string, index: number, firstPoint: boolean) {
-        let point1StartingIndex: number;
-        let point1EndingIndex: number;
-        let point1String: string[];
-        let coord1: Coord;
-
-        let point2StartingIndex: number;
-        let point2EndingIndex: number;
-        let point2String: string[];
-        let coord2: Coord;
-
-        if (index === 0 && firstPoint) {
-          point1StartingIndex = getPosition(d, 'M', index + 1) + 2;
-          point1EndingIndex = getPosition(d, 'L', index + 1);
-          point2StartingIndex = getPosition(d, 'L', index + 1) + 2;
-          point2EndingIndex = getPosition(d, 'C', index + 1);
-        } else {
-          point1StartingIndex = getPosition(d, 'C', index + 1) + 2;
-          point1EndingIndex = getPosition(d, 'L', index + 2);
-          if (point1EndingIndex < d.length) {
-            point2StartingIndex = getPosition(d, 'L', index + 2) + 2;
-            point2EndingIndex = getPosition(d, 'C', index + 2);
-          } else {
-            // need to get first L
-            point2StartingIndex = getPosition(d, 'L', 1) + 2;
-            point2EndingIndex = getPosition(d, 'C', 1);
-          }
-        }
-        point1String = pullStringWithinString(d, point1StartingIndex, point1EndingIndex).split(
-          ' ',
-          2
-        );
-        point2String = pullStringWithinString(d, point2StartingIndex, point2EndingIndex).split(
-          ' ',
-          2
-        );
-        coord1 = new Coord(parseFloat(point1String[0]), parseFloat(point1String[1]));
-        coord2 = new Coord(parseFloat(point2String[0]), parseFloat(point2String[1]));
-        return [coord1, coord2];
-      }
-
-      if (point1 === undefined || point2 === undefined) {
-        [point1, point2] = getDesiredString(d, index, true);
-      }
-
-      [point3, point4] = getDesiredString(d, index, false);
-
-      const angle1 = Math.atan2(point2.y - point1.y, point2.x - point1.x);
-      const angle2 = Math.atan2(point4.y - point3.y, point4.x - point3.x);
-
-      const [x_intersect, y_intersect] = line_intersect(
-        point1.x,
-        point1.y,
-        point2.x,
-        point2.y,
-        point3.x,
-        point3.y,
-        point4.x,
-        point4.y
-      );
-      let fillet_radius: number;
-      fillet_radius = getDistance(desiredJoint, new Coord(x_intersect, y_intersect)) / 3;
-      if (fillet_radius > 0.3) {
-        fillet_radius = 0.3;
-      }
-
-      const bez_point1 = new Coord(
-        fillet_radius * Math.cos(angle1) + point2.x,
-        fillet_radius * Math.sin(angle1) + point2.y
-      );
-      const bez_point2 = new Coord(
-        fillet_radius * -Math.cos(angle2) + point3.x,
-        fillet_radius * -Math.sin(angle2) + point3.y
-      );
-      // find point within d that contains the desired C and insert
-      const desiredIndex = getPosition(d, 'C', index + 1) + 2;
-      d = insertStringWithinString(
-        d,
-        desiredIndex,
-        bez_point1.x.toString() +
-          ' ' +
-          bez_point1.y.toString() +
-          ' ' +
-          bez_point2.x.toString() +
-          ' ' +
-          bez_point2.y.toString() +
-          ' '
-      );
-      return [d, point3, point4];
     }
 
     const jointIDtoIndex = new Map<string, number>();
     allJoints.forEach((j, ind) => {
       jointIDtoIndex.set(j.id, ind);
     });
+
+    //This contrls the 6th varibles in the A (Arc), 1 means it swewps the arc in the large side but when there are two link, it becomes indetermine
+    let clockWiseToggle = -1;
+    let clockWise = 'SETLATER';
+
     for (let i = 0; i < desiredJointsIDs.length; i++) {
       const j = (i + 1) % desiredJointsIDs.length;
       if (desiredJointsIDs.length === 2) {
@@ -1009,6 +931,7 @@ export class RealLink extends Link {
         );
       } else {
         const k = (i + 2) % desiredJointsIDs.length;
+        // console.log(desiredJointsIDs[i], desiredJointsIDs[j], desiredJointsIDs[k]);
         d = determineL(
           d,
           allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
@@ -1017,21 +940,42 @@ export class RealLink extends Link {
         );
       }
     }
-    // get point in M and insert as last C
-    const firstPointIndex = 2;
-    const lastPointIndex = getPosition(d, 'L', 1);
-    d += ' C ' + d.slice(firstPointIndex, lastPointIndex);
-    let point1: Coord;
-    let point2: Coord;
-    for (let i = 0; i < desiredJointsIDs.length; i++) {
-      const desiredJointID = desiredJointsIDs[(i + 1) % desiredJointsIDs.length];
-      const desiredJoint = allJoints.find((j) => j.id === desiredJointID);
-      if (i === 0) {
-        [d, point1, point2] = determineC(d, i, desiredJoint!);
-      } else {
-        [d, point1, point2] = determineC(d, i, desiredJoint!, point1!, point2!);
+
+    const splitPath = d.split(' ');
+
+    const startX = splitPath[1];
+    const startY = splitPath[2];
+    d +=
+      ' A ' +
+      width.toString() +
+      ' ' +
+      width.toString() +
+      ' 0 0 ' +
+      clockWise +
+      ' ' +
+      startX +
+      ' ' +
+      startY;
+
+    if (allJoints.length == 2) {
+      const isClockWise = allJoints[0].y < allJoints[1].y ? '0' : '1';
+      d = d.replace('SETLATER', isClockWise);
+      d = d.replace('SETLATER', isClockWise);
+    }
+    if (clockWiseToggle == 0) {
+      while (d.includes('SETLATER')) {
+        d = d.replace('SETLATER', '0');
+      }
+    } else {
+      while (d.includes('SETLATER')) {
+        d = d.replace('SETLATER', '1');
       }
     }
+
+    // console.log(d.split(' '));
+
+    // d = d.substring(0, d.indexOf('A'))
+
     return d;
   }
 
