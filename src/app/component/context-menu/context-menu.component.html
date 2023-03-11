@@ -1,7 +1,7 @@
 <div id='contextMenu' cdkMenu>
   <div *ngFor='let menuItem of menuItems'>
     <div id='menu-item' cdkMenuItem (cdkMenuItemTriggered)='menuItem.action()'>
-      <mat-icon>{{menuItem.icon}}</mat-icon>
+      <mat-icon svgIcon='{{menuItem.icon}}'></mat-icon>
       <button>{{menuItem.label}}</button>
     </div>
   </div>

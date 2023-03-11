@@ -109,21 +109,21 @@ export class NewGridComponent {
           new cMenuItem(
             'Delete Force',
             this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'delete'
+            'remove'
           )
         );
         this.cMenuItems.push(
           new cMenuItem(
             'Switch Force Direction',
             this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
-            'delete'
+            'switch_force_dir'
           )
         );
         this.cMenuItems.push(
           new cMenuItem(
             (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
             this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
-            'delete'
+            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
           )
         );
         break;
@@ -137,11 +137,11 @@ export class NewGridComponent {
           )
         );
         this.cMenuItems.push(
-          new cMenuItem('Attach Force', this.createForce.bind(this), 'reduce_capacity')
+          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'add_link'));
+        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'remove_done')
+          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
         );
         break;
       case 'PrisJoint':
@@ -151,23 +151,23 @@ export class NewGridComponent {
           new cMenuItem(
             'Delete Joint',
             this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'delete'
+            'remove'
           )
         );
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'edit'));
+        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
             new cMenuItem(
               'Remove Ground',
               this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'delete'
+              'remove_ground'
             )
           );
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
-              'delete'
+              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
           );
         } else {
@@ -175,7 +175,7 @@ export class NewGridComponent {
             new cMenuItem(
               'Add Ground',
               this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'delete'
+              'add_ground'
             )
           );
         }
@@ -183,13 +183,13 @@ export class NewGridComponent {
           new cMenuItem(
             this.lastRightClick instanceof PrisJoint ? 'Remove Slider' : 'Add Slider',
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-            'circle'
+            this.lastRightClick instanceof PrisJoint ? 'remove_slider' : 'add_slider'
           )
         );
 
         break;
       case 'String': //This means grid
-        this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'add'));
+        this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'new_link'));
     }
   }
 

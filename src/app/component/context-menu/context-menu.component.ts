@@ -3,7 +3,7 @@ import { Component, Input } from '@angular/core';
 export class cMenuItem {
   public label: string = 'none';
   public action: Function = () => {
-    console.log('Not implemented');
+    console.error('Not implemented');
   };
   public icon: string = 'none';
 
