@@ -1,4 +1,6 @@
-<section>
-  <ng-content select="[alwaysShown]"></ng-content>
-  <ng-content *ngIf="expanded"></ng-content>
-</section>
+<div id='collapsibleContainer' [ngClass]="warning? 'warning-color' : 'normal-color'">
+  <ng-content select='[alwaysShown]'></ng-content>
+  <div [@openClose]="expanded ? 'open' : 'closed'" id='expnandingContainer'>
+    <ng-content></ng-content>
+  </div>
+</div>

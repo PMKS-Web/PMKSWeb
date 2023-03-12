@@ -10,7 +10,7 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
-  section {
+  #collapsibleContainer {
     pointer-events: all;
     @include mat.elevation(4);
     display: flex;
@@ -18,7 +18,21 @@
     border-radius: var(--border-radius);
     gap: 10px;
     background-color: mat.get-color-from-palette($background, 'background');
-    border-top: 5px solid mat.get-color-from-palette($primary-palette, 500);
     padding: 20px;
   }
+
+  .warning-color {
+    border-top: 5px solid mat.get-color-from-palette($accent-palette, 500);
+  }
+
+  .normal-color {
+    border-top: 5px solid mat.get-color-from-palette($primary-palette, 500);
+  }
+
+  #expnandingContainer {
+    img {
+      width: 100%;
+    }
+  }
+
 }

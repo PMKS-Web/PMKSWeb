@@ -25,8 +25,6 @@ import { GridUtilsService } from '../../services/grid-utils.service';
   styleUrls: ['./edit-panel.component.scss'],
 })
 export class EditPanelComponent implements OnInit, AfterContentInit {
-  numberOfJoint: number = 0;
-
   hideEditPanel() {
     return AnimationBarComponent.animate === true || this.mechanismService.mechanismTimeStep !== 0;
   }
@@ -37,7 +35,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private fb: FormBuilder,
     private nup: NumberUnitParserService,
     private cd: ChangeDetectorRef,
-    private mechanismService: MechanismService,
+    public mechanismService: MechanismService,
     private gridUtils: GridUtilsService
   ) {}
 
@@ -81,8 +79,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   ngAfterContentInit() {
     this.activeSrv.fakeUpdateSelectedObj();
-    this.numberOfJoint = this.mechanismService.joints.length;
-    console.log(this.numberOfJoint);
   }
 
   mouseDown(): void {

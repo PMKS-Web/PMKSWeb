@@ -37,10 +37,10 @@
 
 
     <!--  The X and Y Axis-->
-    <line [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0' stroke='#000'
+    <line id='axes' [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0'
           [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
 
-    <line x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY' stroke='#000'
+    <line id='axes' x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY'
           [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
 
     <!-- Axes Labels -->
@@ -75,10 +75,12 @@
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && !gridUtils.getInput(joint)'
              xlink:href='../../../assets/Ground.svg'
              [attr.width]='settings.objectScale * 1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.35' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
-      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint)'
+      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && settings.isInputCW'
              xlink:href='../../../assets/InputCCW.svg'
              [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
-      <!--       condition for slider crank -->
+      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && !settings.isInputCW'
+             xlink:href='../../../assets/InputCW.svg'
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPill.svg'
              width='1.2' x='-0.6' y='-0.6' height='1.2' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />

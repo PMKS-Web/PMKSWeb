@@ -17,6 +17,7 @@ import { PositionSolver } from '../../model/mechanism/position-solver';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { GridComponent } from '../grid/grid.component';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-new-grid',
@@ -786,5 +787,9 @@ export class NewGridComponent {
         duration: 4000,
       });
     }
+  }
+
+  debug() {
+    console.log('debug');
   }
 }

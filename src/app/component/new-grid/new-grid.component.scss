@@ -11,6 +11,12 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  #activeObjectHighlight {
+    fill: mat.get-color-from-palette($accent-palette, 500);
+    stroke: mat.get-color-from-palette($accent-palette, 500);
+    opacity: 0.3;
+  }
+
   #axes_numbers {
     fill: mat.get-color-from-palette($foreground, 'text');
     paint-order: stroke;
@@ -20,7 +26,24 @@
     alignment-baseline: middle;
   }
 
+  #axes {
+    stroke: mat.get-color-from-palette($primary-palette, 900);
+  }
+
   .animated {
     transition: transform 0.3s ease;
+  }
+
+  .my-custom-snackbar {
+    // margin: 0 !important;
+    // position: absolute !important;
+    // right: 25px !important;
+    // top: 60px !important;
+    margin-top: 50px !important;
+    // transform: translateY(40px) !important;
+    // pointer-events: none !important;
+  }
+  .cdk-overlay-pane {
+    pointer-events: none !important;
   }
 }

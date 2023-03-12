@@ -11,8 +11,20 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  .fade-in-out {
+    opacity: 0;
+    transition: 0.15s ease-in-out;
+    scale: 0.5;
+    transform-origin: top left;
+  }
+
+  .fade-in-out.show {
+    opacity: 1;
+    scale: 1;
+  }
+
   #contextMenu {
-    @include mat.elevation(2);
+    @include mat.elevation(5);
     display: inline-flex;
     flex-direction: column;
     background-color: white;

@@ -1,13 +1,34 @@
 import { Component, ContentChildren, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { TitleBlock } from '../title/title.component';
+import { animate, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'panel-section-collapsible',
+  animations: [
+    trigger('openClose', [
+      state(
+        'open',
+        style({
+          height: '*',
+          opacity: 1,
+        })
+      ),
+      state(
+        'closed',
+        style({
+          height: '0px',
+          opacity: 0,
+        })
+      ),
+      transition('* => *', [animate('0.2s ease-in-out')]),
+    ]),
+  ],
   templateUrl: './panel-section-collapsible.component.html',
   styleUrls: ['./panel-section-collapsible.component.scss'],
 })
 export class PanelSectionCollapsibleComponent {
   @Input() expanded: boolean = true;
+  @Input() warning: boolean = false;
 
   @ContentChildren(TitleBlock) titleBlock?: QueryList<TitleBlock>;
 
@@ -20,6 +41,7 @@ export class PanelSectionCollapsibleComponent {
 
   toggleExpand() {
     this.expanded = !this.expanded;
+    console.log(this.expanded);
     if (this.expanded) {
       this.opened.emit(true);
     } else {

@@ -14,7 +14,7 @@ export class TitleBlock implements OnInit {
   @Output() nestedComponentChange: EventEmitter<number> = new EventEmitter<number>();
 
   defaultIcon: string | undefined;
-  altIcon: string | undefined = 'expand_more';
+  altIcon: string | undefined;
   shownIcon: string | undefined;
 
   constructor() {}
@@ -33,6 +33,8 @@ export class TitleBlock implements OnInit {
     this.shownIcon = this.defaultIcon;
     if (this.defaultIcon == 'expand_less') {
       this.altIcon = 'expand_more';
+    } else if (this.defaultIcon == 'expand_more') {
+      this.altIcon = 'expand_less';
     } else {
       this.altIcon = this.defaultIcon;
     }

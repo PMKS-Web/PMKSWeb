@@ -4,7 +4,6 @@
 @use 'src/app/component/left-tabs/left-tabs.component.scss' as left-tabs;
 @use 'src/app/component/animation-bar/animation-bar.component.scss' as animation-bar;
 @use 'src/app/component/blocks/title/title.component.scss' as title-block;
-@use 'src/app/component/grid/grid.component.scss' as grid;
 @use 'src/app/component/edit-panel/edit-panel.component.scss' as edit-panel;
 @use 'src/app/component/blocks/button/button.component.scss' as button-block;
 @use 'src/app/component/blocks/input/input.component.scss' as input-block;
@@ -46,7 +45,6 @@ $my-theme: mat.define-light-theme(
 @include tab.css($my-theme);
 @include left-tabs.css($my-theme);
 @include animation-bar.css($my-theme);
-@include grid.css($my-theme);
 @include edit-panel.css($my-theme);
 @include analysis-panel.css($my-theme);
 @include analysis-graph.css($my-theme);
