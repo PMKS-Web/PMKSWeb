@@ -476,16 +476,21 @@ export function findBiggestAngle(joint: RealJoint, allJoints: RealJoint[]) {
 
   const curJointIndex = allJoints.findIndex((j) => j.id === joint.id);
   for (let i = 0; i < allJoints.length; i++) {
+    // console.log('Outer loop: ' + i);
     if (i === curJointIndex) {
+      // console.log('Skipped');
       continue;
     }
     const joint1 = allJoints[i];
     for (let j = i + 1; j < allJoints.length; j++) {
+      // console.log('Inner loop: ' + j);
       if (j === curJointIndex) {
+        // console.log('Skipped');
         continue;
       }
       const joint2 = allJoints[j];
       const angle = find_angle(allJoints[curJointIndex], joint1, joint2);
+      // console.log(angle);
       if (angle > biggestAngle) {
         // if (biggestAngle === 0 || angle > biggestAngle) {
         biggestAngle = angle;

@@ -20,6 +20,7 @@ export class SettingsPanelComponent {
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   gravityEnabled!: boolean;
+  currentWidthSetting!: number;
 
   ngOnInit(): void {
     this.gravityEnabled = this.settingsService.isGravity.value;
@@ -28,8 +29,10 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = this.settingsService.angle.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
+    this.currentWidthSetting = this.settingsService.linkWidth.value;
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
+      width: this.currentWidthSetting.toString(),
       gravity: this.gravityEnabled,
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
@@ -56,6 +59,14 @@ export class SettingsPanelComponent {
         this.settingsService.inputSpeed.next(this.currentSpeedSetting);
       }
     });
+    this.settingsForm.controls['width'].valueChanges.subscribe((val) => {
+      if (this.settingsForm.controls['width'].invalid) {
+        this.settingsForm.patchValue({ speed: this.currentWidthSetting.toString() });
+      } else {
+        this.currentWidthSetting = Number(val);
+        this.settingsService.linkWidth.next(this.currentWidthSetting);
+      }
+    });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
       this.currentLengthUnit = ParseLengthUnit(String(val));
       this.settingsService.length.next(this.currentLengthUnit);
@@ -75,6 +86,7 @@ export class SettingsPanelComponent {
     {
       gravity: [false, { updateOn: 'change' }],
       speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      width: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],
       lengthunit: ['', { updateOn: 'change' }],
       angleunit: ['', { updateOn: 'change' }],

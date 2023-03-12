@@ -16,6 +16,8 @@ import {
   determineY,
 } from '../../model/utils';
 import { ActiveObjService } from '../../services/active-obj.service';
+import { MechanismService } from '../../services/mechanism.service';
+import { Link, RealLink } from '../../model/link';
 
 @Component({
   selector: 'app-right-panel',
@@ -54,7 +56,10 @@ export class RightPanelComponent {
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
 
-  constructor(public activeObjService: ActiveObjService) {}
+  constructor(
+    public activeObjService: ActiveObjService,
+    public mechanismService: MechanismService
+  ) {}
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -113,5 +118,9 @@ export class RightPanelComponent {
       forceStates[NewGridComponent.debugGetForceState()] +
       ')'
     );
+  }
+
+  getLinkDesiredOrder() {
+    return RealLink.debugDesiredJointsIDs;
   }
 }
