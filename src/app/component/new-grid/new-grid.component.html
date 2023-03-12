@@ -2,7 +2,7 @@
      (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)' (mouseup)='mouseUp($event)'
      (mousedown)='mouseDown($event)'>>
   <!-- Axes and Grid-->
-  <g id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
+  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
      (mousedown)='activeObjService.updateSelectedObj(undefined)'>
 
     <!--  The Background-->

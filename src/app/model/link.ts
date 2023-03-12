@@ -167,7 +167,6 @@ export class RealLink extends Link {
 
     //Find the colors of the other links connected
     let colors: string[] = [];
-    console.log(joints);
     joints.forEach((j) => {
       //Check if the joint is a real joint
       if (j instanceof RealJoint) {
@@ -180,7 +179,6 @@ export class RealLink extends Link {
         });
       }
     });
-    console.log(colors);
 
     if (colors.length > 0) {
       //Set the color to the first color that is not already used

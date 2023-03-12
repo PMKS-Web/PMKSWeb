@@ -3,6 +3,7 @@ import * as svgPanZoom from 'svg-pan-zoom';
 import { Coord } from '../model/coord';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { forceStates, jointStates } from '../model/utils';
+import { SettingsService } from './settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +25,7 @@ export class SvgGridService {
 
   defaultZoom: number = 80;
 
-  constructor() {}
+  constructor(private settingsService: SettingsService) {}
 
   setNewElement(root: HTMLElement) {
     //This is like the constructor, and allows you to set the root element where the library is loaded
@@ -34,14 +35,13 @@ export class SvgGridService {
       center: false,
       zoomScaleSensitivity: 0.15,
       dblClickZoomEnabled: false,
-      maxZoom: 100,
+      maxZoom: 150,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
       beforePan: this.handleBeforePan.bind(this),
       onUpdatedCTM: this.handleUpdatedCTM.bind(this),
     });
-    this.panZoomObject.center();
-    this.panZoomObject.zoom(this.defaultZoom);
+    this.scaleToFitLinkage();
   }
 
   screenToSVG(screenPos: Coord): Coord {
@@ -139,11 +139,11 @@ export class SvgGridService {
   }
 
   zoomIn() {
-    this.panZoomObject.zoomIn();
+    this.panZoomObject.zoomBy(1.3);
   }
 
   zoomOut() {
-    this.panZoomObject.zoomOut();
+    this.panZoomObject.zoomBy(0.7);
   }
 
   getZoom() {
@@ -160,5 +160,17 @@ export class SvgGridService {
 
   scaleWithZoom(value: number) {
     return value / this.getZoom();
+  }
+
+  scaleToFitLinkage() {
+    this.settingsService.tempGridDisable = true;
+    setTimeout(() => {
+      this.panZoomObject.updateBBox(); // Update viewport bounding box
+      this.settingsService.tempGridDisable = false;
+      NewGridComponent.instance.enableGridAnimationForThisAction();
+      this.panZoomObject.fit();
+      this.panZoomObject.center();
+      this.zoomOut();
+    }, 1);
   }
 }

@@ -7,6 +7,7 @@ import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 @Component({
   selector: 'app-animation-bar',
@@ -179,8 +180,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onZoomResetPressed() {
-    this.svgGrid.panZoomObject.center();
-    this.svgGrid.panZoomObject.zoom(this.svgGrid.defaultZoom);
+    this.svgGrid.scaleToFitLinkage();
   }
 
   getSpeed() {

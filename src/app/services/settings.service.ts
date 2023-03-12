@@ -15,6 +15,7 @@ export class SettingsService {
 
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);
+  tempGridDisable: boolean = false;
 
   constructor() {}
 }

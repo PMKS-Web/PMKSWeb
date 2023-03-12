@@ -1,5 +1,5 @@
 import { SvgGridService } from '../../services/svg-grid.service';
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { MechanismService } from '../../services/mechanism.service';
@@ -37,6 +37,7 @@ export class NewGridComponent {
     NewGridComponent.instance = this;
   }
 
+  private svgGridElement!: HTMLElement;
   public cMenuItems: cMenuItem[] = [];
   public lastRightClick: Joint | Link | Force | String = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
@@ -50,14 +51,12 @@ export class NewGridComponent {
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
 
-  private static instance: NewGridComponent;
+  static instance: NewGridComponent;
   private lastNotificationTime: number = Date.now();
   //To distinguish between a click and a drag
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
-
-  //This is for debug purposes, do not make anything else static!
 
   ngOnInit() {
     const svgElement = document.getElementById('canvas') as HTMLElement;
@@ -67,15 +66,17 @@ export class NewGridComponent {
       .pipe(debounceTime(25))
       .subscribe((event) => {
         console.log('resize');
-        this.svgGrid.panZoomObject.resetZoom();
         this.svgGrid.panZoomObject.resize();
-        this.svgGrid.panZoomObject.center();
+        this.svgGrid.scaleToFitLinkage();
       });
   }
 
   ngAfterViewInit() {
     this.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
     this.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
+    this.svgGridElement = document.getElementsByClassName(
+      'svg-pan-zoom_viewport'
+    )[0] as HTMLElement;
   }
 
   static debugGetGridState() {
@@ -96,6 +97,14 @@ export class NewGridComponent {
   static debugGetForceState() {
     return this.instance.forceStates;
     //This is for debug purposes, do not make anything else static!
+  }
+
+  enableGridAnimationForThisAction() {
+    this.svgGridElement.setAttribute('class', 'animated');
+    //Disable after 0.5 seconds
+    setTimeout(() => {
+      this.svgGridElement.removeAttribute('class');
+    }, 300);
   }
 
   updateContextMenuItems() {
