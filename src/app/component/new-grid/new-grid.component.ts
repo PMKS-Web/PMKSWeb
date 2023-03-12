@@ -196,6 +196,24 @@ export class NewGridComponent {
             this.lastRightClick instanceof PrisJoint ? 'remove_slider' : 'add_slider'
           )
         );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Hide Curve ',
+            () => {
+              NewGridComponent.sendNotification('Feature Coming Soon');
+            },
+            'hide_path'
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Welded Joint',
+            () => {
+              NewGridComponent.sendNotification('Feature Coming Soon');
+            },
+            'weld_joint'
+          )
+        );
 
         break;
       case 'String': //This means grid

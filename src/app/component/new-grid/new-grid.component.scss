@@ -27,7 +27,7 @@
   }
 
   #axes {
-    stroke: mat.get-color-from-palette($primary-palette, 900);
+    stroke: mat.get-color-from-palette($primary-palette, 500);
   }
 
   .animated {
@@ -46,4 +46,31 @@
   .cdk-overlay-pane {
     pointer-events: none !important;
   }
+
+  #pathsHolder {
+    stroke: mat.get-color-from-palette($accent-palette, 500);
+  }
+
+  .joint-default {
+    filter: url(#elevation-1);
+    fill: mat.get-color-from-palette($accent-palette, 200);
+  }
+  .joint-highlight {
+    filter: url(#elevation-2);
+    fill: mat.get-color-from-palette($accent-palette, 100);
+  }
+  .joint-dragging {
+    filter: url(#elevation-3);
+    fill: mat.get-color-from-palette($accent-palette, 50);
+  }
+  .joint-selected {
+    filter: url(#elevation-1);
+    fill: mat.get-color-from-palette($accent-palette, 800);
+  }
+
+  .link-selected {
+    stroke: mat.get-color-from-palette($accent-palette, 800);
+  }
+
+
 }

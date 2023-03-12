@@ -113,14 +113,6 @@ export class MechanismService {
     }
   }
 
-  getJointColor(joint: Joint) {
-    if (NewGridComponent.debugGetJointState() !== jointStates.dragging) {
-      return joint.showHighlight ? 'yellow' : 'transparent';
-    } else {
-      return joint.id === this.activeObjService.selectedJoint.id ? 'red' : 'transparent';
-    }
-  }
-
   getJointPath(joint: Joint) {
     if (this.mechanisms[0].joints[0].length === 0) {
       return '';
@@ -541,5 +533,36 @@ export class MechanismService {
     setTimeout(() => {
       this.animate(this.mechanismTimeStep);
     }, 8);
+  }
+
+  getJointCSSClass(joint: Joint) {
+    if (
+      NewGridComponent.debugGetJointState() == jointStates.dragging &&
+      joint.id === this.activeObjService.selectedJoint.id
+    ) {
+      return 'joint-dragging';
+    }
+    if (
+      NewGridComponent.debugGetJointState() !== jointStates.dragging &&
+      this.activeObjService.objType == 'Joint' &&
+      joint.id === this.activeObjService.selectedJoint.id
+    ) {
+      return 'joint-selected';
+    }
+    if (joint.showHighlight) {
+      return 'joint-highlight';
+    } else {
+      return 'joint-default';
+    }
+  }
+
+  getLinkCSSClass(link: Link) {
+    if (
+      this.activeObjService.objType == 'Link' &&
+      link.id === this.activeObjService.selectedLink.id
+    ) {
+      return 'link-selected';
+    }
+    return 'link-default';
   }
 }

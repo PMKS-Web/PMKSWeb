@@ -30,12 +30,21 @@ export class Joint extends Coord {
 
 export class RealJoint extends Joint {
   // TODO: Does the r only need to be on RevJoints?
-  private _r: number = 5 * AppConstants.scaleFactor; //This seems like the SVG scale factor
+  private _r: number = 0.15; //This seems like the SVG scale factor
   private _input: boolean;
   private _ground: boolean;
   private _links: Link[];
   private _connectedJoints: Joint[];
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
+
+  constructor(
+    id: string,
+    x: number,
+    y: number,
+    input: boolean = false,
+    ground: boolean = false,
+    links: Link[] = [],
+    connectedJoints: Joint[] = []
+  ) {
     super(id, x, y);
     this._input = input;
     this._ground = ground;
@@ -94,7 +103,15 @@ export class RealJoint extends Joint {
 // }
 
 export class RevJoint extends RealJoint {
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
+  constructor(
+    id: string,
+    x: number,
+    y: number,
+    input: boolean = false,
+    ground: boolean = false,
+    links: Link[] = [],
+    connectedJoints: Joint[] = []
+  ) {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 }
@@ -102,7 +119,15 @@ export class RevJoint extends RealJoint {
 export class PrisJoint extends RealJoint {
   private _angle: number = 0;
 
-  constructor(id: string, x: number, y: number, input: boolean = false, ground: boolean = false, links: Link[] = [], connectedJoints: Joint[] = []) {
+  constructor(
+    id: string,
+    x: number,
+    y: number,
+    input: boolean = false,
+    ground: boolean = false,
+    links: Link[] = [],
+    connectedJoints: Joint[] = []
+  ) {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 

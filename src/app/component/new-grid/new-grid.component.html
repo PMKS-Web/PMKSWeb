@@ -1,6 +1,41 @@
 <svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
      (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)' (mouseup)='mouseUp($event)'
      (mousedown)='mouseDown($event)'>>
+  <defs>
+    <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.02"/>
+      <feOffset dx="0.01" dy="-0.01" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.4"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="elevation-2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.04"/>
+      <feOffset dx="0.03" dy="-0.03" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="elevation-3" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.06"/>
+      <feOffset dx="0.05" dy="-0.05" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.6"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
   <!-- Axes and Grid-->
   <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
      (mousedown)='activeObjService.updateSelectedObj(undefined)'>
@@ -38,10 +73,10 @@
 
     <!--  The X and Y Axis-->
     <line id='axes' [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0'
-          [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
+          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
 
     <line id='axes' x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY'
-          [attr.stroke-width]='svgGrid.scaleWithZoom(1.75)'></line>
+          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
 
     <!-- Axes Labels -->
     <ng-container>
@@ -101,6 +136,7 @@
         [attr.fill-opacity]=0.7
         [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
         [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+        [class]='mechanismSrv.getLinkCSSClass(link)'
       >
       </path>
       <image *ngIf='gridUtils.typeOfLink(link) == "P"'
@@ -116,27 +152,17 @@
       (mouseout)='joint.showHighlight = false'
       (contextmenu)='setLastRightClick(joint)'
       (mousedown)='activeObjService.updateSelectedObj(joint)'
-      width='10'
-      height='10'
+      width='20'
+      height='20'
       style='overflow: visible'
       cursor='move'
     >
-      <!--       condition with regular revolute joint -->
       <circle
-        id='joint_{{ joint.id }}_ring'
-        [attr.r]='settings.objectScale * gridUtils.getJointR(joint) * 7 / 5'
-        [attr.cx]='0'
-        [attr.cy]='0'
-        [attr.fill]='mechanismSrv.getJointColor(joint)'
-      />
-      <circle
-        id='joint_{{ joint.id }}'
+        id='joint_{{ joint.id }}' class='joint_circles'
         [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
         [attr.cx]='0'
         [attr.cy]='0'
-        fill='white'
-        stroke='#00000000'
-        [attr.stroke-width]='gridUtils.getJointR(joint) * 2'
+        [class]='mechanismSrv.getJointCSSClass(joint)'
       />
     </svg>
   </g>
@@ -144,9 +170,8 @@
     <path
       *ngFor='let joint of mechanismSrv.getJoints()'
       [attr.d]='mechanismSrv.getJointPath(joint)'
-      stroke='green'
       fill='none'
-      stroke-width='0.04'
+      [attr.stroke-width]='0.04 * settings.objectScale'
       style='transform: scaleY(-1); pointer-events: none'
     ></path>
   </g>
@@ -198,25 +223,23 @@
       <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
     </svg>
   </g>
-  <!--TODO: Add case when dragging anything above the jointTagHolder -->
   <g id='jointTagHolder' style='pointer-events: none'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
-      [attr.x]='joint.x - 0.2'
-      [attr.y]='-1 * joint.y - 0.2'
+      [attr.x]='joint.x - 0.3'
+      [attr.y]='-1 * joint.y - 0.5'
       [attr.height]='10'
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
     >
       <text
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight"
-        style='font-size: 0.7px; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
         {{ joint.id | uppercase }}
       </text>
     </svg>
   </g>
-  <!--TODO: Add case when dragging anything above the linkTagHolder -->
   <g id='linkTagHolder' style='pointer-events: none'>
     <svg
       *ngFor='let link of mechanismSrv.getLinks()'
@@ -228,13 +251,12 @@
     >
       <text
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight"
-        style='font-size: 0.7px; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
         {{ link.id | uppercase }}
       </text>
     </svg>
   </g>
-  <!--TODO: Add case when dragging anything above the forceTagHolder -->
   <g id='forceTagHolder' *ngIf='settings.isShowID.value' style='pointer-events: none'>
     <svg
       *ngFor='let force of mechanismSrv.getForces()'
@@ -250,7 +272,6 @@
       </text>
     </svg>
   </g>
-  <!--TODO: Add case when dragging anything above the comTagHolder -->
   <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
     <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible' width='1.23' height='2.61'>
       <path
@@ -320,20 +341,20 @@
     <path fill='black' d=''></path>
   </g>
 
-  <g id='activeObjectHighlight' style='transform: scaleY(-1); pointer-events: none'>
-    <circle
-      *ngIf="activeObjService.objType == 'Joint'"
-      [attr.r]='0.01'
-      [attr.cx]='activeObjService.selectedJoint.x'
-      [attr.cy]='activeObjService.selectedJoint.y'
-    />
+<!--  <g id='activeObjectHighlight' style='transform: scaleY(-1); pointer-events: none'>-->
+<!--    <circle-->
+<!--      *ngIf="activeObjService.objType == 'Joint'"-->
+<!--      [attr.r]='0.01'-->
+<!--      [attr.cx]='activeObjService.selectedJoint.x'-->
+<!--      [attr.cy]='activeObjService.selectedJoint.y'-->
+<!--    />-->
 
-    <path
-      *ngIf="activeObjService.objType == 'Link'"
-      [attr.d]='mechanismSrv.getLinkProp(activeObjService.selectedLink, "d")'
-      stroke-width='0.5'
-    ></path>
-  </g>
+<!--    <path-->
+<!--      *ngIf="activeObjService.objType == 'Link'"-->
+<!--      [attr.d]='mechanismSrv.getLinkProp(activeObjService.selectedLink, "d")'-->
+<!--      stroke-width='0.5'-->
+<!--    ></path>-->
+<!--  </g>-->
 </svg>
 <ng-template #context_menu>
   <app-context-menu [menuItems]='cMenuItems'>
