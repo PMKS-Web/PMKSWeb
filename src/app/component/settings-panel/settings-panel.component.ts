@@ -5,6 +5,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { GridComponent } from '../grid/grid.component';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { RealLink } from '../../model/link';
 
 @Component({
   selector: 'app-settings-panel',
@@ -29,7 +30,7 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = this.settingsService.angle.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
-    this.currentWidthSetting = this.settingsService.linkWidth.value;
+    this.currentWidthSetting = RealLink.linkWidth.value;
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       width: this.currentWidthSetting.toString(),
@@ -64,7 +65,7 @@ export class SettingsPanelComponent {
         this.settingsForm.patchValue({ speed: this.currentWidthSetting.toString() });
       } else {
         this.currentWidthSetting = Number(val);
-        this.settingsService.linkWidth.next(this.currentWidthSetting);
+        RealLink.linkWidth.next(this.currentWidthSetting);
       }
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {

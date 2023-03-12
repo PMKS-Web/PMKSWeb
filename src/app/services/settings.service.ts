@@ -11,7 +11,6 @@ export class SettingsService {
   isInputCW = new BehaviorSubject(true);
   isGravity = new BehaviorSubject(false);
   inputSpeed = new BehaviorSubject(20);
-  linkWidth = new BehaviorSubject(0.5);
   inputTorque = new BehaviorSubject(TorqueUnit.CM_N);
 
   isShowID = new BehaviorSubject(false);

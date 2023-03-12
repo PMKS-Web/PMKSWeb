@@ -78,11 +78,6 @@ export class NewGridComponent {
     this.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
   }
 
-  static getLinkWidthSettingStaticly() {
-    return this.instance.settings.linkWidth.value;
-    //This is for debug purposes, do not make anything else static!
-  }
-
   static debugGetGridState() {
     return this.instance.gridStates;
     //This is for debug purposes, do not make anything else static!
