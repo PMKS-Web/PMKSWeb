@@ -297,15 +297,6 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
-    // console.warn('mouseMove');
-    // console.log(typeChosen);
-    // $event.preventDefault();
-    // $event.stopPropagation();
-    // TODO: Possibly put this somewhere else so don't have to copy/paste?
-    // const rawCoord = this.getMousePosition($event)!;
-    // const trueCoord = this.screenToGrid(rawCoord.x, -1 * rawCoord.y);
-    // this.screenCoord =
-    //   '(' + roundNumber(trueCoord.x, 1) + ' , ' + roundNumber(trueCoord.y, 1) + ')';
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
 
     switch (this.gridStates) {
@@ -353,69 +344,6 @@ export class NewGridComponent {
         this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
         this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
         break;
-      // case linkStates.dragging:
-      //   // TODO: Add logic when dragging a link within edit shape mode
-      //
-      //   const offsetX = mousePosInSvg.x - this.initialLinkMouseCoord.x;
-      //   const offsetY = mousePosInSvg.y - this.initialLinkMouseCoord.y;
-      //   this.initialLinkMouseCoord.x = mousePosInSvg.x;
-      //   this.initialLinkMouseCoord.y = mousePosInSvg.y;
-      //   this.selectedLink.d = RealLink.getD(this.selectedLink.joints);
-      //   this.selectedLink.CoM = RealLink.determineCenterOfMass(this.selectedLink.joints);
-      //   this.updateMechanism();
-      //   break;
-      // case linkStates.resizing:
-      //   // Adjust the link's bounding boxes
-      //   let b1n,
-      //     b2n,
-      //     b3n,
-      //     b4n,
-      //     arrow5n: Coord = new Coord(0, 0)!;
-      //
-      //   let drag_coord_x, side_coord_x_1, side_coord_x_2: number;
-      //   let drag_coord_y, side_coord_y_1, side_coord_y_2: number;
-      //
-      //   let arrow5n_x, arrow5n_y: number;
-      //
-      //   let m1, closest_m, m2, m3, m4, m5: number;
-      //   let b1, closest_b, b2, b3, b4, b5: number;
-      //
-      //   const typeOfBoundToCoordMap = new Map<string, Coord>();
-      //
-      //   // TOOD: Put this within function call to do all this logic
-      //   const fixedCoord = typeOfBoundToCoordMap.get('fixed')!;
-      //   const dragCoord = typeOfBoundToCoordMap.get('drag')!;
-      //   const sideCoord1 = typeOfBoundToCoordMap.get('sideCoord1')!;
-      //   const sideCoord2 = typeOfBoundToCoordMap.get('sideCoord2')!;
-      //
-      //   // determine line from b1 to b3
-      //
-      //   m1 = determineSlope(fixedCoord.x, fixedCoord.y, dragCoord.x, dragCoord.y);
-      //   b1 = determineYIntersect(fixedCoord.x, fixedCoord.y, m1);
-      //   // determine the point within this line that is closest to where the mouse is
-      //   closest_m = -1 * Math.pow(m1, -1);
-      //   closest_b = determineYIntersect(trueCoord.x, trueCoord.y, closest_m);
-      //   // closest_b = determineYIntersect(newBound.x, newBound.y, closest_m);
-      //   drag_coord_x = determineX(closest_m, closest_b, m1, b1);
-      //   drag_coord_y = determineY(drag_coord_x, closest_m, closest_b);
-      //   // determine the other 2 points
-      //   m2 = determineSlope(fixedCoord.x, fixedCoord.y, sideCoord1.x, sideCoord1.y);
-      //   b2 = determineYIntersect(fixedCoord.x, fixedCoord.y, m2);
-      //   m3 = determineSlope(dragCoord.x, dragCoord.y, sideCoord1.x, sideCoord1.y);
-      //   b3 = determineYIntersect(drag_coord_x, drag_coord_y, m3);
-      //   side_coord_x_1 = determineX(m2, b2, m3, b3);
-      //   side_coord_y_1 = determineY(side_coord_x_1, m2, b2);
-      //
-      //   m4 = determineSlope(fixedCoord.x, fixedCoord.y, sideCoord2.x, sideCoord2.y);
-      //   b4 = determineYIntersect(fixedCoord.x, fixedCoord.y, m4);
-      //   m5 = determineSlope(dragCoord.x, dragCoord.y, sideCoord2.x, sideCoord2.y);
-      //   b5 = determineYIntersect(drag_coord_x, drag_coord_y, m5);
-      //   side_coord_x_2 = determineX(m4, b4, m5, b5);
-      //   side_coord_y_2 = determineY(side_coord_x_2, m4, b4);
-      //
-      //   this.selectedLink.CoM = RealLink.determineCenterOfMass(this.selectedLink.joints);
-      //   this.selectedLink.updateCoMDs();
-      //   break;
     }
     switch (this.forceStates) {
       case forceStates.creating:
@@ -568,6 +496,13 @@ export class NewGridComponent {
                 );
                 joint1.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(joint1);
+
+                if (this.mechanismSrv.links.length == 0) {
+                  console.log('first link');
+                  SettingsService.objectScale.next(
+                    Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
+                  );
+                }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
                 joint1.links.push(link);

@@ -131,8 +131,6 @@ export class RealLink extends Link {
   private _length: number = 0;
   private _angle: number = 0;
 
-  static linkWidth = new BehaviorSubject(0.25);
-
   private static colorOptions = [
     '#0d125a',
     // '#283493',
@@ -159,6 +157,12 @@ export class RealLink extends Link {
     CoM?: Coord
   ) {
     super(id, joints, mass);
+
+    // SettingsService.objectScale.subscribe((value) => {
+    //   this._d = RealLink.getD(this.joints);
+    //   //TODO: Unsubsribe from this when link gets deleted
+    // });
+    // console.log('new subscription');
     // this._mass = mass !== undefined ? mass : 1;
     this._massMoI = massMoI !== undefined ? massMoI : 1;
     // this._shape = shape !== undefined ? shape : Shape.line;
@@ -319,7 +323,7 @@ export class RealLink extends Link {
       jointIDtoIndex.set(j.id, ind);
     });
 
-    let width: number = RealLink.linkWidth.value;
+    let width: number = SettingsService.objectScale.value / 4;
     let d = '';
 
     let clockWise = 'Will be set later';

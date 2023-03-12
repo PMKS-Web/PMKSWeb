@@ -15,7 +15,12 @@ export class SettingsService {
 
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);
-  tempGridDisable: boolean = false;
+  tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit
+  static objectScale = new BehaviorSubject(1);
+
+  get objectScale(): number {
+    return SettingsService.objectScale.value;
+  }
 
   constructor() {}
 }

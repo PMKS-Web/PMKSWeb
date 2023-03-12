@@ -74,10 +74,10 @@
     >
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && !gridUtils.getInput(joint)'
              xlink:href='../../../assets/Ground.svg'
-             width='1.2' x='-0.6' y='-0.35' height='1.2' style='transform: scaleY(-1)' />
+             [attr.width]='settings.objectScale * 1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.35' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint)'
              xlink:href='../../../assets/InputCCW.svg'
-             width='1.2' x='-0.6' y='-0.5' height='1.2' style='transform: scaleY(-1)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <!--       condition for slider crank -->
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPill.svg'
@@ -122,17 +122,17 @@
       <!--       condition with regular revolute joint -->
       <circle
         id='joint_{{ joint.id }}_ring'
-        [attr.r]='(gridUtils.getJointR(joint) * 7) / 5'
+        [attr.r]='settings.objectScale * gridUtils.getJointR(joint) * 7 / 5'
         [attr.cx]='0'
         [attr.cy]='0'
         [attr.fill]='mechanismSrv.getJointColor(joint)'
       />
       <circle
         id='joint_{{ joint.id }}'
-        [attr.r]='gridUtils.getJointR(joint)'
+        [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
         [attr.cx]='0'
         [attr.cy]='0'
-        fill='black'
+        fill='white'
         stroke='#00000000'
         [attr.stroke-width]='gridUtils.getJointR(joint) * 2'
       />

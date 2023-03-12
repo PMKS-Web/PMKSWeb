@@ -30,7 +30,7 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = this.settingsService.angle.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
-    this.currentWidthSetting = RealLink.linkWidth.value;
+    this.currentWidthSetting = SettingsService.objectScale.value;
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       width: this.currentWidthSetting.toString(),
@@ -41,6 +41,14 @@ export class SettingsPanelComponent {
       torqueunit: (this.currentTorqueUnit - 20).toString(),
     });
     this.onChanges();
+
+    SettingsService.objectScale.subscribe((val) => {
+      this.currentWidthSetting = val;
+      this.settingsForm.patchValue(
+        { width: this.currentWidthSetting.toString() },
+        { emitEvent: false }
+      );
+    });
   }
 
   onChanges(): void {
@@ -65,7 +73,7 @@ export class SettingsPanelComponent {
         this.settingsForm.patchValue({ speed: this.currentWidthSetting.toString() });
       } else {
         this.currentWidthSetting = Number(val);
-        RealLink.linkWidth.next(this.currentWidthSetting);
+        SettingsService.objectScale.next(this.currentWidthSetting);
       }
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
