@@ -530,21 +530,14 @@ export class RealLink extends Link {
 
         if (getDistance(coord3, point1c) > getDistance(coord3, point2c)) {
           [point1, point2] = [point1a, point1b];
-          if (clockWiseToggle == -1) {
-            clockWiseToggle = 1;
-          }
         } else {
           [point1, point2] = [point2a, point2b];
-          if (clockWiseToggle == -1) {
-            clockWiseToggle = 0;
-          }
         }
       }
       if (d === '') {
-        if (coord1.y > point1.y) {
-          clockWiseToggle = 1;
-        } else {
-          clockWiseToggle = 0;
+        clockWise = coord1.y > point1.y ? '1' : '0';
+        if (allJoints.length > 3) {
+          clockWise = clockWise == '1' ? '0' : '1';
         }
         d += 'M ' + point1.x.toString() + ' ' + point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
@@ -595,8 +588,7 @@ export class RealLink extends Link {
     let width: number = NewGridComponent.getLinkWidthSettingStaticly();
     let d = '';
 
-    let clockWiseToggle = -1;
-    let clockWise = 'SETLATER';
+    let clockWise = 'Will be set later';
 
     for (let i = 0; i < desiredJointsIDs.length; i++) {
       const j = (i + 1) % desiredJointsIDs.length;
@@ -632,19 +624,6 @@ export class RealLink extends Link {
       startX +
       ' ' +
       startY;
-
-    if (allJoints.length > 3) {
-      clockWiseToggle = clockWiseToggle == 1 ? 0 : 1;
-    }
-    if (clockWiseToggle == 0) {
-      while (d.includes('SETLATER')) {
-        d = d.replace('SETLATER', '0');
-      }
-    } else {
-      while (d.includes('SETLATER')) {
-        d = d.replace('SETLATER', '1');
-      }
-    }
 
     return d;
   }
