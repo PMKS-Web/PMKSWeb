@@ -213,15 +213,24 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           angle: this.activeSrv.selectedLink.angleDeg.toFixed(2).toString(),
         });
       } else {
-        this.activeSrv.selectedLink.angleDeg = parseFloat(val!);
-        this.activeSrv.selectedLink.angleRad = this.nup.convertAngle(this.activeSrv.selectedLink.angleDeg, AngleUnit.DEGREE, AngleUnit.RADIAN);
+        const [num, unit] = this.nup.preProcessInput(val!);
+        var correctAngle = 0;
+        if (this.nup.getAngleUnit(unit) !== this.settingsService.angle.getValue()) {
+          correctAngle = this.nup.convertAngle(num, this.nup.getAngleUnit(unit), this.settingsService.angle.getValue());
+          console.log(correctAngle);
+        } else {
+          correctAngle = num;
+        }
+        this.activeSrv.selectedLink.angleDeg = this.nup.getAngleUnit(unit) == AngleUnit.DEGREE ? parseFloat(val!) : this.nup.convertAngle(parseFloat(val!), AngleUnit.RADIAN, AngleUnit.DEGREE);
+        this.activeSrv.selectedLink.angleRad = this.nup.getAngleUnit(unit) == AngleUnit.RADIAN ? parseFloat(val!) : this.nup.convertAngle(parseFloat(val!), AngleUnit.DEGREE, AngleUnit.RADIAN);
         this.resolveNewLink();
         this.mechanismService.onMechUpdateState.next(2);
         this.linkForm.patchValue(
-          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angle.getValue()) },
+          { angle: this.nup.formatValueAndUnit(correctAngle, this.nup.getAngleUnit(unit)) },
           { emitEvent: false }
         );
       }
+      this.activeSrv.fakeUpdateSelectedObj();
     });
 
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
