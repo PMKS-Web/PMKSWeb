@@ -13,4 +13,5 @@ export class RadioComponent {
   @Input() option3: string | undefined;
   @Input() _formControl!: string;
   @Input() formGroup!: FormGroup;
+  @Input() disabled: boolean = false;
 }

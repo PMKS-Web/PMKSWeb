@@ -24,6 +24,13 @@ export enum TorqueUnit {
   METER_N = 22,
   NULL = 23,
 }
+export enum GlobalUnit {
+  ENGLISH = 30,
+  METRIC = 31,
+  SI = 32,
+  NULL = 33,
+}
+
 
 // The possible states the program could be in.
 export enum gridStates {

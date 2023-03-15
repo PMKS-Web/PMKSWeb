@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
-import { LengthUnit, AngleUnit, TorqueUnit } from 'src/app/model/utils';
+import { LengthUnit, AngleUnit, TorqueUnit, GlobalUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
-import { BehaviorSubject } from 'rxjs';
-import { GridComponent } from '../grid/grid.component';
 import { NewGridComponent } from '../new-grid/new-grid.component';
-import { RealLink } from '../../model/link';
+import { MechanismService } from '../../services/mechanism.service';
+import { Link } from '../../model/link';
 
 @Component({
   selector: 'app-settings-panel',
@@ -13,11 +12,16 @@ import { RealLink } from '../../model/link';
   styleUrls: ['./settings-panel.component.scss'],
 })
 export class SettingsPanelComponent {
-  constructor(public settingsService: SettingsService, private fb: FormBuilder) {}
+  constructor(
+    public settingsService: SettingsService,
+    private fb: FormBuilder,
+    public mechanismSrv: MechanismService
+  ) { }
 
   currentLengthUnit!: LengthUnit;
   currentAngleUnit!: AngleUnit;
   currentTorqueUnit!: TorqueUnit;
+  currentGlobalUnit!: GlobalUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   gravityEnabled!: boolean;
@@ -28,6 +32,7 @@ export class SettingsPanelComponent {
     this.currentTorqueUnit = this.settingsService.inputTorque.value;
     this.currentLengthUnit = this.settingsService.length.value;
     this.currentAngleUnit = this.settingsService.angle.value;
+    this.currentGlobalUnit = this.settingsService.global.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentWidthSetting = SettingsService.objectScale.value;
@@ -39,6 +44,7 @@ export class SettingsPanelComponent {
       lengthunit: this.currentLengthUnit.toString(),
       angleunit: (this.currentAngleUnit - 10).toString(),
       torqueunit: (this.currentTorqueUnit - 20).toString(),
+      globalunit: (this.currentGlobalUnit - 30).toString(),
     });
     this.onChanges();
 
@@ -76,16 +82,22 @@ export class SettingsPanelComponent {
         SettingsService.objectScale.next(this.currentWidthSetting);
       }
     });
-    this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
-      this.currentLengthUnit = ParseLengthUnit(String(val));
-      this.settingsService.length.next(this.currentLengthUnit);
-    });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angle.next(this.currentAngleUnit);
     });
-    this.settingsForm.controls['torqueunit'].valueChanges.subscribe((val) => {
-      this.currentTorqueUnit = ParseTorqueUnit(String(val));
+    this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
+      this.currentGlobalUnit = ParseGlobalUnit(val);
+      this.settingsService.global.next(this.currentGlobalUnit);
+      this.currentTorqueUnit = ParseTorqueUnit(val);
+      this.settingsForm.controls['torqueunit'].patchValue(String(this.currentTorqueUnit - 20));
+      this.currentLengthUnit = ParseLengthUnit(val);
+      this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
+    });
+    this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
+      this.settingsService.length.next(this.currentLengthUnit);
+    });
+    this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
       this.settingsService.inputTorque.next(this.currentTorqueUnit);
     });
   }
@@ -100,6 +112,7 @@ export class SettingsPanelComponent {
       lengthunit: ['', { updateOn: 'change' }],
       angleunit: ['', { updateOn: 'change' }],
       torqueunit: ['', { updateOn: 'change' }],
+      globalunit: ['', { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
@@ -118,7 +131,7 @@ function ParseLengthUnit(val: string | null): LengthUnit {
     case '2':
       return LengthUnit.METER;
     default:
-      return LengthUnit.NULL;
+      return LengthUnit.CM;
   }
 }
 
@@ -129,7 +142,20 @@ function ParseAngleUnit(val: string | null): AngleUnit {
     case '1':
       return AngleUnit.RADIAN;
     default:
-      return AngleUnit.NULL;
+      return AngleUnit.DEGREE;
+  }
+}
+
+function ParseGlobalUnit(val: string | null): GlobalUnit {
+  switch (val) {
+    case '0':
+      return GlobalUnit.ENGLISH;
+    case '1':
+      return GlobalUnit.METRIC;
+    case '2':
+      return GlobalUnit.SI;
+    default:
+      return GlobalUnit.METRIC;
   }
 }
 
@@ -142,6 +168,6 @@ function ParseTorqueUnit(val: string | null): TorqueUnit {
     case '2':
       return TorqueUnit.METER_N;
     default:
-      return TorqueUnit.NULL;
+      return TorqueUnit.CM_N;
   }
 }

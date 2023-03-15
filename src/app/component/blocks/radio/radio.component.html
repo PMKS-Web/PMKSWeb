@@ -8,9 +8,9 @@
   </div>
   <div class="row" [formGroup]="formGroup">
     <mat-button-toggle-group id="radio-buttons" [formControlName]="this._formControl">
-      <mat-button-toggle value="0">{{ this.option1 }}</mat-button-toggle>
-      <mat-button-toggle value="1">{{ this.option2 }}</mat-button-toggle>
-      <mat-button-toggle *ngIf="this.option3" value="2">{{ this.option3 }}</mat-button-toggle>
+      <mat-button-toggle disabled={{this.disabled}} value="0">{{ this.option1 }}</mat-button-toggle>
+      <mat-button-toggle disabled={{this.disabled}} value="1">{{ this.option2 }}</mat-button-toggle>
+      <mat-button-toggle disabled={{this.disabled}} *ngIf="this.option3" value="2">{{ this.option3 }}</mat-button-toggle>
     </mat-button-toggle-group>
   </div>
 </div>
