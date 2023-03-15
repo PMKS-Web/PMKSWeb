@@ -110,12 +110,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     });
 
     this.settingsService.angle.subscribe((val) => {
-      var unit = this.settingsService.angle.value;
-      var [num, str] = this.nup.preProcessInput(this.linkForm.controls['angle'].value!);
-      var unit2 = this.nup.getAngleUnit(str);
-      if (unit !== this.angleUnit) {
-      }
-      this.angleUnit = this.settingsService.angle.value;
       this.activeSrv.fakeUpdateSelectedObj();
     });
 
@@ -220,6 +214,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         });
       } else {
         this.activeSrv.selectedLink.angleDeg = parseFloat(val!);
+        this.activeSrv.selectedLink.angleRad = this.nup.convertAngle(this.activeSrv.selectedLink.angleDeg, AngleUnit.DEGREE, AngleUnit.RADIAN);
         this.resolveNewLink();
         this.mechanismService.onMechUpdateState.next(2);
         this.linkForm.patchValue(
@@ -254,7 +249,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.settingsService.length.getValue()
             ),
             angle: this.nup.formatValueAndUnit(
-              this.activeSrv.selectedLink.angleDeg,
+              this.settingsService.angle.getValue() == AngleUnit.DEGREE ? this.activeSrv.selectedLink.angleDeg : this.activeSrv.selectedLink.angleRad,
               this.settingsService.angle.getValue()
             ),
           },
