@@ -5,6 +5,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link } from '../../model/link';
+import { SvgGridService } from '../../services/svg-grid.service';
 
 @Component({
   selector: 'app-settings-panel',
@@ -15,7 +16,8 @@ export class SettingsPanelComponent {
   constructor(
     public settingsService: SettingsService,
     private fb: FormBuilder,
-    public mechanismSrv: MechanismService
+    public mechanismSrv: MechanismService,
+    private svgGrid: SvgGridService
   ) { }
 
   currentLengthUnit!: LengthUnit;
@@ -36,6 +38,7 @@ export class SettingsPanelComponent {
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentWidthSetting = SettingsService.objectScale.value;
+
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       width: this.currentWidthSetting.toString(),
@@ -46,7 +49,6 @@ export class SettingsPanelComponent {
       torqueunit: (this.currentTorqueUnit - 20).toString(),
       globalunit: (this.currentGlobalUnit - 30).toString(),
     });
-    this.onChanges();
 
     SettingsService.objectScale.subscribe((val) => {
       this.currentWidthSetting = val;
@@ -55,6 +57,8 @@ export class SettingsPanelComponent {
         { emitEvent: false }
       );
     });
+
+    this.onChanges();
   }
 
   onChanges(): void {
@@ -93,6 +97,7 @@ export class SettingsPanelComponent {
       this.settingsForm.controls['torqueunit'].patchValue(String(this.currentTorqueUnit - 20));
       this.currentLengthUnit = ParseLengthUnit(val);
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
+      this.svgGrid.scaleToFitLinkage();
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.length.next(this.currentLengthUnit);
