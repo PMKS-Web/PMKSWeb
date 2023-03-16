@@ -57,19 +57,19 @@
   }
   .joint-highlight {
     filter: url(#elevation-2);
-    fill: mat.get-color-from-palette($accent-palette, 100);
+    fill: lighten(mat.get-color-from-palette($accent-palette, 200), 3%);
   }
   .joint-dragging {
     filter: url(#elevation-3);
-    fill: mat.get-color-from-palette($accent-palette, 50);
+    fill: mat.get-color-from-palette($accent-palette, 100);
   }
   .joint-selected {
     filter: url(#elevation-1);
-    fill: mat.get-color-from-palette($accent-palette, 800);
+    fill: #f44336;
   }
 
   .link-selected {
-    stroke: mat.get-color-from-palette($accent-palette, 800);
+    stroke: #f44336;
   }
 
 
