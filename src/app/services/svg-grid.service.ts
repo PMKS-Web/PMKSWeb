@@ -28,6 +28,66 @@ export class SvgGridService {
   constructor(private settingsService: SettingsService) {}
 
   setNewElement(root: HTMLElement) {
+    var eventsHandler;
+
+    eventsHandler = {
+      haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
+      init: function (options: any) {
+        var instance = options.instance,
+          initialScale = 1,
+          pannedX = 0,
+          pannedY = 0;
+
+        // Init Hammer
+        // Listen only for pointer and touch events
+        this.hammer = new Hammer(options.svgElement, {
+          inputClass: Hammer.TouchMouseInput,
+        });
+
+        // Enable pinch
+        this.hammer.get('pinch').set({ enable: true });
+
+        // Handle double tap
+        this.hammer.on('doubletap', function (ev: any) {
+          instance.zoomIn();
+        });
+
+        // Handle pan
+        this.hammer.on('panstart panmove', function (ev: any) {
+          // On pan start reset panned variables
+          if (ev.type === 'panstart') {
+            pannedX = 0;
+            pannedY = 0;
+          }
+
+          // Pan only the difference
+          instance.panBy({ x: ev.deltaX - pannedX, y: ev.deltaY - pannedY });
+          pannedX = ev.deltaX;
+          pannedY = ev.deltaY;
+        });
+
+        // Handle pinch
+        this.hammer.on('pinchstart pinchmove', function (ev: any) {
+          // On pinch start remember initial zoom
+          if (ev.type === 'pinchstart') {
+            initialScale = instance.getZoom();
+            instance.zoomAtPoint(initialScale * ev.scale, { x: ev.center.x, y: ev.center.y });
+          }
+
+          instance.zoomAtPoint(initialScale * ev.scale, { x: ev.center.x, y: ev.center.y });
+        });
+
+        // Prevent moving the page on some devices when panning over SVG
+        options.svgElement.addEventListener('touchmove', function (e: TouchEvent) {
+          e.preventDefault();
+        });
+      },
+
+      destroy: function () {
+        this.hammer.destroy();
+      },
+    };
+
     //This is like the constructor, and allows you to set the root element where the library is loaded
     this.panZoomObject = svgPanZoom(root, {
       zoomEnabled: true,
@@ -40,6 +100,7 @@ export class SvgGridService {
       onZoom: this.handleZoom.bind(this),
       beforePan: this.handleBeforePan.bind(this),
       onUpdatedCTM: this.handleUpdatedCTM.bind(this),
+      customEventsHandler: eventsHandler,
     });
     this.scaleToFitLinkage();
   }

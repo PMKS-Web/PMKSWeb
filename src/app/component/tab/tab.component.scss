@@ -13,16 +13,19 @@
   .tab {
     //if hover, change the elevation, animate
     @include mat.elevation(4);
+
     &:hover {
       @include mat.elevation(8);
       //make background color lighter
       filter: brightness(104%);
     }
+
     transition: 0.2s;
 
     &.active {
       background-color: mat.get-color-from-palette($primary-palette, 50);
     }
+
     border-radius: var(--border-radius);
 
     height: 100%;
@@ -48,6 +51,7 @@
       @include mat.typography-level($typography-config, 'headline-5');
       font-weight: 500;
       background-color: transparent;
+      color: mat.get-color-from-palette($foreground, 'text');
       border: none;
       //rotate -90 deg around the center
       transform: rotate(-90deg);

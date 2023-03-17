@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
+import { HammerModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
 import { GridComponent } from './component/grid/grid.component';
@@ -77,6 +78,7 @@ import { ContextMenuComponent } from './component/context-menu/context-menu.comp
     MaterialModule,
     ReactiveFormsModule,
     CdkMenuModule,
+    HammerModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
