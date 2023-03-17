@@ -1,5 +1,5 @@
 import { SvgGridService } from '../../services/svg-grid.service';
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { MechanismService } from '../../services/mechanism.service';
@@ -18,6 +18,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { GridComponent } from '../grid/grid.component';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { MatMenuTrigger } from '@angular/material/menu';
+import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
 
 @Component({
   selector: 'app-new-grid',
@@ -402,6 +404,7 @@ export class NewGridComponent {
     console.log(this.lastRightClickCoord);
   }
 
+
   mouseUp($event: MouseEvent) {
     //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
@@ -421,10 +424,10 @@ export class NewGridComponent {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // console.warn('mouseUp');
-        // console.log(typeChosen);
-        // console.log(thing);
-        // console.log(this.activeObjService.objType);
+              // console.warn('mouseUp');
+              // console.log(typeChosen);
+              // console.log(thing);
+              // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);

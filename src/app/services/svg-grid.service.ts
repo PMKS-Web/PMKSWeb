@@ -77,6 +77,10 @@ export class SvgGridService {
           instance.zoomAtPoint(initialScale * ev.scale, { x: ev.center.x, y: ev.center.y });
         });
 
+        // this.hammer.on('press', function (ev: any) {
+        //   NewGridComponent.onContextMenu(ev.center.x, ev.center.y);
+        // });
+
         // Prevent moving the page on some devices when panning over SVG
         options.svgElement.addEventListener('touchmove', function (e: TouchEvent) {
           e.preventDefault();

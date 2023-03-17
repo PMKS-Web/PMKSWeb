@@ -1,6 +1,6 @@
 <svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
-     (contextmenu)='onContextMenu($event)' (mousemove)='mouseMove($event)' (mouseup)='mouseUp($event)'
-     (mousedown)='mouseDown($event)'>>
+     (contextmenu)='onContextMenu($event)' (pointermove)='mouseMove($event)' (pointerup)='mouseUp($event)'
+     (pointerdown)='mouseDown($event)'>>
   <defs>
     <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="0.02"/>
@@ -38,7 +38,7 @@
   </defs>
   <!-- Axes and Grid-->
   <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
-     (mousedown)='activeObjService.updateSelectedObj(undefined)'>
+     (pointerdown)='activeObjService.updateSelectedObj(undefined)'>
 
     <!--  The Background-->
     <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
@@ -126,9 +126,9 @@
     <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
       <path
         *ngIf='gridUtils.typeOfLink(link) == "R"'
-        (mouseover)='link.showHighlight = true'
-        (mouseout)='link.showHighlight = false'
-        (mousedown)='activeObjService.updateSelectedObj(link)'
+        (pointerover)='link.showHighlight = true'
+        (pointerout)='link.showHighlight = false'
+        (pointerdown)='activeObjService.updateSelectedObj(link)'
         (contextmenu)='setLastRightClick(link)'
         [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
         [attr.id]='link.id'
@@ -148,10 +148,10 @@
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
       [attr.x]='joint.x' [attr.y]='joint.y'
-      (mouseover)='joint.showHighlight = true'
-      (mouseout)='joint.showHighlight = false'
+      (pointerover)='joint.showHighlight = true'
+      (pointerout)='joint.showHighlight = false'
       (contextmenu)='setLastRightClick(joint)'
-      (mousedown)='activeObjService.updateSelectedObj(joint)'
+      (pointerdown)='activeObjService.updateSelectedObj(joint)'
       width='20'
       height='20'
       style='overflow: visible'
@@ -180,12 +180,12 @@
     style='transform: scaleY(-1)'
     *ngFor='let force of mechanismSrv.getForces()'
     (contextmenu)='setLastRightClick(force)'
-    (mousedown)='activeObjService.updateSelectedObj(force)'
+    (pointerdown)='activeObjService.updateSelectedObj(force)'
   >
     <g
       [attr.id]='force.id'
-      (mouseover)='force.showHighlight = true'
-      (mouseout)='force.showHighlight = false'
+      (pointerover)='force.showHighlight = true'
+      (pointerout)='force.showHighlight = false'
     >
       <path
         *ngIf='force.showHighlight'
@@ -202,7 +202,7 @@
       id='startForceEndpoint'
       [attr.x]='force.startCoord.x'
       [attr.y]='force.startCoord.y'
-      (mousedown)='activeObjService.updateSelectedObj(force.startCoord, force); mouseDown($event); $event.stopPropagation()'
+      (pointerdown)='activeObjService.updateSelectedObj(force.startCoord, force); mouseDown($event); $event.stopPropagation()'
       height='10'
       width='10'
       style='overflow: visible; cursor: move'
@@ -214,7 +214,7 @@
       id='endForceEndpoint'
       [attr.x]='force.endCoord.x'
       [attr.y]='force.endCoord.y'
-      (mousedown)='activeObjService.updateSelectedObj(force.endCoord, force); mouseDown($event); $event.stopPropagation()'
+      (pointerdown)='activeObjService.updateSelectedObj(force.endCoord, force); mouseDown($event); $event.stopPropagation()'
       height='10'
       width='10'
       style='overflow: visible; cursor: move'
@@ -322,7 +322,7 @@
         fill-opacity='0.5'
         stroke-opacity='0.5'
       ></circle>
-      <!--      (mousedown)="mouseDown($event, 'jointTemp')"-->
+      <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
       <circle
         r='0.1'
         cx='0%'
