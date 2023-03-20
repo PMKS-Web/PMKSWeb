@@ -11,7 +11,13 @@ import { cMenuItem } from '../context-menu/context-menu.component';
 import { Link, RealLink } from '../../model/link';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Coord } from '../../model/coord';
-import { forceStates, gridStates, jointStates, linkStates } from '../../model/utils';
+import {
+  forceStates,
+  gridStates,
+  is_touch_enabled,
+  jointStates,
+  linkStates,
+} from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -20,6 +26,9 @@ import { GridComponent } from '../grid/grid.component';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
+import { MatDialog } from '@angular/material/dialog';
+import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
+import * as util from 'util';
 
 @Component({
   selector: 'app-new-grid',
@@ -34,7 +43,8 @@ export class NewGridComponent {
     public gridUtils: GridUtilsService,
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -64,6 +74,10 @@ export class NewGridComponent {
   ngOnInit() {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
+
+    if (is_touch_enabled()) {
+      this.dialog.open(TouchscreenWarningComponent);
+    }
 
     fromEvent(window, 'resize')
       .pipe(debounceTime(200))

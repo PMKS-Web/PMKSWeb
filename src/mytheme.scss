@@ -3,18 +3,18 @@
 @use 'src/app/component/tab/tab.component.scss' as tab;
 @use 'src/app/component/left-tabs/left-tabs.component.scss' as left-tabs;
 @use 'src/app/component/animation-bar/animation-bar.component.scss' as animation-bar;
-@use 'src/app/component/blocks/title/title.component.scss' as title-block;
+@use 'app/component/BLOCKS/title/title.component.scss' as title-block;
 @use 'src/app/component/edit-panel/edit-panel.component.scss' as edit-panel;
-@use 'src/app/component/blocks/button/button.component.scss' as button-block;
-@use 'src/app/component/blocks/input/input.component.scss' as input-block;
-@use 'src/app/component/blocks/panel-section/panel-section.component.scss' as panel-section;
-@use 'src/app/component/blocks/panel-section-collapsible/panel-section-collapsible.component.scss'
+@use 'app/component/BLOCKS/button/button.component.scss' as button-block;
+@use 'app/component/BLOCKS/input/input.component.scss' as input-block;
+@use 'app/component/BLOCKS/panel-section/panel-section.component.scss' as panel-section;
+@use 'app/component/BLOCKS/panel-section-collapsible/panel-section-collapsible.component.scss'
   as panel-section-collapsible;
-@use 'src/app/component/blocks/dual-input/dual-input.component.scss' as dual-input-block;
-@use 'src/app/component/blocks/radio/radio.component.scss' as radio-block;
-@use 'src/app/component/blocks/subtitle/subtitle.component.scss' as subtitle-block;
-@use 'src/app/component/blocks/toggle/toggle.component.scss' as toggle-block;
-@use 'src/app/component/blocks/blocks.common.scss' as blocks-common;
+@use 'app/component/BLOCKS/dual-input/dual-input.component.scss' as dual-input-block;
+@use 'app/component/BLOCKS/radio/radio.component.scss' as radio-block;
+@use 'app/component/BLOCKS/subtitle/subtitle.component.scss' as subtitle-block;
+@use 'app/component/BLOCKS/toggle/toggle.component.scss' as toggle-block;
+@use 'app/component/BLOCKS/blocks.common.scss' as blocks-common;
 @use 'src/app/component/analysis-panel/analysis-panel.component.scss' as analysis-panel;
 @use 'src/app/component/analysis-graph/analysis-graph.component.scss' as analysis-graph;
 @use 'src/app/component/right-panel/right-panel.component.scss' as right-panel;

@@ -24,13 +24,13 @@ export enum TorqueUnit {
   METER_N = 22,
   NULL = 23,
 }
+
 export enum GlobalUnit {
   ENGLISH = 30,
   METRIC = 31,
   SI = 32,
   NULL = 33,
 }
-
 
 // The possible states the program could be in.
 export enum gridStates {
@@ -588,3 +588,7 @@ export function line_intersect(
 //     return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
 //   }
 // };
+
+export function is_touch_enabled() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}

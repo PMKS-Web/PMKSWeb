@@ -1,0 +1,16 @@
+<div class='modal'>
+  <h1 mat-dialog-title>It looks like you are on a phone or tablet 📱</h1>
+  <div mat-dialog-content>
+    <ul>
+      <li>🖊️ You can edit existing linkages by opening them from a file, template, or URL.</li>
+      <li>❌ You cannot access the right click context menu to create new links.</li>
+      <li>✨ All other features should work as expected.</li>
+    </ul>
+    <p>️Better touchscreen support is being worked on. If you notice any issues or have ideas, please submit a bug
+      report
+      from the help panel on the top right!</p>
+  </div>
+  <div mat-dialog-actions align='end'>
+    <button mat-button cdkFocusInitial (click)='onNoClick()'>Continue</button>
+  </div>
+</div>
