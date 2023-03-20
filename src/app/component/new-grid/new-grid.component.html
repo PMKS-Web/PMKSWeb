@@ -36,6 +36,12 @@
       </feMerge>
     </filter>
   </defs>
+  <!-- This is only used to to scale onto when there is not link -->
+  <rect *ngIf='mechanismSrv.joints.length == 0'
+        [attr.x]='-10' [attr.y]='-10'
+        [attr.width]='20'
+        [attr.height]='20' fill='#ffffff' stroke='#00000000'>
+  </rect>
   <!-- Axes and Grid-->
   <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
      (pointerdown)='activeObjService.updateSelectedObj(undefined)'>

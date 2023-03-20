@@ -66,7 +66,7 @@ export class NewGridComponent {
     this.svgGrid.setNewElement(svgElement);
 
     fromEvent(window, 'resize')
-      .pipe(debounceTime(25))
+      .pipe(debounceTime(200))
       .subscribe((event) => {
         console.log('resize');
         this.svgGrid.panZoomObject.resize();
@@ -404,7 +404,6 @@ export class NewGridComponent {
     console.log(this.lastRightClickCoord);
   }
 
-
   mouseUp($event: MouseEvent) {
     //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
@@ -424,10 +423,10 @@ export class NewGridComponent {
     //This is for more targeted mouseUp evnets, only one should be called for each object
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-              // console.warn('mouseUp');
-              // console.log(typeChosen);
-              // console.log(thing);
-              // console.log(this.activeObjService.objType);
+        // console.warn('mouseUp');
+        // console.log(typeChosen);
+        // console.log(thing);
+        // console.log(this.activeObjService.objType);
         let clickOnlyWithoutDrag: boolean = false;
 
         const diffX = Math.abs($event.pageX - this.startX);
