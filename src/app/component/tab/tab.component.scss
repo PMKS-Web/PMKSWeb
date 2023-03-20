@@ -18,12 +18,23 @@
       @include mat.elevation(8);
       //make background color lighter
       filter: brightness(104%);
+
+      #rotate mat-icon {
+        transform: scale(1.1);
+        transition: 0.2s;
+      }
     }
 
     transition: 0.2s;
 
     &.active {
       background-color: mat.get-color-from-palette($primary-palette, 50);
+
+      #rotate mat-icon {
+        transform: rotate(180deg);
+        transition: 0.15s ease-in-out;
+      }
+      
     }
 
     border-radius: var(--border-radius);
@@ -31,6 +42,7 @@
     height: 100%;
     width: 100%;
     display: flex;
+    //flex-direction: row;
     align-items: center;
     justify-content: center;
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
@@ -46,6 +58,13 @@
     -webkit-user-drag: none;
     -webkit-tap-highlight-color: transparent;
 
+    #rotate {
+      display: flex;
+      align-items: center;
+      transform: rotate(-90deg);
+      transform-origin: center;
+    }
+
     button {
       //set the text size and make it bold
       @include mat.typography-level($typography-config, 'headline-5');
@@ -54,8 +73,8 @@
       color: mat.get-color-from-palette($foreground, 'text');
       border: none;
       //rotate -90 deg around the center
-      transform: rotate(-90deg);
-      transform-origin: center;
+      //transform: rotate(-90deg);
+      //transform-origin: center;
 
       cursor: pointer;
 
