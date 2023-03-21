@@ -62,6 +62,7 @@ export class MechanismService {
   }
 
   updateMechanism() {
+    // console.log(this.mechanisms[0]);
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
@@ -416,7 +417,7 @@ export class MechanismService {
   }
 
   toggleSlider() {
-    if (!(this.activeObjService.selectedJoint instanceof PrisJoint)) {
+    if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
       this.activeObjService.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
@@ -450,32 +451,26 @@ export class MechanismService {
       this.links.push(piston);
     } else {
       // delete Prismatic Joint
-      // TODO: determine logic to delete crank and the prismatic joint
-      this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        const removeIndex = j.connectedJoints.findIndex(
-          (jt) => jt.id === this.activeObjService.selectedJoint.id
-        );
-        j.connectedJoints.splice(removeIndex, 1);
-      });
-      const piston = this.links.find((l) => l instanceof Piston)!;
-      piston.joints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        const removeIndex = j.links.findIndex((l) => l.id === piston.id);
-        j.links.splice(removeIndex, 1);
-      });
-      const prismaticJointIndex = this.joints.findIndex(
-        (j) => j.id == this.activeObjService.selectedJoint.id
-      );
+      const piston = this.activeObjService.selectedJoint.links.find((l) => l instanceof Piston)!;
       const pistonIndex = this.links.findIndex((l) => l.id === piston.id);
+      const prismaticJointID = piston.joints.find((j) => j instanceof PrisJoint)!.id;
+      this.activeObjService.selectedJoint.connectedJoints =
+        this.activeObjService.selectedJoint.connectedJoints.filter(
+          (j) => j.id !== prismaticJointID
+        );
+
+      this.activeObjService.selectedJoint.links = this.activeObjService.selectedJoint.links.filter(
+        (l) => l.id !== piston.id
+      );
+      const prismaticJointIndex = this.joints.findIndex((j) => j.id === prismaticJointID);
       this.joints.splice(prismaticJointIndex, 1);
       this.links.splice(pistonIndex, 1);
+
+      this.activeObjService.selectedJoint.ground = true;
     }
     this.updateMechanism();
+    console.log(this.joints);
+    console.log(this.links);
   }
 
   findInputJointIndex() {

@@ -172,4 +172,11 @@ export class GridUtilsService {
     selectedForce.angle = Force.updateAngle(selectedForce.startCoord, selectedForce.endCoord);
     return selectedForce;
   }
+
+  isAttachedToSlider(lastRightClick: Joint | Link | Force | String) {
+    if (lastRightClick instanceof Joint && lastRightClick instanceof RevJoint) {
+      return lastRightClick.connectedJoints.some((j) => j instanceof PrisJoint);
+    }
+    return false;
+  }
 }

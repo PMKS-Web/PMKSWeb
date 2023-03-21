@@ -173,8 +173,6 @@ export class NewGridComponent {
           new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
         );
         break;
-      case 'PrisJoint':
-      //Fall through intentional
       case 'RevJoint':
         this.cMenuItems.push(
           new cMenuItem(
@@ -210,9 +208,9 @@ export class NewGridComponent {
         }
         this.cMenuItems.push(
           new cMenuItem(
-            this.lastRightClick instanceof PrisJoint ? 'Remove Slider' : 'Add Slider',
+            this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'Remove Slider' : 'Add Slider',
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-            this.lastRightClick instanceof PrisJoint ? 'remove_slider' : 'add_slider'
+            this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         );
         this.cMenuItems.push(
