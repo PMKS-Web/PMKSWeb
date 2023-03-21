@@ -52,6 +52,11 @@ export class SvgGridService {
           instance.zoomIn();
         });
 
+        // Handle tap (click) and no drag.
+        this.hammer.on('tap', function (ev: any) {
+          NewGridComponent.instance.handleTap();
+        });
+
         // Handle pan
         this.hammer.on('panstart panmove', function (ev: any) {
           // On pan start reset panned variables

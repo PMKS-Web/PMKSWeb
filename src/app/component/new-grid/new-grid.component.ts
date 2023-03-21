@@ -55,6 +55,9 @@ export class NewGridComponent {
   public lastRightClick: Joint | Link | Force | String = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
 
+  public lastLeftClick: Joint | Link | Force | String = '';
+  lastLeftClickType: string = 'Nothing';
+
   //TODO: These states should be a one stateMachine that is a service
   private gridStates: gridStates = gridStates.waiting;
   private jointStates: jointStates = jointStates.waiting;
@@ -240,6 +243,30 @@ export class NewGridComponent {
   setLastRightClick(clickedObj: Joint | Link | String | Force) {
     this.lastRightClick = clickedObj;
     this.updateContextMenuItems();
+  }
+
+  setLastLeftClick(clickedObj: Joint | Link | String | Force) {
+    this.lastLeftClick = clickedObj;
+    switch (clickedObj.constructor.name) {
+      case 'Force':
+        this.lastLeftClickType = 'Force';
+        break;
+      case 'RealLink':
+        this.lastLeftClickType = 'Link';
+        break;
+      case 'PrisJoint':
+      //Fall through intentional
+      case 'RevJoint':
+        this.lastLeftClickType = 'Joint';
+        break;
+      case 'String':
+        this.lastLeftClickType = 'Grid';
+        break;
+      default:
+        this.lastLeftClickType = 'Unknown';
+        console.error('Unknown object type clicked: ' + clickedObj.constructor.name);
+    }
+    this.activeObjService.updateSelectedObj(clickedObj);
   }
 
   addJoint() {
@@ -512,7 +539,7 @@ export class NewGridComponent {
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
         console.warn(this.activeObjService.objType);
-        switch (this.activeObjService.objType) {
+        switch (this.lastLeftClickType) {
           case 'Grid':
             switch (this.gridStates) {
               case gridStates.createJointFromGrid:
@@ -825,5 +852,12 @@ export class NewGridComponent {
 
   debug() {
     console.log('debug');
+  }
+
+  handleTap() {
+    if (this.lastLeftClick == 'grid') {
+      console.log('tap on grid');
+      this.activeObjService.updateSelectedObj(undefined);
+    }
   }
 }

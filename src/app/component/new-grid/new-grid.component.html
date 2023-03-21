@@ -43,8 +43,7 @@
         [attr.height]='20' fill='#ffffff' stroke='#00000000'>
   </rect>
   <!-- Axes and Grid-->
-  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")'
-     (pointerdown)='activeObjService.updateSelectedObj(undefined)'>
+  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")' (pointerdown)='setLastLeftClick("grid")'>
 
     <!--  The Background-->
     <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
@@ -134,7 +133,7 @@
         *ngIf='gridUtils.typeOfLink(link) == "R"'
         (pointerover)='link.showHighlight = true'
         (pointerout)='link.showHighlight = false'
-        (pointerdown)='activeObjService.updateSelectedObj(link)'
+        (pointerdown)='setLastLeftClick(link)'
         (contextmenu)='setLastRightClick(link)'
         [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
         [attr.id]='link.id'
@@ -157,7 +156,7 @@
       (pointerover)='joint.showHighlight = true'
       (pointerout)='joint.showHighlight = false'
       (contextmenu)='setLastRightClick(joint)'
-      (pointerdown)='activeObjService.updateSelectedObj(joint)'
+      (pointerdown)='setLastLeftClick(joint)'
       width='20'
       height='20'
       style='overflow: visible'
@@ -186,7 +185,7 @@
     style='transform: scaleY(-1)'
     *ngFor='let force of mechanismSrv.getForces()'
     (contextmenu)='setLastRightClick(force)'
-    (pointerdown)='activeObjService.updateSelectedObj(force)'
+    (pointerdown)='setLastLeftClick(force)'
   >
     <g
       [attr.id]='force.id'

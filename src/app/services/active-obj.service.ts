@@ -45,6 +45,8 @@ export class ActiveObjService {
           console.log('Force selected');
           this.objType = 'Force';
           this.selectedForce = newActiveObj;
+          this.selectedForce.isStartSelected = false;
+          this.selectedForce.isEndSelected = false;
           break;
         }
         case Coord: {
