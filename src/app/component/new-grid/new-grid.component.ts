@@ -795,4 +795,21 @@ export class NewGridComponent {
       this.activeObjService.updateSelectedObj(undefined);
     }
   }
+
+  getFirstPosCoords(link: Link) {
+    if (this.mechanismSrv.oneValidMechanismExists()) {
+      const jointIndex = this.mechanismSrv.joints.indexOf(link.joints[0]);
+      return this.mechanismSrv.mechanisms[0].joints[0][jointIndex];
+    } else {
+      return link.joints[0];
+    }
+  }
+
+  getFirstXPos(link: Link) {
+    return this.getFirstPosCoords(link).x;
+  }
+
+  getFirstYPos(link: Link) {
+    return this.getFirstPosCoords(link).y;
+  }
 }

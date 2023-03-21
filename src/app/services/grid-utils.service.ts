@@ -105,6 +105,12 @@ export class GridUtilsService {
     switch (selectedJoint.constructor) {
       case RevJoint:
         selectedJoint.links.forEach((l) => {
+          if (l instanceof Piston) {
+            //If the joint is a slider, then the joint is the second joint in the link must follow the first joint
+            const jointIndex = l.joints.findIndex((jt) => jt.id !== selectedJoint.id);
+            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
+            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+          }
           if (!(l instanceof RealLink)) {
             return;
           }
@@ -128,34 +134,6 @@ export class GridUtilsService {
             f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
             f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
             f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
-          });
-        });
-        break;
-      case PrisJoint:
-        selectedJoint.connectedJoints.forEach((j) => {
-          if (!(j instanceof RealJoint)) {
-            return;
-          }
-          if (j.ground) {
-            return;
-          }
-          j.x = selectedJoint.x;
-          j.y = selectedJoint.y;
-
-          j.links.forEach((l) => {
-            if (!(l instanceof RealLink)) {
-              return;
-            }
-            // TODO: delete this if this is not needed (verify this)
-            const jointIndex = l.joints.findIndex((jt) => jt.id === j.id);
-            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-            l.d = RealLink.getD(l.joints);
-            l.CoM = RealLink.determineCenterOfMass(l.joints);
-            l.updateCoMDs();
-            l.forces.forEach((f) => {
-              // TODO: adjust the location of force endpoints and update the line and arrow
-            });
           });
         });
         break;

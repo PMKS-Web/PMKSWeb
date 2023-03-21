@@ -1,6 +1,6 @@
 <svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
      (contextmenu)='onContextMenu($event)' (pointermove)='mouseMove($event)' (pointerup)='mouseUp($event)'
-     (pointerdown)='mouseDown($event)'>>
+     (pointerdown)='mouseDown($event)'>
   <defs>
     <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="0.02"/>
@@ -127,6 +127,20 @@
 
     </svg>
   </g>
+  <g id='linkBGHolder' style='transform: scaleY(-1); pointer-events: none'>
+    <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+      <svg *ngIf='gridUtils.typeOfLink(link) == "P"'
+             [attr.x]='getFirstXPos(link)' [attr.y]='getFirstYPos(link)'
+             width='10'
+             height='10'
+             style='overflow: visible'>
+        <image xlink:href='../../../assets/SliderTrackMid.svg'
+                 [attr.width]='3.6' [attr.height]='3.6'  [attr.x]='-1.8' [attr.y]='-1.8'
+               style='transform: rotateZ({{gridUtils.getPrisAngle(link.joints[1])}}rad)'
+        />
+      </svg>
+    </ng-container>
+  </g>
   <g id='linkHolder' style='transform: scaleY(-1)'>
     <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
       <path
@@ -144,9 +158,6 @@
         [class]='mechanismSrv.getLinkCSSClass(link)'
       >
       </path>
-      <image *ngIf='gridUtils.typeOfLink(link) == "P"'
-             xlink:href='../../../assets/SliderTrackMid.svg'
-             width='3.6' x='-1.8' y='-1.8' height='3.6' style='transform: scaleY(-1)' />
     </ng-container>
   </g>
   <g id='jointHolder' style='transform: scaleY(-1)'>
