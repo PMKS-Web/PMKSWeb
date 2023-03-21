@@ -460,67 +460,6 @@ export class NewGridComponent {
     }
     this.mechanismSrv.showPathHolder = false;
     // this.activeObjService.updateSelectedObj(thing);
-
-    //This is for more targeted mouseUp evnets, only one should be called for each object
-    switch ($event.button) {
-      case 0: // Handle Left-Click on canvas
-        // console.warn('mouseUp');
-        // console.log(typeChosen);
-        // console.log(thing);
-        // console.log(this.activeObjService.objType);
-        let clickOnlyWithoutDrag: boolean = false;
-
-        const diffX = Math.abs($event.pageX - this.startX);
-        const diffY = Math.abs($event.pageY - this.startY);
-        if (diffX < this.delta && diffY < this.delta) {
-          clickOnlyWithoutDrag = true;
-        }
-
-        switch (this.activeObjService.objType) {
-          case 'Grid':
-            if (clickOnlyWithoutDrag) {
-              this.activeObjService.updateSelectedObj(undefined);
-            }
-            break;
-          case 'Joint':
-            //If the animation is running or the mechansim is not at t=0, don't allow selection
-            // if (AnimationBarComponent.animate === true) {
-            //   return;
-            // }
-            // if (GridComponent.mechanismTimeStep !== 0) {
-            //   return;
-            // }
-            // this.activeObjService.updateSelectedObj(thing);
-            // GridComponent.canDelete = true;
-
-            if (clickOnlyWithoutDrag) {
-              //Revert the joint to its original position
-              // console.warn('click only without drag');
-              // if (thing.x !== this.jointXatMouseDown || thing.y !== this.jointYatMouseDown) {
-              //   // console.warn('Diff exsits');
-              //   this.gridUtils.dragJoint(
-              //     thing,
-              //     new Coord(this.jointXatMouseDown, this.jointYatMouseDown)
-              //   );
-              //   // this.activeObjService.updateSelectedObj(thing);
-              //   this.mechanismSrv.onMechUpdateState.next(0);
-              // }
-            }
-            break;
-          default:
-            // GridComponent.canDelete = true;
-            //If the animation is running or the mechansim is not at t=0, don't allow selection
-            // if (AnimationBarComponent.animate === true) {
-            //   return;
-            // }
-            // if (GridComponent.mechanismTimeStep !== 0) {
-            //   return;
-            // }
-            // this.activeObjService.updateSelectedObj(thing);
-            break;
-        }
-        break;
-    }
   }
 
   mouseDown($event: MouseEvent) {
@@ -543,10 +482,6 @@ export class NewGridComponent {
           case 'Grid':
             switch (this.gridStates) {
               case gridStates.createJointFromGrid:
-                console.warn('reset position');
-                //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
-                this.startY = 9999999;
-                this.startX = 9999999;
                 joint1 = this.mechanismSrv.createRevJoint(
                   this.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y1')!
@@ -577,10 +512,6 @@ export class NewGridComponent {
                 this.jointTempHolderSVG.style.display = 'none';
                 break;
               case gridStates.createJointFromJoint:
-                // console.warn('reset position');
-                //This is werid bug, ensures that when you use a context menu it always counts as a real click instead of a mis-drag
-                this.startY = 9999999;
-                this.startX = 9999999;
                 joint2 = this.mechanismSrv.createRevJoint(
                   this.jointTempHolderSVG.children[0].getAttribute('x2')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y2')!
@@ -788,14 +719,18 @@ export class NewGridComponent {
             }
             break;
           case 'Link':
-            // if (this.gridStates === gridStates.createJointFromGrid) {
-            //   this.sendNotification(
-            //     'Cannot link to a bar. Please create and select a tracer point on the link.'
-            //   );
-            //   this.gridStates = gridStates.waiting;
-            //   this.jointStates = jointStates.waiting;
-            //   this.jointTempHolderSVG.style.display = 'none';
-            // }
+            if (
+              this.gridStates === gridStates.createJointFromGrid ||
+              this.gridStates === gridStates.createJointFromJoint ||
+              this.gridStates === gridStates.createJointFromLink
+            ) {
+              this.sendNotification(
+                'Cannot link to a bar. Please create and select a tracer point on the link.'
+              );
+              this.gridStates = gridStates.waiting;
+              this.jointStates = jointStates.waiting;
+              this.jointTempHolderSVG.style.display = 'none';
+            }
             break;
           case 'Force':
             switch (this.forceStates) {
