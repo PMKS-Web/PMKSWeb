@@ -1,17 +1,25 @@
-<div id="synthesisWrapper">
+<div id='synthesisWrapper'>
   <panel-section>
-    <p>This page is not ready yet. Here is what this screen could look like:</p>
-    <img src="assets/PlaceholderS.png" />
-    <!-- <div id="headline-1">This is Headline 1</div> -->
-    <div id="headline-2">This is Headline 2</div>
-    <div id="headline-3">This is Headline 3</div>
-    <div id="headline-4">This is Headline 4</div>
-    <div id="headline-5">This is Headline 5</div>
-    <div id="headline-6">This is Headline 6</div>
-    <div id="subtitle-1">This is Subtitle 1</div>
-    <div id="subtitle-2">This is Subtitle 2</div>
-    <div id="body-1">This is Body 1</div>
-    <div id="body-2">This is Body 2</div>
-    <div id="caption">This is Caption</div>
+    <title-block>Four Bar Generator</title-block>
+    <subtitle-block>PMKS+ will create a 4-bar linkage based on 3 poses.</subtitle-block>
+    <input-block unit='cm'>Length</input-block>
   </panel-section>
+  <panel-section-collapsible [expanded]='true'>
+    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 1</subtitle-block>
+    <dual-input-block>Pose 1 Position</dual-input-block>
+    <input-block>Pose 1 Angle</input-block>
+    <button-block icon='arrow_forward'>Next Pose</button-block>
+  </panel-section-collapsible>
+  <panel-section-collapsible [expanded]='false'>
+    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 2</subtitle-block>
+    <dual-input-block>Pose 2 Position</dual-input-block>
+    <input-block>Pose 2 Angle</input-block>
+    <button-block icon='arrow_forward'>Next Pose</button-block>
+  </panel-section-collapsible>
+  <panel-section-collapsible [expanded]='false'>
+    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 3</subtitle-block>
+    <dual-input-block>Pose 3 Position</dual-input-block>
+    <input-block>Pose 3 Angle</input-block>
+    <button-block icon='auto_fix_normal'>Generate</button-block>
+  </panel-section-collapsible>
 </div>
