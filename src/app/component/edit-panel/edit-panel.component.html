@@ -38,24 +38,37 @@
       [formGroup]='this.jointForm'
       formControl1='xPos'
       formControl2='yPos'
-      unit='cm'
       tooltip="The location of the joint in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
     >Joint Position
     </dual-input-block>
 
-    <toggle-block
-      [formGroup]='jointForm'
-      _formControl='ground'
-      tooltip='Ground this joint, making it non-moving.'
+    <input-block *ngIf='this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'
+                 [formGroup]='this.jointForm'
+                 _formControl='angle'
+                 tooltip="The angle of the slider in {{this.settingsService.angle.value == 10 ? 'degrees':'radians'}}."
+    >Slider Angle
+    </input-block>
+
+    <toggle-block *ngIf='!this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'
+                  [formGroup]='jointForm'
+                  _formControl='ground'
+                  tooltip='Ground this joint, making it non-moving.'
     >Ground
     </toggle-block>
 
     <toggle-block
-      *ngIf='this.activeSrv.selectedJoint.ground'
+      *ngIf='this.activeSrv.selectedJoint.ground && !this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint) '
       [formGroup]='jointForm'
       _formControl='input'
       tooltip='Make this joint the driven. Only one joint can be a input at a time.'
     >Input
+    </toggle-block>
+
+    <toggle-block *ngIf='!this.activeSrv.selectedJoint.input'
+                  [formGroup]='jointForm'
+                  _formControl='slider'
+                  tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'
+    >Slider
     </toggle-block>
 
     <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->

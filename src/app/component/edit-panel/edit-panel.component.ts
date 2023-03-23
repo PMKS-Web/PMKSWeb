@@ -1,16 +1,7 @@
-import {
-  AfterContentInit,
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-} from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
-import { RealJoint, RevJoint } from 'src/app/model/joint';
-import { RealLink } from 'src/app/model/link';
-import { Force } from 'src/app/model/force';
-import { FormBuilder, Validators, FormArray } from '@angular/forms';
-import { GridComponent } from '../grid/grid.component';
+import { PrisJoint, RevJoint } from 'src/app/model/joint';
+import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
 import { AngleUnit, getNewOtherJointPos, LengthUnit, TorqueUnit } from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
@@ -36,7 +27,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private nup: NumberUnitParserService,
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
-    private gridUtils: GridUtilsService
+    public gridUtils: GridUtilsService
   ) {}
 
   lengthUnit: LengthUnit = this.settingsService.length.value;
@@ -46,8 +37,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     {
       xPos: [''],
       yPos: [''],
+      angle: [''],
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
+      slider: [false, { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
@@ -165,6 +158,27 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       }
     });
 
+    this.jointForm.controls['angle'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) return;
+      const [success, value] = this.nup.parseAngleString(
+        val!,
+        this.settingsService.angle.getValue()
+      );
+      if (!success) {
+        this.jointForm.patchValue({
+          angle: (this.activeSrv.selectedJoint as PrisJoint).angle.toFixed(2).toString(),
+        });
+      } else {
+        (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle =
+          this.nup.convertAngle(value, this.settingsService.angle.getValue(), AngleUnit.RADIAN);
+        this.jointForm.patchValue(
+          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angle.getValue()) },
+          { emitEvent: false }
+        );
+        this.mechanismService.onMechUpdateState.next(2);
+      }
+    });
+
     this.jointForm.controls['ground'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) {
         return;
@@ -179,6 +193,15 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         return;
       }
       this.activeSrv.selectedJoint.input = val!;
+      this.mechanismService.updateMechanism();
+      this.mechanismService.onMechUpdateState.next(2);
+    });
+
+    this.jointForm.controls['slider'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
+      this.mechanismService.toggleSlider();
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);
     });
@@ -216,13 +239,23 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         const [num, unit] = this.nup.preProcessInput(val!);
         var correctAngle = 0;
         if (this.nup.getAngleUnit(unit) !== this.settingsService.angle.getValue()) {
-          correctAngle = this.nup.convertAngle(num, this.nup.getAngleUnit(unit), this.settingsService.angle.getValue());
+          correctAngle = this.nup.convertAngle(
+            num,
+            this.nup.getAngleUnit(unit),
+            this.settingsService.angle.getValue()
+          );
           console.log(correctAngle);
         } else {
           correctAngle = num;
         }
-        this.activeSrv.selectedLink.angleDeg = this.nup.getAngleUnit(unit) == AngleUnit.DEGREE ? parseFloat(val!) : this.nup.convertAngle(parseFloat(val!), AngleUnit.RADIAN, AngleUnit.DEGREE);
-        this.activeSrv.selectedLink.angleRad = this.nup.getAngleUnit(unit) == AngleUnit.RADIAN ? parseFloat(val!) : this.nup.convertAngle(parseFloat(val!), AngleUnit.DEGREE, AngleUnit.RADIAN);
+        this.activeSrv.selectedLink.angleDeg =
+          this.nup.getAngleUnit(unit) == AngleUnit.DEGREE
+            ? parseFloat(val!)
+            : this.nup.convertAngle(parseFloat(val!), AngleUnit.RADIAN, AngleUnit.DEGREE);
+        this.activeSrv.selectedLink.angleRad =
+          this.nup.getAngleUnit(unit) == AngleUnit.RADIAN
+            ? parseFloat(val!)
+            : this.nup.convertAngle(parseFloat(val!), AngleUnit.DEGREE, AngleUnit.RADIAN);
         this.resolveNewLink();
         this.mechanismService.onMechUpdateState.next(2);
         this.linkForm.patchValue(
@@ -235,6 +268,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
+        const angleTemp = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
+          ? (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle
+          : -999;
         this.jointForm.patchValue(
           {
             xPos: this.nup.formatValueAndUnit(
@@ -245,8 +281,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.activeSrv.selectedJoint.y,
               this.settingsService.length.getValue()
             ),
+            angle: this.nup.formatValueAndUnit(angleTemp, this.settingsService.angle.getValue()),
             ground: this.activeSrv.selectedJoint.ground,
             input: this.activeSrv.selectedJoint.input,
+            slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
           },
           { emitEvent: false }
         );
@@ -258,7 +296,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.settingsService.length.getValue()
             ),
             angle: this.nup.formatValueAndUnit(
-              this.settingsService.angle.getValue() == AngleUnit.DEGREE ? this.activeSrv.selectedLink.angleDeg : this.activeSrv.selectedLink.angleRad,
+              this.settingsService.angle.getValue() == AngleUnit.DEGREE
+                ? this.activeSrv.selectedLink.angleDeg
+                : this.activeSrv.selectedLink.angleRad,
               this.settingsService.angle.getValue()
             ),
           },

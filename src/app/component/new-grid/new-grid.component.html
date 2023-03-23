@@ -123,7 +123,7 @@
              [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPill.svg'
-             width='1.2' x='-0.6' y='-0.6' height='1.2' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.6' [attr.height]='settings.objectScale*1.2' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
 
     </svg>
   </g>
@@ -135,7 +135,7 @@
              height='10'
              style='overflow: visible'>
         <image xlink:href='../../../assets/SliderTrackMid.svg'
-                 [attr.width]='3.6' [attr.height]='3.6'  [attr.x]='-1.8' [attr.y]='-1.8'
+                 [attr.width]='settings.objectScale*3.6' [attr.height]='settings.objectScale*3.6'  [attr.x]='settings.objectScale*-1.8' [attr.y]='settings.objectScale*-1.8'
                style='transform: rotateZ({{gridUtils.getPrisAngle(link.joints[1])}}rad)'
         />
       </svg>

@@ -179,4 +179,11 @@ export class GridUtilsService {
     }
     return false;
   }
+
+  getSliderJoint(joint: Joint) {
+    if (!(joint instanceof RevJoint)) {
+      return;
+    }
+    return joint.connectedJoints.find((j) => j instanceof PrisJoint);
+  }
 }

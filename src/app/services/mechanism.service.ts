@@ -198,9 +198,6 @@ export class MechanismService {
 
     this.activeObjService.selectedJoint.links.forEach((l) => {
       // TODO: May wanna check this to be sure...
-      if (l instanceof Piston) {
-        return;
-      }
       if (l.joints.length < 3) {
         // TODO: Utilize this same logic when you delete ImagJoint and ImagLink
         // TODO: this.deleteJointFromConnectedJoints(delJoint);
@@ -255,7 +252,17 @@ export class MechanismService {
         );
         l.joints.splice(delJointIndex, 1);
       }
+
+      if (l instanceof Piston) {
+        //Special case, remove the other joint on a pistion
+        l.joints.forEach((j) => {
+          if (j.id !== this.activeObjService.selectedJoint.id) {
+            this.joints.splice(this.gridUtils.findJointIDIndex(j.id, this.joints), 1);
+          }
+        });
+      }
     });
+
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
       this.activeObjService.selectedLink.d = RealLink.getD(

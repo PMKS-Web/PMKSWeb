@@ -197,7 +197,7 @@ export class NewGridComponent {
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
           );
-        } else {
+        } else if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
           this.cMenuItems.push(
             new cMenuItem(
               'Add Ground',
