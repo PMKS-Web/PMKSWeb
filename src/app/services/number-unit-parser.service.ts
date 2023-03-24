@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
-import { LengthUnit, AngleUnit, TorqueUnit } from '../model/utils';
+import { LengthUnit, AngleUnit, ForceUnit } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NumberUnitParserService {
-  constructor() { }
+  constructor() {}
 
-  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit): string {
+  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit): string {
     switch (units) {
       case LengthUnit.CM:
         return value.toFixed(2) + ' cm';
@@ -19,6 +19,10 @@ export class NumberUnitParserService {
         return value.toFixed(2) + ' deg';
       case AngleUnit.RADIAN:
         return value.toFixed(2) + ' rad';
+      case ForceUnit.LBF:
+        return value.toFixed(2) + ' lbf';
+      case ForceUnit.NEWTON:
+        return value.toFixed(2) + ' N';
     }
     return 'Error in formatValueAndUnit()';
   }
@@ -104,6 +108,7 @@ export class NumberUnitParserService {
         return LengthUnit.NULL;
     }
   }
+
   public parseLengthString(input: string, desiredUnits: LengthUnit): [boolean, number] {
     let [value, unit] = this.preProcessInput(input);
 
@@ -136,7 +141,36 @@ export class NumberUnitParserService {
     return [true, value];
   }
 
+  parseForceString(s: string, desiredUnits: ForceUnit): [boolean, number] {
+    let [value, unit] = this.preProcessInput(s);
+
+    if (isNaN(value)) return [false, 0]; //If the value is not a number, return fail
+    if (unit.length == 0) return [true, value]; //No units means imply that we have the desired units
+
+    let givenUnits: ForceUnit;
+
+    switch (unit) {
+      case 'N':
+      case 'newton':
+      case 'newtons':
+        givenUnits = ForceUnit.NEWTON;
+        break;
+      case 'lb':
+      case 'lbf':
+      case 'pound':
+      case 'pounds':
+        givenUnits = ForceUnit.LBF;
+        break;
+      default:
+        return [false, value];
+    }
+    if (givenUnits == desiredUnits) return [true, value];
+    value = this.convertForce(value, givenUnits, desiredUnits);
+    return [true, value];
+  }
+
   public convertLength(value: number, givenUnits: LengthUnit, desiredUnits: LengthUnit): number {
+    if (givenUnits == desiredUnits) return value;
     switch (givenUnits) {
       case LengthUnit.CM:
         switch (desiredUnits) {
@@ -163,11 +197,17 @@ export class NumberUnitParserService {
         }
         break;
     }
-    console.error('Error in NumberUnitParserService.convertLength(): No valid conversion found');
+    console.error(
+      'Error in NumberUnitParserService.convertLength(): No valid conversion found between ' +
+        LengthUnit[givenUnits] +
+        ' and ' +
+        LengthUnit[desiredUnits]
+    );
     return value;
   }
 
   public convertAngle(value: number, givenUnits: AngleUnit, desiredUnits: AngleUnit): number {
+    if (givenUnits == desiredUnits) return value;
     switch (givenUnits) {
       case AngleUnit.DEGREE:
         switch (desiredUnits) {
@@ -182,7 +222,37 @@ export class NumberUnitParserService {
         }
         break;
     }
-    console.error('Error in NumberUnitParserService.convertAngle(): No valid conversion found');
+    console.error(
+      'Error in NumberUnitParserService.convertAngle(): No valid conversion found between ' +
+        AngleUnit[givenUnits] +
+        ' and ' +
+        AngleUnit[desiredUnits]
+    );
+    return value;
+  }
+
+  private convertForce(value: number, givenUnits: ForceUnit, desiredUnits: ForceUnit): number {
+    if (givenUnits == desiredUnits) return value;
+    switch (givenUnits) {
+      case ForceUnit.NEWTON:
+        switch (desiredUnits) {
+          case ForceUnit.LBF:
+            return value * 0.224809;
+        }
+        break;
+      case ForceUnit.LBF:
+        switch (desiredUnits) {
+          case ForceUnit.NEWTON:
+            return value / 0.224809;
+        }
+        break;
+    }
+    console.error(
+      'Error in NumberUnitParserService.convertForce(): No valid conversion found between ' +
+        ForceUnit[givenUnits] +
+        ' and ' +
+        ForceUnit[desiredUnits]
+    );
     return value;
   }
 }

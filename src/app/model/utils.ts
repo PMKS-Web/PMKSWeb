@@ -18,11 +18,10 @@ export enum AngleUnit {
   NULL = 12,
 }
 
-export enum TorqueUnit {
-  INCH_LB = 20,
-  CM_N = 21,
-  METER_N = 22,
-  NULL = 23,
+export enum ForceUnit {
+  LBF = 20,
+  NEWTON = 21,
+  NULL = 22,
 }
 
 export enum GlobalUnit {

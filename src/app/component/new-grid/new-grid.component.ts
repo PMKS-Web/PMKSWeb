@@ -245,6 +245,7 @@ export class NewGridComponent {
 
   setLastLeftClick(clickedObj: Joint | Link | String | Force) {
     this.lastLeftClick = clickedObj;
+    // console.error(clickedObj.constructor.name);
     switch (clickedObj.constructor.name) {
       case 'Force':
         this.lastLeftClickType = 'Force';
@@ -420,6 +421,8 @@ export class NewGridComponent {
         }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
+        //So that the panel values update continously
+        this.activeObjService.fakeUpdateSelectedObj();
         break;
       case forceStates.draggingStart:
         if (AnimationBarComponent.animate) {
@@ -432,6 +435,8 @@ export class NewGridComponent {
         }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
+        //So that the panel values update continously
+        this.activeObjService.fakeUpdateSelectedObj();
         break;
     }
   }
@@ -461,7 +466,7 @@ export class NewGridComponent {
   }
 
   mouseDown($event: MouseEvent) {
-    console.warn('mouseDown');
+    // console.warn('mouseDown');
     // console.log(typeChosen);
     // console.log(thing);
     // $event.preventDefault();
@@ -475,7 +480,7 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        console.warn(this.activeObjService.objType);
+        // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
             switch (this.gridStates) {
@@ -731,6 +736,7 @@ export class NewGridComponent {
             }
             break;
           case 'Force':
+            console.log('force is last left click');
             switch (this.forceStates) {
               case forceStates.waiting:
                 console.log(this.activeObjService.selectedForce);

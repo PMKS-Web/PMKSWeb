@@ -16,6 +16,9 @@
     <div *ngIf='getOpenTab() === 3' class='page3'>
       <p style='margin: 30px'>
         <panel-section>
+          <button-block icon='terminal' [click]='printActiveObject.bind(this)'>Console Log Active Object</button-block>
+          <button-block icon='terminal' [click]='printMechanism.bind(this)'>Console Log Mechanism</button-block>
+          
           <app-linkage-table></app-linkage-table>
 
           <li>GridState: {{debugGetGridState()}}</li>

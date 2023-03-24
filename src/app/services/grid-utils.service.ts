@@ -169,7 +169,7 @@ export class GridUtilsService {
         selectedForce.startCoord
       );
     }
-    selectedForce.angle = Force.updateAngle(selectedForce.startCoord, selectedForce.endCoord);
+    selectedForce.updateInternalValues();
     return selectedForce;
   }
 

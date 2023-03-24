@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
-import { LengthUnit, AngleUnit, TorqueUnit, GlobalUnit } from 'src/app/model/utils';
+import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
@@ -18,11 +18,12 @@ export class SettingsPanelComponent {
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
     private svgGrid: SvgGridService
-  ) { }
+  ) {}
 
   currentLengthUnit!: LengthUnit;
+  currentForceUnit!: ForceUnit;
   currentAngleUnit!: AngleUnit;
-  currentTorqueUnit!: TorqueUnit;
+  // currentTorqueUnit!: TorqueUnit;
   currentGlobalUnit!: GlobalUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
@@ -31,10 +32,9 @@ export class SettingsPanelComponent {
 
   ngOnInit(): void {
     this.gravityEnabled = this.settingsService.isGravity.value;
-    this.currentTorqueUnit = this.settingsService.inputTorque.value;
-    this.currentLengthUnit = this.settingsService.length.value;
-    this.currentAngleUnit = this.settingsService.angle.value;
-    this.currentGlobalUnit = this.settingsService.global.value;
+    this.currentLengthUnit = this.settingsService.lengthUnit.value;
+    this.currentAngleUnit = this.settingsService.angleUnit.value;
+    this.currentGlobalUnit = this.settingsService.globalUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentWidthSetting = SettingsService.objectScale.value;
@@ -46,7 +46,7 @@ export class SettingsPanelComponent {
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
       angleunit: (this.currentAngleUnit - 10).toString(),
-      torqueunit: (this.currentTorqueUnit - 20).toString(),
+      // torqueunit: (this.currentTorqueUnit - 20).toString(),
       globalunit: (this.currentGlobalUnit - 30).toString(),
     });
 
@@ -88,23 +88,29 @@ export class SettingsPanelComponent {
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
-      this.settingsService.angle.next(this.currentAngleUnit);
+      this.settingsService.angleUnit.next(this.currentAngleUnit);
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
-      this.settingsService.global.next(this.currentGlobalUnit);
-      this.currentTorqueUnit = ParseTorqueUnit(val);
-      this.settingsForm.controls['torqueunit'].patchValue(String(this.currentTorqueUnit - 20));
+      this.settingsService.globalUnit.next(this.currentGlobalUnit);
+      // this.currentTorqueUnit = ParseTorqueUnit(val);
+      // this.settingsForm.controls['torqueunit'].patchValue(String(this.currentTorqueUnit - 20));
+      if (this.settingsService.globalUnit.value === GlobalUnit.ENGLISH) {
+        this.currentForceUnit = ForceUnit.LBF;
+      } else {
+        this.currentForceUnit = ForceUnit.NEWTON;
+      }
+      this.settingsService.forceUnit.next(this.currentForceUnit);
       this.currentLengthUnit = ParseLengthUnit(val);
-      this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
+      // this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
       this.svgGrid.scaleToFitLinkage();
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
-      this.settingsService.length.next(this.currentLengthUnit);
+      this.settingsService.lengthUnit.next(this.currentLengthUnit);
     });
-    this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
-      this.settingsService.inputTorque.next(this.currentTorqueUnit);
-    });
+    // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
+    //   this.settingsService.inputTorque.next(this.currentTorqueUnit);
+    // });
   }
 
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
@@ -164,15 +170,15 @@ function ParseGlobalUnit(val: string | null): GlobalUnit {
   }
 }
 
-function ParseTorqueUnit(val: string | null): TorqueUnit {
-  switch (val) {
-    case '0':
-      return TorqueUnit.INCH_LB;
-    case '1':
-      return TorqueUnit.CM_N;
-    case '2':
-      return TorqueUnit.METER_N;
-    default:
-      return TorqueUnit.CM_N;
-  }
-}
+// function ParseTorqueUnit(val: string | null): TorqueUnit {
+//   switch (val) {
+//     case '0':
+//       return TorqueUnit.INCH_LB;
+//     case '1':
+//       return TorqueUnit.CM_N;
+//     case '2':
+//       return TorqueUnit.METER_N;
+//     default:
+//       return TorqueUnit.CM_N;
+//   }
+// }
