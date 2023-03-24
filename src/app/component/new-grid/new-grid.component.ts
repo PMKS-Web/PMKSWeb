@@ -29,6 +29,7 @@ import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
+import { CustomIdService } from '../../services/custom-id.service';
 
 @Component({
   selector: 'app-new-grid',
@@ -44,7 +45,8 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    public customIDService: CustomIdService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;

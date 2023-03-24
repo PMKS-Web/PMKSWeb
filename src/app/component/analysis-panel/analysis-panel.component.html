@@ -1,15 +1,5 @@
 <div id='analysisWrapper'>
 
-  <panel-section-collapsible
-    [warning]='true'
-    [expanded]='false'
-    id='placeholderContainer'
-    *ngIf="this.activeSrv.objType == 'Grid' && mechanismService.joints.length != 0"
-  >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
-    <subtitle-block alwaysShown>Select a joint or link to edit properties.</subtitle-block>
-    <img src='assets/gifs/Click.gif' />
-  </panel-section-collapsible>
   <!-- 
     //Param 1: analysis: "force","stress","kinematic"
 
@@ -50,8 +40,8 @@
     (closed)="graphExpanded['JKineAna'] = false"
   >
     <title-block alwaysShown icon='expand_less'>
-      Kinematic Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedJoint.id | uppercase }}
+      Kinematic Analysis for Joint
+      {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
     </title-block>
 
     <mat-expansion-panel
@@ -61,7 +51,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Position of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Position of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -88,7 +78,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Velocity of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Velocity of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -115,7 +105,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Acceleration of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Acceleration of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -145,8 +135,8 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Force Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedJoint.id | uppercase }}
+      Force Analysis for Joint
+      {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
     </title-block>
 
     <radio-block
@@ -167,7 +157,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Force on Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Force on Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -195,7 +185,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Input Torque at Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Input Torque at Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -225,7 +215,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Kinematic Analysis for {{ this.activeSrv.objType }} {{ this.activeSrv.selectedLink.id | uppercase }}
+      Kinematic Analysis for Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
     </title-block>
 
     <!-- <subtitle-block>Kinematics</subtitle-block> -->
@@ -250,7 +240,8 @@
       (closed)="graphExpanded['LAng'] = false"
     >
       <mat-expansion-panel-header>
-        <mat-panel-title> Angle of Link {{ this.activeSrv.selectedLink.id | uppercase }} </mat-panel-title>
+        <mat-panel-title> Angle of
+          Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}} </mat-panel-title>
         <mat-panel-description>
           <mat-icon
             matTooltip='The angle of the selected above the horizontal of the link graphed over time'
@@ -277,7 +268,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Velocity of Link {{ this.activeSrv.selectedLink.id | uppercase }}
+            Angular Velocity of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -306,7 +297,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Acceleration of Link {{ this.activeSrv.selectedLink.id | uppercase }}
+            Angular Acceleration of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -328,7 +319,7 @@
     </mat-expansion-panel>
 
     <subtitle-block style='margin-top: 20px'
-    >Center of Mass (COM) of Link {{ this.activeSrv.selectedLink.id | uppercase }}</subtitle-block
+    >Center of Mass (COM) of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}</subtitle-block
     >
 
     <mat-expansion-panel
@@ -339,7 +330,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Position of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Position of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -368,7 +359,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Velocity of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Velocity of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -397,7 +388,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Acceleration of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Acceleration of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -428,8 +419,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Force Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedLink.id | uppercase }}
+      Force Analysis for Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
     </title-block>
 
     <radio-block
@@ -450,7 +440,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Force on Link {{ this.activeSrv.selectedLink.id | uppercase }}
+          Axial Force on Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -478,7 +468,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Stress on Link {{ this.activeSrv.selectedLink.id | uppercase }}
+          Axial Stress on Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -506,8 +496,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Force'"
   >
     <title-block alwaysShown>
-      Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedForce.id | uppercase }}
+      Analysis for Force {{customIDService.getVisualID(this.activeSrv.selectedForce.id)}}
     </title-block>
 
     <subtitle-block>

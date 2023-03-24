@@ -252,7 +252,7 @@
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
-        {{ joint.id | uppercase }}
+        {{customIDService.getVisualID(joint.id)}}
       </text>
     </svg>
   </g>
@@ -269,22 +269,22 @@
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
-        {{ link.id | uppercase }}
+        {{customIDService.getVisualID(link.id)}}
       </text>
     </svg>
   </g>
   <g id='forceTagHolder' *ngIf='settings.isShowID.value' style='pointer-events: none'>
     <svg
       *ngFor='let force of mechanismSrv.getForces()'
-      [attr.x]='(force.startCoord.x + force.endCoord.x) / 2'
-      [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1'
+      [attr.x]='(force.startCoord.x + force.endCoord.x) / 2 - 0.3'
+      [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1 - 0.3'
       [attr.height]='10'
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
     >
       <!-- should font-size have px??? -->
-      <text style='font-size: 0.7px; text-anchor: middle'>
-        {{ force.id }}
+      <text style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
+        {{customIDService.getVisualID(force.id)}}
       </text>
     </svg>
   </g>

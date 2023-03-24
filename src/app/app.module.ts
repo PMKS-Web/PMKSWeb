@@ -39,6 +39,8 @@ import { NewGridComponent } from './component/new-grid/new-grid.component';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { ContextMenuComponent } from './component/context-menu/context-menu.component';
 import { TouchscreenWarningComponent } from './component/MODALS/touchscreen-warning/touchscreen-warning.component';
+import { EditableTitleComponent } from './component/BLOCKS/editable-title/editable-title.component';
+import { FocusOnShowDirective } from './focus-on-show.directive';
 
 @NgModule({
   declarations: [
@@ -70,6 +72,8 @@ import { TouchscreenWarningComponent } from './component/MODALS/touchscreen-warn
     NewGridComponent,
     ContextMenuComponent,
     TouchscreenWarningComponent,
+    EditableTitleComponent,
+    FocusOnShowDirective,
   ],
   imports: [
     BrowserModule,
