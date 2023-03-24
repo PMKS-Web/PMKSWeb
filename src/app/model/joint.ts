@@ -117,7 +117,7 @@ export class RevJoint extends RealJoint {
 }
 
 export class PrisJoint extends RealJoint {
-  private _angle: number = 0;
+  private _angle_rad: number = 0;
 
   constructor(
     id: string,
@@ -131,11 +131,11 @@ export class PrisJoint extends RealJoint {
     super(id, x, y, input, ground, links, connectedJoints);
   }
 
-  get angle(): number {
-    return this._angle;
+  get angle_rad(): number {
+    return this._angle_rad;
   }
 
-  set angle(value: number) {
-    this._angle = value;
+  set angle_rad(value: number) {
+    this._angle_rad = value;
   }
 }

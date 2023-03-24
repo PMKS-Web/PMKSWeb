@@ -84,7 +84,11 @@ export class KinematicsSolver {
     this.determineLin(simJoints, simLinks);
   }
 
-  private static kinematicsInitializer(joints: Joint[], links: Link[], initialAngularVelocity: number) {
+  private static kinematicsInitializer(
+    joints: Joint[],
+    links: Link[],
+    initialAngularVelocity: number
+  ) {
     if (this.groundJointIndexMap.size === 0) {
       joints.forEach((j, j_index) => {
         if (!(j instanceof RealJoint)) {
@@ -145,7 +149,10 @@ export class KinematicsSolver {
         if (!(realJoint instanceof PrisJoint)) {
           return;
         }
-        this.jointVelMap.set(realJoint.id, [initialAngularVelocity * Math.cos(realJoint.angle), initialAngularVelocity * Math.sin(realJoint.angle)]);
+        this.jointVelMap.set(realJoint.id, [
+          initialAngularVelocity * Math.cos(realJoint.angle_rad),
+          initialAngularVelocity * Math.sin(realJoint.angle_rad),
+        ]);
         this.jointAccMap.set(realJoint.id, [0.0, 0.0]);
         break;
       default:
@@ -195,7 +202,10 @@ export class KinematicsSolver {
                   }) !== -1
                 );
               }
-              if (!this.unknownLinkIndexMap.has(link.id) && !this.linkContainsInputMap.get(link.id)) {
+              if (
+                !this.unknownLinkIndexMap.has(link.id) &&
+                !this.linkContainsInputMap.get(link.id)
+              ) {
                 this.unknownLinkIndexMap.set(link.id, this.unknownLinkIndexMap.size);
               }
               break;
@@ -217,7 +227,10 @@ export class KinematicsSolver {
                   }) !== -1
                 );
               }
-              if (!this.unknownLinkIndexMap.has(desiredJoint.id) && !this.linkContainsInputMap.get(desiredJoint.id)) {
+              if (
+                !this.unknownLinkIndexMap.has(desiredJoint.id) &&
+                !this.linkContainsInputMap.get(desiredJoint.id)
+              ) {
                 this.unknownLinkIndexMap.set(desiredJoint.id, this.unknownLinkIndexMap.size);
               }
               break;
@@ -262,10 +275,16 @@ export class KinematicsSolver {
         // Joint
         switch (analysisType) {
           case 'Velocity':
-            this.jointVelMap.set(linkOrJoint.id, [X[i][0] * Math.cos(linkOrJoint.angle), X[i][0] * Math.sin(linkOrJoint.angle)]);
+            this.jointVelMap.set(linkOrJoint.id, [
+              X[i][0] * Math.cos(linkOrJoint.angle),
+              X[i][0] * Math.sin(linkOrJoint.angle),
+            ]);
             break;
           case 'Acceleration':
-            this.jointAccMap.set(linkOrJoint.id, [X[i][0] * Math.cos(linkOrJoint.angle), X[i][0] * Math.sin(linkOrJoint.angle)]);
+            this.jointAccMap.set(linkOrJoint.id, [
+              X[i][0] * Math.cos(linkOrJoint.angle),
+              X[i][0] * Math.sin(linkOrJoint.angle),
+            ]);
             break;
         }
       }
@@ -298,7 +317,14 @@ export class KinematicsSolver {
           const leftYDist = desiredJoint.y - firstJoint.y;
 
           // velocity and acceleration for joint
-          this.determineVelAndAccel(desiredLink.id, firstJoint.id, leftXDist, leftYDist, desiredJoint.id, 'joint');
+          this.determineVelAndAccel(
+            desiredLink.id,
+            firstJoint.id,
+            leftXDist,
+            leftYDist,
+            desiredJoint.id,
+            'joint'
+          );
         }
 
         // set for where link's center of mass is located
@@ -307,7 +333,14 @@ export class KinematicsSolver {
         }
         this.linkCoMMap.set(desiredLink.id, [desiredLink.CoM.x, desiredLink.CoM.y]);
         // determine velocity and acceleration for link's center of mass
-        this.determineVelAndAccel(desiredLink.id, firstJoint.id, desiredLink.CoM.x - firstJoint.x, desiredLink.CoM.y - firstJoint.y, desiredLink.id, 'link');
+        this.determineVelAndAccel(
+          desiredLink.id,
+          firstJoint.id,
+          desiredLink.CoM.x - firstJoint.x,
+          desiredLink.CoM.y - firstJoint.y,
+          desiredLink.id,
+          'link'
+        );
         desired_links_used.push(desiredLink.id);
       }
     });
@@ -315,7 +348,11 @@ export class KinematicsSolver {
   }
 
   // determine AX = B
-  private static determineArrays(simJoints: Joint[], simLinks: Link[], analysisType: string): any[] {
+  private static determineArrays(
+    simJoints: Joint[],
+    simLinks: Link[],
+    analysisType: string
+  ): any[] {
     const unknownLinksOrJoints: Array<any> = [];
     // first, determine variable locations (X)
     this.requiredLoops.forEach((loop) => {
@@ -323,7 +360,10 @@ export class KinematicsSolver {
         const link = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
         switch (link.constructor) {
           case RealLink:
-            if (this.unknownLinkIndexMap.has(link.id) && unknownLinksOrJoints.findIndex((l) => l.id === link.id) === -1) {
+            if (
+              this.unknownLinkIndexMap.has(link.id) &&
+              unknownLinksOrJoints.findIndex((l) => l.id === link.id) === -1
+            ) {
               unknownLinksOrJoints.push(link);
             }
             break;
@@ -382,7 +422,11 @@ export class KinematicsSolver {
               switch (link.constructor) {
                 case RealLink:
                   // v = w x r
-                  arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [rightXDist, rightYDist, 0]);
+                  arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [
+                    rightXDist,
+                    rightYDist,
+                    0,
+                  ]);
                   break;
                 case Piston:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
@@ -390,7 +434,7 @@ export class KinematicsSolver {
                   if (!(realJoint instanceof PrisJoint)) {
                     return;
                   }
-                  arr = [Math.cos(realJoint.angle), Math.sin(realJoint.angle), 0];
+                  arr = [Math.cos(realJoint.angle_rad), Math.sin(realJoint.angle_rad), 0];
                   break;
                 default:
                   return;
@@ -412,7 +456,7 @@ export class KinematicsSolver {
                   if (!(realJoint instanceof PrisJoint)) {
                     return;
                   }
-                  arr = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle), 0];
+                  arr = [-Math.cos(realJoint.angle_rad), -Math.sin(realJoint.angle_rad), 0];
                   colIndex = this.unknownLinkIndexMap.get(realJoint.id)!;
                   break;
                 default:
@@ -431,9 +475,17 @@ export class KinematicsSolver {
               const rowIndex = 2 * this.loopIndexMap.get(loop)!;
               switch (link.constructor) {
                 case RealLink:
-                  arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [rightXDist, rightYDist, 0]);
+                  arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [
+                    rightXDist,
+                    rightYDist,
+                    0,
+                  ]);
                   const transAccel = this.crossProduct(this.linkAngVelMap.get(link.id)!, arr);
-                  const angularAccel = this.crossProduct(this.linkAngAccMap.get(link.id)!, [rightXDist, rightYDist, 0]);
+                  const angularAccel = this.crossProduct(this.linkAngAccMap.get(link.id)!, [
+                    rightXDist,
+                    rightYDist,
+                    0,
+                  ]);
                   sol = this.addTwoArrays(transAccel, angularAccel);
                   break;
                 case Piston:
@@ -441,7 +493,7 @@ export class KinematicsSolver {
                   if (!(realJoint instanceof PrisJoint)) {
                     return;
                   }
-                  sol = [Math.cos(realJoint.angle), Math.sin(realJoint.angle)];
+                  sol = [Math.cos(realJoint.angle_rad), Math.sin(realJoint.angle_rad)];
                   break;
                 default:
                   return;
@@ -453,8 +505,16 @@ export class KinematicsSolver {
               let colIndex: number;
               switch (link.constructor) {
                 case RealLink:
-                  const arr2 = this.crossProduct(this.linkAngVelMap.get(link.id)!, [rightXDist, rightYDist, 0]);
-                  const transAccel = this.crossProduct(this.linkAngVelMap.get(link.id)!, [arr2[0], arr2[1], arr2[2]]);
+                  const arr2 = this.crossProduct(this.linkAngVelMap.get(link.id)!, [
+                    rightXDist,
+                    rightYDist,
+                    0,
+                  ]);
+                  const transAccel = this.crossProduct(this.linkAngVelMap.get(link.id)!, [
+                    arr2[0],
+                    arr2[1],
+                    arr2[2],
+                  ]);
                   sol = this.crossProduct(1, [leftXDist, leftYDist, 0]); // angularAccel
                   this.B_matrix_AngAcc[rowIndex][0] += transAccel[0];
                   this.B_matrix_AngAcc[rowIndex + 1][0] += transAccel[1];
@@ -465,7 +525,7 @@ export class KinematicsSolver {
                   if (!(realJoint instanceof PrisJoint)) {
                     return;
                   }
-                  sol = [-Math.cos(realJoint.angle), -Math.sin(realJoint.angle)];
+                  sol = [-Math.cos(realJoint.angle_rad), -Math.sin(realJoint.angle_rad)];
                   colIndex = this.unknownLinkIndexMap.get(realJoint.id)!;
                   break;
                 default:
@@ -521,7 +581,14 @@ export class KinematicsSolver {
     });
   }
 
-  private static determineVelAndAccel(desiredLinkID: string, firstJointID: string, xDist: number, yDist: number, desiredID: string, linkOrJoint: string) {
+  private static determineVelAndAccel(
+    desiredLinkID: string,
+    firstJointID: string,
+    xDist: number,
+    yDist: number,
+    desiredID: string,
+    linkOrJoint: string
+  ) {
     // Velocity calculation
     // w x r
     const arr = this.crossProduct(this.linkAngVelMap.get(desiredLinkID)!, [xDist, yDist, 0]);
@@ -559,17 +626,41 @@ export class KinematicsSolver {
       sixthValue = (Math.round(this.jointAccMap.get(firstJointID)![0] * 1000) / 1000).toString();
       seventhValue = (Math.round(knownAng[1] * 1000) / 1000).toString();
       eighthValue = (Math.round(this.jointAccMap.get(firstJointID)![1] * 1000) / 1000).toString();
-      [firstSign, firstValue, secondSign, secondValue] = this.determineValStrings(firstValue, secondValue);
-      [thirdSign, thirdValue, fourthSign, fourthValue] = this.determineValStrings(thirdValue, fourthValue);
-      [fifthSign, fifthValue, sixthSign, sixthValue] = this.determineValStrings(fifthValue, sixthValue);
-      [seventhSign, seventhValue, eighthSign, eighthValue] = this.determineValStrings(seventhValue, eighthValue);
+      [firstSign, firstValue, secondSign, secondValue] = this.determineValStrings(
+        firstValue,
+        secondValue
+      );
+      [thirdSign, thirdValue, fourthSign, fourthValue] = this.determineValStrings(
+        thirdValue,
+        fourthValue
+      );
+      [fifthSign, fifthValue, sixthSign, sixthValue] = this.determineValStrings(
+        fifthValue,
+        sixthValue
+      );
+      [seventhSign, seventhValue, eighthSign, eighthValue] = this.determineValStrings(
+        seventhValue,
+        eighthValue
+      );
 
-      this.jointVelMap.set(desiredID, [arr[0] + this.jointVelMap.get(firstJointID)![0], arr[1] + this.jointVelMap.get(firstJointID)![1]]);
-      this.LinVelJointEq.set(desiredID, [firstValue + secondSign + secondValue, thirdValue + fourthSign + fourthValue]);
+      this.jointVelMap.set(desiredID, [
+        arr[0] + this.jointVelMap.get(firstJointID)![0],
+        arr[1] + this.jointVelMap.get(firstJointID)![1],
+      ]);
+      this.LinVelJointEq.set(desiredID, [
+        firstValue + secondSign + secondValue,
+        thirdValue + fourthSign + fourthValue,
+      ]);
 
       // set joint acceleration
-      this.jointAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0], knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
-      this.LinAccJointEq.set(desiredID, [fifthValue + sixthSign + sixthValue, seventhValue + eighthSign + eighthValue]);
+      this.jointAccMap.set(desiredID, [
+        knownAng[0] + this.jointAccMap.get(firstJointID)![0],
+        knownAng[1] + this.jointAccMap.get(firstJointID)![1],
+      ]);
+      this.LinAccJointEq.set(desiredID, [
+        fifthValue + sixthSign + sixthValue,
+        seventhValue + eighthSign + eighthValue,
+      ]);
     } else {
       // link
       firstValue = (Math.round(arr[0] * 1000) / 1000).toString();
@@ -580,16 +671,40 @@ export class KinematicsSolver {
       sixthValue = (Math.round(this.jointAccMap.get(firstJointID)![0] * 1000) / 1000).toString();
       seventhValue = (Math.round(knownAng[1] * 1000) / 1000).toString();
       eighthValue = (Math.round(this.jointAccMap.get(firstJointID)![1] * 1000) / 1000).toString();
-      [firstSign, firstValue, secondSign, secondValue] = this.determineValStrings(firstValue, secondValue);
-      [thirdSign, thirdValue, fourthSign, fourthValue] = this.determineValStrings(thirdValue, fourthValue);
-      [fifthSign, fifthValue, sixthSign, sixthValue] = this.determineValStrings(fifthValue, sixthValue);
-      [seventhSign, seventhValue, eighthSign, eighthValue] = this.determineValStrings(seventhValue, eighthValue);
+      [firstSign, firstValue, secondSign, secondValue] = this.determineValStrings(
+        firstValue,
+        secondValue
+      );
+      [thirdSign, thirdValue, fourthSign, fourthValue] = this.determineValStrings(
+        thirdValue,
+        fourthValue
+      );
+      [fifthSign, fifthValue, sixthSign, sixthValue] = this.determineValStrings(
+        fifthValue,
+        sixthValue
+      );
+      [seventhSign, seventhValue, eighthSign, eighthValue] = this.determineValStrings(
+        seventhValue,
+        eighthValue
+      );
       // set link's center of mass Velocity
-      this.linkVelMap.set(desiredID, [arr[0] + this.jointVelMap.get(firstJointID)![0], arr[1] + this.jointVelMap.get(firstJointID)![1]]);
-      this.LinVelLinkEq.set(desiredID, [firstValue + secondSign + secondValue, thirdValue + fourthSign + fourthValue]);
+      this.linkVelMap.set(desiredID, [
+        arr[0] + this.jointVelMap.get(firstJointID)![0],
+        arr[1] + this.jointVelMap.get(firstJointID)![1],
+      ]);
+      this.LinVelLinkEq.set(desiredID, [
+        firstValue + secondSign + secondValue,
+        thirdValue + fourthSign + fourthValue,
+      ]);
       // set link's center of mass Acceleration
-      this.linkAccMap.set(desiredID, [knownAng[0] + this.jointAccMap.get(firstJointID)![0], knownAng[1] + this.jointAccMap.get(firstJointID)![1]]);
-      this.LinAccLinkEq.set(desiredID, [fifthValue + sixthSign + sixthValue, seventhValue + eighthSign + eighthValue]);
+      this.linkAccMap.set(desiredID, [
+        knownAng[0] + this.jointAccMap.get(firstJointID)![0],
+        knownAng[1] + this.jointAccMap.get(firstJointID)![1],
+      ]);
+      this.LinAccLinkEq.set(desiredID, [
+        fifthValue + sixthSign + sixthValue,
+        seventhValue + eighthSign + eighthValue,
+      ]);
     }
   }
 

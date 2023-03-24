@@ -222,10 +222,10 @@ export class ForceSolver {
               return;
             }
             const constant =
-              xForce / (-mu * Math.cos(desiredJoint.angle) + Math.sin(desiredJoint.angle));
+              xForce / (-mu * Math.cos(desiredJoint.angle_rad) + Math.sin(desiredJoint.angle_rad));
             this.B_matrix[3 * realLinkCount + imagLinkCount][xIndex] =
-              -mu * constant * Math.sin(desiredJoint.angle) +
-              constant * Math.cos(desiredJoint.angle);
+              -mu * constant * Math.sin(desiredJoint.angle_rad) +
+              constant * Math.cos(desiredJoint.angle_rad);
             this.B_matrix[3 * realLinkCount + imagLinkCount][yIndex] = yForce;
             break;
         }

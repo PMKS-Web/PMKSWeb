@@ -116,7 +116,7 @@ export class LinkageTableComponent implements OnInit {
         if (!(joint instanceof PrisJoint)) {
           return;
         }
-        joint.angle = (Number($event.target.value) * Math.PI) / 180;
+        joint.angle_rad = (Number($event.target.value) * Math.PI) / 180;
     }
     this.mechanismService.updateMechanism();
   }
@@ -241,7 +241,7 @@ export class LinkageTableComponent implements OnInit {
     if (!(joint instanceof PrisJoint)) {
       return;
     }
-    return (joint.angle * 180) / Math.PI;
+    return (joint.angle_rad * 180) / Math.PI;
   }
 
   getLinkProp(link: Link, propType: string) {

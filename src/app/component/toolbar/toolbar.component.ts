@@ -232,7 +232,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
                     return;
                   }
                   const angle = stringToFloat(line[6]);
-                  newJoint.angle = angle;
+                  newJoint.angle_rad = angle;
                   break;
                 default:
                   return;
@@ -454,7 +454,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       content += `${joint.ground ? 't' : 'f'},`;
       // result += `${joint.coeffFriction},`;
       if (joint instanceof PrisJoint) {
-        content += `${joint.angle},`;
+        content += `${joint.angle_rad},`;
       } else {
         content += `Null,`;
       }
@@ -670,7 +670,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       // }
       result += `${joint.ground ? 't' : 'f'},`;
       if (joint instanceof PrisJoint) {
-        result += `${joint.angle},`;
+        result += `${joint.angle_rad},`;
       }
       // result += `${joint.coeffFriction},`;
       result += `${joint.input ? 't' : 'f'},`;
@@ -785,7 +785,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           if (!(joint instanceof PrisJoint)) {
             return;
           }
-          result += `${joint.angle},`;
+          result += `${joint.angle_rad},`;
           break;
         default:
           return;

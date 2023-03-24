@@ -66,7 +66,7 @@ export class Mechanism {
             j.links,
             j.connectedJoints
           );
-          prisJoint.angle = j.angle;
+          prisJoint.angle_rad = j.angle_rad;
           this._joints[0].push(prisJoint);
 
           break;
@@ -456,6 +456,7 @@ export class Mechanism {
   set joints(value: Joint[][]) {
     this._joints = value;
   }
+
   get links(): Link[][] {
     return this._links;
   }

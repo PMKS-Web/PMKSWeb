@@ -5,10 +5,10 @@ import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
 import {
   AngleUnit,
-  getNewOtherJointPos,
-  LengthUnit,
   ForceUnit,
   getDistance,
+  getNewOtherJointPos,
+  LengthUnit,
 } from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
@@ -183,15 +183,23 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       );
       if (!success) {
         this.jointForm.patchValue({
-          angle: (this.activeSrv.selectedJoint as PrisJoint).angle.toFixed(2).toString(),
+          angle: this.nup
+            .convertAngle(
+              (this.activeSrv.selectedJoint as PrisJoint).angle_rad,
+              AngleUnit.RADIAN,
+              this.settingsService.angleUnit.getValue()
+            )
+            .toFixed(2)
+            .toString(),
         });
       } else {
-        (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle =
+        (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle_rad =
           this.nup.convertAngle(value, this.settingsService.angleUnit.getValue(), AngleUnit.RADIAN);
         this.jointForm.patchValue(
           { angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()) },
           { emitEvent: false }
         );
+        this.mechanismService.updateMechanism();
         this.mechanismService.onMechUpdateState.next(2);
       }
     });
@@ -391,9 +399,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
-        const angleTemp = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
-          ? (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle
-          : -999;
+        const angleTemp_rad = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
+          ? (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle_rad
+          : 0;
         this.jointForm.patchValue(
           {
             xPos: this.nup.formatValueAndUnit(
@@ -405,7 +413,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.settingsService.lengthUnit.getValue()
             ),
             angle: this.nup.formatValueAndUnit(
-              angleTemp,
+              this.nup.convertAngle(
+                angleTemp_rad,
+                AngleUnit.RADIAN,
+                this.settingsService.angleUnit.getValue()
+              ),
               this.settingsService.angleUnit.getValue()
             ),
             ground: this.activeSrv.selectedJoint.ground,

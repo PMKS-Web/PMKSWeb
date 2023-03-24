@@ -46,7 +46,7 @@ export class UrlProcessorService {
             return;
           }
           const angle = stringToFloat(propsArray[6]);
-          joint.angle = angle;
+          joint.angle_rad = angle;
           break;
         default:
           return;

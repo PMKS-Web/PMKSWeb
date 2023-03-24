@@ -1,6 +1,12 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
 import { Link } from '../link';
-import { FixedInstantCenter, InstantCenter, PermanentInstantCenter, PrimaryInstantCenter, SecondaryInstantCenter } from '../instant-center';
+import {
+  FixedInstantCenter,
+  InstantCenter,
+  PermanentInstantCenter,
+  PrimaryInstantCenter,
+  SecondaryInstantCenter,
+} from '../instant-center';
 import { crossProduct } from '../utils';
 
 export class ICSolver {
@@ -90,14 +96,20 @@ export class ICSolver {
           // FixedInstantCenter
           switch (joint2.constructor) {
             case RealJoint:
-              curr_ic = new FixedInstantCenter(joint2.x, joint2.y, firstLinkIndex.toString() + ',' + secondLinkIndex.toString(), [], joint2.id);
+              curr_ic = new FixedInstantCenter(
+                joint2.x,
+                joint2.y,
+                firstLinkIndex.toString() + ',' + secondLinkIndex.toString(),
+                [],
+                joint2.id
+              );
               break;
             case PrisJoint:
               let desired_angle: number;
               if (joint1 instanceof PrisJoint) {
-                desired_angle = joint1.angle;
+                desired_angle = joint1.angle_rad;
               } else if (joint3 instanceof PrisJoint) {
-                desired_angle = joint3.angle;
+                desired_angle = joint3.angle_rad;
               } else {
                 return;
               }
@@ -116,7 +128,13 @@ export class ICSolver {
           }
         } else {
           // PermanentInstantCenter
-          curr_ic = new PermanentInstantCenter(joint2.x, joint2.y, firstLinkIndex.toString() + ',' + secondLinkIndex.toString(), [], joint2.id);
+          curr_ic = new PermanentInstantCenter(
+            joint2.x,
+            joint2.y,
+            firstLinkIndex.toString() + ',' + secondLinkIndex.toString(),
+            [],
+            joint2.id
+          );
         }
         // if no IC has this link index, create an empty IC
         if (!this.link_index_to_primary_ic_index_map.has(firstLinkIndex)) {
@@ -126,8 +144,10 @@ export class ICSolver {
           this.setLinkIndexToPrimaryICIndexMap(secondLinkIndex, []);
         }
         // call all instant centers that utilize the desired link index
-        const all_i_primary_IC_indices = this.link_index_to_primary_ic_index_map.get(firstLinkIndex)!;
-        const all_j_primary_IC_indices = this.link_index_to_primary_ic_index_map.get(secondLinkIndex)!;
+        const all_i_primary_IC_indices =
+          this.link_index_to_primary_ic_index_map.get(firstLinkIndex)!;
+        const all_j_primary_IC_indices =
+          this.link_index_to_primary_ic_index_map.get(secondLinkIndex)!;
         // set ics with common link ic as its neighbor
         this.connectAdjacentICs(all_i_primary_IC_indices, primaryICs, curr_ic);
         this.connectAdjacentICs(all_j_primary_IC_indices, primaryICs, curr_ic);
@@ -161,7 +181,8 @@ export class ICSolver {
         }
       }
     }
-    const unknownSecondaryIC_num = ((simLinks.length + 1) * simLinks.length) / 2 - primaryICs.length;
+    const unknownSecondaryIC_num =
+      ((simLinks.length + 1) * simLinks.length) / 2 - primaryICs.length;
     const secondaryICs: Array<InstantCenter> = [];
     let count = 0;
     let more_determinable_secondary_ICs = true;
@@ -172,8 +193,12 @@ export class ICSolver {
         const all_ics_common_link_1: Array<InstantCenter> = [];
         const all_ics_common_link_2: Array<InstantCenter> = [];
         // get all primary ICs that utilize common link and store their index within all_ics_common_link
-        this.link_index_to_primary_ic_index_map.get(first_link_index)!.forEach((ic_index) => all_ics_common_link_1.push(primaryICs[ic_index]));
-        this.link_index_to_primary_ic_index_map.get(second_link_index)!.forEach((ic_index) => all_ics_common_link_2.push(primaryICs[ic_index]));
+        this.link_index_to_primary_ic_index_map
+          .get(first_link_index)!
+          .forEach((ic_index) => all_ics_common_link_1.push(primaryICs[ic_index]));
+        this.link_index_to_primary_ic_index_map
+          .get(second_link_index)!
+          .forEach((ic_index) => all_ics_common_link_2.push(primaryICs[ic_index]));
         // get all secondary ICs that utilize common link and store their index within all_ics_common_link (if link index within secondary
         // ic exist)
         this.link_index_to_secondary_ic_index_map.get(first_link_index)!.forEach((ic_index) => {
@@ -183,18 +208,27 @@ export class ICSolver {
           }
           all_ics_common_link_1.push(secondaryICs[ic_index]);
         });
-        this.link_index_to_secondary_ic_index_map.get(second_link_index)!.forEach((ic_index) => all_ics_common_link_2.push(secondaryICs[ic_index]));
+        this.link_index_to_secondary_ic_index_map
+          .get(second_link_index)!
+          .forEach((ic_index) => all_ics_common_link_2.push(secondaryICs[ic_index]));
 
         let firstCommonPath = '';
         let secondCommonPath = '';
         for (let k = 0; k < all_ics_common_link_1.length; k++) {
-          if (!this.letter_map.has(all_ics_common_link_1[k].id + ',' + first_link_index.toString())) {
+          if (
+            !this.letter_map.has(all_ics_common_link_1[k].id + ',' + first_link_index.toString())
+          ) {
             let link_index = all_ics_common_link_1[k].id;
             link_index = link_index.replace(first_link_index.toString(), '');
             link_index = link_index.replace(',', '');
-            this.letter_map.set(all_ics_common_link_1[k].id + ',' + first_link_index.toString(), link_index);
+            this.letter_map.set(
+              all_ics_common_link_1[k].id + ',' + first_link_index.toString(),
+              link_index
+            );
           }
-          const letter = this.letter_map.get(all_ics_common_link_1[k].id + ',' + first_link_index.toString())!;
+          const letter = this.letter_map.get(
+            all_ics_common_link_1[k].id + ',' + first_link_index.toString()
+          )!;
           for (let l = 0; l < all_ics_common_link_2.length; l++) {
             if (!all_ics_common_link_2[l].id.includes(letter)) {
               continue;
@@ -281,8 +315,10 @@ export class ICSolver {
         all_j.forEach((ic) => {
           newSecondaryIC.connectedICs.push(ic);
         });
-        const all_i_secondary_IC_indices = this.link_index_to_secondary_ic_index_map.get(first_link_index)!;
-        const all_j_secondary_IC_indices = this.link_index_to_secondary_ic_index_map.get(second_link_index)!;
+        const all_i_secondary_IC_indices =
+          this.link_index_to_secondary_ic_index_map.get(first_link_index)!;
+        const all_j_secondary_IC_indices =
+          this.link_index_to_secondary_ic_index_map.get(second_link_index)!;
         all_i_secondary_IC_indices.forEach((ic_index) => {
           newSecondaryIC.connectedICs.push(secondaryICs[ic_index]);
           secondaryICs[ic_index].connectedICs.push(newSecondaryIC);
@@ -299,7 +335,9 @@ export class ICSolver {
         curr_ic_indices.push(secondaryICs.length);
         this.setLinkIndexToSecondaryICIndexMap(second_link_index, curr_ic_indices);
 
-        const unk_sec_index = unknownSecondaryICArray.findIndex((ic) => ic === unknownSecondaryICArray[unknownIndex]);
+        const unk_sec_index = unknownSecondaryICArray.findIndex(
+          (ic) => ic === unknownSecondaryICArray[unknownIndex]
+        );
         secondaryICs.push(newSecondaryIC);
         unknownSecondaryICArray.splice(unk_sec_index, 1);
         count++;
@@ -344,7 +382,10 @@ export class ICSolver {
     const secondaryICs: Array<SecondaryInstantCenter> = [];
     instantCenters.forEach((ic) => {
       // do not want to do this for FixedInstantCenter with an angle (slider)
-      if (ic instanceof PermanentInstantCenter || (ic instanceof FixedInstantCenter && ic.x !== null)) {
+      if (
+        ic instanceof PermanentInstantCenter ||
+        (ic instanceof FixedInstantCenter && ic.x !== null)
+      ) {
         if (!this.joint_ic_index_map.has(ic.jointID)) {
           this.joint_ic_index_map.set(
             ic.jointID,
@@ -412,10 +453,17 @@ export class ICSolver {
   }
 
   private static setLinkIndexMap(joint1_id: string, joint2_id2: string, simLinks: Link[]) {
-    this.link_index_map.set(joint1_id + joint2_id2, simLinks.findIndex((l) => l.id.includes(joint1_id) && l.id.includes(joint2_id2)) + 2);
+    this.link_index_map.set(
+      joint1_id + joint2_id2,
+      simLinks.findIndex((l) => l.id.includes(joint1_id) && l.id.includes(joint2_id2)) + 2
+    );
   }
 
-  private static connectAdjacentICs(all_num_primary_IC_indices: Array<number>, primaryICs: any[], curr_ic: PrimaryInstantCenter) {
+  private static connectAdjacentICs(
+    all_num_primary_IC_indices: Array<number>,
+    primaryICs: any[],
+    curr_ic: PrimaryInstantCenter
+  ) {
     all_num_primary_IC_indices.forEach((ic_index) => {
       curr_ic.connectedICs.push(primaryICs[ic_index]);
       primaryICs[ic_index].connectedICs.push(curr_ic);
@@ -435,7 +483,9 @@ export class ICSolver {
       // const utilizedLinksIndexMap = new Map<string, number>();
       const simICNumToIcIndexMap = new Map<number, number>();
       for (let i = 2; i <= SimulationLinks.length + 1; i++) {
-        const ic_index = SimulationInstantCenters.findIndex((ic) => ic.id.includes('1') && ic.id.includes(i.toString()));
+        const ic_index = SimulationInstantCenters.findIndex(
+          (ic) => ic.id.includes('1') && ic.id.includes(i.toString())
+        );
         simICNumToIcIndexMap.set(i, ic_index);
       }
       const twoJointIDsDeterminedMap = new Map<string, number>();
@@ -461,7 +511,9 @@ export class ICSolver {
             this.indexAndLoopToFirstICIndex.set(index + loop, -1);
             continue; // should have no need be done here
           }
-          const link_index = SimulationLinks.findIndex((l) => l.id.includes(first_joint_id) && l.id.includes(second_joint_id));
+          const link_index = SimulationLinks.findIndex(
+            (l) => l.id.includes(first_joint_id) && l.id.includes(second_joint_id)
+          );
           twoJointIDsDeterminedMap.set(first_joint_id + second_joint_id, link_index);
           if (linkIDToLinkIndexMap.has(SimulationLinks[link_index].id)) {
             // link has already been accounted for
@@ -506,16 +558,21 @@ export class ICSolver {
               SimulationLinks[link_index].joints.forEach((jt) => {
                 // if (jt.id !== first_joint_id && jt.id !== second_joint_id && jt.connectedLinks.length > 1) {
                 if (jt.id !== first_joint_id && jt.id !== second_joint_id) {
-                  const additional_instant_center_index = SimulationInstantCenters.findIndex((ic) => {
-                    if (!(ic instanceof PrimaryInstantCenter)) {
-                      return;
+                  const additional_instant_center_index = SimulationInstantCenters.findIndex(
+                    (ic) => {
+                      if (!(ic instanceof PrimaryInstantCenter)) {
+                        return;
+                      }
+                      return ic.jointID === jt.id;
                     }
-                    return ic.jointID === jt.id;
-                  });
+                  );
                   utilized_instant_centers_indices.push([additional_instant_center_index]);
                 }
               });
-              this.IndexAndLoopToSecondICIndices.set(index + loop, utilized_instant_centers_indices);
+              this.IndexAndLoopToSecondICIndices.set(
+                index + loop,
+                utilized_instant_centers_indices
+              );
               break;
             case loop.length - 2: // last link
               second_initial_instant_center_index = SimulationInstantCenters.findIndex((ic) => {
@@ -529,18 +586,23 @@ export class ICSolver {
               SimulationLinks[link_index].joints.forEach((jt) => {
                 // if (jt.id !== first_joint_id && jt.id !== second_joint_id && jt.connectedLinks.length > 1) {
                 if (jt.id !== first_joint_id && jt.id !== second_joint_id) {
-                  const additional_instant_center_index = SimulationInstantCenters.findIndex((ic) => {
-                    if (!(ic instanceof PrimaryInstantCenter)) {
-                      return;
+                  const additional_instant_center_index = SimulationInstantCenters.findIndex(
+                    (ic) => {
+                      if (!(ic instanceof PrimaryInstantCenter)) {
+                        return;
+                      }
+                      {
+                        return ic.jointID === jt.id;
+                      }
                     }
-                    {
-                      return ic.jointID === jt.id;
-                    }
-                  });
+                  );
                   utilized_instant_centers_indices.push([additional_instant_center_index]);
                 }
               });
-              this.IndexAndLoopToSecondICIndices.set(index + loop, utilized_instant_centers_indices);
+              this.IndexAndLoopToSecondICIndices.set(
+                index + loop,
+                utilized_instant_centers_indices
+              );
               break;
             default: {
               second_initial_instant_center_index = SimulationInstantCenters.findIndex((ic) => {
@@ -552,36 +614,58 @@ export class ICSolver {
               let similar_instant_center_index: number;
               let similar_ic_num: number;
               // get the instant center that the first two instant centers have in common
-              if (SimulationInstantCenters[second_initial_instant_center_index].id.includes(SimulationInstantCenters[first_instant_center_index].id[0])) {
+              if (
+                SimulationInstantCenters[second_initial_instant_center_index].id.includes(
+                  SimulationInstantCenters[first_instant_center_index].id[0]
+                )
+              ) {
                 similar_ic_num = Number(SimulationInstantCenters[first_instant_center_index].id[0]);
               } else {
                 similar_ic_num = Number(SimulationInstantCenters[first_instant_center_index].id[2]);
               }
               similar_instant_center_index = simICNumToIcIndexMap.get(similar_ic_num)!;
-              utilized_instant_centers_indices.push([second_initial_instant_center_index, similar_instant_center_index]);
+              utilized_instant_centers_indices.push([
+                second_initial_instant_center_index,
+                similar_instant_center_index,
+              ]);
               // determine if there are any other joints to the input link (check if joint is connected to two links)
               SimulationLinks[link_index].joints.forEach((jt) => {
                 // if (jt.id !== first_joint_id && jt.id !== second_joint_id && jt.connectedLinks.length > 1) {
                 if (jt.id !== first_joint_id && jt.id !== second_joint_id) {
-                  const additional_instant_center_index = SimulationInstantCenters.findIndex((ic) => {
-                    if (!(ic instanceof PrimaryInstantCenter)) {
-                      return;
-                    } // this won't account for tracer joints!
-                    return ic.jointID === jt.id;
-                  });
+                  const additional_instant_center_index = SimulationInstantCenters.findIndex(
+                    (ic) => {
+                      if (!(ic instanceof PrimaryInstantCenter)) {
+                        return;
+                      } // this won't account for tracer joints!
+                      return ic.jointID === jt.id;
+                    }
+                  );
                   // get the instant center that the first two instant centers have in common
                   //
-                  if (SimulationInstantCenters[additional_instant_center_index].id[0] === SimulationInstantCenters[first_instant_center_index].id[0]) {
-                    similar_ic_num = Number(SimulationInstantCenters[first_instant_center_index].id[0]);
+                  if (
+                    SimulationInstantCenters[additional_instant_center_index].id[0] ===
+                    SimulationInstantCenters[first_instant_center_index].id[0]
+                  ) {
+                    similar_ic_num = Number(
+                      SimulationInstantCenters[first_instant_center_index].id[0]
+                    );
                   } else {
-                    similar_ic_num = Number(SimulationInstantCenters[first_instant_center_index].id[2]);
+                    similar_ic_num = Number(
+                      SimulationInstantCenters[first_instant_center_index].id[2]
+                    );
                   }
                   similar_instant_center_index = simICNumToIcIndexMap.get(similar_ic_num)!;
-                  utilized_instant_centers_indices.push([additional_instant_center_index, similar_instant_center_index]);
+                  utilized_instant_centers_indices.push([
+                    additional_instant_center_index,
+                    similar_instant_center_index,
+                  ]);
                   // utilized_instant_centers_indices.push([additional_instant_center_index, 0]); // doesn't matter what 2nd argument is
                 }
               });
-              this.IndexAndLoopToSecondICIndices.set(index + loop, utilized_instant_centers_indices);
+              this.IndexAndLoopToSecondICIndices.set(
+                index + loop,
+                utilized_instant_centers_indices
+              );
               break;
             }
           }
@@ -607,9 +691,15 @@ export class ICSolver {
             second_ics_indices.forEach((second_ic_index) => {
               const vel = crossProduct(
                 [0, 0, inputAngularVelocity],
-                [SimulationInstantCenters[second_ic_index[0]].x - first_ic.x, SimulationInstantCenters[second_ic_index[0]].y - first_ic.y, 0]
+                [
+                  SimulationInstantCenters[second_ic_index[0]].x - first_ic.x,
+                  SimulationInstantCenters[second_ic_index[0]].y - first_ic.y,
+                  0,
+                ]
               );
-              const second_ic_loop = SimulationInstantCenters[second_ic_index[0]] as PrimaryInstantCenter;
+              const second_ic_loop = SimulationInstantCenters[
+                second_ic_index[0]
+              ] as PrimaryInstantCenter;
               this.jointVelMap.set(second_ic_loop.jointID, [vel[0], vel[1]]);
               // this.jointVelMap.set(SimulationJoints[0].id, [vel[0], vel[1]]);
             });
@@ -617,7 +707,9 @@ export class ICSolver {
           case loop.length - 2:
             // get the velocity of the first joint and utilize that to determine angular velocity of the link
             // const second_ic = SimulationInstantCenters[second_ics_indices[0][0]] as PrimaryInstantCenter;
-            const second_ic = SimulationInstantCenters[second_ics_indices[0][0]] as PrimaryInstantCenter;
+            const second_ic = SimulationInstantCenters[
+              second_ics_indices[0][0]
+            ] as PrimaryInstantCenter;
             const determined_vel = this.jointVelMap.get(second_ic.jointID)!;
             // This equation is gotten based from the cross product v = w X R
             const angular_vel = -determined_vel[0] / (second_ic.y - first_ic.y);
@@ -627,8 +719,13 @@ export class ICSolver {
               if (ic_index_array === second_ics_indices[0]) {
                 return;
               }
-              const connecting_ic = SimulationInstantCenters[ic_index_array[0]] as PrimaryInstantCenter;
-              const vel = crossProduct([0, 0, inputAngularVelocity], [connecting_ic.x - first_ic.x, connecting_ic.y - first_ic.y, 0]);
+              const connecting_ic = SimulationInstantCenters[
+                ic_index_array[0]
+              ] as PrimaryInstantCenter;
+              const vel = crossProduct(
+                [0, 0, inputAngularVelocity],
+                [connecting_ic.x - first_ic.x, connecting_ic.y - first_ic.y, 0]
+              );
               this.jointVelMap.set(connecting_ic.jointID, [vel[0], vel[1]]);
               // const joint_index = SimulationJoints.findIndex(jt => jt.id === connecting_ic.jointID);
               // this.jointVelMap.set(SimulationJoints[joint_index].id, [vel[0], vel[1]]);
@@ -636,7 +733,8 @@ export class ICSolver {
             break;
           default:
             // get the velocity of the first joint and utilize that to determine angular velocity of the link
-            const second_ic_helpful_secondary_ic = SimulationInstantCenters[second_ics_indices[0][1]];
+            const second_ic_helpful_secondary_ic =
+              SimulationInstantCenters[second_ics_indices[0][1]];
             if (!(first_ic instanceof PrimaryInstantCenter)) {
               return;
             }
@@ -670,13 +768,31 @@ export class ICSolver {
                   return;
                 }
                 determined_tracer_joints.push(undetermined_tracer_joint.id);
-                const vel = crossProduct([0, 0, angular_vel_], [undetermined_tracer_joint.x - first_ic.x, undetermined_tracer_joint.y - first_ic.y, 0]);
+                const vel = crossProduct(
+                  [0, 0, angular_vel_],
+                  [
+                    undetermined_tracer_joint.x - first_ic.x,
+                    undetermined_tracer_joint.y - first_ic.y,
+                    0,
+                  ]
+                );
                 // const joint_index = SimulationJoints.findIndex(jt => jt.id === undetermined_tracer_joint.id);
                 this.jointVelMap.set(undetermined_tracer_joint.id, [vel[0], vel[1]]);
               } else {
-                const second_ic_joint = SimulationInstantCenters[ic_index_array[0]] as PrimaryInstantCenter;
-                const second_ic_common_ic = SimulationInstantCenters[ic_index_array[1]] as SecondaryInstantCenter;
-                const vel = crossProduct([0, 0, angular_vel_], [second_ic_joint.x - second_ic_common_ic.x, second_ic_joint.y - second_ic_common_ic.y, 0]);
+                const second_ic_joint = SimulationInstantCenters[
+                  ic_index_array[0]
+                ] as PrimaryInstantCenter;
+                const second_ic_common_ic = SimulationInstantCenters[
+                  ic_index_array[1]
+                ] as SecondaryInstantCenter;
+                const vel = crossProduct(
+                  [0, 0, angular_vel_],
+                  [
+                    second_ic_joint.x - second_ic_common_ic.x,
+                    second_ic_joint.y - second_ic_common_ic.y,
+                    0,
+                  ]
+                );
                 // const vel = cross([0, 0, angular_vel_], [second_ic_joint.x - first_ic.x, second_ic_joint.y - first_ic.y, 0]);
                 this.jointVelMap.set(second_ic_joint.jointID, [vel[0], vel[1]]);
               }
@@ -739,7 +855,12 @@ export class ICSolver {
     });
   }
 
-  private static determineAngVelIC(w: number, IC1: InstantCenter, IC2: InstantCenter, IC3: InstantCenter) {
+  private static determineAngVelIC(
+    w: number,
+    IC1: InstantCenter,
+    IC2: InstantCenter,
+    IC3: InstantCenter
+  ) {
     // utilize cross product for w and IC2 - IC1
     const vel1 = crossProduct([0, 0, w], [IC2.x - IC1.x, IC2.y - IC1.y, 0]);
     // utilize cross product for w and IC3 - IC2

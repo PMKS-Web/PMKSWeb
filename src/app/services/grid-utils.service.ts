@@ -95,7 +95,7 @@ export class GridUtilsService {
   }
 
   getPrisAngle(joint: Joint) {
-    return (joint as PrisJoint).angle;
+    return (joint as PrisJoint).angle_rad;
   }
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
