@@ -34,6 +34,8 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { ActiveObjService } from '../../services/active-obj.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -204,8 +206,10 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   constructor(
     private fb: FormBuilder,
     private mechanismSerivce: MechanismService,
-    private settingsService: SettingsService
-  ) {}
+    private settingsService: SettingsService,
+    private nup: NumberUnitParserService,
+    private activeSrv: ActiveObjService
+  ) { }
 
   seriesCheckboxForm = this.fb.group(
     {
@@ -284,11 +288,10 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'...
     // console.log(this.analysis, this.analysisType, this.mechProp, this.mechPart);
-
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.seriesCheckboxForm.valueChanges.subscribe((data) => {
-      if (this.numberOfSeries === 3) {
+      if (this.numberOfSeries === 3 && this.chart !== null) {
         if (data.x) {
           this.chart.showSeries('X');
         } else {
@@ -305,7 +308,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           this.chart.hideSeries('Z');
         }
       }
-      if (this.numberOfSeries === 2) {
+      if (this.numberOfSeries === 2 && this.chart !== null) {
         if (data.x) {
           this.chart.showSeries('X');
         } else {
@@ -317,8 +320,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           this.chart.hideSeries('Y');
         }
       }
-
-      if (this.numberOfSeries === 1) {
+      if (this.numberOfSeries === 1 && this.chart !== null) {
         if (data.z) {
           this.chart.showSeries('Z');
         } else {
@@ -328,15 +330,29 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     });
 
     this.settingsService.angleUnit.subscribe((t) => {
-      this.updateChartData();
       //Force update the Y axis text with the new label
-      this.chart.updateOptions(
-        {
-          yaxis: this.chartOptions.yaxis,
-        },
-        false,
-        true
-      );
+      if (this.chart.chart) {
+        this.chart.updateOptions(
+          {
+            yaxis: this.chartOptions.yaxis,
+          },
+          false,
+          true
+        );
+      }
+    });
+
+    this.settingsService.lengthUnit.subscribe((t) => {
+      //Force update the Y axis text with the new label
+      if (this.chart.chart) {
+        this.chart.updateOptions(
+          {
+            yaxis: this.chartOptions.yaxis,
+          },
+          false,
+          true
+        );
+      }
     });
 
     this.mechStateSub = this.mechanismSerivce.onMechUpdateState.subscribe((data) => {
@@ -630,7 +646,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
+                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -647,7 +663,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
+                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -664,7 +680,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
+                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
