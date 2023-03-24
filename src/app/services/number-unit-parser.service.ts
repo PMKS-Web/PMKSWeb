@@ -197,12 +197,16 @@ export class NumberUnitParserService {
         }
         break;
     }
-    console.error('Error in NumberUnitParserService.convertLength(): No valid conversion found');
+    console.error(
+      'Error in NumberUnitParserService.convertLength(): No valid conversion found between ' +
+        LengthUnit[givenUnits] +
+        ' and ' +
+        LengthUnit[desiredUnits]
+    );
     return value;
   }
 
   public convertAngle(value: number, givenUnits: AngleUnit, desiredUnits: AngleUnit): number {
-    console.log(givenUnits, desiredUnits);
     if (givenUnits == desiredUnits) return value;
     switch (givenUnits) {
       case AngleUnit.DEGREE:
@@ -243,7 +247,37 @@ export class NumberUnitParserService {
         }
         break;
     }
-    console.error('Error in NumberUnitParserService.convertForce(): No valid conversion found');
+    console.error(
+      'Error in NumberUnitParserService.convertAngle(): No valid conversion found between ' +
+        AngleUnit[givenUnits] +
+        ' and ' +
+        AngleUnit[desiredUnits]
+    );
+    return value;
+  }
+
+  private convertForce(value: number, givenUnits: ForceUnit, desiredUnits: ForceUnit): number {
+    if (givenUnits == desiredUnits) return value;
+    switch (givenUnits) {
+      case ForceUnit.NEWTON:
+        switch (desiredUnits) {
+          case ForceUnit.LBF:
+            return value * 0.224809;
+        }
+        break;
+      case ForceUnit.LBF:
+        switch (desiredUnits) {
+          case ForceUnit.NEWTON:
+            return value / 0.224809;
+        }
+        break;
+    }
+    console.error(
+      'Error in NumberUnitParserService.convertForce(): No valid conversion found between ' +
+        ForceUnit[givenUnits] +
+        ' and ' +
+        ForceUnit[desiredUnits]
+    );
     return value;
   }
 }
