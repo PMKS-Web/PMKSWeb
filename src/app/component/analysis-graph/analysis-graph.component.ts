@@ -201,7 +201,11 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   loading: boolean = false;
 
-  constructor(private fb: FormBuilder, private mechanismSerivce: MechanismService, private settingsService: SettingsService) { }
+  constructor(
+    private fb: FormBuilder,
+    private mechanismSerivce: MechanismService,
+    private settingsService: SettingsService
+  ) {}
 
   seriesCheckboxForm = this.fb.group(
     {
@@ -323,9 +327,17 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
     });
 
-    this.settingsService.angleUnit.subscribe(t => {
+    this.settingsService.angleUnit.subscribe((t) => {
       this.updateChartData();
-    })
+      //Force update the Y axis text with the new label
+      this.chart.updateOptions(
+        {
+          yaxis: this.chartOptions.yaxis,
+        },
+        false,
+        true
+      );
+    });
 
     this.mechStateSub = this.mechanismSerivce.onMechUpdateState.subscribe((data) => {
       switch (data) {
@@ -454,26 +466,28 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       this.mechStateSub.unsubscribe();
     }
   }
+
   getUnitStr(unit: LengthUnit | AngleUnit): string {
     switch (unit) {
       case AngleUnit.RADIAN:
-        return "rad";
+        return 'rad';
       case AngleUnit.DEGREE:
-        return "deg";
+        return 'deg';
       case LengthUnit.CM:
-        return "cm";
+        return 'cm';
       case LengthUnit.INCH:
-        return "in";
+        return 'in';
       case LengthUnit.METER:
-        return "m";
+        return 'm';
       default:
-        if (typeof (unit) === typeof (LengthUnit)) {
-          return "cm";
+        if (typeof unit === typeof LengthUnit) {
+          return 'cm';
         } else {
-          return "deg";
+          return 'deg';
         }
     }
   }
+
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
     let data1Title = '';
     let data2Title = '';
@@ -616,7 +630,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -633,7 +647,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -650,7 +664,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+                series[i] = Number(((series[i] * Math.PI) / 180).toFixed(4));
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
