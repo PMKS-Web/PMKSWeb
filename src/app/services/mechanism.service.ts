@@ -521,7 +521,7 @@ export class MechanismService {
       f.endCoord.y = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].endCoord.y;
       f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
       f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
-      f.angle = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angle;
+      f.angleRad = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angleRad;
       f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
       f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
     });

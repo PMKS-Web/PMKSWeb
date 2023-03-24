@@ -14,7 +14,9 @@ export class Force {
   private _stroke: string = 'black';
   private _fill: string = 'black';
   private _mag: number;
-  private _angle: number;
+  private _angleRad: number;
+  public xComp: number = 0;
+  public yComp: number = 0;
 
   private _showHighlight: boolean = false;
   isEndSelected: boolean = false;
@@ -39,11 +41,19 @@ export class Force {
     this._local = local;
     this._arrowOutward = arrowOutward;
     this._mag = mag;
-    this._angle = Force.updateAngle(this.startCoord, this.endCoord);
+    this._angleRad = this.updateAngle(this.startCoord, this.endCoord);
+    this.xComp = this.endCoord.x - this.startCoord.x;
+    this.yComp = this.endCoord.y - this.startCoord.y;
   }
 
-  static updateAngle(startCoord: Coord, endCoord: Coord) {
+  updateAngle(startCoord: Coord, endCoord: Coord) {
     return Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
+  }
+
+  updateInternalValues() {
+    this.angleRad = this.updateAngle(this.startCoord, this.endCoord);
+    this.xComp = this.endCoord.x - this.startCoord.x;
+    this.yComp = this.endCoord.y - this.startCoord.y;
   }
 
   static createForceLine(startCoord: Coord, endCoord: Coord) {
@@ -184,11 +194,11 @@ export class Force {
     this._showHighlight = value;
   }
 
-  get angle(): number {
-    return this._angle;
+  get angleRad(): number {
+    return this._angleRad;
   }
 
-  set angle(value: number) {
-    this._angle = value;
+  set angleRad(value: number) {
+    this._angleRad = value;
   }
 }

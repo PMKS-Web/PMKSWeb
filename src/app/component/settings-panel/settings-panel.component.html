@@ -13,32 +13,34 @@
     </radio-block
     >
     <div [formGroup]='this.settingsForm'>
-        Length Unit: {{this.currentLengthUnit == 0 ? 'Inch' : this.currentLengthUnit == 1 ? 'Centimeter' : this.currentLengthUnit == 2 ? 'Meter' : 'Centimeter' }}
-        <br />
-        Torque Unit: {{this.currentTorqueUnit == 20 ? 'INCH-LB' : this.currentTorqueUnit == 21 ? 'CM-N' : this.currentTorqueUnit == 22 ? 'N-M' : 'CM-N' }}
+      Length
+      Unit: {{this.currentLengthUnit == 0 ? 'Inch' : this.currentLengthUnit == 1 ? 'Centimeter' : this.currentLengthUnit == 2 ? 'Meter' : 'Centimeter' }}
+      <br />
+      Force
+      Unit: {{this.settingsService.forceUnit.value == 20 ? 'LBF' : 'Newton'}}
     </div>
-<!--    <radio-block
-      option1='Inch'
-      option2='cm'
-      option3='Meter'
-      [formGroup]='this.settingsForm'
-      _formControl='lengthunit'
-      tooltip='Select the units to be used for length. This updates units for derived units as well (e.g. velocity, area, etc.)'
-      [disabled]='true'
-    >Length Units
-    </radio-block
-    >
-    <radio-block
-      option1='lbf-in'
-      option2='N-cm'
-      option3='N-m'
-      [formGroup]='this.settingsForm'
-      _formControl='torqueunit'
-      tooltip='Select the torque units to be used for the analysis. Change the base length units for different torque units.'
-      [disabled]='true'
-    >Torque Units
-    </radio-block
-    >-->
+    <!--    <radio-block
+          option1='Inch'
+          option2='cm'
+          option3='Meter'
+          [formGroup]='this.settingsForm'
+          _formControl='lengthunit'
+          tooltip='Select the units to be used for length. This updates units for derived units as well (e.g. velocity, area, etc.)'
+          [disabled]='true'
+        >Length Units
+        </radio-block
+        >
+        <radio-block
+          option1='lbf-in'
+          option2='N-cm'
+          option3='N-m'
+          [formGroup]='this.settingsForm'
+          _formControl='torqueunit'
+          tooltip='Select the torque units to be used for the analysis. Change the base length units for different torque units.'
+          [disabled]='true'
+        >Torque Units
+        </radio-block
+        >-->
     <radio-block
       option1='Degree'
       option2='Radian'

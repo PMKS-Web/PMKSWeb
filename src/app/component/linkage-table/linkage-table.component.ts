@@ -155,7 +155,7 @@ export class LinkageTableComponent implements OnInit {
   }
 
   showForceAngle(force: Force) {
-    return force.angle * (180 / Math.PI);
+    return force.angleRad * (180 / Math.PI);
   }
 
   changeForceProp($event: any, force: Force, forceProp: string) {
@@ -188,10 +188,10 @@ export class LinkageTableComponent implements OnInit {
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Force Angle');
         }
-        force.angle = Number($event.target.value) * (Math.PI / 180);
+        force.angleRad = Number($event.target.value) * (Math.PI / 180);
         // TODO: Within commonClass, have radToDeg and degToRad
-        force.endCoord.x = Math.cos(force.angle) + force.startCoord.x;
-        force.endCoord.y = Math.sin(force.angle) + force.startCoord.y;
+        force.endCoord.x = Math.cos(force.angleRad) + force.startCoord.x;
+        force.endCoord.y = Math.sin(force.angleRad) + force.startCoord.y;
         break;
     }
     force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);

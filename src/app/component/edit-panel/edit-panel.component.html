@@ -38,14 +38,14 @@
       [formGroup]='this.jointForm'
       formControl1='xPos'
       formControl2='yPos'
-      tooltip="The location of the joint in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
+      tooltip="The location of the joint in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}."
     >Joint Position
     </dual-input-block>
 
     <input-block *ngIf='this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'
                  [formGroup]='this.jointForm'
                  _formControl='angle'
-                 tooltip="The angle of the slider in {{this.settingsService.angle.value == 10 ? 'degrees':'radians'}}."
+                 tooltip="The angle of the slider in {{this.settingsService.angleUnit.value == 10 ? 'degrees':'radians'}}."
     >Slider Angle
     </input-block>
 
@@ -89,7 +89,7 @@
       [formGroup]='linkForm'
       _formControl='length'
       unit='cm'
-      tooltip="The length of the link in {{this.settingsService.length.value == 0 ? 'inches' :this.settingsService.length.value == 1 ? 'centimeters' : 'meters'}}."
+      tooltip="The length of the link in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}."
     >Link Length
     </input-block
     >
@@ -124,26 +124,49 @@
     </ng-container> -->
   </panel-section-collapsible>
 
-  <!-- <panel-section-collapsible>
-    <title-block alwaysShown icon="expand_less">Debug Menu</title-block>
-    <button (click)="debug()">Debug</button> -->
-  <!-- <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
-    <button-block icon="edit">Button Label</button-block>
-    <radio-block tooltip="Tooltip Info" option1="cm" option2="meter" option3="inches"
-      >Radio Block</radio-block
+  <panel-section
+    *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">
+    <title-block
+      icon='edit'
+      description='Changing the magnitude or angle will change the end point of the force.'
+    >Edit Force {{ this.activeSrv.selectedForce.id | uppercase }}</title-block
     >
-    <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block>
-    <subtitle-block icon="home">Subtitle Block</subtitle-block>
-    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block> -->
-  <!-- </panel-section-collapsible> -->
+    <input-block
+      [formGroup]='forceForm'
+      _formControl='magnitude'
+      tooltip='The length of the link in Newtons | lbf.'
+    >Magnitude
+    </input-block
+    >
 
-  <!-- <panel-section>
-    <title-block icon="edit">Normal Section</title-block>
-    <input-block unit="cm" [value]="0.2" tooltip="Tooltip Info">Input Label</input-block>
-    <button-block icon="edit">Button Label</button-block>
-    <radio-block tooltip="Tooltip Info" option1="this" option2="that">Radio Block</radio-block>
-    <toggle-block tooltip="Tooltip Info">Toggle Block</toggle-block>
-    <subtitle-block icon="home" buttonLabel="back">Subtitle Block</subtitle-block>
-    <dual-input-block unit="cm" tooltip="Tooltip Info" [value1]="0.2" [value2]="1.2">Dual Input Block</dual-input-block>
-  </panel-section> -->
+    <input-block
+      [formGroup]='forceForm'
+      _formControl='angle'
+      tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'
+    >Force Angle
+    </input-block
+    >
+
+    <dual-input-block
+      [formGroup]='forceForm'
+      formControl1='xComp'
+      formControl2='yComp'
+      tooltip='The x and y components of the force in Newtons | lbf.'>
+      Force Components
+    </dual-input-block>
+
+    <radio-block
+      [formGroup]='forceForm'
+      _formControl='isGlobal'
+      tooltip='The frame of reference for the force.'
+      option1='Local (Link {{this.activeSrv.selectedForce.link.id | uppercase}})'
+      option2='Global'
+    >
+      Force Base Frame
+    </radio-block>
+    <button-block icon='multiple_stop' [click]='this.mechanismService.changeForceDirection.bind(this.mechanismService)'>
+      Switch Direction
+    </button-block>
+    <button-block icon='delete' [click]='deleteForce.bind(this)'>Delete Force</button-block>
+  </panel-section>
 </div>

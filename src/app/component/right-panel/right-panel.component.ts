@@ -123,4 +123,24 @@ export class RightPanelComponent {
   getLinkDesiredOrder() {
     return RealLink.debugDesiredJointsIDs;
   }
+
+  printMechanism() {
+    console.log(this.mechanismService.mechanisms[0]);
+  }
+
+  printActiveObject() {
+    switch (this.activeObjService.objType) {
+      case 'Joint':
+        console.log(this.activeObjService.selectedJoint);
+        break;
+      case 'Link':
+        console.log(this.activeObjService.selectedLink);
+        break;
+      case 'Force':
+        console.log(this.activeObjService.selectedForce);
+        break;
+      default:
+        console.log('No active object');
+    }
+  }
 }

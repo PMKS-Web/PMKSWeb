@@ -3,7 +3,13 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { PrisJoint, RevJoint } from 'src/app/model/joint';
 import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
-import { AngleUnit, getNewOtherJointPos, LengthUnit, TorqueUnit } from 'src/app/model/utils';
+import {
+  AngleUnit,
+  getNewOtherJointPos,
+  LengthUnit,
+  ForceUnit,
+  getDistance,
+} from 'src/app/model/utils';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
 import { SettingsService } from '../../services/settings.service';
@@ -30,9 +36,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     public gridUtils: GridUtilsService
   ) {}
 
-  lengthUnit: LengthUnit = this.settingsService.length.value;
-  angleUnit: AngleUnit = this.settingsService.angle.value;
-  torqueUnit: TorqueUnit = this.settingsService.inputTorque.value;
+  lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
+  angleUnit: AngleUnit = this.settingsService.angleUnit.value;
+  // torqueUnit: TorqueUnit = this.settingsService.inputTorque.value;
   jointForm = this.fb.group(
     {
       xPos: [''],
@@ -49,6 +55,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     {
       length: [''],
       angle: [''],
+    },
+    { updateOn: 'blur' }
+  );
+  forceForm = this.fb.group(
+    {
+      magnitude: [''],
+      angle: [''],
+      xComp: [''],
+      yComp: [''],
+      isGlobal: ['0', { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
@@ -79,13 +95,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
 
   onChanges(): void {
-    this.settingsService.length.subscribe((val) => {
+    this.settingsService.lengthUnit.subscribe((val) => {
       switch (
         val
         //when length unit changes, rescale grid?
       ) {
       }
-      var unit = this.settingsService.length.value;
+      var unit = this.settingsService.lengthUnit.value;
       if (unit !== this.lengthUnit) {
         this.mechanismService.joints.forEach((joint) => {
           this.activeSrv.updateSelectedObj(joint);
@@ -97,28 +113,28 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
             )
           );
         });
-        this.lengthUnit = this.settingsService.length.value;
+        this.lengthUnit = this.settingsService.lengthUnit.value;
         this.activeSrv.fakeUpdateSelectedObj();
       }
     });
 
-    this.settingsService.angle.subscribe((val) => {
+    this.settingsService.angleUnit.subscribe((val) => {
       this.activeSrv.fakeUpdateSelectedObj();
     });
 
-    this.settingsService.inputTorque.subscribe((val) => {
-      var unit = this.settingsService.inputTorque.value;
-      if (unit !== this.torqueUnit) {
-      }
-      this.torqueUnit = this.settingsService.inputTorque.value;
-      this.activeSrv.fakeUpdateSelectedObj();
-    });
+    // this.settingsService.inputTorque.subscribe((val) => {
+    //   var unit = this.settingsService.inputTorque.value;
+    //   if (unit !== this.torqueUnit) {
+    //   }
+    //   this.torqueUnit = this.settingsService.inputTorque.value;
+    //   this.activeSrv.fakeUpdateSelectedObj();
+    // });
 
     this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
       if (this.hideEditPanel()) return;
       const [success, value] = this.nup.parseLengthString(
         val!,
-        this.settingsService.length.getValue()
+        this.settingsService.lengthUnit.getValue()
       );
       if (!success) {
         this.jointForm.patchValue({ xPos: this.activeSrv.selectedJoint.x.toFixed(2).toString() });
@@ -129,7 +145,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           new Coord(this.activeSrv.selectedJoint.x, this.activeSrv.selectedJoint.y)
         );
         this.jointForm.patchValue(
-          { xPos: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
+          { xPos: this.nup.formatValueAndUnit(value, this.settingsService.lengthUnit.getValue()) },
           { emitEvent: false }
         );
         this.mechanismService.onMechUpdateState.next(2);
@@ -140,7 +156,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) return;
       const [success, value] = this.nup.parseLengthString(
         val!,
-        this.settingsService.length.getValue()
+        this.settingsService.lengthUnit.getValue()
       );
       if (!success) {
         this.jointForm.patchValue({ yPos: this.activeSrv.selectedJoint.y.toFixed(2).toString() });
@@ -151,7 +167,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           new Coord(this.activeSrv.selectedJoint.x, this.activeSrv.selectedJoint.y)
         );
         this.jointForm.patchValue(
-          { yPos: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
+          { yPos: this.nup.formatValueAndUnit(value, this.settingsService.lengthUnit.getValue()) },
           { emitEvent: false }
         );
         this.mechanismService.onMechUpdateState.next(2);
@@ -162,7 +178,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) return;
       const [success, value] = this.nup.parseAngleString(
         val!,
-        this.settingsService.angle.getValue()
+        this.settingsService.angleUnit.getValue()
       );
       if (!success) {
         this.jointForm.patchValue({
@@ -170,9 +186,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         });
       } else {
         (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle =
-          this.nup.convertAngle(value, this.settingsService.angle.getValue(), AngleUnit.RADIAN);
+          this.nup.convertAngle(value, this.settingsService.angleUnit.getValue(), AngleUnit.RADIAN);
         this.jointForm.patchValue(
-          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angle.getValue()) },
+          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()) },
           { emitEvent: false }
         );
         this.mechanismService.onMechUpdateState.next(2);
@@ -209,7 +225,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
       const [success, value] = this.nup.parseLengthString(
         val!,
-        this.settingsService.length.getValue()
+        this.settingsService.lengthUnit.getValue()
       );
       if (!success) {
         this.linkForm.patchValue({
@@ -220,7 +236,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         this.resolveNewLink();
         this.mechanismService.onMechUpdateState.next(2);
         this.linkForm.patchValue(
-          { length: this.nup.formatValueAndUnit(value, this.settingsService.length.getValue()) },
+          {
+            length: this.nup.formatValueAndUnit(value, this.settingsService.lengthUnit.getValue()),
+          },
           { emitEvent: false }
         );
       }
@@ -229,7 +247,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     this.linkForm.controls['angle'].valueChanges.subscribe((val) => {
       const [success, value] = this.nup.parseAngleString(
         val!,
-        this.settingsService.angle.getValue()
+        this.settingsService.angleUnit.getValue()
       );
       if (!success) {
         this.linkForm.patchValue({
@@ -237,14 +255,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         });
       } else {
         const [num, unit] = this.nup.preProcessInput(val!);
-        var correctAngle = 0;
-        if (this.nup.getAngleUnit(unit) !== this.settingsService.angle.getValue()) {
+        let correctAngle = 0;
+        if (this.nup.getAngleUnit(unit) !== this.settingsService.angleUnit.getValue()) {
           correctAngle = this.nup.convertAngle(
             num,
             this.nup.getAngleUnit(unit),
-            this.settingsService.angle.getValue()
+            this.settingsService.angleUnit.getValue()
           );
-          console.log(correctAngle);
         } else {
           correctAngle = num;
         }
@@ -266,6 +283,111 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       this.activeSrv.fakeUpdateSelectedObj();
     });
 
+    this.forceForm.controls['magnitude'].valueChanges.subscribe((val) => {
+      const [success, value] = this.nup.parseForceString(
+        val!,
+        this.settingsService.forceUnit.getValue()
+      );
+      if (!success) {
+        this.forceForm.patchValue({
+          magnitude: this.activeSrv.selectedForce.mag.toFixed(2).toString(),
+        });
+      } else {
+        this.activeSrv.selectedForce.mag = value;
+        // this.resolveNewLink();
+        this.mechanismService.onMechUpdateState.next(2);
+        this.forceForm.patchValue(
+          {
+            magnitude: this.nup.formatValueAndUnit(
+              value,
+              this.settingsService.forceUnit.getValue()
+            ),
+          },
+          { emitEvent: false }
+        );
+      }
+    });
+
+    this.forceForm.controls['angle'].valueChanges.subscribe((val) => {
+      const [success, value] = this.nup.parseAngleString(
+        val!,
+        this.settingsService.angleUnit.getValue()
+      );
+      if (!success) {
+        this.forceForm.patchValue({
+          angle: this.activeSrv.selectedForce.angleRad.toFixed(2).toString(),
+        });
+      } else {
+        //Always convert to Radian since Force.angle is in Radian
+        this.activeSrv.selectedForce.angleRad = this.nup.convertAngle(
+          value,
+          this.settingsService.angleUnit.getValue(),
+          AngleUnit.RADIAN
+        );
+        this.resolveNewForceAngle();
+        this.mechanismService.onMechUpdateState.next(2);
+        this.forceForm.patchValue(
+          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()) },
+          { emitEvent: false }
+        );
+      }
+      this.activeSrv.fakeUpdateSelectedObj();
+    });
+
+    this.forceForm.controls['xComp'].valueChanges.subscribe((val) => {
+      const [success, value] = this.nup.parseForceString(
+        val!,
+        this.settingsService.forceUnit.getValue()
+      );
+      if (!success) {
+        this.forceForm.patchValue({
+          xComp: this.activeSrv.selectedForce.xComp.toFixed(2).toString(),
+        });
+      } else {
+        this.activeSrv.selectedForce.xComp = value;
+        this.resolveNewForceMagnitude();
+        this.mechanismService.onMechUpdateState.next(2);
+        this.forceForm.patchValue(
+          {
+            xComp: this.nup.formatValueAndUnit(value, this.settingsService.forceUnit.getValue()),
+          },
+          { emitEvent: false }
+        );
+      }
+    });
+
+    this.forceForm.controls['yComp'].valueChanges.subscribe((val) => {
+      const [success, value] = this.nup.parseForceString(
+        val!,
+        this.settingsService.forceUnit.getValue()
+      );
+      if (!success) {
+        this.forceForm.patchValue({
+          yComp: this.activeSrv.selectedForce.yComp.toFixed(2).toString(),
+        });
+      } else {
+        this.activeSrv.selectedForce.yComp = value;
+        this.resolveNewForceMagnitude();
+        this.mechanismService.onMechUpdateState.next(2);
+        this.forceForm.patchValue(
+          {
+            yComp: this.nup.formatValueAndUnit(value, this.settingsService.forceUnit.getValue()),
+          },
+          { emitEvent: false }
+        );
+      }
+    });
+
+    this.forceForm.controls['isGlobal'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
+      // this.activeSrv.selectedForce.local = val == '0' ? true : false;
+      this.mechanismService.changeForceLocal();
+      this.mechanismService.updateMechanism();
+      this.mechanismService.onMechUpdateState.next(2);
+    });
+
     this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
       if (newObjType == 'Joint') {
         const angleTemp = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
@@ -275,13 +397,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           {
             xPos: this.nup.formatValueAndUnit(
               this.activeSrv.selectedJoint.x,
-              this.settingsService.length.getValue()
+              this.settingsService.lengthUnit.getValue()
             ),
             yPos: this.nup.formatValueAndUnit(
               this.activeSrv.selectedJoint.y,
-              this.settingsService.length.getValue()
+              this.settingsService.lengthUnit.getValue()
             ),
-            angle: this.nup.formatValueAndUnit(angleTemp, this.settingsService.angle.getValue()),
+            angle: this.nup.formatValueAndUnit(
+              angleTemp,
+              this.settingsService.angleUnit.getValue()
+            ),
             ground: this.activeSrv.selectedJoint.ground,
             input: this.activeSrv.selectedJoint.input,
             slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
@@ -293,14 +418,41 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           {
             length: this.nup.formatValueAndUnit(
               this.activeSrv.selectedLink.length,
-              this.settingsService.length.getValue()
+              this.settingsService.lengthUnit.getValue()
             ),
             angle: this.nup.formatValueAndUnit(
-              this.settingsService.angle.getValue() == AngleUnit.DEGREE
+              this.settingsService.angleUnit.getValue() == AngleUnit.DEGREE
                 ? this.activeSrv.selectedLink.angleDeg
                 : this.activeSrv.selectedLink.angleRad,
-              this.settingsService.angle.getValue()
+              this.settingsService.angleUnit.getValue()
             ),
+          },
+          { emitEvent: false }
+        );
+      } else if (newObjType == 'Force') {
+        this.forceForm.patchValue(
+          {
+            magnitude: this.nup.formatValueAndUnit(
+              this.activeSrv.selectedForce.mag,
+              this.settingsService.forceUnit.getValue()
+            ),
+            angle: this.nup.formatValueAndUnit(
+              this.nup.convertAngle(
+                this.activeSrv.selectedForce.angleRad,
+                AngleUnit.RADIAN,
+                this.settingsService.angleUnit.getValue()
+              ),
+              this.settingsService.angleUnit.getValue()
+            ),
+            xComp: this.nup.formatValueAndUnit(
+              this.activeSrv.selectedForce.xComp,
+              this.settingsService.forceUnit.getValue()
+            ),
+            yComp: this.nup.formatValueAndUnit(
+              this.activeSrv.selectedForce.yComp,
+              this.settingsService.forceUnit.getValue()
+            ),
+            isGlobal: this.activeSrv.selectedForce.local ? '0' : '1',
           },
           { emitEvent: false }
         );
@@ -329,6 +481,33 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     }
   }
 
+  resolveNewForceAngle() {
+    if (!this.hideEditPanel()) {
+      //Whenever angle is changed, the end point of the force is changed
+      const distanceBetweenPoints = getDistance(
+        this.activeSrv.selectedForce.startCoord,
+        this.activeSrv.selectedForce.endCoord
+      );
+
+      const endCoordLocation = getNewOtherJointPos(
+        this.activeSrv.selectedForce.startCoord,
+        this.activeSrv.selectedForce.angleRad,
+        distanceBetweenPoints
+      );
+
+      this.gridUtils.dragForce(this.activeSrv.selectedForce, endCoordLocation, false);
+    }
+  }
+
+  resolveNewForceMagnitude() {
+    if (!this.hideEditPanel()) {
+      const endX = this.activeSrv.selectedForce.startCoord.x + this.activeSrv.selectedForce.xComp;
+      const endY = this.activeSrv.selectedForce.startCoord.y + this.activeSrv.selectedForce.yComp;
+
+      this.gridUtils.dragForce(this.activeSrv.selectedForce, new Coord(endX, endY), false);
+    }
+  }
+
   deleteJoint() {
     this.activeSrv.updateSelectedObj(undefined);
     this.mechanismService.deleteJoint();
@@ -337,5 +516,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   deleteLink() {
     this.activeSrv.updateSelectedObj(undefined);
     this.mechanismService.deleteLink();
+  }
+
+  deleteForce() {
+    this.activeSrv.updateSelectedObj(undefined);
+    this.mechanismService.deleteForce();
   }
 }
