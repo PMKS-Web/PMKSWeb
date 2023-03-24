@@ -1,4 +1,15 @@
 <div id='analysisWrapper'>
+
+  <panel-section-collapsible
+    [warning]='true'
+    [expanded]='false'
+    id='placeholderContainer'
+    *ngIf="this.activeSrv.objType == 'Grid' && mechanismService.joints.length != 0"
+  >
+    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <subtitle-block alwaysShown>Select a joint or link to edit properties.</subtitle-block>
+    <img src='assets/gifs/Click.gif' />
+  </panel-section-collapsible>
   <!-- 
     //Param 1: analysis: "force","stress","kinematic"
 
@@ -489,8 +500,23 @@
     </mat-expansion-panel>
   </panel-section-collapsible>
 
-  <!-- Export Button -->
-  <panel-section>
-    <button-block icon='download'> Export Analysis for {{ this.activeSrv.objType }} </button-block>
+  <!-- Forces Arrows-->
+  <panel-section
+    id='analysis-panel'
+    *ngIf="validMechanisms() && this.activeSrv.objType == 'Force'"
+  >
+    <title-block alwaysShown>
+      Analysis for {{ this.activeSrv.objType }}
+      {{ this.activeSrv.selectedForce.id | uppercase }}
+    </title-block>
+
+    <subtitle-block>
+      There are no analysis graphs for forces.
+    </subtitle-block>
   </panel-section>
+
+  <!-- Export Button -->
+  <!--  <panel-section>-->
+  <!--    <button-block icon='download'> Export Analysis for {{ this.activeSrv.objType }} </button-block>-->
+  <!--  </panel-section>-->
 </div>

@@ -74,7 +74,7 @@ export class AnalysisPanelComponent {
   constructor(
     public activeSrv: ActiveObjService,
     private fb: FormBuilder,
-    private mechanismService: MechanismService
+    public mechanismService: MechanismService
   ) {
     if (this.mechanismService.oneValidMechanismExists()) {
       this.resetVariablesAndSolve();
