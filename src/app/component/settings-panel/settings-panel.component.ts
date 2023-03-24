@@ -6,6 +6,7 @@ import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
+import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -102,7 +103,7 @@ export class SettingsPanelComponent {
       }
       this.settingsService.forceUnit.next(this.currentForceUnit);
       this.currentLengthUnit = ParseLengthUnit(val);
-      // this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
+      this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
       this.svgGrid.scaleToFitLinkage();
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {

@@ -9,6 +9,7 @@
       [formGroup]='this.settingsForm'
       _formControl='globalunit'
       tooltip='Select the global units to be used for the analysis.'
+      [disabled]="this.settingsService.animating.value"
     >Global Units
     </radio-block
     >

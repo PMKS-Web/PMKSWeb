@@ -248,31 +248,6 @@ export class NumberUnitParserService {
         break;
     }
     console.error(
-      'Error in NumberUnitParserService.convertAngle(): No valid conversion found between ' +
-        AngleUnit[givenUnits] +
-        ' and ' +
-        AngleUnit[desiredUnits]
-    );
-    return value;
-  }
-
-  private convertForce(value: number, givenUnits: ForceUnit, desiredUnits: ForceUnit): number {
-    if (givenUnits == desiredUnits) return value;
-    switch (givenUnits) {
-      case ForceUnit.NEWTON:
-        switch (desiredUnits) {
-          case ForceUnit.LBF:
-            return value * 0.224809;
-        }
-        break;
-      case ForceUnit.LBF:
-        switch (desiredUnits) {
-          case ForceUnit.NEWTON:
-            return value / 0.224809;
-        }
-        break;
-    }
-    console.error(
       'Error in NumberUnitParserService.convertForce(): No valid conversion found between ' +
         ForceUnit[givenUnits] +
         ' and ' +

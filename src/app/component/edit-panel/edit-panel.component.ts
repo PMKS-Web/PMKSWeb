@@ -38,6 +38,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
   angleUnit: AngleUnit = this.settingsService.angleUnit.value;
+  forceUnit: ForceUnit = this.settingsService.forceUnit.value;
   // torqueUnit: TorqueUnit = this.settingsService.inputTorque.value;
   jointForm = this.fb.group(
     {
@@ -413,6 +414,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
           },
           { emitEvent: false }
         );
+        this.settingsService.globalUnit.next(this.lengthUnit + 30);
       } else if (newObjType == 'Link') {
         this.linkForm.patchValue(
           {

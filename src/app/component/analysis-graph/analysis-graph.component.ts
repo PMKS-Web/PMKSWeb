@@ -27,12 +27,13 @@ import {
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
-import { crossProduct, roundNumber } from '../../model/utils';
+import { AngleUnit, crossProduct, LengthUnit, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
+import { SettingsService } from '../../services/settings.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -200,7 +201,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
   loading: boolean = false;
 
-  constructor(private fb: FormBuilder, private mechanismSerivce: MechanismService) {}
+  constructor(private fb: FormBuilder, private mechanismSerivce: MechanismService, private settingsService: SettingsService) { }
 
   seriesCheckboxForm = this.fb.group(
     {
@@ -449,7 +450,26 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       this.mechStateSub.unsubscribe();
     }
   }
-
+  getUnitStr(unit: LengthUnit | AngleUnit): string {
+    switch (unit) {
+      case AngleUnit.DEGREE:
+        return "deg";
+      case AngleUnit.DEGREE:
+        return "deg";
+      case LengthUnit.CM:
+        return "cm";
+      case LengthUnit.INCH:
+        return "in";
+      case LengthUnit.METER:
+        return "m";
+      default:
+        if (typeof (unit) === typeof (LengthUnit)) {
+          return "cm";
+        } else {
+          return "deg";
+        }
+    }
+  }
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
     let data1Title = '';
     let data2Title = '';
@@ -460,13 +480,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let datum: number[][] = [];
     let categories: string[] = [];
     const seriesData = [];
-    let posLinUnit = '(cm)';
-    let velLinUnit = '(cm/s)';
-    let accLinUnit = '(cm/s^2)';
-    const posAngUnit = '(degrees)';
+    let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + ')';
+    let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s)';
+    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s^2)';
+    const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + ')';
     // const posAngUnit = '(rad)';
-    const velAngUnit = '(rad/s)';
-    const accAngUnit = '(rad/s^2)';
+    const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s)';
+    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s^2)';
     if (ToolbarComponent.unit === 'm') {
       posLinUnit = 'm';
       velLinUnit = 'm/s';

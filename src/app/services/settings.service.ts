@@ -14,6 +14,7 @@ export class SettingsService {
   isInputCW = new BehaviorSubject(true);
   isGravity = new BehaviorSubject(false);
   inputSpeed = new BehaviorSubject(20);
+  animating = new BehaviorSubject(false);
 
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);

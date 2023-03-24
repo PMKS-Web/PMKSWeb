@@ -20,6 +20,7 @@ import { GridUtilsService } from './grid-utils.service';
 import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { SettingsService } from './settings.service';
 
 @Injectable({
   providedIn: 'root',
@@ -47,7 +48,7 @@ export class MechanismService {
   //The which timestep the mechanims is in
   onMechPositionChange = new Subject<number>();
 
-  constructor(public gridUtils: GridUtilsService, public activeObjService: ActiveObjService) {}
+  constructor(public gridUtils: GridUtilsService, public activeObjService: ActiveObjService, private settingsService: SettingsService) { }
 
   getJoints() {
     return this.joints;

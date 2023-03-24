@@ -115,6 +115,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
         );
+        this.settingsService.animating.next(this.animating);
         break;
       case 'pause':
         AnimationBarComponent.animate = true;
@@ -123,11 +124,13 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
         );
+        this.settingsService.animating.next(this.animating);
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
         this.animating = false;
         this.mechanismService.animate(0, AnimationBarComponent.animate);
+        this.settingsService.animating.next(this.animating);
         break;
     }
   }
