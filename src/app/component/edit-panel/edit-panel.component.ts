@@ -1,6 +1,6 @@
 import { AfterContentInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
-import { PrisJoint, RevJoint } from 'src/app/model/joint';
+import { PrisJoint, RealJoint, RevJoint } from 'src/app/model/joint';
 import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
 import {
@@ -34,7 +34,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
     public gridUtils: GridUtilsService
-  ) {}
+  ) { }
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
   angleUnit: AngleUnit = this.settingsService.angleUnit.value;
@@ -97,15 +97,17 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   onChanges(): void {
     this.settingsService.lengthUnit.subscribe((val) => {
-      switch (
-        val
+      switch (val) {
         //when length unit changes, rescale grid?
-      ) {
       }
       var unit = this.settingsService.lengthUnit.value;
       if (unit !== this.lengthUnit) {
         this.mechanismService.joints.forEach((joint) => {
           this.activeSrv.updateSelectedObj(joint);
+          var wasInput: boolean = this.jointForm.controls['input'].value!;
+          this.jointForm.controls['input'].patchValue(false);
+          this.activeSrv.selectedJoint.input = false;
+          this.activeSrv.fakeUpdateSelectedObj();
           this.gridUtils.dragJoint(
             this.activeSrv.selectedJoint,
             new Coord(
@@ -113,6 +115,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.nup.convertLength(joint.y, this.lengthUnit, unit)
             )
           );
+          this.jointForm.controls['input'].patchValue(wasInput);
         });
         this.lengthUnit = this.settingsService.lengthUnit.value;
         this.activeSrv.fakeUpdateSelectedObj();

@@ -8,6 +8,7 @@ import { SvgGridService } from '../../services/svg-grid.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { RealJoint, RevJoint } from '../../model/joint';
 
 @Component({
   selector: 'app-animation-bar',
@@ -34,7 +35,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     private svgGrid: SvgGridService,
     private mechanismService: MechanismService,
     private settingsService: SettingsService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
@@ -115,7 +116,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
         );
-        this.settingsService.animating.next(this.animating);
         break;
       case 'pause':
         AnimationBarComponent.animate = true;
@@ -124,14 +124,17 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
         );
-        this.settingsService.animating.next(this.animating);
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
         this.animating = false;
         this.mechanismService.animate(0, AnimationBarComponent.animate);
-        this.settingsService.animating.next(this.animating);
         break;
+    }
+    if (this.mechanismService.mechanismTimeStep !== 0) {
+      this.settingsService.animating.next(true);
+    } else {
+      this.settingsService.animating.next(false);
     }
   }
 
