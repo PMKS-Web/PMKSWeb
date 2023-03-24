@@ -323,6 +323,10 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
     });
 
+    this.settingsService.angleUnit.subscribe(t => {
+      this.updateChartData();
+    })
+
     this.mechStateSub = this.mechanismSerivce.onMechUpdateState.subscribe((data) => {
       switch (data) {
         case 0:
@@ -452,8 +456,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   }
   getUnitStr(unit: LengthUnit | AngleUnit): string {
     switch (unit) {
-      case AngleUnit.DEGREE:
-        return "deg";
+      case AngleUnit.RADIAN:
+        return "rad";
       case AngleUnit.DEGREE:
         return "deg";
       case LengthUnit.CM:
@@ -609,7 +613,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               mechProp,
               mechPart
             );
-            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            var series: number[] = datum[0];
+            if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
+              for (let i = 0; i < series.length; i++) {
+                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+              }
+            }
+            seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
           case 'Angular Link Vel':
@@ -620,7 +630,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               mechProp,
               mechPart
             );
-            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            var series: number[] = datum[0];
+            if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
+              for (let i = 0; i < series.length; i++) {
+                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+              }
+            }
+            seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
           case 'Angular Link Acc':
@@ -631,7 +647,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               mechProp,
               mechPart
             );
-            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            var series: number[] = datum[0];
+            if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
+              for (let i = 0; i < series.length; i++) {
+                series[i] = Number((series[i] * Math.PI / 180).toFixed(4));
+              }
+            }
+            seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
         }

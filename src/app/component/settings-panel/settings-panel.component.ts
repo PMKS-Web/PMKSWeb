@@ -7,6 +7,7 @@ import { MechanismService } from '../../services/mechanism.service';
 import { Link } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -19,7 +20,7 @@ export class SettingsPanelComponent {
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
     private svgGrid: SvgGridService
-  ) {}
+  ) { }
 
   currentLengthUnit!: LengthUnit;
   currentForceUnit!: ForceUnit;
@@ -105,6 +106,7 @@ export class SettingsPanelComponent {
       this.currentLengthUnit = ParseLengthUnit(val);
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
       this.svgGrid.scaleToFitLinkage();
+      ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);
@@ -112,6 +114,19 @@ export class SettingsPanelComponent {
     // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
     //   this.settingsService.inputTorque.next(this.currentTorqueUnit);
     // });
+  }
+
+  getUnitStr(unit: LengthUnit): string {
+    switch (unit) {
+      case LengthUnit.CM:
+        return "cm";
+      case LengthUnit.INCH:
+        return "in";
+      case LengthUnit.METER:
+        return "m";
+      default:
+        return "cm";
+    }
   }
 
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
