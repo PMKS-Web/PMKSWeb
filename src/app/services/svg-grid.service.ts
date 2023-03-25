@@ -203,6 +203,18 @@ export class SvgGridService {
       i++;
     }
     this.handlePan();
+    if (this.panZoomObject.getZoom() / this.settingsService.objectScale < 10) {
+      NewGridComponent.sendNotification(
+        'The visual size of the links might be too small. Try using the "Update Object Scale" button in the settings menu.',
+        20000
+      );
+    }
+    if (this.panZoomObject.getZoom() / this.settingsService.objectScale > 150) {
+      NewGridComponent.sendNotification(
+        'The visual size of the links might be too large. Try using the "Update Object Scale" button in the settings menu.',
+        20000
+      );
+    }
   }
 
   handleUpdatedCTM(newCTM: SVGMatrix) {

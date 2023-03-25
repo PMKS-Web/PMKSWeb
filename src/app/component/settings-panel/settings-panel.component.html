@@ -9,17 +9,17 @@
       [formGroup]='this.settingsForm'
       _formControl='globalunit'
       tooltip='Select the global units to be used for the analysis.'
-      [disabled]="this.settingsService.animating.value"
+      [disabled]='this.settingsService.animating.value'
     >Global Units
     </radio-block
     >
-    <div [formGroup]='this.settingsForm'>
-      Length
-      Unit: {{this.currentLengthUnit == 0 ? 'Inch' : this.currentLengthUnit == 1 ? 'Centimeter' : this.currentLengthUnit == 2 ? 'Meter' : 'Centimeter' }}
-      <br />
-      Force
-      Unit: {{this.settingsService.forceUnit.value == 20 ? 'LBF' : 'Newton'}}
-    </div>
+    <!--    <div [formGroup]='this.settingsForm'>-->
+    <!--      Length-->
+    <!--      Unit: {{this.currentLengthUnit == 0 ? 'Inch' : this.currentLengthUnit == 1 ? 'Centimeter' : this.currentLengthUnit == 2 ? 'Meter' : 'Centimeter' }}-->
+    <!--      <br />-->
+    <!--      Force-->
+    <!--      Unit: {{this.settingsService.forceUnit.value == 20 ? 'LBF' : 'Newton'}}-->
+    <!--    </div>-->
     <!--    <radio-block
           option1='Inch'
           option2='cm'
@@ -81,12 +81,27 @@
     <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
     <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
 
+    <subtitle-block>Visual Settings</subtitle-block>
+    <toggle-block
+      [formGroup]='this.settingsForm'
+      _formControl='showMajorGrid'
+      tooltip='Show / hide the major grid lines.'>
+      Grid
+    </toggle-block>
+    <toggle-block *ngIf='settingsService.isShowMajorGrid.value'
+                  [formGroup]='this.settingsForm'
+                  _formControl='showMinorGrid'
+                  tooltip='Show / hide the minor grid lines.'>
+      Minor Gridlines
+    </toggle-block>
     <input-block
       type='number'
       [formGroup]='this.settingsForm'
-      _formControl='width'
+      _formControl='objectScale'
       tooltip='Scales all links, joints, and forces. A save and reload is for changes to take effect. (Default: 1)'
     >Object Scale
     </input-block>
+    <button-block icon='auto_fix_normal' [click]='updateObjectScale.bind(this)'>Update Object Scale</button-block>
+
   </panel-section>
 </div>

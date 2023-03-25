@@ -206,6 +206,10 @@ export class RealLink extends Link {
     this.updateLengthAndAngle();
   }
 
+  public reComputeDPath() {
+    this._d = RealLink.getD(this.joints);
+  }
+
   updateLengthAndAngle() {
     this._length = getDistance(this.joints[0], this.joints[1]);
     this._angle = getAngle(this.joints[0], this.joints[1]);

@@ -81,7 +81,7 @@ export type ChartOptions = {
 export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   public chartOptions: Partial<ChartOptions> = {
     chart: {
-      width: '100%', //380
+      objectScale: '100%', //380
       height: '250px', //300
       animations: {
         // enabled: false,
@@ -209,7 +209,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     private settingsService: SettingsService,
     private nup: NumberUnitParserService,
     private activeSrv: ActiveObjService
-  ) { }
+  ) {}
 
   seriesCheckboxForm = this.fb.group(
     {
@@ -646,7 +646,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
+                series[i] = Number(
+                  this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4)
+                );
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -663,7 +665,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
+                series[i] = Number(
+                  this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4)
+                );
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });
@@ -680,7 +684,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             var series: number[] = datum[0];
             if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
               for (let i = 0; i < series.length; i++) {
-                series[i] = Number(this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4));
+                series[i] = Number(
+                  this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4)
+                );
               }
             }
             seriesData.push({ name: 'Z', type: 'line', data: series });

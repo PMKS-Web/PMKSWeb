@@ -1,5 +1,5 @@
 import { SvgGridService } from '../../services/svg-grid.service';
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, ViewChild } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { MechanismService } from '../../services/mechanism.service';
@@ -774,13 +774,14 @@ export class NewGridComponent {
     }
   }
 
-  static sendNotification(text: string) {
-    NewGridComponent.instance.sendNotification(text);
+  static sendNotification(text: string, rateLimitMS?: number) {
+    NewGridComponent.instance.sendNotification(text, rateLimitMS);
   }
 
-  sendNotification(text: string) {
+  sendNotification(text: string, rateLimitMS?: number) {
+    rateLimitMS = rateLimitMS || 1000; //Default to 1 second
     //If there is more than one notification in the last seccond, ingore all but the first
-    if (this.lastNotificationTime + 1000 < Date.now()) {
+    if (this.lastNotificationTime + rateLimitMS < Date.now()) {
       this.lastNotificationTime = Date.now();
       this.snackBar.open(text, '', {
         panelClass: 'my-custom-snackbar',
@@ -817,5 +818,43 @@ export class NewGridComponent {
 
   getFirstYPos(link: Link) {
     return this.getFirstPosCoords(link).y;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (($event.ctrlKey || $event.metaKey) && $event.keyCode == 90) {
+      //Ctrl + Z
+      NewGridComponent.sendNotification(
+        'You attempted to undo. What were you trying to undo? Please let us know through the report button in the help section.'
+      );
+    }
+
+    if ($event.keyCode == 27) {
+      //Escape Key
+      // NewGridComponent.sendNotification(
+      //   'You pressed the "Escape" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      // );
+      this.activeObjService.updateSelectedObj(undefined);
+    }
+
+    if ($event.keyCode == 46) {
+      //Delete Key
+      if (true) {
+        //Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
+        if (this.activeObjService.objType === 'Grid') {
+          NewGridComponent.sendNotification('Select an object to delete.');
+          return;
+        }
+        if (this.activeObjService.objType === 'Joint') {
+          this.mechanismSrv.deleteJoint();
+        } else if (this.activeObjService.objType === 'Link') {
+          this.mechanismSrv.deleteLink();
+        }
+        this.activeObjService.updateSelectedObj(undefined);
+        NewGridComponent.sendNotification('Deleted Selected Object.');
+      } else {
+        return;
+      }
+    }
   }
 }

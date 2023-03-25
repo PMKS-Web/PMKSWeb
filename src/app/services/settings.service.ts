@@ -15,6 +15,8 @@ export class SettingsService {
   isGravity = new BehaviorSubject(false);
   inputSpeed = new BehaviorSubject(20);
   animating = new BehaviorSubject(false);
+  isShowMajorGrid = new BehaviorSubject(true);
+  isShowMinorGrid = new BehaviorSubject(true);
 
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);

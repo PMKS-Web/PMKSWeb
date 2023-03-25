@@ -4,7 +4,7 @@ import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit } from 'src/app/model/util
 import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
-import { Link } from '../../model/link';
+import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
@@ -20,7 +20,7 @@ export class SettingsPanelComponent {
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
     private svgGrid: SvgGridService
-  ) { }
+  ) {}
 
   currentLengthUnit!: LengthUnit;
   currentForceUnit!: ForceUnit;
@@ -30,7 +30,7 @@ export class SettingsPanelComponent {
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   gravityEnabled!: boolean;
-  currentWidthSetting!: number;
+  currentObjectScaleSetting!: number;
 
   ngOnInit(): void {
     this.gravityEnabled = this.settingsService.isGravity.value;
@@ -39,25 +39,32 @@ export class SettingsPanelComponent {
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
-    this.currentWidthSetting = SettingsService.objectScale.value;
+    this.currentObjectScaleSetting = SettingsService.objectScale.value;
 
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
-      width: this.currentWidthSetting.toString(),
+      objectScale: this.currentObjectScaleSetting.toString(),
       gravity: this.gravityEnabled,
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
       angleunit: (this.currentAngleUnit - 10).toString(),
       // torqueunit: (this.currentTorqueUnit - 20).toString(),
       globalunit: (this.currentGlobalUnit - 30).toString(),
+      showMajorGrid: this.settingsService.isShowMajorGrid.value,
+      showMinorGrid: this.settingsService.isShowMinorGrid.value,
     });
 
     SettingsService.objectScale.subscribe((val) => {
-      this.currentWidthSetting = val;
+      this.currentObjectScaleSetting = val;
       this.settingsForm.patchValue(
-        { width: this.currentWidthSetting.toString() },
+        { objectScale: this.currentObjectScaleSetting.toString() },
         { emitEvent: false }
       );
+
+      //Werid place to put this but
+      this.mechanismSrv.links.forEach((link: Link) => {
+        (link as RealLink).reComputeDPath();
+      });
     });
 
     this.onChanges();
@@ -80,12 +87,12 @@ export class SettingsPanelComponent {
         this.settingsService.inputSpeed.next(this.currentSpeedSetting);
       }
     });
-    this.settingsForm.controls['width'].valueChanges.subscribe((val) => {
-      if (this.settingsForm.controls['width'].invalid) {
-        this.settingsForm.patchValue({ speed: this.currentWidthSetting.toString() });
+    this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
+      if (this.settingsForm.controls['objectScale'].invalid) {
+        this.settingsForm.patchValue({ speed: this.currentObjectScaleSetting.toString() });
       } else {
-        this.currentWidthSetting = Number(val);
-        SettingsService.objectScale.next(this.currentWidthSetting);
+        this.currentObjectScaleSetting = Number(val);
+        SettingsService.objectScale.next(this.currentObjectScaleSetting);
       }
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
@@ -111,6 +118,12 @@ export class SettingsPanelComponent {
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);
     });
+    this.settingsForm.controls['showMajorGrid'].valueChanges.subscribe((val) => {
+      this.settingsService.isShowMajorGrid.next(Boolean(val));
+    });
+    this.settingsForm.controls['showMinorGrid'].valueChanges.subscribe((val) => {
+      this.settingsService.isShowMinorGrid.next(Boolean(val));
+    });
     // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
     //   this.settingsService.inputTorque.next(this.currentTorqueUnit);
     // });
@@ -119,13 +132,13 @@ export class SettingsPanelComponent {
   getUnitStr(unit: LengthUnit): string {
     switch (unit) {
       case LengthUnit.CM:
-        return "cm";
+        return 'cm';
       case LengthUnit.INCH:
-        return "in";
+        return 'in';
       case LengthUnit.METER:
-        return "m";
+        return 'm';
       default:
-        return "cm";
+        return 'cm';
     }
   }
 
@@ -134,18 +147,24 @@ export class SettingsPanelComponent {
     {
       gravity: [false, { updateOn: 'change' }],
       speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      width: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],
       lengthunit: ['', { updateOn: 'change' }],
       angleunit: ['', { updateOn: 'change' }],
       torqueunit: ['', { updateOn: 'change' }],
       globalunit: ['', { updateOn: 'change' }],
+      showMinorGrid: [true, { updateOn: 'change' }],
+      showMajorGrid: [true, { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
 
   sendComingSoon(): void {
     NewGridComponent.sendNotification('This feature is coming soon!');
+  }
+
+  updateObjectScale() {
+    SettingsService.objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
   }
 }
 
