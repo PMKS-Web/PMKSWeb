@@ -48,7 +48,11 @@ export class MechanismService {
   //The which timestep the mechanims is in
   onMechPositionChange = new Subject<number>();
 
-  constructor(public gridUtils: GridUtilsService, public activeObjService: ActiveObjService, private settingsService: SettingsService) { }
+  constructor(
+    public gridUtils: GridUtilsService,
+    public activeObjService: ActiveObjService,
+    private settingsService: SettingsService
+  ) {}
 
   getJoints() {
     return this.joints;
@@ -322,11 +326,15 @@ export class MechanismService {
     // console.warn(this.activeObjService.Link);
     const linkIndex = this.links.findIndex((l) => l.id === this.activeObjService.selectedLink.id);
     this.links[linkIndex].joints.forEach((j) => {
+      //Remove the deleted link from the other joints of the delLink
       if (!(j instanceof RealJoint)) {
         return;
       }
       const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.selectedLink.id);
       j.links.splice(delLinkIndex, 1);
+      if (j.links.length === 0) {
+        this.joints.splice(this.gridUtils.findJointIDIndex(j.id, this.joints), 1);
+      }
     });
     for (let j_i = 0; j_i < this.links[linkIndex].joints.length - 1; j_i++) {
       for (let next_j_i = j_i + 1; next_j_i < this.links[linkIndex].joints.length; next_j_i++) {

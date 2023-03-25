@@ -247,6 +247,7 @@ export class NewGridComponent {
 
   setLastLeftClick(clickedObj: Joint | Link | String | Force) {
     this.lastLeftClick = clickedObj;
+    // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
     switch (clickedObj.constructor.name) {
       case 'Force':
@@ -482,6 +483,7 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
+        // console.warn('Mouse down: ');
         // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
@@ -616,7 +618,7 @@ export class NewGridComponent {
                   this.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y1')!
                 );
-                joint2 = this.activeObjService.prevSelectedJoint;
+                joint2 = this.activeObjService.selectedJoint;
                 // joint2 = this.createRevJoint(
                 //   this.jointTempHolderSVG.children[0].getAttribute('x2')!,
                 //   this.jointTempHolderSVG.children[0].getAttribute('y2')!,
