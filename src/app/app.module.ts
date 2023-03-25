@@ -41,6 +41,7 @@ import { ContextMenuComponent } from './component/context-menu/context-menu.comp
 import { TouchscreenWarningComponent } from './component/MODALS/touchscreen-warning/touchscreen-warning.component';
 import { EditableTitleComponent } from './component/BLOCKS/editable-title/editable-title.component';
 import { FocusOnShowDirective } from './focus-on-show.directive';
+import { EquationPanelComponent } from './component/equation-panel/equation-panel.component';
 
 @NgModule({
   declarations: [
@@ -74,6 +75,7 @@ import { FocusOnShowDirective } from './focus-on-show.directive';
     TouchscreenWarningComponent,
     EditableTitleComponent,
     FocusOnShowDirective,
+    EquationPanelComponent,
   ],
   imports: [
     BrowserModule,
