@@ -42,6 +42,9 @@ import { TouchscreenWarningComponent } from './component/MODALS/touchscreen-warn
 import { EditableTitleComponent } from './component/BLOCKS/editable-title/editable-title.component';
 import { FocusOnShowDirective } from './focus-on-show.directive';
 import { EquationPanelComponent } from './component/equation-panel/equation-panel.component';
+import { environment } from '../environments/environment';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 
 @NgModule({
   declarations: [
@@ -87,6 +90,8 @@ import { EquationPanelComponent } from './component/equation-panel/equation-pane
     ReactiveFormsModule,
     CdkMenuModule,
     HammerModule,
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideAnalytics(() => getAnalytics()),
   ],
   providers: [],
   bootstrap: [AppComponent],
