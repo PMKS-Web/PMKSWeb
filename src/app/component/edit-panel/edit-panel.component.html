@@ -72,7 +72,7 @@
     </toggle-block>
 
     <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->
-    <button-block icon='delete' [click]='deleteJoint'>Delete Joint</button-block>
+    <button-block icon='delete' [click]='deleteJoint.bind(this)'>Delete Joint</button-block>
     <!-- <p>Value: {{ jointForm.value | json }}</p>
     <p>Valid: {{ jointForm.valid }}</p>
     Test: {{ this.activeSrv.Joint.x }}; -->
@@ -101,7 +101,7 @@
     >Link Angle
     </input-block
     >
-    <button-block icon='delete' [click]='deleteLink'>Delete Link</button-block>
+    <button-block icon='delete' [click]='deleteLink.bind(this)'>Delete Link</button-block>
   </panel-section>
 
   <panel-section-collapsible
