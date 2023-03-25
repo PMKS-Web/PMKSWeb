@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, Inject, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RealJoint } from 'src/app/model/joint';
 import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { Analytics, logEvent } from '@angular/fire/analytics';
 
 @Component({
   selector: 'app-left-tabs',
@@ -39,6 +40,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
   ],
 })
 export class LeftTabsComponent {
+  private analytics: Analytics = inject(Analytics);
   openTab = 2; //Default open tab to "Edit" /
   isOpen = true; // Is the tab open?
 
@@ -51,6 +53,19 @@ export class LeftTabsComponent {
         this.isOpen = false;
       } else {
         this.openTab = tabID;
+      }
+    }
+    if (this.isOpen) {
+      switch (tabID) {
+        case 1:
+          logEvent(this.analytics, 'open_synthesis_tab');
+          break;
+        case 2:
+          logEvent(this.analytics, 'open_edit_tab');
+          break;
+        case 3:
+          logEvent(this.analytics, 'open_analysis_tab');
+          break;
       }
     }
     // console.warn(this.openTab);

@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  inject,
+  Inject,
+  Input,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
@@ -16,6 +25,7 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { Analytics, logEvent } from '@angular/fire/analytics';
 
 const parseCSV = require('papaparse');
 
@@ -25,6 +35,8 @@ const parseCSV = require('papaparse');
   styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
+  private analytics: Analytics = inject(Analytics);
+
   openRightPanelEquations() {
     RightPanelComponent.tabClicked(2);
   }
@@ -118,9 +130,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   popUpTemplates() {
     TemplatesPopupComponent.showTemplates();
+    logEvent(this.analytics, 'open_templates');
   }
 
   upload($event: any) {
+    logEvent(this.analytics, 'upload_file');
     const input = $event.target;
     if (input.files.length !== 1) {
       return;
@@ -415,6 +429,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   copyURL() {
+    logEvent(this.analytics, 'copyURL');
     // const content = this.generateExportURL(this.mechanismService.joints, this.mechanismService.links, this.mechanismService.forces, [],
     //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
     let content = '';
@@ -568,6 +583,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   downloadLinkage() {
+    logEvent(this.analytics, 'download_linkage');
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(
       this.mechanismService.joints,

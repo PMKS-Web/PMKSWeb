@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import {
@@ -18,6 +18,7 @@ import {
 import { ActiveObjService } from '../../services/active-obj.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link, RealLink } from '../../model/link';
+import { Analytics, logEvent } from '@angular/fire/analytics';
 
 @Component({
   selector: 'app-right-panel',
@@ -53,6 +54,8 @@ import { Link, RealLink } from '../../model/link';
   ],
 })
 export class RightPanelComponent {
+  private analytics: Analytics = inject(Analytics);
+
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
 
@@ -125,10 +128,12 @@ export class RightPanelComponent {
   }
 
   printMechanism() {
+    logEvent(this.analytics, 'debug_print_mechanism');
     console.log(this.mechanismService.mechanisms[0]);
   }
 
   printActiveObject() {
+    logEvent(this.analytics, 'debug_print_active_object');
     switch (this.activeObjService.objType) {
       case 'Joint':
         console.log(this.activeObjService.selectedJoint);

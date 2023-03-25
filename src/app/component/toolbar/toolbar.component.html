@@ -5,7 +5,7 @@
     src='assets/PMKS_logo.png'
     onClick='window.location.reload()'
   />
-  <button mat-button onclick="window.open(window.location.origin, '_blank');">
+  <button mat-button onclick="window.open(window.location.origin, '_blank'); logEvent(this.analytics, 'new_file');">
     <mat-icon>note_add</mat-icon>
     New
   </button>
