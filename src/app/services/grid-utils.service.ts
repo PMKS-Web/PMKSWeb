@@ -100,24 +100,24 @@ export class GridUtilsService {
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // TODO: have the round Number be integrated within function for determining trueCoord
-    selectedJoint.x = roundNumber(trueCoord.x, 3);
-    selectedJoint.y = roundNumber(trueCoord.y, 3);
+    selectedJoint.x = roundNumber(trueCoord.x, 6);
+    selectedJoint.y = roundNumber(trueCoord.y, 6);
     switch (selectedJoint.constructor) {
       case RevJoint:
         selectedJoint.links.forEach((l) => {
           if (l instanceof Piston) {
             //If the joint is a slider, then the joint is the second joint in the link must follow the first joint
             const jointIndex = l.joints.findIndex((jt) => jt.id !== selectedJoint.id);
-            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+            l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
+            l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
           }
           if (!(l instanceof RealLink)) {
             return;
           }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
-          l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-          l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+          l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
+          l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
           l.d = RealLink.getD(l.joints);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();

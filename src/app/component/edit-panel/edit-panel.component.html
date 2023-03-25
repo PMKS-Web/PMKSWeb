@@ -160,7 +160,7 @@
       [formGroup]='forceForm'
       _formControl='isGlobal'
       tooltip='The frame of reference for the force.'
-      option1='Local (Link {{this.activeSrv.selectedForce.link.id | uppercase}})'
+      option1='Local (Link {{customIDService.getVisualID(this.activeSrv.selectedForce.link.id)}})'
       option2='Global'
     >
       Force Base Frame
