@@ -199,29 +199,31 @@ export class NewGridComponent {
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
           );
-        } else if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+        } else {
           this.cMenuItems.push(
             new cMenuItem(
-              'Add Ground',
-              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'add_ground'
+              (this.lastRightClick as RealJoint).showCurve ? 'Hide Curve' : 'Show Curve',
+              () => {
+                this.gridUtils.toggleCurve(this.lastRightClick);
+              },
+              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
             )
           );
+          if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+            this.cMenuItems.push(
+              new cMenuItem(
+                'Add Ground',
+                this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
+                'add_ground'
+              )
+            );
+          }
         }
         this.cMenuItems.push(
           new cMenuItem(
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'Remove Slider' : 'Add Slider',
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Hide Curve ',
-            () => {
-              NewGridComponent.sendNotification('Feature Coming Soon');
-            },
-            'hide_path'
           )
         );
         this.cMenuItems.push(

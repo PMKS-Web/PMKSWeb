@@ -50,6 +50,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
       slider: [false, { updateOn: 'change' }],
+      curve: [false, { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
@@ -238,6 +239,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       this.mechanismService.onMechUpdateState.next(2);
     });
 
+    this.jointForm.controls['curve'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
+      this.gridUtils.toggleCurve(this.activeSrv.selectedJoint);
+    });
+
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
       const [success, value] = this.nup.parseLengthString(
         val!,
@@ -423,6 +431,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
             ground: this.activeSrv.selectedJoint.ground,
             input: this.activeSrv.selectedJoint.input,
             slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
+            curve: this.activeSrv.selectedJoint.showCurve,
           },
           { emitEvent: false }
         );

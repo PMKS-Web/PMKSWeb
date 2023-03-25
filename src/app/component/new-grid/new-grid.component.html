@@ -183,13 +183,14 @@
     </svg>
   </g>
   <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
-    <path
-      *ngFor='let joint of mechanismSrv.getJoints()'
+    <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
+    <path *ngIf='gridUtils.getJointShowCurve(joint)'
       [attr.d]='mechanismSrv.getJointPath(joint)'
       fill='none'
       [attr.stroke-width]='0.04 * settings.objectScale'
       style='transform: scaleY(-1); pointer-events: none'
     ></path>
+    </ng-container>
   </g>
   <g
     id='forcesHolder'

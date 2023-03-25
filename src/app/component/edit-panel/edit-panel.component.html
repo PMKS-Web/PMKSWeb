@@ -78,6 +78,19 @@
     Test: {{ this.activeSrv.Joint.x }}; -->
   </panel-section>
 
+  <panel-section-collapsible
+    *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()"
+    [expanded]='true'
+  >
+    <title-block alwaysShown icon='expand_more'>Visual Settings</title-block>
+    <toggle-block *ngIf='!this.activeSrv.selectedJoint.ground'
+                  [formGroup]='jointForm'
+                  _formControl='curve'
+                  tooltip='Show / hide the path the joint takes.'
+    >Curve
+    </toggle-block>
+  </panel-section-collapsible>
+
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <editable-title-block description='Changing the length or angle will change the non-grounded joint.'

@@ -35,6 +35,7 @@ export class RealJoint extends Joint {
   private _ground: boolean;
   private _links: Link[];
   private _connectedJoints: Joint[];
+  public showCurve: boolean;
 
   constructor(
     id: string,
@@ -50,6 +51,7 @@ export class RealJoint extends Joint {
     this._ground = ground;
     this._links = links;
     this._connectedJoints = connectedJoints;
+    this.showCurve = true;
   }
 
   //R is radius of the joint

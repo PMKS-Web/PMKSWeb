@@ -65,6 +65,13 @@ export class GridUtilsService {
     return joint.r;
   }
 
+  getJointShowCurve(joint: Joint) {
+    if (!(joint instanceof RevJoint) && !(joint instanceof PrisJoint)) {
+      return false;
+    }
+    return joint.showCurve;
+  }
+
   getInput(joint: Joint) {
     if (!(joint instanceof RevJoint || joint instanceof PrisJoint)) {
       return;
@@ -185,5 +192,18 @@ export class GridUtilsService {
       return;
     }
     return joint.connectedJoints.find((j) => j instanceof PrisJoint);
+  }
+
+  toggleCurve(lastRightClick: Joint | Link | Force | String) {
+    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+    if (this.containsSlider(lastRightClick as RealJoint)) {
+      (this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint).showCurve = !(
+        lastRightClick as RealJoint
+      ).showCurve;
+    }
+    if (lastRightClick instanceof RevJoint) {
+      lastRightClick.showCurve = !lastRightClick.showCurve;
+    }
+    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
   }
 }
