@@ -125,7 +125,7 @@ export class GridUtilsService {
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
-          l.d = RealLink.getD(l.joints);
+          l.d = RealLink.getD(l, l.subset);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();

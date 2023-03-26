@@ -101,7 +101,9 @@ export class UrlProcessorService {
             b3: Coord = b3;
             b4: Coord = b4;
           })();
-          newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+          // TODO: Do this after finished welded joints
+          newLink = new RealLink(id, joints);
+          // newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
           break;
         case 'P':
           newLink = new Piston(id, joints);

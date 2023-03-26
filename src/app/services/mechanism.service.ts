@@ -188,6 +188,27 @@ export class MechanismService {
     return new RevJoint(id, x_num, y_num);
   }
 
+  toggleWeldedJoint() {
+    // TODO: Possibly go over this with Kohmei to make sure this done consistently as others
+    const jointIndex = this.gridUtils.findJointIDIndex(
+        this.activeObjService.selectedJoint.id,
+        this.joints);
+    const joint = this.joints[jointIndex] as RealJoint;
+    const link = joint.links[0] as RealLink;
+    const linkIndex = this.links.findIndex(l => l.id === link.id);
+    link.subset.push(joint.links[1]);
+    joint.links[1].joints.forEach(j => {
+      if (j.id !== joint.id) {
+        this.links[linkIndex].joints.push(j);
+        this.links[linkIndex].id = this.links[linkIndex].id + j.id;
+      }
+    });
+    // TODO: For future person, add method to update the CoM
+    const linkIndexRemove = this.links.findIndex((l) => l.id === joint.links[1].id);
+    this.links.splice(linkIndexRemove, 1);
+    this.updateMechanism();
+  }
+
   deleteJoint() {
     const jointIndex = this.gridUtils.findJointIDIndex(
       this.activeObjService.selectedJoint.id,
@@ -271,7 +292,8 @@ export class MechanismService {
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
       this.activeObjService.selectedLink.d = RealLink.getD(
-        this.activeObjService.selectedLink.joints
+        this.activeObjService.selectedLink,
+          this.activeObjService.selectedLink.subset
       );
     }
     this.updateMechanism();

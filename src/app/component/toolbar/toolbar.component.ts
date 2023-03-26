@@ -287,26 +287,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
                   const CoM_x = stringToFloat(line[4]);
                   const CoM_y = stringToFloat(line[5]);
                   const CoM = new Coord(CoM_x, CoM_y);
-                  // const joints = this.getJointsByIds(line[5].split(','), jointArray);
 
-                  // const forces = this.getForcesByIds(line[6].split(','), forceArray);
-                  // const shape = this.stringToShape(line[7]);
-                  const shape = stringToShape(line[8]);
-                  const b1 = new Coord(stringToFloat(line[9]), stringToFloat(line[10]));
-                  const b2 = new Coord(stringToFloat(line[11]), stringToFloat(line[12]));
-                  const b3 = new Coord(stringToFloat(line[13]), stringToFloat(line[14]));
-                  const b4 = new Coord(stringToFloat(line[15]), stringToFloat(line[16]));
-                  const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
-                  const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
-                  const arrow = new Coord(arrow_x, arrow_y);
-                  const bound = new (class implements Bound {
-                    arrow: Coord = arrow;
-                    b1: Coord = b1;
-                    b2: Coord = b2;
-                    b3: Coord = b3;
-                    b4: Coord = b4;
-                  })();
-                  newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+                  // TODO: Adjust for this after finished welded joints
+                    newLink = new RealLink(id, joints);
+                  // newLink = new RealLink(id, joints, mass, mass_moi, CoM, subset);
                   break;
                 case 'P':
                   newLink = new Piston(id, joints, mass);
