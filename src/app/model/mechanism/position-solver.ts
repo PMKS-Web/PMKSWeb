@@ -380,7 +380,7 @@ export class PositionSolver {
     const y = sols[desiredIndex][1];
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
-  }
+    }
 
   private static determineDesiredIndexTwoCircleIntersection(
     tempJ1: Joint,
@@ -406,6 +406,8 @@ export class PositionSolver {
     );
     return intersection1Diff < intersection2Diff ? 0 : 1;
   }
+
+
 
   private static TwoCircleIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: Joint) {
     if (!this.jointMapPositions.has(j1.id)) {
