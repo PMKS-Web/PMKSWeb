@@ -7,12 +7,14 @@ export class Pose{
     private _angle: number;
     private _coord1: Coord;
     private _coord2: Coord;
+    private _midpoint: Coord;
 
-  constructor(length: number, angle: number, coord1: Coord, coord2: Coord) {
+  constructor(length: number, angle: number, coord1: Coord, coord2: Coord,midpoint: Coord) {
     this._length = length;
       this._angle = angle;
       this._coord1 = coord1;
       this._coord2 = coord2;
+      this._midpoint = midpoint;
   }
 
   get length(): number {
@@ -44,6 +46,14 @@ export class Pose{
 
     set coord2(value: Coord) {
         this._coord2 = value;
+    }
+
+    get midpoint(): Coord {
+        return this._midpoint;
+    }
+
+    set midpoint(value: Coord) {
+        this._midpoint = value;
     }
 
 }

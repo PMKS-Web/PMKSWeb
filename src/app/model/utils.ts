@@ -526,14 +526,36 @@ export function find_angle(B: Coord, A: Coord, C: Coord) {
 //added by Pradeep Mar 25th 2023
 //determine the end point of each pose 
 //we pass coord, length and angle of each pose to this function and store the end point under each pose 
-export function getSecondCoordofeachPose(pose1: Pose) {
-    pose1.coord2= findEndPointOfPose(pose1.coord1, pose1.length, pose1.angle);
+export function getCoordofeachPose(pose1: Pose) {
+
+    if (pose1.angle == 0) {
+
+        pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle));
+        pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle));
+
+        pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+        pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+    }
+
+    else if (pose1.angle > 0 && pose1.angle < 90) {
+
+        pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle + 180));
+        pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle + 180));
+
+        pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+        pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+    }
+    else if (pose1.angle < 0 && pose1.angle < -90) {
+        pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle+180));
+        pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle+180));
+
+        pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+        pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+    }
+
+
 }
-export function findEndPointOfPose(B: Coord, length: number, angle: number) {
-    var x_Coord = B.x + length * Math.cos(degToRad(angle));
-    var y_Coord = B.y + length * Math.sin(degToRad(angle));
-    return new Coord(x_Coord, y_Coord);
-}
+
 
 //added by Pradeep Mar 25th 2023
 //obtain end points of lines. This will help draw the construction lines
