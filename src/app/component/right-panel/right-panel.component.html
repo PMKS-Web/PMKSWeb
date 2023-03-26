@@ -1,6 +1,6 @@
 <div>
   <div
-    [@openClose]="getIsOpen() ? (getOpenTab() === 1 ? 'open' : 'openWide') : 'closed'"
+    [@openClose]="getIsOpen() ? (getOpenTab() === 1 || getOpenTab() == 3 ? 'open' : 'openWide') : 'closed'"
     id='rightPanel'
   >
     <div *ngIf='getOpenTab() === 1' class='page1'>
@@ -10,6 +10,42 @@
       <app-equation-panel></app-equation-panel>
     </div>
     <div *ngIf='getOpenTab() === 3' class='page3'>
+      <div id='helpWrapper'>
+        <panel-section>
+          <title-block>Help</title-block>
+          <button-block icon='help_center' [click]='gotoHelpSite'>Tutorial Videos</button-block>
+          <button-block icon='info' [click]='sendNotReady'>Restart Tutorial</button-block>
+        </panel-section>
+        <panel-section>
+          <title-block description='Found a bug? Have a suggestion?'>Send Feedback
+          </title-block>
+          <form [formGroup]='commentForm'>
+            <mat-form-field class='max-width'>
+              <mat-label>Leave a message</mat-label>
+              <textarea type='text' matInput formControlName='comment'></textarea>
+              <mat-error *ngIf="commentForm.controls['comment'].hasError('required')">
+                Message is required
+              </mat-error>
+            </mat-form-field>
+            <mat-checkbox color='primary' formControlName='response'>I would like a response</mat-checkbox>
+            <mat-form-field *ngIf='commentForm.value.response' class='max-width'>
+              <mat-label>Email</mat-label>
+              <input type='email' matInput formControlName='email' [errorStateMatcher]='matcher'
+                     placeholder='Ex. pat@example.com'>
+              <mat-error
+                *ngIf="commentForm.controls['email'].hasError('email') && !commentForm.controls['email'].hasError('required')">
+                Invalid email address
+              </mat-error>
+            </mat-form-field>
+            <mat-checkbox color='primary' checked formControlName='diagnostics'>Send browser and application data for
+              debugging
+            </mat-checkbox>
+            <button-block icon='send' [click]='sendCommentEmail.bind(this)'>Send Message</button-block>
+          </form>
+        </panel-section>
+      </div>
+    </div>
+    <div *ngIf='getOpenTab() === 4' class='page4'>
       <div id='debugWrapper'>
         <panel-section>
           <button-block icon='terminal' [click]='printActiveObject.bind(this)'>Console Log Active Object</button-block>

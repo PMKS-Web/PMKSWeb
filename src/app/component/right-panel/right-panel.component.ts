@@ -19,6 +19,10 @@ import { ActiveObjService } from '../../services/active-obj.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link, RealLink } from '../../model/link';
 import { Analytics, logEvent } from '@angular/fire/analytics';
+import { FormBuilder, FormControl, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular/material/core';
+import { environment } from '../../../environments/environment';
+import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
 
 @Component({
   selector: 'app-right-panel',
@@ -56,12 +60,22 @@ import { Analytics, logEvent } from '@angular/fire/analytics';
 export class RightPanelComponent {
   private analytics: Analytics = inject(Analytics);
 
+  commentForm = this.fb.group({
+    comment: ['', Validators.required],
+    email: ['', Validators.email],
+    response: [false],
+    diagnostics: [true],
+  });
+
+  matcher = new MyErrorStateMatcher();
+
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
 
   constructor(
     public activeObjService: ActiveObjService,
-    public mechanismService: MechanismService
+    public mechanismService: MechanismService,
+    private fb: FormBuilder
   ) {}
 
   static tabClicked(tabID: number) {
@@ -147,5 +161,107 @@ export class RightPanelComponent {
       default:
         console.log('No active object');
     }
+  }
+
+  gotoHelpSite() {
+    //Open a new tab to this site: https://pmks.mech.website/pmks-web-how-to-videos/
+    window.open('https://pmks.mech.website/pmks-web-how-to-videos/', '_blank');
+    logEvent(this.analytics, 'goto_help_site');
+  }
+
+  sendNotReady() {
+    NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
+    logEvent(this.analytics, 'tutorial_not_ready');
+  }
+
+  getBrowserName() {
+    const agent = window.navigator.userAgent.toLowerCase();
+    switch (true) {
+      case agent.indexOf('edge') > -1:
+        return 'Edge';
+      case agent.indexOf('opr') > -1 && !!(<any>window).opr:
+        return 'Opera';
+      case agent.indexOf('chrome') > -1 && !!(<any>window).chrome:
+        return 'Chrome';
+      case agent.indexOf('trident') > -1:
+        return 'Internet Explorer';
+      case agent.indexOf('firefox') > -1:
+        return 'Firefox';
+      case agent.indexOf('safari') > -1:
+        return 'Safari';
+      default:
+        return 'Other';
+    }
+  }
+
+  detectBrowserVersion() {
+    var userAgent = navigator.userAgent,
+      tem,
+      matchTest =
+        userAgent.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+
+    if (/trident/i.test(matchTest[1])) {
+      tem = /\brv[ :]+(\d+)/g.exec(userAgent) || [];
+      return 'IE ' + (tem[1] || '');
+    }
+    if (matchTest[1] === 'Chrome') {
+      tem = userAgent.match(/\b(OPR|Edge)\/(\d+)/);
+      if (tem != null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
+    }
+    matchTest = matchTest[2]
+      ? [matchTest[1], matchTest[2]]
+      : [navigator.appName, navigator.appVersion, '-?'];
+    if ((tem = userAgent.match(/version\/(\d+)/i)) != null) matchTest.splice(1, 1, tem[1]);
+    return matchTest.join(' ');
+  }
+
+  sendCommentEmail() {
+    if (this.commentForm.invalid) {
+      NewGridComponent.sendNotification('Please fill out the form correctly.');
+      return;
+    } else {
+      emailjs.init(environment.emailJSKey);
+
+      let browserInfo = '';
+      if (this.commentForm.value.diagnostics) {
+        browserInfo += 'Browser: ';
+        browserInfo += this.getBrowserName();
+        browserInfo += '\n Browser Version: ';
+        browserInfo += this.detectBrowserVersion();
+      } else {
+        browserInfo = 'User did not allow diagnostics';
+      }
+
+      const params = {
+        to_email: 'gr-pmksplus@wpi.edu',
+        message: this.commentForm.value.comment
+          ? this.commentForm.value.comment
+          : 'User did not leave a comment',
+        email: this.commentForm.value.email
+          ? this.commentForm.value.email
+          : 'User did not leave an email and does not want a response',
+        diagnostic: browserInfo,
+      };
+
+      emailjs
+        .send('service_pg2k647', 'template_kfwdx5c', params)
+        .then(() => {
+          NewGridComponent.sendNotification('Message sent. Thank you for your feedback!');
+          this.commentForm.reset();
+        })
+        .catch((error: any) => {
+          NewGridComponent.sendNotification(
+            'Message failed to send. Please try again later or contact us directly at: gr-pmksplus@wpi.edu'
+          );
+        });
+    }
+  }
+}
+
+/** Error when invalid control is dirty, touched, or submitted. */
+export class MyErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const isSubmitted = form && form.submitted;
+    return !!(control && control.invalid && (control.dirty || control.touched || isSubmitted));
   }
 }

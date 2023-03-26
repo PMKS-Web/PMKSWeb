@@ -46,6 +46,10 @@
     }
 
     .page3 {
+      width: 300px;
+    }
+
+    .page4 {
       width: 500px;
     }
   }
@@ -55,5 +59,16 @@
     flex-direction: column;
     gap: 10px;
     padding: 10px;
+  }
+
+  #helpWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .max-width {
+    width: 100%;
   }
 }

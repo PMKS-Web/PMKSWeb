@@ -49,6 +49,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     RightPanelComponent.tabClicked(1);
   }
 
+  openRightPanelDebug() {
+    RightPanelComponent.tabClicked(4);
+  }
+
   animate: boolean = false;
 
   static inputAngularVelocity: number = 10;
