@@ -117,6 +117,10 @@ export class SvgGridService {
 
   screenToSVG(screenPos: Coord): Coord {
     const CTM: SVGMatrix = this.CTM;
+    // TODO: Temporary solution. Maybe okay to have...
+    if (this.CTM === undefined) {
+      return new Coord(0, 0);
+    }
     const inverseCTM = CTM.inverse();
     const svgPos = screenPos.applyMatrix(inverseCTM);
     svgPos.y = svgPos.y * -1;

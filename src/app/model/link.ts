@@ -14,7 +14,7 @@ import {
   getPosition,
   getXDistance,
   getYDistance,
-  insertStringWithinString,
+  insertStringWithinString, isLeft,
   line_intersect,
   pullStringWithinString,
   radToDeg,
@@ -235,12 +235,10 @@ export class RealLink extends Link {
           if (dir === 'neg') {
             return [
               new Coord(
-                  width * Math.cos(angle + Math.PI) + c1.x,
-                  width * Math.sin(angle + Math.PI) + c1.y
+                  width * Math.cos(angle + Math.PI) + c1.x, width * Math.sin(angle + Math.PI) + c1.y
               ),
               new Coord(
-                  width * Math.cos(angle + Math.PI) + c2.x,
-                  width * Math.sin(angle + Math.PI) + c2.y
+                  width * Math.cos(angle + Math.PI) + c2.x, width * Math.sin(angle + Math.PI) + c2.y
               ),
             ];
           } else {
@@ -408,216 +406,6 @@ export class RealLink extends Link {
     linkSubsets.forEach((l, indexNum) => {
       subsetToLinkIndexMap.set(l.id, indexNum);
       d_list.push(determineD(l));
-      // const allJoints = l.joints;
-      // subsetToLinkIndexMap.set(l.id, indexNum);
-      // let cur_d = '';
-      // // determine path of link (https://stackoverflow.com/questions/21778506/finding-largest-subset-of-points-forming-a-convex-polygon)
-      // // 1st option: have set axis and extract members from this axis
-      // // 2nd option: Create link with the biggest area
-      // function determineMatch(desiredJointID: string, row: Joint[]) {
-      //   if (desiredJointID === row[0].id) {
-      //     return row[0];
-      //   } else if (desiredJointID === row[1].id) {
-      //     return row[1];
-      //   } else {
-      //     return '';
-      //   }
-      // }
-      //
-      // function findDesiredJointIDOrder(joint: Joint, allJoints: Joint[], firstRow: RealJoint[], desiredJointsIDs: string) {
-      //   let secondRow: Joint[];
-      //   if (desiredJointsIDs.indexOf(firstRow[0].id) === -1) {
-      //     secondRow = findBiggestAngle(firstRow[0] as RealJoint, allJoints as RealJoint[]);
-      //   } else {
-      //     secondRow = findBiggestAngle(firstRow[1] as RealJoint, allJoints as RealJoint[]);
-      //   }
-      //
-      //   const desiredJoint = determineMatch(joint.id, secondRow);
-      //   if (desiredJoint !== '') { // should this be desiredJoint or desiredJointIDs
-      //     desiredJointsIDs += desiredJoint.id;
-      //     // check to see if there is an id that has not been explored
-      //     if (desiredJointsIDs.indexOf(firstRow[0].id) === -1) {
-      //       desiredJointsIDs = findDesiredJointIDOrder(firstRow[0], allJoints, secondRow as RealJoint[], desiredJointsIDs);
-      //     } else if (desiredJointsIDs.indexOf(firstRow[1].id) === -1) {
-      //       desiredJointsIDs = findDesiredJointIDOrder(firstRow[1], allJoints, secondRow as RealJoint[], desiredJointsIDs);
-      //     }
-      //   } else { // TODO: Think about if this is necessary...
-      //     desiredJointsIDs = findDesiredJointIDOrder(secondRow[0], allJoints, secondRow as RealJoint[], desiredJointsIDs)
-      //   }
-      //   return desiredJointsIDs;
-      // }
-      //
-      // const desiredJointsIDs = allJoints.length === 2 ? allJoints[0].id + allJoints[1].id :
-      //     findDesiredJointIDOrder(allJoints[0] as RealJoint, allJoints as RealJoint[],
-      //         findBiggestAngle(allJoints[0] as RealJoint, allJoints as RealJoint[]) as RealJoint[], '');
-      //
-      // // Draw link given the desiredJointIDs
-      // function determineL(d: string, coord1: Joint, coord2: Joint, coord3?: Joint) {
-      //   // find slope between two points
-      //   const m = determineSlope(coord1.x, coord1.y, coord2.x, coord2.y);
-      //   // find normal slope of given slope
-      //   let normal_m: number;
-      //   if (m === 0) {
-      //     normal_m = 99999;
-      //   } else {
-      //     normal_m = -1 / m;
-      //   }
-      //
-      //   const normal_angle = Math.atan(normal_m); // in degrees
-      //   // determine the point further away from third point
-      //   let point1: Coord;
-      //   let point2: Coord;
-      //
-      //   // TODO: think of better way to create this more universally
-      //   function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
-      //     // Maybe it is atan2 that is desired...
-      //     if (dir === 'neg') {
-      //       // const b1 = c1.y - Math.tan(angle) * c1.x;
-      //       // const b2 = c1.y - Math.tan(angle) * c1.x;
-      //       return [new Coord(0.2 * Math.cos(angle + Math.PI) + c1.x, 0.2 * Math.sin(angle + Math.PI) + c1.y),
-      //         new Coord(0.2 * Math.cos(angle + Math.PI) + c2.x, 0.2 * Math.sin(angle + Math.PI) + c2.y)];
-      //     } else {
-      //       return [new Coord(0.2 * Math.cos(angle) + c1.x, 0.2 * Math.sin(angle) + c1.y),
-      //         new Coord(0.2 * Math.cos(angle) + c2.x, 0.2 * Math.sin(angle) + c2.y)];
-      //     }
-      //     // const b1 = determineYIntersect(c1.x, c1.y, Math.atan(angle));
-      //     // const b2 = determineYIntersect(c2.x, c2.y, Math.atan(angle));
-      //     // return [new Coord(0.2 * Math.acos(angle) + c1,0.2 * Math.asin(angle) + b1),
-      //     //         new Coord(0.2 * Math.acos(angle) + b2, 0.2 * Math.asin(angle) + b2)]
-      //   }
-      //
-      //   if (coord3 === undefined) {
-      //     if (d === '') {
-      //       [point1, point2] = determinePoint(normal_angle, coord1, coord2, 'neg');
-      //     } else {
-      //       [point1, point2] = determinePoint(normal_angle, coord1, coord2, 'pos');
-      //     }
-      //   } else {
-      //     const [point1a, point1b] = determinePoint(normal_angle, coord1, coord2, 'pos');
-      //     const point1c = new Coord((point1a.x + point1b.x) / 2, (point1a.y + point1b.y) / 2);
-      //     const [point2a, point2b] = determinePoint(normal_angle, coord1, coord2, 'neg');
-      //     const point2c = new Coord((point2a.x + point2b.x) / 2, (point2a.y + point2b.y) / 2);
-      //     [point1, point2] = getDistance(coord3, point1c) > getDistance(coord3, point2c) ? [point1a, point1b] : [point2a, point2b];
-      //     // if (getDistance(new Coord(coord3.y * 0.2 * Math.cos(normal_angle),coord3.y * 0.2 * Math.sin(normal_angle)),
-      //     //         new Coord(coord1.x + coord2.x, coord1.y + coord2.y)) >
-      //     //     getDistance(new Coord(coord3.y * 0.2 * Math.cos(normal_angle + (Math.PI / 2)),coord3.y * 0.2 * Math.sin(normal_angle + (Math.PI / 2))),
-      //     //         new Coord(coord1.x + coord2.x, coord1.y + coord2.y)))
-      //     // {
-      //     //   [point1, point2] = determinePoint(normal_angle, coord1, coord2, 'pos');
-      //     //   // TODO: Check this logic later...
-      //     //   // point1 = new Coord(coord1.y * 0.2 * Math.cos(normal_angle),coord1.y * Math.sin(normal_angle));
-      //     //   // point2 = new Coord(coord2.y * 0.2 * Math.cos(normal_angle),coord2.y * Math.sin(normal_angle));
-      //     // } else {
-      //     //   [point1, point2] = determinePoint(normal_angle + (Math.PI / 2), coord1, coord2, 'pos');
-      //     //   // point1 = new Coord(coord1.y * 0.2 * Math.cos(normal_angle + (Math.PI / 2)),coord1.y * 0.2 * Math.sin(normal_angle + (Math.PI / 2)));
-      //     //   // point2 = new Coord(coord2.y * 0.2 * Math.cos(normal_angle + (Math.PI / 2)),coord2.y * 0.2 * Math.sin(normal_angle + (Math.PI / 2)));
-      //     // }
-      //   }
-      //   if (d === '') {
-      //     d += 'M ' + point1.x.toString() + ' ' + point1.y.toString();
-      //     d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
-      //   } else {
-      //     // The end position is being inserted here
-      //     d += ' C ' + point1.x.toString() + ' ' + point1.y.toString();
-      //     d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
-      //   }
-      //   return d;
-      // }
-      //
-      // function determineC(d: string, index: number, desiredJoint: Joint, point1?: Coord, point2?: Coord): [string, Coord, Coord] {
-      //   let point3: Coord;
-      //   let point4: Coord;
-      //
-      //   function getDesiredString(d: string, index: number, firstPoint: boolean) {
-      //     let point1StartingIndex: number;
-      //     let point1EndingIndex: number;
-      //     let point1String: string[];
-      //     let coord1: Coord;
-      //
-      //     let point2StartingIndex: number;
-      //     let point2EndingIndex: number;
-      //     let point2String: string[];
-      //     let coord2: Coord;
-      //
-      //     if (index === 0 && firstPoint) {
-      //       point1StartingIndex = getPosition(d, 'M', index + 1) + 2;
-      //       point1EndingIndex = getPosition(d, 'L', index + 1);
-      //       point2StartingIndex = getPosition(d, 'L', index + 1) + 2;
-      //       point2EndingIndex = getPosition(d, 'C', index + 1);
-      //     } else {
-      //       point1StartingIndex = getPosition(d, 'C', index + 1) + 2;
-      //       point1EndingIndex = getPosition(d, 'L', index + 2);
-      //       if (point1EndingIndex < d.length) {
-      //         point2StartingIndex = getPosition(d, 'L', index + 2) + 2;
-      //         point2EndingIndex = getPosition(d, 'C', index + 2);
-      //       } else { // need to get first L
-      //         point2StartingIndex = getPosition(d, 'L', 1) + 2;
-      //         point2EndingIndex = getPosition(d, 'C', 1);
-      //       }
-      //     }
-      //     point1String = pullStringWithinString(d, point1StartingIndex, point1EndingIndex).split(' ', 2);
-      //     point2String = pullStringWithinString(d, point2StartingIndex, point2EndingIndex).split(' ', 2);
-      //     coord1 = new Coord(parseFloat(point1String[0]), parseFloat(point1String[1]));
-      //     coord2 = new Coord(parseFloat(point2String[0]), parseFloat(point2String[1]));
-      //     return [coord1, coord2];
-      //   }
-      //
-      //   if (point1 === undefined || point2 === undefined) {
-      //     [point1, point2] = getDesiredString(d, index, true);
-      //   }
-      //
-      //   [point3, point4] = getDesiredString(d, index, false);
-      //
-      //   const angle1 = Math.atan2(point2.y - point1.y, point2.x - point1.x);
-      //   const angle2 = Math.atan2(point4.y - point3.y, point4.x - point3.x);
-      //
-      //   const [x_intersect, y_intersect] = line_intersect(point1.x, point1.y, point2.x, point2.y, point3.x, point3.y, point4.x, point4.y);
-      //   let fillet_radius: number;
-      //   fillet_radius = getDistance(desiredJoint, new Coord(x_intersect, y_intersect)) / 3;
-      //   if (fillet_radius > 0.3) {
-      //     fillet_radius = 0.3;
-      //   }
-      //
-      //   const bez_point1 = new Coord(fillet_radius * Math.cos(angle1) + point2.x, fillet_radius * Math.sin(angle1) + point2.y);
-      //   const bez_point2 = new Coord(fillet_radius * -Math.cos(angle2) + point3.x, fillet_radius * -Math.sin(angle2) + point3.y);
-      //   // find point within d that contains the desired C and insert
-      //   const desiredIndex = getPosition(d, 'C', index + 1) + 2;
-      //   d = insertStringWithinString(d, desiredIndex, bez_point1.x.toString() + ' ' + bez_point1.y.toString() + ' ' +
-      //       bez_point2.x.toString() + ' ' + bez_point2.y.toString() + ' ',);
-      //   return [d, point3, point4];
-      // }
-      //
-      // const jointIDtoIndex = new Map<string, number>();
-      // allJoints.forEach((j, ind) => {
-      //   jointIDtoIndex.set(j.id, ind);
-      // });
-      // for (let i = 0; i < desiredJointsIDs.length; i++) {
-      //   const j = (i + 1) % desiredJointsIDs.length;
-      //   if (desiredJointsIDs.length === 2) {
-      //     cur_d = determineL(cur_d, allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-      //         allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]);
-      //   } else {
-      //     const k = (i + 2) % desiredJointsIDs.length;
-      //     cur_d = determineL(cur_d, allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-      //         allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!], allJoints[jointIDtoIndex.get(desiredJointsIDs[k])!]);
-      //   }
-      // }
-      // // get point in M and insert as last C
-      // const firstPointIndex = 2;
-      // const lastPointIndex = getPosition(cur_d, 'L', 1);
-      // cur_d += ' C ' + cur_d.slice(firstPointIndex, lastPointIndex);
-      // let point1: Coord;
-      // let point2: Coord;
-      // for (let i = 0; i < desiredJointsIDs.length; i++) {
-      //   const desiredJointID = desiredJointsIDs[(i + 1) % desiredJointsIDs.length];
-      //   const desiredJoint = allJoints.find(j => j.id === desiredJointID);
-      //   if (i === 0) {
-      //     [cur_d, point1, point2] = determineC(cur_d, i, desiredJoint!);
-      //   } else {
-      //     [cur_d, point1, point2] = determineC(cur_d, i, desiredJoint!, point1!, point2!);
-      //   }
-      // }
-      // d_list.push(cur_d);
     });
     let count = 0;
 
@@ -653,7 +441,7 @@ export class RealLink extends Link {
         const indexToIndexMap = new Map<number, number>();
         let numLines = 0;
         for (let i = 0; i < currentPath.length; i++) {
-          if (currentPath[i][0] === 'M' || currentPath[i][0] === 'L' || currentPath[i][0] === 'C') {
+          if (currentPath[i][0] === 'M' || currentPath[i][0] === 'L' || currentPath[i][0] === 'A') {
             indexToLetterMap.set(numLines, currentPath[i][0]);
             indexToIndexMap.set(numLines, i);
             numLines = numLines + 1;
@@ -676,6 +464,7 @@ export class RealLink extends Link {
         end: Coord;
       }
 
+      // TODO: Delete this if using arcs instead of bezier curves
       function bezierCurvePoint(t: number, p0: Coord, p1: Coord, p2: Coord, p3: Coord): Coord {
         const x = (1 - t) ** 3 * p0.x + 3 * (1 - t) ** 2 * t * p1.x + 3 * (1 - t) * t ** 2 * p2.x + t ** 3 * p3.x;
         const y = (1 - t) ** 3 * p0.y + 3 * (1 - t) ** 2 * t * p1.y + 3 * (1 - t) * t ** 2 * p2.y + t ** 3 * p3.y;
@@ -719,6 +508,7 @@ export class RealLink extends Link {
         return [x1, x2, x3];
       }
 
+      // TODO: Maybe use the logic within utils after testing...
       function lineCurveIntersection(line: Line, curve: BezierCurve): [boolean, Coord] {
         const p0 = line.start;
         const p1 = line.end;
@@ -761,6 +551,7 @@ export class RealLink extends Link {
         // return results;
       }
 
+      // TODO: Maybe use the logic within utils after testing...
       function lineLineIntersection(line1: Line, line2: Line): [boolean, Coord] {
         const x1 = line1.start.x, y1 = line1.start.y;
         const x2 = line1.end.x, y2 = line1.end.y;
@@ -818,21 +609,25 @@ export class RealLink extends Link {
                   };
                   [condition, intersect1] = lineLineIntersection(line1, storedPath as Line);
                   break;
-                case 'C':
+                case 'A':
                   storedPath = {
                     start: new Coord(Number(currentPath[numIndex - 2]), Number(currentPath[numIndex - 1])),
                     control1: new Coord(Number(currentPath[numIndex + 1]), Number(currentPath[numIndex + 2])),
                     control2: new Coord(Number(currentPath[numIndex + 3]), Number(currentPath[numIndex + 4])),
-                    end: new Coord(Number(currentPath[numIndex + 5]), Number(currentPath[numIndex + 6]))
+                    end: new Coord(Number(currentPath[numIndex + 6]), Number(currentPath[numIndex + 7]))
                   };
-                  [condition, intersect1] = lineCurveIntersection(line1, storedPath as BezierCurve);
+                  // TODO: Get different logic determining intersection for arcs
+                    [condition, intersect1] = [false, new Coord(0.0, 0.0)];
+                  // [condition, intersect1] = lineCurveIntersection(line1, storedPath as BezierCurve);
                   break;
                 default:
                   storedPath = {
                     start: new Coord(0, 0),
                     end: new Coord(0, 0)
                   };
-                  [condition, intersect1] = [false, new Coord(0,0), new Coord(0,0)];
+                  // TODO: Think just continue, not an arc or line...?
+                  [condition, intersect1] = [false, new Coord(0.0, 0.0)];
+                  // [condition, intersect1] = [false, new Coord(0,0), new Coord(0,0)];
               }
               if (condition && !isNaN(intersect1.x)) {
                 // @ts-ignore
@@ -857,18 +652,21 @@ export class RealLink extends Link {
             // TODO: Check to see path1, path2 return correct value
             [condition, intersect1, intersect2, path1, path2] = determineLinePathIntersection(cur_path as Line, d);
             break;
-          case 'C':
+          case 'A':
+            // TODO: Ummm..??
             cur_path = {
               start: new Coord(Number(currentPath[numIndex - 2]), Number(currentPath[numIndex - 1])),
               control1: new Coord(Number(currentPath[numIndex + 1]), Number(currentPath[numIndex + 2])),
               control2: new Coord(Number(currentPath[numIndex + 3]), Number(currentPath[numIndex + 4])),
-              end: new Coord(Number(currentPath[numIndex + 5]), Number(currentPath[numIndex + 6]))
+              end: new Coord(Number(currentPath[numIndex + 6]), Number(currentPath[numIndex + 7]))
             };
             cNum = cNum + 1;
+            // TODO: Add logic here once line line intersection works properly
           function determineCurvePathIntersection(curve: BezierCurve, d: string): [boolean, Coord, Coord] {
             return [false, new Coord(0, 0), new Coord(0, 0)];
           }
-            [condition, intersect1, intersect2] = determineCurvePathIntersection(cur_path as BezierCurve, d);
+            [condition, intersect1, intersect2] = [false, new Coord(0, 0), new Coord(0, 0)];
+            // [condition, intersect1, intersect2] = determineCurvePathIntersection(cur_path as BezierCurve, d);
             break;
           default:
             continue;
@@ -877,132 +675,201 @@ export class RealLink extends Link {
           continue;
         }
         // Integrate shape into d
-        // const startIndex = d.indexOf(letter);
-        const num = letter === 'C' ? cNum : lNum;
-        const startIndex = d.split(letter, num).join(letter).length;
-        // TODO: Determine logic for slicing d_list
-        // First, determine path to follow
-        const m = determineSlope(cur_path.start.x, cur_path.start.y, cur_path.end.x, cur_path.end.y);
-        // find normal slope of given slope
-        let normal_m: number;
-        if (m === 0) {
-          normal_m = 99999;
-        } else {
-          normal_m = -1 / m;
-        }
 
-        const normal_angle = Math.atan(normal_m); // in degrees
-        // determine the point further away from third point
-        let point1: Coord;
-        let point2: Coord;
-        let path: string;
-
-        // TODO: this function already created.. make sure to put this function within utils
-        function determinePointFunction(angle: number, c1: Coord, c2: Coord, dir: string) {
-          if (dir === 'neg') {
-            return [new Coord(0.2 * Math.cos(angle + Math.PI) + c1.x, 0.2 * Math.sin(angle + Math.PI) + c1.y),
-              new Coord(0.2 * Math.cos(angle + Math.PI) + c2.x, 0.2 * Math.sin(angle + Math.PI) + c2.y)];
-          } else {
-            return [new Coord(0.2 * Math.cos(angle) + c1.x, 0.2 * Math.sin(angle) + c1.y),
-              new Coord(0.2 * Math.cos(angle) + c2.x, 0.2 * Math.sin(angle) + c2.y)];
-          }
-        }
         // @ts-ignore
         if (path1 === undefined || path2 === undefined) {
           continue;
         }
-        const [point1a, point1b] = determinePointFunction(normal_angle, path1.start, path1.end, 'pos');
-        const point1c = new Coord((point1a.x + point1b.x) / 2, (point1a.y + point1b.y) / 2);
-        const [point2a, point2b] = determinePointFunction(normal_angle, path1.start, path1.end, 'neg');
-        const point2c = new Coord((point2a.x + point2b.x) / 2, (point2a.y + point2b.y) / 2);
-        let coord3: Coord;
-        let count = 0;
-        // TODO: Debug this logic and fix bugs that occur
-        // @ts-ignore
-        while (coord3 === undefined) {
-          const letter = indexToLetterMap.get(count);
-          const numIndex = indexToIndexMap.get(count)!;
-          count = count + 1;
-          let point: Coord;
-          switch (letter) {
-            case 'M':
-              point = new Coord(Number(currentPath[numIndex + 1]), Number(currentPath[numIndex + 2]));
-              break;
-            case 'L':
-              point = new Coord(Number(currentPath[numIndex - 2]), Number(currentPath[numIndex - 1]));
-              break;
-            case 'C':
-              point = new Coord(Number(currentPath[numIndex + 5]), Number(currentPath[numIndex + 6]));
-              break;
-            default:
-              point = new Coord(-99999, -99999);
-              break;
-          }
-          if ((Math.abs(point.x - cur_path.start.x) < 0.01 && Math.abs(point.y - cur_path.start.y) < 0.01) || (Math.abs(point.x - cur_path.end.x) < 0.01 && Math.abs(point.y - cur_path.end.y) < 0.01)) {
-            // if ((point.x === cur_path.start.x && point.y === cur_path.start.y) || (point.x === cur_path.end.x && point.y === cur_path.end.y)) {
-            // if ((point.x === path1.start.x && point.y === path1.start.y) || (point.x === path1.end.x && point.y === path1.end.y)) {
-            continue;
-          }
-          coord3 = point;
-        }
-        // [point1, point2, path] = getDistance(coord3, point1c) > getDistance(coord3, point2c) ? [point1a, point1b, 'forward'] : [point2a, point2b, 'backward'];
-        // don't care point1 and point2. Just care which direction path is traveling
-        [point1, point2, path] = getDistance(coord3, point1c) > getDistance(coord3, point2c) ? [point1a, point1b, 'forward'] : [point2a, point2b, 'backward'];
-        // Second, start at intersection. Continue down the path until reaching the second intersection
         let entirePath = '';
-        if (path === 'forward') {
+        if (isLeft(cur_path.start, cur_path.end, path2.start)) {
+          // d and d_list not going along the same direction...
+          // Have to adjust direction of d_list along with making sure d_outer part is considered, not the inner part
           const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
           let insertedPath = '';
+          let let2Index: number;
           if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
-            const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
-            insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
-                intersect1.x.toString() + ' ' + intersect1.y.toString();
+            let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
+            // TODO: Be sure to not put intersect1 but points equidistant from it
+            // insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
+            //     intersect2.x.toString() + ' ' + intersect2.y.toString();
           } else {
-            const let2Index = d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length;
-            insertedPath = d_list.slice(let1Index, let2Index) + intersect1.x.toString() + ' ' + intersect1.y.toString();
+            // TODO: Be sure to not put intersect1 but points equidistant from it
+            let2Index = d_list.split(cur_path.start.y.toString(), 2).join(cur_path.start.y.toString()).length + cur_path.start.y.toString().length;
+            // insertedPath = d_list.slice(let1Index, let2Index) + ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString();
           }
+          // TODO: created inserted path that creates d_list backwards instead of forwards
+          const endIndex = let2Index;
+          const startIndex = let1Index;
+          // while (endIndex < startIndex) {
+          //
+          // }
+          // TODO: Instead of adding intersect2, determine point that is r away from intersection and have that point instead
           entirePath = 'M ' + path1.start.x.toString() + ' ' + path1.start.y.toString() +
-              ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString() + ' L ' + insertedPath;
+              ' L ' + intersect1.x.toString() + ' ' + intersect1.y.toString() + ' L ' + insertedPath;
           const secondIndex = d.split(path2.end.x.toString(), 1).join(path2.end.x.toString()).length;
           let thirdIndex: number;
-          if (d.split(path1.start.x.toString(), 2).join(path1.start.x.toString()).length === d.length) {
-            thirdIndex = d.split(path1.start.y.toString(), 1).join(path1.start.y.toString()).length + path1.start.y.toString().length;
+          if (d.split(path1.end.x.toString(), 2).join(path1.end.x.toString()).length === d.length) {
+            thirdIndex = d.split(path1.end.y.toString(), 1).join(path1.end.y.toString()).length + path1.end.y.toString().length;
+            // TODO: Check this condition. Not sure how to throw this case
             entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
           } else {
-            thirdIndex = d.split(path1.start.y.toString(), 2).join(path1.start.y.toString()).length + path1.start.y.toString().length;
-            entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
-          }
-          d = entirePath;
-        } else {
-          // copy and paste when finished with forward
-          const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
-          let insertedPath = '';
-          if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
-            const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
-            insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
-                intersect1.x.toString() + ' ' + intersect1.y.toString();
-          } else {
-            const let2Index = d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length;
-            insertedPath = d_list.slice(let1Index, let2Index) + intersect1.x.toString() + ' ' + intersect1.y.toString();
-          }
-          // Start point and end point of d_list is the same point
-          //   const let2Index = d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length;
-          //   insertedPath = d_list.slice(let1Index, let2Index) + intersect1.x.toString() + ' ' + intersect1.y.toString();
-
-
-          entirePath = 'M ' + path1.start.x.toString() + ' ' + path1.start.y.toString() +
-              ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString() + ' L ' + insertedPath;
-          const secondIndex = d.split(path2.end.x.toString(), 1).join(path2.end.x.toString()).length;
-          let thirdIndex: number;
-          if (d.split(path1.start.x.toString(), 2).join(path1.start.x.toString()).length === d.length) {
-            thirdIndex = d.split(path1.start.y.toString(), 1).join(path1.start.y.toString()).length + path1.start.y.toString().length;
+            // TODO: Check this too
+            thirdIndex = d.split(path1.end.y.toString(), 2).join(path1.end.y.toString()).length + path1.end.y.toString().length;
             entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
-          } else {
-            thirdIndex = d.split(path1.start.y.toString(), 2).join(path1.start.y.toString()).length + path1.start.y.toString().length;
-            entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
           }
-          d = entirePath;
         }
+        else {
+          // Works, don't touch
+          const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
+          let insertedPath = '';
+          if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
+            const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
+            // TODO: Be sure to not put intersect1 but points equidistant from it
+            insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
+                intersect2.x.toString() + ' ' + intersect2.y.toString();
+          } else {
+            // TODO: Be sure to not put intersect1 but points equidistant from it
+            const let2Index = d_list.split(cur_path.start.y.toString(), 2).join(cur_path.start.y.toString()).length + cur_path.start.y.toString().length;
+            insertedPath = d_list.slice(let1Index, let2Index) + ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString();
+          }
+          // TODO: Instead of adding intersect2, determine point that is r away from intersection and have that point instead
+          entirePath = 'M ' + path2.start.x.toString() + ' ' + path2.start.y.toString() +
+              ' L ' + intersect1.x.toString() + ' ' + intersect1.y.toString() + ' L ' + insertedPath;
+          const secondIndex = d.split(path1.end.x.toString(), 1).join(path1.end.x.toString()).length;
+          let thirdIndex: number;
+          if (d.split(path2.start.x.toString(), 2).join(path2.start.x.toString()).length === d.length) {
+            thirdIndex = d.split(path2.start.y.toString(), 1).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+            // TODO: Check this condition. Not sure how to throw this case
+            entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+          } else {
+            // TODO: Check this too
+            thirdIndex = d.split(path2.start.y.toString(), 2).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+            entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+          }
+        }
+        d = entirePath;
+
+        // const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
+        // let insertedPath = '';
+        // if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
+        //   const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
+        //   // TODO: Be sure to not put intersect1 but points equidistant from it
+        //   insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
+        //       intersect2.x.toString() + ' ' + intersect2.y.toString();
+        // } else {
+        //   // TODO: Be sure to not put intersect1 but points equidistant from it
+        //   const let2Index = d_list.split(cur_path.start.y.toString(), 2).join(cur_path.start.y.toString()).length + cur_path.start.y.toString().length;
+        //   insertedPath = d_list.slice(let1Index, let2Index) + ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString();
+        // }
+        // // TODO: Instead of adding intersect2, determine point that is r away from intersection and have that point instead
+        // const startOrEnd = isLeft(cur_path.start, cur_path.end, path2.start) ? 'End' : 'Start';
+        // entirePath = startOrEnd === 'End' ?
+        //     'M ' + path2.end.x.toString() + ' ' + path2.end.y.toString() :
+        //     'M ' + path2.start.x.toString() + ' ' + path2.start.y.toString();
+        // entirePath += ' L ' + intersect1.x.toString() + ' ' + intersect1.y.toString() + ' L ' + insertedPath;
+        //
+        // const secondIndex = startOrEnd === 'End' ?
+        //     d.split(path1.start.x.toString(), 1).join(path1.start.x.toString()).length :
+        //     d.split(path1.end.x.toString(), 1).join(path1.end.x.toString()).length;
+        // let thirdIndex: number;
+        // if (startOrEnd === 'End') {
+        //   if (d.split(path2.end.x.toString(), 2).join(path2.end.x.toString()).length === d.length) {
+        //     thirdIndex = d.split(path2.end.y.toString(), 1).join(path2.end.y.toString()).length + path2.end.y.toString().length;
+        //     // TODO: Check this.... Should be other logic...
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //   } else {
+        //     // TODO: Check this too
+        //     thirdIndex = d.split(path2.start.y.toString(), 2).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //     // entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
+        //   }
+        // } else {
+        //   if (d.split(path2.end.x.toString(), 2).join(path2.end.x.toString()).length === d.length) {
+        //     thirdIndex = d.split(path2.end.y.toString(), 1).join(path2.end.y.toString()).length + path2.end.y.toString().length;
+        //     // TODO: Check this.... Should be other logic...
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //   } else {
+        //     // TODO: Check this too
+        //     thirdIndex = d.split(path2.end.y.toString(), 2).join(path2.end.y.toString()).length + path2.end.y.toString().length;
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //     // entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
+        //   }
+        // }
+        // d = entirePath;
+
+
+        // if (d.split(path2.start.x.toString(), 2).join(path2.start.x.toString()).length === d.length) {
+        //   thirdIndex = d.split(path2.start.y.toString(), 1).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+        //   // TODO: Check this.... Should be other logic...
+        //   entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        // } else {
+        //   // TODO: Check this too
+        //   thirdIndex = d.split(path2.start.y.toString(), 2).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+        //   entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //   // entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
+        // }
+
+        // DELETE AFTERWARD
+
+        // if (path === 'forward') {
+        //   // // TODO: After this logic works properly, see if there is a way to merge this...
+        //   // const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
+        //   // let insertedPath = '';
+        //   // if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
+        //   //   const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
+        //   //   // TODO: Be sure to not put intersect1 but points equidistant from it
+        //   //   insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
+        //   //       intersect1.x.toString() + ' ' + intersect1.y.toString();
+        //   // } else {
+        //   //   // TODO: Be sure to not put intersect1 but points equidistant from it
+        //   //   const let2Index = d_list.split(cur_path.start.y.toString(), 2).join(cur_path.start.y.toString()).length + cur_path.start.y.toString().length;
+        //   //   insertedPath = d_list.slice(let1Index, let2Index) + ' L ' + intersect1.x.toString() + ' ' + intersect1.y.toString();
+        //   // }
+        //   // // TODO: Instead of adding intersect2, determine point that is r away from intersection and have that point instead
+        //   // entirePath = 'M ' + path1.start.x.toString() + ' ' + path1.start.y.toString() +
+        //   //     ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString() + ' L ' + insertedPath;
+        //   // const secondIndex = d.split(path2.end.x.toString(), 1).join(path2.end.x.toString()).length;
+        //   // let thirdIndex: number;
+        //   // if (d.split(path1.start.x.toString(), 2).join(path1.start.x.toString()).length === d.length) {
+        //   //   thirdIndex = d.split(path1.start.y.toString(), 1).join(path1.start.y.toString()).length + path1.start.y.toString().length;
+        //   //   entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //   // } else {
+        //   //   thirdIndex = d.split(path1.start.y.toString(), 2).join(path1.start.y.toString()).length + path1.start.y.toString().length;
+        //   //   entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
+        //   // }
+        //   // d = entirePath;
+        // }
+        // else {
+        //   // TODO: After this logic works properly, see if there is a way to merge this...
+        //   const let1Index = d_list.split(cur_path.end.x.toString(), 1).join(cur_path.end.x.toString()).length;
+        //   let insertedPath = '';
+        //   if (d_list.split(cur_path.start.x.toString(), 2).join(cur_path.start.x.toString()).length === d_list.length) {
+        //     const let2Index = d_list.split(cur_path.start.x.toString(), 1).join(cur_path.start.x.toString()).length;
+        //     // TODO: Be sure to not put intersect1 but points equidistant from it
+        //     insertedPath = d_list.slice(let1Index, d_list.length) + ' L ' + d_list.slice(1, let2Index) +
+        //         intersect2.x.toString() + ' ' + intersect2.y.toString();
+        //   } else {
+        //     // TODO: Be sure to not put intersect1 but points equidistant from it
+        //     const let2Index = d_list.split(cur_path.start.y.toString(), 2).join(cur_path.start.y.toString()).length + cur_path.start.y.toString().length;
+        //     insertedPath = d_list.slice(let1Index, let2Index) + ' L ' + intersect2.x.toString() + ' ' + intersect2.y.toString();
+        //   }
+        //   // TODO: Instead of adding intersect2, determine point that is r away from intersection and have that point instead
+        //   entirePath = 'M ' + path2.start.x.toString() + ' ' + path2.start.y.toString() +
+        //       ' L ' + intersect1.x.toString() + ' ' + intersect1.y.toString() + ' L ' + insertedPath;
+        //   const secondIndex = d.split(path1.end.x.toString(), 1).join(path1.end.x.toString()).length;
+        //   let thirdIndex: number;
+        //   if (d.split(path2.start.x.toString(), 2).join(path2.start.x.toString()).length === d.length) {
+        //     thirdIndex = d.split(path2.start.y.toString(), 1).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+        //     // TODO: Check this.... Should be other logic...
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //   } else {
+        //     // TODO: Check this too
+        //     thirdIndex = d.split(path2.start.y.toString(), 2).join(path2.start.y.toString()).length + path2.start.y.toString().length;
+        //     entirePath += ' L ' + d.slice(secondIndex, thirdIndex);
+        //     // entirePath += ' L ' + d.slice(secondIndex, d.length) + ' L ' + d.slice(1, thirdIndex);
+        //   }
+        //   d = entirePath;
+        // }
         return d;
       }
       return d;
@@ -1010,7 +877,6 @@ export class RealLink extends Link {
     for (let i = 0; i < subsetToLinkIndexMap.size; i++) {
       const desiredLinkID = countToDesiredLinkOrderMap.get(i);
       const subsetIndex = subsetToLinkIndexMap.get(linkSubsets.find(l => l.id === desiredLinkID)!.id)!
-      // TODO: Check to be sure this is correct
       d = updateD(d, d_list[subsetIndex]);
     }
     return d;
