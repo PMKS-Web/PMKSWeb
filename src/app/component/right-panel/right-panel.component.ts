@@ -220,7 +220,16 @@ export class RightPanelComponent {
       NewGridComponent.sendNotification('Please fill out the form correctly.');
       return;
     } else {
-      emailjs.init(environment.emailJSKey);
+      const apiKey = process.env['EMAIL_JS_KEY'];
+      console.error(apiKey);
+
+      if (!apiKey) {
+        NewGridComponent.sendNotification(
+          'EmailJS API Key Error. Please try again later or contact us directly at: gr-pmksplus@wpi.edu'
+        );
+        return;
+      }
+      emailjs.init(apiKey);
 
       let browserInfo = '';
       if (this.commentForm.value.diagnostics) {
