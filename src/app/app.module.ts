@@ -46,6 +46,18 @@ import { environment } from '../environments/environment';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 
+const key: string = process.env['FIREBASE_KEY']!;
+
+let firebaseCredentials = {
+  apiKey: key,
+  authDomain: 'pmksplus.firebaseapp.com',
+  projectId: 'pmksplus',
+  storageBucket: 'pmksplus.appspot.com',
+  messagingSenderId: '41120076810',
+  appId: '1:41120076810:web:b2e0d4542c1f4d35e37bf3',
+  measurementId: 'G-XQ0PBWVW9H',
+};
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -90,7 +102,7 @@ import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
     ReactiveFormsModule,
     CdkMenuModule,
     HammerModule,
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirebaseApp(() => initializeApp(firebaseCredentials)),
     provideAnalytics(() => getAnalytics()),
   ],
   providers: [],
