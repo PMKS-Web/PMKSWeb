@@ -21,6 +21,7 @@ import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
+import { Coord } from '../model/coord';
 
 @Injectable({
   providedIn: 'root',
@@ -85,6 +86,7 @@ export class MechanismService {
         inputAngularVelocity
       )
     );
+    this.activeObjService.fakeUpdateSelectedObj();
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -191,22 +193,153 @@ export class MechanismService {
   toggleWeldedJoint() {
     // TODO: Possibly go over this with Kohmei to make sure this done consistently as others
     const jointIndex = this.gridUtils.findJointIDIndex(
-        this.activeObjService.selectedJoint.id,
-        this.joints);
+      this.activeObjService.selectedJoint.id,
+      this.joints
+    );
     const joint = this.joints[jointIndex] as RealJoint;
-    const link = joint.links[0] as RealLink;
-    const linkIndex = this.links.findIndex(l => l.id === link.id);
-    link.subset.push(joint.links[1]);
-    joint.links[1].joints.forEach(j => {
-      if (j.id !== joint.id) {
-        this.links[linkIndex].joints.push(j);
-        this.links[linkIndex].id = this.links[linkIndex].id + j.id;
+
+    if (!joint.isWelded) {
+      console.warn(this.links);
+      const link1 = joint.links[0] as RealLink;
+      console.log('link1: ' + link1.id);
+      console.log('link1 subset: ' + link1.subset);
+      const linkIndex1 = this.links.findIndex((l) => l.id === link1.id);
+      const link2 = joint.links[1] as RealLink;
+      const linkIndex2 = this.links.findIndex((l) => l.id === link2.id);
+      console.log('link2: ' + link2.id);
+      console.log('link2 subset: ', link2.subset);
+
+      const newLink = this.createNewCompoundLink(link1, link2, joint);
+
+      // TODO: For future person, add method to update the CoM
+      // This implicitly removes link1
+      this.links[linkIndex1] = newLink;
+      this.links.splice(linkIndex2, 1);
+
+      //Update the joints of the new link with the right links
+      newLink.joints.forEach((j: Joint | RealJoint) => {
+        if (!(j instanceof RealJoint)) return;
+        //Remove any links that are subsets of the new link
+        j.links = j.links.filter((l: Link) => l.id !== link1.id && l.id !== link2.id);
+        //Add the new link to the joints
+        j.links.push(newLink);
+      });
+
+      // console.error(this.links);
+      // console.error((this.links[linkIndex1] as RealLink).subset);
+    } else if (joint.isWelded) {
+      const mainLink = joint.links[0] as RealLink;
+      //Get the list of all subsets of the main link
+      const subset = mainLink.subset;
+      //Split the subsets into two groups by the joint
+      const [subset1, subset2] = this.splitSubset(subset, joint);
+      console.log('subset1: ', subset1);
+      console.log('subset2: ', subset2);
+      //If the subset has one link, this is the new link
+      if (subset1.length == 1) {
+        this.links.splice(this.links.indexOf(mainLink), 0, subset1[0]);
+        subset1[0].joints.forEach((j) => {
+          if (j instanceof RealJoint) {
+            j.links = j.links.filter((l) => l.id !== mainLink.id);
+            j.links.push(subset1[0]);
+          }
+        });
+        //If the subset has more than one link, create a new compound link
+      } else if (subset1.length > 1) {
+        const newCompoundLink = this.createNewCompoundLinkFromSubset(subset1);
+        this.links.splice(this.links.indexOf(mainLink), 0, newCompoundLink);
+        newCompoundLink.joints.forEach((j) => {
+          if (j instanceof RealJoint) {
+            j.links = j.links.filter((l) => l.id !== mainLink.id);
+            j.links.push(newCompoundLink);
+          }
+        });
+        //If the subset is empty, something went wrong
+      } else {
+        console.error('Subset1 is empty');
+      }
+      if (subset2.length == 1) {
+        this.links.splice(this.links.indexOf(mainLink), 0, subset2[0]);
+        subset2[0].joints.forEach((j) => {
+          if (j instanceof RealJoint) {
+            j.links = j.links.filter((l) => l.id !== mainLink.id);
+            j.links.push(subset2[0]);
+          }
+        });
+      } else if (subset2.length > 1) {
+        const newCompoundLink = this.createNewCompoundLinkFromSubset(subset2);
+        this.links.splice(this.links.indexOf(mainLink), 0, newCompoundLink);
+        newCompoundLink.joints.forEach((j) => {
+          if (j instanceof RealJoint) {
+            j.links = j.links.filter((l) => l.id !== mainLink.id);
+            j.links.push(newCompoundLink);
+          }
+        });
+      } else {
+        console.error('Subset2 is empty');
+      }
+      //Remove the main link from the list
+      this.links.splice(this.links.indexOf(mainLink), 1);
+    }
+    joint.isWelded = !joint.isWelded;
+    this.updateMechanism();
+  }
+
+  private createNewCompoundLink(
+    link1: RealLink,
+    link2: RealLink,
+    jointToWeld: RealJoint
+  ): RealLink {
+    const newLinkJoints: Joint[] = [];
+    //Copy all joints in link1 to newLink
+    link1.joints.forEach((j) => {
+      newLinkJoints.push(j);
+    });
+    const newLinkSubset: Link[] = [];
+    const newLink = new RealLink(
+      link1.id,
+      newLinkJoints,
+      link1.mass,
+      link1.massMoI,
+      link1.CoM,
+      newLinkSubset
+    );
+
+    console.log('newLink Subset:', newLink.subset);
+    console.log('link1 subset length: ' + link1.subset.length);
+    link1.subset.length > 0
+      ? (newLink.subset = newLink.subset.concat(link1.subset))
+      : newLink.subset.push(link1);
+    console.log('new subset: ', newLink.subset);
+    console.log('link2 subset length: ' + link2.subset.length);
+    link2.subset.length > 0
+      ? (newLink.subset = newLink.subset.concat(link2.subset))
+      : newLink.subset.push(link2);
+    console.log('new subset: ', newLink.subset);
+    link2.joints.forEach((j) => {
+      if (j.id !== jointToWeld.id) {
+        newLink.joints.push(j);
+        newLink.id = newLink.id + j.id;
       }
     });
-    // TODO: For future person, add method to update the CoM
-    const linkIndexRemove = this.links.findIndex((l) => l.id === joint.links[1].id);
-    this.links.splice(linkIndexRemove, 1);
-    this.updateMechanism();
+    console.log('new joints: ', newLink.joints);
+    console.log('new id: ', newLink.id);
+    return newLink;
+  }
+
+  private createNewCompoundLinkFromSubset(subset: Link[]): RealLink {
+    let newLinkJoints: Joint[] = [];
+    subset.forEach((l) => {
+      l.joints.forEach((j) => {
+        newLinkJoints.push(j);
+      });
+    });
+    //Filter out duplicate joints
+    newLinkJoints = newLinkJoints.filter((v, i, a) => a.indexOf(v) === i);
+    //Find the new id for the new link by concatenating all the joint ids
+    let id = newLinkJoints.reduce((a, b) => a + b.id, '');
+    const newLink = new RealLink(id, newLinkJoints, 0, 0, new Coord(0, 0), subset);
+    return newLink;
   }
 
   deleteJoint() {
@@ -291,13 +424,27 @@ export class MechanismService {
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
-      this.activeObjService.selectedLink.d = RealLink.getD(
-        this.activeObjService.selectedLink,
-          this.activeObjService.selectedLink.subset
+      this.activeObjService.selectedLink.d = RealLink.getPathString(
+        this.activeObjService.selectedLink
       );
     }
     this.updateMechanism();
     this.onMechUpdateState.next(3);
+  }
+
+  splitSubset(subset: Link[], joint: RealJoint): [Link[], Link[]] {
+    //There are multiple links in the subset, so we need to split the subset into two subsets
+    //joint will have two links connected to it and each subset will have one of those links along with all the links connected to it
+    //First find the two links connected to the joint
+    const link1 = subset.find((l) => l.joints.includes(joint)) as RealLink;
+    const link2 = subset.find((l) => l.joints.includes(joint) && l.id !== link1!.id) as RealLink;
+    // //Now, recursively find all the links connected to link1 and link2
+    // const subset1 = this.findConnectedLinks(link1, []);
+    // const subset2 = this.findConnectedLinks(link2, []);
+    //Split the subset into two subsets, at the index of link1
+    const subset1 = subset.slice(0, subset.indexOf(link1) + 1);
+    const subset2 = subset.slice(subset.indexOf(link1) + 1);
+    return [subset1, subset2];
   }
 
   deleteForce() {
@@ -569,6 +716,10 @@ export class MechanismService {
   }
 
   getJointCSSClass(joint: Joint) {
+    const j = joint as RealJoint;
+    if (j.isWelded) {
+      return 'joint-welded';
+    }
     if (
       NewGridComponent.debugGetJointState() == jointStates.dragging &&
       joint.id === this.activeObjService.selectedJoint.id
@@ -597,5 +748,19 @@ export class MechanismService {
       return 'link-selected';
     }
     return 'link-default';
+  }
+
+  private findConnectedLinks(link: RealLink, subsetBuilder: any[]) {
+    link.joints.forEach((j) => {
+      if (j instanceof RealJoint) {
+        j.links.forEach((l) => {
+          if (l instanceof RealLink && l.id !== link.id) {
+            subsetBuilder.push(l);
+            this.findConnectedLinks(l, subsetBuilder);
+          }
+        });
+      }
+    });
+    return subsetBuilder;
   }
 }

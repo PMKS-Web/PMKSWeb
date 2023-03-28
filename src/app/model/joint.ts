@@ -36,6 +36,7 @@ export class RealJoint extends Joint {
   private _links: Link[];
   private _connectedJoints: Joint[];
   public showCurve: boolean;
+  public isWelded: boolean = false;
 
   constructor(
     id: string,

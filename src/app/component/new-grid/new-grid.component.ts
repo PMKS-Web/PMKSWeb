@@ -228,12 +228,9 @@ export class NewGridComponent {
         );
         this.cMenuItems.push(
           new cMenuItem(
-            'Welded Joint',
-              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-            // () => {
-            //   NewGridComponent.sendNotification('Feature Coming Soon');
-            // },
-            'weld_joint'
+            (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+            this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
           )
         );
 
@@ -295,7 +292,9 @@ export class NewGridComponent {
     newJoint.links.push(this.activeObjService.selectedLink);
     this.activeObjService.selectedLink.joints.push(newJoint);
     this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = RealLink.getD(this.activeObjService.selectedLink, this.activeObjService.selectedLink.subset);
+    this.activeObjService.selectedLink.d = RealLink.getPathString(
+      this.activeObjService.selectedLink
+    );
     this.mechanismSrv.joints.push(newJoint);
     this.mechanismSrv.updateMechanism();
   }
@@ -578,9 +577,8 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.id.concat(joint1.id);
                 this.mechanismSrv.mergeToJoints([joint1, joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.activeObjService.selectedLink.d = RealLink.getD(
-                  this.activeObjService.selectedLink,
-                    this.activeObjService.selectedLink.subset
+                this.activeObjService.selectedLink.d = RealLink.getPathString(
+                  this.activeObjService.selectedLink
                 );
                 this.mechanismSrv.updateMechanism();
                 this.gridStates = gridStates.waiting;

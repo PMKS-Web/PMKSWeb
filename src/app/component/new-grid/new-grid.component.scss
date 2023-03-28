@@ -68,6 +68,11 @@
     fill: #f44336;
   }
 
+  .joint-welded {
+    filter: url(#elevation-1);
+    fill: #36f44f;
+  }
+
   .link-selected {
     stroke: #f44336;
   }

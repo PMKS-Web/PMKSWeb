@@ -74,7 +74,7 @@ export class LinkageTableComponent implements OnInit {
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
           // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          l.d = RealLink.getD(l, l.subset);
+          l.d = RealLink.getPathString(l);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -94,7 +94,7 @@ export class LinkageTableComponent implements OnInit {
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.d = RealLink.getD(l, l.subset);
+          l.d = RealLink.getPathString(l);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });

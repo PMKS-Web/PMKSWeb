@@ -262,7 +262,7 @@ export class Mechanism {
               // });
               const pushLink = new RealLink(l.id, connectedJoints);
               // TODO: Prob wanna put the realLink.getD within constructor of RealLink
-              pushLink.d = RealLink.getD(pushLink, pushLink.subset);
+              pushLink.d = RealLink.getPathString(pushLink);
               // pushLink.d = RealLink.getD(l.joints);
               // TODO: When you insert a joint onto a link, be sure to utilize this function call
               pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);
