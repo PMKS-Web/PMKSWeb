@@ -35,7 +35,8 @@ const parseCSV = require('papaparse');
   styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
-  private analytics: Analytics = inject(Analytics);
+  // private analytics: Analytics = inject(Analytics);
+  private analytics = null;
 
   openRightPanelEquations() {
     RightPanelComponent.tabClicked(2);
@@ -134,11 +135,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   popUpTemplates() {
     TemplatesPopupComponent.showTemplates();
-    logEvent(this.analytics, 'open_templates');
+    // logEvent(this.analytics, 'open_templates');
   }
 
   upload($event: any) {
-    logEvent(this.analytics, 'upload_file');
+    // logEvent(this.analytics, 'upload_file');
     const input = $event.target;
     if (input.files.length !== 1) {
       return;
@@ -289,7 +290,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
                   const CoM = new Coord(CoM_x, CoM_y);
 
                   // TODO: Adjust for this after finished welded joints
-                    newLink = new RealLink(id, joints);
+                  newLink = new RealLink(id, joints);
                   // newLink = new RealLink(id, joints, mass, mass_moi, CoM, subset);
                   break;
                 case 'P':
@@ -417,7 +418,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   copyURL() {
-    logEvent(this.analytics, 'copyURL');
+    // logEvent(this.analytics, 'copyURL');
     // const content = this.generateExportURL(this.mechanismService.joints, this.mechanismService.links, this.mechanismService.forces, [],
     //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
     let content = '';
@@ -571,7 +572,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   downloadLinkage() {
-    logEvent(this.analytics, 'download_linkage');
+    // logEvent(this.analytics, 'download_linkage');
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(
       this.mechanismService.joints,

@@ -58,7 +58,8 @@ import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
   ],
 })
 export class RightPanelComponent {
-  private analytics: Analytics = inject(Analytics);
+  // private analytics: Analytics = inject(Analytics);
+  private analytics = null;
 
   commentForm = this.fb.group({
     comment: ['', Validators.required],
@@ -142,12 +143,12 @@ export class RightPanelComponent {
   }
 
   printMechanism() {
-    logEvent(this.analytics, 'debug_print_mechanism');
+    // logEvent(this.analytics, 'debug_print_mechanism');
     console.log(this.mechanismService.mechanisms[0]);
   }
 
   printActiveObject() {
-    logEvent(this.analytics, 'debug_print_active_object');
+    // logEvent(this.analytics, 'debug_print_active_object');
     switch (this.activeObjService.objType) {
       case 'Joint':
         console.log(this.activeObjService.selectedJoint);
@@ -166,12 +167,12 @@ export class RightPanelComponent {
   gotoHelpSite() {
     //Open a new tab to this site: https://pmks.mech.website/pmks-web-how-to-videos/
     window.open('https://pmks.mech.website/pmks-web-how-to-videos/', '_blank');
-    logEvent(this.analytics, 'goto_help_site');
+    // logEvent(this.analytics, 'goto_help_site');
   }
 
   sendNotReady() {
     NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
-    logEvent(this.analytics, 'tutorial_not_ready');
+    // logEvent(this.analytics, 'tutorial_not_ready');
   }
 
   getBrowserName() {
@@ -215,12 +216,19 @@ export class RightPanelComponent {
     return matchTest.join(' ');
   }
 
-  sendCommentEmail() {
+  async sendCommentEmail() {
     if (this.commentForm.invalid) {
       NewGridComponent.sendNotification('Please fill out the form correctly.');
+      // const response = await fetch('/.netlify/functions/getEnvVars').then((response) =>
+      //   response.json()
+      // );
+      // console.log(response);
+      // @ts-ignore
+      const topSecretRecipe = process.env.EMAIL_JS_KEY;
+      console.log(topSecretRecipe);
       return;
     } else {
-      emailjs.init(environment.emailJSKey);
+      // emailjs.init(environment.emailJSKey);
 
       let browserInfo = '';
       if (this.commentForm.value.diagnostics) {

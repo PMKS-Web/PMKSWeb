@@ -90,7 +90,9 @@ import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
     ReactiveFormsModule,
     CdkMenuModule,
     HammerModule,
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirebaseApp(() => {
+      return initializeApp(environment.firebase);
+    }),
     provideAnalytics(() => getAnalytics()),
   ],
   providers: [],
