@@ -58,8 +58,7 @@ import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
   ],
 })
 export class RightPanelComponent {
-  // private analytics: Analytics = inject(Analytics);
-  private analytics = null;
+  private analytics: Analytics = inject(Analytics);
 
   commentForm = this.fb.group({
     comment: ['', Validators.required],
@@ -143,12 +142,12 @@ export class RightPanelComponent {
   }
 
   printMechanism() {
-    // logEvent(this.analytics, 'debug_print_mechanism');
+    logEvent(this.analytics, 'debug_print_mechanism');
     console.log(this.mechanismService.mechanisms[0]);
   }
 
   printActiveObject() {
-    // logEvent(this.analytics, 'debug_print_active_object');
+    logEvent(this.analytics, 'debug_print_active_object');
     switch (this.activeObjService.objType) {
       case 'Joint':
         console.log(this.activeObjService.selectedJoint);
@@ -167,12 +166,12 @@ export class RightPanelComponent {
   gotoHelpSite() {
     //Open a new tab to this site: https://pmks.mech.website/pmks-web-how-to-videos/
     window.open('https://pmks.mech.website/pmks-web-how-to-videos/', '_blank');
-    // logEvent(this.analytics, 'goto_help_site');
+    logEvent(this.analytics, 'goto_help_site');
   }
 
   sendNotReady() {
     NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
-    // logEvent(this.analytics, 'tutorial_not_ready');
+    logEvent(this.analytics, 'tutorial_not_ready');
   }
 
   getBrowserName() {
@@ -223,15 +222,18 @@ export class RightPanelComponent {
     } else {
       let emailJSKey = '';
       try {
-        emailJSKey = await fetch('/.netlify/functions/getEmailJSKey').then((response) =>
+        const res = await fetch('/.netlify//functions/getEmailJSKey').then((response) =>
           response.json()
         );
+        emailJSKey = res.apiKey;
       } catch (err) {
+        console.log(err);
         NewGridComponent.sendNotification(
           'It looks like you are in a development environment. If this is not the case, please try again later or contact us directly at: gr-pmksplus@wpi.edu'
         );
+        return;
       }
-      // emailjs.init(environment.emailJSKey);
+      emailjs.init(emailJSKey);
 
       let browserInfo = '';
       if (this.commentForm.value.diagnostics) {
@@ -261,6 +263,7 @@ export class RightPanelComponent {
           this.commentForm.reset();
         })
         .catch((error: any) => {
+          console.log(error);
           NewGridComponent.sendNotification(
             'Message failed to send. Please try again later or contact us directly at: gr-pmksplus@wpi.edu'
           );

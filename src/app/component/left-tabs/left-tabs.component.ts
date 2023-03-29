@@ -58,13 +58,13 @@ export class LeftTabsComponent {
     if (this.isOpen) {
       switch (tabID) {
         case 1:
-          // logEvent(this.analytics, 'open_synthesis_tab');
+          logEvent(this.analytics, 'open_synthesis_tab');
           break;
         case 2:
-          // logEvent(this.analytics, 'open_edit_tab');
+          logEvent(this.analytics, 'open_edit_tab');
           break;
         case 3:
-          // logEvent(this.analytics, 'open_analysis_tab');
+          logEvent(this.analytics, 'open_analysis_tab');
           break;
       }
     }
