@@ -5,13 +5,13 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: 'AIzaSyCsxZBueBaFOqbaFKM8O3kpm4S48UvawAk',
-    authDomain: 'pmksplus.firebaseapp.com',
-    projectId: 'pmksplus',
-    storageBucket: 'pmksplus.appspot.com',
-    messagingSenderId: '41120076810',
-    appId: '1:41120076810:web:b2e0d4542c1f4d35e37bf3',
-    measurementId: 'G-XQ0PBWVW9H',
+    apiKey: 'AIzaSyAXFfav2hbsikfFeUpVCH5dDfhJbAtNpds',
+    authDomain: 'pmksplus-dev.firebaseapp.com',
+    projectId: 'pmksplus-dev',
+    storageBucket: 'pmksplus-dev.appspot.com',
+    messagingSenderId: '544614835896',
+    appId: '1:544614835896:web:e4ce898265bbcdca43b64d',
+    measurementId: 'G-SQWWVNMK8Q',
   },
 };
 
