@@ -424,9 +424,7 @@ export class MechanismService {
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
-      this.activeObjService.selectedLink.d = RealLink.getPathString(
-        this.activeObjService.selectedLink
-      );
+      this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     }
     this.updateMechanism();
     this.onMechUpdateState.next(3);

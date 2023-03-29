@@ -1,5 +1,7 @@
 // A class to represent an X and Y coordinate
 
+import { RealLink } from './link';
+
 export class Coord {
   private _x: number;
   private _y: number;

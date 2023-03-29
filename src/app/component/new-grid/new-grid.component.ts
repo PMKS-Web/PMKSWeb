@@ -93,6 +93,13 @@ export class NewGridComponent {
       });
   }
 
+  static isInsideLink(simpleLink: Link, coord: Coord): boolean {
+    //Use the SVG.isPointInFill() method to check if the point is inside the link
+    const linkSVG = document.getElementById('sub_' + 'ab') as unknown as SVGGeometryElement;
+    console.log(linkSVG);
+    return linkSVG.isPointInFill(new DOMPoint(coord.x, coord.y));
+  }
+
   ngAfterViewInit() {
     this.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
     this.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
@@ -292,9 +299,7 @@ export class NewGridComponent {
     newJoint.links.push(this.activeObjService.selectedLink);
     this.activeObjService.selectedLink.joints.push(newJoint);
     this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = RealLink.getPathString(
-      this.activeObjService.selectedLink
-    );
+    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     this.mechanismSrv.joints.push(newJoint);
     this.mechanismSrv.updateMechanism();
   }
@@ -485,7 +490,10 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
+        // let clickPos = new Coord($event.pageX, $event.pageY);
+        // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
         // console.warn('Mouse down: ');
+        // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
         // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
@@ -577,9 +585,8 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.id.concat(joint1.id);
                 this.mechanismSrv.mergeToJoints([joint1, joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.activeObjService.selectedLink.d = RealLink.getPathString(
-                  this.activeObjService.selectedLink
-                );
+                this.activeObjService.selectedLink.d =
+                  this.activeObjService.selectedLink.getPathString();
                 this.mechanismSrv.updateMechanism();
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;

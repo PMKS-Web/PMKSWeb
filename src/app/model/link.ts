@@ -26,7 +26,8 @@ import { SettingsService } from '../services/settings.service';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { BehaviorSubject } from 'rxjs';
 import * as path from 'path';
-import { Z } from '@angular/cdk/keycodes';
+import { M, Z } from '@angular/cdk/keycodes';
+import { Line } from './line';
 
 export enum Shape {
   line = 'line',
@@ -135,6 +136,8 @@ export class RealLink extends Link {
   private _angle: number = 0;
   private _subset: Link[] = []; // this is not connectedLinks but links that make up this link
 
+  public externalLines: Line[] = [];
+
   private static colorOptions = [
     '#0d125a',
     // '#283493',
@@ -206,7 +209,7 @@ export class RealLink extends Link {
     } else {
       this._subset = subSet;
     }
-    this._d = RealLink.getPathString(this);
+    this._d = this.getPathString();
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
     this._CoM = CoM !== undefined ? CoM : RealLink.determineCenterOfMass(joints);
     this.updateCoMDs();
@@ -214,7 +217,7 @@ export class RealLink extends Link {
   }
 
   public reComputeDPath() {
-    this._d = RealLink.getPathString(this);
+    this._d = this.getPathString();
   }
 
   updateLengthAndAngle() {
@@ -223,85 +226,194 @@ export class RealLink extends Link {
     // console.warn(this._length, this._angle);
   }
 
-  // getCompoundPathPesudoCode(link: Link) {
-  //   linkSubset: link[] = link.subset;
-  //   path = '';
-  //   // startJoint = linkSubset[0].joints[0];
-  //   // endJoint = linkSubset[0.joints[1];
-  //   // startPoint = determinePointWithNormalOffset(startJoint, pos)
-  //   // endPoint = determinePointWithNormalOffset(endJoint, pos)
-  //   thisLine = pickRandomExternalLine(linkSubset);
-  //   veryFirstPoint = thisLine.startPoint;
-  //   path += M to veryFirstPoint
-  //
-  //   while penLocation != veryFirstPoint{
-  //     thisLink = linkContainingAandB(thisLine.startJoint,thisLine.endJoint,linkSubset)
-  //     if(thisLine.endJoint is weldedJoint){
-  //       nextLink = linkContainingAbutNotB(thisLine.endJoint,thisLine.startJoint,linkSubset)
-  //       if(thisLine.endPoint is inside nextLink){
-  //         [intersectionPoint, nextLine] = findInterSectionBetween(thisLine,nextLink)
-  //         arcStartPoint = offsetAlongLineNotInLink(thisLine,intersectionPoint,nextLink);
-  //         arcEndPoint = offsetAlongLineNotInLink(nextLine,intersectionPoint,thisLink);
-  //         path += LINE to arcStartPoint
-  //         nextLine.startPoint = arcEndPoint
-  //       }else(){ //Endjoint must be on link Edge, this is an external (>180) intersection
-  //         path += LINE to thisLine.endPoint
-  //         nextLine = findClosestLineNotIntersectingLink(endJoint, thisLink, nextLink);
-  //       }
-  //     }else{ //Non-welded joint
-  //       path += LINE to thisLine.endPoint
-  //       nextLine = findOtherExternalLine(thisLine, thisLink);
-  //     }
-  //
-  //     path += ARC to nextLine.startPoint
-  //     penLocation = nextLine.startPoint
-  //     thisLine = nextLine
-  //   }
-  //   path+= Z
-  //   return path
-  //
-  // }
+  getCompoundPathPesudoCode(link: RealLink) {
+    // let linkSubset: RealLink[] = link._subset as RealLink[];
+    // let path: string = '';
+    //
+    // const allLines: Line[] = generateAllLines(linkSubset);
+    //
+    // function pickRandomExternalLine(allLines: Line[]): Line {
+    //   return allLines[0];
+    // }
+    //
+    // let thisLine: Line = pickRandomExternalLine(allLines);
+    // let veryFirstPoint: Coord  = thisLine.startPosition;
+    // path += "M " + veryFirstPoint.x + " " + veryFirstPoint.y;
+    //
+    // let penLocation: Coord = veryFirstPoint;
+    //
+    // function linkContainingAandB(startJoint: Joint, endJoint: Joint, linkSubset: RealLink[]):RealLink {
+    //   //Filter links that contain both joints, and return the first one (there should only be one)
+    //   return linkSubset.filter((l) => {
+    //     return l.joints.includes(startJoint) && l.joints.includes(endJoint);
+    //   })[0];
+    // }
+    //
+    // let thisLink: RealLink;
+    // let nextLink: RealLink;
+    //
+    // function linkContainingAbutNotB(endJoint: RealJoint, startJoint: RealJoint, linkSubset: RealLink[]) {
+    //   //Filter links that contain the endJoint but not the startJoint, and return the first one (there should only be one)
+    //   return linkSubset.filter((l) => {
+    //     return l.joints.includes(endJoint) && !l.joints.includes(startJoint);
+    //   })[0];
+    // }
+    //
+    // function findInterSectionBetween(thisLine: Line, nextLink: RealLink) {
+    //   //first, get a coll
+    // }
+    //
+    // while (penLocation != veryFirstPoint){
+    //   thisLink = linkContainingAandB(thisLine.startJoint,thisLine.endJoint,linkSubset)
+    //   if(thisLine.endJoint.isWelded){
+    //     nextLink = linkContainingAbutNotB(thisLine.endJoint,thisLine.startJoint,linkSubset)
+    //     if(NewGridComponent.isInsideLink(nextLink,thisLine.endPosition)){ //Endjoint must inside, this is an internal (<180) intersection
+    //       [intersectionPoint, nextLine] = findInterSectionBetween(thisLine,nextLink)
+    //       arcStartPoint = offsetAlongLineNotInLink(thisLine,intersectionPoint,nextLink);
+    //       arcEndPoint = offsetAlongLineNotInLink(nextLine,intersectionPoint,thisLink);
+    //       path += LINE to arcStartPoint
+    //       nextLine.startPoint = arcEndPoint
+    //     }else{ //Endjoint must be on link Edge, this is an external (>180) intersection
+    //       path += LINE to thisLine.endPoint
+    //       nextLine = findClosestLineNotIntersectingLink(endJoint, thisLink, nextLink);
+    //     }
+    //   }else{ //Non-welded joint
+    //     path += LINE to thisLine.endPoint
+    //     nextLine = findOtherExternalLine(thisLine, thisLink);
+    //   }
+    //
+    //   path += ARC to nextLine.startPoint
+    //   penLocation = nextLine.startPoint
+    //   thisLine = nextLine
+    // }
+    // path+= Z
+    // return path
+    //
+    // function generateAllLines(linkSubset: Link[]) {
+    //   let allLines: Line[] = [];
+    //   linkSubset.forEach((l) => {
+    //     //for each joint of the link, create a line with every other joint
+    //     l.joints.forEach((j) => {
+    //       l.joints.forEach((k) => {
+    //         if (j.id !== k.id) {
+    //           allLines.push(new Line((j.id+k.id).toString(),j, k));
+    //         }
+    //       });
+    //     });
+    //   });
+    //   return allLines;
+    // }
+  }
 
-  static getPathString(l: Link): string {
-    const link = l as RealLink;
+  getPathString(): string {
+    const link = this as RealLink;
     if (link.subset.length === 0) {
-      return RealLink.getSimplePathString(l);
+      return link.getSimplePathString();
     } else {
       //Compound link
-      return RealLink.getCompoundPathString(l);
+      return link.getCompoundPathString();
     }
   }
 
-  static getCompoundPathString(l: Link): string {
+  getCompoundPathString(): string {
     return '';
   }
 
-  static getSimplePathString(l: Link): string {
+  getSimplePathString(): string {
+    this.externalLines = [];
+    let l = this;
+    // Draw link given the desiredJointIDs
     const allJoints = l.joints;
 
-    // Draw link given the desiredJointIDs
-    function determineL(d: string, coord1: Joint, coord2: Joint, coord3?: Joint) {
-      function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
-        // Maybe it is atan2 that is desired...
-        if (dir === 'neg') {
-          return [
-            new Coord(
-              width * Math.cos(angle + Math.PI) + c1.x,
-              width * Math.sin(angle + Math.PI) + c1.y
-            ),
-            new Coord(
-              width * Math.cos(angle + Math.PI) + c2.x,
-              width * Math.sin(angle + Math.PI) + c2.y
-            ),
-          ];
-        } else {
-          return [
-            new Coord(width * Math.cos(angle) + c1.x, width * Math.sin(angle) + c1.y),
-            new Coord(width * Math.cos(angle) + c2.x, width * Math.sin(angle) + c2.y),
-          ];
-        }
-      }
+    //Convert joints to simple x, y array
+    const points = allJoints.map((j) => [j.x, j.y]);
+    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
 
+    //Match resuling x,y points to joints
+    let desiredJointsIDs: string = '';
+    hullPoints.forEach((point: any) => {
+      const joint = allJoints.find((j) => j.x === point[0] && j.y === point[1]);
+      if (joint) desiredJointsIDs += joint.id;
+    });
+
+    //Cut off the last once since it is the same as the first
+    desiredJointsIDs = desiredJointsIDs.substring(0, desiredJointsIDs.length - 1);
+
+    //This is just for debugging display
+    // l.debugDesiredJointsIDs = desiredJointsIDs;
+    // RealLink.debugDesiredJointsIDs = desiredJointsIDs;
+
+    const jointIDtoIndex = new Map<string, number>();
+    allJoints.forEach((j, ind) => {
+      jointIDtoIndex.set(j.id, ind);
+    });
+
+    let width: number = SettingsService.objectScale.value / 4;
+    let d = '';
+
+    let clockWise = 'Will be set later';
+
+    for (let i = 0; i < desiredJointsIDs.length; i++) {
+      const j = (i + 1) % desiredJointsIDs.length;
+      if (desiredJointsIDs.length === 2) {
+        const [ammendedD, point1, point2] = determineL(
+          d,
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
+        );
+        d = ammendedD;
+        const lineToAdd = new Line(
+          'externalLine',
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
+        );
+        lineToAdd.startPosition = point1;
+        lineToAdd.endPosition = point2;
+        this.externalLines.push(lineToAdd);
+      } else {
+        const k = (i + 2) % desiredJointsIDs.length;
+        const [ammendedD, point1, point2] = determineL(
+          d,
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[k])!]
+        );
+        d = ammendedD;
+        const lineToAdd = new Line(
+          'externalLine',
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
+        );
+        lineToAdd.startPosition = point1;
+        lineToAdd.endPosition = point2;
+        this.externalLines.push(lineToAdd);
+      }
+    }
+
+    const splitPath = d.split(' ');
+
+    const startX = splitPath[1];
+    const startY = splitPath[2];
+    d +=
+      ' A ' +
+      width.toString() +
+      ' ' +
+      width.toString() +
+      ' 0 0 ' +
+      clockWise +
+      ' ' +
+      startX +
+      ' ' +
+      startY;
+
+    return d;
+
+    function determineL(
+      d: string,
+      coord1: Joint,
+      coord2: Joint,
+      coord3?: Joint
+    ): [string, Coord, Coord] {
       // find slope between two points
       const m = determineSlope(coord1.x, coord1.y, coord2.x, coord2.y);
       // find normal slope of given slope
@@ -338,6 +450,7 @@ export class RealLink extends Link {
           [point1, point2] = [point2a, point2b];
         }
       }
+
       if (d === '') {
         clockWise = coord1.y > point1.y ? '1' : '0';
         if (allJoints.length > 3) {
@@ -360,77 +473,29 @@ export class RealLink extends Link {
           point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
       }
-      return d;
-    }
+      return [d, point1, point2];
 
-    //MAIN FUNCTION STARTS HERE
-    //MAIN FUNCTION STARTS HERE
-    //MAIN FUNCTION STARTS HERE
-
-    //Convert joints to simple x, y array
-    const points = allJoints.map((j) => [j.x, j.y]);
-    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
-
-    //Match resuling x,y points to joints
-    let desiredJointsIDs: string = '';
-    hullPoints.forEach((point: any) => {
-      const joint = allJoints.find((j) => j.x === point[0] && j.y === point[1]);
-      if (joint) desiredJointsIDs += joint.id;
-    });
-
-    //Cut off the last once since it is the same as the first
-    desiredJointsIDs = desiredJointsIDs.substring(0, desiredJointsIDs.length - 1);
-
-    //This is just for debugging display
-    // l.debugDesiredJointsIDs = desiredJointsIDs;
-    // RealLink.debugDesiredJointsIDs = desiredJointsIDs;
-
-    const jointIDtoIndex = new Map<string, number>();
-    allJoints.forEach((j, ind) => {
-      jointIDtoIndex.set(j.id, ind);
-    });
-
-    let width: number = SettingsService.objectScale.value / 4;
-    let d = '';
-
-    let clockWise = 'Will be set later';
-
-    for (let i = 0; i < desiredJointsIDs.length; i++) {
-      const j = (i + 1) % desiredJointsIDs.length;
-      if (desiredJointsIDs.length === 2) {
-        d = determineL(
-          d,
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
-        );
-      } else {
-        const k = (i + 2) % desiredJointsIDs.length;
-        d = determineL(
-          d,
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[k])!]
-        );
+      function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
+        // Maybe it is atan2 that is desired...
+        if (dir === 'neg') {
+          return [
+            new Coord(
+              width * Math.cos(angle + Math.PI) + c1.x,
+              width * Math.sin(angle + Math.PI) + c1.y
+            ),
+            new Coord(
+              width * Math.cos(angle + Math.PI) + c2.x,
+              width * Math.sin(angle + Math.PI) + c2.y
+            ),
+          ];
+        } else {
+          return [
+            new Coord(width * Math.cos(angle) + c1.x, width * Math.sin(angle) + c1.y),
+            new Coord(width * Math.cos(angle) + c2.x, width * Math.sin(angle) + c2.y),
+          ];
+        }
       }
     }
-
-    const splitPath = d.split(' ');
-
-    const startX = splitPath[1];
-    const startY = splitPath[2];
-    d +=
-      ' A ' +
-      width.toString() +
-      ' ' +
-      width.toString() +
-      ' 0 0 ' +
-      clockWise +
-      ' ' +
-      startX +
-      ' ' +
-      startY;
-
-    return d;
   }
 
   static determineCenterOfMass(joints: Joint[]) {

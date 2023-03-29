@@ -158,7 +158,18 @@
         [class]='mechanismSrv.getLinkCSSClass(link)'
       >
       </path>
-    </ng-container>
+        <path
+          *ngFor='let subLink of gridUtils.getLinkSubset(link)'
+          [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
+          [attr.id]="'sub_'+subLink.id"
+          [attr.fill]="'red'"
+          [attr.fill-opacity]=0.1
+          [attr.stroke]="'brown'"
+          [attr.stroke-dasharray]='0.1'
+          [attr.stroke-width]='0.02'>
+
+        </path>
+      </ng-container>
   </g>
   <g id='jointHolder' style='transform: scaleY(-1)'>
     <svg

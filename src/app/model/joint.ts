@@ -1,5 +1,5 @@
 import { AppConstants } from './app-constants';
-import { Link } from './link';
+import { Link, RealLink } from './link';
 import { Coord } from './coord';
 
 export class Joint extends Coord {
@@ -95,6 +95,7 @@ export class RealJoint extends Joint {
   set input(value: boolean) {
     this._input = value;
   }
+
 }
 
 // TODO: Verify this but I don't believe there is an ImagJoint...

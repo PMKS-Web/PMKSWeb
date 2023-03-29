@@ -125,7 +125,7 @@ export class GridUtilsService {
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
-          l.d = RealLink.getPathString(l);
+          l.d = l.getPathString();
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();
@@ -205,5 +205,12 @@ export class GridUtilsService {
       lastRightClick.showCurve = !lastRightClick.showCurve;
     }
     console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+  }
+
+  getLinkSubset(link: Link) {
+    if (!(link instanceof RealLink)) {
+      return;
+    }
+    return link.subset;
   }
 }
