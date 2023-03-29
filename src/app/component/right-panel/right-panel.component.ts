@@ -219,15 +219,18 @@ export class RightPanelComponent {
   async sendCommentEmail() {
     if (this.commentForm.invalid) {
       NewGridComponent.sendNotification('Please fill out the form correctly.');
-      // const response = await fetch('/.netlify/functions/getEnvVars').then((response) =>
-      //   response.json()
-      // );
-      // console.log(response);
-      // @ts-ignore
-      const topSecretRecipe = process.env.EMAIL_JS_KEY;
-      console.log(topSecretRecipe);
       return;
     } else {
+      let emailJSKey = '';
+      try {
+        emailJSKey = await fetch('/.netlify/functions/getEmailJSKey').then((response) =>
+          response.json()
+        );
+      } catch (err) {
+        NewGridComponent.sendNotification(
+          'It looks like you are in a development environment. If this is not the case, please try again later or contact us directly at: gr-pmksplus@wpi.edu'
+        );
+      }
       // emailjs.init(environment.emailJSKey);
 
       let browserInfo = '';
