@@ -13,6 +13,7 @@ export class Line {
   endJoint: Joint;
   startPosition: Coord;
   endPosition: Coord;
+  angleRad: number;
 
   constructor(id: string, startJoint: Joint, endJoint: Joint) {
     this.id = id;
@@ -28,6 +29,15 @@ export class Line {
     this.endPosition = new Coord(
       2 * Math.cos(normalAngle) + this.endJoint.x,
       2 * Math.sin(normalAngle) + this.endJoint.y
+    );
+
+    this.angleRad = Math.atan(
+      determineSlope(
+        this.startPosition.x,
+        this.startPosition.y,
+        this.endPosition.x,
+        this.endPosition.y
+      )
     );
   }
 

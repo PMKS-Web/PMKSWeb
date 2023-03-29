@@ -547,6 +547,9 @@ export function pullStringWithinString(a: string, firstIndex: number, secondInde
 }
 
 // https://stackoverflow.com/questions/13937782/calculating-the-point-of-intersection-of-two-lines
+// line intercept math by Paul Bourke http://paulbourke.net/geometry/pointlineplane/
+// Determine the intersection point of two line segments
+// Return FALSE if the lines don't intersect
 export function line_intersect(
   x1: number,
   y1: number,
@@ -557,22 +560,31 @@ export function line_intersect(
   x4: number,
   y4: number
 ) {
-  var ua,
-    ub,
-    denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-  if (denom == 0) {
-    return [-9999, -9999];
-    // return null;
+  // Check if none of the lines are of length 0
+  if ((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+    return [null, null];
   }
-  ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-  ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-  return [x1 + ua * (x2 - x1), y1 + ua * (y2 - y1)];
-  // return {
-  //   x: x1 + ua * (x2 - x1),
-  //   y: y1 + ua * (y2 - y1),
-  //   seg1: ua >= 0 && ua <= 1,
-  //   seg2: ub >= 0 && ub <= 1
-  // };
+
+  let denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+
+  // Lines are parallel
+  if (denominator === 0) {
+    return [null, null];
+  }
+
+  let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
+  let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator;
+
+  // is the intersection along the segments
+  if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+    return [null, null];
+  }
+
+  // Return an object with the x and y coordinates of the intersection
+  let x = x1 + ua * (x2 - x1);
+  let y = y1 + ua * (y2 - y1);
+
+  return [x, y];
 }
 
 // returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
@@ -594,5 +606,5 @@ export function is_touch_enabled() {
 
 // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 export function isLeft(a: Coord, b: Coord, c: Coord) {
-  return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0;
 }

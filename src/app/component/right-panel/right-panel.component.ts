@@ -76,7 +76,8 @@ export class RightPanelComponent {
     public activeObjService: ActiveObjService,
     public mechanismService: MechanismService,
     private fb: FormBuilder
-  ) {}
+  ) {
+  }
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -144,6 +145,15 @@ export class RightPanelComponent {
   printMechanism() {
     logEvent(this.analytics, 'debug_print_mechanism');
     console.log(this.mechanismService.mechanisms[0]);
+    console.log(this.mechanismService.links);
+    console.log(this.mechanismService.joints);
+  }
+
+  redrawAllLinks() {
+    console.log('Redrawing all links');
+    this.mechanismService.links.forEach(link => {
+      (link as RealLink).reComputeDPath();
+    });
   }
 
   printActiveObject() {
