@@ -16,6 +16,7 @@ import {
   gridStates,
   is_touch_enabled,
   jointStates,
+  line_intersect,
   linkStates,
 } from '../../model/utils';
 import { Force } from '../../model/force';
@@ -30,6 +31,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { CustomIdService } from '../../services/custom-id.service';
+import { Line } from '../../model/line';
 
 @Component({
   selector: 'app-new-grid',
@@ -92,26 +94,6 @@ export class NewGridComponent {
         this.svgGrid.panZoomObject.resize();
         this.svgGrid.scaleToFitLinkage();
       });
-  }
-
-  static isInsideLink(simpleLink: Link, coord: Coord): boolean {
-    console.log('isInsideLinkCalled with: ', simpleLink.id, coord.x.toFixed(2), coord.y.toFixed(2));
-    //Use the SVG.isPointInFill() method to check if the point is inside the link
-    const linkSVG = document.getElementById(
-      'sub_' + simpleLink.id
-    ) as unknown as SVGGeometryElement;
-    console.log('found SVGElement', linkSVG);
-
-    if (linkSVG == null) {
-      console.log('linkSVG is null in isInsideLink');
-      return false;
-    }
-
-    const isInFill = linkSVG.isPointInFill(new DOMPoint(coord.x, coord.y));
-    const isInStroke = linkSVG.isPointInStroke(new DOMPoint(coord.x, coord.y));
-    console.log('isPointInFill: ', isInFill);
-    console.log('isPointInStroke: ', isInStroke);
-    return isInFill && !isInStroke;
   }
 
   ngAfterViewInit() {

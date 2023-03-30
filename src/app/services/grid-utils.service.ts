@@ -130,6 +130,15 @@ export class GridUtilsService {
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();
+
+          if (l.subset.length > 0) {
+            l.subset.forEach((slink) => {
+              let subLink = slink as RealLink;
+              subLink.CoM = RealLink.determineCenterOfMass(subLink.joints);
+              subLink.updateCoMDs();
+              subLink.updateLengthAndAngle();
+            });
+          }
           // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
           PositionSolver.setUpInitialJointLocations(l.joints);
           l.forces.forEach((f) => {

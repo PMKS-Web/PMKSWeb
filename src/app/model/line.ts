@@ -15,6 +15,7 @@ export class Line {
   startPosition: Coord;
   endPosition: Coord;
   angleRad: number;
+  isMirror: boolean = false;
 
   constructor(id: string, startJoint: Joint, endJoint: Joint) {
     this.id = id;
