@@ -86,6 +86,11 @@ export class MechanismService {
         inputAngularVelocity
       )
     );
+    this.links.forEach((l) => {
+      if (l instanceof RealLink) {
+        (l as RealLink).reComputeDPath();
+      }
+    });
     this.activeObjService.fakeUpdateSelectedObj();
   }
 
@@ -199,7 +204,8 @@ export class MechanismService {
     const joint = this.joints[jointIndex] as RealJoint;
 
     if (!joint.isWelded) {
-      console.warn(this.links);
+      console.warn('all links:', this.links);
+      console.log('joint.links:', joint.links);
       const link1 = joint.links[0] as RealLink;
       console.log('link1: ' + link1.id);
       console.log('link1 subset: ' + link1.subset);
@@ -213,8 +219,15 @@ export class MechanismService {
 
       // TODO: For future person, add method to update the CoM
       // This implicitly removes link1
-      this.links[linkIndex1] = newLink;
-      this.links.splice(linkIndex2, 1);
+      this.links.splice(
+        this.links.findIndex((l) => l.id === link1.id),
+        1
+      );
+      this.links.splice(
+        this.links.findIndex((l) => l.id === link2.id),
+        1
+      );
+      this.links.push(newLink);
 
       //Update the joints of the new link with the right links
       newLink.joints.forEach((j: Joint | RealJoint) => {
@@ -295,35 +308,25 @@ export class MechanismService {
     link1.joints.forEach((j) => {
       newLinkJoints.push(j);
     });
-    const newLinkSubset: Link[] = [];
-    const newLink = new RealLink(
-      link1.id,
-      newLinkJoints,
-      link1.mass,
-      link1.massMoI,
-      link1.CoM,
-      newLinkSubset
-    );
+    const newLink = new RealLink(link1.id, newLinkJoints, link1.mass, link1.massMoI, link1.CoM);
 
-    console.log('newLink Subset:', newLink.subset);
     console.log('link1 subset length: ' + link1.subset.length);
     link1.subset.length > 0
       ? (newLink.subset = newLink.subset.concat(link1.subset))
       : newLink.subset.push(link1);
-    console.log('new subset: ', newLink.subset);
     console.log('link2 subset length: ' + link2.subset.length);
     link2.subset.length > 0
       ? (newLink.subset = newLink.subset.concat(link2.subset))
       : newLink.subset.push(link2);
-    console.log('new subset: ', newLink.subset);
+    console.log('newLink subset: ', newLink.subset);
     link2.joints.forEach((j) => {
       if (j.id !== jointToWeld.id) {
         newLink.joints.push(j);
         newLink.id = newLink.id + j.id;
       }
     });
-    console.log('new joints: ', newLink.joints);
-    console.log('new id: ', newLink.id);
+    console.log('newLink joints: ', newLink.joints);
+    console.log('newLink id: ', newLink.id);
     return newLink;
   }
 

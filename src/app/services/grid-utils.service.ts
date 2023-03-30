@@ -106,6 +106,7 @@ export class GridUtilsService {
   }
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
+    console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 6);
     selectedJoint.y = roundNumber(trueCoord.y, 6);
@@ -125,7 +126,7 @@ export class GridUtilsService {
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
           l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
           l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
-          l.reComputeDPath();
+          // l.reComputeDPath();
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();

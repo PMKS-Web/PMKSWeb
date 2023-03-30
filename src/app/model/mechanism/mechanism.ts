@@ -80,11 +80,12 @@ export class Mechanism {
           if (!(l instanceof RealLink)) {
             return;
           }
-          const newLink = new RealLink(l.id, l.joints);
-          newLink.d = l.d;
-          newLink.CoM = l.CoM;
-          newLink.forces = l.forces;
-          this._links[0].push(newLink);
+          // const newLink = new RealLink(l.id, l.joints, l.mass, l.massMoI, l.CoM, l.subset);
+          // newLink.d = l.d;
+          // newLink.CoM = l.CoM;
+          // newLink.forces = l.forces;
+          // this._links[0].push(newLink);
+          this._links[0].push(l);
           break;
         case Piston:
           if (!(l instanceof Piston)) {

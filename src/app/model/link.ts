@@ -135,6 +135,10 @@ export class RealLink extends Link {
 
   public externalLines: Line[] = [];
 
+  //For debugging:
+  public unqiqueRandomID: string =
+    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
   private static colorOptions = [
     '#0d125a',
     // '#283493',
@@ -202,9 +206,9 @@ export class RealLink extends Link {
       this._fill = RealLink.colorOptions[0];
     }
     if (subSet === undefined || subSet.length === 0) {
-      this._subset = [];
+      // this.subset = [];
     } else {
-      this._subset = subSet;
+      this.subset = subSet;
     }
     this._d = this.getPathString();
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
@@ -239,13 +243,13 @@ export class RealLink extends Link {
     let veryFirstPoint: Coord = thisLine.startPosition;
     console.log(
       'Starting at ' +
-      veryFirstPoint.x.toFixed(2) +
-      ', ' +
-      veryFirstPoint.y.toFixed(2) +
-      ' ' +
-      thisLine.startJoint.id +
-      ' ' +
-      thisLine.endJoint.id
+        veryFirstPoint.x.toFixed(2) +
+        ', ' +
+        veryFirstPoint.y.toFixed(2) +
+        ' ' +
+        thisLine.startJoint.id +
+        ' ' +
+        thisLine.endJoint.id
     );
     path += 'M ' + veryFirstPoint.x + ' ' + veryFirstPoint.y;
     let penLocation: Coord = new Coord(0, 0);
@@ -268,9 +272,9 @@ export class RealLink extends Link {
           console.log('nextLink: ' + nextLink.id);
           console.log(
             'thisLine.endPos: ' +
-            thisLine.endPosition.x.toFixed(2) +
-            ', ' +
-            thisLine.endPosition.y.toFixed(2)
+              thisLine.endPosition.x.toFixed(2) +
+              ', ' +
+              thisLine.endPosition.y.toFixed(2)
           );
           if (NewGridComponent.isInsideLink(nextLink, thisLine.endPosition)) {
             console.log('thisLine is inside nextLink');
@@ -289,11 +293,11 @@ export class RealLink extends Link {
             );
             console.log(
               '(Internal) Drawing line to ' +
-              arcStartPoint.x.toFixed(2) +
-              ', ' +
-              arcStartPoint.y.toFixed(2) +
-              ' ' +
-              thisLine.endJoint.id
+                arcStartPoint.x.toFixed(2) +
+                ', ' +
+                arcStartPoint.y.toFixed(2) +
+                ' ' +
+                thisLine.endJoint.id
             );
             path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
             nextLine.startPosition = arcEndPoint;
@@ -301,11 +305,11 @@ export class RealLink extends Link {
             console.log('thisLine is outside nextLink');
             console.log(
               '(External) Drawing line to ' +
-              thisLine.endPosition.x.toFixed(2) +
-              ', ' +
-              thisLine.endPosition.y.toFixed(2) +
-              ' ' +
-              thisLine.endJoint.id
+                thisLine.endPosition.x.toFixed(2) +
+                ', ' +
+                thisLine.endPosition.y.toFixed(2) +
+                ' ' +
+                thisLine.endJoint.id
             );
             //Endjoint must be on link Edge, this is an external (>180) intersection
             path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
@@ -315,11 +319,11 @@ export class RealLink extends Link {
           //Non-welded joint
           console.log(
             '(Non-Welded) Drawing line to ' +
-            thisLine.endPosition.x.toFixed(2) +
-            ', ' +
-            thisLine.endPosition.y.toFixed(2) +
-            ' ' +
-            thisLine.endJoint.id
+              thisLine.endPosition.x.toFixed(2) +
+              ', ' +
+              thisLine.endPosition.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
           );
 
           path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
@@ -328,13 +332,13 @@ export class RealLink extends Link {
 
         console.log(
           '(Common) Drawing arc to ' +
-          nextLine.startPosition.x.toFixed(2) +
-          ', ' +
-          nextLine.startPosition.y.toFixed(2) +
-          ' ' +
-          nextLine.startJoint.id +
-          ' ' +
-          nextLine.endJoint.id
+            nextLine.startPosition.x.toFixed(2) +
+            ', ' +
+            nextLine.startPosition.y.toFixed(2) +
+            ' ' +
+            nextLine.startJoint.id +
+            ' ' +
+            nextLine.endJoint.id
         );
 
         path +=
@@ -350,6 +354,7 @@ export class RealLink extends Link {
         thisLine = nextLine;
       }
       // path += ' Z';
+      console.warn('Finished getCompoundPathString');
       return path;
     } catch (error) {
       console.error(error);
@@ -499,6 +504,7 @@ export class RealLink extends Link {
     }
 
     function findNextExternalLine(thisLine: Line, thisLink: RealLink): Line {
+      console.log('Looking inside link: ' + thisLink.id + ' for next external line', thisLine);
       //Find the next external line of thisLink that comes after thisLine
       let thisLinkExternalLines: Line[] = thisLink.externalLines;
       //Check to make sure that the next link has external lines
@@ -518,6 +524,7 @@ export class RealLink extends Link {
 
   getPathString(): string {
     const link = this as RealLink;
+    console.error('Getting path string for link: ' + link.id);
     console.log(link);
     console.log(link.subset.length);
     if (link.subset.length == 0) {
@@ -899,6 +906,7 @@ export class RealLink extends Link {
   }
 
   set subset(value: Link[]) {
+    console.error('setting subset to:', value, 'for link:', this.id);
     this._subset = value;
   }
 }
