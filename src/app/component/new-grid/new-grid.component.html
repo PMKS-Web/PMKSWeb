@@ -165,8 +165,7 @@
           [attr.fill]="'red'"
           [attr.fill-opacity]=0.1
           [attr.stroke]="'brown'"
-          [attr.stroke-dasharray]='0.1'
-          [attr.stroke-width]='0.02'>
+          [attr.stroke-width]='0.01'>
 
         </path>
       </ng-container>
@@ -384,6 +383,9 @@
 <!--    ></path>-->
 <!--  </g>-->
 </svg>
+<div id='mouseLocation'>
+  Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
+</div>
 <ng-template #context_menu>
   <app-context-menu [menuItems]='cMenuItems'>
   </app-context-menu>

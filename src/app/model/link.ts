@@ -224,8 +224,12 @@ export class RealLink extends Link {
   }
 
   getCompoundPathString() {
-    const offset: number = 0.1;
+    const offset: number = SettingsService.objectScale.value / 4;
     let linkSubset: RealLink[] = this.subset as RealLink[];
+
+    linkSubset.forEach((l) => {
+      l.reComputeDPath();
+    });
     let path: string = '';
 
     const allLines: Line[] = generateAllLines(linkSubset);
@@ -233,53 +237,126 @@ export class RealLink extends Link {
     let thisLine: Line = pickRandomExternalLine(allLines);
     let nextLine: Line;
     let veryFirstPoint: Coord = thisLine.startPosition;
+    console.log(
+      'Starting at ' +
+      veryFirstPoint.x.toFixed(2) +
+      ', ' +
+      veryFirstPoint.y.toFixed(2) +
+      ' ' +
+      thisLine.startJoint.id +
+      ' ' +
+      thisLine.endJoint.id
+    );
     path += 'M ' + veryFirstPoint.x + ' ' + veryFirstPoint.y;
     let penLocation: Coord = new Coord(0, 0);
 
     let thisLink: RealLink;
     let nextLink: RealLink;
 
-    while (penLocation != veryFirstPoint) {
-      thisLink = linkContainingAandB(thisLine.startJoint, thisLine.endJoint, linkSubset);
-      if ((thisLine.endJoint as RealJoint).isWelded) {
-        nextLink = linkContainingAbutNotB(thisLine.endJoint, thisLine.startJoint, linkSubset);
-        if (NewGridComponent.isInsideLink(nextLink, thisLine.endPosition)) {
-          //Endjoint must inside, this is an internal (<180) intersection
-          let intersectionPoint: Coord;
-          [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink);
-          let arcStartPoint: Coord = offsetAlongLineNotInLink(
-            thisLine,
-            intersectionPoint,
-            nextLink
-          );
-          let arcEndPoint: Coord = offsetAlongLineNotInLink(nextLine, intersectionPoint, thisLink);
-          path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
-          nextLine.startPosition = arcEndPoint;
-        } else {
-          //Endjoint must be on link Edge, this is an external (>180) intersection
-          path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
-          nextLine = findClosestLineNotIntersectingLink(thisLine.endJoint, thisLink, nextLink);
-        }
-      } else {
-        //Non-welded joint
-        path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
-        nextLine = findNextExternalLine(thisLine, thisLink);
-      }
+    let counter: number = 0;
 
-      path +=
-        'A ' +
-        offset +
-        ' ' +
-        offset +
-        ' 0 0 1 ' +
-        nextLine.startPosition.x +
-        ' ' +
-        nextLine.startPosition.y;
-      penLocation = nextLine.startPosition;
-      thisLine = nextLine;
+    try {
+      while (!sameLocation(penLocation, veryFirstPoint) && counter < 5) {
+        counter++;
+        thisLink = linkContainingAandB(thisLine.startJoint, thisLine.endJoint, linkSubset);
+        console.log('thisLink: ' + thisLink.id);
+        console.log('thisLine: ' + thisLine.startJoint.id + ' ' + thisLine.endJoint.id);
+        console.log('thisLine.endJoint:', thisLine.endJoint);
+        if ((thisLine.endJoint as RealJoint).isWelded) {
+          console.log(thisLine.endJoint.id + ' is welded');
+          nextLink = linkContainingAbutNotB(thisLine.endJoint, thisLine.startJoint, linkSubset);
+          console.log('nextLink: ' + nextLink.id);
+          console.log(
+            'thisLine.endPos: ' +
+            thisLine.endPosition.x.toFixed(2) +
+            ', ' +
+            thisLine.endPosition.y.toFixed(2)
+          );
+          if (NewGridComponent.isInsideLink(nextLink, thisLine.endPosition)) {
+            console.log('thisLine is inside nextLink');
+            //Endjoint must inside, this is an internal (<180) intersection
+            let intersectionPoint: Coord;
+            [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink, thisLink);
+            let arcStartPoint: Coord = offsetAlongLineNotInLink(
+              thisLine,
+              intersectionPoint,
+              nextLink
+            );
+            let arcEndPoint: Coord = offsetAlongLineNotInLink(
+              nextLine,
+              intersectionPoint,
+              thisLink
+            );
+            console.log(
+              '(Internal) Drawing line to ' +
+              arcStartPoint.x.toFixed(2) +
+              ', ' +
+              arcStartPoint.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
+            );
+            path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
+            nextLine.startPosition = arcEndPoint;
+          } else {
+            console.log('thisLine is outside nextLink');
+            console.log(
+              '(External) Drawing line to ' +
+              thisLine.endPosition.x.toFixed(2) +
+              ', ' +
+              thisLine.endPosition.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
+            );
+            //Endjoint must be on link Edge, this is an external (>180) intersection
+            path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
+            nextLine = findClosestLineNotIntersectingLink(thisLine.endJoint, thisLink, nextLink);
+          }
+        } else {
+          //Non-welded joint
+          console.log(
+            '(Non-Welded) Drawing line to ' +
+            thisLine.endPosition.x.toFixed(2) +
+            ', ' +
+            thisLine.endPosition.y.toFixed(2) +
+            ' ' +
+            thisLine.endJoint.id
+          );
+
+          path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
+          nextLine = findNextExternalLine(thisLine, thisLink);
+        }
+
+        console.log(
+          '(Common) Drawing arc to ' +
+          nextLine.startPosition.x.toFixed(2) +
+          ', ' +
+          nextLine.startPosition.y.toFixed(2) +
+          ' ' +
+          nextLine.startJoint.id +
+          ' ' +
+          nextLine.endJoint.id
+        );
+
+        path +=
+          'A ' +
+          offset +
+          ' ' +
+          offset +
+          ' 0 0 1 ' +
+          nextLine.startPosition.x +
+          ' ' +
+          nextLine.startPosition.y;
+        penLocation = nextLine.startPosition;
+        thisLine = nextLine;
+      }
+      // path += ' Z';
+      return path;
+    } catch (error) {
+      console.error(error);
+      console.error('Error in getCompoundPathString, returning what we have so far');
+      // path += ' Z';
+      return path;
     }
-    path += ' Z';
-    return path;
 
     function generateAllLines(linkSubset: Link[]) {
       let allLines: Line[] = [];
@@ -300,6 +377,15 @@ export class RealLink extends Link {
       return allLines[0];
     }
 
+    function sameLocation(penLocation: Coord, veryFirstPoint: Coord) {
+      //Refund true if the two points are within 0.01 of each other
+      const tolerance = 0.01;
+      return (
+        Math.abs(penLocation.x - veryFirstPoint.x) < tolerance &&
+        Math.abs(penLocation.y - veryFirstPoint.y) < tolerance
+      );
+    }
+
     function linkContainingAandB(
       startJoint: Joint,
       endJoint: Joint,
@@ -318,7 +404,11 @@ export class RealLink extends Link {
       })[0];
     }
 
-    function findInterSectionBetween(thisLine: Line, nextLink: RealLink): [Coord, Line] {
+    function findInterSectionBetween(
+      thisLine: Line,
+      nextLink: RealLink,
+      thisLink: RealLink
+    ): [Coord, Line] {
       //Get all the external lines of the next link
       let nextLinkExternalLines: Line[] = nextLink.externalLines;
       //Check to make sure that the next link has external lines
@@ -326,15 +416,21 @@ export class RealLink extends Link {
         throw new Error('The next link has no external lines');
       }
 
+      console.log('NextLinkExternalLines: ', nextLinkExternalLines);
       //For each external line, check to see if it intersects with thisLine
       for (let i = 0; i < nextLinkExternalLines.length; i++) {
         let nextLine: Line = nextLinkExternalLines[i];
         let intersectionPoint: Coord | null = RealLink.getLineIntersection(thisLine, nextLine);
         if (intersectionPoint !== null) {
-          return [intersectionPoint, nextLine];
+          console.log('Intersection found between ' + thisLine.id + ' and ' + nextLine.id);
+          if (NewGridComponent.isInsideLink(thisLink, nextLine.startPosition)) {
+            console.log('Intersection point is inside thisLink, returning nextLine');
+            return [intersectionPoint, nextLine];
+          }
         }
       }
       //If it doesn't, throw an error
+      console.error('No intersection found between ' + thisLine.id + ' and ' + nextLink.id);
       throw new Error('No intersection found');
     }
 
@@ -520,6 +616,15 @@ export class RealLink extends Link {
       startX +
       ' ' +
       startY;
+
+    this.externalLines.forEach((line) => {
+      //Create the corresponding external line that travels in the opposite direction
+      const newLine = new Line('oppositeExternalLine', line.endJoint, line.startJoint);
+      newLine.startPosition = line.endPosition;
+      newLine.endPosition = line.startPosition;
+      this.externalLines.push(newLine);
+      // console.warn(line, newLine);
+    });
 
     return d;
 

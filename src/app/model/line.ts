@@ -2,6 +2,7 @@ import { Joint, RealJoint } from './joint';
 import { Coord } from './coord';
 import { determineSlope } from './utils';
 import { RealLink } from './link';
+import { SettingsService } from '../services/settings.service';
 
 export class Line {
   id: string;
@@ -21,14 +22,15 @@ export class Line {
     this.endJoint = endJoint;
 
     const normalAngle = this.findNormalAngle(startJoint, endJoint);
+    let offset = SettingsService.objectScale.value / 4;
 
     this.startPosition = new Coord(
-      2 * Math.cos(normalAngle) + this.startJoint.x,
-      2 * Math.sin(normalAngle) + this.startJoint.y
+      offset * Math.cos(normalAngle) + this.startJoint.x,
+      offset * Math.sin(normalAngle) + this.startJoint.y
     );
     this.endPosition = new Coord(
-      2 * Math.cos(normalAngle) + this.endJoint.x,
-      2 * Math.sin(normalAngle) + this.endJoint.y
+      offset * Math.cos(normalAngle) + this.endJoint.x,
+      offset * Math.sin(normalAngle) + this.endJoint.y
     );
 
     this.angleRad = Math.atan(

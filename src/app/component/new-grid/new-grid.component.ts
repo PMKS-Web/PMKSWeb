@@ -75,6 +75,7 @@ export class NewGridComponent {
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
+  mouseLocation: Coord = new Coord(0, 0);
 
   ngOnInit() {
     const svgElement = document.getElementById('canvas') as HTMLElement;
@@ -94,10 +95,23 @@ export class NewGridComponent {
   }
 
   static isInsideLink(simpleLink: Link, coord: Coord): boolean {
+    console.log('isInsideLinkCalled with: ', simpleLink.id, coord.x.toFixed(2), coord.y.toFixed(2));
     //Use the SVG.isPointInFill() method to check if the point is inside the link
-    const linkSVG = document.getElementById('sub_' + 'ab') as unknown as SVGGeometryElement;
-    console.log(linkSVG);
-    return linkSVG.isPointInFill(new DOMPoint(coord.x, coord.y));
+    const linkSVG = document.getElementById(
+      'sub_' + simpleLink.id
+    ) as unknown as SVGGeometryElement;
+    console.log('found SVGElement', linkSVG);
+
+    if (linkSVG == null) {
+      console.log('linkSVG is null in isInsideLink');
+      return false;
+    }
+
+    const isInFill = linkSVG.isPointInFill(new DOMPoint(coord.x, coord.y));
+    const isInStroke = linkSVG.isPointInStroke(new DOMPoint(coord.x, coord.y));
+    console.log('isPointInFill: ', isInFill);
+    console.log('isPointInStroke: ', isInStroke);
+    return isInFill && !isInStroke;
   }
 
   ngAfterViewInit() {
@@ -369,6 +383,7 @@ export class NewGridComponent {
 
   mouseMove($event: MouseEvent) {
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocation = mousePosInSvg;
 
     switch (this.gridStates) {
       case gridStates.createForce:

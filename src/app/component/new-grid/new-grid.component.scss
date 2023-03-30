@@ -77,5 +77,11 @@
     stroke: #f44336;
   }
 
+  #mouseLocation {
+    position: absolute;
+    top: 35px;
+    left: 300px;
+    background: rgba(255, 255, 255, 0.7);
+  }
 
 }
