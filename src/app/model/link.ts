@@ -258,6 +258,7 @@ export class RealLink extends Link {
     let counter: number = 0;
 
     let isInternal: boolean = false;
+    let internalRadius: number = 0;
 
     function findArcOffsetDistance(
       intersectionPoint: Coord,
@@ -265,63 +266,20 @@ export class RealLink extends Link {
       nextLine: Line,
       radiusOfCircle: number
     ): number {
-      // Find the unit vectors of the two lines.
-      const thisLineUnitVector: Coord = new Coord(
-        thisLine.endPosition.x - thisLine.startPosition.x,
-        thisLine.endPosition.y - thisLine.startPosition.y
-      );
-      const thisLineLength = Math.sqrt(thisLineUnitVector.x ** 2 + thisLineUnitVector.y ** 2);
-      thisLineUnitVector.x /= thisLineLength;
-      thisLineUnitVector.y /= thisLineLength;
-
-      const nextLineUnitVector: Coord = new Coord(
-        nextLine.endPosition.x - nextLine.startPosition.x,
-        nextLine.endPosition.y - nextLine.startPosition.y
-      );
-      const nextLineLength = Math.sqrt(nextLineUnitVector.x ** 2 + nextLineUnitVector.y ** 2);
-      nextLineUnitVector.x /= nextLineLength;
-      nextLineUnitVector.y /= nextLineLength;
-
-      // Calculate the angle between the two lines.
-      const angleBetweenLines = Math.acos(
-        thisLineUnitVector.x * nextLineUnitVector.x + thisLineUnitVector.y * nextLineUnitVector.y
-      );
-
-      // If the angle is less than pi/2, then the circle can be placed on the inside of the angle.
-      if (angleBetweenLines < Math.PI / 2) {
-        // Calculate the angle between the first line and the line from the intersection point to the center of the circle.
-        const thisLineToCenterAngle = Math.atan2(
-          -intersectionPoint.y + thisLine.startPosition.y,
-          -intersectionPoint.x + thisLine.startPosition.x
+      //Find the angle between the two lines
+      const angleBetweenLines =
+        Math.atan2(
+          nextLine.endPosition.y - nextLine.startPosition.y,
+          nextLine.endPosition.x - nextLine.startPosition.x
+        ) -
+        Math.atan2(
+          thisLine.endPosition.y - thisLine.startPosition.y,
+          thisLine.endPosition.x - thisLine.startPosition.x
         );
 
-        // Calculate the distance from the intersection point to the circle center.
-        const distanceToCenter =
-          radiusOfCircle / Math.sin(Math.PI - angleBetweenLines - thisLineToCenterAngle);
-
-        // Calculate the distance from the intersection point to the tangent point.
-        const distanceToTangent = distanceToCenter * Math.cos(thisLineToCenterAngle);
-
-        return distanceToTangent;
-      }
-
-      // If the angle is greater than or equal to pi/2, then the circle can be placed on the outside of the angle.
-      else {
-        // Calculate the angle between the first line and the line from the intersection point to the center of the circle.
-        const thisLineToCenterAngle = Math.atan2(
-          -intersectionPoint.y + thisLine.startPosition.y,
-          -intersectionPoint.x + thisLine.startPosition.x
-        );
-
-        // Calculate the distance from the intersection point to the circle center.
-        const distanceToCenter =
-          radiusOfCircle / Math.sin(angleBetweenLines + thisLineToCenterAngle);
-
-        // Calculate the distance from the intersection point to the tangent point.
-        const distanceToTangent = distanceToCenter * Math.cos(thisLineToCenterAngle);
-
-        return distanceToTangent;
-      }
+      //d = r * tan(θ/2)
+      const distanceToTangentThisLine = radiusOfCircle * Math.tan(angleBetweenLines / 2);
+      return distanceToTangentThisLine;
     }
 
     try {
@@ -346,10 +304,27 @@ export class RealLink extends Link {
             console.log('thisLine is inside nextLink');
             //Endjoint must inside, this is an internal (<180) intersection
             let intersectionPoint: Coord;
-            [intersectionPoint, nextLine, offset] = findInterSectionBetween(
+            [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink, thisLink);
+            // internalRadius = r ≈ A / (π/2 - θ/2)
+            // Angle between lines
+            const angleBetweenLines =
+              Math.atan2(
+                nextLine.endPosition.y - nextLine.startPosition.y,
+                nextLine.endPosition.x - nextLine.startPosition.x
+              ) -
+              Math.atan2(
+                thisLine.endPosition.y - thisLine.startPosition.y,
+                thisLine.endPosition.x - thisLine.startPosition.x
+              );
+
+            internalRadius = 1 * Math.tan((Math.PI - angleBetweenLines) / 2);
+
+            //Find the distance from the intersection point to the tangent point.
+            let arcOffsetDistance: number = findArcOffsetDistance(
+              intersectionPoint,
               thisLine,
-              nextLink,
-              thisLink
+              nextLine,
+              internalRadius
             );
             let arcStartPoint: Coord = offsetAlongLineNotInLink(
               thisLine,
@@ -390,6 +365,7 @@ export class RealLink extends Link {
           }
         } else {
           isInternal = false;
+
           //Non-welded joint
           console.log(
             '(Non-Welded) Drawing line to ' +
@@ -418,9 +394,9 @@ export class RealLink extends Link {
         if (isInternal) {
           path +=
             'A ' +
-            offset * 1 +
+            internalRadius +
             ' ' +
-            offset * 1 +
+            internalRadius +
             ' 0 0 0' +
             nextLine.startPosition.x +
             ' ' +
@@ -439,7 +415,7 @@ export class RealLink extends Link {
         penLocation = nextLine.startPosition;
         thisLine = nextLine;
       }
-      // path += ' Z';
+      path += ' Z';
       console.warn('Finished getCompoundPathString');
       return path;
     } catch (error) {
@@ -447,6 +423,13 @@ export class RealLink extends Link {
       console.error('Error in getCompoundPathString, returning what we have so far');
       // path += ' Z';
       return path;
+      //As a fallback, return the simple path string of each sublink
+      // let stringBuilder = '';
+      // for (const link of linkSubset) {
+      //   stringBuilder += (link as RealLink).getSimplePathString();
+      // }
+      // console.error(stringBuilder.split(' '));
+      // return stringBuilder;
     }
 
     function generateAllLines(linkSubset: Link[]) {
@@ -470,7 +453,10 @@ export class RealLink extends Link {
         for (const line of mainLink.externalLines) {
           for (const otherLink of subLinks) {
             if (mainLink.id !== otherLink.id) {
-              if (!isInsideLink(otherLink, line.startPosition)) {
+              if (
+                !isInsideLink(otherLink, line.startPosition) &&
+                !(line.startJoint as RealJoint).isWelded
+              ) {
                 if (isClockwise(line, mainLink._CoM)) {
                   return line;
                 }
@@ -534,7 +520,7 @@ export class RealLink extends Link {
       thisLine: Line,
       nextLink: RealLink,
       thisLink: RealLink
-    ): [Coord, Line, number] {
+    ): [Coord, Line] {
       //Get all the external lines of the next link
       let nextLinkExternalLines: Line[] = nextLink.externalLines;
       //Check to make sure that the next link has external lines
@@ -836,6 +822,8 @@ export class RealLink extends Link {
       this.externalLines.push(newLine);
       // console.warn(line, newLine);
     });
+
+    d += ' Z ';
 
     return d;
 
