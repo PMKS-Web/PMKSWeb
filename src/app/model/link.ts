@@ -6,6 +6,7 @@ import {
   degToRad,
   determineSlope,
   determineYIntersect,
+  euclideanDistance,
   find_slope,
   find_y_intercept,
   findBiggestAngle,
@@ -25,6 +26,7 @@ import hull from 'hull.js/dist/hull.js';
 import { SettingsService } from '../services/settings.service';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { Line } from './line';
+import { get } from '@angular/fire/database';
 
 export enum Shape {
   line = 'line',
@@ -210,9 +212,9 @@ export class RealLink extends Link {
     } else {
       this.subset = subSet;
     }
+    this._CoM = CoM !== undefined ? CoM : RealLink.determineCenterOfMass(joints);
     this._d = this.getPathString();
     // TODO: When you insert a joint onto a link, be sure to utilize this function call
-    this._CoM = CoM !== undefined ? CoM : RealLink.determineCenterOfMass(joints);
     this.updateCoMDs();
     this.updateLengthAndAngle();
   }
@@ -280,6 +282,20 @@ export class RealLink extends Link {
       //d = r * tan(θ/2)
       const distanceToTangentThisLine = radiusOfCircle * Math.tan(angleBetweenLines / 2);
       return distanceToTangentThisLine;
+    }
+
+    function intersectsAnyLine(thisLine: Line, linkSubset: RealLink[]): boolean {
+      //Return true if this line intersects any other line in the subset
+      for (const link of linkSubset) {
+        for (const line of link.externalLines) {
+          if (line !== thisLine) {
+            if (RealLink.getLineIntersection(thisLine, line) !== null) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     }
 
     try {
@@ -364,20 +380,73 @@ export class RealLink extends Link {
             nextLine = findClosestLineNotIntersectingLink(thisLine.endJoint, thisLink, nextLink);
           }
         } else {
-          isInternal = false;
+          if (intersectsAnyLine(thisLine, linkSubset)) {
+            isInternal = true;
+            nextLink = getLinkThatContainsFirstIntersectingLine(thisLine, linkSubset);
+            console.log('thisLine is inside nextLink');
+            //Endjoint must inside, this is an internal (<180) intersection
+            let intersectionPoint: Coord;
+            [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink, thisLink);
+            // internalRadius = r ≈ A / (π/2 - θ/2)
+            // Angle between lines
+            const angleBetweenLines =
+              Math.atan2(
+                nextLine.endPosition.y - nextLine.startPosition.y,
+                nextLine.endPosition.x - nextLine.startPosition.x
+              ) -
+              Math.atan2(
+                thisLine.endPosition.y - thisLine.startPosition.y,
+                thisLine.endPosition.x - thisLine.startPosition.x
+              );
 
-          //Non-welded joint
-          console.log(
-            '(Non-Welded) Drawing line to ' +
-              thisLine.endPosition.x.toFixed(2) +
-              ', ' +
-              thisLine.endPosition.y.toFixed(2) +
-              ' ' +
-              thisLine.endJoint.id
-          );
+            internalRadius = 1 * Math.tan((Math.PI - angleBetweenLines) / 2);
 
-          path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
-          nextLine = findNextExternalLine(thisLine, thisLink);
+            //Find the distance from the intersection point to the tangent point.
+            let arcOffsetDistance: number = findArcOffsetDistance(
+              intersectionPoint,
+              thisLine,
+              nextLine,
+              internalRadius
+            );
+            let arcStartPoint: Coord = offsetAlongLineNotInLink(
+              thisLine,
+              intersectionPoint,
+              nextLink,
+              arcOffsetDistance
+            );
+            let arcEndPoint: Coord = offsetAlongLineNotInLink(
+              nextLine,
+              intersectionPoint,
+              thisLink,
+              arcOffsetDistance
+            );
+            console.log(
+              '(Internal) Drawing line to ' +
+                arcStartPoint.x.toFixed(2) +
+                ', ' +
+                arcStartPoint.y.toFixed(2) +
+                ' ' +
+                thisLine.endJoint.id
+            );
+            path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
+            nextLine.startPosition = arcEndPoint;
+            getLinkThatContainsFirstIntersectingLine(thisLine, linkSubset);
+          } else {
+            isInternal = false;
+
+            //Non-welded joint
+            console.log(
+              '(Non-Welded) Drawing line to ' +
+                thisLine.endPosition.x.toFixed(2) +
+                ', ' +
+                thisLine.endPosition.y.toFixed(2) +
+                ' ' +
+                thisLine.endJoint.id
+            );
+
+            path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
+            nextLine = findNextExternalLine(thisLine, thisLink);
+          }
         }
 
         console.log(
@@ -457,7 +526,7 @@ export class RealLink extends Link {
                 !isInsideLink(otherLink, line.startPosition) &&
                 !(line.startJoint as RealJoint).isWelded
               ) {
-                if (isClockwise(line, mainLink._CoM)) {
+                if (RealLink.isClockwise(line, mainLink._CoM)) {
                   return line;
                 }
               }
@@ -467,26 +536,6 @@ export class RealLink extends Link {
       }
 
       throw new Error('No clockWise, external lines found. Not sure where to start tracing from');
-
-      function isClockwise(l: Line, center: Coord) {
-        const lineStart: Coord = l.startPosition;
-        const lineEnd: Coord = l.endPosition;
-
-        const vectorStartToCenter = {
-          x: center.x - lineStart.x,
-          y: center.y - lineStart.y,
-        };
-
-        const vectorEndToCenter = {
-          x: center.x - lineEnd.x,
-          y: center.y - lineEnd.y,
-        };
-
-        const crossProduct =
-          vectorStartToCenter.x * vectorEndToCenter.y - vectorStartToCenter.y * vectorEndToCenter.x;
-
-        return crossProduct > 0;
-      }
     }
 
     function sameLocation(penLocation: Coord, veryFirstPoint: Coord) {
@@ -507,6 +556,43 @@ export class RealLink extends Link {
       return linkSubset.filter((l) => {
         return l.joints.includes(startJoint) && l.joints.includes(endJoint);
       })[0];
+    }
+
+    function getLinkThatContainsFirstIntersectingLine(thisLine: Line, linkSubset: RealLink[]) {
+      //Get the link that contains the first line that intersects with thisLine
+      let mapOfIntersectingLinksToDistance: Map<RealLink, number> = new Map();
+      for (const link of linkSubset) {
+        for (const line of link.externalLines) {
+          if (line !== thisLine) {
+            const intersectionPoint = RealLink.getLineIntersection(thisLine, line);
+            if (intersectionPoint !== null) {
+              mapOfIntersectingLinksToDistance.set(
+                link,
+                euclideanDistance(
+                  thisLine.startPosition.x,
+                  thisLine.startPosition.x,
+                  intersectionPoint.x,
+                  intersectionPoint.y
+                )
+              );
+            }
+          }
+        }
+      }
+      //Find the link that is closest to the start of thisLine
+      let closestLink: RealLink;
+      let closestDistance = Infinity;
+      for (const [link, distance] of mapOfIntersectingLinksToDistance) {
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestLink = link;
+        }
+      }
+
+      if (closestLink! === undefined) {
+        throw new Error('No intersecting links found');
+      }
+      return closestLink;
     }
 
     function linkContainingAbutNotB(endJoint: Joint, startJoint: Joint, linkSubset: RealLink[]) {
@@ -813,15 +899,21 @@ export class RealLink extends Link {
       ' ' +
       startY;
 
-    this.externalLines.forEach((line) => {
-      //Create the corresponding external line that travels in the opposite direction
-      const newLine = new Line('oppositeExternalLine', line.endJoint, line.startJoint);
-      newLine.startPosition = line.endPosition;
-      newLine.endPosition = line.startPosition;
-      newLine.isMirror = true;
-      this.externalLines.push(newLine);
-      // console.warn(line, newLine);
-    });
+    if (RealLink.isClockwise(this.externalLines[0], this.CoM)) {
+      console.error('Clockwise');
+    } else {
+      console.error('Counter clockwise');
+      this.externalLines.forEach((line) => {
+        //Swap start and end positions
+        const temp = line.startPosition;
+        line.startPosition = line.endPosition;
+        line.endPosition = temp;
+        //Same for joints
+        const temp2 = line.startJoint;
+        line.startJoint = line.endJoint;
+        line.endJoint = temp2;
+      });
+    }
 
     d += ' Z ';
 
@@ -915,6 +1007,26 @@ export class RealLink extends Link {
         }
       }
     }
+  }
+
+  static isClockwise(l: Line, center: Coord) {
+    const lineStart: Coord = l.startPosition;
+    const lineEnd: Coord = l.endPosition;
+
+    const vectorStartToCenter = {
+      x: center.x - lineStart.x,
+      y: center.y - lineStart.y,
+    };
+
+    const vectorEndToCenter = {
+      x: center.x - lineEnd.x,
+      y: center.y - lineEnd.y,
+    };
+
+    const crossProduct =
+      vectorStartToCenter.x * vectorEndToCenter.y - vectorStartToCenter.y * vectorEndToCenter.x;
+
+    return crossProduct > 0;
   }
 
   static getLineIntersection(thisLine: Line, nextLine: Line): Coord | null {
