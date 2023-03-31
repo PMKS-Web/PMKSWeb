@@ -865,4 +865,11 @@ export class NewGridComponent {
       }
     }
   }
+
+  isRenderFail(link: Link) {
+    if (link instanceof RealLink) {
+      return false;
+    }
+    return (link as RealLink).renderError;
+  }
 }

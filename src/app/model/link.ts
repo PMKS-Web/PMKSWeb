@@ -156,6 +156,7 @@ export class RealLink extends Link {
   // TODO: Have an optional argument of forces
 
   public static debugDesiredJointsIDs: any;
+  public renderError: boolean = true;
 
   constructor(
     id: string,
@@ -233,6 +234,9 @@ export class RealLink extends Link {
     const offset: number = SettingsService.objectScale.value / 4;
     let linkSubset: RealLink[] = this.subset as RealLink[];
 
+    //Make a set of two lines (Line,Line) that have been drawn already
+    let setOfDrawnInterSections = new Set<String>();
+
     linkSubset.forEach((l) => {
       l.reComputeDPath();
     });
@@ -261,43 +265,7 @@ export class RealLink extends Link {
 
     let isInternal: boolean = false;
     let internalRadius: number = 0;
-
-    function findArcOffsetDistance(
-      intersectionPoint: Coord,
-      thisLine: Line,
-      nextLine: Line,
-      radiusOfCircle: number
-    ): number {
-      //Find the angle between the two lines
-      const angleBetweenLines =
-        Math.atan2(
-          nextLine.endPosition.y - nextLine.startPosition.y,
-          nextLine.endPosition.x - nextLine.startPosition.x
-        ) -
-        Math.atan2(
-          thisLine.endPosition.y - thisLine.startPosition.y,
-          thisLine.endPosition.x - thisLine.startPosition.x
-        );
-
-      //d = r * tan(θ/2)
-      const distanceToTangentThisLine = radiusOfCircle * Math.tan(angleBetweenLines / 2);
-      return distanceToTangentThisLine;
-    }
-
-    function intersectsAnyLine(thisLine: Line, linkSubset: RealLink[]): boolean {
-      //Return true if this line intersects any other line in the subset
-      for (const link of linkSubset) {
-        for (const line of link.externalLines) {
-          if (line !== thisLine) {
-            if (RealLink.getLineIntersection(thisLine, line) !== null) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
-    }
-
+    let internalLineStart: Coord = new Coord(0, 0);
     try {
       while (!sameLocation(penLocation, veryFirstPoint) && counter < 100) {
         counter++;
@@ -305,148 +273,134 @@ export class RealLink extends Link {
         console.log('thisLink: ' + thisLink.id);
         console.log('thisLine: ' + thisLine.startJoint.id + ' ' + thisLine.endJoint.id);
         console.log('thisLine.endJoint:', thisLine.endJoint);
-        if ((thisLine.endJoint as RealJoint).isWelded) {
-          console.log(thisLine.endJoint.id + ' is welded');
-          nextLink = linkContainingAbutNotB(thisLine.endJoint, thisLine.startJoint, linkSubset);
-          console.log('nextLink: ' + nextLink.id);
+
+        if (intersectsAnyLine(thisLine, linkSubset)) {
+          //Welded or Non-welded Internal
+          isInternal = true;
+          nextLink = getLinkThatContainsFirstIntersectingLine(thisLine, linkSubset);
+          let intersectionPoint: Coord;
+          [intersectionPoint, nextLine] = findFirstInterSectionBetween(
+            thisLine,
+            nextLink,
+            thisLink
+          );
+          // internalRadius = r ≈ A / (π/2 - θ/2)
+          // Angle between lines
+          const angleBetweenLines =
+            Math.atan2(
+              nextLine.endPosition.y - nextLine.startPosition.y,
+              nextLine.endPosition.x - nextLine.startPosition.x
+            ) -
+            Math.atan2(
+              thisLine.endPosition.y - thisLine.startPosition.y,
+              thisLine.endPosition.x - thisLine.startPosition.x
+            );
+
+          internalRadius = 1 * Math.tan((Math.PI - angleBetweenLines) / 2);
+
+          //Find the distance from the intersection point to the tangent point.
+          let arcOffsetDistance: number = findArcOffsetDistance(
+            intersectionPoint,
+            thisLine,
+            nextLine,
+            internalRadius
+          );
+          let arcStartPoint: Coord = offsetAlongLineNotInLink(
+            thisLine,
+            intersectionPoint,
+            nextLink,
+            arcOffsetDistance
+          );
+          let arcEndPoint: Coord = offsetAlongLineNotInLink(
+            nextLine,
+            intersectionPoint,
+            thisLink,
+            arcOffsetDistance
+          );
+
+          // // Find the smaller distance between the intersection point the two points
+          // let arcStartDistance: number = getDistance(intersectionPoint, arcStartPoint);
+          // let arcEndDistance: number = getDistance(intersectionPoint, arcEndPoint);
+          // let realArcDistance: number = Math.min(arcStartDistance, arcEndDistance);
+          //
+          // let realArcRadius = findArcOffsetDistanceInverse(
+          //   intersectionPoint,
+          //   thisLine,
+          //   nextLine,
+          //   realArcDistance
+          // );
+          //
+          // console.error('intersectionPoint', intersectionPoint);
+          // console.error('arcStart', arcStartPoint);
+          // console.error('arcEnd', arcEndPoint);
+          // console.error('realArcDistance', realArcDistance);
+          // console.error('realArcRadius', realArcRadius);
+          // console.error('internalRadius', internalRadius);
+          //
+          // if (Math.abs(realArcRadius) < Math.abs(internalRadius)) {
+          //   console.error(realArcRadius, internalRadius);
+          //   arcOffsetDistance = findArcOffsetDistance(
+          //     intersectionPoint,
+          //     thisLine,
+          //     nextLine,
+          //     realArcRadius
+          //   );
+          //   arcStartPoint = offsetAlongLineNotInLink(
+          //     thisLine,
+          //     intersectionPoint,
+          //     nextLink,
+          //     arcOffsetDistance
+          //   );
+          //   arcEndPoint = offsetAlongLineNotInLink(
+          //     nextLine,
+          //     intersectionPoint,
+          //     thisLink,
+          //     arcOffsetDistance
+          //   );
+          //   internalRadius = realArcRadius;
+          // }
+
           console.log(
-            'thisLine.endPos: ' +
+            '(Intersection) Drawing line to ' +
+              arcStartPoint.x.toFixed(2) +
+              ', ' +
+              arcStartPoint.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
+          );
+          path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
+          internalLineStart = arcEndPoint;
+          // nextLine.startPosition = arcEndPoint;
+        } else if ((thisLine.endJoint as RealJoint).isWelded) {
+          nextLink = linkContainingAbutNotB(thisLine.endJoint, thisLine.startJoint, linkSubset);
+          //Welded External
+          isInternal = false;
+          console.log('thisLine is outside nextLink');
+          console.log(
+            '(Weleded External) Drawing line to ' +
               thisLine.endPosition.x.toFixed(2) +
               ', ' +
-              thisLine.endPosition.y.toFixed(2)
+              thisLine.endPosition.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
           );
-          if (isInsideLink(nextLink, thisLine.endPosition)) {
-            isInternal = true;
-            console.log('thisLine is inside nextLink');
-            //Endjoint must inside, this is an internal (<180) intersection
-            let intersectionPoint: Coord;
-            [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink, thisLink);
-            // internalRadius = r ≈ A / (π/2 - θ/2)
-            // Angle between lines
-            const angleBetweenLines =
-              Math.atan2(
-                nextLine.endPosition.y - nextLine.startPosition.y,
-                nextLine.endPosition.x - nextLine.startPosition.x
-              ) -
-              Math.atan2(
-                thisLine.endPosition.y - thisLine.startPosition.y,
-                thisLine.endPosition.x - thisLine.startPosition.x
-              );
-
-            internalRadius = 1 * Math.tan((Math.PI - angleBetweenLines) / 2);
-
-            //Find the distance from the intersection point to the tangent point.
-            let arcOffsetDistance: number = findArcOffsetDistance(
-              intersectionPoint,
-              thisLine,
-              nextLine,
-              internalRadius
-            );
-            let arcStartPoint: Coord = offsetAlongLineNotInLink(
-              thisLine,
-              intersectionPoint,
-              nextLink,
-              arcOffsetDistance
-            );
-            let arcEndPoint: Coord = offsetAlongLineNotInLink(
-              nextLine,
-              intersectionPoint,
-              thisLink,
-              arcOffsetDistance
-            );
-            console.log(
-              '(Internal) Drawing line to ' +
-                arcStartPoint.x.toFixed(2) +
-                ', ' +
-                arcStartPoint.y.toFixed(2) +
-                ' ' +
-                thisLine.endJoint.id
-            );
-            path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
-            nextLine.startPosition = arcEndPoint;
-          } else {
-            isInternal = false;
-            console.log('thisLine is outside nextLink');
-            console.log(
-              '(External) Drawing line to ' +
-                thisLine.endPosition.x.toFixed(2) +
-                ', ' +
-                thisLine.endPosition.y.toFixed(2) +
-                ' ' +
-                thisLine.endJoint.id
-            );
-            //Endjoint must be on link Edge, this is an external (>180) intersection
-            path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
-            nextLine = findClosestLineNotIntersectingLink(thisLine.endJoint, thisLink, nextLink);
-          }
+          //Endjoint must be on link Edge, this is an external (>180) intersection
+          path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
+          nextLine = findClosestLineNotIntersectingLink(thisLine, thisLink, nextLink);
         } else {
-          if (intersectsAnyLine(thisLine, linkSubset)) {
-            isInternal = true;
-            nextLink = getLinkThatContainsFirstIntersectingLine(thisLine, linkSubset);
-            console.log('thisLine is inside nextLink');
-            //Endjoint must inside, this is an internal (<180) intersection
-            let intersectionPoint: Coord;
-            [intersectionPoint, nextLine] = findInterSectionBetween(thisLine, nextLink, thisLink);
-            // internalRadius = r ≈ A / (π/2 - θ/2)
-            // Angle between lines
-            const angleBetweenLines =
-              Math.atan2(
-                nextLine.endPosition.y - nextLine.startPosition.y,
-                nextLine.endPosition.x - nextLine.startPosition.x
-              ) -
-              Math.atan2(
-                thisLine.endPosition.y - thisLine.startPosition.y,
-                thisLine.endPosition.x - thisLine.startPosition.x
-              );
+          //Non-welded External
+          isInternal = false;
+          console.log(
+            '(Non-Welded External) Drawing line to ' +
+              thisLine.endPosition.x.toFixed(2) +
+              ', ' +
+              thisLine.endPosition.y.toFixed(2) +
+              ' ' +
+              thisLine.endJoint.id
+          );
 
-            internalRadius = 1 * Math.tan((Math.PI - angleBetweenLines) / 2);
-
-            //Find the distance from the intersection point to the tangent point.
-            let arcOffsetDistance: number = findArcOffsetDistance(
-              intersectionPoint,
-              thisLine,
-              nextLine,
-              internalRadius
-            );
-            let arcStartPoint: Coord = offsetAlongLineNotInLink(
-              thisLine,
-              intersectionPoint,
-              nextLink,
-              arcOffsetDistance
-            );
-            let arcEndPoint: Coord = offsetAlongLineNotInLink(
-              nextLine,
-              intersectionPoint,
-              thisLink,
-              arcOffsetDistance
-            );
-            console.log(
-              '(Internal) Drawing line to ' +
-                arcStartPoint.x.toFixed(2) +
-                ', ' +
-                arcStartPoint.y.toFixed(2) +
-                ' ' +
-                thisLine.endJoint.id
-            );
-            path += 'L ' + arcStartPoint.x + ' ' + arcStartPoint.y;
-            nextLine.startPosition = arcEndPoint;
-            getLinkThatContainsFirstIntersectingLine(thisLine, linkSubset);
-          } else {
-            isInternal = false;
-
-            //Non-welded joint
-            console.log(
-              '(Non-Welded) Drawing line to ' +
-                thisLine.endPosition.x.toFixed(2) +
-                ', ' +
-                thisLine.endPosition.y.toFixed(2) +
-                ' ' +
-                thisLine.endJoint.id
-            );
-
-            path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
-            nextLine = findNextExternalLine(thisLine, thisLink);
-          }
+          path += 'L ' + thisLine.endPosition.x + ' ' + thisLine.endPosition.y;
+          nextLine = findNextExternalLine(thisLine, thisLink);
         }
 
         console.log(
@@ -467,9 +421,10 @@ export class RealLink extends Link {
             ' ' +
             internalRadius +
             ' 0 0 0' +
-            nextLine.startPosition.x +
+            internalLineStart.x +
             ' ' +
-            nextLine.startPosition.y;
+            internalLineStart.y;
+          penLocation = internalLineStart;
         } else {
           path +=
             'A ' +
@@ -480,19 +435,21 @@ export class RealLink extends Link {
             nextLine.startPosition.x +
             ' ' +
             nextLine.startPosition.y;
+          penLocation = nextLine.startPosition;
         }
-        penLocation = nextLine.startPosition;
         thisLine = nextLine;
       }
       path += ' Z';
       console.warn('Finished getCompoundPathString');
+      this.renderError = false;
       return path;
     } catch (error) {
       console.error(error);
+      this.renderError = true;
       console.error('Error in getCompoundPathString, returning what we have so far');
-      // path += ' Z';
+      path += ' Z';
       return path;
-      //As a fallback, return the simple path string of each sublink
+      // As a fallback, return the simple path string of each sublink
       // let stringBuilder = '';
       // for (const link of linkSubset) {
       //   stringBuilder += (link as RealLink).getSimplePathString();
@@ -514,6 +471,74 @@ export class RealLink extends Link {
         });
       });
       return allLines;
+    }
+
+    function findArcOffsetDistance(
+      intersectionPoint: Coord,
+      thisLine: Line,
+      nextLine: Line,
+      radiusOfCircle: number
+    ): number {
+      //Finds the distance to offset the arc from the intersection point
+      //Find the angle between the two lines
+      const angleBetweenLines =
+        Math.atan2(
+          nextLine.endPosition.y - nextLine.startPosition.y,
+          nextLine.endPosition.x - nextLine.startPosition.x
+        ) -
+        Math.atan2(
+          thisLine.endPosition.y - thisLine.startPosition.y,
+          thisLine.endPosition.x - thisLine.startPosition.x
+        );
+
+      //d = r * tan(θ/2)
+      const distanceToTangentThisLine = radiusOfCircle * Math.tan(angleBetweenLines / 2);
+      return distanceToTangentThisLine;
+    }
+
+    function findArcOffsetDistanceInverse(
+      intersectionPoint: Coord,
+      thisLine: Line,
+      nextLine: Line,
+      distanceFromIntersection: number
+    ): number {
+      //Finds the distance to offset the arc from the intersection point
+      //Find the angle between the two lines
+      const angleBetweenLines =
+        Math.atan2(
+          nextLine.endPosition.y - nextLine.startPosition.y,
+          nextLine.endPosition.x - nextLine.startPosition.x
+        ) -
+        Math.atan2(
+          thisLine.endPosition.y - thisLine.startPosition.y,
+          thisLine.endPosition.x - thisLine.startPosition.x
+        );
+      console.error('Angle between lines: ' + radToDeg(angleBetweenLines));
+
+      //r = d / 2 sin (α / 2)
+      const radiusOfCircle = distanceFromIntersection / (2 * Math.sin(angleBetweenLines / 2));
+      return radiusOfCircle;
+    }
+
+    function getCombinedLineString(thisLine: Line, line: Line) {
+      return thisLine.startJoint.id + thisLine.endJoint.id + line.startJoint.id + line.endJoint.id;
+    }
+
+    function intersectsAnyLine(thisLine: Line, linkSubset: RealLink[]): boolean {
+      //Return true if this line intersects any other line in the subset
+      for (const link of linkSubset) {
+        for (const line of link.externalLines) {
+          if (line !== thisLine) {
+            if (RealLink.getLineIntersection(thisLine, line) !== null) {
+              console.log('Intersects ', setOfDrawnInterSections.values());
+              if (!setOfDrawnInterSections.has(getCombinedLineString(thisLine, line))) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
     }
 
     function pickRandomExternalLine(subLinks: RealLink[]): Line {
@@ -602,7 +627,7 @@ export class RealLink extends Link {
       })[0];
     }
 
-    function findInterSectionBetween(
+    function findFirstInterSectionBetween(
       thisLine: Line,
       nextLink: RealLink,
       thisLink: RealLink
@@ -615,21 +640,65 @@ export class RealLink extends Link {
       }
 
       console.log('NextLinkExternalLines: ', nextLinkExternalLines);
+
+      let interSectionPointToNextLine = new Map<Coord, Line>();
       //For each external line, check to see if it intersects with thisLine
       for (let i = 0; i < nextLinkExternalLines.length; i++) {
         let nextLine: Line = nextLinkExternalLines[i];
         let intersectionPoint: Coord | null = RealLink.getLineIntersection(thisLine, nextLine);
         if (intersectionPoint !== null) {
-          console.log('Intersection found between ' + thisLine.id + ' and ' + nextLine.id);
-          if (isInsideLink(thisLink, nextLine.startPosition)) {
-            console.log('Intersection point is inside thisLink, returning nextLine');
-            return [intersectionPoint, nextLine];
-          }
+          console.log('Intersection found between two lines', thisLine, nextLine);
+          //Add the intersection point and the line to the map
+          interSectionPointToNextLine.set(intersectionPoint, nextLine);
         }
       }
-      //If it doesn't, throw an error
-      console.error('No intersection found between ' + thisLine.id + ' and ' + nextLink.id);
-      throw new Error('No intersection found');
+
+      //If there are no intersections, throw an error
+      if (interSectionPointToNextLine.size === 0) {
+        //If it doesn't, throw an error
+        console.error('No intersection found between ' + thisLine.id + ' and ' + nextLink.id);
+        throw new Error('No intersection found');
+      }
+
+      //Find the closest intersection point and the line that it intersects with
+      let closestIntersectionPoint: Coord;
+      let closestDistance = Infinity;
+      let nextLine: Line;
+      for (const [intersectionPoint, line] of interSectionPointToNextLine) {
+        let distance: number = euclideanDistance(
+          thisLine.startPosition.x,
+          thisLine.startPosition.y,
+          intersectionPoint.x,
+          intersectionPoint.y
+        );
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIntersectionPoint = intersectionPoint;
+          nextLine = line;
+        }
+      }
+
+      //Add to the set of lines that have been drawn
+      setOfDrawnInterSections.add(getCombinedLineString(thisLine, nextLine!));
+      setOfDrawnInterSections.add(getCombinedLineString(nextLine!, thisLine));
+      return [closestIntersectionPoint!, nextLine!];
+    }
+
+    function forcePointToBeOnLine(point: Coord, line: Line) {
+      //Ensure that the point is located on the line, if not, move it to the closest point on the line
+      if (point.x < Math.min(line.startPosition.x, line.endPosition.x)) {
+        point.x = Math.min(line.startPosition.x, line.endPosition.x);
+      } else if (point.x > Math.max(line.startPosition.x, line.endPosition.x)) {
+        point.x = Math.max(line.startPosition.x, line.endPosition.x);
+      }
+
+      if (point.y < Math.min(line.startPosition.y, line.endPosition.y)) {
+        point.y = Math.min(line.startPosition.y, line.endPosition.y);
+      } else if (point.y > Math.max(line.startPosition.y, line.endPosition.y)) {
+        point.y = Math.max(line.startPosition.y, line.endPosition.y);
+      }
+
+      return point;
     }
 
     function offsetAlongLineNotInLink(
@@ -651,11 +720,20 @@ export class RealLink extends Link {
         intersectionPoint.y - arcOffset * Math.sin(line.angleRad)
       );
 
+      let point1Nudge: Coord = new Coord(
+        intersectionPoint.x + 0.05 * Math.cos(line.angleRad),
+        intersectionPoint.y + 0.05 * Math.sin(line.angleRad)
+      );
+      let point2Nudge: Coord = new Coord(
+        intersectionPoint.x - 0.05 * Math.cos(line.angleRad),
+        intersectionPoint.y - 0.05 * Math.sin(line.angleRad)
+      );
+
       //Then check to see which one is inside the other link
-      if (isInsideLink(otherLink, point1)) {
-        return point2;
-      } else if (isInsideLink(otherLink, point2)) {
-        return point1;
+      if (isInsideLink(otherLink, point1Nudge)) {
+        return forcePointToBeOnLine(point2, line);
+      } else if (isInsideLink(otherLink, point2Nudge)) {
+        return forcePointToBeOnLine(point1, line);
       } else {
         throw new Error('Neither point is inside the other link');
       }
@@ -723,42 +801,46 @@ export class RealLink extends Link {
     }
 
     function findClosestLineNotIntersectingLink(
-      endOfThisLine: Joint,
+      thisLine: Line,
       thisLink: RealLink,
       nextLink: RealLink
     ): Line {
-      //Finds the closest line of the nextLink that does not intersect with thisLink
+      //Finds the closest line of the nextLink that does not intersect with thisLink, if it can't find one, return thisLink's closest line
       //First, get all the external lines of the next link
-      let nextLinkExternalLines: Line[] = nextLink.externalLines;
+      let thisLinkAndNextLinkExtLines: Line[] = nextLink.externalLines;
       //Check to make sure that the next link has external lines
-      if (nextLinkExternalLines.length === 0) {
+      if (thisLinkAndNextLinkExtLines.length === 0) {
         throw new Error('The next link has no external lines');
       }
 
+      //Also look in thisLink's external lines
+      thisLinkAndNextLinkExtLines = thisLinkAndNextLinkExtLines.concat(thisLink.externalLines);
+      console.log('(WeldExt) All lines: ', thisLinkAndNextLinkExtLines);
+      console.log('(WeldExt) thisLine: ', thisLine.endPosition);
       //Find the closest line
       let closestLine: Line;
       let closestDistance: number = Number.MAX_VALUE;
-      for (let i = 0; i < nextLinkExternalLines.length; i++) {
-        let nextLine: Line = nextLinkExternalLines[i];
-        //Check to see if the next line intersects with thisLink by checking for all external lines of thisLink
-        let intersects: boolean = false;
-        thisLink.externalLines.forEach((line) => {
-          if (RealLink.getLineIntersection(line, nextLine) !== null) {
-            intersects = true;
-          }
-        });
+      for (let i = 0; i < thisLinkAndNextLinkExtLines.length; i++) {
+        let nextLine: Line = thisLinkAndNextLinkExtLines[i];
 
-        if (!intersects) {
-          let distance: number = getDistance(endOfThisLine, nextLine.startJoint);
-          if (distance < closestDistance) {
-            closestLine = nextLine;
-            closestDistance = distance;
-          }
+        if (nextLine === thisLine) {
+          console.log('(WeldExt) Ignoring nextline, ', nextLine);
+          continue;
+        }
+
+        let distance: number = getDistance(thisLine.endPosition, nextLine.startPosition);
+        console.log(nextLine, distance);
+        if (distance < closestDistance) {
+          closestLine = nextLine;
+          closestDistance = distance;
         }
       }
       if (closestLine! === undefined) {
-        throw new Error('No closest line found');
+        throw new Error(
+          'Could not find a line that does not intersect with thisLink or nextLink in (welded external)'
+        );
       }
+      console.log('(WeldExt) Selected closest line: ', closestLine);
       return closestLine;
     }
 
