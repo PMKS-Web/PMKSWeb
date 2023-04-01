@@ -485,7 +485,7 @@ export class RealLink extends Link {
         drawingError ||
         !setsAreIdentical(setOfAllExternalLines, setOfDrawnLines)
       ) {
-        this.renderError = true;
+        this.renderError = true; //Turn this off to see the real path being drawn
         console.warn('Finished getCompoundPathString but did not draw all external lines');
       } else {
         path += ' Z';
