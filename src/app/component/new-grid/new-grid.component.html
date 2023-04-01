@@ -196,7 +196,11 @@
         [attr.cy]='0'
         [class]='mechanismSrv.getJointCSSClass(joint)'
       />
+
     </svg>
+  </g>
+  <g *ngIf='settings.isGridDebugOn'>
+  <circle *ngFor='let coord of getDebugPoints()' r='0.1' [attr.cx]='getDebugPointX(coord)' [attr.cy]='-getDebugPointY(coord)' fill='black' />
   </g>
   <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
     <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
@@ -389,8 +393,10 @@
 <!--    ></path>-->
 <!--  </g>-->
 </svg>
-<div id='mouseLocation'>
+<div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
+  <br/>
+  {{returnDebugValue()}}
 </div>
 <ng-template #context_menu>
   <app-context-menu [menuItems]='cMenuItems'>

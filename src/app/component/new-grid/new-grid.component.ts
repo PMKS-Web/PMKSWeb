@@ -39,6 +39,9 @@ import { Line } from '../../model/line';
   styleUrls: ['./new-grid.component.scss'],
 })
 export class NewGridComponent {
+  public static debugValue: any;
+  static debugPoints: Coord[] = [];
+
   constructor(
     public svgGrid: SvgGridService,
     public mechanismSrv: MechanismService,
@@ -867,9 +870,28 @@ export class NewGridComponent {
   }
 
   isRenderFail(link: Link) {
-    if (link instanceof RealLink) {
-      return false;
-    }
     return (link as RealLink).renderError;
+  }
+
+  returnDebugValue() {
+    return NewGridComponent.debugValue;
+  }
+
+  getDebugPointX(coord: Coord) {
+    if (coord == undefined) {
+      return 0;
+    }
+    return coord.x;
+  }
+
+  getDebugPointY(coord: Coord) {
+    if (coord == undefined) {
+      return 0;
+    }
+    return coord.y;
+  }
+
+  getDebugPoints() {
+    return NewGridComponent.debugPoints;
   }
 }

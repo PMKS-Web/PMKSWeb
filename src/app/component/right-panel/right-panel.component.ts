@@ -23,6 +23,7 @@ import { FormBuilder, FormControl, FormGroupDirective, NgForm, Validators } from
 import { ErrorStateMatcher } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
+import { SettingsService } from '../../services/settings.service';
 
 @Component({
   selector: 'app-right-panel',
@@ -71,13 +72,16 @@ export class RightPanelComponent {
 
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
+  turnOnDebugger() {
+    this.settingsService.isGridDebugOn = true;
+  }
 
   constructor(
     public activeObjService: ActiveObjService,
     public mechanismService: MechanismService,
+    public settingsService: SettingsService,
     private fb: FormBuilder
-  ) {
-  }
+  ) {}
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -151,7 +155,7 @@ export class RightPanelComponent {
 
   redrawAllLinks() {
     console.log('Redrawing all links');
-    this.mechanismService.links.forEach(link => {
+    this.mechanismService.links.forEach((link) => {
       (link as RealLink).reComputeDPath();
     });
   }
