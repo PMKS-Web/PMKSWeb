@@ -17,6 +17,7 @@ import { Mechanism } from '../model/mechanism/mechanism';
 import { Coord } from '../model/coord';
 import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
+import { Arc, Line } from '../model/line';
 
 @Injectable({
   providedIn: 'root',
@@ -222,5 +223,9 @@ export class GridUtilsService {
       return;
     }
     return link.subset;
+  }
+
+  getCenter(line: Line) {
+    return (line as Arc).center;
   }
 }

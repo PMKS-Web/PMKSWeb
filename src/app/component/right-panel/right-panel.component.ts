@@ -24,6 +24,9 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
 import { SettingsService } from '../../services/settings.service';
+import { Arc, Line } from '../../model/line';
+import { C } from '@angular/cdk/keycodes';
+import { Coord } from '../../model/coord';
 
 @Component({
   selector: 'app-right-panel',
@@ -73,7 +76,7 @@ export class RightPanelComponent {
   static openTab = 0; //Default open tab to "Edit" /
   static isOpen = false; // Is the tab open?
   turnOnDebugger() {
-    this.settingsService.isGridDebugOn = true;
+    this.settingsService.isGridDebugOn = !this.settingsService.isGridDebugOn;
   }
 
   constructor(
@@ -81,7 +84,8 @@ export class RightPanelComponent {
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
     private fb: FormBuilder
-  ) {}
+  ) {
+  }
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -175,6 +179,50 @@ export class RightPanelComponent {
       default:
         console.log('No active object');
     }
+
+    console.log('Running interseciton tests');
+    let arc = new Arc(new Coord(0, 0), new Coord(0, 2), new Coord(0, 1));
+    let arc2 = new Arc(new Coord(-1, 1), new Coord(1, 1), new Coord(0, 1));
+    console.log('Arc intersects with arc2, should be infinite points:');
+    console.log(arc.intersectsWith(arc2));
+
+    let line = new Line(new Coord(1, 0), new Coord(1, 2));
+    console.log('Arc intersects with line, should be one point:');
+    console.log(arc.intersectsWith(line));
+
+    let line2 = new Line(new Coord(0.8, 0), new Coord(0.8, 2));
+    console.log('Arc intersects with line2, should be two points:');
+    console.log(arc.intersectsWith(line2));
+    console.log(line2.intersectsWith(arc));
+
+    let line3 = new Line(new Coord(-1, 0), new Coord(0, 0));
+    console.log('Arc intersects with line 3 but only at the end, no points:');
+    console.log(line3.intersectsWith(arc));
+    console.log(arc.intersectsWith(line3));
+
+    let line4 = new Line(new Coord(0, 2), new Coord(-1, 2));
+    console.log('Arc intersects with line 4 but only at the start, no points:');
+    console.log(line4.intersectsWith(arc));
+    console.log(arc.intersectsWith(line4));
+
+    let arc3 = new Arc(new Coord(-1, 2), new Coord(-1, 0), new Coord(-1, 1));
+    console.log('Arc intersects with arc3 but only at the start, no points:');
+    console.log(arc3.intersectsWith(line3));
+    console.log(line3.intersectsWith(arc3));
+
+    let arcTest = new Arc(new Coord(-0.1926, -7.258), new Coord(1.038, -7.36), new Coord(0.422, -7.31));
+    let lineTest = new Line(new Coord(1, 9.95), new Coord(0.457, 0.52));
+    console.log('Arc intersects with lineTest, should be undefined:');
+    console.log(arcTest.intersectsWith(lineTest));
+    console.log(lineTest.intersectsWith(arcTest));
+
+
+    //Two circle intersection test
+    let arc4 = new Arc(new Coord(0, -1), new Coord(0, 1), new Coord(0, 0));
+    let arc5 = new Arc(new Coord(1, 1), new Coord(1, -1), new Coord(1, 0));
+    console.log('Arc intersects with arc5, should be two points:');
+    console.log(arc4.intersectsWith(arc5));
+    console.log(arc5.intersectsWith(arc4));
   }
 
   gotoHelpSite() {

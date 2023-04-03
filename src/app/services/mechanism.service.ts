@@ -61,7 +61,7 @@ export class MechanismService {
   }
 
   getLinks() {
-    return this.links;
+    return this.links as RealLink[];
   }
 
   getForces() {
@@ -295,14 +295,16 @@ export class MechanismService {
       return newLinkJoints.indexOf(j) === index;
     });
 
-    const newLink = new RealLink('', newLinkJoints);
+    let subsetForNewLink: Link[] = [];
 
     //For each link in linksToWeld, if the link has a subset, add it to the newLink's subset, else add the link to the newLink's subset
     linksToWeld.forEach((link) => {
       link.subset.length > 0
-        ? (newLink.subset = newLink.subset.concat(link.subset))
-        : newLink.subset.push(link);
+        ? (subsetForNewLink = subsetForNewLink.concat(link.subset))
+        : subsetForNewLink.push(link);
     });
+
+    const newLink = new RealLink('', newLinkJoints, 0, 0, new Coord(0, 0), subsetForNewLink);
 
     //Now find the ID for the new link by concatenating all the joint ids, make sure to sort and remove duplicates
     const id = newLinkJoints

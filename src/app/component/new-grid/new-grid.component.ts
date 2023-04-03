@@ -16,7 +16,7 @@ import {
   gridStates,
   is_touch_enabled,
   jointStates,
-  line_intersect,
+  line_line_intersect,
   linkStates,
 } from '../../model/utils';
 import { Force } from '../../model/force';
@@ -41,6 +41,7 @@ import { Line } from '../../model/line';
 export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
+  public static debugLines: Line[] = [];
 
   constructor(
     public svgGrid: SvgGridService,
@@ -893,5 +894,9 @@ export class NewGridComponent {
 
   getDebugPoints() {
     return NewGridComponent.debugPoints;
+  }
+
+  getDebugLines(): Line[] {
+    return NewGridComponent.debugLines;
   }
 }

@@ -32,4 +32,12 @@ export class Coord {
     const y = this.x * inverseCTM.b + this.y * inverseCTM.d + inverseCTM.f;
     return new Coord(x, y);
   }
+
+  getDistanceTo(coord: Coord): number {
+    return Math.sqrt(Math.pow(this.x - coord.x, 2) + Math.pow(this.y - coord.y, 2));
+  }
+
+  getAngleTo(arcStart: Coord) {
+    return Math.atan2(this.y - arcStart.y, this.x - arcStart.x);
+  }
 }
