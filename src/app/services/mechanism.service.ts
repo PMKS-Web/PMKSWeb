@@ -677,6 +677,7 @@ export class MechanismService {
       l.d = link.d;
       l.CoM = link.CoM;
       l.updateCoMDs();
+      l.reComputeDPath();
     });
     this.forces.forEach((f, f_index) => {
       f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
