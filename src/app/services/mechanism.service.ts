@@ -277,7 +277,7 @@ export class MechanismService {
       this.links.splice(this.links.indexOf(mainLink), 1);
     }
     joint.isWelded = !joint.isWelded;
-    this.updateMechanism();
+    // this.updateMechanism();
   }
 
   private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {

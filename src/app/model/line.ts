@@ -29,7 +29,6 @@ export class Line {
   parentLink: RealLink | null = null;
 
   nextClockwiseLine: Line | Arc | null = null;
-  previousClockwiseLine: Line | Arc | null = null;
 
   constructor(startPosition: Coord, endPosition: Coord) {
     this.startPosition = startPosition;
@@ -52,14 +51,6 @@ export class Line {
 
   get next(): Line | Arc {
     return this.nextClockwiseLine!;
-  }
-
-  set prev(previous: Line | Arc) {
-    this.previousClockwiseLine = previous;
-  }
-
-  get prev(): Line | Arc {
-    return this.previousClockwiseLine!;
   }
 
   get angle(): number {
@@ -105,6 +96,31 @@ export class Line {
     this._initialStartPos = this.startPosition;
     this._initialEndPos = this.endPosition;
   }
+
+  splitAt(coord: Coord): Line | undefined {
+    if (this.startPosition.equals(coord) || this.endPosition.equals(coord)) {
+      console.log('Cannot split at start or end position', coord, this);
+      return;
+    } else {
+      let newLine = new Line(coord, this.endPosition);
+      newLine.next = this.next;
+      newLine.parentLink = this.parentLink;
+      newLine.color = this.color;
+
+      this.endPosition = coord;
+      this.next = newLine;
+
+      return newLine;
+    }
+  }
+
+  equals(line: Line): boolean {
+    return (
+      this.startPosition.equals(line.startPosition) &&
+      this.endPosition.equals(line.endPosition) &&
+      this.isArc == line.isArc
+    );
+  }
 }
 
 export class Arc extends Line {
@@ -149,5 +165,22 @@ export class Arc extends Line {
     return `A ${this.startPosition.getDistanceTo(this.center)} ${this.startPosition.getDistanceTo(
       this.center
     )} 0 0 1 ${this.endPosition.x} ${this.endPosition.y} `;
+  }
+
+  override splitAt(coord: Coord): Line | undefined {
+    if (this.startPosition.equals(coord) || this.endPosition.equals(coord)) {
+      console.log('Cannot split at start or end position', coord, this);
+      return;
+    } else {
+      let newArc = new Arc(coord, this.endPosition, this.center);
+      newArc.next = this.next;
+      newArc.parentLink = this.parentLink;
+      newArc.color = this.color;
+
+      this.endPosition = coord;
+      this.next = newArc;
+
+      return newArc;
+    }
   }
 }

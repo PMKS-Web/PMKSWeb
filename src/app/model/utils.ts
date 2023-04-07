@@ -589,7 +589,18 @@ export function line_line_intersect(
   let x = x1 + ua * (x2 - x1);
   let y = y1 + ua * (y2 - y1);
 
-  return new Coord(x, y);
+  let intersection = new Coord(x, y);
+
+  if (
+    intersection.equals(line1start) ||
+    intersection.equals(line1end) ||
+    intersection.equals(line2start) ||
+    intersection.equals(line2end)
+  ) {
+    return;
+  }
+
+  return intersection;
 }
 
 function circle_circle_intersect(
@@ -759,7 +770,13 @@ export function arc_arc_intersect(
   let closestIntersection: Coord | undefined;
 
   for (let intersection of intersections) {
-    if (isPointInArc(intersection, startPosition, endPosition, center)) {
+    if (
+      isPointInArc(intersection, startPosition, endPosition, center) &&
+      !intersection.equals(startPosition) &&
+      !intersection.equals(endPosition) &&
+      !intersection.equals(startPosition2) &&
+      !intersection.equals(endPosition2)
+    ) {
       if (!closestIntersection) {
         closestIntersection = intersection;
       } else if (
@@ -823,7 +840,13 @@ export function line_arc_intersect(
   let closestIntersection: Coord | undefined;
 
   for (let intersection of intersections) {
-    if (isPointInArc(intersection, arcStart, arcEnd, arcCenter)) {
+    if (
+      isPointInArc(intersection, arcStart, arcEnd, arcCenter) &&
+      !intersection.equals(arcStart) &&
+      !intersection.equals(arcEnd) &&
+      !intersection.equals(lineStart) &&
+      !intersection.equals(lineEnd)
+    ) {
       //If it is, then return the closest intersection point.
       if (closestIntersection == undefined) {
         closestIntersection = intersection;

@@ -84,7 +84,8 @@ export class RightPanelComponent {
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
     private fb: FormBuilder
-  ) {}
+  ) {
+  }
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -231,6 +232,20 @@ export class RightPanelComponent {
     console.log('Arc intersects with arc5, should be two points:');
     console.log(arc6.intersectsWith(arc7));
     console.log(arc7.intersectsWith(arc6));
+
+    //Check with lines that touch each other don't count as intersection
+    let line5 = new Line(new Coord(0, 0), new Coord(1, 0));
+    let line6 = new Line(new Coord(0.5, 0), new Coord(0.5, 1));
+    console.log('Line intersects with line6, should be one point:');
+    console.log(line5.intersectsWith(line6));
+    console.log(line6.intersectsWith(line5));
+
+    //These two arcs should not intersect
+    let arc8 = new Arc(new Coord(0, 0.6), new Coord(0, -0.6), new Coord(0, 0));
+    let arc9 = new Arc(new Coord(0.5, 0), new Coord(1.7, 0), new Coord(1.1, 0));
+    console.log('Does not intersect, should be no points:');
+    console.log(arc8.intersectsWith(arc9));
+    console.log(arc9.intersectsWith(arc8));
   }
 
   gotoHelpSite() {
