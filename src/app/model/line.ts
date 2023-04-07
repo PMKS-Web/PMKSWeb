@@ -14,6 +14,9 @@ export class Line {
   startPosition: Coord;
   endPosition: Coord;
 
+  private _initialStartPos: Coord;
+  private _initialEndPos: Coord;
+
   isArc: boolean = false;
 
   public static linkColorIndex: number = 0;
@@ -31,6 +34,16 @@ export class Line {
   constructor(startPosition: Coord, endPosition: Coord) {
     this.startPosition = startPosition;
     this.endPosition = endPosition;
+    this._initialStartPos = startPosition;
+    this._initialEndPos = endPosition;
+  }
+
+  get initialStartPos(): Coord {
+    return this._initialStartPos;
+  }
+
+  get initialEndPos(): Coord {
+    return this._initialEndPos;
   }
 
   set next(next: Line | Arc) {
@@ -86,6 +99,11 @@ export class Line {
 
   toPathString() {
     return `L ${this.endPosition.x} ${this.endPosition.y} `;
+  }
+
+  resetInitialPosition() {
+    this._initialStartPos = this.startPosition;
+    this._initialEndPos = this.endPosition;
   }
 }
 

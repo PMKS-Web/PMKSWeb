@@ -778,7 +778,7 @@ function isPointOnLine(point: Coord, lineStart: Coord, lineEnd: Coord): boolean 
   //Return false otherwise.
 
   //Check if the point is within a small range of the line segment.
-  let range = 0.001;
+  let range = 0.00001;
   if (
     point.x < Math.min(lineStart.x, lineEnd.x) - range ||
     point.x > Math.max(lineStart.x, lineEnd.x) + range ||
@@ -898,7 +898,7 @@ function line_circle_intersect(
       circleRadius * circleRadius;
 
     let discriminant = b * b - 4 * a * c;
-    const tolerance = 0.001;
+    const tolerance = 0.00001;
     if (discriminant < -tolerance) {
       // line doesn't touch circle
       console.log("line doesn't touch circle");
