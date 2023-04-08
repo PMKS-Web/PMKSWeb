@@ -324,14 +324,6 @@ export class RealLink extends Link {
     //   }
     // });
 
-    //Shorten all lines
-    // for (let line of externalLines) {
-    //   line = line.shorten(0.5);
-    // }
-
-    //Remove any lines that are undefined
-    externalLines = externalLines.filter((line) => line !== undefined);
-
     // Duplicate lines are only added if we deteced a gap in the path
     // Check each external line's endpoint, if there is no other line that starts at that point, then we need to add a duplicate line to close the gap
     const newLinesToAdd = [];
@@ -357,8 +349,10 @@ export class RealLink extends Link {
       return '';
     }
 
-    //Remove any lines that are undefined
-    externalLines = externalLines.filter((line) => line !== undefined);
+    // Shorten all lines (for visual debugging)
+    // for (let line of externalLines) {
+    //   line = line.shorten(0.5);
+    // }
 
     // console.log('externalLinesToDraw', externalLines);
     NewGridComponent.debugLines = externalLines;
@@ -689,14 +683,10 @@ export class RealLink extends Link {
     function isLineFullyInside(line: Line, link: RealLink): boolean {
       const tempShortenedLine = line.clone().shorten(0.01);
 
-      const shortenVector = new Coord(Math.cos(line.angle), Math.sin(line.angle)).scale(0.01);
-      const debug = line.startPosition.add(shortenVector);
-      const debug2 = line.endPosition.subtract(shortenVector);
-
       //First we need to check if both endpoints of the line are inside the link
       if (
-        isPointInsideLink(line.startPosition.add(shortenVector), link) &&
-        isPointInsideLink(line.endPosition.subtract(shortenVector), link)
+        isPointInsideLink(tempShortenedLine.startPosition, link) &&
+        isPointInsideLink(tempShortenedLine.endPosition, link)
       ) {
         //If both endpoints are inside the link, then we need to check if the line is fully inside the link
         //To do this, we will check if the line intersects with any of the lines of the link
