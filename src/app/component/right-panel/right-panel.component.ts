@@ -246,6 +246,13 @@ export class RightPanelComponent {
     console.log('Does not intersect, should be no points:');
     console.log(arc8.intersectsWith(arc9));
     console.log(arc9.intersectsWith(arc8));
+
+    //These two arcs should not intersect
+    let arc10 = new Arc(new Coord(1, 0), new Coord(-1, 0), new Coord(0, 0));
+    let arc11 = new Arc(new Coord(1, 0.1), new Coord(-1, 0.1), new Coord(0, 0.1));
+    console.log('Does not intersect, should be no points:');
+    console.log(arc10.intersectsWith(arc11));
+    console.log(arc11.intersectsWith(arc10));
   }
 
   gotoHelpSite() {

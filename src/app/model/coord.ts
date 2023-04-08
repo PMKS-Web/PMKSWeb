@@ -54,4 +54,12 @@ export class Coord {
     //Subtract a vector from this coordinate
     return new Coord(this.x - vector.x, this.y - vector.y);
   }
+
+  clone() {
+    return new Coord(this.x, this.y);
+  }
+
+  scale(shortenBy: number) {
+    return new Coord(this.x * shortenBy, this.y * shortenBy);
+  }
 }

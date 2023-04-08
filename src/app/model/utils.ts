@@ -1,6 +1,7 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
 import { Coord } from './coord';
 import { Shape } from './link';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 export class Utils {}
 
@@ -633,7 +634,7 @@ function circle_circle_intersect(
 
   // Circles are coincident
   if (d === 0 && radius === radius2) {
-    console.log('Circles are coincident');
+    // console.log('Circles are coincident');
     return [undefined, true];
   }
 
@@ -738,10 +739,10 @@ export function arc_arc_intersect(
       allImportantIntersections.push(endPosition2);
     }
 
-    console.log(
-      'Circles are coicident, here are all the endpoints that overalp',
-      allImportantIntersections
-    );
+    // console.log(
+    //   'Circles are coicident, here are all the endpoints that overalp',
+    //   allImportantIntersections
+    // );
 
     //If there are no intersections, then the arcs do not intersect.
     if (allImportantIntersections.length === 0) {
@@ -772,12 +773,14 @@ export function arc_arc_intersect(
   for (let intersection of intersections) {
     if (
       isPointInArc(intersection, startPosition, endPosition, center) &&
+      isPointInArc(intersection, startPosition2, endPosition2, center2) &&
       !intersection.equals(startPosition) &&
       !intersection.equals(endPosition) &&
       !intersection.equals(startPosition2) &&
       !intersection.equals(endPosition2)
     ) {
       if (!closestIntersection) {
+        //First iteration only
         closestIntersection = intersection;
       } else if (
         intersection.getDistanceTo(startPosition) < closestIntersection.getDistanceTo(startPosition)
@@ -832,7 +835,7 @@ export function line_arc_intersect(
     return isPointOnLine(intersection, lineStart, lineEnd);
   });
 
-  if (!intersections) {
+  if (!intersections || intersections.length === 0) {
     return;
   }
 
@@ -843,9 +846,7 @@ export function line_arc_intersect(
     if (
       isPointInArc(intersection, arcStart, arcEnd, arcCenter) &&
       !intersection.equals(arcStart) &&
-      !intersection.equals(arcEnd) &&
-      !intersection.equals(lineStart) &&
-      !intersection.equals(lineEnd)
+      !intersection.equals(arcEnd)
     ) {
       //If it is, then return the closest intersection point.
       if (closestIntersection == undefined) {
@@ -924,17 +925,17 @@ function line_circle_intersect(
     const tolerance = 0.00001;
     if (discriminant < -tolerance) {
       // line doesn't touch circle
-      console.log("line doesn't touch circle");
+      // console.log("line doesn't touch circle");
       return;
     } else if (discriminant < tolerance) {
-      console.log('line is tangent to circle');
+      // console.log('line is tangent to circle');
       // line is tangent to circle
       let x = -b / (2 * a);
       let y = slope * x + y_intercept;
       intersections.push(new Coord(x, y));
       return intersections;
     } else {
-      console.log('line intersects circle in two places');
+      // console.log('line intersects circle in two places');
       // line intersects circle in two places
       let x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
       let y1 = slope * x1 + y_intercept;
@@ -956,23 +957,20 @@ function isPointInArc(
 ): boolean {
   //Return true if the point is within the arc.
   //Return false if the point is outside the circle.
-  //Return false if the point is on the arc, but not within the arc.
+  //Return false if the point is on the circle, but not within the arc.
+  //The arc always goes from the start point to the end point in a counter-clockwise direction.
+  //Use the cross product to determine if the point is on the left or right side of the line from the start point to the end point.
+  //If the point is on the left side, then it is within the arc.
+  //If the point is on the right side, then it is outside the arc.
 
-  let arcStartAngle = arcCenter.getAngleTo(arcStart);
-  let arcEndAngle = arcCenter.getAngleTo(arcEnd);
-  let intersectionAngle = arcCenter.getAngleTo(intersection);
-  if (arcStartAngle > arcEndAngle) {
-    if (arcStartAngle < intersectionAngle || arcEndAngle > intersectionAngle) {
-      return true;
-    } else {
-      return false;
-    }
+  //Next, check if the point is on the left side of the line from the start point to the end point
+  let crossProduct =
+    (arcEnd.x - arcStart.x) * (intersection.y - arcStart.y) -
+    (intersection.x - arcStart.x) * (arcEnd.y - arcStart.y);
+  if (crossProduct < 0) {
+    return true;
   } else {
-    if (arcStartAngle < intersectionAngle && arcEndAngle > intersectionAngle) {
-      return true;
-    } else {
-      return false;
-    }
+    return false;
   }
 }
 

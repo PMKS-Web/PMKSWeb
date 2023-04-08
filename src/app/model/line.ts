@@ -1,11 +1,6 @@
 import { Joint, RealJoint } from './joint';
 import { Coord } from './coord';
-import {
-  arc_arc_intersect,
-  determineSlope,
-  line_arc_intersect,
-  line_line_intersect,
-} from './utils';
+import { arc_arc_intersect, line_arc_intersect, line_line_intersect } from './utils';
 import { RealLink } from './link';
 import { SettingsService } from '../services/settings.service';
 import { center } from 'svg-pan-zoom';
@@ -99,7 +94,7 @@ export class Line {
 
   splitAt(coord: Coord): Line | undefined {
     if (this.startPosition.equals(coord) || this.endPosition.equals(coord)) {
-      console.log('Cannot split at start or end position', coord, this);
+      // console.log('Cannot split at start or end position', coord, this);
       return;
     } else {
       let newLine = new Line(coord, this.endPosition);
@@ -120,6 +115,30 @@ export class Line {
       this.endPosition.equals(line.endPosition) &&
       this.isArc == line.isArc
     );
+  }
+
+  clone() {
+    let line = new Line(this.startPosition.clone(), this.endPosition.clone());
+    line.next = this.next;
+    line.parentLink = this.parentLink;
+    line.color = this.color;
+    return line;
+  }
+
+  reverse() {
+    let temp = this.startPosition;
+    this.startPosition = this.endPosition;
+    this.endPosition = temp;
+    return this;
+  }
+
+  shorten(shortenBy: number) {
+    const shortenByVector = new Coord(Math.cos(this.angle), Math.sin(this.angle)).scale(
+      shortenBy / 2
+    );
+    this.startPosition = this.startPosition.add(shortenByVector);
+    this.endPosition = this.endPosition.subtract(shortenByVector);
+    return this;
   }
 }
 
@@ -161,6 +180,14 @@ export class Arc extends Line {
     }
   }
 
+  override clone() {
+    let arc = new Arc(this.startPosition.clone(), this.endPosition.clone(), this.center.clone());
+    arc.next = this.next;
+    arc.parentLink = this.parentLink;
+    arc.color = this.color;
+    return arc;
+  }
+
   override toPathString() {
     return `A ${this.startPosition.getDistanceTo(this.center)} ${this.startPosition.getDistanceTo(
       this.center
@@ -169,7 +196,7 @@ export class Arc extends Line {
 
   override splitAt(coord: Coord): Line | undefined {
     if (this.startPosition.equals(coord) || this.endPosition.equals(coord)) {
-      console.log('Cannot split at start or end position', coord, this);
+      // console.log('Cannot split at start or end position', coord, this);
       return;
     } else {
       let newArc = new Arc(coord, this.endPosition, this.center);
@@ -182,5 +209,31 @@ export class Arc extends Line {
 
       return newArc;
     }
+  }
+
+  override shorten(arcLength: number) {
+    //Move the start position along the circle towards the end position to shorten the arc
+    //Same for the end position
+    //First find the radius of the circle
+    let radius = this.startPosition.getDistanceTo(this.center);
+    //Then find the angle we need to move along the circle
+    let angleToShortenBy = arcLength / radius;
+    angleToShortenBy /= 2;
+
+    //Then find the angle of the start position
+    let startAngle = this.startPosition.getAngleTo(this.center);
+    let endAngle = this.endPosition.getAngleTo(this.center);
+
+    startAngle += angleToShortenBy;
+    endAngle -= angleToShortenBy;
+
+    this.startPosition = this.center.add(
+      new Coord(Math.cos(startAngle), Math.sin(startAngle)).scale(radius)
+    );
+    this.endPosition = this.center.add(
+      new Coord(Math.cos(endAngle), Math.sin(endAngle)).scale(radius)
+    );
+
+    return this;
   }
 }

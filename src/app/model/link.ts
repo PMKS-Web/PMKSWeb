@@ -139,6 +139,8 @@ export class RealLink extends Link {
 
   public externalLines: Line[] = [];
 
+  public initialExternalLines: Line[] = [];
+
   //For debugging:
   public unqiqueRandomID: string =
     Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -233,6 +235,7 @@ export class RealLink extends Link {
   }
 
   getCompoundPathString() {
+    NewGridComponent.debugPoints = [];
     this.renderError = false;
     const linkSubset: RealLink[] = this.subset as RealLink[];
 
@@ -258,9 +261,11 @@ export class RealLink extends Link {
     }
 
     //For each external line, check for intersections with all other external lines
-    externalLines.forEach((line) => {
-      externalLines.forEach((line2) => {
-        if (line === line2) return;
+    for (let i1 = 0; i1 < externalLines.length; i1++) {
+      const line = externalLines[i1];
+      for (let i = 0; i < externalLines.length; i++) {
+        const line2 = externalLines[i];
+        if (line === line2) continue;
         //If the lines intersect, split the line into two lines
         let count = 0;
         while (count < 10) {
@@ -278,10 +283,10 @@ export class RealLink extends Link {
           }
           count++;
         }
-      });
-    });
+      }
+    }
 
-    //We need to find duplicate lines
+    //We need to find duplicate lines for later
     let duplicateLines: Line[] = [];
     for (const line of externalLines) {
       const duplicateFound = externalLines.find((line2) => {
@@ -303,8 +308,48 @@ export class RealLink extends Link {
       });
     });
 
-    //Add back the duplicate lines
-    externalLines = externalLines.concat(duplicateLines);
+    //If any lines are un
+
+    //Change the color of the line to red if it's fully inside another link
+    // externalLines.forEach((line) => {
+    //   if (
+    //     linkSubset.some((link) => {
+    //       if (link === line.parentLink) return false;
+    //       return isLineFullyInside(line, link);
+    //     })
+    //   ) {
+    //     line.color = 'red';
+    //   } else {
+    //     line.color = 'black';
+    //   }
+    // });
+
+    //Shorten all lines
+    // for (let line of externalLines) {
+    //   line = line.shorten(0.5);
+    // }
+
+    //Remove any lines that are undefined
+    externalLines = externalLines.filter((line) => line !== undefined);
+
+    // Duplicate lines are only added if we deteced a gap in the path
+    // Check each external line's endpoint, if there is no other line that starts at that point, then we need to add a duplicate line to close the gap
+    const newLinesToAdd = [];
+    for (let i = 0; i < externalLines.length; i++) {
+      const pointToSearch = externalLines[i].endPosition;
+      const found = externalLines.find((line2) => {
+        return line2.startPosition.equals(pointToSearch);
+      });
+      if (!found) {
+        const lineToAdd = duplicateLines.find((line2) => line2.startPosition.equals(pointToSearch));
+        if (lineToAdd) {
+          newLinesToAdd.push(lineToAdd);
+        }
+      }
+    }
+    externalLines.push(...newLinesToAdd);
+
+    // externalLines = externalLines.concat(duplicateLines);
 
     //If there are no external lines to draw, then return an empty string
     if (externalLines.length === 0) {
@@ -312,7 +357,10 @@ export class RealLink extends Link {
       return '';
     }
 
-    console.log('externalLinesToDraw', externalLines);
+    //Remove any lines that are undefined
+    externalLines = externalLines.filter((line) => line !== undefined);
+
+    // console.log('externalLinesToDraw', externalLines);
     NewGridComponent.debugLines = externalLines;
 
     return '';
@@ -618,9 +666,19 @@ export class RealLink extends Link {
       const infiniteLine = new Line(startPosition, new Coord(10000, startPosition.y));
 
       let intersections = 0;
-      link.externalLines.forEach((line) => {
-        if (line.intersectsWith(infiniteLine)) {
-          intersections++;
+      link.initialExternalLines.forEach((line) => {
+        const intersectionPoint = infiniteLine.intersectsWith(line);
+        const otherIntersectionPoint = infiniteLine.clone().reverse().intersectsWith(line);
+
+        //Add two to the intersection count if intersectionPoint and otherIntersectionPoint are not equal
+        if (intersectionPoint && otherIntersectionPoint) {
+          if (!intersectionPoint.equals(otherIntersectionPoint)) {
+            intersections += 2;
+          } else {
+            intersections += 1;
+          }
+        } else if (intersectionPoint || otherIntersectionPoint) {
+          intersections += 1;
         }
       });
 
@@ -629,14 +687,16 @@ export class RealLink extends Link {
     }
 
     function isLineFullyInside(line: Line, link: RealLink): boolean {
-      //Nudge each endpoint of the line by 0.001 to each other and shorten the line by 0.002 to ensure boundary cases are not missed
-      const nudge = 0.01;
-      const nudgeVector = new Coord(Math.cos(line.angle) * nudge, Math.sin(line.angle) * nudge);
+      const tempShortenedLine = line.clone().shorten(0.01);
+
+      const shortenVector = new Coord(Math.cos(line.angle), Math.sin(line.angle)).scale(0.01);
+      const debug = line.startPosition.add(shortenVector);
+      const debug2 = line.endPosition.subtract(shortenVector);
 
       //First we need to check if both endpoints of the line are inside the link
       if (
-        isPointInsideLink(line.startPosition.add(nudgeVector), link) &&
-        isPointInsideLink(line.endPosition.subtract(nudgeVector), link)
+        isPointInsideLink(line.startPosition.add(shortenVector), link) &&
+        isPointInsideLink(line.endPosition.subtract(shortenVector), link)
       ) {
         //If both endpoints are inside the link, then we need to check if the line is fully inside the link
         //To do this, we will check if the line intersects with any of the lines of the link
@@ -651,12 +711,12 @@ export class RealLink extends Link {
 
   getPathString(): string {
     const link = this as RealLink;
-    console.error('Get path string called');
+    // console.error('Get path string called');
     if (link.subset.length == 0) {
-      console.log('Simple path starting for ' + link.id, link);
+      // console.log('Simple path starting for ' + link.id, link);
       return link.getSimplePathString();
     } else {
-      console.log('Compound path starting for ' + link.id, link);
+      // console.log('Compound path starting for ' + link.id, link);
       return link.getCompoundPathString();
     }
   }
@@ -742,7 +802,7 @@ export class RealLink extends Link {
     this.externalLines.push(new Arc(lastPos, startPos, finalJoint));
 
     if (!RealLink.isClockwise(this.externalLines[0], this.CoM)) {
-      console.log('Link is not clockwise');
+      // console.log('Link is not clockwise');
       this.externalLines.reverse();
       //If the link is not clockwise, reverse the order of the external lines
       for (let i = 0; i < this.externalLines.length; i++) {
@@ -760,6 +820,8 @@ export class RealLink extends Link {
       const nextLine = this.externalLines[(ind + 1) % this.externalLines.length];
       line.next = nextLine;
     });
+
+    this.initialExternalLines = this.externalLines.map((line) => line.clone());
 
     d += ' Z ';
     this.renderError = false;

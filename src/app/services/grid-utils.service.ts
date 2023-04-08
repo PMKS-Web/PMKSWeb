@@ -107,7 +107,7 @@ export class GridUtilsService {
   }
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
-    console.error('new drag Joint cycle');
+    // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 6);
     selectedJoint.y = roundNumber(trueCoord.y, 6);
