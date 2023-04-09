@@ -50,7 +50,9 @@
         <panel-section>
           <button-block icon='terminal' [click]='printActiveObject.bind(this)'>Console Log Active Object</button-block>
           <button-block icon='terminal' [click]='printMechanism.bind(this)'>Console Log Mechanism</button-block>
-          <button-block icon='terminal' [click]='redrawAllLinks.bind(this)'>Redraw</button-block>
+          <button-block icon='draw' [click]='redrawAllLinks.bind(this)'>Redraw</button-block>
+          <button-block icon='quiz' [click]='runGeometryUnitTests.bind(this)'>Run Intersection Unit Tests
+          </button-block>
           <button-block icon='report' [click]='turnOnDebugger.bind(this)'>Turn on Grid Debug Info</button-block>
 
           <app-linkage-table></app-linkage-table>

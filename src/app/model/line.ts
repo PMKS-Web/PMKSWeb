@@ -18,8 +18,8 @@ export class Line {
   //For debugging
   //Pick a random color from the list
   color: string = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black', 'lightgrey'][
-  Line.linkColorIndex++ % 8
-    ];
+    Line.linkColorIndex++ % 8
+  ];
 
   parentLink: RealLink | null = null;
 
@@ -149,7 +149,6 @@ export class Line {
 export class Arc extends Line {
   //Given the start and end positions and the center and assuming the arc moves counter-clockwise from the start to the end
   center: Coord | Joint;
-  static radius: number = SettingsService.objectScale.value / 4;
 
   constructor(startPosition: Coord, endPosition: Coord, center: Coord | Joint) {
     super(startPosition, endPosition);

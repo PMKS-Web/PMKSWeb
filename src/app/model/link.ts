@@ -256,7 +256,7 @@ export class RealLink extends Link {
       return [];
     }
 
-    let breakOutCounter = 1000;
+    let breakOutCounter = 10000;
     //For each external line, check for intersections with all other external lines
     for (let i1 = 0; i1 < externalLines.length; i1++) {
       const line = externalLines[i1];
@@ -329,7 +329,10 @@ export class RealLink extends Link {
 
     //Remove very short lines
     externalLines = externalLines.filter((line) => {
-      return line.startPosition.getDistanceTo(line.endPosition) > 0.09;
+      return (
+        line.startPosition.getDistanceTo(line.endPosition) >
+        0.02 * SettingsService.objectScale.value
+      );
     });
 
     //As a final step, we need to remove one of the duplicate lines from each pair
@@ -368,7 +371,7 @@ export class RealLink extends Link {
     }
 
     function isLineFullyInside(line: Line, link: RealLink): boolean {
-      const tempShortenedLine = line.clone().shorten(0.05);
+      const tempShortenedLine = line.clone().shorten(0.03 * SettingsService.objectScale.value);
 
       //First we need to check if both endpoints of the line are inside the link
       if (
@@ -411,7 +414,7 @@ export class RealLink extends Link {
 
     let pathString = '';
 
-    let timeoutCounter = 100;
+    let timeoutCounter = 1000;
 
     while (externalLinesSet.size > 1) {
       //Pick the first line from the set

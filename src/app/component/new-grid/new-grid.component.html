@@ -236,6 +236,7 @@
     </ng-container>
 
   </g>
+
   <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
     <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
     <path *ngIf='gridUtils.getJointShowCurve(joint)'
@@ -247,26 +248,25 @@
     </ng-container>
   </g>
   <g
-    id='forcesHolder'
-    style='transform: scaleY(-1)'
+    id='forcesHolder' style='transform: scaleY(-1)'
     *ngFor='let force of mechanismSrv.getForces()'
     (contextmenu)='setLastRightClick(force)'
     (pointerdown)='setLastLeftClick(force)'
+    (pointerover)='force.showHighlight = true'
+    (pointerout)='force.showHighlight = false'
   >
     <g
       [attr.id]='force.id'
-      (pointerover)='force.showHighlight = true'
-      (pointerout)='force.showHighlight = false'
     >
-      <path
-        *ngIf='force.showHighlight'
-        [attr.d]='force.forceLine'
-        stroke='yellow'
-        stroke-width='0.2'
-      ></path>
+<!--      <path-->
+<!--        *ngIf='force.showHighlight'-->
+<!--        [attr.d]='force.forceLine'-->
+<!--        stroke='yellow'-->
+<!--        stroke-width='0.2'-->
+<!--      ></path>-->
       <!-- Transpent thicker force to increase hitbox for the group for highliting-->
-      <path [attr.d]='force.forceLine' [attr.stroke]='force.stroke' stroke-width='0.04'></path>
-      <path [attr.d]='force.forceLine' stroke='transparent' stroke-width='0.4'></path>
+      <path [attr.d]='force.forceLine' [attr.stroke]='force.stroke' [attr.stroke-width]='0.04*settings.objectScale'></path>
+      <path [attr.d]='force.forceLine' stroke='transparent' [attr.stroke-width]='0.4*settings.objectScale'></path>
       <path [attr.d]='force.forceArrow' [attr.fill]='force.fill'></path>
     </g>
     <svg
@@ -278,9 +278,9 @@
       width='10'
       style='overflow: visible; cursor: move'
     >
-      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
-      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      <rect x='-0.1' y='-0.1' width='0.2' height='0.2' fill='blue' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
     </svg>
+
     <svg
       id='endForceEndpoint'
       [attr.x]='force.endCoord.x'
@@ -290,10 +290,10 @@
       width='10'
       style='overflow: visible; cursor: move'
     >
-      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
-      <circle cx='0%' cy='0%' r='0.1' fill='blue'></circle>
+      <rect x='-0.1' y='-0.1' width='0.2' height='0.2' fill='blue' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
     </svg>
   </g>
+
   <g id='jointTagHolder' style='pointer-events: none'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
@@ -328,7 +328,7 @@
       </text>
     </svg>
   </g>
-  <g id='forceTagHolder' *ngIf='settings.isShowID.value' style='pointer-events: none'>
+  <g id='forceTagHolder' style='pointer-events: none'>
     <svg
       *ngFor='let force of mechanismSrv.getForces()'
       [attr.x]='(force.startCoord.x + force.endCoord.x) / 2 - settings.objectScale*0.3'
@@ -337,8 +337,8 @@
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
     >
-      <!-- should font-size have px??? -->
-      <text style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
+      <text *ngIf='settings.isShowID.value || force.showHighlight'
+            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
         {{customIDService.getVisualID(force.id)}}
       </text>
     </svg>
@@ -375,18 +375,16 @@
       ></path>
     </svg>
   </g>
-  <g id='pathPointHolder'></g>
-  <g id='threePositionHolder'></g>
   <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
     <line
       stroke='black'
-      stroke-width='0.02'
+      [attr.stroke-width]='0.02 * settings.objectScale'
       stroke-opacity='0.5'
       style='pointer-events: none'
     ></line>
     <svg height='10' width='10' style='overflow: visible' cursor='move'>
       <circle
-        r='0.14'
+        [attr.r]='0.14 * settings.objectScale'
         cx='0%'
         cy='0%'
         fill='black'
@@ -395,7 +393,7 @@
       ></circle>
       <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
       <circle
-        r='0.1'
+        [attr.r]='0.1 * settings.objectScale'
         cx='0%'
         cy='0%'
         fill='gray'
@@ -412,20 +410,6 @@
     <path fill='black' d=''></path>
   </g>
 
-<!--  <g id='activeObjectHighlight' style='transform: scaleY(-1); pointer-events: none'>-->
-<!--    <circle-->
-<!--      *ngIf="activeObjService.objType == 'Joint'"-->
-<!--      [attr.r]='0.01'-->
-<!--      [attr.cx]='activeObjService.selectedJoint.x'-->
-<!--      [attr.cy]='activeObjService.selectedJoint.y'-->
-<!--    />-->
-
-<!--    <path-->
-<!--      *ngIf="activeObjService.objType == 'Link'"-->
-<!--      [attr.d]='mechanismSrv.getLinkProp(activeObjService.selectedLink, "d")'-->
-<!--      stroke-width='0.5'-->
-<!--    ></path>-->
-<!--  </g>-->
 </svg>
 <div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}

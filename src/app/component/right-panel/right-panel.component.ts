@@ -179,7 +179,9 @@ export class RightPanelComponent {
       default:
         console.log('No active object');
     }
+  }
 
+  runGeometryUnitTests() {
     console.log('Running interseciton tests');
     let arc = new Arc(new Coord(0, 0), new Coord(0, 2), new Coord(0, 1));
     let arc2 = new Arc(new Coord(-1, 1), new Coord(1, 1), new Coord(0, 1));

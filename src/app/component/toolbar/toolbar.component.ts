@@ -5,6 +5,7 @@ import {
   inject,
   Inject,
   Input,
+  isDevMode,
   OnInit,
   Output,
 } from '@angular/core';
@@ -948,5 +949,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       return true;
     }
     return this.mechanismService.mechanisms[0].joints.length > 3 ? null : true;
+  }
+
+  isDevMode() {
+    return isDevMode();
   }
 }

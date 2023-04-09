@@ -1,6 +1,7 @@
 import { Link, RealLink } from './link';
 import { Coord } from './coord';
 import { AppConstants } from './app-constants';
+import { SettingsService } from '../services/settings.service';
 
 export class Force {
   private _id: string;
@@ -65,8 +66,7 @@ export class Force {
       ' L ' +
       endCoord.x.toString() +
       ' ' +
-      endCoord.y.toString() +
-      ' Z'
+      endCoord.y.toString()
     );
   }
 
@@ -74,18 +74,22 @@ export class Force {
     const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
     const a1 = angle - Math.PI / 6;
     const a2 = angle + Math.PI / 6;
-    const triLen = 12 * AppConstants.scaleFactor;
+    const triLen = 0.2 * SettingsService.objectScale.value;
     const dx1 = Math.cos(a1) * triLen;
     const dy1 = Math.sin(a1) * triLen;
     const dx2 = Math.cos(a2) * triLen;
     const dy2 = Math.sin(a2) * triLen;
 
+    //Offset the tip of the triangle by 1/2 the length of the triangle
+    const tipOfTriangle = endCoord.clone();
+    tipOfTriangle.x += Math.cos(angle) * 0.05 * SettingsService.objectScale.value;
+    tipOfTriangle.y += Math.sin(angle) * 0.05 * SettingsService.objectScale.value;
     // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
     return (
       'M ' +
-      endCoord.x.toString() +
+      tipOfTriangle.x.toString() +
       ' ' +
-      endCoord.y.toString() +
+      tipOfTriangle.y.toString() +
       ' L ' +
       (endCoord.x - dx1).toString() +
       ' ' +

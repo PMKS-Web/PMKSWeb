@@ -27,7 +27,8 @@
     Share Project
   </button>
   <div class='spacer'></div>
-  <button mat-button (click)='openRightPanelDebug()' style='color: lightblue;'>
+  <button *ngIf='isDevMode()' mat-button (click)='openRightPanelDebug()'>
+    <mat-icon>bug_report</mat-icon>
     Debug
   </button>
   <button mat-button (click)='openRightPanelSettings()'>
