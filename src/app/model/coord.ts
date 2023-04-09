@@ -43,11 +43,11 @@ export class Coord {
   }
 
   equals(coord: Coord) {
-    return this.getDistanceTo(coord) < 0.0001;
+    return this.getDistanceTo(coord) < 0.0001 * SettingsService.objectScale.value;
   }
 
   looselyEquals(coord: Coord) {
-    return this.getDistanceTo(coord) < 0.1;
+    return this.getDistanceTo(coord) < 0.04 * SettingsService.objectScale.value;
   }
 
   add(vector: Coord) {

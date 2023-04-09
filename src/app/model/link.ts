@@ -22,6 +22,7 @@ import {
   pullStringWithinString,
   radToDeg,
   roundNumber,
+  wrapAngle,
 } from './utils';
 import hull from 'hull.js/dist/hull.js';
 import { SettingsService } from '../services/settings.service';
@@ -331,7 +332,7 @@ export class RealLink extends Link {
     externalLines = externalLines.filter((line) => {
       return (
         line.startPosition.getDistanceTo(line.endPosition) >
-        0.02 * SettingsService.objectScale.value
+        0.0036 * SettingsService.objectScale.value
       );
     });
 
@@ -371,7 +372,7 @@ export class RealLink extends Link {
     }
 
     function isLineFullyInside(line: Line, link: RealLink): boolean {
-      const tempShortenedLine = line.clone().shorten(0.03 * SettingsService.objectScale.value);
+      const tempShortenedLine = line.clone().shorten(0.02 * SettingsService.objectScale.value);
 
       //First we need to check if both endpoints of the line are inside the link
       if (
@@ -407,6 +408,7 @@ export class RealLink extends Link {
     //   line = line.shorten(0.5);
     // }
     NewGridComponent.debugPoints = [];
+    NewGridComponent.debugValue = [];
     NewGridComponent.debugLines = this.externalLines;
 
     //Convert external lines to a set so we can keep track of which lines have been used
@@ -439,7 +441,8 @@ export class RealLink extends Link {
           //When there are two lines intersecting, create a fillet between them
           !currentLine.isArc &&
           !nextLine.isArc &&
-          Math.abs(nextLine.angle - currentLine.angle) > degToRad(10) &&
+          //If the angle between the two lines. Wrap to -pi to pi. Then check if abs(angle) is less than 90 degrees
+          Math.abs(wrapAngle(nextLine.angle - currentLine.angle)) > degToRad(10) &&
           1
         ) {
           let [currentLineOffsetPoint, nextLineOffsetPoint, radius] =
@@ -478,7 +481,7 @@ export class RealLink extends Link {
   private computeArcPointsAndRadius(
     currentLine: Line,
     nextLine: Line,
-    desiredArcRadius = 2
+    desiredArcRadius: number
   ): [Coord, Coord, number] {
     //We can modify the currentLine.endPosition and nextLine.startPosition to draw an arc between them
     const arcOffset = Math.min(desiredArcRadius, currentLine.length / 2, nextLine.length / 2);

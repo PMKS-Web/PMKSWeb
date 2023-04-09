@@ -3,8 +3,8 @@
      (pointerdown)='mouseDown($event)'>
   <defs>
     <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="0.02"/>
-      <feOffset dx="0.01" dy="-0.01" />
+      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.008*settings.objectScale'/>
+      <feOffset [attr.dx]='0.004*settings.objectScale' [attr.dy]='-0.004*settings.objectScale' />
       <feComponentTransfer>
         <feFuncA type="linear" slope="0.4"/>
       </feComponentTransfer>
@@ -14,8 +14,8 @@
       </feMerge>
     </filter>
     <filter id="elevation-2" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="0.04"/>
-      <feOffset dx="0.03" dy="-0.03" />
+      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.016*settings.objectScale'/>
+      <feOffset [attr.dx]='0.012*settings.objectScale' [attr.dy]='-0.012*settings.objectScale' />
       <feComponentTransfer>
         <feFuncA type="linear" slope="0.5"/>
       </feComponentTransfer>
@@ -25,8 +25,8 @@
       </feMerge>
     </filter>
     <filter id="elevation-3" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="0.06"/>
-      <feOffset dx="0.05" dy="-0.05" />
+      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.024*settings.objectScale'/>
+      <feOffset [attr.dx]='0.02*settings.objectScale' [attr.dy]='-0.02*settings.objectScale' />
       <feComponentTransfer>
         <feFuncA type="linear" slope="0.6"/>
       </feComponentTransfer>

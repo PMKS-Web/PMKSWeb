@@ -987,6 +987,18 @@ function isPointInArc(
 //   }
 // };
 
+export function wrapAngle(angle: number) {
+  //Wrap between -pi and pi
+  angle = angle % (2 * Math.PI);
+  if (angle > Math.PI) {
+    angle -= 2 * Math.PI;
+  }
+  if (angle < -Math.PI) {
+    angle += 2 * Math.PI;
+  }
+  return angle;
+}
+
 export function is_touch_enabled() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
