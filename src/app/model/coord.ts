@@ -45,6 +45,10 @@ export class Coord {
     return this.getDistanceTo(coord) < 0.0001;
   }
 
+  looselyEquals(coord: Coord) {
+    return this.getDistanceTo(coord) < 0.1;
+  }
+
   add(vector: Coord) {
     //Add a vector to this coordinate
     return new Coord(this.x + vector.x, this.y + vector.y);

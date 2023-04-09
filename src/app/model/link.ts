@@ -234,11 +234,7 @@ export class RealLink extends Link {
     // console.warn(this._length, this._angle);
   }
 
-  getCompoundPathString() {
-    NewGridComponent.debugPoints = [];
-    this.renderError = false;
-    const linkSubset: RealLink[] = this.subset as RealLink[];
-
+  solveForExternalLines(linkSubset: RealLink[]) {
     linkSubset.forEach((l) => {
       l.reComputeDPath();
     });
@@ -257,7 +253,7 @@ export class RealLink extends Link {
 
     if (externalLines.length === 0) {
       this.renderError = true;
-      return '';
+      return [];
     }
 
     //For each external line, check for intersections with all other external lines
@@ -308,22 +304,6 @@ export class RealLink extends Link {
       });
     });
 
-    //If any lines are un
-
-    //Change the color of the line to red if it's fully inside another link
-    // externalLines.forEach((line) => {
-    //   if (
-    //     linkSubset.some((link) => {
-    //       if (link === line.parentLink) return false;
-    //       return isLineFullyInside(line, link);
-    //     })
-    //   ) {
-    //     line.color = 'red';
-    //   } else {
-    //     line.color = 'black';
-    //   }
-    // });
-
     // Duplicate lines are only added if we deteced a gap in the path
     // Check each external line's endpoint, if there is no other line that starts at that point, then we need to add a duplicate line to close the gap
     const newLinesToAdd = [];
@@ -341,23 +321,115 @@ export class RealLink extends Link {
     }
     externalLines.push(...newLinesToAdd);
 
-    // externalLines = externalLines.concat(duplicateLines);
+    //Remove very short lines
+    externalLines = externalLines.filter((line) => {
+      return line.startPosition.getDistanceTo(line.endPosition) > 0.09;
+    });
+
+    //As a final step, we need to remove one of the duplicate lines from each pair
+    let returnExternalLines: Line[] = [];
+    externalLines.forEach((line) => {
+      if (returnExternalLines.find((line2) => line2.equals(line))) return;
+      returnExternalLines.push(line);
+    });
+
+    return returnExternalLines;
+
+    function isPointInsideLink(startPosition: Coord, link: RealLink) {
+      //Check if the point is inside of the shape created by the lines
+      //First, draw a line that is infinitely long and check if it intersects with the shape an odd number of times
+      const infiniteLine = new Line(startPosition, new Coord(10000, startPosition.y));
+
+      let intersections = 0;
+      link.initialExternalLines.forEach((line) => {
+        const intersectionPoint = infiniteLine.intersectsWith(line);
+        const otherIntersectionPoint = infiniteLine.clone().reverse().intersectsWith(line);
+
+        //Add two to the intersection count if intersectionPoint and otherIntersectionPoint are not equal
+        if (intersectionPoint && otherIntersectionPoint) {
+          if (!intersectionPoint.equals(otherIntersectionPoint)) {
+            intersections += 2;
+          } else {
+            intersections += 1;
+          }
+        } else if (intersectionPoint || otherIntersectionPoint) {
+          intersections += 1;
+        }
+      });
+
+      //If the number of intersections is odd, then the point is inside the shape
+      return intersections % 2 === 1;
+    }
+
+    function isLineFullyInside(line: Line, link: RealLink): boolean {
+      const tempShortenedLine = line.clone().shorten(0.05);
+
+      //First we need to check if both endpoints of the line are inside the link
+      if (
+        isPointInsideLink(tempShortenedLine.startPosition, link) &&
+        isPointInsideLink(tempShortenedLine.endPosition, link)
+      ) {
+        //If both endpoints are inside the link, then we need to check if the line is fully inside the link
+        //To do this, we will check if the line intersects with any of the lines of the link
+        return true;
+        // return !link.externalLines.some((linkLine) => {
+        //   return linkLine.intersectsWith(line);
+        // });
+      }
+      return false;
+    }
+  }
+
+  getCompoundPathString() {
+    this.renderError = false;
+    const linkSubset: RealLink[] = this.subset as RealLink[];
+
+    this.externalLines = this.solveForExternalLines(linkSubset);
 
     //If there are no external lines to draw, then return an empty string
-    if (externalLines.length === 0) {
+    if (this.externalLines.length === 0) {
       this.renderError = true;
       return '';
     }
 
     // Shorten all lines (for visual debugging)
-    // for (let line of externalLines) {
+
+    // for (let line of this.externalLines) {
     //   line = line.shorten(0.5);
     // }
+    NewGridComponent.debugPoints = [];
+    NewGridComponent.debugLines = this.externalLines;
 
-    // console.log('externalLinesToDraw', externalLines);
-    NewGridComponent.debugLines = externalLines;
+    //Convert external lines to a set so we can keep track of which lines have been used
+    const externalLinesSet = new Set(this.externalLines);
 
-    return '';
+    let pathString = '';
+
+    while (externalLinesSet.size > 0) {
+      //Pick the first line from the set
+      let currentLine: Line = externalLinesSet.values().next().value;
+      externalLinesSet.delete(currentLine);
+
+      pathString += 'M ' + currentLine.startPosition.x + ' ' + currentLine.startPosition.y + ' ';
+      let veryFirstPoint = currentLine.startPosition.clone();
+      while (!currentLine.endPosition.equals(veryFirstPoint)) {
+        pathString += currentLine.toPathString();
+        //Find the next line that starts at the end of the current line
+        const nextLine = [...externalLinesSet].find((line) => {
+          return line.startPosition.looselyEquals(currentLine.endPosition);
+        });
+        if (!nextLine) {
+          // this.renderError = true;
+          // return '';
+          // return pathString;
+          break;
+        }
+        externalLinesSet.delete(nextLine);
+        currentLine = nextLine;
+      }
+      pathString += currentLine.toPathString();
+    }
+    return pathString;
     //
     // //This should be a line that does not intersect any other lines
     // // let currentLine: Line | undefined = externalLinesToDraw.find((line) => {
@@ -652,50 +724,6 @@ export class RealLink extends Link {
 
       //Return the first line in the list
       return intersectedLinesSorted[0][0];
-    }
-
-    function isPointInsideLink(startPosition: Coord, link: RealLink) {
-      //Check if the point is inside of the shape created by the lines
-      //First, draw a line that is infinitely long and check if it intersects with the shape an odd number of times
-      const infiniteLine = new Line(startPosition, new Coord(10000, startPosition.y));
-
-      let intersections = 0;
-      link.initialExternalLines.forEach((line) => {
-        const intersectionPoint = infiniteLine.intersectsWith(line);
-        const otherIntersectionPoint = infiniteLine.clone().reverse().intersectsWith(line);
-
-        //Add two to the intersection count if intersectionPoint and otherIntersectionPoint are not equal
-        if (intersectionPoint && otherIntersectionPoint) {
-          if (!intersectionPoint.equals(otherIntersectionPoint)) {
-            intersections += 2;
-          } else {
-            intersections += 1;
-          }
-        } else if (intersectionPoint || otherIntersectionPoint) {
-          intersections += 1;
-        }
-      });
-
-      //If the number of intersections is odd, then the point is inside the shape
-      return intersections % 2 === 1;
-    }
-
-    function isLineFullyInside(line: Line, link: RealLink): boolean {
-      const tempShortenedLine = line.clone().shorten(0.01);
-
-      //First we need to check if both endpoints of the line are inside the link
-      if (
-        isPointInsideLink(tempShortenedLine.startPosition, link) &&
-        isPointInsideLink(tempShortenedLine.endPosition, link)
-      ) {
-        //If both endpoints are inside the link, then we need to check if the line is fully inside the link
-        //To do this, we will check if the line intersects with any of the lines of the link
-        return true;
-        // return !link.externalLines.some((linkLine) => {
-        //   return linkLine.intersectsWith(line);
-        // });
-      }
-      return false;
     }
   }
 
