@@ -40,4 +40,39 @@ export class Coord {
   getAngleTo(arcStart: Coord) {
     return Math.atan2(this.y - arcStart.y, this.x - arcStart.x);
   }
+
+  equals(coord: Coord) {
+    return this.getDistanceTo(coord) < 0.0001;
+  }
+
+  looselyEquals(coord: Coord) {
+    return this.getDistanceTo(coord) < 0.1;
+  }
+
+  add(vector: Coord) {
+    //Add a vector to this coordinate
+    return new Coord(this.x + vector.x, this.y + vector.y);
+  }
+
+  subtract(vector: Coord) {
+    //Subtract a vector from this coordinate
+    return new Coord(this.x - vector.x, this.y - vector.y);
+  }
+
+  clone() {
+    return new Coord(this.x, this.y);
+  }
+
+  scale(shortenBy: number) {
+    return new Coord(this.x * shortenBy, this.y * shortenBy);
+  }
+
+  normalize() {
+    const length = Math.sqrt(this.x * this.x + this.y * this.y);
+    return new Coord(this.x / length, this.y / length);
+  }
+
+  multiply(scale: number) {
+    return this.scale(scale);
+  }
 }

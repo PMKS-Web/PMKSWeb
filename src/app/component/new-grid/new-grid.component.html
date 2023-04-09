@@ -36,9 +36,8 @@
       </feMerge>
     </filter>
 
-    <marker id="arrowhead" markerWidth="10" markerHeight="7"
-            refX="0" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" />
+    <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+      <polygon points="0 0, 5 1.75, 0 3.5" />
     </marker>
   </defs>
   <!-- This is only used to to scale onto when there is not link -->
@@ -194,7 +193,7 @@
       style='overflow: visible'
       cursor='move'
     >
-      <circle
+      <circle *ngIf='!gridUtils.getWelded(joint)'
         id='joint_{{ joint.id }}' class='joint_circles'
         [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
         [attr.cx]='0'
@@ -202,11 +201,29 @@
         [class]='mechanismSrv.getJointCSSClass(joint)'
       />
 
+      <path *ngIf='gridUtils.getWelded(joint)' [class]='mechanismSrv.getJointCSSClass(joint)'
+            d='M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z'
+            style='transform: scale({{0.01*settings.objectScale}}) rotateZ({{gridUtils.getAngleFromJoint(joint)}}rad)' >
+      </path>
     </svg>
   </g>
 <!--  For Debugging-->
   <g *ngIf='settings.isGridDebugOn' style='transform: scaleY(-1); pointer-events: none'>
-    <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(2)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='black' />
+    <ng-container *ngFor='let line of getDebugLines()'>
+      <circle [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
+      <circle [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
+      <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
+      <line
+        [attr.x1]='line.startPosition.x'
+        [attr.y1]='line.startPosition.y'
+        [attr.x2]='line.endPosition.x'
+        [attr.y2]='line.endPosition.y'
+        [attr.stroke]='line.color'
+        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+        marker-end="url(#arrowhead)"
+      ></line>
+    </ng-container>
+
     <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
       <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && link.subset.length == 0'>
         <circle *ngFor='let line of link.externalLines' [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
@@ -215,22 +232,9 @@
           <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
         </ng-container>
       </ng-container>
+      <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='hotpink' />
     </ng-container>
 
-    <ng-container *ngFor='let line of getDebugLines()'>
-        <circle [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
-        <circle [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
-        <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
-        <line
-          [attr.x1]='line.startPosition.x'
-          [attr.y1]='line.startPosition.y'
-          [attr.x2]='line.endPosition.x'
-          [attr.y2]='line.endPosition.y'
-          [attr.stroke]='line.color'
-          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-          marker-end="url(#arrowhead)"
-        ></line>
-    </ng-container>
   </g>
   <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
     <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>

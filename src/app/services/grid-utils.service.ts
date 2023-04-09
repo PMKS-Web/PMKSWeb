@@ -107,7 +107,7 @@ export class GridUtilsService {
   }
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
-    console.error('new drag Joint cycle');
+    // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
     selectedJoint.x = roundNumber(trueCoord.x, 6);
     selectedJoint.y = roundNumber(trueCoord.y, 6);
@@ -227,5 +227,14 @@ export class GridUtilsService {
 
   getCenter(line: Line) {
     return (line as Arc).center;
+  }
+
+  getWelded(joint: Joint) {
+    return (joint as RealJoint).isWelded;
+  }
+
+  getAngleFromJoint(joint: Joint) {
+    //This joint must be a welded joint, get the angle of one of the sublinks
+    return ((joint as RealJoint).links[0] as RealLink).angleRad;
   }
 }

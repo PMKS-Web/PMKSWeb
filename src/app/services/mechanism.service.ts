@@ -277,7 +277,7 @@ export class MechanismService {
       this.links.splice(this.links.indexOf(mainLink), 1);
     }
     joint.isWelded = !joint.isWelded;
-    this.updateMechanism();
+    // this.updateMechanism();
   }
 
   private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {
@@ -703,10 +703,7 @@ export class MechanismService {
   }
 
   getJointCSSClass(joint: Joint) {
-    const j = joint as RealJoint;
-    if (j.isWelded) {
-      return 'joint-welded';
-    }
+    // const j = joint as RealJoint;
     if (
       NewGridComponent.debugGetJointState() == jointStates.dragging &&
       joint.id === this.activeObjService.selectedJoint.id

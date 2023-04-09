@@ -210,12 +210,15 @@ export class RightPanelComponent {
     console.log(arc3.intersectsWith(line3));
     console.log(line3.intersectsWith(arc3));
 
-    let arcTest = new Arc(new Coord(-0.1926, -7.258), new Coord(1.038, -7.36), new Coord(0.422, -7.31));
+    let arcTest = new Arc(
+      new Coord(-0.1926, -7.258),
+      new Coord(1.038, -7.36),
+      new Coord(0.422, -7.31)
+    );
     let lineTest = new Line(new Coord(1, 9.95), new Coord(0.457, 0.52));
     console.log('Arc intersects with lineTest, should be undefined:');
     console.log(arcTest.intersectsWith(lineTest));
     console.log(lineTest.intersectsWith(arcTest));
-
 
     //Two circle intersection test
     let arc4 = new Arc(new Coord(0, -1), new Coord(0, 1), new Coord(0, 0));
@@ -223,6 +226,33 @@ export class RightPanelComponent {
     console.log('Arc intersects with arc5, should be two points:');
     console.log(arc4.intersectsWith(arc5));
     console.log(arc5.intersectsWith(arc4));
+
+    let arc6 = new Arc(new Coord(3.94, 3.12), new Coord(3.73, 4.33), new Coord(3.83, 3.73));
+    let arc7 = new Arc(new Coord(3.49, 4.29), new Coord(3.91, 5.45), new Coord(3.67, 4.88));
+    console.log('Arc intersects with arc5, should be two points:');
+    console.log(arc6.intersectsWith(arc7));
+    console.log(arc7.intersectsWith(arc6));
+
+    //Check with lines that touch each other don't count as intersection
+    let line5 = new Line(new Coord(0, 0), new Coord(1, 0));
+    let line6 = new Line(new Coord(0.5, 0), new Coord(0.5, 1));
+    console.log('Line intersects with line6, should be one point:');
+    console.log(line5.intersectsWith(line6));
+    console.log(line6.intersectsWith(line5));
+
+    //These two arcs should not intersect
+    let arc8 = new Arc(new Coord(0, 0.6), new Coord(0, -0.6), new Coord(0, 0));
+    let arc9 = new Arc(new Coord(0.5, 0), new Coord(1.7, 0), new Coord(1.1, 0));
+    console.log('Does not intersect, should be no points:');
+    console.log(arc8.intersectsWith(arc9));
+    console.log(arc9.intersectsWith(arc8));
+
+    //These two arcs should not intersect
+    let arc10 = new Arc(new Coord(1, 0), new Coord(-1, 0), new Coord(0, 0));
+    let arc11 = new Arc(new Coord(1, 0.1), new Coord(-1, 0.1), new Coord(0, 0.1));
+    console.log('Does not intersect, should be no points:');
+    console.log(arc10.intersectsWith(arc11));
+    console.log(arc11.intersectsWith(arc10));
   }
 
   gotoHelpSite() {
