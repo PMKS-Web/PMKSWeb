@@ -228,7 +228,7 @@
           <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
         </ng-container>
       </ng-container>
-      <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='black' />
+      <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='hotpink' />
     </ng-container>
 
   </g>

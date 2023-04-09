@@ -18,8 +18,8 @@ export class Line {
   //For debugging
   //Pick a random color from the list
   color: string = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black', 'lightgrey'][
-    Line.linkColorIndex++ % 8
-  ];
+  Line.linkColorIndex++ % 8
+    ];
 
   parentLink: RealLink | null = null;
 
@@ -53,6 +53,10 @@ export class Line {
       this.endPosition.y - this.startPosition.y,
       this.endPosition.x - this.startPosition.x
     );
+  }
+
+  get length(): number {
+    return this.startPosition.getDistanceTo(this.endPosition);
   }
 
   get normalAngle(): number {

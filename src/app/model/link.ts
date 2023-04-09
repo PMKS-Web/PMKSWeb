@@ -384,6 +384,7 @@ export class RealLink extends Link {
     this.renderError = false;
     const linkSubset: RealLink[] = this.subset as RealLink[];
 
+    //This is a very long function that returns the full external clockwise path for the combined shape
     this.externalLines = this.solveForExternalLines(linkSubset);
 
     //If there are no external lines to draw, then return an empty string
@@ -392,8 +393,7 @@ export class RealLink extends Link {
       return '';
     }
 
-    // Shorten all lines (for visual debugging)
-
+    // Shorten all lines (uncomment block for visual debugging)
     // for (let line of this.externalLines) {
     //   line = line.shorten(0.5);
     // }
@@ -405,326 +405,91 @@ export class RealLink extends Link {
 
     let pathString = '';
 
-    while (externalLinesSet.size > 0) {
+    let timeoutCounter = 100;
+
+    while (externalLinesSet.size > 0 && timeoutCounter > 0) {
       //Pick the first line from the set
       let currentLine: Line = externalLinesSet.values().next().value;
-      externalLinesSet.delete(currentLine);
 
-      pathString += 'M ' + currentLine.startPosition.x + ' ' + currentLine.startPosition.y + ' ';
-      let veryFirstPoint = currentLine.startPosition.clone();
-      while (!currentLine.endPosition.equals(veryFirstPoint)) {
-        pathString += currentLine.toPathString();
+      let veryFirstPoint = currentLine.endPosition.clone();
+      while (!currentLine.endPosition.equals(veryFirstPoint) || isNewShape(pathString)) {
+        timeoutCounter--;
         //Find the next line that starts at the end of the current line
         const nextLine = [...externalLinesSet].find((line) => {
           return line.startPosition.looselyEquals(currentLine.endPosition);
         });
-        if (!nextLine) {
-          // this.renderError = true;
-          // return '';
-          // return pathString;
-          break;
-        }
+
+        if (!nextLine) break;
         externalLinesSet.delete(nextLine);
+
+        if (
+          //When there are two lines intersecting, create a fillet between them
+          !currentLine.isArc &&
+          !nextLine.isArc &&
+          Math.abs(nextLine.angle - currentLine.angle) > degToRad(10) &&
+          0
+        ) {
+          let [currentLineOffsetPoint, nextLineOffsetPoint, radius] =
+            this.computeArcPointsAndRadius(currentLine, nextLine, 2);
+
+          currentLine.endPosition = currentLineOffsetPoint;
+          nextLine.startPosition = nextLineOffsetPoint;
+
+          if (isNewShape(pathString)) {
+            pathString += 'M ' + currentLine.endPosition.x + ' ' + currentLine.endPosition.y + ' ';
+          } else {
+            pathString += currentLine.toPathString();
+          }
+
+          pathString += getArcPathString(nextLine.startPosition, radius);
+        } else {
+          //Otherwise, just draw a line between the two points
+          if (isNewShape(pathString)) {
+            pathString += 'M ' + currentLine.endPosition.x + ' ' + currentLine.endPosition.y + ' ';
+          } else {
+            pathString += currentLine.toPathString();
+          }
+        }
         currentLine = nextLine;
       }
       pathString += currentLine.toPathString();
+      pathString += 'Z ';
     }
     return pathString;
-    //
-    // //This should be a line that does not intersect any other lines
-    // // let currentLine: Line | undefined = externalLinesToDraw.find((line) => {
-    // //   return !externalLinesToDraw.some((otherLine) => {
-    // //     if (line === otherLine) return false;
-    // //     if (line.next === otherLine) return false;
-    // //     if (otherLine.next === line) return false;
-    // //     if (line.intersectsWith(otherLine)) {
-    // //       console.log('can not use line', line, 'because it intersects with', otherLine);
-    // //       return true;
-    // //     }
-    // //     return false;
-    // //   });
-    // // });
-    //
-    // //Convert the external lines to a set of lines so we can keep track of which lines have been used
-    // const externalLinesSet = new Set(externalLinesToDraw);
-    //
-    // function islinesLeft(externalLinesSet: Set<Line>) {
-    //   //Check if there are any lines left (not arcs) that have not been used
-    //   return Array.from(externalLinesSet).some((line) => {
-    //     return !line.isArc;
-    //   });
-    // }
-    //
-    // let pathString = '';
-    //
-    // let counter2 = 0;
-    //
-    // let currentLine: Line | undefined;
-    //
-    // while (islinesLeft(externalLinesSet)) {
-    //   counter2++;
-    //   // if (counter2 > 1) {
-    //   //   throw new Error('Outer loop too many interations');
-    //   // }
-    //   //Set the first line to be a line that does not start in another link
-    //   console.log('STARTING WITH THIS SET', externalLinesSet);
-    //   currentLine = Array.from(externalLinesSet).find((line) => {
-    //     return !linkSubset.some((link) => {
-    //       if (link === line.parentLink) return false;
-    //       return isPointInsideLink(line.startPosition, link);
-    //     });
-    //   });
-    //
-    //   if (currentLine === undefined) {
-    //     throw new Error('Could not find a line that does not start in another link');
-    //   }
-    //
-    //   //Remove the current line from the set
-    //   externalLinesSet.delete(currentLine);
-    //
-    //   const veryFirstStartingPoint: Coord = new Coord(
-    //     currentLine.startPosition.x,
-    //     currentLine.startPosition.y
-    //   );
-    //
-    //   pathString += ` M ${currentLine.startPosition.x} ${currentLine.startPosition.y} `;
-    //
-    //   let counter = 0;
-    //
-    //   while (
-    //     currentLine.startPosition.getDistanceTo(veryFirstStartingPoint) > 0.00001 ||
-    //     counter == 0
-    //   ) {
-    //     console.log('counter', counter);
-    //     console.log('currentLine', currentLine);
-    //     //Remove the current line from the set
-    //
-    //     //If the line intersects with any other lines, then we need to find the intersection point and split the line
-    //     //Else we can just move on to the next line
-    //     let firstIntersectedLine = findFirstIntersectedLine(currentLine, externalLinesSet);
-    //     if (firstIntersectedLine !== undefined) {
-    //       console.log('Intersection', firstIntersectedLine);
-    //       //Find the intersection point
-    //       const intersectionPoint: Coord | undefined =
-    //         currentLine.intersectsWith(firstIntersectedLine);
-    //
-    //       if (intersectionPoint === undefined)
-    //         throw new Error(
-    //           'Intersection point is undefined despite the fact that the lines intersected'
-    //         );
-    //
-    //       console.log('currentLine', currentLine, 'firstIntersectedLine', firstIntersectedLine);
-    //       if (currentLine instanceof Arc && firstIntersectedLine instanceof Arc) {
-    //         //Arc to Arc intersection
-    //         if (currentLine.center.getDistanceTo(firstIntersectedLine.center) < 0.00001) {
-    //           console.log('Skipping drawing the next arc going to line');
-    //           pathString += currentLine.toPathString();
-    //           //Remove the new arc from the set
-    //           externalLinesSet.delete(firstIntersectedLine);
-    //           firstIntersectedLine = currentLine.next;
-    //         } else {
-    //           //Arc to arc by they are not the same joint
-    //           //We need to split both arcs into two arcs
-    //           const arcToDraw = new Arc(
-    //             currentLine.startPosition,
-    //             intersectionPoint,
-    //             currentLine.center
-    //           );
-    //           console.log('shortened arc', arcToDraw);
-    //           arcToDraw.color = 'brown';
-    //           pathString += arcToDraw.toPathString();
-    //
-    //           currentLine.startPosition = intersectionPoint;
-    //
-    //           //We also need to split the 2nd arc into two arcs
-    //           const arcToSave = new Arc(
-    //             firstIntersectedLine.startPosition,
-    //             intersectionPoint,
-    //             firstIntersectedLine.center
-    //           );
-    //           console.log('shortened arc', arcToSave);
-    //           arcToSave.color = 'brown';
-    //           arcToSave.next = firstIntersectedLine.next;
-    //
-    //           externalLinesSet.add(arcToSave);
-    //
-    //           firstIntersectedLine.startPosition = intersectionPoint;
-    //         }
-    //       } else if (currentLine instanceof Line && firstIntersectedLine instanceof Arc) {
-    //         //Going from a line to an arc
-    //         const lineToDraw = new Line(currentLine.startPosition, intersectionPoint);
-    //         pathString += lineToDraw.toPathString();
-    //         firstIntersectedLine.startPosition = intersectionPoint;
-    //       } else if (currentLine instanceof Arc && firstIntersectedLine instanceof Line) {
-    //         const arcToDraw = new Arc(
-    //           currentLine.startPosition,
-    //           intersectionPoint,
-    //           currentLine.center
-    //         );
-    //         console.log('shortened arc', arcToDraw);
-    //         arcToDraw.color = 'brown';
-    //         pathString += arcToDraw.toPathString();
-    //
-    //         //We also need to split the line into two lines
-    //         const intersectionPointNudgedToStart = new Coord(
-    //           intersectionPoint.x +
-    //             (firstIntersectedLine.startPosition.x - intersectionPoint.x) * 0.00001,
-    //           intersectionPoint.y +
-    //             (firstIntersectedLine.startPosition.y - intersectionPoint.y) * 0.00001
-    //         );
-    //
-    //         const firstLine = new Line(
-    //           firstIntersectedLine.startPosition,
-    //           intersectionPointNudgedToStart
-    //         );
-    //         firstLine.color = 'lightblue';
-    //         firstLine.parentLink = firstIntersectedLine.parentLink;
-    //
-    //         firstIntersectedLine.startPosition = intersectionPoint;
-    //       } else if (currentLine instanceof Line && firstIntersectedLine instanceof Line) {
-    //         //Split the current line into two lines
-    //         const firstLine = new Line(currentLine.startPosition, intersectionPoint);
-    //
-    //         //Make a seccond point that nudeged from the intersection point towards the end point
-    //         const nudgedEndPoint = new Coord(
-    //           intersectionPoint.x + (currentLine.endPosition.x - intersectionPoint.x) * 0.00001,
-    //           intersectionPoint.y + (currentLine.endPosition.y - intersectionPoint.y) * 0.00001
-    //         );
-    //         const secondLine = new Line(nudgedEndPoint, currentLine.endPosition);
-    //
-    //         firstLine.parentLink = currentLine.parentLink;
-    //         secondLine.parentLink = currentLine.parentLink;
-    //
-    //         firstLine.next = secondLine;
-    //         secondLine.next = currentLine.next;
-    //         firstLine.color = 'light' + firstLine.color;
-    //         secondLine.color = 'lightblue';
-    //
-    //         //Add the first line to the path string
-    //         pathString += firstLine.toPathString();
-    //
-    //         //Add the second line to the set as long as it's not fully inside another link (excluding the line's parent)
-    //         if (
-    //           !linkSubset.some((link) =>
-    //             link === secondLine.parentLink ? false : isLineFullyInside(secondLine, link)
-    //           )
-    //         ) {
-    //           externalLinesSet.add(secondLine);
-    //         }
-    //       }
-    //
-    //       //Set the next line to the first intersected line
-    //       currentLine = firstIntersectedLine;
-    //     } else {
-    //       console.log('No intersection');
-    //       //The line does not intersect with any other lines, so we can just add it to the path string
-    //       pathString += currentLine.toPathString();
-    //
-    //       //Set the next line to be the next line of the line
-    //       currentLine = currentLine.next;
-    //     }
-    //
-    //     //If the current line is undefined, then we have reached the end of the path
-    //     if (currentLine === undefined) {
-    //       console.log('Exisitng inner loop since currentLine is undefined');
-    //       break;
-    //     }
-    //     counter++;
-    //     if (counter == 20) {
-    //       // For Debugging
-    //       console.log(pathString);
-    //       return pathString;
-    //     }
-    //     if (counter > 100) throw new Error('Infinite loop detected');
-    //
-    //     console.log('removing currentLine', currentLine);
-    //     externalLinesSet.delete(currentLine);
-    //   }
-    //   console.log('REMAINING SET:', externalLinesSet);
-    // }
-    //
-    // //print the last current line
-    // // console.log('Drawing Last current line', currentLine);
-    // // pathString += currentLine!.toPathString();
-    //
-    // // pathString += ' Z';
-    // console.log('Compound link path complete!: ', pathString);
-    // //Return the path string
-    // return pathString;
+  }
 
-    function findFirstIntersectedLine(
-      currentLine: any,
-      externalLinesSet: Set<Line>
-    ): Line | undefined {
-      console.log(
-        'Finding first intersected line called with',
-        currentLine,
-        'and',
-        externalLinesSet
-      );
-      //Note that concentric circles are not considered to intersect
+  private computeArcPointsAndRadius(
+    currentLine: Line,
+    nextLine: Line,
+    desiredArcRadius = 2
+  ): [Coord, Coord, number] {
+    //We can modify the currentLine.endPosition and nextLine.startPosition to draw an arc between them
+    const arcOffset = Math.min(desiredArcRadius, currentLine.length / 2, nextLine.length / 2);
+    //Find the offsetPoint for the currentLine, which is arcOffset units away from the end of the line towards the start of the line
+    const currentLineOffsetPoint = currentLine.startPosition
+      .clone()
+      .subtract(currentLine.endPosition)
+      .normalize()
+      .multiply(arcOffset)
+      .add(currentLine.endPosition);
 
-      //Find the first line that intersects with the current line. Find all the intersection points and sort them by distance from the current line's starting point
-      let intersectedLines: Map<Line, Coord> = new Map();
-      let intersectedArcsWithSameCenter: Line[] = [];
-      externalLinesSet.forEach((line) => {
-        const intersectionPoint = currentLine.intersectsWith(line);
-        if (intersectionPoint) {
-          if (line instanceof Arc && currentLine instanceof Arc) {
-            if (line.center.getDistanceTo(currentLine.center) < 0.00001) {
-              //The two lines are concentric arcs, add to another list
-              intersectedArcsWithSameCenter.push(line);
-            } else {
-              intersectedLines.set(line, intersectionPoint);
-            }
-          } else if (!(line == currentLine.next || currentLine == line.next)) {
-            console.log('line is intersected with current line', line);
-            intersectedLines.set(line, intersectionPoint);
-          } else {
-            console.log('line is adjacent to current line excluding, ', line);
-          }
-        }
-      });
+    //Find the offsetPoint for the nextLine, which is arcOffset units away from the start of the line towards the end of the line
+    const nextLineOffsetPoint = nextLine.endPosition
+      .clone()
+      .subtract(nextLine.startPosition)
+      .normalize()
+      .multiply(arcOffset)
+      .add(nextLine.startPosition);
 
-      //if there are any intersections at the startOf this line, then we need to remove them
-      intersectedLines.forEach((intersectionPoint, intersectedLine) => {
-        if (currentLine.startPosition.getDistanceTo(intersectionPoint) < 0.00001) {
-          intersectedLines.delete(intersectedLine);
-        }
-      });
+    NewGridComponent.debugPoints.push(currentLineOffsetPoint);
+    NewGridComponent.debugPoints.push(nextLineOffsetPoint);
 
-      console.log('Intersected lines found', intersectedLines, intersectedArcsWithSameCenter);
-      //If there are not intersected lines, add the intersected arcs with the same center to the list
-      if (intersectedLines.size === 0 && intersectedArcsWithSameCenter.length > 0) {
-        console.warn(
-          'No intersected lines, there are intersected arcs with the same center',
-          intersectedArcsWithSameCenter
-        );
-        // //We want to sort by the arc that ends closest to the current line's starting point since
-        // //this is the most shallow angle that will follow the enternal shape
-        intersectedArcsWithSameCenter.sort((a, b) => {
-          const aDistance = getDistance(a.endPosition, currentLine.startPosition);
-          const bDistance = getDistance(b.endPosition, currentLine.startPosition);
-          return aDistance - bDistance;
-        });
+    //Find the angle between the two lines
+    const angleBetweenLines = nextLine.angle - currentLine.angle;
+    NewGridComponent.debugValue = radToDeg(angleBetweenLines).toFixed(2);
+    const radius = arcOffset * Math.tan((Math.PI - angleBetweenLines) / 2);
 
-        //Return the shortest arc
-        return intersectedArcsWithSameCenter[0];
-      }
-
-      //If there are no intersected lines, then return undefined
-      if (intersectedLines.size === 0) return undefined;
-
-      //Sort the intersected lines by distance from the current line's starting point to the intersection point
-      const intersectedLinesSorted = Array.from(intersectedLines).sort((a, b) => {
-        const aDistance = getDistance(a[1], currentLine.startPosition);
-        const bDistance = getDistance(b[1], currentLine.startPosition);
-        return aDistance - bDistance;
-      });
-
-      //Return the first line in the list
-      return intersectedLinesSorted[0][0];
-    }
+    return [currentLineOffsetPoint, nextLineOffsetPoint, radius];
   }
 
   getPathString(): string {
@@ -1151,6 +916,14 @@ export class Piston extends Link {
   constructor(id: string, joints: Joint[], mass?: number) {
     super(id, joints, mass);
   }
+}
+
+function isNewShape(pathString: string) {
+  return pathString === '' || pathString.substring(pathString.length - 2) === 'Z ';
+}
+
+function getArcPathString(endPoint: Coord, radius: number) {
+  return 'A ' + radius + ' ' + radius + ' 0 0 0 ' + endPoint.x + ' ' + endPoint.y + ' ';
 }
 
 // export class BinaryLink extends RealLink {}

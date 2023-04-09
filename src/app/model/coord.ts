@@ -66,4 +66,13 @@ export class Coord {
   scale(shortenBy: number) {
     return new Coord(this.x * shortenBy, this.y * shortenBy);
   }
+
+  normalize() {
+    const length = Math.sqrt(this.x * this.x + this.y * this.y);
+    return new Coord(this.x / length, this.y / length);
+  }
+
+  multiply(scale: number) {
+    return this.scale(scale);
+  }
 }
