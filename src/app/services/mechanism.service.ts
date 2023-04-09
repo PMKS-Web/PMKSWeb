@@ -226,6 +226,25 @@ export class MechanismService {
         //Add the new link to the joints
         j.links.push(newLink);
       });
+
+      //For every joint in the new link, add all other joints in the new link as connected joints
+      // newLink.joints.forEach((j: Joint | RealJoint) => {
+      //   if (!(j instanceof RealJoint)) return;
+      //   newLink.joints.forEach((j2: Joint | RealJoint) => {
+      //     if (!(j2 instanceof RealJoint)) return;
+      //     if (j.id !== j2.id) {
+      //       j.connectedJoints.push(j2);
+      //     }
+      //   });
+      // });
+      //
+      // //Lastly remove duplicate connected joints
+      // newLink.joints.forEach((j: Joint | RealJoint) => {
+      //   if (!(j instanceof RealJoint)) return;
+      //   j.connectedJoints = j.connectedJoints.filter((cj, index) => {
+      //     return j.connectedJoints.findIndex((cj2) => cj2.id === cj.id) === index;
+      //   });
+      // });
     } else if (joint.isWelded) {
       //WE ARE UNWELDING THE JOINT
       const mainLink = joint.links[0] as RealLink;

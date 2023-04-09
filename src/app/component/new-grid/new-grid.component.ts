@@ -152,16 +152,16 @@ export class NewGridComponent {
         );
         this.cMenuItems.push(
           new cMenuItem(
-            'Switch Force Direction',
-            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
-            'switch_force_dir'
+            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
+            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
+            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
           )
         );
         this.cMenuItems.push(
           new cMenuItem(
-            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
-            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
-            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
+            'Switch Force Direction',
+            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
+            'switch_force_dir'
           )
         );
         break;
@@ -175,11 +175,11 @@ export class NewGridComponent {
           )
         );
         this.cMenuItems.push(
-          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
         );
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
+          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
         break;
       case 'RevJoint':
@@ -207,15 +207,6 @@ export class NewGridComponent {
             )
           );
         } else {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).showCurve ? 'Hide Curve' : 'Show Curve',
-              () => {
-                this.gridUtils.toggleCurve(this.lastRightClick);
-              },
-              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
-            )
-          );
           if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
             this.cMenuItems.push(
               new cMenuItem(
@@ -233,13 +224,29 @@ export class NewGridComponent {
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         );
-        this.cMenuItems.push(
-          new cMenuItem(
-            (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-            this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
-          )
-        );
+        if ((this.lastRightClick as RealJoint).canBeWelded()) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
+            )
+          );
+        }
+        if (
+          !(this.lastRightClick as RealJoint).ground &&
+          this.mechanismSrv.oneValidMechanismExists()
+        ) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).showCurve ? 'Hide Curve' : 'Show Curve',
+              () => {
+                this.gridUtils.toggleCurve(this.lastRightClick);
+              },
+              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
+            )
+          );
+        }
 
         break;
       case 'String': //This means grid

@@ -96,6 +96,19 @@ export class RealJoint extends Joint {
     this._input = value;
   }
 
+  canBeWelded() {
+    //Is is already welded - it can always be unwelded
+    if (this.isWelded) {
+      return true;
+    }
+    //If the joint is an input or ground, it cannot be welded
+    //It also cannot be welded unless there are two or more links connected to it
+    if (this.input || this.ground || this.links.length < 2) {
+      return false;
+    } else {
+      return true;
+    }
+  }
 }
 
 // TODO: Verify this but I don't believe there is an ImagJoint...
