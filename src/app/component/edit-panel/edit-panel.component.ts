@@ -311,7 +311,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         });
       } else {
         this.activeSrv.selectedForce.mag = value;
-        // this.resolveNewLink();
+        this.resolveNewForceAngle();
         this.mechanismService.onMechUpdateState.next(2);
         this.forceForm.patchValue(
           {

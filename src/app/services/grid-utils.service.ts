@@ -150,8 +150,8 @@ export class GridUtilsService {
             f.endCoord.y = PositionSolver.forcePositionMap.get(f.id + 'end')!.y;
             f.startCoord.x = PositionSolver.forcePositionMap.get(f.id + 'start')!.x;
             f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
-            f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-            f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+            f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+            f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
           });
         });
         break;
@@ -172,17 +172,17 @@ export class GridUtilsService {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;
     }
-    selectedForce.forceLine = Force.createForceLine(
+    selectedForce.forceLine = selectedForce.createForceLine(
       selectedForce.startCoord,
       selectedForce.endCoord
     );
     if (selectedForce.arrowOutward) {
-      selectedForce.forceArrow = Force.createForceArrow(
+      selectedForce.forceArrow = selectedForce.createForceArrow(
         selectedForce.startCoord,
         selectedForce.endCoord
       );
     } else {
-      selectedForce.forceArrow = Force.createForceArrow(
+      selectedForce.forceArrow = selectedForce.createForceArrow(
         selectedForce.endCoord,
         selectedForce.startCoord
       );

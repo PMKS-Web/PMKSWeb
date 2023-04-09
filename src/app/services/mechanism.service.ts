@@ -442,20 +442,23 @@ export class MechanismService {
   }
 
   changeForceDirection() {
-    this.activeObjService.selectedForce.arrowOutward =
-      !this.activeObjService.selectedForce.arrowOutward;
-    if (this.activeObjService.selectedForce.arrowOutward) {
-      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
-        this.activeObjService.selectedForce.startCoord,
-        this.activeObjService.selectedForce.endCoord
-      );
-    } else {
-      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
-        this.activeObjService.selectedForce.endCoord,
-        this.activeObjService.selectedForce.startCoord
-      );
-    }
-    this.updateMechanism();
+    NewGridComponent.sendNotification('This feature is coming soon!');
+    // this.activeObjService.selectedForce.arrowOutward =
+    //   !this.activeObjService.selectedForce.arrowOutward;
+    // if (this.activeObjService.selectedForce.arrowOutward) {
+    //   this.activeObjService.selectedForce.forceArrow =
+    //     this.activeObjService.selectedForce.createForceArrow(
+    //       this.activeObjService.selectedForce.startCoord,
+    //       this.activeObjService.selectedForce.endCoord
+    //     );
+    // } else {
+    //   this.activeObjService.selectedForce.forceArrow =
+    //     this.activeObjService.selectedForce.createForceArrow(
+    //       this.activeObjService.selectedForce.endCoord,
+    //       this.activeObjService.selectedForce.startCoord
+    //     );
+    // }
+    // this.updateMechanism();
   }
 
   changeForceLocal() {
@@ -687,8 +690,8 @@ export class MechanismService {
       f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
       f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
       f.angleRad = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angleRad;
-      f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-      f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+      f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+      f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
     });
     if (!AnimationBarComponent.animate) {
       return;

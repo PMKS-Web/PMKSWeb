@@ -194,8 +194,8 @@ export class LinkageTableComponent implements OnInit {
         force.endCoord.y = Math.sin(force.angleRad) + force.startCoord.y;
         break;
     }
-    force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
-    force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
+    force.forceLine = force.createForceLine(force.startCoord, force.endCoord);
+    force.forceArrow = force.createForceArrow(force.startCoord, force.endCoord);
     this.mechanismService.updateMechanism();
   }
 

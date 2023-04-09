@@ -319,11 +319,11 @@ export class NewGridComponent {
     const mousePos = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
     this.forceTempHolderSVG.children[0].setAttribute(
       'd',
-      Force.createForceLine(startCoord, mousePos)
+      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
     );
     this.forceTempHolderSVG.children[1].setAttribute(
       'd',
-      Force.createForceArrow(startCoord, mousePos)
+      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
     );
   }
 

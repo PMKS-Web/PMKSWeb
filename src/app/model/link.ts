@@ -152,7 +152,7 @@ export class RealLink extends Link {
     '#303e9f',
     // '#3948ab',
     // '#3f50b5',
-    '#5c6ac0',
+    // '#5c6ac0',
     // '#7986cb',
     // '#9fa8da',
     '#c5cae9',

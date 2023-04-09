@@ -2,6 +2,7 @@ import { Link, RealLink } from './link';
 import { Coord } from './coord';
 import { AppConstants } from './app-constants';
 import { SettingsService } from '../services/settings.service';
+import { getAngle } from './utils';
 
 export class Force {
   private _id: string;
@@ -22,6 +23,7 @@ export class Force {
   private _showHighlight: boolean = false;
   isEndSelected: boolean = false;
   isStartSelected: boolean = false;
+  visualWidth: number = 0.1;
 
   constructor(
     id: string,
@@ -37,14 +39,15 @@ export class Force {
     this._link = link;
     this._startCoord = new Coord(startCoord.x, startCoord.y);
     this._endCoord = new Coord(endCoord.x, endCoord.y);
-    this._forceLine = Force.createForceLine(startCoord, endCoord);
-    this._forceArrow = Force.createForceArrow(startCoord, endCoord);
+    this._forceLine = this.createForceLine(startCoord, endCoord);
+    this._forceArrow = this.createForceArrow(startCoord, endCoord);
     this._local = local;
     this._arrowOutward = arrowOutward;
     this._mag = mag;
     this._angleRad = this.updateAngle(this.startCoord, this.endCoord);
     this.xComp = this.endCoord.x - this.startCoord.x;
     this.yComp = this.endCoord.y - this.startCoord.y;
+    this.visualWidth = Math.min(this.mag * 0.1, 0.5);
   }
 
   updateAngle(startCoord: Coord, endCoord: Coord) {
@@ -55,49 +58,75 @@ export class Force {
     this.angleRad = this.updateAngle(this.startCoord, this.endCoord);
     this.xComp = this.endCoord.x - this.startCoord.x;
     this.yComp = this.endCoord.y - this.startCoord.y;
+    this.visualWidth = Math.min(this.mag * 0.1, 0.5);
+    this._forceLine = this.createForceLine(this.startCoord, this.endCoord);
+    this._forceArrow = this.createForceArrow(this.startCoord, this.endCoord);
   }
 
-  static createForceLine(startCoord: Coord, endCoord: Coord) {
-    return (
-      'M ' +
-      startCoord.x.toString() +
-      ' ' +
-      startCoord.y.toString() +
-      ' L ' +
-      endCoord.x.toString() +
-      ' ' +
-      endCoord.y.toString()
-    );
-  }
-
-  static createForceArrow(startCoord: Coord, endCoord: Coord) {
+  createForceLine(startCoord: Coord, endCoord: Coord) {
+    //Shorten the end of the line the height of the arrow
     const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
-    const a1 = angle - Math.PI / 6;
-    const a2 = angle + Math.PI / 6;
-    const triLen = 0.2 * SettingsService.objectScale.value;
-    const dx1 = Math.cos(a1) * triLen;
-    const dy1 = Math.sin(a1) * triLen;
-    const dx2 = Math.cos(a2) * triLen;
-    const dy2 = Math.sin(a2) * triLen;
+    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale.value;
+    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale.value;
+    let startX = startCoord.x + dx;
+    let startY = startCoord.y + dy;
+    let endX = endCoord.x - dx;
+    let endY = endCoord.y - dy;
 
-    //Offset the tip of the triangle by 1/2 the length of the triangle
-    const tipOfTriangle = endCoord.clone();
-    tipOfTriangle.x += Math.cos(angle) * 0.05 * SettingsService.objectScale.value;
-    tipOfTriangle.y += Math.sin(angle) * 0.05 * SettingsService.objectScale.value;
-    // const triString = `M ${endX} ${endY} L ${endX - dx1} ${endY - dy1} L ${endX - dx2} ${endY - dy2} Z`;
+    if (this._arrowOutward) {
+      startX = startCoord.x;
+      startY = startCoord.y;
+    } else {
+      endX = endCoord.x;
+      endY = endCoord.y;
+    }
+
+    return `M ${startX} ${startY} L ${endX} ${endY}`;
+  }
+
+  createForceArrow(startCoord: Coord, endCoord: Coord) {
+    //Get the tip of the triangle
+    const arrowVector = endCoord
+      .clone()
+      .subtract(startCoord)
+      .normalize()
+      .scale(0.06 * SettingsService.objectScale.value);
+    let tipOfTriangle = endCoord.clone().add(arrowVector);
+
+    const length = this.visualWidth * 2 * SettingsService.objectScale.value;
+    const width = this.visualWidth * 2 * SettingsService.objectScale.value;
+    const angle = getAngle(startCoord, endCoord);
+
+    const point1 = tipOfTriangle
+      .clone()
+      .add(
+        new Coord(
+          -length * Math.cos(angle) - width * Math.sin(angle),
+          -length * Math.sin(angle) + width * Math.cos(angle)
+        )
+      );
+    const point2 = tipOfTriangle
+      .clone()
+      .add(
+        new Coord(
+          -length * Math.cos(angle) + width * Math.sin(angle),
+          -length * Math.sin(angle) - width * Math.cos(angle)
+        )
+      );
+
     return (
       'M ' +
       tipOfTriangle.x.toString() +
       ' ' +
       tipOfTriangle.y.toString() +
       ' L ' +
-      (endCoord.x - dx1).toString() +
+      point1.x.toString() +
       ' ' +
-      (endCoord.y - dy1).toString() +
+      point1.y.toString() +
       ' L ' +
-      (endCoord.x - dx2).toString() +
+      point2.x.toString() +
       ' ' +
-      (endCoord.y - dy2).toString() +
+      point2.y.toString() +
       ' Z'
     );
   }
