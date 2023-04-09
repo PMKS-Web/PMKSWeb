@@ -167,6 +167,22 @@ export class Force {
     return this._forceLine;
   }
 
+  get forceLineLong(): string {
+    //Extend the line on both ends by the visual width
+    const angle = Math.atan2(
+      this.endCoord.y - this.startCoord.y,
+      this.endCoord.x - this.startCoord.x
+    );
+    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale.value;
+    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale.value;
+    let startX = this.startCoord.x - dx;
+    let startY = this.startCoord.y - dy;
+    let endX = this.endCoord.x + dx;
+    let endY = this.endCoord.y + dy;
+
+    return `M ${startX} ${startY} L ${endX} ${endY}`;
+  }
+
   set forceLine(value: string) {
     this._forceLine = value;
   }

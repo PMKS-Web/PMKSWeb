@@ -147,6 +147,16 @@
   </g>
   <g id='linkHolder' style='transform: scaleY(-1)'>
     <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+      <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && activeObjService.objType== "Link" && activeObjService.selectedLink == link' style='pointer-events: none;'>
+        <path
+          *ngFor='let subLink of gridUtils.getLinkSubset(link)'
+          [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
+          fill="rgba(0,0,0,0.3)"
+          [attr.stroke]="'black'"
+          [attr.stroke-width]='0.01 * settings.objectScale'
+          [attr.stroke-dasharray]='0.1 * settings.objectScale'>
+        </path>
+      </ng-container>
       <path
         *ngIf='gridUtils.typeOfLink(link) == "R" && !isRenderFail(link)'
         (pointerover)='link.showHighlight = true'
@@ -193,6 +203,10 @@
       style='overflow: visible'
       cursor='move'
     >
+
+      <!-- Hitbox -->
+      <circle [attr.r]='settings.objectScale/4' cx='0' cy='0' fill='transparent' />
+<!--      Normal Joint-->
       <circle *ngIf='!gridUtils.getWelded(joint)'
         id='joint_{{ joint.id }}' class='joint_circles'
         [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
@@ -201,6 +215,7 @@
         [class]='mechanismSrv.getJointCSSClass(joint)'
       />
 
+<!--      Welded Joint-->
       <path *ngIf='gridUtils.getWelded(joint)' [class]='mechanismSrv.getJointCSSClass(joint)'
             d='M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z'
             style='transform: scale({{0.01*settings.objectScale}}) rotateZ({{gridUtils.getAngleFromJoint(joint)}}rad)' >
@@ -267,7 +282,7 @@
       </svg>
       <!-- Transpent thicker force to increase hitbox for the group for highliting-->
       <path [attr.d]='force.forceLine' class='forceLine' [attr.stroke-width]='force.visualWidth*settings.objectScale'></path>
-      <path [attr.d]='force.forceLine' stroke='transparent' [attr.stroke-width]='force.visualWidth*settings.objectScale'></path>
+      <path [attr.d]='force.forceLineLong' stroke='transparent' [attr.stroke-width]='force.visualWidth*settings.objectScale+svgGrid.scaleWithZoom(10)'></path>
       <path [attr.d]='force.forceArrow' class='forceArrow' [attr.fill]='force.fill'></path>
     </g>
 
