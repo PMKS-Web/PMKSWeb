@@ -193,7 +193,7 @@
       style='overflow: visible'
       cursor='move'
     >
-      <circle
+      <circle *ngIf='!gridUtils.getWelded(joint)'
         id='joint_{{ joint.id }}' class='joint_circles'
         [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
         [attr.cx]='0'
@@ -201,6 +201,10 @@
         [class]='mechanismSrv.getJointCSSClass(joint)'
       />
 
+      <path *ngIf='gridUtils.getWelded(joint)' [class]='mechanismSrv.getJointCSSClass(joint)'
+            d='M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z'
+            style='transform: scale({{0.01*settings.objectScale}}) rotateZ({{gridUtils.getAngleFromJoint(joint)}}rad)' >
+      </path>
     </svg>
   </g>
 <!--  For Debugging-->

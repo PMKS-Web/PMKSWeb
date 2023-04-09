@@ -228,4 +228,13 @@ export class GridUtilsService {
   getCenter(line: Line) {
     return (line as Arc).center;
   }
+
+  getWelded(joint: Joint) {
+    return (joint as RealJoint).isWelded;
+  }
+
+  getAngleFromJoint(joint: Joint) {
+    //This joint must be a welded joint, get the angle of one of the sublinks
+    return ((joint as RealJoint).links[0] as RealLink).angleRad;
+  }
 }

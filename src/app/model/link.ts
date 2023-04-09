@@ -256,10 +256,16 @@ export class RealLink extends Link {
       return [];
     }
 
+    let breakOutCounter = 1000;
     //For each external line, check for intersections with all other external lines
     for (let i1 = 0; i1 < externalLines.length; i1++) {
       const line = externalLines[i1];
       for (let i = 0; i < externalLines.length; i++) {
+        if (breakOutCounter-- < 0) {
+          console.error('breakOutCounter');
+          this.renderError = true;
+          return [];
+        }
         const line2 = externalLines[i];
         if (line === line2) continue;
         //If the lines intersect, split the line into two lines
@@ -407,13 +413,17 @@ export class RealLink extends Link {
 
     let timeoutCounter = 100;
 
-    while (externalLinesSet.size > 0 && timeoutCounter > 0) {
+    while (externalLinesSet.size > 1) {
       //Pick the first line from the set
       let currentLine: Line = externalLinesSet.values().next().value;
 
       let veryFirstPoint = currentLine.endPosition.clone();
       while (!currentLine.endPosition.equals(veryFirstPoint) || isNewShape(pathString)) {
-        timeoutCounter--;
+        if (timeoutCounter-- < 0) {
+          console.log('Timeout');
+          this.renderError = true;
+          return pathString;
+        }
         //Find the next line that starts at the end of the current line
         const nextLine = [...externalLinesSet].find((line) => {
           return line.startPosition.looselyEquals(currentLine.endPosition);
@@ -427,10 +437,14 @@ export class RealLink extends Link {
           !currentLine.isArc &&
           !nextLine.isArc &&
           Math.abs(nextLine.angle - currentLine.angle) > degToRad(10) &&
-          0
+          1
         ) {
           let [currentLineOffsetPoint, nextLineOffsetPoint, radius] =
-            this.computeArcPointsAndRadius(currentLine, nextLine, 2);
+            this.computeArcPointsAndRadius(
+              currentLine,
+              nextLine,
+              SettingsService.objectScale.value
+            );
 
           currentLine.endPosition = currentLineOffsetPoint;
           nextLine.startPosition = nextLineOffsetPoint;

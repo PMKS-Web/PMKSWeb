@@ -54,23 +54,53 @@
   .joint-default {
     filter: url(#elevation-1);
     fill: mat.get-color-from-palette($accent-palette, 200);
+
+    image {
+      path {
+        fill: mat.get-color-from-palette($accent-palette, 200);
+      }
+    }
   }
   .joint-highlight {
     filter: url(#elevation-2);
     fill: lighten(mat.get-color-from-palette($accent-palette, 200), 3%);
+
+    image {
+      path {
+        fill: lighten(mat.get-color-from-palette($accent-palette, 200), 3%);
+      }
+    }
   }
   .joint-dragging {
     filter: url(#elevation-3);
     fill: mat.get-color-from-palette($accent-palette, 100);
+
+    image {
+      path {
+        fill: mat.get-color-from-palette($accent-palette, 100);
+      }
+    }
   }
   .joint-selected {
     filter: url(#elevation-1);
     fill: #f44336;
+
+    image {
+      path {
+        fill: #f44336;
+      }
+    }
   }
 
   .joint-welded {
     filter: url(#elevation-1);
     fill: #36f44f;
+
+    image {
+      path {
+        fill: #36f44f;
+      }
+    }
   }
 
   .link-selected {
