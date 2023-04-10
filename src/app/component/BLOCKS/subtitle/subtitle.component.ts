@@ -9,4 +9,6 @@ export class SubtitleComponent {
   @Input() icon: string | undefined;
   @Input() buttonLabel: string | undefined;
   @Input() description: string | undefined;
+
+  @Input() click!: () => void;
 }

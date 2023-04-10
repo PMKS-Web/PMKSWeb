@@ -1,5 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Inject, Input } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { MechanismService } from '../../services/mechanism.service';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 export class cMenuItem {
   public label: string = 'none';
@@ -12,6 +14,14 @@ export class cMenuItem {
     this.label = _label;
     this.action = _action;
     this.icon = _icon;
+  }
+
+  actionWrapper() {
+    if (NewGridComponent.instance.mechanismSrv.mechanismTimeStep !== 0) {
+      NewGridComponent.sendNotification('Context menu cannot be used while simulation is running');
+      return;
+    }
+    this.action();
   }
 }
 
@@ -43,6 +53,8 @@ export class cMenuItem {
 export class ContextMenuComponent {
   @Input() menuItems: cMenuItem[] = [];
   private contextMenu!: HTMLElement;
+
+  constructor(private mechanismSrv: MechanismService) {}
 
   ngAfterViewInit() {
     this.contextMenu = document.querySelector('#contextMenu') as HTMLElement;

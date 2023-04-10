@@ -36,6 +36,7 @@ import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { ActiveObjService } from '../../services/active-obj.service';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -372,19 +373,19 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
       }
     });
-    this.mechPositionSub = this.mechanismSerivce.onMechPositionChange.subscribe((data) => {
+    this.mechPositionSub = this.mechanismSerivce.onMechPositionChange.subscribe((timeIndex) => {
       if (
-        !this.seriesCheckboxForm.value.x ||
-        !this.seriesCheckboxForm.value.y ||
-        !this.seriesCheckboxForm.value.z
+        this.seriesCheckboxForm.value.x ||
+        this.seriesCheckboxForm.value.y ||
+        this.seriesCheckboxForm.value.z
       ) {
         this.chart.clearAnnotations();
         this.chart.addXaxisAnnotation(
           {
-            x: data,
+            x: timeIndex,
             borderColor: '#313aa7',
             label: {
-              text: 'T= ' + String((data / 125).toFixed(2)),
+              text: 'T= ' + String((timeIndex / 125).toFixed(2)),
               orientation: 'horizontal',
               offsetY: -20,
             },
@@ -393,11 +394,16 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         );
       }
 
-      !this.seriesCheckboxForm.value.x &&
+      const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
+      const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
+      const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
+
+      this.seriesCheckboxForm.value.x &&
+        xSeries &&
         this.chart.addPointAnnotation(
           {
-            x: data,
-            y: this.chartOptions.series![0].data[data],
+            x: timeIndex,
+            y: xSeries.data[timeIndex],
             marker: {
               strokeColor: '#313aa7',
               shape: 'square',
@@ -406,71 +412,51 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               borderColor: '#313aa7',
               fillColor: '#000000',
               orientation: 'horizontal',
-              text: String(this.chartOptions.series![0].data[data]),
+              text: String(xSeries.data[timeIndex]),
             },
           },
           false
         );
 
-      !this.seriesCheckboxForm.value.y &&
+      this.seriesCheckboxForm.value.y &&
+        ySeries &&
         this.chart.addPointAnnotation(
           {
-            x: data,
-            y: this.chartOptions.series![1].data[data],
+            x: timeIndex,
+            y: ySeries.data[timeIndex],
             marker: {
-              strokeColor: '#ea2b29',
+              strokeColor: '#f42a2a',
               shape: 'square',
             },
             label: {
-              borderColor: '#ea2b29',
+              borderColor: '#f42a2a',
               fillColor: '#000000',
               orientation: 'horizontal',
-              text: String(this.chartOptions.series![1].data[data]),
+              text: String(ySeries.data[timeIndex]),
             },
           },
           false
         );
 
-      if (this.numberOfSeries === 3) {
-        !this.seriesCheckboxForm.value.z &&
-          this.chart.addPointAnnotation(
-            {
-              x: data,
-              y: this.chartOptions.series![2].data[data],
-              marker: {
-                strokeColor: '#fdb50e',
-                shape: 'square',
-              },
-              label: {
-                borderColor: '#fdb50e',
-                fillColor: '#000000',
-                orientation: 'horizontal',
-                text: String(this.chartOptions.series![2].data[data]),
-              },
+      this.seriesCheckboxForm.value.z &&
+        zSeries &&
+        this.chart.addPointAnnotation(
+          {
+            x: timeIndex,
+            y: zSeries.data[timeIndex],
+            marker: {
+              strokeColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+              shape: 'square',
             },
-            false
-          );
-      } else {
-        //When there is only z, z is the 0th series
-        !this.seriesCheckboxForm.value.z &&
-          this.chart.addPointAnnotation(
-            {
-              x: data,
-              y: this.chartOptions.series![0].data[data],
-              marker: {
-                strokeColor: '#313aa7',
-                shape: 'square',
-              },
-              label: {
-                borderColor: '#313aa7',
-                fillColor: '#000000',
-                orientation: 'horizontal',
-                text: String(this.chartOptions.series![0].data[data]),
-              },
+            label: {
+              borderColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(zSeries.data[timeIndex]),
             },
-            false
-          );
-      }
+          },
+          false
+        );
     });
   }
 

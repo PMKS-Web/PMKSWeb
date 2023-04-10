@@ -83,6 +83,8 @@ export class NewGridComponent {
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
 
+  @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
+
   ngOnInit() {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
@@ -460,6 +462,13 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (this.mechanismSrv.mechanismTimeStep !== 0) {
+      this.sendNotification('Stop animation (or reset to 0 position) to edit');
+      //Close the MatContextMenu
+      // console.log(this.contextMenu);
+      // this.contextMenu.close();
+      return;
+    }
     this.lastRightClickCoord.x = $event.clientX;
     this.lastRightClickCoord.y = $event.clientY;
     console.log('context menu');

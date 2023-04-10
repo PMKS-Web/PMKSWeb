@@ -14,22 +14,63 @@
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
   -->
 
-  <!-- Invalid Mech-->
-  <panel-section id='placeholderContainer' *ngIf='!validMechanisms()'>
-    <p id='placeholderText'>
-      This linkage is not valid. It could be missing an input or have too many / little DOfs.
-    </p>
-    <img id='placeholder' src='assets/placeholder.svg' />
-  </panel-section>
+  <panel-section-collapsible
+    [warning]='true'
+    [expanded]='false'
+    id='placeholderContainer'
+    *ngIf='!this.mechanismService.oneValidMechanismExists()'
+  >
+    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <subtitle-block alwaysShown>This linkage is not valid and cannot be analyzed. Make sure all requirements are met:
+    </subtitle-block>
+    <mat-list class='example-list-wrapping'>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Must have one input</span>
+        <span>Mechanisms should have 1 and only one joint defined as a input.</span>
+      </mat-list-item>
+      <mat-list-item lines='2'>
+        <span matListItemTitle>At least one joint is grounded</span>
+        <span>An input joint doubles as a ground joint.</span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>No orphaned joints</span>
+        <span>
+          Joints that are not a part of any link are orphaned. Remove or connect
+          orphaned joints.
+        </span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>No free floating links</span>
+        <span>
+          Links that are not part of a grounded joint are free floating. Remove or
+          connect free floating links.
+        </span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Degress of freedom must be one</span>
+        <span>DOF = 3*(#_of_Links-1) - 2*(#_of_joints). Count both revolute joints and slider joints.</span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Welded links count as one link</span>
+        <span>
+          If two or more links are welded together at a joint they should only be counted as 1 link.
+        </span>
+      </mat-list-item>
+    </mat-list>
+  </panel-section-collapsible>
 
   <!-- Valid Mech but Nothing Selected -->
-  <panel-section
+
+  <panel-section-collapsible
+    [warning]='true'
+    [expanded]='false'
     id='placeholderContainer'
-    *ngIf="validMechanisms() && this.activeSrv.objType == 'Nothing'"
+    *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
   >
-    <p id='placeholderText'>Select a part of the linkage to analyze it.</p>
-    <img id='placeholder' src='assets/placeholder.svg' />
-  </panel-section>
+    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <subtitle-block alwaysShown>Select a part of the linkage to analyze it.</subtitle-block>
+    <img src='assets/gifs/Click.gif' />
+  </panel-section-collapsible>
 
   <!-- Joint Kinematics-->
   <panel-section-collapsible

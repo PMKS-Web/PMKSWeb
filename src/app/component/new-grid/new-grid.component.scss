@@ -48,7 +48,7 @@
   }
 
   #pathsHolder {
-    stroke: mat.get-color-from-palette($accent-palette, 500);
+    stroke: mat.get-color-from-palette($primary-palette, 900);
   }
 
   .joint-default {

@@ -205,7 +205,7 @@
     >
 
       <!-- Hitbox -->
-      <circle [attr.r]='settings.objectScale/4' cx='0' cy='0' fill='transparent' />
+      <circle *ngIf='gridUtils.typeOfJoint(joint) == "R"' [attr.r]='settings.objectScale/4' cx='0' cy='0' fill='transparent' />
 <!--      Normal Joint-->
       <circle *ngIf='!gridUtils.getWelded(joint)'
         id='joint_{{ joint.id }}' class='joint_circles'
@@ -257,7 +257,8 @@
     <path *ngIf='gridUtils.getJointShowCurve(joint)'
       [attr.d]='mechanismSrv.getJointPath(joint)'
       fill='none'
-      [attr.stroke-width]='0.04 * settings.objectScale'
+      [attr.stroke-width]='0.01 * settings.objectScale'
+      [attr.stroke-dasharray]='0.1 * settings.objectScale'
       style='transform: scaleY(-1); pointer-events: none'
     ></path>
     </ng-container>
@@ -333,7 +334,7 @@
       style='overflow: visible; text-anchor: middle'
     >
       <text
-        *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight"
+        *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
         {{customIDService.getVisualID(joint.id)}}
@@ -350,7 +351,7 @@
       style='overflow: visible; text-anchor: middle'
     >
       <text
-        *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight"
+        *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
         {{customIDService.getVisualID(link.id)}}
@@ -366,7 +367,7 @@
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
     >
-      <text *ngIf='settings.isShowID.value || force.showHighlight'
+      <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
             style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
         {{customIDService.getVisualID(force.id)}}
       </text>
@@ -450,3 +451,4 @@
   </app-context-menu>
 </ng-template>
 
+<div cdkContextMenuTriggerFor="context_menu" #trigger>Right click me</div>
