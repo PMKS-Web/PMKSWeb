@@ -6,6 +6,8 @@
             mat-mini-fab
             color='white'
             (click)='handleSpeedChange()'
+            matTooltip='Change Animation Speed'
+            matTooltipShowDelay='1000'
     >
       {{this.mechanismService.mechanismAnimationIncrement === 4 ? 3 :
       this.mechanismService.mechanismAnimationIncrement}}x
@@ -17,6 +19,8 @@
       mat-mini-fab
       color='primary'
       (click)="startAnimation('pause')"
+      matTooltip='Pause Animation'
+      matTooltipShowDelay='1000'
     >
       <mat-icon>play_arrow</mat-icon>
     </button>
@@ -26,6 +30,8 @@
       mat-mini-fab
       color='primary'
       (click)="startAnimation('play')"
+      matTooltip='Play Animation'
+      matTooltipShowDelay='1000'
     >
       <mat-icon>pause</mat-icon>
     </button>
@@ -34,6 +40,8 @@
       color='warn'
       [disabled]='invalidMechanism()'
       (click)="startAnimation('stop')"
+      matTooltip='Reset to start'
+      matTooltipShowDelay='1000'
     >
       <mat-icon>stop</mat-icon>
     </button>
