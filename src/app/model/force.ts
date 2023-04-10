@@ -66,8 +66,8 @@ export class Force {
   createForceLine(startCoord: Coord, endCoord: Coord) {
     //Shorten the end of the line the height of the arrow
     const angle = Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
-    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale.value;
-    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale.value;
+    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale;
+    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale;
     let startX = startCoord.x + dx;
     let startY = startCoord.y + dy;
     let endX = endCoord.x - dx;
@@ -90,11 +90,11 @@ export class Force {
       .clone()
       .subtract(startCoord)
       .normalize()
-      .scale(0.06 * SettingsService.objectScale.value);
+      .scale(0.06 * SettingsService.objectScale);
     let tipOfTriangle = endCoord.clone().add(arrowVector);
 
-    const length = this.visualWidth * 2 * SettingsService.objectScale.value;
-    const width = this.visualWidth * 2 * SettingsService.objectScale.value;
+    const length = this.visualWidth * 2 * SettingsService.objectScale;
+    const width = this.visualWidth * 2 * SettingsService.objectScale;
     const angle = getAngle(startCoord, endCoord);
 
     const point1 = tipOfTriangle
@@ -173,8 +173,8 @@ export class Force {
       this.endCoord.y - this.startCoord.y,
       this.endCoord.x - this.startCoord.x
     );
-    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale.value;
-    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale.value;
+    const dx = Math.cos(angle) * this.visualWidth * SettingsService.objectScale;
+    const dy = Math.sin(angle) * this.visualWidth * SettingsService.objectScale;
     let startX = this.startCoord.x - dx;
     let startY = this.startCoord.y - dy;
     let endX = this.endCoord.x + dx;

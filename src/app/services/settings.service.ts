@@ -23,10 +23,14 @@ export class SettingsService {
   tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit
 
   isGridDebugOn: boolean = false;
-  static objectScale = new BehaviorSubject(1);
+  static _objectScale = new BehaviorSubject(1);
+
+  static get objectScale(): number {
+    return SettingsService._objectScale.value;
+  }
 
   get objectScale(): number {
-    return SettingsService.objectScale.value;
+    return SettingsService._objectScale.value;
   }
 
   constructor() {

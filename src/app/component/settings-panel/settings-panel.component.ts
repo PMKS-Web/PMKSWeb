@@ -39,7 +39,7 @@ export class SettingsPanelComponent {
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
-    this.currentObjectScaleSetting = SettingsService.objectScale.value;
+    this.currentObjectScaleSetting = SettingsService.objectScale;
 
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
@@ -54,7 +54,7 @@ export class SettingsPanelComponent {
       showMinorGrid: this.settingsService.isShowMinorGrid.value,
     });
 
-    SettingsService.objectScale.subscribe((val) => {
+    SettingsService._objectScale.subscribe((val) => {
       this.currentObjectScaleSetting = val;
       this.settingsForm.patchValue(
         { objectScale: this.currentObjectScaleSetting.toString() },
@@ -93,7 +93,7 @@ export class SettingsPanelComponent {
         this.settingsForm.patchValue({ speed: this.currentObjectScaleSetting.toString() });
       } else {
         this.currentObjectScaleSetting = Number(val);
-        SettingsService.objectScale.next(this.currentObjectScaleSetting);
+        SettingsService._objectScale.next(this.currentObjectScaleSetting);
       }
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
@@ -165,7 +165,7 @@ export class SettingsPanelComponent {
   }
 
   updateObjectScale() {
-    SettingsService.objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
+    SettingsService._objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
   }
 }
 

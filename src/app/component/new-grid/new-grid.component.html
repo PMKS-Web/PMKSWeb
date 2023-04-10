@@ -97,7 +97,7 @@
       <ng-container *ngFor='let line of svgGrid.horizontalLines'>
         <text id='axes_numbers' text-anchor='end' [attr.y]='line' [attr.x]='svgGrid.scaleWithZoom(-10)'
               [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
-              [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{line}}</text>
+              [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{-line}}</text>
       </ng-container>
       <text id='axes_numbers' text-anchor='end' [attr.y]='svgGrid.scaleWithZoom(20)'
             [attr.x]='svgGrid.scaleWithZoom(-10)'
@@ -374,35 +374,35 @@
     </svg>
   </g>
   <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
-    <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible' width='1.23' height='2.61'>
-      <path
-        stroke-width='2'
-        stroke-linejoin='round'
-        fill='black'
-        opacity='1.0'
-        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
-      ></path>
-      <path
-        stroke-width='2'
-        stroke-linejoin='round'
-        fill='white'
-        opacity='1.0'
-        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
-      ></path>
-      <path
-        stroke-width='2'
-        stroke-linejoin='round'
-        fill='black'
-        opacity='1.0'
-        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
-      ></path>
-      <path
-        stroke-width='2'
-        stroke-linejoin='round'
-        fill='white'
-        opacity='1.0'
-        [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
-      ></path>
+    <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible;'>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='black'
+          opacity='1.0'
+          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='white'
+          opacity='1.0'
+          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='black'
+          opacity='1.0'
+          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
+        ></path>
+        <path
+          stroke-width='2'
+          stroke-linejoin='round'
+          fill='white'
+          opacity='1.0'
+          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
+        ></path>
     </svg>
   </g>
   <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
@@ -451,4 +451,4 @@
   </app-context-menu>
 </ng-template>
 
-<div cdkContextMenuTriggerFor="context_menu" #trigger>Right click me</div>
+<!--<div cdkContextMenuTriggerFor="context_menu" #trigger>Right click me</div>-->

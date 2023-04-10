@@ -1,4 +1,4 @@
-<nav class='navBar'>
+<nav class='navBar' id='{{isDevMode() ? "devModeColor" : ""}}'>
   <img
     class='pmksImage'
     alt='PMKS+'
@@ -27,6 +27,10 @@
     Share Project
   </button>
   <div class='spacer'></div>
+  <ng-container *ngIf='isDevMode()'>
+    <p style='font-size: 10px; pointer-events: none; max-height: 50px; overflow: hidden'>
+      You are in Development Mode. The color will return to normal when you build with the production flag. </p>
+  </ng-container>
   <button *ngIf='isDevMode()' mat-button (click)='openRightPanelDebug()'>
     <mat-icon>bug_report</mat-icon>
     Debug

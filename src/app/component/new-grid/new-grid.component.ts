@@ -241,7 +241,7 @@ export class NewGridComponent {
         ) {
           this.cMenuItems.push(
             new cMenuItem(
-              (this.lastRightClick as RealJoint).showCurve ? 'Hide Curve' : 'Show Curve',
+              (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
               () => {
                 this.gridUtils.toggleCurve(this.lastRightClick);
               },
@@ -530,7 +530,7 @@ export class NewGridComponent {
 
                 if (this.mechanismSrv.links.length == 0) {
                   console.log('first link');
-                  SettingsService.objectScale.next(
+                  SettingsService._objectScale.next(
                     Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
                   );
                 }

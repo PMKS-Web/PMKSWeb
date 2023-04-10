@@ -45,6 +45,7 @@ import { EquationPanelComponent } from './component/equation-panel/equation-pane
 import { environment } from '../environments/environment';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
+import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 
 @NgModule({
   declarations: [
@@ -79,6 +80,7 @@ import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
     EditableTitleComponent,
     FocusOnShowDirective,
     EquationPanelComponent,
+    NotReadyWarningComponent,
   ],
   imports: [
     BrowserModule,

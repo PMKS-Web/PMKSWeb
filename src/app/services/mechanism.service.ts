@@ -721,7 +721,7 @@ export class MechanismService {
     }
     setTimeout(() => {
       this.animate(this.mechanismTimeStep);
-    }, 8);
+    }, 16);
   }
 
   getJointCSSClass(joint: Joint) {

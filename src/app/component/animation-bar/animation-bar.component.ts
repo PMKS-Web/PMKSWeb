@@ -33,14 +33,14 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   constructor(
     private svgGrid: SvgGridService,
-    private mechanismService: MechanismService,
+    public mechanismService: MechanismService,
     private settingsService: SettingsService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
     this.mechanismService.onMechPositionChange.subscribe({
-      next: (v) => (this.timestepDisplay = Number((v / 125).toFixed(2))),
+      next: (v) => (this.timestepDisplay = Number((v / 62.5).toFixed(2))),
     });
   }
 
@@ -61,7 +61,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
       simpleForm.value.timestep = 0;
     }
     this.mechanismService.animate(
-      Number(simpleForm.value.timestep) * 125,
+      Number(simpleForm.value.timestep) * 62.5,
       AnimationBarComponent.animate
     );
   }
@@ -203,5 +203,13 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   invalidMechanism() {
     return !this.mechanismService.oneValidMechanismExists();
+  }
+
+  handleSpeedChange() {
+    //Switch from 1 -> 2 -> 4 -> 1
+    this.mechanismService.mechanismAnimationIncrement =
+      (this.mechanismService.mechanismAnimationIncrement % 4) + 1;
+    if (this.mechanismService.mechanismAnimationIncrement === 3)
+      this.mechanismService.mechanismAnimationIncrement++;
   }
 }

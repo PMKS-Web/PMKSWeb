@@ -10,6 +10,10 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  #devModeColor {
+    background-color: #EF9A9A;
+  }
+
   .navBar {
     z-index: 1;
     @include mat.elevation(2);

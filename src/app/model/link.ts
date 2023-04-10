@@ -227,6 +227,8 @@ export class RealLink extends Link {
 
   public reComputeDPath() {
     this._d = this.getPathString();
+    this._CoM = RealLink.determineCenterOfMass(this.joints);
+    this.updateCoMDs();
   }
 
   updateLengthAndAngle() {
@@ -331,8 +333,7 @@ export class RealLink extends Link {
     //Remove very short lines
     externalLines = externalLines.filter((line) => {
       return (
-        line.startPosition.getDistanceTo(line.endPosition) >
-        0.0036 * SettingsService.objectScale.value
+        line.startPosition.getDistanceTo(line.endPosition) > 0.0036 * SettingsService.objectScale
       );
     });
 
@@ -372,7 +373,7 @@ export class RealLink extends Link {
     }
 
     function isLineFullyInside(line: Line, link: RealLink): boolean {
-      const tempShortenedLine = line.clone().shorten(0.02 * SettingsService.objectScale.value);
+      const tempShortenedLine = line.clone().shorten(0.02 * SettingsService.objectScale);
 
       //First we need to check if both endpoints of the line are inside the link
       if (
@@ -446,11 +447,7 @@ export class RealLink extends Link {
           1
         ) {
           let [currentLineOffsetPoint, nextLineOffsetPoint, radius] =
-            this.computeArcPointsAndRadius(
-              currentLine,
-              nextLine,
-              SettingsService.objectScale.value
-            );
+            this.computeArcPointsAndRadius(currentLine, nextLine, SettingsService.objectScale);
 
           currentLine.endPosition = currentLineOffsetPoint;
           nextLine.startPosition = nextLineOffsetPoint;
@@ -553,7 +550,7 @@ export class RealLink extends Link {
       jointIDtoIndex.set(j.id, ind);
     });
 
-    let width: number = SettingsService.objectScale.value / 4;
+    let width: number = SettingsService.objectScale / 4;
     let d = '';
 
     let clockWise = 'Will be set later';
@@ -865,20 +862,22 @@ export class RealLink extends Link {
   }
 
   updateCoMDs() {
+    //This is such a bad way of doing this. Just import the SVG file from the assets folder and use that instead of constructing the exact same thing every time.
+    const radius = SettingsService.objectScale * 0.2;
     this._CoM_d1 =
       'M' +
       this.CoM.x +
       ' ' +
       this.CoM.y +
       ' ' +
-      (this.CoM.x - 0.25) +
+      (this.CoM.x - radius) +
       ' ' +
       this.CoM.y +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
+      `A ${radius} ${radius} 0 0 0 ` +
       this.CoM.x +
       ' ' +
-      (this.CoM.y + 0.25);
+      (this.CoM.y + radius);
     this._CoM_d2 =
       'M' +
       this.CoM.x +
@@ -887,10 +886,10 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.x +
       ' ' +
-      (this.CoM.y + 0.25) +
+      (this.CoM.y + radius) +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
-      (this.CoM.x + 0.25) +
+      `A ${radius} ${radius} 0 0 0` +
+      (this.CoM.x + radius) +
       ' ' +
       this.CoM.y;
     this._CoM_d3 =
@@ -899,14 +898,14 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.y +
       ' ' +
-      (this.CoM.x + 0.25) +
+      (this.CoM.x + radius) +
       ' ' +
       this.CoM.y +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
+      `A ${radius} ${radius} 0 0 0 ` +
       this.CoM.x +
       ' ' +
-      (this.CoM.y - 0.25);
+      (this.CoM.y - radius);
     this._CoM_d4 =
       'M' +
       this.CoM.x +
@@ -915,10 +914,10 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.x +
       ' ' +
-      (this.CoM.y - 0.25) +
+      (this.CoM.y - radius) +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
-      (this.CoM.x - 0.25) +
+      `A ${radius} ${radius} 0 0 0 ` +
+      (this.CoM.x - radius) +
       ' ' +
       this.CoM.y;
   }

@@ -109,7 +109,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       x: {
         // show: false,
         formatter: function (val) {
-          return 'T = ' + ((val - 1) / 125).toFixed(2) + 's';
+          return 'T = ' + ((val - 1) / 62.5).toFixed(2) + 's';
         },
       },
       marker: {
@@ -148,7 +148,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         rotateAlways: true,
         trim: true,
         formatter: function (val) {
-          return String((Number(val) - 1) / 125);
+          return String((Number(val) - 1) / 62.5);
         },
       },
       tickAmount: 1,
@@ -385,7 +385,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             x: timeIndex,
             borderColor: '#313aa7',
             label: {
-              text: 'T= ' + String((timeIndex / 125).toFixed(2)),
+              text: 'T= ' + String((timeIndex / 62.5).toFixed(2)),
               orientation: 'horizontal',
               offsetY: -20,
             },

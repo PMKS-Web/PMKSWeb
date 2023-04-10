@@ -11,6 +11,11 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  #speedButton {
+    font-weight: bold;
+    font-size: 20px;
+  }
+
   #barContainer {
     //Fix to the bottom left, make the it cover the entire width of the screen but give it a height of 50px. Use flex to center animation bar in the middle botttom.
     position: absolute;
@@ -73,6 +78,7 @@
         #tLabel {
           margin-right: 10px;
         }
+
         #secLabel {
         }
       }
