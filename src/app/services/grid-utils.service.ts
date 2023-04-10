@@ -18,6 +18,7 @@ import { Coord } from '../model/coord';
 import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 @Injectable({
   providedIn: 'root',
@@ -156,6 +157,7 @@ export class GridUtilsService {
         });
         break;
     }
+    NewGridComponent.instance.mechanismSrv.updateMechanism();
     return selectedJoint;
   }
 
