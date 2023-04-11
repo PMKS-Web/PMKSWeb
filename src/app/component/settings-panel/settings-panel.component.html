@@ -57,7 +57,7 @@
       [formGroup]='this.settingsForm'
       _formControl='rotation'
       tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
-    >Input Direction
+    >Input Direction [Disabled]
     </radio-block
     >
 
@@ -67,7 +67,7 @@
       [formGroup]='this.settingsForm'
       _formControl='speed'
       tooltip='The speed that the animation will run at.'
-    >Input Speed
+    >Input Speed [Disabled]
     </input-block>
 
     <subtitle-block>Force Settings</subtitle-block>
@@ -75,7 +75,7 @@
       [formGroup]='this.settingsForm'
       _formControl='gravity'
       tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
-    >Gravity
+    >Gravity [Disabled]
     </toggle-block
     >
     <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>

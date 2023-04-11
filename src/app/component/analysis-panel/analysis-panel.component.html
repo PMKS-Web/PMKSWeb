@@ -80,7 +80,10 @@
     (opened)="graphExpanded['JKineAna'] = true"
     (closed)="graphExpanded['JKineAna'] = false"
   >
-    <title-block alwaysShown icon='expand_less'>
+    <title-block alwaysShown icon='expand_less'
+                 description='The input speed is currently set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
+      the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
+    settings panel.'>
       Kinematic Analysis for Joint
       {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
     </title-block>
@@ -255,7 +258,10 @@
     id='analysis-panel'
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
-    <title-block alwaysShown icon='expand_less'>
+    <title-block alwaysShown icon='expand_less'
+                 description='The input speed is currently set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
+      the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
+    settings panel.'>
       Kinematic Analysis for Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
     </title-block>
 
