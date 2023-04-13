@@ -10,17 +10,52 @@ import { ForceData, JointData, LinkData } from "./transcoder-data";
 
 export abstract class GenericEncoder {
 
-    abstract addJoint(joint: JointData): void;
-    abstract addLink(link: LinkData): void;
-    abstract addForce(force: ForceData): void;
+    joints: JointData[] = [];
+    links: LinkData[] = [];
+    forces: ForceData[] = [];
 
-    abstract setUnits(globalUnits: string, angleUnits: string): void;
-    abstract setInputVector(speed: number, direction: number): void;
-    abstract setGravityOn(isOn: boolean): void;
-    abstract setGrid(isOn: boolean, isMinorGridLinesOn: boolean): void;
-    abstract setScale(scale: number): void;
-    abstract setCurrentTimestep(timestep: number): void;
+    globalUnits: string = "";
+    angleUnits: string = "";
+    speed: number = 0;
+    scale: number = 0;
+    timestep: number = 0;
+    direction: boolean = false;
+    isGravityOn: boolean = false;
+    isGridOn: boolean = false;
+    isMinorGridLinesOn: boolean = false;
+    
 
+    addJoint(joint: JointData): void {
+        this.joints.push(joint);
+    }
+    addLink(link: LinkData) {
+        this.links.push(link);
+    }
+    addForce(force: ForceData) {
+        this.forces.push(force);
+    }
+    setUnits(globalUnits: string, angleUnits: string): void {
+        this.globalUnits = globalUnits;
+    }
+    setInputVector(speed: number, direction: boolean): void {
+        this.speed = speed;
+        this.direction = direction;
+    }
+    setGravityOn(isOn: boolean): void {
+        this.isGravityOn = isOn;
+    }
+    setGrid(isOn: boolean, isMinorGridLinesOn: boolean): void {
+        this.isGridOn = isOn;
+        this.isMinorGridLinesOn = isMinorGridLinesOn;
+    }
+    setScale(scale: number): void {
+        this.scale = scale;
+    }
+    setCurrentTimestep(timestep: number): void {
+        this.timestep = timestep;
+    }
+
+    // Note: users should still encodeURI just in case there are any special characters
     abstract encodeURL(): string;
 }
 

@@ -15,7 +15,7 @@ export class JointData {
         public y: number,
         public isGrounded: boolean,
         public isInput: boolean,
-        public angleRadians?: number
+        public angleRadians: number
     ) {}
 }
 

@@ -27,6 +27,8 @@ import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Analytics, logEvent } from '@angular/fire/analytics';
+import { StringEncoder } from 'src/app/services/transcoding/string-transcoder';
+import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
 
 const parseCSV = require('papaparse');
 
@@ -419,130 +421,85 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   copyURL() {
     logEvent(this.analytics, 'copyURL');
-    // const content = this.generateExportURL(this.mechanismService.joints, this.mechanismService.links, this.mechanismService.forces, [],
-    //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
-    let content = '';
-    content += `j=`;
+
+    let encoder = new StringEncoder()
+    
     this.mechanismService.joints.forEach((joint) => {
-      if (!(joint instanceof RealJoint)) {
-        return;
+      if (joint instanceof RealJoint) {
+        encoder.addJoint(new JointData(
+          JOINT_TYPE.REVOLUTE,
+          joint.id,
+          joint.x,
+          joint.y,
+          joint.ground,
+          joint.input,
+          0
+        ))
+      } else if (joint instanceof PrisJoint) {
+        encoder.addJoint(new JointData(
+          JOINT_TYPE.PRISMATIC,
+          joint.id,
+          joint.x,
+          joint.y,
+          joint.ground,
+          joint.input,
+          joint.angle_rad
+        ));
       }
-      content += `${joint.id},`;
-      content += `${roundNumber(joint.x, 3)},`;
-      content += `${roundNumber(joint.y, 3)},`;
-      const relatedLinkIDs = joint.links.map((link) => {
-        return link.id;
-      });
-      content += `${relatedLinkIDs.join('|')},`;
-      switch (joint.constructor) {
-        case RevJoint:
-          content += `R,`;
-          break;
-        case PrisJoint:
-          content += `P,`;
-          break;
-        default:
-          content += `???`;
-          break;
-      }
-      // switch (joint.constructor) {
-      //   case RevJoint:
-      //     result += `R`;
-      //     break;
-      //   case PrisJoint:
-      //     if (!(joint instanceof PrisJoint)) {return}
-      //     result += `P`;
-      //     result += `${joint.angle}`;
-      //     break;
-      // }
-      content += `${joint.ground ? 't' : 'f'},`;
-      // result += `${joint.coeffFriction},`;
-      if (joint instanceof PrisJoint) {
-        content += `${joint.angle_rad},`;
-      } else {
-        content += `Null,`;
-      }
-      content += `${joint.input ? 't' : 'f'}`;
+    })
 
-      // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
-      content += '\n';
-    });
-    content += `&l=`;
     this.mechanismService.links.forEach((link) => {
-      content += `${link.id},`;
-      content += !(link instanceof RealLink) ? `P,` : `R,`;
-      // if (!(link instanceof RealLink)) {return}
-      // content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
-      content += `${link.mass},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.massMoI},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.x},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.y},`;
-      const relatedJointIDs = link.joints.map((joint) => {
-        return joint.id;
-      });
-      const relatedForceIDs = link.forces.map((force) => {
-        return force.id;
-      });
 
-      content += `${relatedJointIDs.join('|')},`;
-      content += `${relatedForceIDs.join('|')},`;
-      // content += !(link instanceof RealLink) ? `Null,` : `${link.shape},`;
-      // if (!(link instanceof RealLink)) {
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null`;
-      // } else {
-      //   // const bounds = link.bound;
-      //   // const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      //   // keyArray.forEach((eid, index) => {
-      //   //   content += `${roundNumber(eid.x, 3)},`;
-      //   //   content +=
-      //   //     index === keyArray.length - 1
-      //   //       ? `${roundNumber(eid.y, 3)}`
-      //   //       : `${roundNumber(eid.y, 3)},`;
-      //   // });
-      // }
-      content += '\n';
-    });
+      if (link instanceof RealLink) {
+        encoder.addLink(new LinkData(
+          LINK_TYPE.REAL,
+          link.id,
+          link.mass,
+          link.massMoI,
+          link.CoM.x,
+          link.CoM.y,
+          link.joints.map((joint) => joint.id))
+        );
+      } else if (link instanceof Piston) {
+        encoder.addLink(new LinkData(
+          LINK_TYPE.PISTON,
+          link.id,
+          link.mass,
+          0,
+          0,
+          0,
+          link.joints.map((joint) => joint.id))
+        );
+      }
+    })
 
-    content += `&f=`;
     this.mechanismService.forces.forEach((force) => {
-      content += `${force.id},`;
-      content += `${force.link.id},`;
-      content += `${roundNumber(force.startCoord.x, 3)},`;
-      content += `${roundNumber(force.startCoord.y, 3)},`;
-      content += `${roundNumber(force.endCoord.x, 3)},`;
-      content += `${roundNumber(force.endCoord.y, 3)},`;
-      content += `${force.local ? 'f' : 't'},`;
-      content += `${force.arrowOutward},`;
-      content += `${force.mag}`;
-      // result += `${force.yMag}`;
-      content += '\n';
-    });
-    // result += `&pp=`;
-    // pathPointArray.forEach(pp => {
-    //   result += `${pp.id},`;
-    //   result += `${IndiFuncs.roundNumber(pp.x, 3)},`;
-    //   result += `${IndiFuncs.roundNumber(pp.y, 3)},`;
-    //   result += `${pp.neighbor_one.id},`;
-    //   result += `${pp.neighbor_two.id},`;
-    //   result += '\n';
-    // });
-    // result += `&tp=`;
-    // threePositionArray.forEach(tp => {});
-    content += `&s=`;
-    content += `${ToolbarComponent.inputAngularVelocity},`; // input speed
-    content += `${ToolbarComponent.clockwise},`; // cw (true) or ccw (false)
-    content += `${ToolbarComponent.gravity},`; // gravity on or off
-    content += `${ToolbarComponent.unit}`;
-    /////
+
+      encoder.addForce(new ForceData(
+        force.id,
+        force.link.id,
+        force.startCoord.x,
+        force.startCoord.y,
+        force.endCoord.x,
+        force.endCoord.y,
+        force.local,
+        force.arrowOutward,
+        force.mag
+      ));
+    })
+
+    // ANSEL TODO: FIX PARAMETERS
+    encoder.setUnits(ToolbarComponent.unit, ToolbarComponent.unit); // SECOND PARAMETER INVALID
+    encoder.setInputVector(ToolbarComponent.inputAngularVelocity, ToolbarComponent.clockwise);
+    encoder.setGravityOn(ToolbarComponent.gravity);
+    // encoder.setGridOn(ToolbarComponent.gridOn); // HOW TO GET PARAMETER?
+    // encoder.setScale(ToolbarComponent.scale); // HOW TO GET PARAMETER?
+    // encoder.setCurrentTimestep(ToolbarComponent.timeStep); // HOW TO GET PARAMETER?
+
+    let urlRaw = encoder.encodeURL();
+
     const url = this.getURL();
-    const dataURLString = `${url}?${content}`;
+    const dataURLString = `${url}?${urlRaw}`;
     const dataURL = encodeURI(dataURLString);
     console.log(dataURL.length);
     if (dataURL.length > 2000) {
