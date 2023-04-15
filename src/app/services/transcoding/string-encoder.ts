@@ -1,21 +1,14 @@
+import { Base62Converter } from "./base62-converter";
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
 import { GenericEncoder } from "./transcoder-interface";
 
+/*
+ StringEncoder class is responsible for encoding various types of data,
+ * including joints, links, forces, and global settings, into a compact
+ * URL-safe string format. It utilizes the Base62Converter for number encoding
+ * and follows a specific format for each type of data.
+ */
 export class StringEncoder extends GenericEncoder {
-
-    // convert number to base62. If negative, add - to the beginning.
-    private toUrlSafeBase64(integer: number): string {
-        const base62Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let base62String = (integer >= 0) ? "" : "-"; // If negative, add "-" to the beginning.
-        integer = Math.abs(integer); // We only deal with positive numbers now
-    
-        do {
-            base62String = base62Chars[integer % 62] + base62String;
-            integer = Math.floor(integer / 62);
-        } while (integer > 0);
-    
-        return base62String;
-    }
 
     // We encode a number to base64.
     // To represent sign, "0", is inserted in the beginning for positive numbers and "1" for negative numbers.
@@ -24,11 +17,11 @@ export class StringEncoder extends GenericEncoder {
         // Number is now in string form, and is always an integer with resolution of 3 decimal places.
         let normalizedNumber = Math.round(number * 1000)
 
-        return this.toUrlSafeBase64(normalizedNumber);
+        return Base62Converter.toUrlSafeBase62(normalizedNumber);
     }
 
     private encodeInteger(integer: number): string {
-        return this.toUrlSafeBase64(integer);
+        return Base62Converter.toUrlSafeBase62(integer);
     }
 
     /*
@@ -101,7 +94,7 @@ export class StringEncoder extends GenericEncoder {
 
     /* 
     URL encoding is defined as 
-    [MASK][global units],[angle units],[speed],[direction],[scale],[timestep]
+    [MASK][global units],[angle units],[speed],[direction],[scale],[timestep].[joints...]..[links]..[forces]
     [MASK] = (isGravityOn) ? 4 : 0 + (isGridOn) ? 2 : 0 + (isMinorGridLinesOn) ? 1 : 0
     [global units] = string
     [angle units] = string
@@ -125,15 +118,17 @@ export class StringEncoder extends GenericEncoder {
 
         let url = "" + maskStr + this.globalUnits + "," + this.angleUnits + "," + speedString + "," + scaleString + "," + timestepString;
         
-        // We assume joints, links, and forces do not start or end with J, L, F, so we use them to delimit
+        // We delimit between same type with '.' and two different types with '..'
         for (let i = 0; i < this.joints.length; i++) {
-            url += "J" + this.encodeJoint(this.joints[i]);
+            url += "." + this.encodeJoint(this.joints[i]);
         }
+        url += ".";
         for (let i = 0; i < this.links.length; i++) {
-            url += "L" + this.encodeLink(this.links[i]);
+            url += "." + this.encodeLink(this.links[i]);
         }
+        url += ".";
         for (let i = 0; i < this.forces.length; i++) {
-            url += "F" + this.encodeForce(this.forces[i]);
+            url += "." + this.encodeForce(this.forces[i]);
         }
         return url;
     }
