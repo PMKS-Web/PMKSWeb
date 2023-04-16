@@ -110,6 +110,8 @@ export class MechanismBuilder {
         this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
         this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
         SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
+
+        this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);
         
     }
 

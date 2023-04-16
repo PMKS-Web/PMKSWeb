@@ -508,6 +508,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
+    encoder.addIntSetting(IntSetting.TIMESTEP, this.mechanismService.mechanismTimeStep);
+
     let urlRaw = encoder.encodeURL();
 
     const url = this.getURL();

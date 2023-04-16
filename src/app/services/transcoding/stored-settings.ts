@@ -9,6 +9,7 @@ export enum EnumSetting {
 
 export enum IntSetting {
     INPUT_SPEED,
+    TIMESTEP,
 }
 
 export enum DecimalSetting {
