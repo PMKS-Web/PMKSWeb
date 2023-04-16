@@ -27,6 +27,7 @@ import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Analytics, logEvent } from '@angular/fire/analytics';
+import { UrlProcessorService } from '../../services/url-processor.service';
 
 const parseCSV = require('papaparse');
 

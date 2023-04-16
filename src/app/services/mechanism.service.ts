@@ -23,6 +23,7 @@ import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
+import { UrlProcessorService } from './url-processor.service';
 
 @Injectable({
   providedIn: 'root',
