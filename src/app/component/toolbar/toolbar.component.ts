@@ -419,6 +419,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // }
   }
 
+  /*
+    *  Copy the URL of the current mechanism to the clipboard
+  */
   copyURL() {
     logEvent(this.analytics, 'copyURL');
 

@@ -3,7 +3,7 @@ import { MechanismService } from '../mechanism.service';
 import { Link, Piston, RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { Coord } from 'src/app/model/coord';
-import { GenericDecoder } from './transcoder-interface';
+import { GenericTranscoder } from './transcoder-interface';
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transcoder-data';
 
 /*
@@ -12,11 +12,11 @@ import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transco
 */
 export class MechanismBuilder {
     mechanism: MechanismService;
-    decoder: GenericDecoder;
+    transcoder: GenericTranscoder;
 
-    constructor(mechanism: MechanismService, decoder: GenericDecoder) {
+    constructor(mechanism: MechanismService, transcoder: GenericTranscoder) {
         this.mechanism = mechanism;
-        this.decoder = decoder
+        this.transcoder = transcoder
     }
     // Find joint by id from decoder
     private getJointByID(joints: Joint[], id: string): Joint | undefined {
@@ -76,13 +76,13 @@ export class MechanismBuilder {
     public build(): void {
 
         // Build Joints from JointData
-        let joints: Joint[] = this.decoder.getJoints().map(jointData => this.buildJoint(jointData));
+        let joints: Joint[] = this.transcoder.getJoints().map(jointData => this.buildJoint(jointData));
         
         // Build Links from LinkData, and linking them to their joints
-        let links: Link[] = this.decoder.getLinks().map(linkData => this.buildLink(linkData, joints));
+        let links: Link[] = this.transcoder.getLinks().map(linkData => this.buildLink(linkData, joints));
 
         // Build Forces from ForceData, and link them to their links
-        let forces: Force[] = this.decoder.getForces().map(forceData => this.buildForce(forceData, links));
+        let forces: Force[] = this.transcoder.getForces().map(forceData => this.buildForce(forceData, links));
 
         // Build mechanism
         this.mechanism.joints = joints
@@ -90,9 +90,8 @@ export class MechanismBuilder {
         this.mechanism.forces = forces
 
         // Configure mechanism global flags
-        this.mechanism.mechanismTimeStep = this.decoder.getCurrentTimestep();
+        this.mechanism.mechanismTimeStep = this.transcoder.getCurrentTimestep();
         // TODO: set more flags. Unsure where they are located in the mechanism.
-
     }
 
 }
