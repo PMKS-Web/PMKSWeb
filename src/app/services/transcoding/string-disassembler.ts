@@ -1,6 +1,5 @@
-import { Base62Converter } from "./base62-converter";
-import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
-import { GenericDecoder } from "./transcoder-interface";
+import { Base64Converter } from "./base64-converter";
+import { FlagPacker } from "./flag-packer";
 
 /**
  * StringDisassembler class provides a convenient way to extract values
@@ -12,11 +11,20 @@ import { GenericDecoder } from "./transcoder-interface";
  * processes the tokens and characters, making it easy to extract
  * multiple values in sequence.
  */
-class StringDisassembler {
+export class StringDisassembler {
     private remaining: string;
 
     constructor(fullString: string) {
         this.remaining = fullString;
+    }
+
+    // Returns the next character without stripping
+    pollNextCharacter(): string {
+        if (this.isEmpty()) {
+            return "";
+        }
+
+        return this.remaining.charAt(0);
     }
 
     // strips and returns the next character from the start of the string
@@ -29,6 +37,15 @@ class StringDisassembler {
         let result = this.remaining.charAt(0);
         this.remaining = this.remaining.substring(1);
         return result;
+    }
+
+    // strips the next character and returns the decoded form given as a list of boolean flags
+    nextFlags(numFlags: number): boolean[] {
+        if (this.isEmpty()) {
+            return new Array(numFlags).fill(false);
+        }
+        
+        return FlagPacker.unpack(this.nextCharacter(), numFlags);
     }
 
     // strips and returns the next substring up to the delimeter.
@@ -51,7 +68,7 @@ class StringDisassembler {
     // to an integer, which is currently stored with base62 encoding
     nextInteger(delimiter: string = ","): number {
         let token = this.nextToken(delimiter);
-        return Base62Converter.fromUrlSafeBase62(token);
+        return Base64Converter.fromUrlSafeBase64(token);
     }
 
     // converts the substring (from the start of the remaining string to the delimeter)
@@ -65,14 +82,4 @@ class StringDisassembler {
     isEmpty(): boolean {
         return this.remaining.length == 0;
     }
-}
-
-export class StringDecoder extends GenericDecoder {
-
-    constructor(url: string) {
-        super(url);
-
-
-    }
-
 }

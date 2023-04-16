@@ -1,4 +1,4 @@
-import { Base62Converter } from "./base62-converter";
+import { Base64Converter } from "./base64-converter";
 
 /**
  * The FlagPacker class provides static utility methods for encoding and decoding
@@ -28,13 +28,13 @@ export class FlagPacker {
           packed |= 1 << i;
         }
       }
-      return Base62Converter.toUrlSafeBase62(packed);
+      return Base64Converter.toUrlSafeBase64(packed);
     }
   
     // Unpacks the specified number of flags from the base62 encoded string
     // and returns an array of booleans
     static unpack(packedFlags: string, numFlags: number): boolean[] {
-      const packed = Base62Converter.fromUrlSafeBase62(packedFlags);
+      const packed = Base64Converter.fromUrlSafeBase64(packedFlags);
       const flags: boolean[] = [];
       for (let i = 0; i < numFlags; i++) {
         flags.push((packed & (1 << i)) !== 0);

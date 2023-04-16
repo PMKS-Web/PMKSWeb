@@ -8,22 +8,23 @@ import { ForceData, JointData, LinkData } from "./transcoder-data";
     * in transcoder-data.ts.
 */
 
-export abstract class GenericEncoder {
+export abstract class GenericTranscoder {
 
-    joints: JointData[] = [];
-    links: LinkData[] = [];
-    forces: ForceData[] = [];
+    protected joints: JointData[] = [];
+    protected links: LinkData[] = [];
+    protected forces: ForceData[] = [];
 
-    globalUnits: string = "";
-    angleUnits: string = "";
-    speed: number = 0;
-    scale: number = 0;
-    timestep: number = 0;
-    direction: boolean = false;
-    isGravityOn: boolean = false;
-    isGridOn: boolean = false;
-    isMinorGridLinesOn: boolean = false;
+    protected globalUnits: string = "";
+    protected angleUnits: string = "";
+    protected speed: number = 0;
+    protected scale: number = 0;
+    protected timestep: number = 0;
+    protected direction: boolean = false;
+    protected isGravityOn: boolean = false;
+    protected isGridOn: boolean = false;
+    protected isMinorGridLinesOn: boolean = false;
     
+    abstract encodeURL(): string;
 
     addJoint(joint: JointData): void {
         this.joints.push(joint);
@@ -55,22 +56,34 @@ export abstract class GenericEncoder {
         this.timestep = timestep;
     }
 
-    // Note: users should still encodeURI just in case there are any special characters
-    abstract encodeURL(): string;
-}
+    abstract decodeURL(url: string): void;
 
-export abstract class GenericDecoder {
+    getJoints(): JointData[] {
+        return this.joints;
+    }
+    getLinks(): LinkData[] {
+        return this.links;
+    }
+    getForces(): ForceData[] {
+        return this.forces;
+    }
 
-    constructor(private url: string) {}
-
-    abstract getJoints(): JointData[]
-    abstract getLinks(): LinkData[];
-    abstract getForces(): ForceData[];
-
-    abstract getUnits(): {globalUnits: string, angleUnits: string};
-    abstract getInputVector(): {speed: number, direction: number};
-    abstract getGravityOn(): boolean;
-    abstract getGrid(): {isOn: boolean, isMinorGridLinesOn: boolean};
-    abstract getScale(): number;
-    abstract getCurrentTimestep(): number;
+    getUnits(): [string, string] {
+        return [this.globalUnits, this.angleUnits];
+    }
+    getInputVector(): [number, boolean] {
+        return [this.speed, this.direction];
+    }
+    getGravityOn(): boolean {
+        return this.isGravityOn;
+    }
+    getGrid(): [boolean, boolean] {
+        return [this.isGridOn, this.isMinorGridLinesOn];
+    }
+    getScale(): number {
+        return this.scale;
+    }
+    getCurrentTimestep(): number {
+        return this.timestep;
+    }
 }

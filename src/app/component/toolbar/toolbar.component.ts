@@ -27,7 +27,7 @@ import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Analytics, logEvent } from '@angular/fire/analytics';
-import { StringEncoder } from 'src/app/services/transcoding/string-transcoder';
+import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder';
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
 
 const parseCSV = require('papaparse');
@@ -422,7 +422,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   copyURL() {
     logEvent(this.analytics, 'copyURL');
 
-    let encoder = new StringEncoder()
+    let encoder = new StringTranscoder()
     
     this.mechanismService.joints.forEach((joint) => {
       if (joint instanceof RealJoint) {

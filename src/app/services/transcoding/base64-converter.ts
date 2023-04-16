@@ -13,46 +13,46 @@ Decoding:
 Converts a Base62 string back into an integer. If the input string starts
 with a '-', the decoded number will be negative.
 */
-export class Base62Converter {
+export class Base64Converter {
 
     // the list of uri-allowed characters, excluding , . - _ ~
-    static readonly base62Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    static readonly base64Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-";
 
-    // convert number to base62. If negative, add - to the beginning.
-    static toUrlSafeBase62(integer: number): string {
+    // convert number to base62. If negative, add 0 to the beginning.
+    static toUrlSafeBase64(integer: number): string {
         // assert integer is a whole number
         integer = Math.floor(integer);
 
         let positive = (integer >= 0); // Store sign to insert - to beginning if negative
         integer = Math.abs(integer); // We only deal with positive numbers now
 
-        let base62String = "";
+        let base64String = "";
         do {
-            base62String = Base62Converter.base62Chars.charAt(integer % 62) + base62String;
-            integer = Math.floor(integer / 62);
+            base64String = Base64Converter.base64Chars.charAt(integer % 64) + base64String;
+            integer = Math.floor(integer / 64);
         } while (integer > 0);
 
         if (!positive) {
-            base62String = "-" + base62String;
+            base64String = "0" + base64String;
         }
     
-        return base62String;
+        return base64String;
     }
 
-    // decode base62 string back to number. If string starts with -, the number is negative.
-    static fromUrlSafeBase62(base62String: string): number {
+    // decode base62 string back to number. If string starts with 0, the number is nonpositive.
+    static fromUrlSafeBase64(base64String: string): number {
         let positive = true; // Assume positive number by default
         let index = 0;
 
-        if (base62String[0] === '-') {
+        if (base64String[0] === '0') {
             positive = false; // Number is negative
             index = 1; // Start decoding from index 1, skipping the negative sign
         }
 
         let integer = 0;
-        for (let i = index; i < base62String.length; i++) {
+        for (let i = index; i < base64String.length; i++) {
             integer *= 62;
-            integer += Base62Converter.base62Chars.indexOf(base62String[i]);
+            integer += Base64Converter.base64Chars.indexOf(base64String[i]);
         }
 
         if (!positive) {
