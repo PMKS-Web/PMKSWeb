@@ -1,4 +1,4 @@
-import { Base64Converter } from "./base64-converter";
+import { BaseNConverter } from "./base64-converter";
 import { FlagPacker } from "./flag-packer";
 import { StringDisassembler } from "./string-disassembler";
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
@@ -19,11 +19,20 @@ export class StringTranscoder extends GenericTranscoder {
         // Number is now in string form, and is always an integer with resolution of 3 decimal places.
         let normalizedNumber = Math.round(number * 1000)
 
-        return Base64Converter.toUrlSafeBase64(normalizedNumber);
+        return BaseNConverter.toUrlSafeBaseN(normalizedNumber);
     }
 
     private encodeInteger(integer: number): string {
-        return Base64Converter.toUrlSafeBase64(integer);
+        return BaseNConverter.toUrlSafeBaseN(integer);
+    }
+
+    private decodeDecimalNumber(numberString: string): number {
+        let normalizedNumber = BaseNConverter.fromUrlSafeBaseN(numberString);
+        return normalizedNumber / 1000;
+    }
+
+    private decodeInteger(integerString: string): number {
+        return BaseNConverter.fromUrlSafeBaseN(integerString);
     }
 
     /*
@@ -148,59 +157,105 @@ export class StringTranscoder extends GenericTranscoder {
 
     /* 
     URL encoding is defined as 
-    [FLAGS][global units],[angle units],[speed],[scale],[timestep],[joints,...].[links..,].[forces,..]
-    [FLAGS] = (direction), (isGravityOn), (isGridOn), (isMinorGridLinesOn)
-    [global units] = string
-    [angle units] = string
-    [speed] = number
-    [direction] = number
-    [scale] = number
-    [timestep] = integer
+    [Bool settings].[Decimal settings].[Int settings,].[Enum settings,].[Joints.].[Links.].[Forces.]
     This should on average be 27 characters plus joints/links/forces
     */
     override encodeURL(): string {
 
-        let flags = FlagPacker.pack([
-            this.direction,
-            this.isGravityOn,
-            this.isMinorGridLinesOn,
-            this.isMinorGridLinesOn
-        ])
+        console.log("Booleans:", this.boolData);
+        console.log("Decimals:", this.decimalData);
+        console.log("Integers:", this.intData);
+        console.log("Enums:", this.enumData);
 
-        let speedString = this.encodeDecimalNumber(this.speed)
-        let scaleString = this.encodeDecimalNumber(this.scale)
-        let timestepString = this.encodeInteger(this.timestep)
 
-        let url = "" + flags + this.globalUnits + "," + this.angleUnits + "," + speedString + "," + scaleString + "," + timestepString + ",";
+        // Encode global boolean settings through flagpacker
+        const boolSettings = Object.values(this.boolData);
+        let boolString = FlagPacker.pack(boolSettings);
+
+        // Encode global decimal settings
+        const decimalSettings = Object.values(this.decimalData);
+        let decimalString = "";
+        for (let i = 0; i < decimalSettings.length; i++) {
+            decimalString += this.encodeDecimalNumber(decimalSettings[i]) + ",";
+        }
+        decimalString = decimalString.substring(0, decimalString.length - 1); // remove trailing comma
+
+        // Encode global integer settings
+        const intSettings = Object.values(this.intData);
+        let intString = "";
+        for (let i = 0; i < intSettings.length; i++) {
+            intString += this.encodeInteger(intSettings[i]) + ",";
+        }
+        intString = intString.substring(0, intString.length - 1); // remove trailing comma
+
+        const enumSettings = Object.values(this.enumData);
+        let enumString = "";
+        for (let i = 0; i < enumSettings.length; i++) {
+            enumString += this.encodeInteger(enumSettings[i]) + ",";
+        }
+        enumString = enumString.substring(0, enumString.length - 1); // remove trailing comma
         
-        // We delimit between data with '.'
+        let jointString = ""; // encoded string of all the joints
         for (let i = 0; i < this.joints.length; i++) {
-            url += this.encodeJoint(this.joints[i]) + ".";
+            jointString += this.encodeJoint(this.joints[i]) + ".";
         }
-        url += ".";
+        
+        let linkString = ""; // encoded string of all the links
         for (let i = 0; i < this.links.length; i++) {
-            url += this.encodeLink(this.links[i]) + ".";
+            linkString += this.encodeLink(this.links[i]) + ".";
         }
-        url += ".";
+        
+        let forceString = ""; // encoded string of all the forces
         for (let i = 0; i < this.forces.length; i++) {
-            url += this.encodeForce(this.forces[i]) + ".";
+            forceString += this.encodeForce(this.forces[i]) + ".";
         }
-        return url;
+
+        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
     }
 
     override decodeURL(url: string): void {
         const sd = new StringDisassembler(url);
 
-        const flags = sd.nextFlags(3);
-        let direction = flags[0];
-        this.setGravityOn(flags[1]);
-        this.setGrid(flags[2], flags[3]);
+        // Decode bool settings
+        let boolString = sd.nextToken(".");
+        let boolSettings = FlagPacker.unpack(boolString, Object.values(this.boolData).length);
+        let i = 0;
+        for (const key in this.boolData) {
+            this.boolData[key] = boolSettings[i];
+            i++;
+        }
 
-        // Decode global settings
-        this.setUnits(sd.nextToken(), sd.nextToken());
-        this.setInputVector(sd.nextDecimalNumber(), direction);
-        this.setScale(sd.nextDecimalNumber());
-        this.setCurrentTimestep(sd.nextInteger());
+        // Decode decimal settings
+        let decimalString = sd.nextToken(".");
+        let decimalSettings = decimalString.split(",");
+        i = 0;
+        for (const key in this.decimalData) {
+            this.decimalData[key] = this.decodeDecimalNumber(decimalSettings[i]);
+            i++;
+        }
+
+        // Decode int settings
+        let intString = sd.nextToken(".");
+        let intSettings = intString.split(",");
+        i = 0;
+        for (const key in this.intData) {
+            this.intData[key] = this.decodeInteger(intSettings[i]);
+            i++;
+        }
+
+        // Decode enum settings
+        let enumString = sd.nextToken(".");
+        let enumSettings = enumString.split(",");
+        i = 0;
+        for (const key in this.enumData) {
+            this.enumData[key] = this.decodeInteger(enumSettings[i]);
+            i++;
+        }
+
+        console.log("Booleans:", this.boolData);
+        console.log("Decimals:", this.decimalData);
+        console.log("Integers:", this.intData);
+        console.log("Enums:", this.enumData);
 
         // Decode joints
         while (sd.pollNextCharacter() !== ".") {

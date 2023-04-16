@@ -5,6 +5,9 @@ import { Force } from 'src/app/model/force';
 import { Coord } from 'src/app/model/coord';
 import { GenericTranscoder } from './transcoder-interface';
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transcoder-data';
+import { SettingsService } from '../settings.service';
+import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
+import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
 
 /*
     * MechanismBuilder is a class that takes in a decoder and mechanism service and
@@ -14,7 +17,11 @@ export class MechanismBuilder {
     mechanism: MechanismService;
     transcoder: GenericTranscoder;
 
-    constructor(mechanism: MechanismService, transcoder: GenericTranscoder) {
+    constructor(
+        mechanism: MechanismService,
+        transcoder: GenericTranscoder,
+        public settings: SettingsService)
+    {
         this.mechanism = mechanism;
         this.transcoder = transcoder
     }
@@ -90,8 +97,20 @@ export class MechanismBuilder {
         this.mechanism.forces = forces
 
         // Configure mechanism global flags
-        this.mechanism.mechanismTimeStep = this.transcoder.getCurrentTimestep();
-        // TODO: set more flags. Unsure where they are located in the mechanism.
+        this.settings.lengthUnit.next(this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit));
+        this.settings.angleUnit.next(this.transcoder.getEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit));
+        this.settings.forceUnit.next(this.transcoder.getEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit));
+        this.settings.globalUnit.next(this.transcoder.getEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit));
+        this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
+        this.settings.isGravity.next(this.transcoder.getBoolSetting(BoolSetting.IS_GRAVITY));
+        this.settings.inputSpeed.next(this.transcoder.getIntSetting(IntSetting.INPUT_SPEED));
+        this.settings.animating.next(this.transcoder.getBoolSetting(BoolSetting.ANIMATING));
+        this.settings.isShowMajorGrid.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID));
+        this.settings.isShowMinorGrid.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID));
+        this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
+        this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
+        SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
+        
     }
 
 }

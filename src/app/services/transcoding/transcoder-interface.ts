@@ -1,4 +1,5 @@
 import { ForceData, JointData, LinkData } from "./transcoder-data";
+import {EnumSetting, DecimalSetting, IntSetting, BoolSetting} from "./stored-settings";
 
 /*
     * This file contains the interface for the encoder and decoder,
@@ -8,21 +9,25 @@ import { ForceData, JointData, LinkData } from "./transcoder-data";
     * in transcoder-data.ts.
 */
 
+
 export abstract class GenericTranscoder {
 
     protected joints: JointData[] = [];
     protected links: LinkData[] = [];
     protected forces: ForceData[] = [];
 
-    protected globalUnits: string = "";
-    protected angleUnits: string = "";
-    protected speed: number = 0;
-    protected scale: number = 0;
-    protected timestep: number = 0;
-    protected direction: boolean = false;
-    protected isGravityOn: boolean = false;
-    protected isGridOn: boolean = false;
-    protected isMinorGridLinesOn: boolean = false;
+    protected enumData: number[] = [];
+    protected decimalData: number[] = [];
+    protected intData: number[] = [];
+    protected boolData: boolean[] = [];
+
+    // Initialize data dictionaries based on settings enums
+    constructor() {
+        for (let i = 0; i < this.getNumberOfEnums(EnumSetting); i++) this.enumData.push(0);
+        for (let i = 0; i < this.getNumberOfEnums(DecimalSetting); i++) this.decimalData.push(0);
+        for (let i = 0; i < this.getNumberOfEnums(IntSetting); i++) this.intData.push(0);
+        for (let i = 0; i < this.getNumberOfEnums(BoolSetting); i++) this.boolData.push(false);
+    }
     
     abstract encodeURL(): string;
 
@@ -35,27 +40,48 @@ export abstract class GenericTranscoder {
     addForce(force: ForceData) {
         this.forces.push(force);
     }
-    setUnits(globalUnits: string, angleUnits: string): void {
-        this.globalUnits = globalUnits;
-    }
-    setInputVector(speed: number, direction: boolean): void {
-        this.speed = speed;
-        this.direction = direction;
-    }
-    setGravityOn(isOn: boolean): void {
-        this.isGravityOn = isOn;
-    }
-    setGrid(isOn: boolean, isMinorGridLinesOn: boolean): void {
-        this.isGridOn = isOn;
-        this.isMinorGridLinesOn = isMinorGridLinesOn;
-    }
-    setScale(scale: number): void {
-        this.scale = scale;
-    }
-    setCurrentTimestep(timestep: number): void {
-        this.timestep = timestep;
+
+    private getNumberOfEnums(enumType: object): number {
+        return Object.keys(enumType).length;
     }
 
+    // Returns the index of the given enum value within the specified enum type.
+    // Example usage: getEnumIndex(Color, Color.RED)
+    private getEnumIndexByValue(enumType: object, enumValue: any): number | undefined {
+        const enumKeys = Object.keys(enumType).filter(k => isNaN(Number(k)));
+        const enumValues: any[] = enumKeys.map(k => enumType[k as keyof typeof enumType]);
+        const index = enumValues.indexOf(enumValue);
+        return index !== -1 ? index : undefined;
+    }
+
+    // Stores a global setting of type enum in the enumData dictionary.
+    // Example usage: addEnumSetting("theme", Color, Color.RED)
+    addEnumSetting(setting: EnumSetting, enumType: object, enumValue: any): void {
+        const settingIndex = this.getEnumIndexByValue(EnumSetting, setting) as number;
+        const index = this.getEnumIndexByValue(enumType, enumValue);
+        if (index !== undefined) {
+            this.enumData[settingIndex] = index;
+        }
+    }
+
+    // Stores a global setting of type decimal in the decimalData dictionary.
+    addDecimalSetting(setting: DecimalSetting, value: number): void {
+        const settingIndex = this.getEnumIndexByValue(DecimalSetting, setting) as number;
+        this.decimalData[settingIndex] = value;
+    }
+
+    // Stores a global setting of type integer in the intData dictionary.
+    addIntSetting(setting: IntSetting, value: number): void {
+        const settingIndex = this.getEnumIndexByValue(IntSetting, setting) as number;
+        this.intData[settingIndex] = value;
+    }
+
+    // Stores a global setting of type boolean in the boolData dictionary.
+    addBoolSetting(setting: BoolSetting, value: boolean): void {
+        const settingIndex = this.getEnumIndexByValue(BoolSetting, setting) as number;
+        this.boolData[settingIndex] = value;
+    }
+    
     abstract decodeURL(url: string): void;
 
     getJoints(): JointData[] {
@@ -68,22 +94,34 @@ export abstract class GenericTranscoder {
         return this.forces;
     }
 
-    getUnits(): [string, string] {
-        return [this.globalUnits, this.angleUnits];
+    private getEnumValueByIndex(enumType: object, index: number): any | undefined {
+        const enumKeys = Object.keys(enumType).filter(k => isNaN(Number(k)));
+        const enumKey = enumKeys[index];
+        return enumKey !== undefined ? enumType[enumKey as keyof typeof enumType] : undefined;
+      }
+
+    // Returns the enum value linked with the setting.
+    getEnumSetting(setting: EnumSetting, enumType: object): any {
+        const settingIndex = this.getEnumIndexByValue(EnumSetting, setting) as number;
+        const enumIndex = this.enumData[settingIndex];
+        return this.getEnumValueByIndex(enumType, enumIndex);
     }
-    getInputVector(): [number, boolean] {
-        return [this.speed, this.direction];
+
+    // Returns the decimal value linked with the setting.
+    getDecimalSetting(setting: DecimalSetting): number {
+        const settingIndex = this.getEnumIndexByValue(DecimalSetting, setting) as number;
+        return this.decimalData[settingIndex];
     }
-    getGravityOn(): boolean {
-        return this.isGravityOn;
+
+    // Returns the integer value linked with the setting.
+    getIntSetting(setting: IntSetting): number {
+        const settingIndex = this.getEnumIndexByValue(IntSetting, setting) as number;
+        return this.intData[settingIndex];
     }
-    getGrid(): [boolean, boolean] {
-        return [this.isGridOn, this.isMinorGridLinesOn];
-    }
-    getScale(): number {
-        return this.scale;
-    }
-    getCurrentTimestep(): number {
-        return this.timestep;
+
+    // Returns the boolean value linked with the setting.
+    getBoolSetting(setting: BoolSetting): boolean {
+        const settingIndex = this.getEnumIndexByValue(BoolSetting, setting) as number;
+        return this.boolData[settingIndex];
     }
 }

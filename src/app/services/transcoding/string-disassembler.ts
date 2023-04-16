@@ -1,4 +1,4 @@
-import { Base64Converter } from "./base64-converter";
+import { BaseNConverter } from "./base64-converter";
 import { FlagPacker } from "./flag-packer";
 
 /**
@@ -39,13 +39,28 @@ export class StringDisassembler {
         return result;
     }
 
+    nextSubstring(length: number): string {
+        if (this.isEmpty()) {
+            return "";
+        }
+
+        if (length > this.remaining.length) {
+            length = this.remaining.length;
+        }
+
+        let result = this.remaining.substring(0, length);
+        this.remaining = this.remaining.substring(length);
+        return result;
+    }
+
     // strips the next character and returns the decoded form given as a list of boolean flags
     nextFlags(numFlags: number): boolean[] {
         if (this.isEmpty()) {
             return new Array(numFlags).fill(false);
         }
         
-        return FlagPacker.unpack(this.nextCharacter(), numFlags);
+        const length = FlagPacker.getEncodedLength(numFlags);
+        return FlagPacker.unpack(this.nextSubstring(length), numFlags);
     }
 
     // strips and returns the next substring up to the delimeter.
@@ -68,7 +83,7 @@ export class StringDisassembler {
     // to an integer, which is currently stored with base62 encoding
     nextInteger(delimiter: string = ","): number {
         let token = this.nextToken(delimiter);
-        return Base64Converter.fromUrlSafeBase64(token);
+        return BaseNConverter.fromUrlSafeBaseN(token);
     }
 
     // converts the substring (from the start of the remaining string to the delimeter)

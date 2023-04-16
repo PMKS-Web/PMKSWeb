@@ -13,7 +13,7 @@ import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
+import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit, roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
@@ -29,6 +29,8 @@ import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Analytics, logEvent } from '@angular/fire/analytics';
 import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder';
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
+import { SettingsService } from 'src/app/services/settings.service';
+import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from 'src/app/services/transcoding/stored-settings';
 
 const parseCSV = require('papaparse');
 
@@ -90,7 +92,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   constructor(
     private activeObjService: ActiveObjService,
-    private mechanismService: MechanismService
+    private mechanismService: MechanismService,
+    public settings: SettingsService
   ) {}
 
   ngOnInit(): void {
@@ -491,13 +494,19 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       ));
     })
 
-    // ANSEL TODO: FIX PARAMETERS
-    encoder.setUnits(ToolbarComponent.unit, ToolbarComponent.unit); // SECOND PARAMETER INVALID
-    encoder.setInputVector(ToolbarComponent.inputAngularVelocity, ToolbarComponent.clockwise);
-    encoder.setGravityOn(ToolbarComponent.gravity);
-    // encoder.setGridOn(ToolbarComponent.gridOn); // HOW TO GET PARAMETER?
-    // encoder.setScale(ToolbarComponent.scale); // HOW TO GET PARAMETER?
-    // encoder.setCurrentTimestep(ToolbarComponent.timeStep); // HOW TO GET PARAMETER?
+   // Encode global settings
+    encoder.addEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit, this.settings.lengthUnit);
+    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit);
+    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit);
+    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, this.settings.globalUnit);
+    encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
+    encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID, this.settings.isShowMajorGrid.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID, this.settings.isShowMinorGrid.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
+    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     let urlRaw = encoder.encodeURL();
 
