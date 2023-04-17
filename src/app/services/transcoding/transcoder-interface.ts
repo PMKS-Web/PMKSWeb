@@ -49,8 +49,7 @@ export abstract class GenericTranscoder {
     // Example usage: getEnumIndex(Color, Color.RED)
     private getEnumIndexByValue(enumType: object, enumValue: any): number | undefined {
         const enumKeys = Object.keys(enumType).filter(k => isNaN(Number(k)));
-        const enumValues: any[] = enumKeys.map(k => enumType[k as keyof typeof enumType]);
-        const index = enumValues.indexOf(enumValue);
+        const index = enumKeys.findIndex(k => enumType[k as keyof typeof enumType] === enumValue);
         return index !== -1 ? index : undefined;
     }
 

@@ -495,10 +495,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     })
 
    // Encode global settings
-    encoder.addEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit, this.settings.lengthUnit);
-    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit);
-    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit);
-    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, this.settings.globalUnit);
+    encoder.addEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit, this.settings.lengthUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, this.settings.globalUnit.getValue());
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
     encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
