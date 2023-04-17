@@ -188,10 +188,12 @@ export class StringTranscoder extends GenericTranscoder {
         }
         intString = intString.substring(0, intString.length - 1); // remove trailing comma
 
+        // Encode global enum settings.
+        // Precondition: enum < BaseNConverter.N
         const enumSettings = Object.values(this.enumData);
         let enumString = "";
         for (let i = 0; i < enumSettings.length; i++) {
-            enumString += this.encodeInteger(enumSettings[i]) + ",";
+            enumString += this.encodeInteger(enumSettings[i]);
         }
         enumString = enumString.substring(0, enumString.length - 1); // remove trailing comma
         
@@ -245,10 +247,9 @@ export class StringTranscoder extends GenericTranscoder {
 
         // Decode enum settings
         let enumString = sd.nextToken(".");
-        let enumSettings = enumString.split(",");
         i = 0;
         for (const key in this.enumData) {
-            this.enumData[key] = this.decodeInteger(enumSettings[i]);
+            this.enumData[key] = this.decodeInteger(enumString.charAt(i));
             i++;
         }
 
