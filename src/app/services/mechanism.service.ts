@@ -202,9 +202,9 @@ export class MechanismService {
     ) as RealJoint;
 
     if (!joint.isWelded) {
-      NewGridComponent.sendNotification(
-        'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-      );
+//       NewGridComponent.sendNotification(
+//         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+//       );
       //WE NEED TO WELD THE JOINT
       const linksAtJoint = joint.links as RealLink[];
 
