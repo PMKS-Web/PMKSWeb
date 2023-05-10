@@ -12,10 +12,10 @@
 
   .tab {
     //if hover, change the elevation, animate
-    //@include mat.elevation(4);
+    @include mat.elevation(4);
 
     &:hover {
-      //@include mat.elevation(8);
+      @include mat.elevation(8);
       //make background color lighter
       filter: brightness(104%);
 
