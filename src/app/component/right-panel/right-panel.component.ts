@@ -84,8 +84,7 @@ export class RightPanelComponent {
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
     private fb: FormBuilder
-  ) {
-  }
+  ) {}
 
   static tabClicked(tabID: number) {
     if (!this.isOpen) {
@@ -261,6 +260,12 @@ export class RightPanelComponent {
     //Open a new tab to this site: https://pmks.mech.website/pmks-web-how-to-videos/
     window.open('https://pmks.mech.website/pmks-web-how-to-videos/', '_blank');
     logEvent(this.analytics, 'goto_help_site');
+  }
+
+  gotoGithub() {
+    //Open a new tab to this site: https://pmks.mech.website/pmks-web-how-to-videos/
+    window.open('https://github.com/PMKS-Web/PMKSWeb', '_blank');
+    logEvent(this.analytics, 'goto_github');
   }
 
   sendNotReady() {

@@ -4,7 +4,6 @@ import { HttpClientModule } from '@angular/common/http';
 import { HammerModule } from '@angular/platform-browser';
 
 import { AppComponent } from './app.component';
-import { GridComponent } from './component/grid/grid.component';
 import { LinkageTableComponent } from './component/linkage-table/linkage-table.component';
 import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
@@ -50,7 +49,6 @@ import { NotReadyWarningComponent } from './component/not-ready-warning/not-read
 @NgModule({
   declarations: [
     AppComponent,
-    GridComponent,
     LinkageTableComponent,
     ToolbarComponent,
     AnalysisPopupComponent,

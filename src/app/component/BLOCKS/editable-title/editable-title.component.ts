@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { CustomIdService } from '../../../services/custom-id.service';
-import { GridComponent } from '../../grid/grid.component';
 import { NewGridComponent } from '../../new-grid/new-grid.component';
 
 @Component({

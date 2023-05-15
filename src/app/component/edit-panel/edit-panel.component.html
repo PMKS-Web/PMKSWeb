@@ -126,23 +126,23 @@
     <button-block icon='delete' [click]='deleteLink.bind(this)'>Delete Link</button-block>
   </panel-section>
 
-  <panel-section-collapsible
-    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"
-    [expanded]='false'
-  >
-    <title-block alwaysShown icon='expand_more'>Related Objects</title-block>
-    <app-not-ready-warning></app-not-ready-warning>
-    <ng-container *ngFor='let joint of this.activeSrv.selectedLink.joints'>
-      <subtitle-block icon='open_in_new' style='margin-bottom: -10px'
-      >Joint {{ joint.id | uppercase }}</subtitle-block
-      >
-      <dual-input-block
-        unit='cm'
-        tooltip='The location of the joint in cm.'
-      >Joint {{ joint.id | uppercase }} Position
-      </dual-input-block>
-    </ng-container>
-  </panel-section-collapsible>
+  <!--  <panel-section-collapsible-->
+  <!--    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"-->
+  <!--    [expanded]='false'-->
+  <!--  >-->
+  <!--    <title-block alwaysShown icon='expand_more'>Related Objects</title-block>-->
+  <!--    <app-not-ready-warning></app-not-ready-warning>-->
+  <!--    <ng-container *ngFor='let joint of this.activeSrv.selectedLink.joints'>-->
+  <!--      <subtitle-block icon='open_in_new' style='margin-bottom: -10px'-->
+  <!--      >Joint {{ joint.id | uppercase }}</subtitle-block-->
+  <!--      >-->
+  <!--      <dual-input-block-->
+  <!--        unit='cm'-->
+  <!--        tooltip='The location of the joint in cm.'-->
+  <!--      >Joint {{ joint.id | uppercase }} Position-->
+  <!--      </dual-input-block>-->
+  <!--    </ng-container>-->
+  <!--  </panel-section-collapsible>-->
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">

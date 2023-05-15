@@ -23,7 +23,6 @@ import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { GridComponent } from '../grid/grid.component';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
@@ -93,13 +92,13 @@ export class NewGridComponent {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    fromEvent(window, 'resize')
-      .pipe(debounceTime(200))
-      .subscribe((event) => {
-        console.log('resize');
-        this.svgGrid.panZoomObject.resize();
-        this.svgGrid.scaleToFitLinkage();
-      });
+    // fromEvent(window, 'resize')
+    //   .pipe(debounceTime(200))
+    //   .subscribe((event) => {
+    //     console.log('resize');
+    //     this.svgGrid.panZoomObject.resize();
+    //     this.svgGrid.scaleToFitLinkage();
+    //   });
   }
 
   ngAfterViewInit() {
