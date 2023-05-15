@@ -8,13 +8,13 @@
   <button mat-button onclick="window.open(window.location.origin, '_blank'); logEvent(this.analytics, 'new_file');"
           matTooltip='Open a new tab with a blank project' matTooltipShowDelay='1000'>
     <mat-icon>note_add</mat-icon>
-    Hello from Staging
+    New
   </button>
   <input #csvInput style='display: none' type='file' accept='.csv' (change)='upload($event)' />
   <button mat-button (click)='csvInput.click()' matTooltip='Open a linkage from a file on your device'
           matTooltipShowDelay='1000'>
     <mat-icon>file_open</mat-icon>
-    Open
+    Broken
   </button>
   <button mat-button (click)='popUpTemplates()' matTooltip='Show the library of available linkages'
           matTooltipShowDelay='1000'>
