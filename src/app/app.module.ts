@@ -6,7 +6,6 @@ import { HammerModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { LinkageTableComponent } from './component/linkage-table/linkage-table.component';
 import { ToolbarComponent } from './component/toolbar/toolbar.component';
-import { AnalysisPopupComponent } from './component/analysis-popup/analysis-popup.component';
 import { AnimationBarComponent } from './component/animation-bar/animation-bar.component';
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +15,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MaterialModule } from './material/material.module';
 import { LeftTabsComponent } from './component/left-tabs/left-tabs.component';
-import { TabComponent } from './component/tab/tab.component';
 import { TitleBlock } from './component/BLOCKS/title/title.component';
 import { EditPanelComponent } from './component/edit-panel/edit-panel.component';
 import { InputComponent } from './component/BLOCKS/input/input.component';
@@ -51,12 +49,10 @@ import { NotReadyWarningComponent } from './component/not-ready-warning/not-read
     AppComponent,
     LinkageTableComponent,
     ToolbarComponent,
-    AnalysisPopupComponent,
     AnimationBarComponent,
     ShapeSelectorComponent,
     TemplatesPopupComponent,
     LeftTabsComponent,
-    TabComponent,
     TitleBlock,
     EditPanelComponent,
     InputComponent,

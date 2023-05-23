@@ -92,13 +92,13 @@ export class NewGridComponent {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    // fromEvent(window, 'resize')
-    //   .pipe(debounceTime(200))
-    //   .subscribe((event) => {
-    //     console.log('resize');
-    //     this.svgGrid.panZoomObject.resize();
-    //     this.svgGrid.scaleToFitLinkage();
-    //   });
+    fromEvent(window, 'resize')
+      .pipe(debounceTime(200))
+      .subscribe((event) => {
+        console.log('resize');
+        this.svgGrid.panZoomObject.resize();
+        this.svgGrid.scaleToFitLinkage();
+      });
   }
 
   ngAfterViewInit() {

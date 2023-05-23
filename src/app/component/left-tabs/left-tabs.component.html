@@ -1,32 +1,28 @@
 <div>
-  <div class="tabContainer">
-    <app-tab
-      tabLabel="Synthesize"
-      [tabID]="1"
-      [activeTab]="this.isOpen ? this.openTab : 0"
-      (pressedEvent)="tabClicked($event)"
-    ></app-tab>
-    <app-tab
-      tabLabel="Edit"
-      [tabID]="2"
-      [activeTab]="this.isOpen ? this.openTab : 0"
-      (pressedEvent)="tabClicked($event)"
-    ></app-tab>
-    <app-tab
-      tabLabel="Analyze"
-      [tabID]="3"
-      [activeTab]="this.isOpen ? this.openTab : 0"
-      (pressedEvent)="tabClicked($event)"
-    ></app-tab>
+  <div class='tabContainer'>
+    <button mat-icon-button class='leftButton' (click)='tabClicked(1)' matTooltip='Synthesize' matTooltipShowDelay='0'
+            matTooltipPosition='right'>
+      <mat-icon>auto_fix_normal</mat-icon>
+    </button>
+    <button mat-icon-button class='leftButton' (click)='tabClicked(2)' matTooltip='Edit' matTooltipShowDelay='0'
+            matTooltipPosition='right'>
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button mat-icon-button class='leftButton' (click)='tabClicked(3)' matTooltip='Analyze' matTooltipShowDelay='0'
+            matTooltipPosition='right'>
+      <mat-icon>query_stats</mat-icon>
+    </button>
+    <div [@activeTab]=this.openTab.toString() class='activeTabPill'>
+    </div>
   </div>
-  <div [@openClose]="isOpen ? (this.openTab === 3 ? 'openWide' : 'open') : 'closed'" class="panel">
-    <div *ngIf="this.openTab === 1" class="page1">
+  <div [@openClose]="isOpen ? (this.openTab === 3 ? 'openWide' : 'open') : 'closed'" class='panel'>
+    <div *ngIf='this.openTab === 1' class='page1'>
       <app-synthesis-panel></app-synthesis-panel>
     </div>
-    <div *ngIf="this.openTab === 2" class="page2">
+    <div *ngIf='this.openTab === 2' class='page2'>
       <app-edit-panel></app-edit-panel>
     </div>
-    <div *ngIf="this.openTab === 3" class="page3">
+    <div *ngIf='this.openTab === 3' class='page3'>
       <app-analysis-panel></app-analysis-panel>
     </div>
   </div>
