@@ -44,11 +44,14 @@ We encourage high code quality and strive for clean, readable, and maintainable 
 3. **Good OOP Practices**: Follow principles like SOLID, DRY, and prefer composition over inheritance. If complex relationships seem necessary, reach out first so we can discuss the best approach.
 
 4. **Follow Programming Conventions**: 
-    - Always use full type hinting
-    - Use snake case for file names
-    - Use pascal case for classes
-    - Use camel case for functions and variables
-    - Top-level multiline comment for classes and comment function headers
+- File names should always be dash-delimited, with dots being used to denote the “type” of the file. For example: `currency-converter.pipe.ts1`
+- All service classes should end with the term `Service`. For example: `HeroService1`
+- Selectors for your components should always be dash-delimited, like files, and contain the appropriate app prefix. For example: `app-hero-list`
+- The name of a component class should end with `Component`. For example: `HeroListComponent`
+- The name of a directive class should end with `Directive`. For example: `HighlightDirective`
+- The name of a module class should end with `Module`. For example: `AppModule2`
+- The name of a pipe class should be in `PascalCase` and end with `Pipe`. For example: `CurrencyConverterPipe2`
+- For more details, check out [Angular's offical coding style guide](https://angular.io/guide/styleguide).
 
 While the codebase may not always perfectly adhere to these conventions, the aim is to continually improve the codebase to meet these standards.
 
@@ -62,6 +65,13 @@ The process is as follows:
 2. Once you've resolved an issue in your fork, submit a pull request to the main branch.
 
 Please note, the main branch has a CI/CD workflow setup that will update the production website, so nothing should be pushed directly to the main branch!
+
+The commits to the main branch will get reflected on [app.pmksplus.com](https://app.pmksplus.com)
+
+All other branches will get published to https://[BRANCHNAME]--pmks.netlify.app (For example https://staging--pmks.netlify.app)
+
+Landing Page: https://pmksplus.com
+
 
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.2.5.
