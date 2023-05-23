@@ -61,25 +61,27 @@
     </radio-block
     >
 
-    <input-block
-      unit='deg/sec'
-      type='number'
-      [formGroup]='this.settingsForm'
-      _formControl='speed'
-      tooltip='The speed that the animation will run at.'
-    >Input Speed
-    </input-block>
-
     <subtitle-block>Force Settings</subtitle-block>
     <toggle-block
       [formGroup]='this.settingsForm'
       _formControl='gravity'
       tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
-    >Gravity
+    >Enable Forces
     </toggle-block
     >
-    <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
-    <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
+
+    <ng-container *ngIf='settingsService.isGravity.value'>
+      <input-block
+        unit='deg/sec'
+        type='number'
+        [formGroup]='this.settingsForm'
+        _formControl='speed'
+        tooltip='The speed that the animation will run at.'
+      >Input Speed
+      </input-block>
+      <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
+      <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
+    </ng-container>
 
     <subtitle-block>Visual Settings</subtitle-block>
     <toggle-block
