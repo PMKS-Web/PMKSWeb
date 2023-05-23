@@ -140,7 +140,7 @@
              style='overflow: visible'>
         <image xlink:href='../../../assets/SliderTrackMid.svg'
                  [attr.width]='settings.objectScale*2.6' [attr.height]='settings.objectScale*2.6'  [attr.x]='settings.objectScale*-1.3' [attr.y]='settings.objectScale*-1.3'
-               style='transform: scaleY(-1) rotateZ({{gridUtils.getPrisAngle(link.joints[1])}}rad)'
+               style='transform: scaleY(-1) rotateZ({{-gridUtils.getPrisAngle(link.joints[1])}}rad)'
         />
       </svg>
     </ng-container>
