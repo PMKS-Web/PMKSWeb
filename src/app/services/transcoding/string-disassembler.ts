@@ -13,6 +13,7 @@ import { FlagPacker } from "./flag-packer";
  */
 export class StringDisassembler {
     private remaining: string;
+    private currentDelimiter: string = "";
 
     constructor(fullString: string) {
         this.remaining = fullString;
@@ -72,10 +73,12 @@ export class StringDisassembler {
         if (index == -1) {
             let result = this.remaining;
             this.remaining = "";
+            this.currentDelimiter = "";
             return result;
         }
 
         let result = this.remaining.substring(0, index);
+        this.currentDelimiter = this.remaining.charAt(index);
         this.remaining = this.remaining.substring(index+1);
         return result;
     }
@@ -97,4 +100,9 @@ export class StringDisassembler {
     isEmpty(): boolean {
         return this.remaining.length == 0;
     }
+
+    getDelimiter(): string {
+        return this.currentDelimiter;
+    }
+
 }
