@@ -42,7 +42,7 @@ export abstract class GenericTranscoder {
     }
 
     private getNumberOfEnums(enumType: object): number {
-        return Object.keys(enumType).length;
+        return Object.keys(enumType).length / 2;
     }
 
     // Returns the index of the given enum value within the specified enum type.
