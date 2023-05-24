@@ -76,10 +76,10 @@
 
     <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>
       <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'
-                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Weld Joint
+                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Weld Joint
       </button-block>
       <button-block *ngIf='this.activeSrv.selectedJoint.isWelded' customIcon='unweld_joint'
-                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Unweld Joint
+                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Unweld Joint
       </button-block>
     </ng-container>
     <!-- <p>Value: {{ jointForm.value | json }}</p>

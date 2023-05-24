@@ -439,6 +439,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           joint.y,
           joint.ground,
           joint.input,
+          joint.isWelded,
           0
         ))
       } else if (joint instanceof PrisJoint) {
@@ -449,6 +450,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           joint.y,
           joint.ground,
           joint.input,
+          joint.isWelded,
           joint.angle_rad
         ));
       }

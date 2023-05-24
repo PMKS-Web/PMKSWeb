@@ -1,4 +1,4 @@
-import { Joint, PrisJoint, RevJoint } from 'src/app/model/joint';
+import { Joint, PrisJoint, RealJoint, RevJoint } from 'src/app/model/joint';
 import { MechanismService } from '../mechanism.service';
 import { Link, Piston, RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
@@ -37,11 +37,15 @@ export class MechanismBuilder {
 
     // Create Joints from JointData. Joint starts off with no links, to be added later
     private buildJoint(jointData: JointData): Joint {
+        let joint;
+
         if (jointData.type === JOINT_TYPE.PRISMATIC) {
-            return new PrisJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
+            joint = new PrisJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
         } else {
-            return new RevJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
+            joint = new RevJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
         }
+
+        return joint;
     }
 
     // Create Links from LinkData. Joints are passed in to be linked to the link
@@ -88,6 +92,18 @@ export class MechanismBuilder {
 
     }
 
+    // For each joint with welded flag set, weld joint
+    public weldMechanismJoints(): void {
+        this.mechanism.joints.forEach(joint => {
+            if (joint instanceof RealJoint) {
+                let realJoint = joint as RealJoint;
+                if (realJoint.isWelded) {
+                    this.mechanism.weldJoint(realJoint);
+                }
+            }
+        });
+    }
+
     public build(): void {
 
         // Build Joints from JointData
@@ -103,6 +119,8 @@ export class MechanismBuilder {
         this.mechanism.joints = joints
         this.mechanism.links = links
         this.mechanism.forces = forces
+
+        this.weldMechanismJoints();
 
         // Configure mechanism global flags
         this.settings.lengthUnit.next(this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit));

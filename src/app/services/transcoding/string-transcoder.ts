@@ -50,7 +50,8 @@ export class StringTranscoder extends GenericTranscoder {
         let flags = FlagPacker.pack([
             joint.type == JOINT_TYPE.PRISMATIC,
             joint.isInput,
-            joint.isGrounded
+            joint.isGrounded,
+            joint.isWelded
         ])
 
         let xString = this.encodeDecimalNumber(joint.x)
@@ -69,11 +70,12 @@ export class StringTranscoder extends GenericTranscoder {
         let jointType = flags[0] ? JOINT_TYPE.PRISMATIC : JOINT_TYPE.REVOLUTE;
         let isInput = flags[1];
         let isGrounded = flags[2];
+        let isWelded = flags[3];
         let id = sd.nextToken();
         let x = sd.nextDecimalNumber();
         let y = sd.nextDecimalNumber();
         let angle = sd.nextDecimalNumber();
-        return new JointData(jointType, id, x, y, isGrounded, isInput, angle);
+        return new JointData(jointType, id, x, y, isGrounded, isInput, isWelded, angle);
     }
 
     /*
