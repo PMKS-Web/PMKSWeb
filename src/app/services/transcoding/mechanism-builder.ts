@@ -110,6 +110,19 @@ export class MechanismBuilder {
             if (joint instanceof RealJoint) {
                 let realJoint = joint as RealJoint;
                 realJoint.links = this.mechanism.links.filter((link) => link.joints.includes(realJoint));
+
+    // For each link, build subsets of links
+    public buildLinkSubsets(links: Link[], linkDatas: LinkData[]): void {
+        linkDatas.forEach(linkData => {
+
+            let currentLink = this.getLinkByID(links, linkData.id)!;
+
+            if (currentLink instanceof RealLink) {
+
+                linkData.subsetIDs.forEach(subsetID => {
+                    let subsetLink = this.getLinkByID(links, subsetID)!;
+                    (currentLink as RealLink).subset.push(subsetLink);
+                });
             }
         });
     }
@@ -121,6 +134,7 @@ export class MechanismBuilder {
 
         // Build Links from LinkData, and linking them to their joints
         let links: Link[] = this.transcoder.getLinks().map(linkData => this.buildLink(linkData, joints));
+        this.buildLinkSubsets(links, this.transcoder.getLinks());
 
         // Build Forces from ForceData, and link them to their links
         let forces: Force[] = this.transcoder.getForces().map(forceData => this.buildForce(forceData, links));

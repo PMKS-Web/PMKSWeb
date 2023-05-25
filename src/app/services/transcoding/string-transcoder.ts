@@ -89,12 +89,22 @@ export class StringTranscoder extends GenericTranscoder {
         let massMoIString = this.encodeDecimalNumber(link.massMoI)
         let xCoMString = this.encodeDecimalNumber(link.xCoM)
         let yCoMString = this.encodeDecimalNumber(link.yCoM)
+        
+        // build jointIDs string
         let jointIDs: string = "";
         for (let i = 0; i < link.jointIDs.length; i++) {
             jointIDs += link.jointIDs[i] + ",";
         }
         jointIDs = jointIDs.substring(0, jointIDs.length - 1); // remove trailing comma
-        return type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + jointIDs;
+        
+        // build subsetIDs string
+        let subsetIDs: string = "";
+        for (let i = 0; i < link.subsetIDs.length; i++) {
+            subsetIDs += link.subsetIDs[i] + ",";
+        }
+        subsetIDs = subsetIDs.substring(0, subsetIDs.length - 1); // remove trailing comma
+        
+        return type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + jointIDs + "." + subsetIDs;
     }
 
     private decodeLink(linkString: string): LinkData {
@@ -108,10 +118,15 @@ export class StringTranscoder extends GenericTranscoder {
         let xCoM = sd.nextDecimalNumber();
         let yCoM = sd.nextDecimalNumber();
 
+        const sdJoint = new StringDisassembler(sd.nextToken("."));
+
         let jointIDs: string[] = [];
-        while (!sd.isEmpty()) jointIDs.push(sd.nextToken());
+        while (!sdJoint.isEmpty()) jointIDs.push(sd.nextToken());
+
+        let subsetIDs: string[] = [];
+        while (!sd.isEmpty()) subsetIDs.push(sd.nextToken());
         
-        return new LinkData(type, id, mass, massMoI, xCoM, yCoM, jointIDs);
+        return new LinkData(type, id, mass, massMoI, xCoM, yCoM, jointIDs, subsetIDs);
     }
 
     /*

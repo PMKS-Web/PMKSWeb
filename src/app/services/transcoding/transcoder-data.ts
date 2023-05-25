@@ -28,7 +28,8 @@ export class LinkData {
         public massMoI: number = 0,
         public xCoM: number = 0,
         public yCoM: number = 0,
-        public jointIDs: string[] = []
+        public jointIDs: string[] = [],
+        public subsetIDs: string[] = []
     ) {}
 }
 

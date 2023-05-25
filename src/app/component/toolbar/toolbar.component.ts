@@ -466,8 +466,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           link.massMoI,
           link.CoM.x,
           link.CoM.y,
-          link.joints.map((joint) => joint.id))
-        );
+          link.joints.map((joint) => joint.id),
+          link.subset.map((link) => link.id)
+        ));
       } else if (link instanceof Piston) {
         encoder.addLink(new LinkData(
           LINK_TYPE.PISTON,
@@ -476,8 +477,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
           0,
           0,
           0,
-          link.joints.map((joint) => joint.id))
-        );
+          link.joints.map((joint) => joint.id),
+          []
+        ));
       }
     })
 
