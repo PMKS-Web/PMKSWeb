@@ -428,6 +428,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   copyURL() {
     logEvent(this.analytics, 'copyURL');
 
+    // First, reset animation to the beginning, but cache animation frame to restore afterwards
+    let cachedAnimationFrame = this.mechanismService.mechanismTimeStep;
+    this.mechanismService.animate(0, false);
+
     let encoder = new StringTranscoder()
     
     this.mechanismService.joints.forEach((joint) => {
@@ -510,9 +514,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
-    encoder.addIntSetting(IntSetting.TIMESTEP, this.mechanismService.mechanismTimeStep);
+    encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
     
     let urlRaw = encoder.encodeURL();
+
+    // Restore animation frame
+    this.mechanismService.animate(cachedAnimationFrame, false);
 
     const url = this.getURL();
     const dataURLString = `${url}?${urlRaw}`;

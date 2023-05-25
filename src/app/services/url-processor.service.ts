@@ -30,6 +30,10 @@ export class UrlProcessorService {
     }
 
     mechanismSrv.updateMechanism();
+
+    // animate the mechanism
+    mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
+
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
