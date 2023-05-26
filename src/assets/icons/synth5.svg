@@ -1,0 +1,14 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<ellipse cx="10.8293" cy="3.02801" rx="1.49177" ry="1.5" transform="rotate(-28.3008 10.8293 3.02801)" fill="black"/>
+<ellipse cx="2.02461" cy="7.76898" rx="1.49177" ry="1.5" transform="rotate(-28.3008 2.02461 7.76898)" fill="black"/>
+<line x1="11.2768" y1="2.78692" x2="2.47214" y2="7.52792" stroke="black"/>
+<ellipse cx="21.4503" cy="18.5787" rx="1.49177" ry="1.5" transform="rotate(80.1163 21.4503 18.5787)" fill="black"/>
+<ellipse cx="19.7338" cy="8.7271" rx="1.49177" ry="1.5" transform="rotate(80.1163 19.7338 8.7271)" fill="black"/>
+<line x1="21.5375" y1="19.0795" x2="19.821" y2="9.2279" stroke="black"/>
+<line x1="1.0092" y1="8.05022" x2="20.0092" y2="8.75017" stroke="black" stroke-width="0.5" stroke-dasharray="1 1"/>
+<line x1="10.709" y1="2.86284" x2="21.209" y2="18.8628" stroke="black" stroke-width="0.5" stroke-dasharray="1 1"/>
+<path d="M8.5 15.2L12.3971 18.95H4.60289L8.5 15.2Z" fill="black"/>
+<line x1="6.21213" y1="18.7879" x2="7.62635" y2="20.2021" stroke="black" stroke-width="0.6"/>
+<line x1="8.21213" y1="18.7879" x2="9.62635" y2="20.2021" stroke="black" stroke-width="0.6"/>
+<line x1="10.2121" y1="18.7879" x2="11.6263" y2="20.2021" stroke="black" stroke-width="0.6"/>
+</svg>
