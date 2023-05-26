@@ -14,7 +14,6 @@ import { SettingsService } from './settings.service';
 })
 export class UrlProcessorService {
   constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService) {
-    
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -23,7 +22,7 @@ export class UrlProcessorService {
 
     // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
     if (url !== null) {
-      console.log("decoded url: " + url);
+      console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
       const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
       builder.build();
@@ -32,8 +31,9 @@ export class UrlProcessorService {
     mechanismSrv.updateMechanism();
 
     // animate the mechanism
-    mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
-
+    setTimeout(() => {
+      mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
+    }, 0);
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
