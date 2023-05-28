@@ -458,6 +458,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         link.massMoI,
         link.CoM.x,
         link.CoM.y,
+        link.fill,
         link.joints.map((joint) => joint.id),
         link.subset.map((subset) => subset.id)
         )
@@ -471,6 +472,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         0,
         0,
         0,
+        "",
         link.joints.map((joint) => joint.id),
         []
         )

@@ -67,7 +67,9 @@ export class MechanismBuilder {
 
         if (linkData.type === LINK_TYPE.REAL) {
             let CoM: Coord = new Coord(linkData.xCoM, linkData.yCoM);
-            return new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
+            let link = new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
+            link.fill = linkData.color;
+            return link;
         } else {
             return new Piston(linkData.id, jointsOnLink, linkData.mass);
         }

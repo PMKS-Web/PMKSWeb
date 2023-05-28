@@ -80,7 +80,7 @@ export class StringTranscoder extends GenericTranscoder {
 
     /*
     Link encoding is defined as 
-    [type][id],[mass],[massMoI],[xCoM],[yCoM],[jointID1,jointID2...],,[subsetLinkID1,subsetLinkID2...]
+    [type][id],[mass],[massMoI],[xCoM],[yCoM],[color],[jointID1,jointID2...],,[subsetLinkID1,subsetLinkID2...]
     This should on average be 26 + [number of joints] characters per link
     */
     private encodeLink(link: LinkData): string {
@@ -90,6 +90,7 @@ export class StringTranscoder extends GenericTranscoder {
         let massMoIString = this.encodeDecimalNumber(link.massMoI)
         let xCoMString = this.encodeDecimalNumber(link.xCoM)
         let yCoMString = this.encodeDecimalNumber(link.yCoM)
+        let color = link.color.substring(1); // remove leading #
 
         let jointIDs: string = "";
         for (let i = 0; i < link.jointIDs.length; i++) {
@@ -103,7 +104,7 @@ export class StringTranscoder extends GenericTranscoder {
         }
         subsetLinkIDs = subsetLinkIDs.substring(0, subsetLinkIDs.length - 1); // remove trailing comma
 
-        return isRoot + type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + jointIDs + "," + subsetLinkIDs;
+        return isRoot + type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + color + "," + jointIDs + "," + subsetLinkIDs;
     }
 
     private decodeLink(linkString: string): LinkData {
@@ -117,6 +118,7 @@ export class StringTranscoder extends GenericTranscoder {
         let massMoI = sd.nextDecimalNumber();
         let xCoM = sd.nextDecimalNumber();
         let yCoM = sd.nextDecimalNumber();
+        let color = "#" + sd.nextToken(); // add leading #
 
         // parse joints until we hit a double comma
         let jointIDs: string[] = [];
@@ -130,7 +132,7 @@ export class StringTranscoder extends GenericTranscoder {
         let subsetLinkIDs: string[] = [];
         while (!sd.isEmpty()) subsetLinkIDs.push(sd.nextToken());
         
-        return new LinkData(isRoot, type, id, mass, massMoI, xCoM, yCoM, jointIDs, subsetLinkIDs);
+        return new LinkData(isRoot, type, id, mass, massMoI, xCoM, yCoM, color, jointIDs, subsetLinkIDs);
     }
 
     /*
