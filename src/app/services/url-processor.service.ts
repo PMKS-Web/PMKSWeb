@@ -31,9 +31,12 @@ export class UrlProcessorService {
     mechanismSrv.updateMechanism();
 
     // animate the mechanism
-    setTimeout(() => {
-      mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
-    }, 0);
+    if (mechanismSrv.mechanismTimeStep > 0) {
+      setTimeout(() => {
+        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
+        console.log("animate on setTimeout")
+      }, 0);
+    }
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null

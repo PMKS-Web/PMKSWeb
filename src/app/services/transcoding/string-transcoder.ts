@@ -80,27 +80,37 @@ export class StringTranscoder extends GenericTranscoder {
 
     /*
     Link encoding is defined as 
-    [type][id],[mass],[massMoI],[xCoM],[yCoM],[jointID1],[jointID2],...
+    [type][id],[mass],[massMoI],[xCoM],[yCoM],[jointID1,jointID2...],,[subsetLinkID1,subsetLinkID2...]
     This should on average be 26 + [number of joints] characters per link
     */
     private encodeLink(link: LinkData): string {
+        let isRoot: string = (link.isRoot) ? "Y" : "N";
         let type: string = (link.type == LINK_TYPE.REAL) ? "R" : "P";
         let massString = this.encodeDecimalNumber(link.mass)
         let massMoIString = this.encodeDecimalNumber(link.massMoI)
         let xCoMString = this.encodeDecimalNumber(link.xCoM)
         let yCoMString = this.encodeDecimalNumber(link.yCoM)
+
         let jointIDs: string = "";
         for (let i = 0; i < link.jointIDs.length; i++) {
             jointIDs += link.jointIDs[i] + ",";
         }
-        jointIDs = jointIDs.substring(0, jointIDs.length - 1); // remove trailing comma
-        return type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + jointIDs;
+        // don't remove trailing comma. between joint and subset will have 2 consecutive commas
+
+        let subsetLinkIDs: string = "";
+        for (let i = 0; i < link.subsetLinkIDs.length; i++) {
+            subsetLinkIDs += link.subsetLinkIDs[i] + ",";
+        }
+        subsetLinkIDs = subsetLinkIDs.substring(0, subsetLinkIDs.length - 1); // remove trailing comma
+
+        return isRoot + type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + jointIDs + "," + subsetLinkIDs;
     }
 
     private decodeLink(linkString: string): LinkData {
 
         const sd = new StringDisassembler(linkString);
 
+        let isRoot = (sd.nextCharacter() === "Y");
         let type = (sd.nextCharacter() === "R") ? LINK_TYPE.REAL : LINK_TYPE.PISTON;
         let id = sd.nextToken();
         let mass = sd.nextDecimalNumber();
@@ -108,10 +118,19 @@ export class StringTranscoder extends GenericTranscoder {
         let xCoM = sd.nextDecimalNumber();
         let yCoM = sd.nextDecimalNumber();
 
+        // parse joints until we hit a double comma
         let jointIDs: string[] = [];
-        while (!sd.isEmpty()) jointIDs.push(sd.nextToken());
+        while (true) {
+            let jointID = sd.nextToken();
+            if (jointID === "") break;
+            jointIDs.push(jointID);
+        }
+
+        // parse subset links until we hit the end of the string
+        let subsetLinkIDs: string[] = [];
+        while (!sd.isEmpty()) subsetLinkIDs.push(sd.nextToken());
         
-        return new LinkData(type, id, mass, massMoI, xCoM, yCoM, jointIDs);
+        return new LinkData(isRoot, type, id, mass, massMoI, xCoM, yCoM, jointIDs, subsetLinkIDs);
     }
 
     /*

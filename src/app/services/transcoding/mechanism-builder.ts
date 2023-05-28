@@ -45,6 +45,8 @@ export class MechanismBuilder {
             joint = new RevJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
         }
 
+        joint.isWelded = jointData.isWelded;
+
         return joint;
     }
 
@@ -92,26 +94,36 @@ export class MechanismBuilder {
 
     }
 
-    // For each joint with welded flag set, weld joint
-    public weldMechanismJoints(): void {
-        this.mechanism.joints.forEach(joint => {
-            if (joint instanceof RealJoint) {
-                let realJoint = joint as RealJoint;
-                if (realJoint.isWelded) {
-                    this.mechanism.weldJoint(realJoint);
-                }
-            }
+    // For each joint, add links that are adjacent to the joint
+    public addSubsetLinks(linkDatas: LinkData[], links: Link[]): void {
+        
+        linkDatas.forEach((linkData, index) => {
+            let link = links[index];
+
+            // only RealLinks can have subset links
+            if (!(link instanceof RealLink)) return;
+
+            // For each subset link id, find and add the associated subset link to root link
+            (link as RealLink).subset = [];
+            linkData.subsetLinkIDs.forEach(subsetLinkID => {
+                let subsetLink = this.getLinkByID(links, subsetLinkID)!;
+                (link as RealLink).subset.push(subsetLink);
+            });
+
         });
     }
 
-    // For each joint, add links that are adjacent to the joint
-    public addAdjacentLinksForJoints(): void {
-        this.mechanism.joints.forEach((joint) => {
-            if (joint instanceof RealJoint) {
-                let realJoint = joint as RealJoint;
-                realJoint.links = this.mechanism.links.filter((link) => link.joints.includes(realJoint));
-            }
+    // Remove subset links from links
+    public filterSubsetLinks(linkDatas: LinkData[], links: Link[]): Link[] {
+        let filteredLinks: Link[] = [];
+
+        // root links have isRoot for corresponding LinkData set to true
+        linkDatas.forEach((linkData, index) => {
+            let link = links[index];
+            if (linkData.isRoot) filteredLinks.push(link);
         });
+
+        return filteredLinks;
     }
 
     public build(): void {
@@ -120,7 +132,14 @@ export class MechanismBuilder {
         let joints: Joint[] = this.transcoder.getJoints().map(jointData => this.buildJoint(jointData));
 
         // Build Links from LinkData, and linking them to their joints
-        let links: Link[] = this.transcoder.getLinks().map(linkData => this.buildLink(linkData, joints));
+        let linkDatas: LinkData[] = this.transcoder.getLinks();
+        let links: Link[] = linkDatas.map(linkData => this.buildLink(linkData, joints));
+        
+        // Add subset links to each link
+        this.addSubsetLinks(linkDatas, links);
+
+        // Once subsets are added, filter away non-root (subset) links
+        links = this.filterSubsetLinks(linkDatas, links);
 
         // Build Forces from ForceData, and link them to their links
         let forces: Force[] = this.transcoder.getForces().map(forceData => this.buildForce(forceData, links));
@@ -129,9 +148,6 @@ export class MechanismBuilder {
         this.mechanism.joints = joints
         this.mechanism.links = links
         this.mechanism.forces = forces
-
-        this.weldMechanismJoints();
-        this.addAdjacentLinksForJoints();
 
         // Configure mechanism global flags
         this.settings.lengthUnit.next(this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit));

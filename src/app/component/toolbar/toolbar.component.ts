@@ -422,6 +422,76 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // }
   }
 
+  _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
+    if (joint instanceof RealJoint) {
+      encoder.addJoint(new JointData(
+        JOINT_TYPE.REVOLUTE,
+        joint.id,
+        joint.x,
+        joint.y,
+        joint.ground,
+        joint.input,
+        joint.isWelded,
+        0
+      ))
+    } else if (joint instanceof PrisJoint) {
+      encoder.addJoint(new JointData(
+        JOINT_TYPE.PRISMATIC,
+        joint.id,
+        joint.x,
+        joint.y,
+        joint.ground,
+        joint.input,
+        joint.isWelded,
+        joint.angle_rad
+      ));
+    }
+  }
+
+  _addLinkToEncoder(encoder: StringTranscoder, link: Link, isRoot: boolean) {
+    if (link instanceof RealLink) {
+      encoder.addLink(new LinkData(
+        isRoot,
+        LINK_TYPE.REAL,
+        link.id,
+        link.mass,
+        link.massMoI,
+        link.CoM.x,
+        link.CoM.y,
+        link.joints.map((joint) => joint.id),
+        link.subset.map((subset) => subset.id)
+        )
+      );
+    } else if (link instanceof Piston) {
+      encoder.addLink(new LinkData(
+        isRoot,
+        LINK_TYPE.PISTON,
+        link.id,
+        link.mass,
+        0,
+        0,
+        0,
+        link.joints.map((joint) => joint.id),
+        []
+        )
+      );
+    }
+  }
+
+  _addForceToEncoder(encoder: StringTranscoder, force: Force) {
+    encoder.addForce(new ForceData(
+      force.id,
+      force.link.id,
+      force.startCoord.x,
+      force.startCoord.y,
+      force.endCoord.x,
+      force.endCoord.y,
+      force.local,
+      force.arrowOutward,
+      force.mag
+    ));
+    }
+
   /*
     *  Copy the URL of the current mechanism to the clipboard
   */
@@ -430,74 +500,31 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
     // First, reset animation to the beginning, but cache animation frame to restore afterwards
     let cachedAnimationFrame = this.mechanismService.mechanismTimeStep;
-    this.mechanismService.animate(0, false);
+    if (cachedAnimationFrame > 0) this.mechanismService.animate(0, false);
 
     let encoder = new StringTranscoder()
     
+    // add each joint
     this.mechanismService.joints.forEach((joint) => {
-      if (joint instanceof RealJoint) {
-        encoder.addJoint(new JointData(
-          JOINT_TYPE.REVOLUTE,
-          joint.id,
-          joint.x,
-          joint.y,
-          joint.ground,
-          joint.input,
-          joint.isWelded,
-          0
-        ))
-      } else if (joint instanceof PrisJoint) {
-        encoder.addJoint(new JointData(
-          JOINT_TYPE.PRISMATIC,
-          joint.id,
-          joint.x,
-          joint.y,
-          joint.ground,
-          joint.input,
-          joint.isWelded,
-          joint.angle_rad
-        ));
-      }
+      this._addJointToEncoder(encoder, joint);
     })
 
+    // add each (non-subset) link
     this.mechanismService.links.forEach((link) => {
-
-      if (link instanceof RealLink) {
-        encoder.addLink(new LinkData(
-          LINK_TYPE.REAL,
-          link.id,
-          link.mass,
-          link.massMoI,
-          link.CoM.x,
-          link.CoM.y,
-          link.joints.map((joint) => joint.id))
-        );
-      } else if (link instanceof Piston) {
-        encoder.addLink(new LinkData(
-          LINK_TYPE.PISTON,
-          link.id,
-          link.mass,
-          0,
-          0,
-          0,
-          link.joints.map((joint) => joint.id))
-        );
-      }
+      this._addLinkToEncoder(encoder, link, true);
     })
+    
+    // for each link, add subset links
+    this.mechanismService.links.forEach((link) => {
+      if (link instanceof RealLink) {
+        link.subset.forEach((subsetLink) => {
+          this._addLinkToEncoder(encoder, subsetLink, false);
+        });
+      }
+    });
 
     this.mechanismService.forces.forEach((force) => {
-
-      encoder.addForce(new ForceData(
-        force.id,
-        force.link.id,
-        force.startCoord.x,
-        force.startCoord.y,
-        force.endCoord.x,
-        force.endCoord.y,
-        force.local,
-        force.arrowOutward,
-        force.mag
-      ));
+      this._addForceToEncoder(encoder, force);
     })
 
    // Encode global settings
@@ -519,7 +546,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     let urlRaw = encoder.encodeURL();
 
     // Restore animation frame
-    this.mechanismService.animate(cachedAnimationFrame, false);
+    if (cachedAnimationFrame > 0) this.mechanismService.animate(cachedAnimationFrame, false);
 
     const url = this.getURL();
     const dataURLString = `${url}?${urlRaw}`;

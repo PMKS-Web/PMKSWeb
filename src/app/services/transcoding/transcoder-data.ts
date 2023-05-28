@@ -22,13 +22,15 @@ export class JointData {
 
 export class LinkData {
     constructor(
+        public isRoot: boolean,
         public type: LINK_TYPE,
         public id: string,
         public mass: number,
         public massMoI: number = 0,
         public xCoM: number = 0,
         public yCoM: number = 0,
-        public jointIDs: string[] = []
+        public jointIDs: string[] = [],
+        public subsetLinkIDs: string[] = [],
     ) {}
 }
 
