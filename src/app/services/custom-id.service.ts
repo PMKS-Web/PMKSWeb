@@ -24,6 +24,14 @@ export class CustomIdService {
     return this.customIDMap.get(originalID) || originalID;
   }
 
+  getMap(): Map<string, string> {
+    return this.customIDMap;
+  }
+
+  setMap(map: Map<string, string>) {
+    this.customIDMap = map;
+  }
+
   constructor() {
   }
 }

@@ -8,12 +8,13 @@ import { MechanismService } from './mechanism.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
+import { CustomIdService } from './custom-id.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UrlProcessorService {
-  constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService) {
+  constructor(mechanismSrv: MechanismService, customIDSrv: CustomIdService, settingsSrv: SettingsService) {
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -24,7 +25,7 @@ export class UrlProcessorService {
     if (url !== null) {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
+      const builder = new MechanismBuilder(mechanismSrv, decoder, customIDSrv, settingsSrv);
       builder.build();
     }
 

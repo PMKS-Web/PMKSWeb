@@ -178,9 +178,33 @@ export class StringTranscoder extends GenericTranscoder {
         return new ForceData(id, linkID, startX, startY, endX, endY, isLocal, isFacingOut, magnitude);
     }
 
+    /*
+    URL encoding is defined as
+    [original id 1],[new id 1],[original id 2],[new id 2]...
+    */
+    private encodeLinkIDs(map: Map<string, string>): string {
+        let encodedString = "";
+        map.forEach((newID, oldID) => {
+            encodedString += oldID + "," + newID + ",";
+        });
+        encodedString = encodedString.substring(0, encodedString.length - 1); // remove trailing comma
+        return encodedString;
+    }
+
+    private decodeLinkIDs(encodedString: string): Map<string, string> {
+        const sd = new StringDisassembler(encodedString);
+        let map = new Map<string, string>();
+        while (!sd.isEmpty()) {
+            let oldID = sd.nextToken();
+            let newID = sd.nextToken();
+            map.set(oldID, newID);
+        }
+        return map;
+    }
+
     /* 
     URL encoding is defined as 
-    [Bool settings].[Decimal settings].[Int settings,].[Enum settings,].[Joints.].[Links.].[Forces.]
+    [Bool settings].[Decimal settings].[Int settings,].[Enum settings,].[custom link ids].[Joints.].[Links.].[Forces.]
     This should on average be 27 characters plus joints/links/forces
     */
     override encodeURL(): string {
@@ -220,6 +244,9 @@ export class StringTranscoder extends GenericTranscoder {
         }
         enumString = enumString.substring(0, enumString.length - 1); // remove trailing comma
         
+        // Encode custom link ids
+        let linkIDString = this.encodeLinkIDs(this.getLinkIDMap());
+
         let jointString = ""; // encoded string of all the joints
         for (let i = 0; i < this.joints.length; i++) {
             jointString += this.encodeJoint(this.joints[i]) + ".";
@@ -235,7 +262,7 @@ export class StringTranscoder extends GenericTranscoder {
             forceString += this.encodeForce(this.forces[i]) + ".";
         }
 
-        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
+        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + linkIDString + "." + jointString + "." + linkString + "." + forceString;
     }
 
     override decodeURL(url: string): void {
@@ -280,6 +307,10 @@ export class StringTranscoder extends GenericTranscoder {
         console.log("Decimals:", this.decimalData);
         console.log("Integers:", this.intData);
         console.log("Enums:", this.enumData);
+
+        // Decode custom link ids
+        let linkIDString = sd.nextToken(".");
+        this.setLinkIDMap(this.decodeLinkIDs(linkIDString));
 
         // Decode joints
         while (sd.pollNextCharacter() !== ".") {

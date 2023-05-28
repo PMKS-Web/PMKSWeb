@@ -8,6 +8,7 @@ import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transco
 import { SettingsService } from '../settings.service';
 import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
+import { CustomIdService } from '../custom-id.service';
 
 /*
     * MechanismBuilder is a class that takes in a decoder and mechanism service and
@@ -20,7 +21,8 @@ export class MechanismBuilder {
     constructor(
         mechanism: MechanismService,
         transcoder: GenericTranscoder,
-        public settings: SettingsService)
+        private customIdService: CustomIdService,
+        private settings: SettingsService)
     {
         this.mechanism = mechanism;
         this.transcoder = transcoder
@@ -167,6 +169,9 @@ export class MechanismBuilder {
         SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
 
         this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);
+
+        // set map linking custom ids to link ids
+        this.customIdService.setMap(this.transcoder.getLinkIDMap());
 
     }
 
