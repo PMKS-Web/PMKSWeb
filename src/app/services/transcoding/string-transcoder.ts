@@ -37,7 +37,7 @@ export class StringTranscoder extends GenericTranscoder {
 
     /*
     Joint encoding is defined as:
-    [FLAGS][JointID],[x],[y],[angleRadians]
+    [FLAGS][JointID],[x],[y],[angleRadians],[linkID1],[linkID2]...
     [FLAGS] = (JointType == PRISMATIC), (isInput), (isGrounded)
     [JointID] = string
     [x] = number
@@ -56,7 +56,7 @@ export class StringTranscoder extends GenericTranscoder {
 
         let xString = this.encodeDecimalNumber(joint.x)
         let yString = this.encodeDecimalNumber(joint.y)
-       let  angleString = this.encodeDecimalNumber(joint.angleRadians)
+        let angleString = this.encodeDecimalNumber(joint.angleRadians)
 
         return "" + flags + joint.id + "," + xString + "," + yString + "," + angleString;
     }
@@ -66,15 +66,17 @@ export class StringTranscoder extends GenericTranscoder {
         const sd = new StringDisassembler(jointString);
 
         // [FLAGS] = (JointType == PRISMATIC), (isInput), (isGrounded)
-        let flags = sd.nextFlags(3);
+        let flags = sd.nextFlags(4);
         let jointType = flags[0] ? JOINT_TYPE.PRISMATIC : JOINT_TYPE.REVOLUTE;
         let isInput = flags[1];
         let isGrounded = flags[2];
         let isWelded = flags[3];
+        //console.log("flags", flags);
         let id = sd.nextToken();
         let x = sd.nextDecimalNumber();
         let y = sd.nextDecimalNumber();
         let angle = sd.nextDecimalNumber();
+
         return new JointData(jointType, id, x, y, isGrounded, isInput, isWelded, angle);
     }
 
@@ -86,6 +88,7 @@ export class StringTranscoder extends GenericTranscoder {
     private encodeLink(link: LinkData): string {
         let isRoot: string = (link.isRoot) ? "Y" : "N";
         let type: string = (link.type == LINK_TYPE.REAL) ? "R" : "P";
+        let id = link.id;
         let massString = this.encodeDecimalNumber(link.mass)
         let massMoIString = this.encodeDecimalNumber(link.massMoI)
         let xCoMString = this.encodeDecimalNumber(link.xCoM)
@@ -104,7 +107,7 @@ export class StringTranscoder extends GenericTranscoder {
         }
         subsetLinkIDs = subsetLinkIDs.substring(0, subsetLinkIDs.length - 1); // remove trailing comma
 
-        return isRoot + type + link.id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + color + "," + jointIDs + "," + subsetLinkIDs;
+        return isRoot + type + id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + color + "," + jointIDs + "," + subsetLinkIDs;
     }
 
     private decodeLink(linkString: string): LinkData {

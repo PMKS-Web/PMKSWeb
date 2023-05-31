@@ -43,11 +43,13 @@ export class MechanismBuilder {
 
         if (jointData.type === JOINT_TYPE.PRISMATIC) {
             joint = new PrisJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
+            joint.angle_rad = jointData.angleRadians;
         } else {
             joint = new RevJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
         }
 
         joint.isWelded = jointData.isWelded;
+        console.log("isWelded", jointData.isWelded);
 
         return joint;
     }
@@ -66,15 +68,20 @@ export class MechanismBuilder {
                 if (joint !== otherJoint) joint.connectedJoints.push(otherJoint);
             }
         }
-
+        
+        let link;
         if (linkData.type === LINK_TYPE.REAL) {
             let CoM: Coord = new Coord(linkData.xCoM, linkData.yCoM);
-            let link = new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
+            link = new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
             link.fill = linkData.color;
-            return link;
         } else {
-            return new Piston(linkData.id, jointsOnLink, linkData.mass);
+            link = new Piston(linkData.id, jointsOnLink, linkData.mass);
         }
+
+        // for all joints in link, connect to link
+        for (let joint of revoluteJoints) joint.links.push(link);
+
+        return link;
     }
 
     // Create Force from ForceData. Links are passed in to be linked to the force
