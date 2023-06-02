@@ -38,7 +38,7 @@ export class EditableTitleComponent {
 
     // If new ID is not purely alphanumeric, don't save it
     if (!this.isAlphanumeric(newID)) {
-      return "The new ID must be alphanumeric."
+      return "The new ID must only contain letters and numbers."
     }
 
     return "";
