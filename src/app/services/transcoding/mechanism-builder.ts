@@ -79,7 +79,7 @@ export class MechanismBuilder {
         }
 
         // for all joints in link, connect to link
-        for (let joint of revoluteJoints) joint.links.push(link);
+        //for (let joint of revoluteJoints) joint.links.push(link);
 
         return link;
     }
@@ -137,6 +137,16 @@ export class MechanismBuilder {
         return filteredLinks;
     }
 
+    // For each joint, add links that are adjacent to the joint
+    public addAdjacentLinksForJoints(): void {
+        this.mechanism.joints.forEach((joint) => {
+        if (joint instanceof RealJoint) {
+            let realJoint = joint as RealJoint;
+            realJoint.links = this.mechanism.links.filter((link) => link.joints.includes(realJoint));
+        }
+        });
+    }
+
     public build(): void {
 
         // Build Joints from JointData
@@ -159,6 +169,8 @@ export class MechanismBuilder {
         this.mechanism.joints = joints
         this.mechanism.links = links
         this.mechanism.forces = forces
+
+        this.addAdjacentLinksForJoints();
 
         // Configure mechanism global flags
         this.settings.lengthUnit.next(this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit));
