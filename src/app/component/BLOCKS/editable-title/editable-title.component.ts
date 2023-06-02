@@ -24,6 +24,10 @@ export class EditableTitleComponent {
     this.editMode = true;
   }
 
+  isAlphanumeric(str: string): boolean {
+    return /^[a-zA-Z0-9]+$/.test(str);
+  }
+
   // Check whether new id name is valid
   // Return empty string if valid, or error message if not
   validateNewID(newID: string): string {
@@ -34,7 +38,7 @@ export class EditableTitleComponent {
     }
 
     // If new ID is not purely alphanumeric, don't save it
-    if (false/*TODO*/) {
+    if (!this.isAlphanumeric(newID)) {
       return "The new ID must be alphanumeric."
     }
 
