@@ -295,11 +295,16 @@ export class PositionSolver {
           );
           break;
         case 'determineTracerJoint':
-          this.determineTracerJoint(
-            joints[connected_joint_indices[0]],
-            joints[connected_joint_indices[1]],
-            joint
+          this.twoCircleIntersectionPoints(
+              joints[connected_joint_indices[0]],
+              joints[connected_joint_indices[1]],
+              joint
           );
+          // this.determineTracerJoint(
+          //   joints[connected_joint_indices[0]],
+          //   joints[connected_joint_indices[1]],
+          //   joint
+          // );
           possible = true;
           break;
         default:
