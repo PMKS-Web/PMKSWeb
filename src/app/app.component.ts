@@ -97,5 +97,9 @@ export class AppComponent {
       'unweld_joint',
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/unweld_joint.svg')
     );
+    this.matIconRegistry.addSvgIcon(
+      'github',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/github.svg')
+    );
   }
 }

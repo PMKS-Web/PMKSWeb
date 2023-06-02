@@ -6,7 +6,6 @@ import { Coord } from '../../model/coord';
 import { roundNumber } from '../../model/utils';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { InstantCenter } from '../../model/instant-center';
-import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';

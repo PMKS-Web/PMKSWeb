@@ -2,7 +2,6 @@ import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@
 import { NgForm } from '@angular/forms';
 // import {switchMapTo} from "rxjs";
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { MechanismService } from '../../services/mechanism.service';

@@ -15,9 +15,13 @@
           <title-block>Help</title-block>
           <button-block icon='help_center' [click]='gotoHelpSite'>Tutorial Videos</button-block>
           <button-block icon='info' [click]='sendNotReady'>Restart Tutorial</button-block>
+          <subtitle-block> PMKS+ is open source! Do you want to help us develop it?</subtitle-block>
+          <button-block customIcon='github' [click]='gotoGithub'>Github Repo</button-block>
         </panel-section>
         <panel-section>
-          <title-block description='Found a bug? Have a suggestion?'>Send Feedback
+          <title-block
+            description='Do you want to attach a file? Send us an email at gr-pmksplus@wpi.edu'>
+            Send Feedback
           </title-block>
           <form [formGroup]='commentForm'>
             <mat-form-field class='max-width'>

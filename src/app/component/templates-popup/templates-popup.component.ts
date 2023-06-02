@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { GridComponent } from '../grid/grid.component';
 import { Link, RealLink } from '../../model/link';
 import { Joint, RealJoint } from '../../model/joint';
 import { Force } from '../../model/force';

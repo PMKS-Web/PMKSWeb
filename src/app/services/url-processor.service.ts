@@ -5,10 +5,10 @@ import { Bound, Link, Piston, RealLink } from '../model/link';
 import { Coord } from '../model/coord';
 import { Force } from '../model/force';
 import { MechanismService } from './mechanism.service';
-import { MechanismBuilder } from './transcoding/mechanism-builder';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
 import { CustomIdService } from './custom-id.service';
+import { MechanismBuilder } from './transcoding/mechanism-builder';
 
 @Injectable({
   providedIn: 'root',

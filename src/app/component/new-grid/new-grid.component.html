@@ -47,14 +47,14 @@
         [attr.height]='20' fill='#ffffff' stroke='#00000000'>
   </rect>
   <!-- Axes and Grid-->
-  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")' (pointerdown)='setLastLeftClick("grid")'>
-
+  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")' (pointerdown)='setLastLeftClick("grid")' >
     <!--  The Background-->
     <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
           [attr.width]='svgGrid.viewBoxMaxX-svgGrid.viewBoxMinX'
-          [attr.height]='svgGrid.viewBoxMaxY-svgGrid.viewBoxMinY' fill='#ffffff' stroke='#00000000'>
+          [attr.height]='svgGrid.viewBoxMaxY-svgGrid.viewBoxMinY' fill='white' stroke='#00000000'>
 
     </rect>
+
     <!--  The Minor Axes-->
     <ng-container *ngIf='settings.isShowMajorGrid.getValue() && settings.isShowMinorGrid.getValue()'>
       <ng-container *ngFor='let line of svgGrid.verticalLinesMinor'>
