@@ -4,8 +4,8 @@
     <title-block> Settings</title-block>
     <radio-block
       option1='English'
-      option2='Metric'
-      option3='SI'
+      option2='Metric (cm)'
+      option3='SI (m)'
       [formGroup]='this.settingsForm'
       _formControl='globalunit'
       tooltip='Select the global units to be used for the analysis.'
@@ -75,11 +75,14 @@
       [formGroup]='this.settingsForm'
       _formControl='gravity'
       tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
-    >Gravity
+    >Enable Forces
     </toggle-block
     >
-    <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
-    <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
+
+    <ng-container *ngIf='settingsService.isGravity.value'>
+      <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
+      <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
+    </ng-container>
 
     <subtitle-block>Visual Settings</subtitle-block>
     <toggle-block
