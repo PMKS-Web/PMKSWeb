@@ -12,6 +12,8 @@
   $foreground: map.get($theme, foreground);
 
   .example-card {
+    //Set cursor to pointer
+    cursor: pointer;
     color: black;
     width: 20vw;
     //background-color: #aaaaaa;
@@ -25,11 +27,27 @@
       font-size: 14px;
       font-weight: 200;
     }
+
+    button {
+      //Position to bottom right of card
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+
+    img {
+      border-radius: var(--border-radius);
+    }
+
+    //Increase elevation when hovering
+    &:hover {
+      @include mat.elevation(4);
+    }
+
+    //delay the hover effect
+    transition: all 0.1s ease-in-out;
   }
 
-  //mat-dialog-content {
-  //  padding-top: 0 !important;
-  //}
 
   .linkage-grid {
     display: grid;
