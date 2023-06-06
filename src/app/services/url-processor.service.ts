@@ -27,6 +27,8 @@ export class UrlProcessorService {
       decoder.decodeURL(url as string);
       const builder = new MechanismBuilder(mechanismSrv, decoder, customIDSrv, settingsSrv);
       builder.build();
+      //Now set the URL back to the original URL without the query string.
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     mechanismSrv.updateMechanism();
