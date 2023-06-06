@@ -20,7 +20,7 @@
     id='placeholderContainer'
     *ngIf='!this.mechanismService.oneValidMechanismExists()'
   >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
     <subtitle-block alwaysShown>This linkage is not valid and cannot be analyzed. Make sure all requirements are met:
     </subtitle-block>
     <mat-list class='example-list-wrapping'>
@@ -67,7 +67,7 @@
     id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
   >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
     <subtitle-block alwaysShown>Select a part of the linkage to analyze it.</subtitle-block>
     <img src='assets/gifs/Click.gif' />
   </panel-section-collapsible>

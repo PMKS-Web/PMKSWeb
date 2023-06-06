@@ -1,7 +1,7 @@
 <div id='editWrapper'>
   <panel-section-collapsible [warning]='true' [expanded]='false' id='placeholderContainer'
                              *ngIf='hideEditPanel() && this.activeSrv.objType !== "Grid"'>
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
     <subtitle-block alwaysShown>Stop animation or reset the time slider to 0 to edit.</subtitle-block>
     <img src='assets/gifs/Stop.gif' />
   </panel-section-collapsible>
@@ -12,7 +12,7 @@
     id='placeholderContainer'
     *ngIf="(this.activeSrv.objType == 'Grid' ||  this.activeSrv.objType == 'Nothing') && mechanismService.joints.length == 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
     <subtitle-block alwaysShown>Right click on the grid to create a link.</subtitle-block>
     <img src='assets/gifs/Create.gif' />
   </panel-section-collapsible>
@@ -23,7 +23,7 @@
     id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Grid' && mechanismService.joints.length != 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
+    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
     <subtitle-block alwaysShown>Select a joint or link to edit properties.</subtitle-block>
     <img src='assets/gifs/Click.gif' />
   </panel-section-collapsible>

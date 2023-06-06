@@ -11,6 +11,37 @@ import { Analytics, logEvent } from '@angular/fire/analytics';
   templateUrl: './left-tabs.component.html',
   styleUrls: ['./left-tabs.component.scss'],
   animations: [
+    trigger('activeTab', [
+      state(
+        '0',
+        style({
+          visibility: 'hidden',
+        })
+      ),
+      state(
+        '1',
+        style({
+          top: '0px',
+        })
+      ),
+      state(
+        '2',
+        style({
+          top: '53px', //Be careful, there are multiple places to change this value
+        })
+      ),
+      state(
+        '3',
+        style({
+          top: '106px', //Be careful, there are multiple places to change this value
+        })
+      ),
+
+      transition('* => 0', [animate('0s')]),
+      transition('0 => *', [animate('0s')]),
+      transition('* => *', [animate('0.1s ease-in-out')]),
+    ]),
+
     trigger('openClose', [
       // ...
       state(
@@ -51,6 +82,7 @@ export class LeftTabsComponent {
     } else {
       if (this.openTab === tabID) {
         this.isOpen = false;
+        this.openTab = 0;
       } else {
         this.openTab = tabID;
       }
