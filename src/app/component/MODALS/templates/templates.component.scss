@@ -1,0 +1,67 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $typography-config: mat.get-typography-config($theme);
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  .example-card {
+    color: black;
+    width: 20vw;
+    //background-color: #aaaaaa;
+    mat-card-title {
+      font-size: 20px;
+      font-weight: 400;
+    }
+
+    mat-card-subtitle {
+      color: black;
+      font-size: 14px;
+      font-weight: 200;
+    }
+  }
+
+  //mat-dialog-content {
+  //  padding-top: 0 !important;
+  //}
+
+  .linkage-grid {
+    display: grid;
+    //Make a 3 column grid
+    grid-template-columns: 1fr 1fr 1fr;
+    // Add a 10px gap
+    grid-gap: 20px;
+    // Add a 20px padding but 0 on top
+    padding: 0 20px 20px 20px;
+    margin-top: -10px;
+  }
+
+  #remove_top_padding {
+    padding-top: 0px;
+  }
+
+  .dialog_root {
+    background-color: mat.get-color-from-palette($primary-palette, 50);
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 20px;
+
+      h1 {
+        font-weight: 400;
+        font-size: 32px;
+        margin: 0;
+      }
+    }
+  }
+
+}

@@ -23,6 +23,7 @@
 @use 'src/app/component/new-grid/new-grid.component.scss' as new-grid;
 @use 'src/app/component/context-menu/context-menu.component.scss' as context-menu;
 @use 'src/app/component/equation-panel/equation-panel.component.scss' as equation-panel;
+@use 'src/app/component/MODALS/templates/templates.component.scss' as templates;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -66,3 +67,5 @@ $my-theme: mat.define-light-theme(
 @include subtitle-block.css($my-theme);
 @include toggle-block.css($my-theme);
 @include editable-title-block.css($my-theme);
+
+@include templates.css($my-theme);
