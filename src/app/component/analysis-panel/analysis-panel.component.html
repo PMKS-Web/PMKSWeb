@@ -184,13 +184,12 @@
     </title-block>
 
     <radio-block
-      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other.'
-      option1='Global (20 rpm)'
-      option2='Equilibrium (0 rpm)'
-      option3='Other'
+      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set in the settings panel.'
+      option1='Static (Equilibrium)'
+      option2='In-motion (Dynamic)'
       [formGroup]='this.inputSpeedFormGroup'
       _formControl='speed'
-    >Input Speed
+    >Force Analysis Type
     </radio-block
     >
 
@@ -470,13 +469,12 @@
     </title-block>
 
     <radio-block
-      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other.'
-      option1='Global (20 rpm)'
-      option2='Equilibrium (0 rpm)'
-      option3='Other'
+      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set in the settings panel.'
+      option1='Static (Equilibrium)'
+      option2='In-motion (Dynamic)'
       [formGroup]='this.inputSpeedFormGroup'
       _formControl='speed'
-    >Input Speed
+    >Force Analysis Type
     </radio-block
     >
 
