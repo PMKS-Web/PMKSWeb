@@ -425,7 +425,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
-    if (joint instanceof RealJoint) {
+    if (joint instanceof RevJoint) {
       encoder.addJoint(new JointData(
         JOINT_TYPE.REVOLUTE,
         joint.id,

@@ -35,9 +35,11 @@ export abstract class GenericTranscoder {
 
     addJoint(joint: JointData): void {
         this.joints.push(joint);
+        console.log("save joint", joint);
     }
     addLink(link: LinkData) {
         this.links.push(link);
+        console.log("save link", link);
     }
     addForce(force: ForceData) {
         this.forces.push(force);

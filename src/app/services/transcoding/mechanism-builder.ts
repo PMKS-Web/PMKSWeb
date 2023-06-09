@@ -49,7 +49,7 @@ export class MechanismBuilder {
         }
 
         joint.isWelded = jointData.isWelded;
-        console.log("isWelded", jointData.isWelded);
+        console.log("build joint", jointData.type);
 
         return joint;
     }
