@@ -21,8 +21,6 @@ export abstract class GenericTranscoder {
     protected intData: number[] = [];
     protected boolData: boolean[] = [];
 
-    protected linkIDMap: Map<string, string> = new Map<string, string>();
-
     // Initialize data dictionaries based on settings enums
     constructor() {
         for (let i = 0; i < this.getNumberOfEnums(EnumSetting); i++) this.enumData.push(0);
@@ -43,10 +41,6 @@ export abstract class GenericTranscoder {
     }
     addForce(force: ForceData) {
         this.forces.push(force);
-    }
-
-    setLinkIDMap(linkIDMap: Map<string, string>) {
-        this.linkIDMap = linkIDMap;
     }
 
     private getNumberOfEnums(enumType: object): number {
@@ -99,10 +93,6 @@ export abstract class GenericTranscoder {
     }
     getForces(): ForceData[] {
         return this.forces;
-    }
-
-    getLinkIDMap(): Map<string, string> {
-        return this.linkIDMap;
     }
 
     private getEnumValueByIndex(enumType: object, index: number): any | undefined {

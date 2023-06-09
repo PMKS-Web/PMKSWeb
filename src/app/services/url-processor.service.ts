@@ -7,14 +7,13 @@ import { Force } from '../model/force';
 import { MechanismService } from './mechanism.service';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
-import { CustomIdService } from './custom-id.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UrlProcessorService {
-  constructor(mechanismSrv: MechanismService, customIDSrv: CustomIdService, settingsSrv: SettingsService) {
+  constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService) {
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -25,7 +24,7 @@ export class UrlProcessorService {
     if (url !== null) {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(mechanismSrv, decoder, customIDSrv, settingsSrv);
+      const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
       builder.build();
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);

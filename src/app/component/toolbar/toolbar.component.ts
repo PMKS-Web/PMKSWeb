@@ -31,7 +31,6 @@ import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
 import { SettingsService } from 'src/app/services/settings.service';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from 'src/app/services/transcoding/stored-settings';
-import { CustomIdService } from 'src/app/services/custom-id.service';
 
 const parseCSV = require('papaparse');
 
@@ -94,7 +93,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   constructor(
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
-    private customIdService: CustomIdService,
     public settings: SettingsService
   ) {}
 
@@ -429,6 +427,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       encoder.addJoint(new JointData(
         JOINT_TYPE.REVOLUTE,
         joint.id,
+        joint.name,
         joint.x,
         joint.y,
         joint.ground,
@@ -440,6 +439,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       encoder.addJoint(new JointData(
         JOINT_TYPE.PRISMATIC,
         joint.id,
+        joint.name,
         joint.x,
         joint.y,
         joint.ground,
@@ -456,6 +456,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         isRoot,
         LINK_TYPE.REAL,
         link.id,
+        link.name,
         link.mass,
         link.massMoI,
         link.CoM.x,
@@ -470,6 +471,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         isRoot,
         LINK_TYPE.PISTON,
         link.id,
+        link.name,
         link.mass,
         0,
         0,
@@ -486,6 +488,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     encoder.addForce(new ForceData(
       force.id,
       force.link.id,
+      force.name,
       force.startCoord.x,
       force.startCoord.y,
       force.endCoord.x,
@@ -546,8 +549,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
-
-    encoder.setLinkIDMap(this.customIdService.getMap());
     
     let urlRaw = encoder.encodeURL();
 

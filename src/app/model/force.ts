@@ -6,6 +6,7 @@ import { getAngle } from './utils';
 
 export class Force {
   private _id: string;
+  private _name: string = '';
   private _link: RealLink;
   private _startCoord: Coord;
   private _endCoord: Coord;
@@ -137,6 +138,17 @@ export class Force {
 
   set id(value: string) {
     this._id = value;
+  }
+
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
   }
 
   get link(): RealLink {

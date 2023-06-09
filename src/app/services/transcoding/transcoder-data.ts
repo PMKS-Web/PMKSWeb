@@ -11,6 +11,7 @@ export class JointData {
     constructor(
         public type: JOINT_TYPE,
         public id: string,
+        public name: string,
         public x: number,
         public y: number,
         public isGrounded: boolean,
@@ -25,6 +26,7 @@ export class LinkData {
         public isRoot: boolean,
         public type: LINK_TYPE,
         public id: string,
+        public name: string,
         public mass: number,
         public massMoI: number = 0,
         public xCoM: number = 0,
@@ -39,6 +41,7 @@ export class ForceData {
     constructor(
         public id: string,
         public linkID: string,
+        public name: string,
         public startX: number,
         public startY: number,
         public endX: number,

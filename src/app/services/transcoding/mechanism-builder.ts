@@ -8,7 +8,6 @@ import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transco
 import { SettingsService } from '../settings.service';
 import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
-import { CustomIdService } from '../custom-id.service';
 
 /*
     * MechanismBuilder is a class that takes in a decoder and mechanism service and
@@ -21,7 +20,6 @@ export class MechanismBuilder {
     constructor(
         mechanism: MechanismService,
         transcoder: GenericTranscoder,
-        private customIdService: CustomIdService,
         private settings: SettingsService)
     {
         this.mechanism = mechanism;
@@ -47,7 +45,8 @@ export class MechanismBuilder {
         } else {
             joint = new RevJoint(jointData.id, jointData.x, jointData.y, jointData.isInput, jointData.isGrounded);
         }
-
+        
+        joint.name = jointData.name;
         joint.isWelded = jointData.isWelded;
         console.log("build joint", jointData.type);
 
@@ -81,6 +80,8 @@ export class MechanismBuilder {
         // for all joints in link, connect to link
         //for (let joint of revoluteJoints) joint.links.push(link);
 
+        link.name = linkData.name;
+
         return link;
     }
 
@@ -97,6 +98,7 @@ export class MechanismBuilder {
         }
 
         let force = new Force(forceData.id, (link as RealLink), startCoord, endCoord, forceData.isLocal, forceData.isFacingOut, forceData.magnitude);
+        force.name = forceData.name;
 
         // Add force to link
         link.forces.push(force);
@@ -188,9 +190,6 @@ export class MechanismBuilder {
         SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
 
         this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);
-
-        // set map linking custom ids to link ids
-        this.customIdService.setMap(this.transcoder.getLinkIDMap());
 
     }
 

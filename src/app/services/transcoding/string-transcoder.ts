@@ -58,7 +58,7 @@ export class StringTranscoder extends GenericTranscoder {
         let yString = this.encodeDecimalNumber(joint.y)
         let angleString = this.encodeDecimalNumber(joint.angleRadians)
 
-        return "" + flags + joint.id + "," + xString + "," + yString + "," + angleString;
+        return "" + flags + joint.id + "," + joint.name + "," + xString + "," + yString + "," + angleString;
     }
     
     private decodeJoint(jointString: string): JointData {
@@ -73,11 +73,12 @@ export class StringTranscoder extends GenericTranscoder {
         let isWelded = flags[3];
         //console.log("flags", flags);
         let id = sd.nextToken();
+        let name = sd.nextToken();
         let x = sd.nextDecimalNumber();
         let y = sd.nextDecimalNumber();
         let angle = sd.nextDecimalNumber();
 
-        return new JointData(jointType, id, x, y, isGrounded, isInput, isWelded, angle);
+        return new JointData(jointType, id, name, x, y, isGrounded, isInput, isWelded, angle);
     }
 
     /*
@@ -107,7 +108,7 @@ export class StringTranscoder extends GenericTranscoder {
         }
         subsetLinkIDs = subsetLinkIDs.substring(0, subsetLinkIDs.length - 1); // remove trailing comma
 
-        return isRoot + type + id + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + color + "," + jointIDs + "," + subsetLinkIDs;
+        return isRoot + type + id + "," + link.name + "," + massString + "," + massMoIString + "," + xCoMString + "," + yCoMString + "," + color + "," + jointIDs + "," + subsetLinkIDs;
     }
 
     private decodeLink(linkString: string): LinkData {
@@ -117,6 +118,7 @@ export class StringTranscoder extends GenericTranscoder {
         let isRoot = (sd.nextCharacter() === "Y");
         let type = (sd.nextCharacter() === "R") ? LINK_TYPE.REAL : LINK_TYPE.PISTON;
         let id = sd.nextToken();
+        let name = sd.nextToken();
         let mass = sd.nextDecimalNumber();
         let massMoI = sd.nextDecimalNumber();
         let xCoM = sd.nextDecimalNumber();
@@ -135,7 +137,7 @@ export class StringTranscoder extends GenericTranscoder {
         let subsetLinkIDs: string[] = [];
         while (!sd.isEmpty()) subsetLinkIDs.push(sd.nextToken());
         
-        return new LinkData(isRoot, type, id, mass, massMoI, xCoM, yCoM, color, jointIDs, subsetLinkIDs);
+        return new LinkData(isRoot, type, id, name, mass, massMoI, xCoM, yCoM, color, jointIDs, subsetLinkIDs);
     }
 
     /*
@@ -160,7 +162,7 @@ export class StringTranscoder extends GenericTranscoder {
         let endYString = this.encodeDecimalNumber(force.endY)
         let magnitudeString = this.encodeDecimalNumber(force.magnitude)
 
-        return "" + flags + force.id + "," + force.linkID + "," + startXString + "," + startYString + "," + endXString + "," + endYString + "," + magnitudeString;
+        return "" + flags + force.id + "," + force.linkID + "," + force.name + "," + startXString + "," + startYString + "," + endXString + "," + endYString + "," + magnitudeString;
     }
 
     private decodeForce(forceString: string): ForceData {
@@ -172,26 +174,14 @@ export class StringTranscoder extends GenericTranscoder {
 
         let id = sd.nextToken();
         let linkID = sd.nextToken();
+        let name = sd.nextToken();
         let startX = sd.nextDecimalNumber();
         let startY = sd.nextDecimalNumber();
         let endX = sd.nextDecimalNumber();
         let endY = sd.nextDecimalNumber();
         let magnitude = sd.nextDecimalNumber();
 
-        return new ForceData(id, linkID, startX, startY, endX, endY, isLocal, isFacingOut, magnitude);
-    }
-
-    /*
-    URL encoding is defined as
-    [original id 1],[new id 1],[original id 2],[new id 2]...
-    */
-    private encodeLinkIDs(map: Map<string, string>): string {
-        let encodedString = "";
-        map.forEach((newID, oldID) => {
-            encodedString += oldID + "," + newID + ",";
-        });
-        encodedString = encodedString.substring(0, encodedString.length - 1); // remove trailing comma
-        return encodedString;
+        return new ForceData(id, linkID, name, startX, startY, endX, endY, isLocal, isFacingOut, magnitude);
     }
 
     private decodeLinkIDs(encodedString: string): Map<string, string> {
@@ -247,9 +237,6 @@ export class StringTranscoder extends GenericTranscoder {
         }
         enumString = enumString.substring(0, enumString.length - 1); // remove trailing comma
         
-        // Encode custom link ids
-        let linkIDString = this.encodeLinkIDs(this.getLinkIDMap());
-
         let jointString = ""; // encoded string of all the joints
         for (let i = 0; i < this.joints.length; i++) {
             jointString += this.encodeJoint(this.joints[i]) + ".";
@@ -265,7 +252,7 @@ export class StringTranscoder extends GenericTranscoder {
             forceString += this.encodeForce(this.forces[i]) + ".";
         }
 
-        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + linkIDString + "." + jointString + "." + linkString + "." + forceString;
+        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
     }
 
     override decodeURL(url: string): void {
@@ -310,10 +297,6 @@ export class StringTranscoder extends GenericTranscoder {
         console.log("Decimals:", this.decimalData);
         console.log("Integers:", this.intData);
         console.log("Enums:", this.enumData);
-
-        // Decode custom link ids
-        let linkIDString = sd.nextToken(".");
-        this.setLinkIDMap(this.decodeLinkIDs(linkIDString));
 
         // Decode joints
         while (sd.pollNextCharacter() !== ".") {

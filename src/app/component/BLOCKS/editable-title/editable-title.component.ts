@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { CustomIdService } from '../../../services/custom-id.service';
 import { NewGridComponent } from '../../new-grid/new-grid.component';
+import { ActiveObjService } from 'src/app/services/active-obj.service';
 
 @Component({
   selector: 'editable-title-block',
@@ -10,16 +10,18 @@ import { NewGridComponent } from '../../new-grid/new-grid.component';
 })
 export class EditableTitleComponent {
   @Input() description: string = '';
-  @Input() originalID: string = '';
 
   editMode = false;
 
-  constructor(private fb: FormBuilder, public customIDService: CustomIdService) {}
+  constructor(
+    private fb: FormBuilder,
+    public activeObjService: ActiveObjService,
+    ) {}
 
   newIDForm = this.fb.group({ newID: [''] });
 
   gotoEditMode() {
-    this.newIDForm.controls['newID'].setValue(this.customIDService.getVisualID(this.originalID));
+    this.newIDForm.controls['newID'].setValue(this.activeObjService.getSelectedObj().name);
     this.editMode = true;
   }
 
@@ -56,8 +58,9 @@ export class EditableTitleComponent {
       return;
     }
 
-    this.customIDService.addVisualID(this.originalID, this.newIDForm.value.newID!);
-    console.log(this.customIDService.getVisualID(this.originalID));
+    let activeObj = this.activeObjService.getSelectedObj();
+    activeObj.name = newID;
+    console.log("Set new name to " + newID + " for " + this.activeObjService.objType);
     this.editMode = false;
   }
 
