@@ -62,9 +62,9 @@ export class MechanismBuilder {
         let jointsOnLink: Joint[] = linkData.jointIDs.map(jointID => this.getJointByID(joints, jointID)!);
 
         // For each revolute joint on the link, link it to every other joint
-        const revoluteJoints = jointsOnLink.filter(joint => joint instanceof RevJoint) as RevJoint[];
-        for (let joint of revoluteJoints) {
-            for (let otherJoint of revoluteJoints) {
+        const realJoints = jointsOnLink.filter(joint => joint instanceof RealJoint) as RealJoint[];
+        for (let joint of realJoints) {
+            for (let otherJoint of realJoints) {
                 if (joint !== otherJoint) joint.connectedJoints.push(otherJoint);
             }
         }
