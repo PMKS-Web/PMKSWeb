@@ -14,7 +14,11 @@ import { SvgGridService } from './svg-grid.service';
   providedIn: 'root',
 })
 export class UrlProcessorService {
-  constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService, svgGrid: SvgGridService) {
+  constructor(
+    mechanismSrv: MechanismService,
+    settingsSrv: SettingsService,
+    private svgGrid: SvgGridService
+  ) {
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -28,9 +32,6 @@ export class UrlProcessorService {
       const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
       builder.build();
 
-      //After the mechanism is built, scale the mechanism to fit the screen.
-      svgGrid.scaleToFitLinkage();
-
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -41,9 +42,14 @@ export class UrlProcessorService {
     if (mechanismSrv.mechanismTimeStep > 0) {
       setTimeout(() => {
         mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
-        console.log("animate on setTimeout")
       }, 0);
     }
+
+    //After the mechanism is built, scale the mechanism to fit the screen
+    //Do this after a 1 sec timeout to allow the mechanism to be built first.
+    setTimeout(() => {
+      this.svgGrid.scaleToFitLinkage();
+    }, 1000);
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
