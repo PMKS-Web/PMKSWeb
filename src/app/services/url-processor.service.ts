@@ -8,12 +8,13 @@ import { MechanismService } from './mechanism.service';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
+import { SvgGridService } from './svg-grid.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UrlProcessorService {
-  constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService) {
+  constructor(mechanismSrv: MechanismService, settingsSrv: SettingsService, svgGrid: SvgGridService) {
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -26,6 +27,10 @@ export class UrlProcessorService {
       decoder.decodeURL(url as string);
       const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
       builder.build();
+
+      //After the mechanism is built, scale the mechanism to fit the screen.
+      svgGrid.scaleToFitLinkage();
+
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);
     }
