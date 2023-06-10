@@ -106,28 +106,8 @@ export class AppComponent {
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/edit.svg')
     );
     this.matIconRegistry.addSvgIcon(
-      'synth1',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth1.svg')
-    );
-    this.matIconRegistry.addSvgIcon(
-      'synth2',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth2.svg')
-    );
-    this.matIconRegistry.addSvgIcon(
-      'synth3',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth3.svg')
-    );
-    this.matIconRegistry.addSvgIcon(
-      'synth4',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth4.svg')
-    );
-    this.matIconRegistry.addSvgIcon(
-      'synth5',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth5.svg')
-    );
-    this.matIconRegistry.addSvgIcon(
-      'synth6',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synth6.svg')
+      'synthesis',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synthesis.svg')
     );
   }
 }
