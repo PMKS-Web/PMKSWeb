@@ -71,6 +71,8 @@ export class MechanismService {
 
   updateMechanism() {
     // console.log(this.mechanisms[0]);
+    //There are multiple mechanisms since there was a plan to support multiple mechanisms
+    //You can treat this as a single mechanism for now at index 0
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
@@ -78,6 +80,8 @@ export class MechanismService {
       inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
     }
     this.mechanisms.push(
+      //This creates a new mechanism with the current state of the joints, links, forces, and ics
+      //If the mechnaism is simulatable, it will generate loops and all future time steps
       new Mechanism(
         this.joints,
         this.links,
@@ -203,9 +207,9 @@ export class MechanismService {
     ) as RealJoint;
 
     if (!joint.isWelded) {
-//       NewGridComponent.sendNotification(
-//         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-//       );
+      //       NewGridComponent.sendNotification(
+      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+      //       );
       //WE NEED TO WELD THE JOINT
       const linksAtJoint = joint.links as RealLink[];
 
