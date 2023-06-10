@@ -1,4 +1,5 @@
 import { BaseNConverter } from "./base64-converter";
+import { Checksum } from "./checksum";
 import { FlagPacker } from "./flag-packer";
 import { StringDisassembler } from "./string-disassembler";
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
@@ -252,10 +253,34 @@ export class StringTranscoder extends GenericTranscoder {
             forceString += this.encodeForce(this.forces[i]) + ".";
         }
 
-        return boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
+        let fullString = boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
+
+        // add checksum character in the end
+        let checksum = new Checksum();
+        let checkSumChar = checksum.generateChecksum(fullString.length);
+
+        console.log("Generate checksum for length " + fullString.length + "and char " + checkSumChar);
+
+        fullString += checkSumChar;
+        return fullString;
+
     }
 
     override decodeURL(url: string): void {
+
+        // Verify checksum
+        let checksum = new Checksum();
+        let lastChar = url.charAt(url.length - 1); // extract last character
+        url = url.substring(0, url.length - 1); // remove checksum from url
+        console.log("Verifying checksum for length " + url.length + "and char " + lastChar);
+        if (!checksum.verifyChecksum(url.length, lastChar)) {
+            throw new Error("Checksum failed");
+        }
+
+        // Now that we know the checksum is correct, we can remove the last character
+        console.log("Checksum passed");
+        
+
         const sd = new StringDisassembler(url);
 
         // Decode bool settings
