@@ -165,14 +165,16 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       showForNullSeries: false,
       forceNiceScale: true,
       min: function (min) {
-        return min - 0.01;
+        return Math.floor(min);
       },
       max: function (max) {
-        return max + 0.01;
+        return Math.ceil(max);
       },
       title: {
         text: 'setLater',
       },
+      // tickAmount: 1,
+      decimalsInFloat: 1,
     },
     legend: {
       show: false,
