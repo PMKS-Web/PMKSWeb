@@ -21,6 +21,7 @@ export class ActiveObjService {
   onActiveObjChange = new EventEmitter<string>();
 
   fakeUpdateSelectedObj() {
+    //Don't actually update the selected object, just emit the event so subscribers can update
     this.onActiveObjChange.emit(this.objType);
   }
 

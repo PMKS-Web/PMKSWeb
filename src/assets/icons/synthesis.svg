@@ -1,0 +1,11 @@
+<svg width="22" height="21" viewBox="0 0 22 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="1.5" cy="1.5" r="1.65" transform="matrix(-1 0 0 1 18.5 8.75)" fill="black" stroke="black" stroke-width="0.3"/>
+<circle cx="1.5" cy="1.5" r="1.65" transform="matrix(-1 0 0 1 9.5 6.75)" fill="black" stroke="black" stroke-width="0.3"/>
+<circle cx="1.5" cy="1.5" r="1.65" transform="matrix(-1 0 0 1 4.5 15.75)" fill="black" stroke="black" stroke-width="0.3"/>
+<circle cx="1.5" cy="1.5" r="1.65" transform="matrix(-1 0 0 1 20.5 15.75)" fill="black" stroke="black" stroke-width="0.3"/>
+<path d="M14.1058 6.53835L14.8635 4.90185L16.5 4.14418L14.8635 3.3865L14.1058 1.75L13.3482 3.3865L11.7116 4.14418L13.3482 4.90185L14.1058 6.53835Z" fill="black"/>
+<path d="M2.91925 7.9115L3.41925 6.83075L4.5 6.33075L3.41925 5.83075L2.91925 4.75L2.41925 5.83075L1.3385 6.33075L2.41925 6.83075L2.91925 7.9115Z" fill="black"/>
+<path d="M19 17.25C17.963 13.6204 17.7407 12.8426 17 10.25" stroke="black" stroke-width="1.7"/>
+<path d="M8 8.25C12.6667 9.28704 13.6667 9.50926 17 10.25" stroke="black" stroke-width="1.7"/>
+<path d="M8 8.25C5.40741 12.9167 4.85185 13.9167 3 17.25" stroke="black" stroke-width="1.8"/>
+</svg>
