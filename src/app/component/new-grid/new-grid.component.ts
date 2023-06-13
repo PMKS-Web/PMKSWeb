@@ -15,6 +15,7 @@ import {
   forceStates,
   gridStates,
   is_touch_enabled,
+  has_mouse_pointer,
   jointStates,
   line_line_intersect,
   linkStates,
@@ -88,7 +89,7 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    if (is_touch_enabled()) {
+    if (!has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 

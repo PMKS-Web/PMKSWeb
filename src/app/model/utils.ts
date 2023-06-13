@@ -1003,6 +1003,10 @@ export function is_touch_enabled() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
+export function has_mouse_pointer() {
+  return matchMedia('(pointer:fine)').matches;
+}
+
 // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 export function isLeft(a: Coord, b: Coord, c: Coord) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0;
