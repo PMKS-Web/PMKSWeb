@@ -13,8 +13,8 @@
 
   #input-block {
     #block-input-box {
-      font-size: 14px;
-      font-weight: 200;
+      //font-size: 14px;
+      //font-weight: 400;
       width: 80px;
       border: 0;
       outline: none;
@@ -33,15 +33,37 @@
       }
     }
 
-    #block-input-units {
-      font-size: 14px;
-      font-weight: 200;
-      color: mat.get-color-from-palette($foreground, 'disabled-text');
-
-      text-align: right;
-      padding-right: 5px;
-      margin-left: -35px;
-      width: 30px;
+    #test-input {
+      //color: red;
+      @include mat.typography-level($typography-config, 'body-2');
     }
+
+    .test {
+
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+
+      .mat-mdc-form-field-infix {
+        padding: 6px 0;
+      }
+    }
+
+    .test > .mat-mdc-text-field-wrapper {
+      height: 30px;
+      width: 100px;
+      padding: 0 6px;
+    }
+
+    //#block-input-units {
+    //  //font-size: 14px;
+    //  //font-weight: 200;
+    //  color: mat.get-color-from-palette($foreground, 'disabled-text');
+    //
+    //  text-align: right;
+    //  padding-right: 5px;
+    //  margin-left: -35px;
+    //  width: 30px;
+    //}
   }
 }

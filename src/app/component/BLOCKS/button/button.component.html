@@ -1,7 +1,7 @@
-<button id='button-block' (click)='click()' mat-flat-button>
-  <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>
-  <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>
-  </mat-icon>
-  <div id='spacer'></div>
+<button id='button-block' (click)='click()' mat-stroked-button color='warn'>
+  <!--  <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>-->
+  <!--  <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>-->
+  <!--  </mat-icon>-->
+  <!--  <div id='spacer'></div>-->
   <ng-content></ng-content>
 </button>

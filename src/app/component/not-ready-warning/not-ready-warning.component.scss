@@ -1,16 +1,34 @@
-#outerBox {
-  display: flex;
-  background-color: #FFEBEE;
-  border-radius: 5px;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 20px;
-  font-size: 12px;
-  font-weight: 300;
+@use 'sass:map';
+@use '@angular/material' as mat;
 
-  img {
-    width: 30px;
-    height: 30px;
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $typography-config: mat.get-typography-config($theme);
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  #outerBox {
+    display: flex;
+    background-color: #FFEBEE;
+    border-radius: var(--border-radius);
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    gap: 15px;
+
+    @include mat.typography-level($typography-config, 'caption');
+    color: rgba(0, 0, 0, 0.6);
+
+
+    img {
+      width: 30px;
+      height: 30px;
+    }
   }
+
+
 }

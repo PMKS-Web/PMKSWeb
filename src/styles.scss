@@ -4,6 +4,7 @@ html,
 body {
   height: 100%;
 }
+
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
@@ -17,6 +18,23 @@ body {
   user-select: none; /* Standard */
 }
 
+
 :root {
-  --border-radius: 4px;
+  --border-radius: 5px;
+}
+
+/* Remove all default margins and padding */
+p {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.spacer5px {
+  height: 5px;
+  margin: -5px 0;
+}
+
+input {
+  margin: 0;
 }

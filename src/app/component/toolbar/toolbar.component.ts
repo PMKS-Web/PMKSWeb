@@ -19,7 +19,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { Coord } from '../../model/coord';
-import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
+// import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
@@ -125,10 +125,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
-  popUpTemplates() {
-    TemplatesPopupComponent.showTemplates();
-    logEvent(this.analytics, 'open_templates');
-  }
+  // popUpTemplates() {
+  //   TemplatesPopupComponent.showTemplates();
+  //   logEvent(this.analytics, 'open_templates');
+  // }
 
   upload($event: any) {
     logEvent(this.analytics, 'upload_file');

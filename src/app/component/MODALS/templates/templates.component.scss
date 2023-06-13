@@ -14,18 +14,18 @@
   .example-card {
     //Set cursor to pointer
     cursor: pointer;
-    color: black;
+    //color: black;
     width: 20vw;
     //background-color: #aaaaaa;
     mat-card-title {
-      font-size: 20px;
-      font-weight: 400;
+      //font-size: 20px;
+      //font-weight: 400;
     }
 
     mat-card-subtitle {
-      color: black;
-      font-size: 14px;
-      font-weight: 200;
+      //color: black;
+      //font-size: 14px;
+      //font-weight: 200;
     }
 
     button {
@@ -75,8 +75,8 @@
       padding: 20px;
 
       h1 {
-        font-weight: 400;
-        font-size: 32px;
+        //font-weight: 400;
+        //font-size: 32px;
         margin: 0;
       }
     }

@@ -10,7 +10,7 @@ import { AnimationBarComponent } from './component/animation-bar/animation-bar.c
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { TemplatesPopupComponent } from './component/templates-popup/templates-popup.component';
+// import { TemplatesPopupComponent } from './component/templates-popup/templates-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MaterialModule } from './material/material.module';
@@ -52,7 +52,6 @@ import { TemplatesComponent } from './component/MODALS/templates/templates.compo
     ToolbarComponent,
     AnimationBarComponent,
     ShapeSelectorComponent,
-    TemplatesPopupComponent,
     LeftTabsComponent,
     TitleBlock,
     EditPanelComponent,

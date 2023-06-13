@@ -1,8 +1,9 @@
 <div id='editWrapper'>
   <panel-section-collapsible [warning]='true' [expanded]='false' id='placeholderContainer'
                              *ngIf='hideEditPanel() && this.activeSrv.objType !== "Grid"'>
-    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
-    <subtitle-block alwaysShown>Stop animation or reset the time slider to 0 to edit.</subtitle-block>
+    <title-block alwaysShown icon='expand_more' description='Stop animation or reset the time slider to 0 to edit.'>Edit
+      Help
+    </title-block>
     <img src='assets/gifs/Stop.gif' />
   </panel-section-collapsible>
 
@@ -12,8 +13,8 @@
     id='placeholderContainer'
     *ngIf="(this.activeSrv.objType == 'Grid' ||  this.activeSrv.objType == 'Nothing') && mechanismService.joints.length == 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
-    <subtitle-block alwaysShown>Right click on the grid to create a link.</subtitle-block>
+    <title-block alwaysShown icon='expand_more' description='Right click on the grid to create a link.'>Edit Help
+    </title-block>
     <img src='assets/gifs/Create.gif' />
   </panel-section-collapsible>
 
@@ -23,8 +24,8 @@
     id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Grid' && mechanismService.joints.length != 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown icon='expand_more'>Edit Help</title-block>
-    <subtitle-block alwaysShown>Select a joint or link to edit properties.</subtitle-block>
+    <title-block alwaysShown icon='expand_more' description='Select a joint or link to edit properties.'>Edit Help
+    </title-block>
     <img src='assets/gifs/Click.gif' />
   </panel-section-collapsible>
 
@@ -72,7 +73,7 @@
     </toggle-block>
 
     <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->
-    <button-block icon='delete' [click]='deleteJoint.bind(this)'>Delete Joint</button-block>
+    <button-block customIcon='remove' [click]='deleteJoint.bind(this)'>Delete Joint</button-block>
 
     <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>
       <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'
@@ -102,10 +103,11 @@
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
-    <editable-title-block description='Changing the length or angle will change the non-grounded joint.'
+    <editable-title-block description='Changing the length / angle will change the non-grounded joint.'
                           originalID='{{ this.activeSrv.selectedLink.id | uppercase }}'>
       Edit Link
     </editable-title-block>
+    <div class='spacer5px'></div>
     <input-block
       [formGroup]='linkForm'
       _formControl='length'
@@ -121,9 +123,9 @@
       unit='deg'
       tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'
     >Link Angle
-    </input-block
-    >
-    <button-block icon='delete' [click]='deleteLink.bind(this)'>Delete Link</button-block>
+    </input-block>
+    <div class='spacer5px'></div>
+    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete Link</button-block>
   </panel-section>
 
   <!--  <panel-section-collapsible-->

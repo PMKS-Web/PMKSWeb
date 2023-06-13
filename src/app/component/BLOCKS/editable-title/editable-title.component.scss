@@ -12,12 +12,15 @@
   $foreground: map.get($theme, foreground);
 
   #editable-title-block {
+
+    @include mat.typography-level($typography-config, 'headline-6');
+
     .editModeRow {
       height: 34px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 20px;
+      //font-size: 20px;
 
       #title-button {
         // font-size: 0.8em !important;
@@ -30,7 +33,7 @@
       }
 
       #title-input-box {
-        font-size: 20px;
+        //font-size: 20px;
         //font-weight: 300;
         width: 60px;
         border: 0;
@@ -52,8 +55,8 @@
     }
 
     #title-description {
-      font-weight: 200;
-      font-size: 12px;
+      @include mat.typography-level($typography-config, 'body-2');
+      color: rgba(0, 0, 0, 0.6);
     }
 
     mat-icon {

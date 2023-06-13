@@ -14,8 +14,8 @@
   #dual-input-block {
     #block-input-box {
       margin-left: 10px;
-      font-size: 14px;
-      font-weight: 200;
+      //font-size: 14px;
+      //font-weight: 200;
       width: 70px;
       border: 0;
       outline: none;
@@ -35,8 +35,8 @@
     }
 
     #block-input-units {
-      font-size: 14px;
-      font-weight: 200;
+      //font-size: 14px;
+      //font-weight: 200;
       color: mat.get-color-from-palette($foreground, 'disabled-text');
 
       text-align: right;

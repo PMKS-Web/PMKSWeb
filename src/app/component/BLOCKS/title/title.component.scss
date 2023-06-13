@@ -16,12 +16,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 20px;
+      @include mat.typography-level($typography-config, 'headline-6');
 
       #title-button {
-        // font-size: 0.8em !important;
-        // font-weight: 600 !important;
-        height: 24px !important;
+        //height: 24px !important;
       }
 
       #title-icon-button {
@@ -30,8 +28,10 @@
     }
 
     #title-description {
-      font-weight: 200;
-      font-size: 12px;
+      @include mat.typography-level($typography-config, 'body-2');
+      color: rgba(0, 0, 0, 0.6);
+      //font-weight: 200;
+      //font-size: 12px;
     }
 
     mat-icon {

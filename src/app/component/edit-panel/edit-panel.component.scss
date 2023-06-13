@@ -16,9 +16,14 @@
     flex-direction: column;
     gap: 10px;
     margin: 10px;
+
+    //For child components, set border to dotted for debugging
+    //> * > * > * {
+    //  border: 1px dotted black;
+    //}
   }
 
   #errorMessage {
-    font-weight: 300;
+    //font-weight: 300;
   }
 }

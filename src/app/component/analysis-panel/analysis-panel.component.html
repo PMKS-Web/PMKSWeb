@@ -20,9 +20,10 @@
     id='placeholderContainer'
     *ngIf='!this.mechanismService.oneValidMechanismExists()'
   >
-    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
-    <subtitle-block alwaysShown>This linkage is not valid and cannot be analyzed. Make sure all requirements are met:
-    </subtitle-block>
+    <title-block alwaysShown icon='expand_more'
+                 description='This linkage is not valid and cannot be analyzed. Make sure all requirements are met:'>
+      Analysis Help
+    </title-block>
     <mat-list class='example-list-wrapping'>
       <mat-list-item lines='3'>
         <span matListItemTitle>Must have one input</span>
@@ -67,8 +68,9 @@
     id='placeholderContainer'
     *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
   >
-    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
-    <subtitle-block alwaysShown>Select a part of the linkage to analyze it.</subtitle-block>
+    <title-block alwaysShown icon='expand_more' description='Select a part of the linkage to analyze it.'>Analysis
+      Help
+    </title-block>
     <img src='assets/gifs/Click.gif' />
   </panel-section-collapsible>
 
