@@ -48,6 +48,7 @@ export class MechanismBuilder {
         
         joint.name = jointData.name;
         joint.isWelded = jointData.isWelded;
+        joint.showCurve = jointData.showCurve;
         console.log("build joint", jointData.type);
 
         return joint;

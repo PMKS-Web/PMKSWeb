@@ -52,7 +52,8 @@ export class StringTranscoder extends GenericTranscoder {
             joint.type == JOINT_TYPE.PRISMATIC,
             joint.isInput,
             joint.isGrounded,
-            joint.isWelded
+            joint.isWelded,
+            joint.showCurve,
         ])
 
         let xString = this.encodeDecimalNumber(joint.x)
@@ -66,20 +67,20 @@ export class StringTranscoder extends GenericTranscoder {
 
         const sd = new StringDisassembler(jointString);
 
-        // [FLAGS] = (JointType == PRISMATIC), (isInput), (isGrounded)
-        let flags = sd.nextFlags(4);
+        let flags = sd.nextFlags(5);
         let jointType = flags[0] ? JOINT_TYPE.PRISMATIC : JOINT_TYPE.REVOLUTE;
         let isInput = flags[1];
         let isGrounded = flags[2];
         let isWelded = flags[3];
-        //console.log("flags", flags);
+        let showCurve = flags[4];
+
         let id = sd.nextToken();
         let name = sd.nextToken();
         let x = sd.nextDecimalNumber();
         let y = sd.nextDecimalNumber();
         let angle = sd.nextDecimalNumber();
 
-        return new JointData(jointType, id, name, x, y, isGrounded, isInput, isWelded, angle);
+        return new JointData(jointType, id, name, x, y, isGrounded, isInput, isWelded, angle, showCurve);
     }
 
     /*

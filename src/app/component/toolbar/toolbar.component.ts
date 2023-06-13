@@ -433,7 +433,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         joint.ground,
         joint.input,
         joint.isWelded,
-        0
+        0,
+        joint.showCurve
       ))
     } else if (joint instanceof PrisJoint) {
       encoder.addJoint(new JointData(
@@ -445,7 +446,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
         joint.ground,
         joint.input,
         joint.isWelded,
-        joint.angle_rad
+        joint.angle_rad,
+        joint.showCurve
       ));
     }
   }
