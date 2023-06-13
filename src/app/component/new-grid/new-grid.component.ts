@@ -19,6 +19,7 @@ import {
   jointStates,
   line_line_intersect,
   linkStates,
+  local_storage_available,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -89,7 +90,10 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    if (!has_mouse_pointer()) {
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+
+    // Touchscreen warning for when no mouse pointer
+    if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
