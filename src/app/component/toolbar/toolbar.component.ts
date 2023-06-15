@@ -392,7 +392,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               const unit = line[3];
               ToolbarComponent.inputAngularVelocity = input_speed_mag;
               ToolbarComponent.clockwise = clockwise;
-              AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+              // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
               ToolbarComponent.gravity = gravity;
               // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
               // this.localUnit.selectedUnit = unit;
@@ -908,47 +908,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     result += '\n';
 
     return result;
-  }
-
-  setInputMagnitudeAngVel($event: any) {
-    ToolbarComponent.inputAngularVelocity = $event.target.value;
-    this.mechanismService.updateMechanism();
-  }
-
-  getClockwise() {
-    return ToolbarComponent.clockwise;
-  }
-
-  setClockwise(cond: boolean) {
-    ToolbarComponent.clockwise = cond;
-    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    this.mechanismService.updateMechanism();
-  }
-
-  getGravity() {
-    return ToolbarComponent.gravity;
-  }
-
-  setGravity(cond: boolean) {
-    ToolbarComponent.gravity = cond;
-    this.mechanismService.updateMechanism();
-  }
-
-  changeUnit(selectedUnit: string) {
-    this.localUnit.selectedUnit = selectedUnit;
-    ToolbarComponent.unit = this.localUnit.selectedUnit;
-    this.mechanismService.updateMechanism();
-  }
-
-  getInputAngVel() {
-    return ToolbarComponent.inputAngularVelocity;
-  }
-
-  validMechanism() {
-    if (this.mechanismService.mechanisms[0] === undefined) {
-      return true;
-    }
-    return this.mechanismService.mechanisms[0].joints.length > 3 ? null : true;
   }
 
   isDevMode() {
