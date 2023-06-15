@@ -1,28 +1,31 @@
-<div id="graph-checkbox-list-three" *ngIf="numberOfSeries === 3" [formGroup]="seriesCheckboxForm">
-  <mat-checkbox formControlName="z">Magnitude</mat-checkbox>
-  <mat-checkbox formControlName="x" color="primary">X-Comp</mat-checkbox>
-  <mat-checkbox formControlName="y" color="warn">Y-Comp</mat-checkbox>
+<div id='graph-checkbox-list-three' *ngIf='numberOfSeries === 3' [formGroup]='seriesCheckboxForm'>
+  <mat-checkbox formControlName='z'>Magnitude</mat-checkbox>
+  <mat-checkbox formControlName='x' color='primary'>X-Comp</mat-checkbox>
+  <mat-checkbox formControlName='y' color='warn'>Y-Comp</mat-checkbox>
 </div>
-<div id="graph-checkbox-list-two" *ngIf="numberOfSeries === 2" [formGroup]="seriesCheckboxForm">
-  <mat-checkbox formControlName="x" color="primary">X-Comp</mat-checkbox>
-  <mat-checkbox formControlName="y" color="warn">Y-Comp</mat-checkbox>
+<div id='graph-checkbox-list-two' *ngIf='numberOfSeries === 2' [formGroup]='seriesCheckboxForm'>
+  <mat-checkbox formControlName='x' color='primary'>X-Comp</mat-checkbox>
+  <mat-checkbox formControlName='y' color='warn'>Y-Comp</mat-checkbox>
+</div>
+<div [@showHide]="noDataSelected ? 'graphHidden' : 'graphShown'" id='graphHide'>
+  Please select at least one data series.
+</div>
+<div [@showHide]="loading ? 'graphHidden' : 'graphShown'" id='graphHide'>
+  Graph unavailable while dragging.
 </div>
 <apx-chart
   #chart
-  [series]="chartOptions.series!"
-  [annotations]="chartOptions.annotations!"
-  [chart]="chartOptions.chart"
-  [colors]="chartOptions.colors"
-  [yaxis]="chartOptions.yaxis!"
-  [dataLabels]="chartOptions.dataLabels!"
-  [markers]="chartOptions.markers!"
-  [stroke]="chartOptions.stroke!"
-  [grid]="chartOptions.grid"
-  [xaxis]="chartOptions.xaxis!"
-  [tooltip]="chartOptions.tooltip!"
-  [legend]="chartOptions.legend!"
+  [series]='chartOptions.series!'
+  [annotations]='chartOptions.annotations!'
+  [chart]='chartOptions.chart'
+  [colors]='chartOptions.colors'
+  [yaxis]='chartOptions.yaxis!'
+  [dataLabels]='chartOptions.dataLabels!'
+  [markers]='chartOptions.markers!'
+  [stroke]='chartOptions.stroke!'
+  [grid]='chartOptions.grid'
+  [xaxis]='chartOptions.xaxis!'
+  [tooltip]='chartOptions.tooltip!'
+  [legend]='chartOptions.legend!'
 >
 </apx-chart>
-<div [@showHide]="loading ? 'graphHidden' : 'graphShown'" id="graphHide">
-  Graph unavailable while dragging.
-</div>
