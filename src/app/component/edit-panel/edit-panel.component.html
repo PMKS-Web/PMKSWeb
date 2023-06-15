@@ -124,8 +124,22 @@
       tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'
     >Link Angle
     </input-block>
-    <div class='spacer5px'></div>
-    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete Link</button-block>
+    <!--    <div class='spacer5px'></div>-->
+    <!--    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete</button-block>-->
+  </panel-section>
+  <panel-section
+    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
+    <subtitle-block> Actions for Link AB</subtitle-block>
+    <button mat-stroked-button>
+      <mat-icon svgIcon='add_tracer'></mat-icon>
+      Add Tracer Point
+    </button>
+    <button mat-stroked-button>
+      <mat-icon svgIcon='add_force'></mat-icon>
+      Attach Force
+    </button>
+    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete</button-block>
+
   </panel-section>
 
   <!--  <panel-section-collapsible-->

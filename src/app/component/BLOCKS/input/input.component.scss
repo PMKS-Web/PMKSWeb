@@ -12,6 +12,7 @@
   $foreground: map.get($theme, foreground);
 
   #input-block {
+
     #block-input-box {
       //font-size: 14px;
       //font-weight: 400;
@@ -46,6 +47,11 @@
 
       .mat-mdc-form-field-infix {
         padding: 6px 0;
+      }
+
+      .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+        //background-color: #eff1f8;
+        background-color: #f0f1f5;
       }
     }
 

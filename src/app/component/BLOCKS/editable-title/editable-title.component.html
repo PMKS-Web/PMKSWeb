@@ -2,7 +2,8 @@
   <div *ngIf='!editMode' class='editModeRow'>
     <ng-container *ngTemplateOutlet='contentTpl'></ng-container>
     {{customIDService.getVisualID(originalID)}}
-    <button id='title-icon-button' mat-icon-button (click)='gotoEditMode()' matTooltip='Edit the name of this object.'
+    <button id='title-icon-button' mat-icon-button color='primary' (click)='gotoEditMode()'
+            matTooltip='Edit the name of this object.'
             [matTooltipShowDelay]='1000' matTooltipPosition='above'>
       <mat-icon>edit</mat-icon>
     </button>
@@ -11,7 +12,8 @@
     <ng-container *ngTemplateOutlet='contentTpl'></ng-container>
     <input id='title-input-box' type='text' formControlName='newID' (keyup.enter)='saveNewID()'
            (keyup.escape)='exitEditModeWithoutSaving()' appPrefixFocusAndSelect />
-    <button id='title-icon-button' mat-icon-button (click)='saveNewID()' matTooltip='Save this name. Escape to cancel.'
+    <button id='title-icon-button' mat-icon-button color='primary' (click)='saveNewID()'
+            matTooltip='Save this name. Escape to cancel.'
             [matTooltipShowDelay]='1000' matTooltipPosition='above'>
       <mat-icon>check</mat-icon>
     </button>
