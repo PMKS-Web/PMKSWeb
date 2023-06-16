@@ -222,6 +222,22 @@ export class MechanismService {
           1
         );
       });
+      // Make sure that the joints that are connected to the welded joints know that they are connected joints
+      linksAtJoint.forEach((l1: Link, l1Index) => {
+        if (l1Index === linksAtJoint.length - 1) {return;}
+        for (let l2Index = l1Index + 1; l2Index < linksAtJoint.length; l2Index++) {
+          l1.joints.forEach((j1: Joint) => {
+            if (!(j1 instanceof RealJoint)) {return;}
+            if (j1.id === joint.id) {return;}
+            linksAtJoint[l2Index].joints.forEach((j2: Joint) => {
+              if (!(j2 instanceof RealJoint)) {return;}
+              if (j2.id === joint.id) {return;}
+              j1.connectedJoints.push(j2);
+              j2.connectedJoints.push(j1);
+            });
+          });
+        }
+      });
       this.links.push(newLink);
 
       //Update the joints of the new link with the right links
@@ -304,7 +320,7 @@ export class MechanismService {
       this.links.splice(this.links.indexOf(mainLink), 1);
     }
     joint.isWelded = !joint.isWelded;
-    // this.updateMechanism();
+    this.updateMechanism();
   }
 
   private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {
@@ -313,7 +329,9 @@ export class MechanismService {
     //Copy all joints in all links to newLinkJoints
     linksToWeld.forEach((link) => {
       link.joints.forEach((j) => {
-        newLinkJoints.push(j);
+        if (newLinkJoints.findIndex((jo) => jo.id === j.id) === -1) {
+          newLinkJoints.push(j);
+        }
       });
     });
 
