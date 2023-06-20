@@ -100,7 +100,6 @@ export class MechanismBuilder {
 
         let force = new Force(forceData.id, (link as RealLink), startCoord, endCoord, forceData.isLocal, forceData.isFacingOut, forceData.magnitude);
         force.name = forceData.name;
-
         // Add force to link
         link.forces.push(force);
 
@@ -191,6 +190,9 @@ export class MechanismBuilder {
         SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
 
         this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);
+
+        // Fix visual bug for forces
+        this.mechanism.forces.forEach(force => force.updateInternalValues());
 
     }
 
