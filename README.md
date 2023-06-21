@@ -1,5 +1,8 @@
 # Planar Mechanism Kinematic Simulator Plus (PMKS+)
 
+![Github Hero](https://github.com/PMKS-Web/PMKSWeb/assets/19924289/02b57e93-5421-47e0-92fc-b24798eb6867)
+
+
 PMKS+ (Planar Mechanism Kinematic Simulator Plus) is an educational web-based tool designed for comprehensive 2D linkage analysis. It offers an interactive platform for users to rapidly create, edit, and analyze planar linkages. Along with performing kinematic and force analysis, PMKS+ allows for easy sharing of linkages with peers or teaching staff.
 
 Built with a strong emphasis on the four core principles of education, flexibility, collaboration, and accessibility, PMKS+ aims to provide a user-friendly experience that aids learning and promotes understanding of complex concepts in a simplified manner.
