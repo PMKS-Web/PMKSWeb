@@ -17,7 +17,6 @@ import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit, roundNumber, stringToBool
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
-import { AnalysisPopupComponent } from '../analysis-popup/analysis-popup.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { Coord } from '../../model/coord';
 import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';

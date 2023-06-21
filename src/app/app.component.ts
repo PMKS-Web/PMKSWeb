@@ -101,5 +101,13 @@ export class AppComponent {
       'github',
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/github.svg')
     );
+    this.matIconRegistry.addSvgIcon(
+      'edit_outline',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/edit.svg')
+    );
+    this.matIconRegistry.addSvgIcon(
+      'synthesis',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synthesis.svg')
+    );
   }
 }
