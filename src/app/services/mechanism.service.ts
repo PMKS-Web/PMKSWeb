@@ -294,6 +294,8 @@ export class MechanismService {
           mainLink.subset.splice(mainLink.subset.findIndex(l2 => l2.id === l.id), 1);
           if (mainLink.subset.length === 1) {
             mainLink = mainLink.subset[0] as RealLink;
+            this.links.splice(this.links.findIndex(l2 => l2.id === mainLink.id), 1);
+            this.links.push(mainLink);
           }
           mainLink.joints.forEach(j3 => {
             if (!(j3 instanceof RealJoint)) {return}
