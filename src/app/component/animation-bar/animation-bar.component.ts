@@ -38,8 +38,8 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
-    this.mechanismService.onMechPositionChange.subscribe({
-      next: (v) => (this.timestepDisplay = Number((v / 62.5).toFixed(2))),
+    this.mechanismService.onMechPositionChange.subscribe((v) => {
+      this.timestepDisplay = Number((v / 62.5).toFixed(2));
     });
   }
 
