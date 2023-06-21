@@ -9,7 +9,7 @@
   <div mat-dialog-content id='remove_top_padding'>
     <div class='linkage-grid'>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("4-Bar")'>
         <mat-card-header>
           <mat-card-title>Four Bar Linkage</mat-card-title>
           <mat-card-subtitle> 3 binary links connected in a loop by four joints
@@ -19,7 +19,7 @@
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("Watt_I")'>
         <mat-card-header>
           <mat-card-title>Watt's Linkage</mat-card-title>
           <mat-card-subtitle>The central moving point is constrained to travel on a nearly straight line
@@ -29,7 +29,7 @@
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("Watt_II")'>
         <mat-card-header>
           <mat-card-title>Stephenson I Linkage</mat-card-title>
           <mat-card-subtitle>A six bar linkage with 2 ternary links</mat-card-subtitle>
@@ -38,30 +38,33 @@
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("Stephenson_III")'>
         <mat-card-header>
-          <mat-card-title>Stephenson II Linkage</mat-card-title>
+          <mat-card-title>Stephenson III Linkage</mat-card-title>
           <mat-card-subtitle>A six bar linkage with 1 ternary link</mat-card-subtitle>
         </mat-card-header>
+        Image Coming Soon
         <img mat-card-image src='assets/gifs/fourbar.gif' alt='Fourbar Image'>
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("Slider_Crank")'>
         <mat-card-header>
           <mat-card-title>Slider Crank</mat-card-title>
           <mat-card-subtitle>A four-bar linkage with a sliding joint that converts rotary motion into linear motion
           </mat-card-subtitle>
         </mat-card-header>
+        Image Coming Soon
         <img mat-card-image src='assets/gifs/fourbar.gif' alt='Fourbar Image'>
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
 
-      <mat-card class='example-card' (click)='openLinkageDialog()'>
+      <mat-card class='example-card' (click)='openLinkage("Force")'>
         <mat-card-header>
           <mat-card-title>Four Bar Linkage with Force</mat-card-title>
           <mat-card-subtitle>A four-bar linkage with an external force applied to coupler</mat-card-subtitle>
         </mat-card-header>
+        Image Coming Soon
         <img mat-card-image src='assets/gifs/fourbar.gif' alt='Fourbar Image'>
         <button mat-flat-button color='primary'>Open</button>
       </mat-card>
