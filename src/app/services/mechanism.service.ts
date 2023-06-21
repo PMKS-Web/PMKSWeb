@@ -271,7 +271,7 @@ export class MechanismService {
       // });
     } else if (joint.isWelded) {
       //WE ARE UNWELDING THE JOINT
-      const mainLink = joint.links[0] as RealLink;
+      let mainLink = joint.links[0] as RealLink;
       const subset = mainLink.subset;
       subset.forEach((l, l_index) => {
         if (!(l instanceof RealLink)) {return}
@@ -280,6 +280,25 @@ export class MechanismService {
         l.joints.forEach((j1, j_index) => {
           if (!(j1 instanceof RealJoint)) {return}
           if (j1.id === joint.id) {return}
+          mainLink.joints.forEach(j => {
+            if (!(j instanceof RealJoint)) {return}
+            j.links.splice(j.links.findIndex(l2 => l2.id === mainLink.id) , 1);
+          });
+          j1.links.push(l);
+          mainLink.joints.splice(mainLink.joints.findIndex(j3 => j3.id === j1.id), 1);
+          mainLink.id = mainLink.id.replace(j1.id, '');
+          mainLink.fixedLocations.splice(mainLink.fixedLocations.findIndex(obj => obj.id === j1.id), 1);
+          if (mainLink.fixedLocation.fixedPoint === j1.id) {
+            mainLink.fixedLocation.fixedPoint = "com";
+          }
+          mainLink.subset.splice(mainLink.subset.findIndex(l2 => l2.id === l.id), 1);
+          if (mainLink.subset.length === 1) {
+            mainLink = mainLink.subset[0] as RealLink;
+          }
+          mainLink.joints.forEach(j3 => {
+            if (!(j3 instanceof RealJoint)) {return}
+            j3.links.push(mainLink);
+          });
           for (let connectedLinkIndex = l_index + 1; connectedLinkIndex < subset.length; connectedLinkIndex++) {
             subset[connectedLinkIndex].joints.forEach(j2 => {
               if (!(j2 instanceof RealJoint)) {return}
@@ -287,29 +306,13 @@ export class MechanismService {
               if (j2.id === joint.id) {return}
               j1.connectedJoints.splice(j1.connectedJoints.findIndex(j3 => j3.id === j1.id), 1);
               j2.connectedJoints.splice(j2.connectedJoints.findIndex(j3 => j3.id === j2.id), 1);
-              // TODO: Hmmm.... Def need to account for mainLinks as we go....
-              //  Would need to have another for loop that accounts for all conditions that store this link with this name
-              j1.links.splice(j1.links.findIndex(l2 => l2.id === mainLink.id));
-              j2.links.splice(j2.links.findIndex(l2 => l2.id === mainLink.id));
-              j1.links.push(l);
-              mainLink.joints.splice(mainLink.joints.findIndex(j3 => j3.id === j1.id), 1);
-              mainLink.id = mainLink.id.replace(j1.id, '');
-              mainLink.fixedLocations.splice(mainLink.fixedLocations.findIndex(obj => obj.id === j1.id), 1);
-              if (mainLink.fixedLocation.fixedPoint === j1.id) {
-                mainLink.fixedLocation.fixedPoint = "com";
-              }
-              mainLink.subset.splice(mainLink.subset.findIndex(l2 => l2.id === l.id), 1);
-              if (mainLink.subset.length === 1) {
-                j2.links.push(mainLink.subset[0]);
-              } else {
-                j2.links.push(mainLink);
-              }
+              j2.links.push(mainLink);
             });
           }
           this.links.push(l);
           joint.links.push(l);
         });
-        subset.splice(l_index, 1);
+        // subset.splice(l_index, 1);
       });
     }
     joint.isWelded = !joint.isWelded;
