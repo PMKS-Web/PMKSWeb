@@ -26,6 +26,9 @@ import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Analytics, logEvent } from '@angular/fire/analytics';
+import { UrlProcessorService } from '../../services/url-processor.service';
+import { MatDialog } from '@angular/material/dialog';
+import { TemplatesComponent } from '../MODALS/templates/templates.component';
 import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder';
 import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
 import { SettingsService } from 'src/app/services/settings.service';
@@ -72,28 +75,18 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   private static helpButton: SVGElement;
   static unit = 'cm';
   // TODO: If possible, change this to static variable...
-  localUnit = {
-    // selectedUnit: 'Metric'
-    selectedUnit: 'cm',
-  };
-
-  localUnits = [
-    { id: 'cm', label: 'cm' },
-    { id: 'm', label: 'm' },
-    // { id: 'km', label: 'km'},
-    // { id: 'in', label: 'in'},
-    // { id: 'ft', label: 'ft'}
-    // { id: 'Metric', label: 'Metric'},
-    // { id: 'English', label: 'English'}
-  ];
-  window: any;
   url: any;
 
   constructor(
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
-    public settings: SettingsService
+    public dialog: MatDialog,
+    public settings: SettingsService,
   ) {}
+
+  openTemplates() {
+    this.dialog.open(TemplatesComponent);
+  }
 
   ngOnInit(): void {
     //This will need to move to settings service
@@ -622,8 +615,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     }
   }
 
-  merge() {}
-
   getURL(): string {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
@@ -925,48 +916,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     return result;
   }
 
-  setInputMagnitudeAngVel($event: any) {
-    ToolbarComponent.inputAngularVelocity = $event.target.value;
-    this.mechanismService.updateMechanism();
-  }
-
-  getClockwise() {
-    return ToolbarComponent.clockwise;
-  }
-
-  setClockwise(cond: boolean) {
-    ToolbarComponent.clockwise = cond;
-    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    this.mechanismService.updateMechanism();
-  }
-
-  getGravity() {
-    return ToolbarComponent.gravity;
-  }
-
-  setGravity(cond: boolean) {
-    ToolbarComponent.gravity = cond;
-    this.mechanismService.updateMechanism();
-  }
-
-  changeUnit(selectedUnit: string) {
-    this.localUnit.selectedUnit = selectedUnit;
-    ToolbarComponent.unit = this.localUnit.selectedUnit;
-    this.mechanismService.updateMechanism();
-  }
-
-  getInputAngVel() {
-    return ToolbarComponent.inputAngularVelocity;
-  }
-
-  validMechanism() {
-    if (this.mechanismService.mechanisms[0] === undefined) {
-      return true;
-    }
-    return this.mechanismService.mechanisms[0].joints.length > 3 ? null : true;
-  }
-
   isDevMode() {
+    //Used to change the color of the topbar when not running prod
     return isDevMode();
   }
 }
