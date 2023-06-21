@@ -54,13 +54,14 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onSubmit(simpleForm: any) {
-    if (simpleForm.value.timestep > this.maxTimeSteps()) {
-      simpleForm.value.timestep = this.maxTimeSteps();
+    console.log(simpleForm.value.timestep);
+    if (simpleForm.value.timestep * 62.5 > this.maxTimeSteps()) {
+      simpleForm.value.timestep = this.maxTimeSteps() / 62.5;
     } else if (simpleForm.value.timestep < 0) {
       simpleForm.value.timestep = 0;
     }
     this.mechanismService.animate(
-      Number(simpleForm.value.timestep) * 62.5,
+      Number(simpleForm.value.timestep * 62.5),
       AnimationBarComponent.animate
     );
   }

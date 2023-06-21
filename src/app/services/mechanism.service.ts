@@ -55,7 +55,8 @@ export class MechanismService {
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
     private settingsService: SettingsService
-  ) {}
+  ) {
+  }
 
   getJoints() {
     return this.joints;
@@ -684,6 +685,9 @@ export class MechanismService {
   }
 
   animate(progress: number, animationState?: boolean) {
+    //Round progress to nearest integer
+    progress = Math.round(progress);
+
     this.onMechPositionChange.next(progress);
     this.mechanismTimeStep = progress;
     this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
