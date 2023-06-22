@@ -103,7 +103,13 @@ export class RealJoint extends Joint {
     }
     //If the joint is an input or ground, it cannot be welded
     //It also cannot be welded unless there are two or more links connected to it
-    if (this.input || this.ground || this.links.length < 2) {
+    //also if this.connectedJoints contains a pris joint, this cannot be welded
+    if (
+      this.input ||
+      this.ground ||
+      this.links.length < 2 ||
+      this.connectedJoints.some((joint) => joint instanceof PrisJoint)
+    ) {
       return false;
     } else {
       return true;
