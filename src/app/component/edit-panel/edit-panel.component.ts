@@ -15,7 +15,6 @@ import { NumberUnitParserService } from 'src/app/services/number-unit-parser.ser
 import { SettingsService } from '../../services/settings.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
-import { CustomIdService } from '../../services/custom-id.service';
 
 @Component({
   selector: 'app-edit-panel',
@@ -35,7 +34,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
     public gridUtils: GridUtilsService,
-    public customIDService: CustomIdService
   ) {}
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;

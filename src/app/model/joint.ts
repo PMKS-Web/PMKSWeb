@@ -4,6 +4,7 @@ import { Coord } from './coord';
 
 export class Joint extends Coord {
   private _id: string;
+  private _name: string = '';
   private _showHighlight: boolean = false;
 
   constructor(id: string, x: number, y: number) {
@@ -17,6 +18,17 @@ export class Joint extends Coord {
 
   set id(value: string) {
     this._id = value;
+  }
+
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
   }
 
   get showHighlight(): boolean {
