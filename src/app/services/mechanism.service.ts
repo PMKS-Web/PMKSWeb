@@ -202,109 +202,127 @@ export class MechanismService {
     return new RevJoint(id, x_num, y_num);
   }
 
-  toggleWeldedJoint() {
+  toggleSelectedWeldedJoint() {
     const joint = this.joints.find(
       (j) => j.id === this.activeObjService.selectedJoint.id
     ) as RealJoint;
+    
+    if (joint.isWelded) {
+      this.unweldJoint(joint);
+    } else {
+      this.weldJoint(joint);
+    }
+  }
 
-    if (!joint.isWelded) {
+  weldJoint(joint: RealJoint) {
+    
+    //WE NEED TO WELD THE JOINT
+    const linksAtJoint = joint.links as RealLink[];
+//     if (!joint.isWelded) {
       //       NewGridComponent.sendNotification(
       //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
       //       );
       //WE NEED TO WELD THE JOINT
-      const linksAtJoint = joint.links as RealLink[];
+//       const linksAtJoint = joint.links as RealLink[];
 
-      const newLink = this.createNewCompoundLink(linksAtJoint);
+    const newLink = this.createNewCompoundLink(linksAtJoint);
 
-      //Remove all the links that are being merged from this.links
-      linksAtJoint.forEach((l1: Link) => {
-        this.links.splice(
-          this.links.findIndex((l2) => l2.id === l1.id),
-          1
-        );
+    //Remove all the links that are being merged from this.links
+    linksAtJoint.forEach((l1: Link) => {
+      this.links.splice(
+        this.links.findIndex((l2) => l2.id === l1.id),
+        1
+      );
+    });
+    this.links.push(newLink);
+
+    //Update the joints of the new link with the right links
+    newLink.joints.forEach((j: Joint | RealJoint) => {
+      if (!(j instanceof RealJoint)) return;
+      //Remove any links that are subsets of the new link
+      j.links = j.links.filter((l: Link) => {
+        return !linksAtJoint.some((l2) => l2.id === l.id);
       });
-      this.links.push(newLink);
+      //Add the new link to the joints
+      j.links.push(newLink);
+    });
 
-      //Update the joints of the new link with the right links
-      newLink.joints.forEach((j: Joint | RealJoint) => {
-        if (!(j instanceof RealJoint)) return;
-        //Remove any links that are subsets of the new link
-        j.links = j.links.filter((l: Link) => {
-          return !linksAtJoint.some((l2) => l2.id === l.id);
-        });
-        //Add the new link to the joints
-        j.links.push(newLink);
-      });
+    //For every joint in the new link, add all other joints in the new link as connected joints
+    // newLink.joints.forEach((j: Joint | RealJoint) => {
+    //   if (!(j instanceof RealJoint)) return;
+    //   newLink.joints.forEach((j2: Joint | RealJoint) => {
+    //     if (!(j2 instanceof RealJoint)) return;
+    //     if (j.id !== j2.id) {
+    //       j.connectedJoints.push(j2);
+    //     }
+    //   });
+    // });
+    //
+    // //Lastly remove duplicate connected joints
+    // newLink.joints.forEach((j: Joint | RealJoint) => {
+    //   if (!(j instanceof RealJoint)) return;
+    //   j.connectedJoints = j.connectedJoints.filter((cj, index) => {
+    //     return j.connectedJoints.findIndex((cj2) => cj2.id === cj.id) === index;
+    //   });
+    // });
 
-      //For every joint in the new link, add all other joints in the new link as connected joints
-      // newLink.joints.forEach((j: Joint | RealJoint) => {
-      //   if (!(j instanceof RealJoint)) return;
-      //   newLink.joints.forEach((j2: Joint | RealJoint) => {
-      //     if (!(j2 instanceof RealJoint)) return;
-      //     if (j.id !== j2.id) {
-      //       j.connectedJoints.push(j2);
-      //     }
-      //   });
-      // });
-      //
-      // //Lastly remove duplicate connected joints
-      // newLink.joints.forEach((j: Joint | RealJoint) => {
-      //   if (!(j instanceof RealJoint)) return;
-      //   j.connectedJoints = j.connectedJoints.filter((cj, index) => {
-      //     return j.connectedJoints.findIndex((cj2) => cj2.id === cj.id) === index;
-      //   });
-      // });
-    } else if (joint.isWelded) {
-      //WE ARE UNWELDING THE JOINT
-      const mainLink = joint.links[0] as RealLink;
-      //Get the list of all subsets of the main link
-      const subset = mainLink.subset;
+    joint.isWelded = true;
 
-      //First restore all sublink connections
-      subset.forEach((l) => {
-        l.joints.forEach((j) => {
-          if (j instanceof RealJoint) {
-            j.links = j.links.filter((l) => l.id !== mainLink.id);
-            j.links.push(l);
-          }
-        });
-      });
+  }
 
-      //Split the subsets into groups
-      const splitSubsets: Link[][] = this.splitSubset(subset, joint);
 
-      //Create a new compound link for each subset
-      splitSubsets.forEach((subset) => {
-        if (subset.length === 0) return;
-        //Error
-        if (subset.length === 1) {
-          //This is a simple link
-          const simpleLink = subset[0];
-          this.links.push(simpleLink);
-          (simpleLink.joints as RealJoint[]).forEach((j) => {
-            j.links = j.links.filter((l) => l.id !== mainLink.id);
-          });
-          return;
-        } else {
-          //This subset is a compound link
-          const newCompoundLink = this.createNewCompoundLinkFromSubset(subset);
-          this.links.push(newCompoundLink);
-          (newCompoundLink.joints as RealJoint[]).forEach((j) => {
-            //Remove the main link (old link that was unwelded) from the joints
-            j.links = j.links.filter((l) => l.id !== mainLink.id);
-            //Also remove any links that are subsets of the new link
-            j.links = j.links.filter((l) => {
-              return !subset.some((l2) => l2.id === l.id);
-            });
-            j.links.push(newCompoundLink);
-          });
+  unweldJoint(joint: RealJoint) {
+
+    //WE ARE UNWELDING THE JOINT
+    const mainLink = joint.links[0] as RealLink;
+    //Get the list of all subsets of the main link
+    const subset = mainLink.subset;
+
+    //First restore all sublink connections
+    subset.forEach((l) => {
+      l.joints.forEach((j) => {
+        if (j instanceof RealJoint) {
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+          j.links.push(l);
         }
       });
+    });
 
-      //Remove the main link from the list
-      this.links.splice(this.links.indexOf(mainLink), 1);
-    }
-    joint.isWelded = !joint.isWelded;
+    //Split the subsets into groups
+    const splitSubsets: Link[][] = this.splitSubset(subset, joint);
+
+    //Create a new compound link for each subset
+    splitSubsets.forEach((subset) => {
+      if (subset.length === 0) return;
+      //Error
+      if (subset.length === 1) {
+        //This is a simple link
+        const simpleLink = subset[0];
+        this.links.push(simpleLink);
+        (simpleLink.joints as RealJoint[]).forEach((j) => {
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+        });
+        return;
+      } else {
+        //This subset is a compound link
+        const newCompoundLink = this.createNewCompoundLinkFromSubset(subset);
+        this.links.push(newCompoundLink);
+        (newCompoundLink.joints as RealJoint[]).forEach((j) => {
+          //Remove the main link (old link that was unwelded) from the joints
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+          //Also remove any links that are subsets of the new link
+          j.links = j.links.filter((l) => {
+            return !subset.some((l2) => l2.id === l.id);
+          });
+          j.links.push(newCompoundLink);
+        });
+      }
+    });
+
+    //Remove the main link from the list
+    this.links.splice(this.links.indexOf(mainLink), 1);
+
+    joint.isWelded = false;
     // this.updateMechanism();
   }
 

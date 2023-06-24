@@ -15,22 +15,22 @@
 
     <button
       [disabled]='invalidMechanism()'
-      *ngIf='!animating'
+      *ngIf='!this.getStaticAnimating()'
       mat-mini-fab
       color='primary'
-      (click)="startAnimation('pause')"
-      matTooltip='Pause Animation'
+      (click)="startAnimation('play')"
+      matTooltip='Play Animation'
       matTooltipShowDelay='1000'
     >
       <mat-icon>play_arrow</mat-icon>
     </button>
     <button
       [disabled]='invalidMechanism()'
-      *ngIf='animating'
+      *ngIf='this.getStaticAnimating()'
       mat-mini-fab
       color='primary'
-      (click)="startAnimation('play')"
-      matTooltip='Play Animation'
+      (click)="startAnimation('pause')"
+      matTooltip='Pause Animation'
       matTooltipShowDelay='1000'
     >
       <mat-icon>pause</mat-icon>
@@ -49,7 +49,7 @@
   <div id='animationBar'>
     <div id='timeInputWrapper'>
       <div id='tLabel'>T:</div>
-      <form #simpleForm='ngForm' (ngSubmit)='onSubmit(simpleForm)'>
+      <form #simpleForm='ngForm' (ngSubmit)='onNewTimeSubmit(simpleForm)'>
         <input
           [disabled]='invalidMechanism()'
           id='animationBar-input'
@@ -65,11 +65,11 @@
       [disabled]='invalidMechanism()'
       min='0'
       max='{{ maxTimeSteps() }}'
-      (mousedown)='adjustMechanismAnimation(true)'
-      (mousemove)='setAnim()'
-      (mouseup)='adjustMechanismAnimation(false)'
+      (mousedown)='sliderDown()'
+      (mousemove)='sliderChange()'
+      (mouseup)='sliderUp()'
     >
-      <input id='slider' matSliderThumb value='{{ getMechanismTimeStep() }}' />
+      <input id='slider' matSliderThumb value='{{this.mechanismService.mechanismTimeStep}}' />
     </mat-slider>
   </div>
   <div id='viewButtons'>
@@ -121,7 +121,7 @@
       [matTooltipShowDelay]='1000'
       mat-icon-button
       color='primary'
-      (click)='onZoomResetPressed()'
+      (click)='this.svgGrid.scaleToFitLinkage()'
     >
       <mat-icon>crop_free</mat-icon>
     </button>
