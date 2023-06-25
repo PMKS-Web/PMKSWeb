@@ -49,7 +49,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -188,7 +188,16 @@ export class NewGridComponent {
             this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
             'remove'
           )
-        );
+        ); //Rev Joint - Always
+        if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
+              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
+            )
+          ); //Rev Joint Slider
+        }
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
@@ -197,13 +206,13 @@ export class NewGridComponent {
               this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
               'remove_ground'
             )
-          );
+          ); //Rev Joint - Ground
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
-            )
+            ) //Rev Joint - Input
           );
         } else {
           if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
@@ -213,7 +222,7 @@ export class NewGridComponent {
                 this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
                 'add_ground'
               )
-            );
+            ); //Rev Joint - Not Ground
           }
         }
         this.cMenuItems.push(
@@ -222,7 +231,7 @@ export class NewGridComponent {
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
-        );
+        ); //Rev Joint - Always
         if ((this.lastRightClick as RealJoint).canBeWelded()) {
           this.cMenuItems.push(
             new cMenuItem(
@@ -230,7 +239,7 @@ export class NewGridComponent {
               this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
-          );
+          ); //Rev Joint - Can be welded
         }
         if (
           !(this.lastRightClick as RealJoint).ground &&
@@ -244,7 +253,7 @@ export class NewGridComponent {
               },
               (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
             )
-          );
+          ); //Rev Joint - Not Ground and at least one valid mechanism exists
         }
 
         break;
