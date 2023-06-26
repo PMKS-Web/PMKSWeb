@@ -613,11 +613,25 @@ export class MechanismService {
 
   toggleInput($event: MouseEvent) {
     // TODO: Adjust this logic when there are multiple mechanisms created
-    this.activeObjService.selectedJoint.input = !this.activeObjService.selectedJoint.input;
     let jointsTraveled = ''.concat(this.activeObjService.selectedJoint.id);
     this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
       jointsTraveled = checkConnectedJoints(j, jointsTraveled);
     });
+    const indexVal = this.joints.findIndex(j => {
+      // if (!(j instanceof RealJoint)) {return}
+      if (!(j instanceof PrisJoint)) {return}
+      return j.connectedJoints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) !== -1 && j.ground;
+    });
+    if (indexVal !== -1) {
+      const desiredGroundIndex = this.joints.findIndex(j => {
+        if (!(j instanceof RealJoint)) {return}
+        return j.ground && j.connectedJoints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) !== -1;
+      });
+      const desiredJoint = this.joints[desiredGroundIndex] as RealJoint;
+      desiredJoint.input = true;
+    } else {
+      this.activeObjService.selectedJoint.input = !this.activeObjService.selectedJoint.input;
+    }
 
     function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
       if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {
