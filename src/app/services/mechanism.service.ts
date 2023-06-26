@@ -205,7 +205,7 @@ export class MechanismService {
     const joint = this.joints.find(
       (j) => j.id === this.activeObjService.selectedJoint.id
     ) as RealJoint;
-    
+
     if (joint.isWelded) {
       this.unweldJoint(joint);
     } else {
@@ -214,15 +214,14 @@ export class MechanismService {
   }
 
   weldJoint(joint: RealJoint) {
-    
     //WE NEED TO WELD THE JOINT
     const linksAtJoint = joint.links as RealLink[];
-//     if (!joint.isWelded) {
-      //       NewGridComponent.sendNotification(
-      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-      //       );
-      //WE NEED TO WELD THE JOINT
-//       const linksAtJoint = joint.links as RealLink[];
+    //     if (!joint.isWelded) {
+    //       NewGridComponent.sendNotification(
+    //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+    //       );
+    //WE NEED TO WELD THE JOINT
+    //       const linksAtJoint = joint.links as RealLink[];
 
     const newLink = this.createNewCompoundLink(linksAtJoint);
 
@@ -266,12 +265,9 @@ export class MechanismService {
     // });
 
     joint.isWelded = true;
-
   }
 
-
   unweldJoint(joint: RealJoint) {
-
     //WE ARE UNWELDING THE JOINT
     const mainLink = joint.links[0] as RealLink;
     //Get the list of all subsets of the main link
@@ -611,21 +607,33 @@ export class MechanismService {
     this.updateMechanism();
   }
 
-  toggleInput($event: MouseEvent) {
+  toggleInput() {
     // TODO: Adjust this logic when there are multiple mechanisms created
     let jointsTraveled = ''.concat(this.activeObjService.selectedJoint.id);
     this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
       jointsTraveled = checkConnectedJoints(j, jointsTraveled);
     });
-    const indexVal = this.joints.findIndex(j => {
+    const indexVal = this.joints.findIndex((j) => {
       // if (!(j instanceof RealJoint)) {return}
-      if (!(j instanceof PrisJoint)) {return}
-      return j.connectedJoints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) !== -1 && j.ground;
+      if (!(j instanceof PrisJoint)) {
+        return;
+      }
+      return (
+        j.connectedJoints.findIndex((jt) => jt.id === this.activeObjService.selectedJoint.id) !==
+          -1 && j.ground
+      );
     });
     if (indexVal !== -1) {
-      const desiredGroundIndex = this.joints.findIndex(j => {
-        if (!(j instanceof RealJoint)) {return}
-        return j.ground && j.connectedJoints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) !== -1;
+      // If the selected joint is a prismatic joint
+      const desiredGroundIndex = this.joints.findIndex((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        return (
+          j.ground &&
+          j.connectedJoints.findIndex((jt) => jt.id === this.activeObjService.selectedJoint.id) !==
+            -1
+        );
       });
       const desiredJoint = this.joints[desiredGroundIndex] as RealJoint;
       desiredJoint.input = true;

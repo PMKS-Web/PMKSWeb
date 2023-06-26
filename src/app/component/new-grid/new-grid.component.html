@@ -128,6 +128,9 @@
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPill.svg'
              [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
+      <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && gridUtils.getInput(joint)"
+             xlink:href='../../../assets/SliderPillInput.svg'
+             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
 
     </svg>
   </g>
