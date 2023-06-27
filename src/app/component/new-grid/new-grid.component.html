@@ -334,7 +334,7 @@
     >
       <text
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
         {{customIDService.getVisualID(joint.id)}}
       </text>
@@ -351,7 +351,7 @@
     >
       <text
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
         {{customIDService.getVisualID(link.id)}}
       </text>
@@ -367,7 +367,7 @@
       style='overflow: visible; text-anchor: middle'
     >
       <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
-            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
+            style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: left'>
         {{customIDService.getVisualID(force.id)}}
       </text>
     </svg>
