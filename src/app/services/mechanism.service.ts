@@ -224,14 +224,24 @@ export class MechanismService {
       });
       // Make sure that the joints that are connected to the welded joints know that they are connected joints
       linksAtJoint.forEach((l1: Link, l1Index) => {
-        if (l1Index === linksAtJoint.length - 1) {return;}
+        if (l1Index === linksAtJoint.length - 1) {
+          return;
+        }
         for (let l2Index = l1Index + 1; l2Index < linksAtJoint.length; l2Index++) {
           l1.joints.forEach((j1: Joint) => {
-            if (!(j1 instanceof RealJoint)) {return;}
-            if (j1.id === joint.id) {return;}
+            if (!(j1 instanceof RealJoint)) {
+              return;
+            }
+            if (j1.id === joint.id) {
+              return;
+            }
             linksAtJoint[l2Index].joints.forEach((j2: Joint) => {
-              if (!(j2 instanceof RealJoint)) {return;}
-              if (j2.id === joint.id) {return;}
+              if (!(j2 instanceof RealJoint)) {
+                return;
+              }
+              if (j2.id === joint.id) {
+                return;
+              }
               j1.connectedJoints.push(j2);
               j2.connectedJoints.push(j1);
             });
@@ -274,40 +284,85 @@ export class MechanismService {
       let mainLink = joint.links[0] as RealLink;
       const subset = mainLink.subset;
       subset.forEach((l, l_index) => {
-        if (!(l instanceof RealLink)) {return}
-        if (l.joints.findIndex(j => j.id === joint.id) === -1) {return}
-        if (l_index === subset.length - 1) {return}
+        if (!(l instanceof RealLink)) {
+          return;
+        }
+        if (l.joints.findIndex((j) => j.id === joint.id) === -1) {
+          return;
+        }
+        if (l_index === subset.length - 1) {
+          return;
+        }
         l.joints.forEach((j1, j_index) => {
-          if (!(j1 instanceof RealJoint)) {return}
-          if (j1.id === joint.id) {return}
-          mainLink.joints.forEach(j => {
-            if (!(j instanceof RealJoint)) {return}
-            j.links.splice(j.links.findIndex(l2 => l2.id === mainLink.id) , 1);
+          if (!(j1 instanceof RealJoint)) {
+            return;
+          }
+          if (j1.id === joint.id) {
+            return;
+          }
+          mainLink.joints.forEach((j) => {
+            if (!(j instanceof RealJoint)) {
+              return;
+            }
+            j.links.splice(
+              j.links.findIndex((l2) => l2.id === mainLink.id),
+              1
+            );
           });
           j1.links.push(l);
-          mainLink.joints.splice(mainLink.joints.findIndex(j3 => j3.id === j1.id), 1);
+          mainLink.joints.splice(
+            mainLink.joints.findIndex((j3) => j3.id === j1.id),
+            1
+          );
           mainLink.id = mainLink.id.replace(j1.id, '');
-          mainLink.fixedLocations.splice(mainLink.fixedLocations.findIndex(obj => obj.id === j1.id), 1);
+          mainLink.fixedLocations.splice(
+            mainLink.fixedLocations.findIndex((obj) => obj.id === j1.id),
+            1
+          );
           if (mainLink.fixedLocation.fixedPoint === j1.id) {
-            mainLink.fixedLocation.fixedPoint = "com";
+            mainLink.fixedLocation.fixedPoint = 'com';
           }
-          mainLink.subset.splice(mainLink.subset.findIndex(l2 => l2.id === l.id), 1);
+          mainLink.subset.splice(
+            mainLink.subset.findIndex((l2) => l2.id === l.id),
+            1
+          );
           if (mainLink.subset.length === 1) {
             mainLink = mainLink.subset[0] as RealLink;
-            this.links.splice(this.links.findIndex(l2 => l2.id === mainLink.id), 1);
+            this.links.splice(
+              this.links.findIndex((l2) => l2.id === mainLink.id),
+              1
+            );
             this.links.push(mainLink);
           }
-          mainLink.joints.forEach(j3 => {
-            if (!(j3 instanceof RealJoint)) {return}
+          mainLink.joints.forEach((j3) => {
+            if (!(j3 instanceof RealJoint)) {
+              return;
+            }
             j3.links.push(mainLink);
           });
-          for (let connectedLinkIndex = l_index + 1; connectedLinkIndex < subset.length; connectedLinkIndex++) {
-            subset[connectedLinkIndex].joints.forEach(j2 => {
-              if (!(j2 instanceof RealJoint)) {return}
-              if (j2.id === j1.id) {return}
-              if (j2.id === joint.id) {return}
-              j1.connectedJoints.splice(j1.connectedJoints.findIndex(j3 => j3.id === j1.id), 1);
-              j2.connectedJoints.splice(j2.connectedJoints.findIndex(j3 => j3.id === j2.id), 1);
+          for (
+            let connectedLinkIndex = l_index + 1;
+            connectedLinkIndex < subset.length;
+            connectedLinkIndex++
+          ) {
+            subset[connectedLinkIndex].joints.forEach((j2) => {
+              if (!(j2 instanceof RealJoint)) {
+                return;
+              }
+              if (j2.id === j1.id) {
+                return;
+              }
+              if (j2.id === joint.id) {
+                return;
+              }
+              j1.connectedJoints.splice(
+                j1.connectedJoints.findIndex((j3) => j3.id === j1.id),
+                1
+              );
+              j2.connectedJoints.splice(
+                j2.connectedJoints.findIndex((j3) => j3.id === j2.id),
+                1
+              );
               j2.links.push(mainLink);
             });
           }
@@ -718,6 +773,13 @@ export class MechanismService {
       const link = this.mechanisms[0].links[this.mechanismTimeStep][l_index];
       if (!(link instanceof RealLink)) {
         return;
+      }
+      //If subsets exsist, recompute d for those first
+      if (l.subset.length > 0) {
+        l.subset.forEach((s) => {
+          if (!(s instanceof RealLink)) return;
+          s.reComputeDPath();
+        });
       }
       // l.d = RealLink.getD(l.joints);
       l.d = link.d;
