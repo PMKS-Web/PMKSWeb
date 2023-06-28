@@ -106,6 +106,8 @@
                           originalID='{{ this.activeSrv.selectedLink.id | uppercase }}'>
       Edit Link
     </editable-title-block>
+    <subtitle-block *ngIf='this.activeSrv.selectedLink.isWelded'>LastSelectedSublink
+      is {{this.activeSrv.selectedLink.lastSelectedSublink ? this.activeSrv.selectedLink.lastSelectedSublink.id : 'null'}}</subtitle-block>
     <input-block
       [formGroup]='linkForm'
       _formControl='length'

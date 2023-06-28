@@ -161,7 +161,7 @@
         *ngIf='gridUtils.typeOfLink(link) == "R" && !isRenderFail(link)'
         (pointerover)='link.showHighlight = true'
         (pointerout)='link.showHighlight = false'
-        (pointerdown)='setLastLeftClick(link)'
+        (pointerdown)='setLastLeftClick(link, $event)'
         (contextmenu)='setLastRightClick(link)'
         [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
         [attr.id]='link.id'
@@ -177,7 +177,7 @@
           *ngFor='let subLink of gridUtils.getLinkSubset(link)'
           (pointerover)='link.showHighlight = true'
           (pointerout)='link.showHighlight = false'
-          (pointerdown)='setLastLeftClick(link)'
+          (pointerdown)='setLastLeftClick(link, $event)'
           (contextmenu)='setLastRightClick(link)'
           [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
           [attr.id]='link.id'

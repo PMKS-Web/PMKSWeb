@@ -260,7 +260,7 @@ export class NewGridComponent {
     this.updateContextMenuItems();
   }
 
-  setLastLeftClick(clickedObj: Joint | Link | String | Force) {
+  setLastLeftClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
     this.lastLeftClick = clickedObj;
     // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
@@ -270,6 +270,9 @@ export class NewGridComponent {
         break;
       case 'RealLink':
         this.lastLeftClickType = 'Link';
+        if ((clickedObj as RealLink).subset.length > 1) {
+          this.gridUtils.updateLastSelectedSublink(event!, clickedObj as RealLink);
+        }
         break;
       case 'PrisJoint':
       //Fall through intentional
