@@ -87,7 +87,7 @@
       the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
     settings panel.'>
       Kinematic Analysis for Joint
-      {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+      {{this.activeSrv.selectedJoint.name}}
     </title-block>
 
     <mat-expansion-panel
@@ -97,7 +97,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Position of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+          Position of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -124,7 +124,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Velocity of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+          Velocity of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -151,7 +151,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Acceleration of Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+          Acceleration of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -182,7 +182,7 @@
   >
     <title-block alwaysShown icon='expand_less'>
       Force Analysis for Joint
-      {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+      {{this.activeSrv.selectedJoint.name}}
     </title-block>
 
     <radio-block
@@ -202,7 +202,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Force on Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+          Force on Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -230,7 +230,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Input Torque at Joint {{customIDService.getVisualID(this.activeSrv.selectedJoint.id)}}
+          Input Torque at Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -263,7 +263,7 @@
                  description='The input speed is currently set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
       the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
     settings panel.'>
-      Kinematic Analysis for Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+      Kinematic Analysis for Link {{this.activeSrv.selectedLink.name}}
     </title-block>
 
     <!-- <subtitle-block>Kinematics</subtitle-block> -->
@@ -289,7 +289,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title> Angle of
-          Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}} </mat-panel-title>
+          Link {{this.activeSrv.selectedLink.name}} </mat-panel-title>
         <mat-panel-description>
           <mat-icon
             matTooltip='The angle of the selected above the horizontal of the link graphed over time'
@@ -316,7 +316,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Velocity of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+            Angular Velocity of Link {{this.activeSrv.selectedLink.name}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -345,7 +345,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Acceleration of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+            Angular Acceleration of Link {{this.activeSrv.selectedLink.name}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -367,7 +367,7 @@
     </mat-expansion-panel>
 
     <subtitle-block style='margin-top: 20px'
-    >Center of Mass (COM) of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}</subtitle-block
+    >Center of Mass (COM) of Link {{this.activeSrv.selectedLink.name}}</subtitle-block
     >
 
     <mat-expansion-panel
@@ -378,7 +378,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Position of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
+            Position of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -407,7 +407,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Velocity of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
+            Velocity of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -436,7 +436,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Acceleration of Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}'s COM
+            Acceleration of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -467,7 +467,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Force Analysis for Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+      Force Analysis for Link {{this.activeSrv.selectedLink.name}}
     </title-block>
 
     <radio-block
@@ -487,7 +487,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Force on Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+          Axial Force on Link {{this.activeSrv.selectedLink.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -515,7 +515,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Stress on Link {{customIDService.getVisualID(this.activeSrv.selectedLink.id)}}
+          Axial Stress on Link {{this.activeSrv.selectedLink.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -543,7 +543,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Force'"
   >
     <title-block alwaysShown>
-      Analysis for Force {{customIDService.getVisualID(this.activeSrv.selectedForce.id)}}
+      Analysis for Force {{this.activeSrv.selectedForce.name}}
     </title-block>
 
     <subtitle-block>
