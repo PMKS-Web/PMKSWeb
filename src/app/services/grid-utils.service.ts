@@ -17,6 +17,8 @@ import { Mechanism } from '../model/mechanism/mechanism';
 import { Coord } from '../model/coord';
 import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
+import { Arc, Line } from '../model/line';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 @Injectable({
   providedIn: 'root',
@@ -65,6 +67,13 @@ export class GridUtilsService {
     return joint.r;
   }
 
+  getJointShowCurve(joint: Joint) {
+    if (!(joint instanceof RevJoint) && !(joint instanceof PrisJoint)) {
+      return false;
+    }
+    return joint.showCurve;
+  }
+
   getInput(joint: Joint) {
     if (!(joint instanceof RevJoint || joint instanceof PrisJoint)) {
       return;
@@ -99,29 +108,39 @@ export class GridUtilsService {
   }
 
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
+    // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
-    selectedJoint.x = roundNumber(trueCoord.x, 3);
-    selectedJoint.y = roundNumber(trueCoord.y, 3);
+    selectedJoint.x = roundNumber(trueCoord.x, 6);
+    selectedJoint.y = roundNumber(trueCoord.y, 6);
     switch (selectedJoint.constructor) {
       case RevJoint:
         selectedJoint.links.forEach((l) => {
           if (l instanceof Piston) {
             //If the joint is a slider, then the joint is the second joint in the link must follow the first joint
             const jointIndex = l.joints.findIndex((jt) => jt.id !== selectedJoint.id);
-            l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-            l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
+            l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
+            l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
           }
           if (!(l instanceof RealLink)) {
             return;
           }
           // TODO: delete this if this is not needed (verify this)
           const jointIndex = l.joints.findIndex((jt) => jt.id === selectedJoint.id);
-          l.joints[jointIndex].x = roundNumber(trueCoord.x, 3);
-          l.joints[jointIndex].y = roundNumber(trueCoord.y, 3);
-          l.d = RealLink.getD(l.joints);
+          l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
+          l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
+          // l.reComputeDPath();
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           l.updateCoMDs();
           l.updateLengthAndAngle();
+
+          if (l.subset.length > 0) {
+            l.subset.forEach((slink) => {
+              let subLink = slink as RealLink;
+              subLink.CoM = RealLink.determineCenterOfMass(subLink.joints);
+              subLink.updateCoMDs();
+              subLink.updateLengthAndAngle();
+            });
+          }
           // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
           PositionSolver.setUpInitialJointLocations(l.joints);
           l.forces.forEach((f) => {
@@ -132,12 +151,13 @@ export class GridUtilsService {
             f.endCoord.y = PositionSolver.forcePositionMap.get(f.id + 'end')!.y;
             f.startCoord.x = PositionSolver.forcePositionMap.get(f.id + 'start')!.x;
             f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
-            f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-            f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+            f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+            f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
           });
         });
         break;
     }
+    NewGridComponent.instance.mechanismSrv.updateMechanism();
     return selectedJoint;
   }
 
@@ -154,17 +174,17 @@ export class GridUtilsService {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;
     }
-    selectedForce.forceLine = Force.createForceLine(
+    selectedForce.forceLine = selectedForce.createForceLine(
       selectedForce.startCoord,
       selectedForce.endCoord
     );
     if (selectedForce.arrowOutward) {
-      selectedForce.forceArrow = Force.createForceArrow(
+      selectedForce.forceArrow = selectedForce.createForceArrow(
         selectedForce.startCoord,
         selectedForce.endCoord
       );
     } else {
-      selectedForce.forceArrow = Force.createForceArrow(
+      selectedForce.forceArrow = selectedForce.createForceArrow(
         selectedForce.endCoord,
         selectedForce.startCoord
       );
@@ -185,5 +205,41 @@ export class GridUtilsService {
       return;
     }
     return joint.connectedJoints.find((j) => j instanceof PrisJoint);
+  }
+
+  toggleCurve(lastRightClick: Joint | Link | Force | String) {
+    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+    if (this.containsSlider(lastRightClick as RealJoint)) {
+      (this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint).showCurve = !(
+        lastRightClick as RealJoint
+      ).showCurve;
+    }
+    if (lastRightClick instanceof RevJoint) {
+      lastRightClick.showCurve = !lastRightClick.showCurve;
+    }
+    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+  }
+
+  getLinkSubset(link: Link) {
+    if (!(link instanceof RealLink)) {
+      return;
+    }
+    return link.subset;
+  }
+
+  getCenter(line: Line) {
+    return (line as Arc).center;
+  }
+
+  getWelded(joint: Joint) {
+    return (joint as RealJoint).isWelded;
+  }
+
+  getAngleFromJoint(joint: Joint) {
+    //This joint must be a welded joint, get the angle of one of the sublinks
+    //console.log("gaf1", (joint as RealJoint));
+    //console.log("gaf2", (joint as RealJoint).links);
+    //console.log("gaf3", (joint as RealJoint).links[0] as RealLink);
+    return ((joint as RealJoint).links[0] as RealLink).angleRad;
   }
 }

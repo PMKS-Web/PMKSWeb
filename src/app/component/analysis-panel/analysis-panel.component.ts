@@ -23,6 +23,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
+import { SettingsService } from '../../services/settings.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -74,7 +75,8 @@ export class AnalysisPanelComponent {
   constructor(
     public activeSrv: ActiveObjService,
     private fb: FormBuilder,
-    public mechanismService: MechanismService
+    public mechanismService: MechanismService,
+    public settingsService: SettingsService
   ) {
     if (this.mechanismService.oneValidMechanismExists()) {
       this.resetVariablesAndSolve();

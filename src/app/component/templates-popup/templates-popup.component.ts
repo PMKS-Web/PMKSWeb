@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { GridComponent } from '../grid/grid.component';
 import { Link, RealLink } from '../../model/link';
 import { Joint, RealJoint } from '../../model/joint';
 import { Force } from '../../model/force';
@@ -262,22 +261,22 @@ export class TemplatesPopupComponent implements OnInit {
     }
   }
 
-  getForceLine(joint: Joint, dir: string, xOrY: string) {
-    switch (dir) {
-      case 'pos':
-        if (xOrY === 'x') {
-          return Force.createForceLine(joint, new Coord(joint.x + 0.7, joint.y));
-        } else {
-          return Force.createForceLine(joint, new Coord(joint.x, joint.y + 0.7));
-        }
-      case 'neg':
-        if (xOrY === 'x') {
-          return Force.createForceLine(joint, new Coord(joint.x - 0.7, joint.y));
-        } else {
-          return Force.createForceLine(joint, new Coord(joint.x, joint.y - 0.7));
-        }
-      default:
-        return;
-    }
-  }
+  // getForceLine(joint: Joint, dir: string, xOrY: string) {
+  //   switch (dir) {
+  //     case 'pos':
+  //       if (xOrY === 'x') {
+  //         return Force.createForceLine(joint, new Coord(joint.x + 0.7, joint.y));
+  //       } else {
+  //         return Force.createForceLine(joint, new Coord(joint.x, joint.y + 0.7));
+  //       }
+  //     case 'neg':
+  //       if (xOrY === 'x') {
+  //         return Force.createForceLine(joint, new Coord(joint.x - 0.7, joint.y));
+  //       } else {
+  //         return Force.createForceLine(joint, new Coord(joint.x, joint.y - 0.7));
+  //       }
+  //     default:
+  //       return;
+  //   }
+  // }
 }

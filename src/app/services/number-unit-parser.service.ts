@@ -212,13 +212,13 @@ export class NumberUnitParserService {
       case AngleUnit.DEGREE:
         switch (desiredUnits) {
           case AngleUnit.RADIAN:
-            return (value * Math.PI) / 180;
+            return (value * Math.PI) / 180.0;
         }
         break;
       case AngleUnit.RADIAN:
         switch (desiredUnits) {
           case AngleUnit.DEGREE:
-            return (value * 180) / Math.PI;
+            return (value * 180.0) / Math.PI;
         }
         break;
     }

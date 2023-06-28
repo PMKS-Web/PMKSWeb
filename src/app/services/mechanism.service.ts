@@ -21,6 +21,9 @@ import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
+import { Coord } from '../model/coord';
+import { Line } from '../model/line';
+import { UrlProcessorService } from './url-processor.service';
 
 @Injectable({
   providedIn: 'root',
@@ -48,14 +51,19 @@ export class MechanismService {
   //The which timestep the mechanims is in
   onMechPositionChange = new Subject<number>();
 
-  constructor(public gridUtils: GridUtilsService, public activeObjService: ActiveObjService, private settingsService: SettingsService) { }
+  constructor(
+    public gridUtils: GridUtilsService,
+    public activeObjService: ActiveObjService,
+    private settingsService: SettingsService
+  ) {
+  }
 
   getJoints() {
     return this.joints;
   }
 
   getLinks() {
-    return this.links;
+    return this.links as RealLink[];
   }
 
   getForces() {
@@ -64,6 +72,8 @@ export class MechanismService {
 
   updateMechanism() {
     // console.log(this.mechanisms[0]);
+    //There are multiple mechanisms since there was a plan to support multiple mechanisms
+    //You can treat this as a single mechanism for now at index 0
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
@@ -71,6 +81,8 @@ export class MechanismService {
       inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
     }
     this.mechanisms.push(
+      //This creates a new mechanism with the current state of the joints, links, forces, and ics
+      //If the mechnaism is simulatable, it will generate loops and all future time steps
       new Mechanism(
         this.joints,
         this.links,
@@ -81,6 +93,12 @@ export class MechanismService {
         inputAngularVelocity
       )
     );
+    this.links.forEach((l) => {
+      if (l instanceof RealLink) {
+        (l as RealLink).reComputeDPath();
+      }
+    });
+    this.activeObjService.fakeUpdateSelectedObj();
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -184,6 +202,181 @@ export class MechanismService {
     return new RevJoint(id, x_num, y_num);
   }
 
+  toggleSelectedWeldedJoint() {
+    const joint = this.joints.find(
+      (j) => j.id === this.activeObjService.selectedJoint.id
+    ) as RealJoint;
+    
+    if (joint.isWelded) {
+      this.unweldJoint(joint);
+    } else {
+      this.weldJoint(joint);
+    }
+  }
+
+  weldJoint(joint: RealJoint) {
+    
+    //WE NEED TO WELD THE JOINT
+    const linksAtJoint = joint.links as RealLink[];
+//     if (!joint.isWelded) {
+      //       NewGridComponent.sendNotification(
+      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+      //       );
+      //WE NEED TO WELD THE JOINT
+//       const linksAtJoint = joint.links as RealLink[];
+
+    const newLink = this.createNewCompoundLink(linksAtJoint);
+
+    //Remove all the links that are being merged from this.links
+    linksAtJoint.forEach((l1: Link) => {
+      this.links.splice(
+        this.links.findIndex((l2) => l2.id === l1.id),
+        1
+      );
+    });
+    this.links.push(newLink);
+
+    //Update the joints of the new link with the right links
+    newLink.joints.forEach((j: Joint | RealJoint) => {
+      if (!(j instanceof RealJoint)) return;
+      //Remove any links that are subsets of the new link
+      j.links = j.links.filter((l: Link) => {
+        return !linksAtJoint.some((l2) => l2.id === l.id);
+      });
+      //Add the new link to the joints
+      j.links.push(newLink);
+    });
+
+    //For every joint in the new link, add all other joints in the new link as connected joints
+    // newLink.joints.forEach((j: Joint | RealJoint) => {
+    //   if (!(j instanceof RealJoint)) return;
+    //   newLink.joints.forEach((j2: Joint | RealJoint) => {
+    //     if (!(j2 instanceof RealJoint)) return;
+    //     if (j.id !== j2.id) {
+    //       j.connectedJoints.push(j2);
+    //     }
+    //   });
+    // });
+    //
+    // //Lastly remove duplicate connected joints
+    // newLink.joints.forEach((j: Joint | RealJoint) => {
+    //   if (!(j instanceof RealJoint)) return;
+    //   j.connectedJoints = j.connectedJoints.filter((cj, index) => {
+    //     return j.connectedJoints.findIndex((cj2) => cj2.id === cj.id) === index;
+    //   });
+    // });
+
+    joint.isWelded = true;
+
+  }
+
+
+  unweldJoint(joint: RealJoint) {
+
+    //WE ARE UNWELDING THE JOINT
+    const mainLink = joint.links[0] as RealLink;
+    //Get the list of all subsets of the main link
+    const subset = mainLink.subset;
+
+    //First restore all sublink connections
+    subset.forEach((l) => {
+      l.joints.forEach((j) => {
+        if (j instanceof RealJoint) {
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+          j.links.push(l);
+        }
+      });
+    });
+
+    //Split the subsets into groups
+    const splitSubsets: Link[][] = this.splitSubset(subset, joint);
+
+    //Create a new compound link for each subset
+    splitSubsets.forEach((subset) => {
+      if (subset.length === 0) return;
+      //Error
+      if (subset.length === 1) {
+        //This is a simple link
+        const simpleLink = subset[0];
+        this.links.push(simpleLink);
+        (simpleLink.joints as RealJoint[]).forEach((j) => {
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+        });
+        return;
+      } else {
+        //This subset is a compound link
+        const newCompoundLink = this.createNewCompoundLinkFromSubset(subset);
+        this.links.push(newCompoundLink);
+        (newCompoundLink.joints as RealJoint[]).forEach((j) => {
+          //Remove the main link (old link that was unwelded) from the joints
+          j.links = j.links.filter((l) => l.id !== mainLink.id);
+          //Also remove any links that are subsets of the new link
+          j.links = j.links.filter((l) => {
+            return !subset.some((l2) => l2.id === l.id);
+          });
+          j.links.push(newCompoundLink);
+        });
+      }
+    });
+
+    //Remove the main link from the list
+    this.links.splice(this.links.indexOf(mainLink), 1);
+
+    joint.isWelded = false;
+    // this.updateMechanism();
+  }
+
+  private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {
+    const newLinkJoints: Joint[] = [];
+
+    //Copy all joints in all links to newLinkJoints
+    linksToWeld.forEach((link) => {
+      link.joints.forEach((j) => {
+        newLinkJoints.push(j);
+      });
+    });
+
+    //Make sure newLinkJoints only contains unique joints
+    newLinkJoints.filter((j, index) => {
+      return newLinkJoints.indexOf(j) === index;
+    });
+
+    let subsetForNewLink: Link[] = [];
+
+    //For each link in linksToWeld, if the link has a subset, add it to the newLink's subset, else add the link to the newLink's subset
+    linksToWeld.forEach((link) => {
+      link.subset.length > 0
+        ? (subsetForNewLink = subsetForNewLink.concat(link.subset))
+        : subsetForNewLink.push(link);
+    });
+
+    const newLink = new RealLink('', newLinkJoints, 0, 0, new Coord(0, 0), subsetForNewLink);
+
+    //Now find the ID for the new link by concatenating all the joint ids, make sure to sort and remove duplicates
+    const id = newLinkJoints
+      .map((j) => j.id)
+      .sort()
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .reduce((a, b) => a + b, '');
+    newLink.id = id;
+    return newLink;
+  }
+
+  private createNewCompoundLinkFromSubset(subset: Link[]): RealLink {
+    let newLinkJoints: Joint[] = [];
+    subset.forEach((l) => {
+      l.joints.forEach((j) => {
+        newLinkJoints.push(j);
+      });
+    });
+    //Filter out duplicate joints
+    newLinkJoints = newLinkJoints.filter((v, i, a) => a.indexOf(v) === i);
+    //Find the new id for the new link by concatenating all the joint ids
+    let id = newLinkJoints.reduce((a, b) => a + b.id, '');
+    const newLink = new RealLink(id, newLinkJoints, 0, 0, new Coord(0, 0), subset);
+    return newLink;
+  }
+
   deleteJoint() {
     const jointIndex = this.gridUtils.findJointIDIndex(
       this.activeObjService.selectedJoint.id,
@@ -266,12 +459,24 @@ export class MechanismService {
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
-      this.activeObjService.selectedLink.d = RealLink.getD(
-        this.activeObjService.selectedLink.joints
-      );
+      this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     }
     this.updateMechanism();
     this.onMechUpdateState.next(3);
+  }
+
+  splitSubset(subset: Link[], joint: RealJoint): Link[][] {
+    //We need to stop assuming there are two links connected to the joint, there could be more
+    const linksConnectedToJoint = subset.filter((l) => l.joints.includes(joint));
+
+    const subsets: Link[][] = [];
+    linksConnectedToJoint.forEach((l) => {
+      //Find the subset of links excluding the current link
+      const avoidThese = linksConnectedToJoint.filter((ll) => ll.id !== l.id);
+      subsets.push(this.findConnectedLinksReccusively(l, avoidThese, subset, []));
+    });
+
+    return subsets;
   }
 
   deleteForce() {
@@ -283,20 +488,23 @@ export class MechanismService {
   }
 
   changeForceDirection() {
-    this.activeObjService.selectedForce.arrowOutward =
-      !this.activeObjService.selectedForce.arrowOutward;
-    if (this.activeObjService.selectedForce.arrowOutward) {
-      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
-        this.activeObjService.selectedForce.startCoord,
-        this.activeObjService.selectedForce.endCoord
-      );
-    } else {
-      this.activeObjService.selectedForce.forceArrow = Force.createForceArrow(
-        this.activeObjService.selectedForce.endCoord,
-        this.activeObjService.selectedForce.startCoord
-      );
-    }
-    this.updateMechanism();
+    NewGridComponent.sendNotification('This feature is coming soon!');
+    // this.activeObjService.selectedForce.arrowOutward =
+    //   !this.activeObjService.selectedForce.arrowOutward;
+    // if (this.activeObjService.selectedForce.arrowOutward) {
+    //   this.activeObjService.selectedForce.forceArrow =
+    //     this.activeObjService.selectedForce.createForceArrow(
+    //       this.activeObjService.selectedForce.startCoord,
+    //       this.activeObjService.selectedForce.endCoord
+    //     );
+    // } else {
+    //   this.activeObjService.selectedForce.forceArrow =
+    //     this.activeObjService.selectedForce.createForceArrow(
+    //       this.activeObjService.selectedForce.endCoord,
+    //       this.activeObjService.selectedForce.startCoord
+    //     );
+    // }
+    // this.updateMechanism();
   }
 
   changeForceLocal() {
@@ -322,11 +530,15 @@ export class MechanismService {
     // console.warn(this.activeObjService.Link);
     const linkIndex = this.links.findIndex((l) => l.id === this.activeObjService.selectedLink.id);
     this.links[linkIndex].joints.forEach((j) => {
+      //Remove the deleted link from the other joints of the delLink
       if (!(j instanceof RealJoint)) {
         return;
       }
       const delLinkIndex = j.links.findIndex((l) => l.id === this.activeObjService.selectedLink.id);
       j.links.splice(delLinkIndex, 1);
+      if (j.links.length === 0) {
+        this.joints.splice(this.gridUtils.findJointIDIndex(j.id, this.joints), 1);
+      }
     });
     for (let j_i = 0; j_i < this.links[linkIndex].joints.length - 1; j_i++) {
       for (let next_j_i = j_i + 1; next_j_i < this.links[linkIndex].joints.length; next_j_i++) {
@@ -491,6 +703,9 @@ export class MechanismService {
   }
 
   animate(progress: number, animationState?: boolean) {
+    //Round progress to nearest integer
+    progress = Math.round(progress);
+
     this.onMechPositionChange.next(progress);
     this.mechanismTimeStep = progress;
     this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
@@ -514,6 +729,7 @@ export class MechanismService {
       l.d = link.d;
       l.CoM = link.CoM;
       l.updateCoMDs();
+      l.reComputeDPath();
     });
     this.forces.forEach((f, f_index) => {
       f.startCoord.x = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].startCoord.x;
@@ -523,8 +739,8 @@ export class MechanismService {
       f.local = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].local;
       f.mag = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].mag;
       f.angleRad = this.mechanisms[0].forces[this.mechanismTimeStep][f_index].angleRad;
-      f.forceLine = Force.createForceLine(f.startCoord, f.endCoord);
-      f.forceArrow = Force.createForceArrow(f.startCoord, f.endCoord);
+      f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+      f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
     });
     if (!AnimationBarComponent.animate) {
       return;
@@ -535,10 +751,11 @@ export class MechanismService {
     }
     setTimeout(() => {
       this.animate(this.mechanismTimeStep);
-    }, 8);
+    }, 16);
   }
 
   getJointCSSClass(joint: Joint) {
+    // const j = joint as RealJoint;
     if (
       NewGridComponent.debugGetJointState() == jointStates.dragging &&
       joint.id === this.activeObjService.selectedJoint.id
@@ -567,5 +784,28 @@ export class MechanismService {
       return 'link-selected';
     }
     return 'link-default';
+  }
+
+  private findConnectedLinksReccusively(
+    link: Link,
+    avoid: Link[],
+    subset: Link[],
+    subsetBuilder: Link[]
+  ): Link[] {
+    //Recursively find all connected links to a given link, making sure not to include the block link
+    (link.joints as RealJoint[]).forEach((joint) => {
+      joint.links.forEach((l) => {
+        if (
+          l instanceof RealLink &&
+          !avoid.includes(l) &&
+          !subsetBuilder.includes(l) &&
+          subset.includes(l)
+        ) {
+          subsetBuilder.push(l);
+          this.findConnectedLinksReccusively(l, avoid, subset, subsetBuilder);
+        }
+      });
+    });
+    return subsetBuilder;
   }
 }

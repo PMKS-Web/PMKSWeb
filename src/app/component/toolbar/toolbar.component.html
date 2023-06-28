@@ -1,42 +1,59 @@
-<nav class='navBar'>
+<nav class='navBar' id='{{isDevMode() ? "devModeColor" : ""}}'>
   <img
     class='pmksImage'
     alt='PMKS+'
     src='assets/PMKS_logo.png'
     onClick='window.location.reload()'
   />
-  <button mat-button onclick="window.open(window.location.origin, '_blank');">
+  <button mat-button onclick="window.open(window.location.origin, '_blank'); logEvent(this.analytics, 'new_file');"
+          matTooltip='Open a new tab with a blank project' matTooltipShowDelay='1000'>
     <mat-icon>note_add</mat-icon>
     New
   </button>
   <input #csvInput style='display: none' type='file' accept='.csv' (change)='upload($event)' />
-  <button mat-button (click)='csvInput.click()'>
+  <button mat-button (click)='csvInput.click()' matTooltip='Open a linkage from a file on your device'
+          matTooltipShowDelay='1000'>
     <mat-icon>file_open</mat-icon>
     Open
   </button>
-  <button mat-button (click)='popUpTemplates()'>
+  <button mat-button (click)='openTemplates()' matTooltip='Show the library of available linkages'
+          matTooltipShowDelay='1000'>
     <mat-icon>apps</mat-icon>
     Templates
   </button>
-  <button mat-button (click)='downloadLinkage()'>
+  <button mat-button (click)='downloadLinkage()' matTooltip='Save this linkage to your device'
+          matTooltipShowDelay='1000'>
     <mat-icon>save</mat-icon>
     Save
   </button>
-  <button mat-button (click)='copyURL()'>
+  <button mat-button (click)='copyURL()' matTooltip='Copy a URL to clipboard that contains your linakge'
+          matTooltipShowDelay='1000'>
     <mat-icon>link</mat-icon>
     Share Project
   </button>
   <div class='spacer'></div>
-  <button mat-button (click)='openRightPanelSettings()'>
+  <ng-container *ngIf='isDevMode()' matTooltip='This message and the debug panel will disappear'
+                matTooltipShowDelay='1000'>
+    <p style='font-size: 10px; pointer-events: none; max-height: 50px; overflow: hidden'>
+      You are in Development Mode. The color will return to normal when you build with the production flag. </p>
+  </ng-container>
+  <button *ngIf='isDevMode()' mat-button (click)='openRightPanelDebug()'
+          matTooltip='This button will not show up in prod'
+          matTooltipShowDelay='1000'>
+    <mat-icon>bug_report</mat-icon>
+    Debug
+  </button>
+  <button mat-button (click)='openRightPanelSettings()' matTooltip='Change Linkage Settings' matTooltipShowDelay='1000'>
     <mat-icon>settings</mat-icon>
     Settings
   </button>
-  <button mat-button (click)='openRightPanelEquations()'>
+  <button mat-button (click)='openRightPanelEquations()' matTooltip='View Equations of Equilibrium'
+          matTooltipShowDelay='1000'>
     <mat-icon>format_list_numbered</mat-icon>
     Equations
   </button>
-  <button mat-button (click)='openRightPanelHelp()'>
-    <mat-icon>bug_report</mat-icon>
-    Debug
+  <button mat-button (click)='openRightPanelHelp()' matTooltip='Get Support from our team' matTooltipShowDelay='1000'>
+    <mat-icon>help</mat-icon>
+    Help / Feedback
   </button>
 </nav>

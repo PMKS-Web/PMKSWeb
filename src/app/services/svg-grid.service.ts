@@ -117,6 +117,10 @@ export class SvgGridService {
 
   screenToSVG(screenPos: Coord): Coord {
     const CTM: SVGMatrix = this.CTM;
+    // TODO: Temporary solution. Maybe okay to have...
+    if (this.CTM === undefined) {
+      return new Coord(0, 0);
+    }
     const inverseCTM = CTM.inverse();
     const svgPos = screenPos.applyMatrix(inverseCTM);
     svgPos.y = svgPos.y * -1;
@@ -203,6 +207,18 @@ export class SvgGridService {
       i++;
     }
     this.handlePan();
+    if (this.panZoomObject.getZoom() / this.settingsService.objectScale < 10) {
+      NewGridComponent.sendNotification(
+        'The visual size of the links might be too small. Try using the "Update Object Scale" button in the settings menu.',
+        20000
+      );
+    }
+    if (this.panZoomObject.getZoom() / this.settingsService.objectScale > 150) {
+      NewGridComponent.sendNotification(
+        'The visual size of the links might be too large. Try using the "Update Object Scale" button in the settings menu.',
+        20000
+      );
+    }
   }
 
   handleUpdatedCTM(newCTM: SVGMatrix) {

@@ -1,15 +1,47 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, Inject, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RealJoint } from 'src/app/model/joint';
 import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
+import { Analytics, logEvent } from '@angular/fire/analytics';
 
 @Component({
   selector: 'app-left-tabs',
   templateUrl: './left-tabs.component.html',
   styleUrls: ['./left-tabs.component.scss'],
   animations: [
+    trigger('activeTab', [
+      state(
+        '0',
+        style({
+          visibility: 'hidden',
+        })
+      ),
+      state(
+        '1',
+        style({
+          top: '0px',
+        })
+      ),
+      state(
+        '2',
+        style({
+          top: '53px', //Be careful, there are multiple places to change this value
+        })
+      ),
+      state(
+        '3',
+        style({
+          top: '106px', //Be careful, there are multiple places to change this value
+        })
+      ),
+
+      transition('* => 0', [animate('0s')]),
+      transition('0 => *', [animate('0s')]),
+      transition('* => *', [animate('0.1s ease-in-out')]),
+    ]),
+
     trigger('openClose', [
       // ...
       state(
@@ -39,6 +71,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
   ],
 })
 export class LeftTabsComponent {
+  private analytics: Analytics = inject(Analytics);
   openTab = 2; //Default open tab to "Edit" /
   isOpen = true; // Is the tab open?
 
@@ -49,8 +82,22 @@ export class LeftTabsComponent {
     } else {
       if (this.openTab === tabID) {
         this.isOpen = false;
+        this.openTab = 0;
       } else {
         this.openTab = tabID;
+      }
+    }
+    if (this.isOpen) {
+      switch (tabID) {
+        case 1:
+          logEvent(this.analytics, 'open_synthesis_tab');
+          break;
+        case 2:
+          logEvent(this.analytics, 'open_edit_tab');
+          break;
+        case 3:
+          logEvent(this.analytics, 'open_analysis_tab');
+          break;
       }
     }
     // console.warn(this.openTab);

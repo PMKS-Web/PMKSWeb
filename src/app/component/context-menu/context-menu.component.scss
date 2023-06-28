@@ -24,6 +24,7 @@
   }
 
   #contextMenu {
+    pointer-events: all !important;
     @include mat.elevation(5);
     display: inline-flex;
     flex-direction: column;
@@ -69,8 +70,5 @@
     }
   }
 
-  .cdk-overlay-pane {
-    pointer-events: all !important;
-  }
 
 }

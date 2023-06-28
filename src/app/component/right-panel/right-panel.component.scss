@@ -11,14 +11,14 @@
   $foreground: map.get($theme, foreground);
 
   #rightPanel {
-    pointer-events: none;
+    //pointer-events: none;
     position: absolute;
     top: 30px;
     right: 0px;
     // width: 300px;
     overflow-x: hidden;
     overflow-y: scroll;
-    height: calc(100% - 40px);
+    max-height: calc(100% - 30px);
     display: flex;
     border-radius: var(--border-radius);
 
@@ -29,34 +29,46 @@
     // background-color: mat.get-color-from-palette($primary-palette, 50);
 
     .page1 {
-      position: absolute;
-      top: 0;
-      right: 0;
       width: 300px;
-      height: 100%;
+      //height: 100%;
       // border-radius: var(--border-radius);
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .page2 {
-      position: absolute;
-      top: 0;
-      right: 0;
+      //position: absolute;
+      //top: 0;
+      //right: 0;
       width: 500px;
+      //overflow-y: visible;
       ////Be careful, there are multiple places to change this value
-      height: 100%;
+      //height: 1000px;
       // border-radius: var(--border-radius);
     }
 
     .page3 {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 500px;
-      //Be careful, there are multiple places to change this value
-      height: 100%;
+      width: 300px;
     }
+
+    .page4 {
+      width: 500px;
+    }
+  }
+
+  #debugWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  #helpWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .max-width {
+    width: 100%;
   }
 }

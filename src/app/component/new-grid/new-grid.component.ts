@@ -1,5 +1,5 @@
 import { SvgGridService } from '../../services/svg-grid.service';
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, HostListener, ViewChild } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { MechanismService } from '../../services/mechanism.service';
@@ -16,19 +16,20 @@ import {
   gridStates,
   is_touch_enabled,
   jointStates,
+  line_line_intersect,
   linkStates,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { GridComponent } from '../grid/grid.component';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
+import { Line } from '../../model/line';
 
 @Component({
   selector: 'app-new-grid',
@@ -36,6 +37,10 @@ import * as util from 'util';
   styleUrls: ['./new-grid.component.scss'],
 })
 export class NewGridComponent {
+  public static debugValue: any;
+  static debugPoints: Coord[] = [];
+  public static debugLines: Line[] = [];
+
   constructor(
     public svgGrid: SvgGridService,
     public mechanismSrv: MechanismService,
@@ -44,7 +49,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog
+    public dialog: MatDialog,
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -73,6 +78,9 @@ export class NewGridComponent {
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
+  mouseLocation: Coord = new Coord(0, 0);
+
+  @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 
   ngOnInit() {
     const svgElement = document.getElementById('canvas') as HTMLElement;
@@ -133,7 +141,7 @@ export class NewGridComponent {
     console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
-        //Swtich force direction, switch force local, delete Force
+        //Switch force direction, switch force local, delete Force
         this.cMenuItems.push(
           new cMenuItem(
             'Delete Force',
@@ -143,16 +151,16 @@ export class NewGridComponent {
         );
         this.cMenuItems.push(
           new cMenuItem(
-            'Switch Force Direction',
-            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
-            'switch_force_dir'
+            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
+            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
+            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
           )
         );
         this.cMenuItems.push(
           new cMenuItem(
-            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
-            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
-            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
+            'Switch Force Direction',
+            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
+            'switch_force_dir'
           )
         );
         break;
@@ -166,11 +174,11 @@ export class NewGridComponent {
           )
         );
         this.cMenuItems.push(
-          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
         );
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
+          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
         break;
       case 'RevJoint':
@@ -197,14 +205,16 @@ export class NewGridComponent {
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
           );
-        } else if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Add Ground',
-              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'add_ground'
-            )
-          );
+        } else {
+          if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+            this.cMenuItems.push(
+              new cMenuItem(
+                'Add Ground',
+                this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
+                'add_ground'
+              )
+            );
+          }
         }
         this.cMenuItems.push(
           new cMenuItem(
@@ -213,24 +223,29 @@ export class NewGridComponent {
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Hide Curve ',
-            () => {
-              NewGridComponent.sendNotification('Feature Coming Soon');
-            },
-            'hide_path'
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Welded Joint',
-            () => {
-              NewGridComponent.sendNotification('Feature Coming Soon');
-            },
-            'weld_joint'
-          )
-        );
+        if ((this.lastRightClick as RealJoint).canBeWelded()) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+              this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
+            )
+          );
+        }
+        if (
+          !(this.lastRightClick as RealJoint).ground &&
+          this.mechanismSrv.oneValidMechanismExists()
+        ) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
+              () => {
+                this.gridUtils.toggleCurve(this.lastRightClick);
+              },
+              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
+            )
+          );
+        }
 
         break;
       case 'String': //This means grid
@@ -245,6 +260,7 @@ export class NewGridComponent {
 
   setLastLeftClick(clickedObj: Joint | Link | String | Force) {
     this.lastLeftClick = clickedObj;
+    // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
     switch (clickedObj.constructor.name) {
       case 'Force':
@@ -289,7 +305,7 @@ export class NewGridComponent {
     newJoint.links.push(this.activeObjService.selectedLink);
     this.activeObjService.selectedLink.joints.push(newJoint);
     this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = RealLink.getD(this.activeObjService.selectedLink.joints);
+    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     this.mechanismSrv.joints.push(newJoint);
     this.mechanismSrv.updateMechanism();
   }
@@ -309,11 +325,11 @@ export class NewGridComponent {
     const mousePos = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
     this.forceTempHolderSVG.children[0].setAttribute(
       'd',
-      Force.createForceLine(startCoord, mousePos)
+      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
     );
     this.forceTempHolderSVG.children[1].setAttribute(
       'd',
-      Force.createForceArrow(startCoord, mousePos)
+      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
     );
   }
 
@@ -359,6 +375,7 @@ export class NewGridComponent {
 
   mouseMove($event: MouseEvent) {
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocation = mousePosInSvg;
 
     switch (this.gridStates) {
       case gridStates.createForce:
@@ -442,6 +459,13 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (this.mechanismSrv.mechanismTimeStep !== 0) {
+      this.sendNotification('Stop animation (or reset to 0 position) to edit');
+      //Close the MatContextMenu
+      // console.log(this.contextMenu);
+      // this.contextMenu.close();
+      return;
+    }
     this.lastRightClickCoord.x = $event.clientX;
     this.lastRightClickCoord.y = $event.clientY;
     console.log('context menu');
@@ -480,6 +504,10 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
+        // let clickPos = new Coord($event.pageX, $event.pageY);
+        // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
+        // console.warn('Mouse down: ');
+        // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
         // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
@@ -499,7 +527,7 @@ export class NewGridComponent {
 
                 if (this.mechanismSrv.links.length == 0) {
                   console.log('first link');
-                  SettingsService.objectScale.next(
+                  SettingsService._objectScale.next(
                     Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
                   );
                 }
@@ -571,9 +599,8 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.id.concat(joint1.id);
                 this.mechanismSrv.mergeToJoints([joint1, joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.activeObjService.selectedLink.d = RealLink.getD(
-                  this.activeObjService.selectedLink.joints
-                );
+                this.activeObjService.selectedLink.d =
+                  this.activeObjService.selectedLink.getPathString();
                 this.mechanismSrv.updateMechanism();
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
@@ -614,7 +641,7 @@ export class NewGridComponent {
                   this.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y1')!
                 );
-                joint2 = this.activeObjService.prevSelectedJoint;
+                joint2 = this.activeObjService.selectedJoint;
                 // joint2 = this.createRevJoint(
                 //   this.jointTempHolderSVG.children[0].getAttribute('x2')!,
                 //   this.jointTempHolderSVG.children[0].getAttribute('y2')!,
@@ -772,13 +799,14 @@ export class NewGridComponent {
     }
   }
 
-  static sendNotification(text: string) {
-    NewGridComponent.instance.sendNotification(text);
+  static sendNotification(text: string, rateLimitMS?: number) {
+    NewGridComponent.instance.sendNotification(text, rateLimitMS);
   }
 
-  sendNotification(text: string) {
+  sendNotification(text: string, rateLimitMS?: number) {
+    rateLimitMS = rateLimitMS || 1000; //Default to 1 second
     //If there is more than one notification in the last seccond, ingore all but the first
-    if (this.lastNotificationTime + 1000 < Date.now()) {
+    if (this.lastNotificationTime + rateLimitMS < Date.now()) {
       this.lastNotificationTime = Date.now();
       this.snackBar.open(text, '', {
         panelClass: 'my-custom-snackbar',
@@ -815,5 +843,73 @@ export class NewGridComponent {
 
   getFirstYPos(link: Link) {
     return this.getFirstPosCoords(link).y;
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent) {
+    if (($event.ctrlKey || $event.metaKey) && $event.keyCode == 90) {
+      //Ctrl + Z
+      NewGridComponent.sendNotification(
+        'You attempted to undo. What were you trying to undo? Please let us know through the report button in the help section.'
+      );
+    }
+
+    if ($event.keyCode == 27) {
+      //Escape Key
+      // NewGridComponent.sendNotification(
+      //   'You pressed the "Escape" key. What were you trying to do and in what context? (This is an Easter Egg. Please talk about in the final question of the survey.)'
+      // );
+      this.activeObjService.updateSelectedObj(undefined);
+    }
+
+    if ($event.keyCode == 46) {
+      //Delete Key
+      if (true) {
+        //Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
+        if (this.activeObjService.objType === 'Grid') {
+          NewGridComponent.sendNotification('Select an object to delete.');
+          return;
+        }
+        if (this.activeObjService.objType === 'Joint') {
+          this.mechanismSrv.deleteJoint();
+        } else if (this.activeObjService.objType === 'Link') {
+          this.mechanismSrv.deleteLink();
+        }
+        this.activeObjService.updateSelectedObj(undefined);
+        NewGridComponent.sendNotification('Deleted Selected Object.');
+      } else {
+        return;
+      }
+    }
+  }
+
+  isRenderFail(link: Link) {
+    return (link as RealLink).renderError;
+  }
+
+  returnDebugValue() {
+    return NewGridComponent.debugValue;
+  }
+
+  getDebugPointX(coord: Coord) {
+    if (coord == undefined) {
+      return 0;
+    }
+    return coord.x;
+  }
+
+  getDebugPointY(coord: Coord) {
+    if (coord == undefined) {
+      return 0;
+    }
+    return coord.y;
+  }
+
+  getDebugPoints() {
+    return NewGridComponent.debugPoints;
+  }
+
+  getDebugLines(): Line[] {
+    return NewGridComponent.debugLines;
   }
 }

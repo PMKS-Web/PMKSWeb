@@ -6,7 +6,6 @@ import { Coord } from '../../model/coord';
 import { roundNumber } from '../../model/utils';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { InstantCenter } from '../../model/instant-center';
-import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
@@ -74,7 +73,7 @@ export class LinkageTableComponent implements OnInit {
           l.CoM = RealLink.determineCenterOfMass(l.joints);
           // l.bound = RealLink.getBounds(new Coord(l.joints[0].x, l.joints[0].y), new Coord(l.joints[1].x, l.joints[1].y), Shape.line);
           // l.d = RealLink.getPointsFromBounds(l.bound, l.shape);
-          l.d = RealLink.getD(l.joints);
+          l.d = l.getPathString();
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -94,7 +93,7 @@ export class LinkageTableComponent implements OnInit {
           l.joints[jointIndex].x = roundNumber(joint.x, 3);
           l.joints[jointIndex].y = roundNumber(joint.y, 3);
           l.CoM = RealLink.determineCenterOfMass(l.joints);
-          l.d = RealLink.getD(l.joints);
+          l.d = l.getPathString();
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
           });
@@ -194,8 +193,8 @@ export class LinkageTableComponent implements OnInit {
         force.endCoord.y = Math.sin(force.angleRad) + force.startCoord.y;
         break;
     }
-    force.forceLine = Force.createForceLine(force.startCoord, force.endCoord);
-    force.forceArrow = Force.createForceArrow(force.startCoord, force.endCoord);
+    force.forceLine = force.createForceLine(force.startCoord, force.endCoord);
+    force.forceArrow = force.createForceArrow(force.startCoord, force.endCoord);
     this.mechanismService.updateMechanism();
   }
 

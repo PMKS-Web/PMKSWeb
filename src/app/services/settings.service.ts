@@ -15,15 +15,24 @@ export class SettingsService {
   isGravity = new BehaviorSubject(false);
   inputSpeed = new BehaviorSubject(20);
   animating = new BehaviorSubject(false);
+  isShowMajorGrid = new BehaviorSubject(true);
+  isShowMinorGrid = new BehaviorSubject(true);
 
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);
   tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit
-  static objectScale = new BehaviorSubject(1);
 
-  get objectScale(): number {
-    return SettingsService.objectScale.value;
+  isGridDebugOn: boolean = false;
+  static _objectScale = new BehaviorSubject(1);
+
+  static get objectScale(): number {
+    return SettingsService._objectScale.value;
   }
 
-  constructor() {}
+  get objectScale(): number {
+    return SettingsService._objectScale.value;
+  }
+
+  constructor() {
+  }
 }

@@ -80,11 +80,12 @@ export class Mechanism {
           if (!(l instanceof RealLink)) {
             return;
           }
-          const newLink = new RealLink(l.id, l.joints);
-          newLink.d = l.d;
-          newLink.CoM = l.CoM;
-          newLink.forces = l.forces;
-          this._links[0].push(newLink);
+          // const newLink = new RealLink(l.id, l.joints, l.mass, l.massMoI, l.CoM, l.subset);
+          // newLink.d = l.d;
+          // newLink.CoM = l.CoM;
+          // newLink.forces = l.forces;
+          // this._links[0].push(newLink);
+          this._links[0].push(l);
           break;
         case Piston:
           if (!(l instanceof Piston)) {
@@ -262,7 +263,7 @@ export class Mechanism {
               // });
               const pushLink = new RealLink(l.id, connectedJoints);
               // TODO: Prob wanna put the realLink.getD within constructor of RealLink
-              pushLink.d = RealLink.getD(pushLink.joints);
+              pushLink.d = pushLink.getPathString();
               // pushLink.d = RealLink.getD(l.joints);
               // TODO: When you insert a joint onto a link, be sure to utilize this function call
               pushLink.CoM = RealLink.determineCenterOfMass(pushLink.joints);

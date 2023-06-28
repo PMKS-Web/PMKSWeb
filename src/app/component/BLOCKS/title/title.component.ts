@@ -1,5 +1,4 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { GridComponent } from '../../grid/grid.component';
 
 @Component({
   selector: 'title-block',

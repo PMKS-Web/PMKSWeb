@@ -1,0 +1,63 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  #editable-title-block {
+    .editModeRow {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 20px;
+
+      #title-button {
+        // font-size: 0.8em !important;
+        // font-weight: 600 !important;
+        height: 24px !important;
+      }
+
+      #title-icon-button {
+        zoom: 0.7; // NOTE: You may need to adjust this value to achieve exactly 48px.
+      }
+
+      #title-input-box {
+        font-size: 20px;
+        //font-weight: 300;
+        width: 60px;
+        border: 0;
+        outline: none;
+        background-color: mat.get-color-from-palette($primary-palette, 50);
+        border-radius: var(--border-radius);
+        padding: 5px;
+
+        //When the input is focused
+        &:focus {
+          margin-bottom: 0px;
+          background-color: mat.get-color-from-palette($primary-palette, 100);
+          //add a bottom border
+          border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
+          //no more roudned corners in for the bottom
+          border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+      }
+    }
+
+    #title-description {
+      font-weight: 200;
+      font-size: 12px;
+    }
+
+    mat-icon {
+      color: mat.get-color-from-palette($foreground, 'icon');
+    }
+  }
+}

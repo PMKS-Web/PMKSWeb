@@ -1,13 +1,22 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  inject,
+  Inject,
+  Input,
+  isDevMode,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
+import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit, roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
-import { AnalysisPopupComponent } from '../analysis-popup/analysis-popup.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { Coord } from '../../model/coord';
 import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
@@ -16,6 +25,14 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { Analytics, logEvent } from '@angular/fire/analytics';
+import { UrlProcessorService } from '../../services/url-processor.service';
+import { MatDialog } from '@angular/material/dialog';
+import { TemplatesComponent } from '../MODALS/templates/templates.component';
+import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder';
+import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
+import { SettingsService } from 'src/app/services/settings.service';
+import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from 'src/app/services/transcoding/stored-settings';
 
 const parseCSV = require('papaparse');
 
@@ -25,6 +42,8 @@ const parseCSV = require('papaparse');
   styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit, AfterViewInit {
+  private analytics: Analytics = inject(Analytics);
+
   openRightPanelEquations() {
     RightPanelComponent.tabClicked(2);
   }
@@ -35,6 +54,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   openRightPanelSettings() {
     RightPanelComponent.tabClicked(1);
+  }
+
+  openRightPanelDebug() {
+    RightPanelComponent.tabClicked(4);
   }
 
   animate: boolean = false;
@@ -52,27 +75,18 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   private static helpButton: SVGElement;
   static unit = 'cm';
   // TODO: If possible, change this to static variable...
-  localUnit = {
-    // selectedUnit: 'Metric'
-    selectedUnit: 'cm',
-  };
-
-  localUnits = [
-    { id: 'cm', label: 'cm' },
-    { id: 'm', label: 'm' },
-    // { id: 'km', label: 'km'},
-    // { id: 'in', label: 'in'},
-    // { id: 'ft', label: 'ft'}
-    // { id: 'Metric', label: 'Metric'},
-    // { id: 'English', label: 'English'}
-  ];
-  window: any;
   url: any;
 
   constructor(
     private activeObjService: ActiveObjService,
-    private mechanismService: MechanismService
+    private mechanismService: MechanismService,
+    public dialog: MatDialog,
+    public settings: SettingsService,
   ) {}
+
+  openTemplates() {
+    this.dialog.open(TemplatesComponent);
+  }
 
   ngOnInit(): void {
     //This will need to move to settings service
@@ -118,9 +132,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   popUpTemplates() {
     TemplatesPopupComponent.showTemplates();
+    logEvent(this.analytics, 'open_templates');
   }
 
   upload($event: any) {
+    logEvent(this.analytics, 'upload_file');
     const input = $event.target;
     if (input.files.length !== 1) {
       return;
@@ -269,26 +285,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
                   const CoM_x = stringToFloat(line[4]);
                   const CoM_y = stringToFloat(line[5]);
                   const CoM = new Coord(CoM_x, CoM_y);
-                  // const joints = this.getJointsByIds(line[5].split(','), jointArray);
 
-                  // const forces = this.getForcesByIds(line[6].split(','), forceArray);
-                  // const shape = this.stringToShape(line[7]);
-                  const shape = stringToShape(line[8]);
-                  const b1 = new Coord(stringToFloat(line[9]), stringToFloat(line[10]));
-                  const b2 = new Coord(stringToFloat(line[11]), stringToFloat(line[12]));
-                  const b3 = new Coord(stringToFloat(line[13]), stringToFloat(line[14]));
-                  const b4 = new Coord(stringToFloat(line[15]), stringToFloat(line[16]));
-                  const arrow_x = (b1.x + b2.x + b3.x + b4.x) / 4;
-                  const arrow_y = (b1.x + b2.x + b3.x + b4.x) / 4;
-                  const arrow = new Coord(arrow_x, arrow_y);
-                  const bound = new (class implements Bound {
-                    arrow: Coord = arrow;
-                    b1: Coord = b1;
-                    b2: Coord = b2;
-                    b3: Coord = b3;
-                    b4: Coord = b4;
-                  })();
-                  newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
+                  // TODO: Adjust for this after finished welded joints
+                  newLink = new RealLink(id, joints);
+                  // newLink = new RealLink(id, joints, mass, mass_moi, CoM, subset);
                   break;
                 case 'P':
                   newLink = new Piston(id, joints, mass);
@@ -389,7 +389,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               const unit = line[3];
               ToolbarComponent.inputAngularVelocity = input_speed_mag;
               ToolbarComponent.clockwise = clockwise;
-              AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+              // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
               ToolbarComponent.gravity = gravity;
               // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
               // this.localUnit.selectedUnit = unit;
@@ -414,131 +414,143 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // }
   }
 
+  _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
+    if (joint instanceof RevJoint) {
+      encoder.addJoint(new JointData(
+        JOINT_TYPE.REVOLUTE,
+        joint.id,
+        joint.name,
+        joint.x,
+        joint.y,
+        joint.ground,
+        joint.input,
+        joint.isWelded,
+        0,
+        joint.showCurve
+      ))
+    } else if (joint instanceof PrisJoint) {
+      encoder.addJoint(new JointData(
+        JOINT_TYPE.PRISMATIC,
+        joint.id,
+        joint.name,
+        joint.x,
+        joint.y,
+        joint.ground,
+        joint.input,
+        joint.isWelded,
+        joint.angle_rad,
+        joint.showCurve
+      ));
+    }
+  }
+
+  _addLinkToEncoder(encoder: StringTranscoder, link: Link, isRoot: boolean) {
+    if (link instanceof RealLink) {
+      encoder.addLink(new LinkData(
+        isRoot,
+        LINK_TYPE.REAL,
+        link.id,
+        link.name,
+        link.mass,
+        link.massMoI,
+        link.CoM.x,
+        link.CoM.y,
+        link.fill,
+        link.joints.map((joint) => joint.id),
+        link.subset.map((subset) => subset.id)
+        )
+      );
+    } else if (link instanceof Piston) {
+      encoder.addLink(new LinkData(
+        isRoot,
+        LINK_TYPE.PISTON,
+        link.id,
+        link.name,
+        link.mass,
+        0,
+        0,
+        0,
+        "",
+        link.joints.map((joint) => joint.id),
+        []
+        )
+      );
+    }
+  }
+
+  _addForceToEncoder(encoder: StringTranscoder, force: Force) {
+    encoder.addForce(new ForceData(
+      force.id,
+      force.link.id,
+      force.name,
+      force.startCoord.x,
+      force.startCoord.y,
+      force.endCoord.x,
+      force.endCoord.y,
+      force.local,
+      force.arrowOutward,
+      force.mag
+    ));
+    }
+
+  /*
+    *  Copy the URL of the current mechanism to the clipboard
+  */
   copyURL() {
-    // const content = this.generateExportURL(this.mechanismService.joints, this.mechanismService.links, this.mechanismService.forces, [],
-    //   [], 10, true, ToolbarComponent.gravity, ToolbarComponent.unit);
-    let content = '';
-    content += `j=`;
+    logEvent(this.analytics, 'copyURL');
+
+    // First, reset animation to the beginning, but cache animation frame to restore afterwards
+    let cachedAnimationFrame = this.mechanismService.mechanismTimeStep;
+    if (cachedAnimationFrame > 0) this.mechanismService.animate(0, false);
+
+    let encoder = new StringTranscoder()
+    
+    // add each joint
     this.mechanismService.joints.forEach((joint) => {
-      if (!(joint instanceof RealJoint)) {
-        return;
-      }
-      content += `${joint.id},`;
-      content += `${roundNumber(joint.x, 3)},`;
-      content += `${roundNumber(joint.y, 3)},`;
-      const relatedLinkIDs = joint.links.map((link) => {
-        return link.id;
-      });
-      content += `${relatedLinkIDs.join('|')},`;
-      switch (joint.constructor) {
-        case RevJoint:
-          content += `R,`;
-          break;
-        case PrisJoint:
-          content += `P,`;
-          break;
-        default:
-          content += `???`;
-          break;
-      }
-      // switch (joint.constructor) {
-      //   case RevJoint:
-      //     result += `R`;
-      //     break;
-      //   case PrisJoint:
-      //     if (!(joint instanceof PrisJoint)) {return}
-      //     result += `P`;
-      //     result += `${joint.angle}`;
-      //     break;
-      // }
-      content += `${joint.ground ? 't' : 'f'},`;
-      // result += `${joint.coeffFriction},`;
-      if (joint instanceof PrisJoint) {
-        content += `${joint.angle_rad},`;
-      } else {
-        content += `Null,`;
-      }
-      content += `${joint.input ? 't' : 'f'}`;
+      this._addJointToEncoder(encoder, joint);
+    })
 
-      // result += `${joint.coeffFriction},`; // maybe in future when coefficient of friction is taken into consideration
-      content += '\n';
-    });
-    content += `&l=`;
+    // add each (non-subset) link
     this.mechanismService.links.forEach((link) => {
-      content += `${link.id},`;
-      content += !(link instanceof RealLink) ? `P,` : `R,`;
-      // if (!(link instanceof RealLink)) {return}
-      // content += (!(link instanceof RealLink)) ? `Null,` : `${link.mass},`;
-      content += `${link.mass},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.massMoI},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.x},`;
-      content += !(link instanceof RealLink) ? `Null,` : `${link.CoM.y},`;
-      const relatedJointIDs = link.joints.map((joint) => {
-        return joint.id;
-      });
-      const relatedForceIDs = link.forces.map((force) => {
-        return force.id;
-      });
-
-      content += `${relatedJointIDs.join('|')},`;
-      content += `${relatedForceIDs.join('|')},`;
-      // content += !(link instanceof RealLink) ? `Null,` : `${link.shape},`;
-      // if (!(link instanceof RealLink)) {
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null,`;
-      //   content += `Null`;
-      // } else {
-      //   // const bounds = link.bound;
-      //   // const keyArray = [bounds.b1, bounds.b2, bounds.b3, bounds.b4];
-      //   // keyArray.forEach((eid, index) => {
-      //   //   content += `${roundNumber(eid.x, 3)},`;
-      //   //   content +=
-      //   //     index === keyArray.length - 1
-      //   //       ? `${roundNumber(eid.y, 3)}`
-      //   //       : `${roundNumber(eid.y, 3)},`;
-      //   // });
-      // }
-      content += '\n';
+      this._addLinkToEncoder(encoder, link, true);
+    })
+    
+    // for each link, add subset links
+    this.mechanismService.links.forEach((link) => {
+      if (link instanceof RealLink) {
+        link.subset.forEach((subsetLink) => {
+          this._addLinkToEncoder(encoder, subsetLink, false);
+        });
+      }
     });
 
-    content += `&f=`;
     this.mechanismService.forces.forEach((force) => {
-      content += `${force.id},`;
-      content += `${force.link.id},`;
-      content += `${roundNumber(force.startCoord.x, 3)},`;
-      content += `${roundNumber(force.startCoord.y, 3)},`;
-      content += `${roundNumber(force.endCoord.x, 3)},`;
-      content += `${roundNumber(force.endCoord.y, 3)},`;
-      content += `${force.local ? 'f' : 't'},`;
-      content += `${force.arrowOutward},`;
-      content += `${force.mag}`;
-      // result += `${force.yMag}`;
-      content += '\n';
-    });
-    // result += `&pp=`;
-    // pathPointArray.forEach(pp => {
-    //   result += `${pp.id},`;
-    //   result += `${IndiFuncs.roundNumber(pp.x, 3)},`;
-    //   result += `${IndiFuncs.roundNumber(pp.y, 3)},`;
-    //   result += `${pp.neighbor_one.id},`;
-    //   result += `${pp.neighbor_two.id},`;
-    //   result += '\n';
-    // });
-    // result += `&tp=`;
-    // threePositionArray.forEach(tp => {});
-    content += `&s=`;
-    content += `${ToolbarComponent.inputAngularVelocity},`; // input speed
-    content += `${ToolbarComponent.clockwise},`; // cw (true) or ccw (false)
-    content += `${ToolbarComponent.gravity},`; // gravity on or off
-    content += `${ToolbarComponent.unit}`;
-    /////
+      this._addForceToEncoder(encoder, force);
+    })
+
+   // Encode global settings
+    encoder.addEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit, this.settings.lengthUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit.getValue());
+    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, this.settings.globalUnit.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
+    encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID, this.settings.isShowMajorGrid.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID, this.settings.isShowMinorGrid.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
+    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
+
+    encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
+    
+    let urlRaw = encoder.encodeURL();
+
+    // Restore animation frame
+    if (cachedAnimationFrame > 0) this.mechanismService.animate(cachedAnimationFrame, false);
+
     const url = this.getURL();
-    const dataURLString = `${url}?${content}`;
+    const dataURLString = `${url}?${urlRaw}`;
     const dataURL = encodeURI(dataURLString);
     console.log(dataURL.length);
     if (dataURL.length > 2000) {
@@ -558,7 +570,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     document.body.removeChild(toolman);
 
     NewGridComponent.sendNotification(
-      'URL copied. If you make additional changes, copy the URL again.'
+      '[WARNING: Save, Open, and Copy features are under development. They will NOT reliably save your linkage! Do not close this tab if you want to come back to this.]  URL copied. If you make additional changes, copy the URL again.'
     );
   }
 
@@ -568,6 +580,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   downloadLinkage() {
+    logEvent(this.analytics, 'download_linkage');
     // TODO: Believe this should be this.unit.selectedUnit
     const content = this.generateExportFile(
       this.mechanismService.joints,
@@ -601,8 +614,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       // }
     }
   }
-
-  merge() {}
 
   getURL(): string {
     const protocol = window.location.protocol;
@@ -905,44 +916,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     return result;
   }
 
-  setInputMagnitudeAngVel($event: any) {
-    ToolbarComponent.inputAngularVelocity = $event.target.value;
-    this.mechanismService.updateMechanism();
-  }
-
-  getClockwise() {
-    return ToolbarComponent.clockwise;
-  }
-
-  setClockwise(cond: boolean) {
-    ToolbarComponent.clockwise = cond;
-    AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-    this.mechanismService.updateMechanism();
-  }
-
-  getGravity() {
-    return ToolbarComponent.gravity;
-  }
-
-  setGravity(cond: boolean) {
-    ToolbarComponent.gravity = cond;
-    this.mechanismService.updateMechanism();
-  }
-
-  changeUnit(selectedUnit: string) {
-    this.localUnit.selectedUnit = selectedUnit;
-    ToolbarComponent.unit = this.localUnit.selectedUnit;
-    this.mechanismService.updateMechanism();
-  }
-
-  getInputAngVel() {
-    return ToolbarComponent.inputAngularVelocity;
-  }
-
-  validMechanism() {
-    if (this.mechanismService.mechanisms[0] === undefined) {
-      return true;
-    }
-    return this.mechanismService.mechanisms[0].joints.length > 3 ? null : true;
+  isDevMode() {
+    //Used to change the color of the topbar when not running prod
+    return isDevMode();
   }
 }

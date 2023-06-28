@@ -1,9 +1,10 @@
 import { AppConstants } from './app-constants';
-import { Link } from './link';
+import { Link, RealLink } from './link';
 import { Coord } from './coord';
 
 export class Joint extends Coord {
   private _id: string;
+  private _name: string = '';
   private _showHighlight: boolean = false;
 
   constructor(id: string, x: number, y: number) {
@@ -17,6 +18,17 @@ export class Joint extends Coord {
 
   set id(value: string) {
     this._id = value;
+  }
+
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
   }
 
   get showHighlight(): boolean {
@@ -35,6 +47,8 @@ export class RealJoint extends Joint {
   private _ground: boolean;
   private _links: Link[];
   private _connectedJoints: Joint[];
+  public showCurve: boolean;
+  public isWelded: boolean = false;
 
   constructor(
     id: string,
@@ -50,6 +64,7 @@ export class RealJoint extends Joint {
     this._ground = ground;
     this._links = links;
     this._connectedJoints = connectedJoints;
+    this.showCurve = true;
   }
 
   //R is radius of the joint
@@ -91,6 +106,26 @@ export class RealJoint extends Joint {
 
   set input(value: boolean) {
     this._input = value;
+  }
+
+  canBeWelded() {
+    //Is is already welded - it can always be unwelded
+    if (this.isWelded) {
+      return true;
+    }
+    //If the joint is an input or ground, it cannot be welded
+    //It also cannot be welded unless there are two or more links connected to it
+    //also if this.connectedJoints contains a pris joint, this cannot be welded
+    if (
+      this.input ||
+      this.ground ||
+      this.links.length < 2 ||
+      this.connectedJoints.some((joint) => joint instanceof PrisJoint)
+    ) {
+      return false;
+    } else {
+      return true;
+    }
   }
 }
 

@@ -4,8 +4,10 @@ import { AppConstants } from './app-constants';
 import { Force } from './force';
 import {
   degToRad,
+  determineCenter,
   determineSlope,
   determineYIntersect,
+  euclideanDistance,
   find_slope,
   find_y_intercept,
   findBiggestAngle,
@@ -15,15 +17,19 @@ import {
   getXDistance,
   getYDistance,
   insertStringWithinString,
-  line_intersect,
+  isLeft,
+  line_line_intersect,
   pullStringWithinString,
   radToDeg,
   roundNumber,
+  wrapAngle,
 } from './utils';
 import hull from 'hull.js/dist/hull.js';
 import { SettingsService } from '../services/settings.service';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
-import { BehaviorSubject } from 'rxjs';
+import { Arc, Line } from './line';
+import { get, set } from '@angular/fire/database';
+import { first, last } from 'rxjs';
 
 export enum Shape {
   line = 'line',
@@ -56,6 +62,7 @@ export interface Bound {
 
 export class Link {
   private _id: string;
+  private _name: string = ''; //The name of the link
   private _mass: number;
   private _joints: Joint[];
   private _forces: Force[] = [];
@@ -90,6 +97,17 @@ export class Link {
     this._id = value;
   }
 
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
+  }
+
   get mass(): number {
     return this._mass;
   }
@@ -121,6 +139,7 @@ export class RealLink extends Link {
   // private _bound: Bound; //The rectengualr area the link is encompassed by
   private _d: string; //SVG path
   // private _mass: number;
+
   private _massMoI: number; //The value passed in from the linakge table
   private _CoM: Coord; //Same passed in from the linkage table
   private _CoM_d1: string = ''; //
@@ -130,6 +149,15 @@ export class RealLink extends Link {
 
   private _length: number = 0;
   private _angle: number = 0;
+  private _subset: Link[] = []; // this is not connectedLinks but links that make up this link
+
+  public externalLines: Line[] = [];
+
+  public initialExternalLines: Line[] = [];
+
+  //For debugging:
+  public unqiqueRandomID: string =
+    Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
   private static colorOptions = [
     '#0d125a',
@@ -137,7 +165,7 @@ export class RealLink extends Link {
     '#303e9f',
     // '#3948ab',
     // '#3f50b5',
-    '#5c6ac0',
+    // '#5c6ac0',
     // '#7986cb',
     // '#9fa8da',
     '#c5cae9',
@@ -146,15 +174,15 @@ export class RealLink extends Link {
   // TODO: Have an optional argument of forces
 
   public static debugDesiredJointsIDs: any;
+  public renderError: boolean = true;
 
   constructor(
     id: string,
     joints: Joint[],
     mass?: number,
     massMoI?: number,
-    shape?: Shape,
-    bound?: Bound,
-    CoM?: Coord
+    CoM?: Coord,
+    subSet?: Link[]
   ) {
     super(id, joints, mass);
 
@@ -198,12 +226,22 @@ export class RealLink extends Link {
       // console.log('No colors found');
       this._fill = RealLink.colorOptions[0];
     }
-
-    this._d = RealLink.getD(this.joints);
-    // TODO: When you insert a joint onto a link, be sure to utilize this function call
+    if (subSet === undefined || subSet.length === 0) {
+      // this.subset = [];
+    } else {
+      this.subset = subSet;
+    }
     this._CoM = CoM !== undefined ? CoM : RealLink.determineCenterOfMass(joints);
+    this._d = this.getPathString();
+    // TODO: When you insert a joint onto a link, be sure to utilize this function call
     this.updateCoMDs();
     this.updateLengthAndAngle();
+  }
+
+  public reComputeDPath() {
+    this._d = this.getPathString();
+    this._CoM = RealLink.determineCenterOfMass(this.joints);
+    this.updateCoMDs();
   }
 
   updateLengthAndAngle() {
@@ -212,30 +250,398 @@ export class RealLink extends Link {
     // console.warn(this._length, this._angle);
   }
 
-  static getD(allJoints: Joint[]) {
-    // Draw link given the desiredJointIDs
-    function determineL(d: string, coord1: Joint, coord2: Joint, coord3?: Joint) {
-      function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
-        // Maybe it is atan2 that is desired...
-        if (dir === 'neg') {
-          return [
-            new Coord(
-              width * Math.cos(angle + Math.PI) + c1.x,
-              width * Math.sin(angle + Math.PI) + c1.y
-            ),
-            new Coord(
-              width * Math.cos(angle + Math.PI) + c2.x,
-              width * Math.sin(angle + Math.PI) + c2.y
-            ),
-          ];
-        } else {
-          return [
-            new Coord(width * Math.cos(angle) + c1.x, width * Math.sin(angle) + c1.y),
-            new Coord(width * Math.cos(angle) + c2.x, width * Math.sin(angle) + c2.y),
-          ];
+  solveForExternalLines(linkSubset: RealLink[]) {
+    linkSubset.forEach((l) => {
+      l.reComputeDPath();
+    });
+
+    //Populate the parentLink of each external line
+    linkSubset.forEach((link) => {
+      link.externalLines.forEach((line) => {
+        line.parentLink = link;
+      });
+    });
+
+    //create a list of all the external lines of all links in the subset using reduce()
+    let externalLines: Line[] = linkSubset.reduce((acc: Line[], link) => {
+      return acc.concat(link.externalLines);
+    }, []);
+
+    if (externalLines.length === 0) {
+      this.renderError = true;
+      return [];
+    }
+
+    let breakOutCounter = 10000;
+    //For each external line, check for intersections with all other external lines
+    for (let i1 = 0; i1 < externalLines.length; i1++) {
+      const line = externalLines[i1];
+      for (let i = 0; i < externalLines.length; i++) {
+        if (breakOutCounter-- < 0) {
+          console.error('breakOutCounter');
+          this.renderError = true;
+          return [];
+        }
+        const line2 = externalLines[i];
+        if (line === line2) continue;
+        //If the lines intersect, split the line into two lines
+        let count = 0;
+        while (count < 10) {
+          const intersection = line.intersectsWith(line2);
+          if (!intersection) break;
+          const newLine = line.splitAt(intersection);
+          const newLine2 = line2.splitAt(intersection);
+          if (newLine) {
+            line.parentLink?.externalLines.push(newLine);
+            externalLines.push(newLine);
+          }
+          if (newLine2) {
+            line2.parentLink?.externalLines.push(newLine2);
+            externalLines.push(newLine2);
+          }
+          count++;
         }
       }
+    }
 
+    //We need to find duplicate lines for later
+    let duplicateLines: Line[] = [];
+    for (const line of externalLines) {
+      const duplicateFound = externalLines.find((line2) => {
+        return line !== line2 && line2.equals(line);
+      });
+      const inDuplicateLines = duplicateLines.find((line2) => {
+        return line2.equals(line);
+      });
+      if (duplicateFound && !inDuplicateLines) {
+        duplicateLines.push(line);
+      }
+    }
+
+    // If the line is fully inside another link, then remove it
+    externalLines = externalLines.filter((line) => {
+      return !linkSubset.some((link) => {
+        if (link === line.parentLink) return false;
+        return isLineFullyInside(line, link);
+      });
+    });
+
+    // Duplicate lines are only added if we deteced a gap in the path
+    // Check each external line's endpoint, if there is no other line that starts at that point, then we need to add a duplicate line to close the gap
+    const newLinesToAdd = [];
+    for (let i = 0; i < externalLines.length; i++) {
+      const pointToSearch = externalLines[i].endPosition;
+      const found = externalLines.find((line2) => {
+        return line2.startPosition.equals(pointToSearch);
+      });
+      if (!found) {
+        const lineToAdd = duplicateLines.find((line2) => line2.startPosition.equals(pointToSearch));
+        if (lineToAdd) {
+          newLinesToAdd.push(lineToAdd);
+        }
+      }
+    }
+    externalLines.push(...newLinesToAdd);
+
+    //Remove very short lines
+    externalLines = externalLines.filter((line) => {
+      return (
+        line.startPosition.getDistanceTo(line.endPosition) > 0.0036 * SettingsService.objectScale
+      );
+    });
+
+    //As a final step, we need to remove one of the duplicate lines from each pair
+    let returnExternalLines: Line[] = [];
+    externalLines.forEach((line) => {
+      if (returnExternalLines.find((line2) => line2.equals(line))) return;
+      returnExternalLines.push(line);
+    });
+
+    return returnExternalLines;
+
+    function isPointInsideLink(startPosition: Coord, link: RealLink) {
+      //Check if the point is inside of the shape created by the lines
+      //First, draw a line that is infinitely long and check if it intersects with the shape an odd number of times
+      const infiniteLine = new Line(startPosition, new Coord(10000, startPosition.y));
+
+      let intersections = 0;
+      link.initialExternalLines.forEach((line) => {
+        const intersectionPoint = infiniteLine.intersectsWith(line);
+        const otherIntersectionPoint = infiniteLine.clone().reverse().intersectsWith(line);
+
+        //Add two to the intersection count if intersectionPoint and otherIntersectionPoint are not equal
+        if (intersectionPoint && otherIntersectionPoint) {
+          if (!intersectionPoint.equals(otherIntersectionPoint)) {
+            intersections += 2;
+          } else {
+            intersections += 1;
+          }
+        } else if (intersectionPoint || otherIntersectionPoint) {
+          intersections += 1;
+        }
+      });
+
+      //If the number of intersections is odd, then the point is inside the shape
+      return intersections % 2 === 1;
+    }
+
+    function isLineFullyInside(line: Line, link: RealLink): boolean {
+      const tempShortenedLine = line.clone().shorten(0.02 * SettingsService.objectScale);
+
+      //First we need to check if both endpoints of the line are inside the link
+      if (
+        isPointInsideLink(tempShortenedLine.startPosition, link) &&
+        isPointInsideLink(tempShortenedLine.endPosition, link)
+      ) {
+        //If both endpoints are inside the link, then we need to check if the line is fully inside the link
+        //To do this, we will check if the line intersects with any of the lines of the link
+        return true;
+        // return !link.externalLines.some((linkLine) => {
+        //   return linkLine.intersectsWith(line);
+        // });
+      }
+      return false;
+    }
+  }
+
+  getCompoundPathString() {
+    this.renderError = false;
+    const linkSubset: RealLink[] = this.subset as RealLink[];
+
+    //This is a very long function that returns the full external clockwise path for the combined shape
+    this.externalLines = this.solveForExternalLines(linkSubset);
+
+    //If there are no external lines to draw, then return an empty string
+    if (this.externalLines.length === 0) {
+      this.renderError = true;
+      return '';
+    }
+
+    // Shorten all lines (uncomment block for visual debugging)
+    // for (let line of this.externalLines) {
+    //   line = line.shorten(0.5);
+    // }
+    NewGridComponent.debugPoints = [];
+    NewGridComponent.debugValue = [];
+    NewGridComponent.debugLines = this.externalLines;
+
+    //Convert external lines to a set so we can keep track of which lines have been used
+    const externalLinesSet = new Set(this.externalLines);
+
+    let pathString = '';
+
+    let timeoutCounter = 1000;
+
+    while (externalLinesSet.size > 1) {
+      //Pick the first line from the set
+      let currentLine: Line = externalLinesSet.values().next().value;
+
+      let veryFirstPoint = currentLine.endPosition.clone();
+      while (!currentLine.endPosition.equals(veryFirstPoint) || isNewShape(pathString)) {
+        if (timeoutCounter-- < 0) {
+          console.log('Timeout');
+          this.renderError = true;
+          return pathString;
+        }
+        //Find the next line that starts at the end of the current line
+        const nextLine = [...externalLinesSet].find((line) => {
+          return line.startPosition.looselyEquals(currentLine.endPosition);
+        });
+
+        if (!nextLine) break;
+        externalLinesSet.delete(nextLine);
+
+        if (
+          //When there are two lines intersecting, create a fillet between them
+          !currentLine.isArc &&
+          !nextLine.isArc &&
+          //If the angle between the two lines. Wrap to -pi to pi. Then check if abs(angle) is less than 90 degrees
+          Math.abs(wrapAngle(nextLine.angle - currentLine.angle)) > degToRad(10) &&
+          1
+        ) {
+          let [currentLineOffsetPoint, nextLineOffsetPoint, radius] =
+            this.computeArcPointsAndRadius(currentLine, nextLine, SettingsService.objectScale);
+
+          currentLine.endPosition = currentLineOffsetPoint;
+          nextLine.startPosition = nextLineOffsetPoint;
+
+          if (isNewShape(pathString)) {
+            pathString += 'M ' + currentLine.endPosition.x + ' ' + currentLine.endPosition.y + ' ';
+          } else {
+            pathString += currentLine.toPathString();
+          }
+
+          pathString += getArcPathString(nextLine.startPosition, radius);
+        } else {
+          //Otherwise, just draw a line between the two points
+          if (isNewShape(pathString)) {
+            pathString += 'M ' + currentLine.endPosition.x + ' ' + currentLine.endPosition.y + ' ';
+          } else {
+            pathString += currentLine.toPathString();
+          }
+        }
+        currentLine = nextLine;
+      }
+      pathString += currentLine.toPathString();
+      pathString += 'Z ';
+    }
+    return pathString;
+  }
+
+  private computeArcPointsAndRadius(
+    currentLine: Line,
+    nextLine: Line,
+    desiredArcRadius: number
+  ): [Coord, Coord, number] {
+    //We can modify the currentLine.endPosition and nextLine.startPosition to draw an arc between them
+    const arcOffset = Math.min(desiredArcRadius, currentLine.length / 2, nextLine.length / 2);
+    //Find the offsetPoint for the currentLine, which is arcOffset units away from the end of the line towards the start of the line
+    const currentLineOffsetPoint = currentLine.startPosition
+      .clone()
+      .subtract(currentLine.endPosition)
+      .normalize()
+      .multiply(arcOffset)
+      .add(currentLine.endPosition);
+
+    //Find the offsetPoint for the nextLine, which is arcOffset units away from the start of the line towards the end of the line
+    const nextLineOffsetPoint = nextLine.endPosition
+      .clone()
+      .subtract(nextLine.startPosition)
+      .normalize()
+      .multiply(arcOffset)
+      .add(nextLine.startPosition);
+
+    NewGridComponent.debugPoints.push(currentLineOffsetPoint);
+    NewGridComponent.debugPoints.push(nextLineOffsetPoint);
+
+    //Find the angle between the two lines
+    const angleBetweenLines = nextLine.angle - currentLine.angle;
+    NewGridComponent.debugValue = radToDeg(angleBetweenLines).toFixed(2);
+    const radius = arcOffset * Math.tan((Math.PI - angleBetweenLines) / 2);
+
+    return [currentLineOffsetPoint, nextLineOffsetPoint, radius];
+  }
+
+  getPathString(): string {
+    const link = this as RealLink;
+    // console.error('Get path string called');
+    if (link.subset.length == 0) {
+      // console.log('Simple path starting for ' + link.id, link);
+      return link.getSimplePathString();
+    } else {
+      // console.log('Compound path starting for ' + link.id, link);
+      return link.getCompoundPathString();
+    }
+  }
+
+  getSimplePathString(): string {
+    this.externalLines = [];
+    let l = this;
+    // Draw link given the desiredJointIDs
+    const allJoints = l.joints;
+
+    //Convert joints to simple x, y array
+    const points = allJoints.map((j) => [j.x, j.y]);
+    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
+
+    //Match resuling x,y points to joints
+    let desiredJointsIDs: string = '';
+    hullPoints.forEach((point: any) => {
+      const joint = allJoints.find((j) => j.x === point[0] && j.y === point[1]);
+      if (joint) desiredJointsIDs += joint.id;
+    });
+
+    //Cut off the last once since it is the same as the first
+    desiredJointsIDs = desiredJointsIDs.substring(0, desiredJointsIDs.length - 1);
+
+    //This is just for debugging display
+    // l.debugDesiredJointsIDs = desiredJointsIDs;
+    // RealLink.debugDesiredJointsIDs = desiredJointsIDs;
+
+    const jointIDtoIndex = new Map<string, number>();
+    allJoints.forEach((j, ind) => {
+      jointIDtoIndex.set(j.id, ind);
+    });
+
+    let width: number = SettingsService.objectScale / 4;
+    let d = '';
+
+    let clockWise = 'Will be set later';
+
+    let j: number;
+    for (let i = 0; i < desiredJointsIDs.length; i++) {
+      j = (i + 1) % desiredJointsIDs.length;
+      if (desiredJointsIDs.length === 2) {
+        const [updatedD, newLines] = determineL(
+          d,
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
+        );
+        d = updatedD;
+        this.externalLines = this.externalLines.concat(newLines);
+      } else {
+        const k = (i + 2) % desiredJointsIDs.length;
+        const [updatedD, newLines] = determineL(
+          d,
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!],
+          allJoints[jointIDtoIndex.get(desiredJointsIDs[k])!]
+        );
+        d = updatedD;
+        this.externalLines = this.externalLines.concat(newLines);
+      }
+    }
+
+    const splitPath = d.split(' ');
+
+    //Get the final joint
+    const finalJoint = allJoints[jointIDtoIndex.get(desiredJointsIDs[j!])!];
+    let lastPos = this.externalLines[this.externalLines.length - 1].endPosition;
+    let startPos = this.externalLines[0].startPosition;
+    lastPos = new Coord(lastPos.x, lastPos.y);
+    startPos = new Coord(startPos.x, startPos.y);
+    d +=
+      ' A ' +
+      width.toString() +
+      ' ' +
+      width.toString() +
+      ' 0 0 ' +
+      clockWise +
+      ' ' +
+      startPos.x +
+      ' ' +
+      startPos.y;
+
+    this.externalLines.push(new Arc(lastPos, startPos, finalJoint));
+
+    if (!RealLink.isClockwise(this.externalLines[0], this.CoM)) {
+      // console.log('Link is not clockwise');
+      this.externalLines.reverse();
+      //If the link is not clockwise, reverse the order of the external lines
+      for (let i = 0; i < this.externalLines.length; i++) {
+        const line = this.externalLines[i];
+        //Swap start and end positions
+        const temp = line.startPosition;
+        line.startPosition = line.endPosition;
+        line.endPosition = temp;
+        line.resetInitialPosition();
+      }
+    }
+
+    //Now set the next external line for each line
+    this.externalLines.forEach((line, ind) => {
+      const nextLine = this.externalLines[(ind + 1) % this.externalLines.length];
+      line.next = nextLine;
+    });
+
+    this.initialExternalLines = this.externalLines.map((line) => line.clone());
+
+    d += ' Z ';
+    this.renderError = false;
+
+    return d;
+
+    function determineL(d: string, coord1: Joint, coord2: Joint, coord3?: Joint): [string, Line[]] {
       // find slope between two points
       const m = determineSlope(coord1.x, coord1.y, coord2.x, coord2.y);
       // find normal slope of given slope
@@ -272,6 +678,9 @@ export class RealLink extends Link {
           [point1, point2] = [point2a, point2b];
         }
       }
+
+      const returnLines: Line[] = [];
+
       if (d === '') {
         clockWise = coord1.y > point1.y ? '1' : '0';
         if (allJoints.length > 3) {
@@ -279,8 +688,14 @@ export class RealLink extends Link {
         }
         d += 'M ' + point1.x.toString() + ' ' + point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
+        returnLines.push(new Line(point1, point2));
       } else {
         // The end position is being inserted here
+        // Get the last position by splitting the string
+        const splitPath = d.split(' ');
+        const lastX = splitPath[splitPath.length - 2];
+        const lastY = splitPath[splitPath.length - 1];
+        const lastPosition = new Coord(Number(lastX), Number(lastY));
         d +=
           ' A ' +
           width.toString() +
@@ -293,78 +708,72 @@ export class RealLink extends Link {
           ' ' +
           point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
+        //Get the current joint we are arcing around
+        const currentJoint = allJoints[jointIDtoIndex.get(coord1.id)!];
+        returnLines.push(new Arc(lastPosition, point1, currentJoint));
+        returnLines.push(new Line(point1, point2));
       }
-      return d;
-    }
+      return [d, returnLines];
 
-    //MAIN FUNCTION STARTS HERE
-    //MAIN FUNCTION STARTS HERE
-    //MAIN FUNCTION STARTS HERE
-
-    //Convert joints to simple x, y array
-    const points = allJoints.map((j) => [j.x, j.y]);
-    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
-
-    //Match resuling x,y points to joints
-    let desiredJointsIDs: string = '';
-    hullPoints.forEach((point: any) => {
-      const joint = allJoints.find((j) => j.x === point[0] && j.y === point[1]);
-      if (joint) desiredJointsIDs += joint.id;
-    });
-
-    //Cut off the last once since it is the same as the first
-    desiredJointsIDs = desiredJointsIDs.substring(0, desiredJointsIDs.length - 1);
-
-    //This is just for debugging display
-    this.debugDesiredJointsIDs = desiredJointsIDs;
-
-    const jointIDtoIndex = new Map<string, number>();
-    allJoints.forEach((j, ind) => {
-      jointIDtoIndex.set(j.id, ind);
-    });
-
-    let width: number = SettingsService.objectScale.value / 4;
-    let d = '';
-
-    let clockWise = 'Will be set later';
-
-    for (let i = 0; i < desiredJointsIDs.length; i++) {
-      const j = (i + 1) % desiredJointsIDs.length;
-      if (desiredJointsIDs.length === 2) {
-        d = determineL(
-          d,
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!]
-        );
-      } else {
-        const k = (i + 2) % desiredJointsIDs.length;
-        d = determineL(
-          d,
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[i])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[j])!],
-          allJoints[jointIDtoIndex.get(desiredJointsIDs[k])!]
-        );
+      function determinePoint(angle: number, c1: Coord, c2: Coord, dir: string) {
+        // Maybe it is atan2 that is desired...
+        if (dir === 'neg') {
+          return [
+            new Coord(
+              width * Math.cos(angle + Math.PI) + c1.x,
+              width * Math.sin(angle + Math.PI) + c1.y
+            ),
+            new Coord(
+              width * Math.cos(angle + Math.PI) + c2.x,
+              width * Math.sin(angle + Math.PI) + c2.y
+            ),
+          ];
+        } else {
+          return [
+            new Coord(width * Math.cos(angle) + c1.x, width * Math.sin(angle) + c1.y),
+            new Coord(width * Math.cos(angle) + c2.x, width * Math.sin(angle) + c2.y),
+          ];
+        }
       }
     }
-
-    const splitPath = d.split(' ');
-
-    const startX = splitPath[1];
-    const startY = splitPath[2];
-    d +=
-      ' A ' +
-      width.toString() +
-      ' ' +
-      width.toString() +
-      ' 0 0 ' +
-      clockWise +
-      ' ' +
-      startX +
-      ' ' +
-      startY;
-
-    return d;
   }
+
+  static isClockwise(l: Line, center: Coord) {
+    const lineStart: Coord = l.startPosition;
+    const lineEnd: Coord = l.endPosition;
+
+    const vectorStartToCenter = {
+      x: center.x - lineStart.x,
+      y: center.y - lineStart.y,
+    };
+
+    const vectorEndToCenter = {
+      x: center.x - lineEnd.x,
+      y: center.y - lineEnd.y,
+    };
+
+    const crossProduct =
+      vectorStartToCenter.x * vectorEndToCenter.y - vectorStartToCenter.y * vectorEndToCenter.x;
+
+    return crossProduct > 0;
+  }
+
+  // static getLineIntersection(thisLine: Line, nextLine: Line): Coord | null {
+  //   const [x, y] = line_intersect(
+  //     thisLine.startPosition.x,
+  //     thisLine.startPosition.y,
+  //     thisLine.endPosition.x,
+  //     thisLine.endPosition.y,
+  //     nextLine.startPosition.x,
+  //     nextLine.startPosition.y,
+  //     nextLine.endPosition.x,
+  //     nextLine.endPosition.y
+  //   );
+  //   if (x === null || y === null) {
+  //     return null;
+  //   }
+  //   return new Coord(x, y);
+  // }
 
   static determineCenterOfMass(joints: Joint[]) {
     let com_x = 0;
@@ -466,20 +875,22 @@ export class RealLink extends Link {
   }
 
   updateCoMDs() {
+    //This is such a bad way of doing this. Just import the SVG file from the assets folder and use that instead of constructing the exact same thing every time.
+    const radius = SettingsService.objectScale * 0.2;
     this._CoM_d1 =
       'M' +
       this.CoM.x +
       ' ' +
       this.CoM.y +
       ' ' +
-      (this.CoM.x - 0.25) +
+      (this.CoM.x - radius) +
       ' ' +
       this.CoM.y +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
+      `A ${radius} ${radius} 0 0 0 ` +
       this.CoM.x +
       ' ' +
-      (this.CoM.y + 0.25);
+      (this.CoM.y + radius);
     this._CoM_d2 =
       'M' +
       this.CoM.x +
@@ -488,10 +899,10 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.x +
       ' ' +
-      (this.CoM.y + 0.25) +
+      (this.CoM.y + radius) +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
-      (this.CoM.x + 0.25) +
+      `A ${radius} ${radius} 0 0 0` +
+      (this.CoM.x + radius) +
       ' ' +
       this.CoM.y;
     this._CoM_d3 =
@@ -500,14 +911,14 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.y +
       ' ' +
-      (this.CoM.x + 0.25) +
+      (this.CoM.x + radius) +
       ' ' +
       this.CoM.y +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
+      `A ${radius} ${radius} 0 0 0 ` +
       this.CoM.x +
       ' ' +
-      (this.CoM.y - 0.25);
+      (this.CoM.y - radius);
     this._CoM_d4 =
       'M' +
       this.CoM.x +
@@ -516,12 +927,20 @@ export class RealLink extends Link {
       ' ' +
       this.CoM.x +
       ' ' +
-      (this.CoM.y - 0.25) +
+      (this.CoM.y - radius) +
       ' ' +
-      'A0.25 0.25 0 0 0 ' +
-      (this.CoM.x - 0.25) +
+      `A ${radius} ${radius} 0 0 0 ` +
+      (this.CoM.x - radius) +
       ' ' +
       this.CoM.y;
+  }
+
+  get subset(): Link[] {
+    return this._subset;
+  }
+
+  set subset(value: Link[]) {
+    this._subset = value;
   }
 }
 
@@ -529,6 +948,14 @@ export class Piston extends Link {
   constructor(id: string, joints: Joint[], mass?: number) {
     super(id, joints, mass);
   }
+}
+
+function isNewShape(pathString: string) {
+  return pathString === '' || pathString.substring(pathString.length - 2) === 'Z ';
+}
+
+function getArcPathString(endPoint: Coord, radius: number) {
+  return 'A ' + radius + ' ' + radius + ' 0 0 0 ' + endPoint.x + ' ' + endPoint.y + ' ';
 }
 
 // export class BinaryLink extends RealLink {}

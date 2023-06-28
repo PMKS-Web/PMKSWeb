@@ -10,10 +10,49 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  #collapsibleContainer {
+    overflow-y: hidden;
+  }
+
+  .activeTabPill {
+    background-color: mat.get-color-from-palette($primary-palette, 50);
+    width: 100%;
+    margin-left: -5px;
+    margin-top: 0px;
+    height: 53px;
+    position: absolute;
+    z-index: -1;
+
+    //compute border to be inside the container
+    box-sizing: border-box;
+    border-left: 5px solid mat.get-color-from-palette($primary-palette, 500);
+
+  }
+
+  //.buttonGroup {
+  //  padding: 4px;
+  //  display: flex;
+  //  flex-direction: row;
+  //
+  //  .activePill {
+  //    background-color: mat.get-color-from-palette($primary-palette, 500);
+  //    height: calc(100% + 8px);
+  //    width: 5px;
+  //    margin-left: -5px;
+  //    margin-top: -4px;
+  //  }
+  //}
+
+  .leftButton {
+    mat-icon {
+      transform: scale(1.5);
+    }
+  }
+
   .panel {
     position: absolute;
     top: 30px;
-    left: 45px;
+    left: 58px;
     // width: 300px;
     overflow-x: hidden;
     overflow-y: scroll;
@@ -26,7 +65,7 @@
 
     animation-duration: 4s;
 
-    // @include mat.elevation(4);
+    //@include mat.elevation(4);
     //Check here for 2nd parameter options: node_modules/@angular/material/core/theming/_palette.scss: Line 674
     // background-color: mat.get-color-from-palette($background, 'background');
     // background-color: mat.get-color-from-palette($primary-palette, 50);
@@ -36,12 +75,14 @@
       // left: 0;
       width: 270px; //Be careful, there are multiple places to change this value
     }
+
     .page2 {
       // position: absolute;
       // top: 0;
       // left: 0;
       width: 270px; //Be careful, there are multiple places to change this value
     }
+
     .page3 {
       // position: absolute;
       // top: 0;
@@ -51,19 +92,20 @@
   }
 
   .tabContainer {
+
+    @include mat.elevation(2);
+    background-color: white;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 10px 0;
-    z-index: 10;
+    gap: 5px;
+    padding: 2.5px 5px;
+    z-index: 1;
 
     position: absolute;
     top: 30px;
-    left: 10px;
-    width: 35px;
-    height: calc(100% - 50px);
+    left: 0px;
+    //width: 48px;
+    height: calc(100% - 35px);
 
     app-tab {
       flex-grow: 1;

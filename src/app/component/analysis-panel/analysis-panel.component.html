@@ -1,15 +1,5 @@
 <div id='analysisWrapper'>
 
-  <panel-section-collapsible
-    [warning]='true'
-    [expanded]='false'
-    id='placeholderContainer'
-    *ngIf="this.activeSrv.objType == 'Grid' && mechanismService.joints.length != 0"
-  >
-    <title-block alwaysShown icon='expand_more'>Interactive Help</title-block>
-    <subtitle-block alwaysShown>Select a joint or link to edit properties.</subtitle-block>
-    <img src='assets/gifs/Click.gif' />
-  </panel-section-collapsible>
   <!-- 
     //Param 1: analysis: "force","stress","kinematic"
 
@@ -24,22 +14,63 @@
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
   -->
 
-  <!-- Invalid Mech-->
-  <panel-section id='placeholderContainer' *ngIf='!validMechanisms()'>
-    <p id='placeholderText'>
-      This linkage is not valid. It could be missing an input or have too many / little DOfs.
-    </p>
-    <img id='placeholder' src='assets/placeholder.svg' />
-  </panel-section>
+  <panel-section-collapsible
+    [warning]='true'
+    [expanded]='false'
+    id='placeholderContainer'
+    *ngIf='!this.mechanismService.oneValidMechanismExists()'
+  >
+    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
+    <subtitle-block alwaysShown>This linkage is not valid and cannot be analyzed. Make sure all requirements are met:
+    </subtitle-block>
+    <mat-list class='example-list-wrapping'>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Must have one input</span>
+        <span>Mechanisms should have 1 and only one joint defined as a input.</span>
+      </mat-list-item>
+      <mat-list-item lines='2'>
+        <span matListItemTitle>At least one joint is grounded</span>
+        <span>An input joint doubles as a ground joint.</span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>No orphaned joints</span>
+        <span>
+          Joints that are not a part of any link are orphaned. Remove or connect
+          orphaned joints.
+        </span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>No free floating links</span>
+        <span>
+          Links that are not part of a grounded joint are free floating. Remove or
+          connect free floating links.
+        </span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Degress of freedom must be one</span>
+        <span>DOF = 3*(#_of_Links-1) - 2*(#_of_joints). Count both revolute joints and slider joints.</span>
+      </mat-list-item>
+      <mat-list-item lines='3'>
+        <span matListItemTitle>Welded links count as one link</span>
+        <span>
+          If two or more links are welded together at a joint they should only be counted as 1 link.
+        </span>
+      </mat-list-item>
+    </mat-list>
+  </panel-section-collapsible>
 
   <!-- Valid Mech but Nothing Selected -->
-  <panel-section
+
+  <panel-section-collapsible
+    [warning]='true'
+    [expanded]='false'
     id='placeholderContainer'
-    *ngIf="validMechanisms() && this.activeSrv.objType == 'Nothing'"
+    *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
   >
-    <p id='placeholderText'>Select a part of the linkage to analyze it.</p>
-    <img id='placeholder' src='assets/placeholder.svg' />
-  </panel-section>
+    <title-block alwaysShown icon='expand_more'>Analysis Help</title-block>
+    <subtitle-block alwaysShown>Select a part of the linkage to analyze it.</subtitle-block>
+    <img src='assets/gifs/Click.gif' />
+  </panel-section-collapsible>
 
   <!-- Joint Kinematics-->
   <panel-section-collapsible
@@ -49,9 +80,12 @@
     (opened)="graphExpanded['JKineAna'] = true"
     (closed)="graphExpanded['JKineAna'] = false"
   >
-    <title-block alwaysShown icon='expand_less'>
-      Kinematic Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedJoint.id | uppercase }}
+    <title-block alwaysShown icon='expand_less'
+                 description='The input speed is currently set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
+      the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
+    settings panel.'>
+      Kinematic Analysis for Joint
+      {{this.activeSrv.selectedJoint.name}}
     </title-block>
 
     <mat-expansion-panel
@@ -61,7 +95,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Position of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Position of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -74,6 +108,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JPos"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Pos'
@@ -88,7 +123,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Velocity of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Velocity of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -101,6 +136,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Vel'
@@ -115,7 +151,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Acceleration of Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Acceleration of Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -128,6 +164,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Acc'
@@ -145,18 +182,17 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Joint'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Force Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedJoint.id | uppercase }}
+      Force Analysis for Joint
+      {{this.activeSrv.selectedJoint.name}}
     </title-block>
 
     <radio-block
-      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other.'
-      option1='Global (20 rpm)'
-      option2='Equilibrium (0 rpm)'
-      option3='Other'
+      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set in the settings panel.'
+      option1='Static (Equilibrium)'
+      option2='In-motion (Dynamic)'
       [formGroup]='this.inputSpeedFormGroup'
       _formControl='speed'
-    >Input Speed
+    >Force Analysis Type
     </radio-block
     >
 
@@ -167,7 +203,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Force on Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Force on Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -180,6 +216,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JForce"]'
         analysis='force'
         analysisType="{{ this.inputSpeedFormGroup.value.speed === 'One' ? 'dynamic' : 'static' }}"
         mechProp='Joint Forces'
@@ -195,7 +232,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Input Torque at Joint {{ this.activeSrv.selectedJoint.id | uppercase }}
+          Input Torque at Joint {{this.activeSrv.selectedJoint.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -208,6 +245,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JInputForce"]'
         analysis='force'
         analysisType="{{ this.inputSpeedFormGroup.value.speed === 'One' ? 'dynamic' : 'static' }}"
         mechProp='Input Torque'
@@ -224,8 +262,11 @@
     id='analysis-panel'
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
-    <title-block alwaysShown icon='expand_less'>
-      Kinematic Analysis for {{ this.activeSrv.objType }} {{ this.activeSrv.selectedLink.id | uppercase }}
+    <title-block alwaysShown icon='expand_less'
+                 description='The input speed is currently set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
+      the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
+    settings panel.'>
+      Kinematic Analysis for Link {{this.activeSrv.selectedLink.name}}
     </title-block>
 
     <!-- <subtitle-block>Kinematics</subtitle-block> -->
@@ -250,7 +291,8 @@
       (closed)="graphExpanded['LAng'] = false"
     >
       <mat-expansion-panel-header>
-        <mat-panel-title> Angle of Link {{ this.activeSrv.selectedLink.id | uppercase }} </mat-panel-title>
+        <mat-panel-title> Angle of
+          Link {{this.activeSrv.selectedLink.name}} </mat-panel-title>
         <mat-panel-description>
           <mat-icon
             matTooltip='The angle of the selected above the horizontal of the link graphed over time'
@@ -262,6 +304,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAng"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Pos'
@@ -277,7 +320,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Velocity of Link {{ this.activeSrv.selectedLink.id | uppercase }}
+            Angular Velocity of Link {{this.activeSrv.selectedLink.name}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -291,6 +334,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAngVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Vel'
@@ -306,7 +350,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Angular Acceleration of Link {{ this.activeSrv.selectedLink.id | uppercase }}
+            Angular Acceleration of Link {{this.activeSrv.selectedLink.name}}
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -320,6 +364,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAngAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Acc'
@@ -328,7 +373,7 @@
     </mat-expansion-panel>
 
     <subtitle-block style='margin-top: 20px'
-    >Center of Mass (COM) of Link {{ this.activeSrv.selectedLink.id | uppercase }}</subtitle-block
+    >Center of Mass (COM) of Link {{this.activeSrv.selectedLink.name}}</subtitle-block
     >
 
     <mat-expansion-panel
@@ -339,7 +384,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Position of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Position of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -353,6 +398,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LPos"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Pos"
@@ -368,7 +414,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Velocity of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Velocity of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -382,6 +428,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Vel"
@@ -397,7 +444,7 @@
       <mat-expansion-panel-header>
         <mat-panel-title>
           <mat-panel-title>
-            Acceleration of Link {{ this.activeSrv.selectedLink.id | uppercase }}'s COM
+            Acceleration of Link {{this.activeSrv.selectedLink.name}}'s COM
           </mat-panel-title>
         </mat-panel-title>
         <mat-panel-description>
@@ -411,6 +458,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Acc"
@@ -428,18 +476,16 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
     <title-block alwaysShown icon='expand_less'>
-      Force Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedLink.id | uppercase }}
+      Force Analysis for Link {{this.activeSrv.selectedLink.name}}
     </title-block>
 
     <radio-block
-      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. For dynamics, the global animation speed can be used, or a custom speed can be set by selecting other.'
-      option1='Global (20 rpm)'
-      option2='Equilibrium (0 rpm)'
-      option3='Other'
+      tooltip='Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set in the settings panel.'
+      option1='Static (Equilibrium)'
+      option2='In-motion (Dynamic)'
       [formGroup]='this.inputSpeedFormGroup'
       _formControl='speed'
-    >Input Speed
+    >Force Analysis Type
     </radio-block
     >
 
@@ -450,7 +496,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Force on Link {{ this.activeSrv.selectedLink.id | uppercase }}
+          Axial Force on Link {{this.activeSrv.selectedLink.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -478,7 +524,7 @@
     >
       <mat-expansion-panel-header>
         <mat-panel-title>
-          Axial Stress on Link {{ this.activeSrv.selectedLink.id | uppercase }}
+          Axial Stress on Link {{this.activeSrv.selectedLink.name}}
         </mat-panel-title>
         <mat-panel-description>
           <mat-icon
@@ -506,8 +552,7 @@
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Force'"
   >
     <title-block alwaysShown>
-      Analysis for {{ this.activeSrv.objType }}
-      {{ this.activeSrv.selectedForce.id | uppercase }}
+      Analysis for Force {{this.activeSrv.selectedForce.name}}
     </title-block>
 
     <subtitle-block>

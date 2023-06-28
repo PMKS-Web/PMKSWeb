@@ -97,5 +97,17 @@ export class AppComponent {
       'unweld_joint',
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/unweld_joint.svg')
     );
+    this.matIconRegistry.addSvgIcon(
+      'github',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/github.svg')
+    );
+    this.matIconRegistry.addSvgIcon(
+      'edit_outline',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/edit.svg')
+    );
+    this.matIconRegistry.addSvgIcon(
+      'synthesis',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/synthesis.svg')
+    );
   }
 }

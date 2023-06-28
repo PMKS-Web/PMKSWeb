@@ -48,16 +48,16 @@
   }
 
   #pathsHolder {
-    stroke: mat.get-color-from-palette($accent-palette, 500);
+    stroke: mat.get-color-from-palette($primary-palette, 900);
   }
 
   .joint-default {
     filter: url(#elevation-1);
-    fill: mat.get-color-from-palette($accent-palette, 200);
+    fill: mat.get-color-from-palette($accent-palette, 50);
   }
   .joint-highlight {
     filter: url(#elevation-2);
-    fill: lighten(mat.get-color-from-palette($accent-palette, 200), 3%);
+    fill: mat.get-color-from-palette($accent-palette, 100);
   }
   .joint-dragging {
     filter: url(#elevation-3);
@@ -65,12 +65,43 @@
   }
   .joint-selected {
     filter: url(#elevation-1);
-    fill: #f44336;
+    fill: mat.get-color-from-palette($accent-palette, 400);
   }
 
   .link-selected {
-    stroke: #f44336;
+    stroke: mat.get-color-from-palette($accent-palette, 400);
   }
 
+  #mouseLocation {
+    position: absolute;
+    top: 35px;
+    left: 300px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .forceEndpointSquare {
+    fill: mat.get-color-from-palette($accent-palette, 50);
+    stroke: mat.get-color-from-palette($accent-palette, 500);
+
+    &:hover {
+      fill: mat.get-color-from-palette($accent-palette, 100);
+    }
+  }
+
+  .forceLine {
+    stroke: mat.get-color-from-palette($primary-palette, 900);
+  }
+
+  .forceArrow {
+    fill: mat.get-color-from-palette($primary-palette, 900);
+  }
+
+  .forceAnchor {
+    fill: mat.get-color-from-palette($primary-palette, 900);
+  }
+
+  .forceSelectedLine {
+    stroke: mat.get-color-from-palette($accent-palette, 500);
+  }
 
 }

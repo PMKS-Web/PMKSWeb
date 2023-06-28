@@ -2,13 +2,13 @@ import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@
 import { NgForm } from '@angular/forms';
 // import {switchMapTo} from "rxjs";
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { GridComponent } from '../grid/grid.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { RealJoint, RevJoint } from '../../model/joint';
+import { connect } from 'rxjs';
 
 @Component({
   selector: 'app-animation-bar',
@@ -16,12 +16,12 @@ import { RealJoint, RevJoint } from '../../model/joint';
   styleUrls: ['./animation-bar.component.scss'],
 })
 export class AnimationBarComponent implements OnInit, AfterViewInit {
-  animating: boolean = false;
+  userIsDragging: boolean = false;
+
+  wasAnimating: boolean = false;
 
   static animate: boolean = false;
 
-  static direction: string = 'ccw';
-  static speed: string = 'medium';
   static playButton: HTMLInputElement;
   static pauseButton: HTMLInputElement;
   static stopButton: HTMLInputElement;
@@ -32,15 +32,15 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   timestepDisplay: number = 0;
 
   constructor(
-    private svgGrid: SvgGridService,
-    private mechanismService: MechanismService,
+    public svgGrid: SvgGridService,
+    public mechanismService: MechanismService,
     private settingsService: SettingsService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
-    this.mechanismService.onMechPositionChange.subscribe({
-      next: (v) => (this.timestepDisplay = Number((v / 125).toFixed(2))),
+    this.mechanismService.onMechPositionChange.subscribe((v) => {
+      this.timestepDisplay = Number((v / 62.5).toFixed(2));
     });
   }
 
@@ -54,14 +54,15 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     );
   }
 
-  onSubmit(simpleForm: any) {
-    if (simpleForm.value.timestep > this.maxTimeSteps()) {
-      simpleForm.value.timestep = this.maxTimeSteps();
+  onNewTimeSubmit(simpleForm: any) {
+    console.log(simpleForm.value.timestep);
+    if (simpleForm.value.timestep * 62.5 > this.maxTimeSteps()) {
+      simpleForm.value.timestep = this.maxTimeSteps() / 62.5;
     } else if (simpleForm.value.timestep < 0) {
       simpleForm.value.timestep = 0;
     }
     this.mechanismService.animate(
-      Number(simpleForm.value.timestep) * 125,
+      Number(simpleForm.value.timestep * 62.5),
       AnimationBarComponent.animate
     );
   }
@@ -74,52 +75,45 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onDirectionChange() {
-    AnimationBarComponent.direction = AnimationBarComponent.direction === 'ccw' ? 'cw' : 'ccw';
-    ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
-    this.mechanismService.updateMechanism();
-  }
-
-  getDirection() {
-    return AnimationBarComponent.direction;
-  }
-
-  onSpeedChange() {
-    switch (AnimationBarComponent.speed) {
-      case 'slow':
-        AnimationBarComponent.speed = 'medium';
-        this.mechanismService.mechanismAnimationIncrement = 2;
-        break;
-      case 'medium':
-        AnimationBarComponent.speed = 'fast';
-        this.mechanismService.mechanismAnimationIncrement = 3;
-        break;
-      case 'fast':
-        AnimationBarComponent.speed = 'slow';
-        this.mechanismService.mechanismAnimationIncrement = 1;
-        break;
-    }
-  }
+  // onDirectionChange() {
+  //   AnimationBarComponent.direction = AnimationBarComponent.direction === 'ccw' ? 'cw' : 'ccw';
+  //   ToolbarComponent.clockwise = AnimationBarComponent.direction === 'cw';
+  //   this.mechanismService.updateMechanism();
+  // }
+  //
+  // getDirection() {
+  //   return AnimationBarComponent.direction;
+  // }
+  //
+  // onSpeedChange() {
+  //   switch (AnimationBarComponent.speed) {
+  //     case 'slow':
+  //       AnimationBarComponent.speed = 'medium';
+  //       this.mechanismService.mechanismAnimationIncrement = 2;
+  //       break;
+  //     case 'medium':
+  //       AnimationBarComponent.speed = 'fast';
+  //       this.mechanismService.mechanismAnimationIncrement = 3;
+  //       break;
+  //     case 'fast':
+  //       AnimationBarComponent.speed = 'slow';
+  //       this.mechanismService.mechanismAnimationIncrement = 1;
+  //       break;
+  //   }
+  // }
 
   startAnimation(state: string) {
-    if (this.mechanismService.mechanisms[0] === undefined) {
-      return;
-    }
-    if (this.mechanismService.mechanisms[0].joints.length < 3) {
-      return;
-    }
+    // console.log('startAnimation ' + state);
     switch (state) {
-      case 'play':
+      case 'pause':
         AnimationBarComponent.animate = false;
-        this.animating = false;
         this.mechanismService.animate(
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
         );
         break;
-      case 'pause':
+      case 'play':
         AnimationBarComponent.animate = true;
-        this.animating = true;
         this.mechanismService.animate(
           this.mechanismService.mechanismTimeStep,
           AnimationBarComponent.animate
@@ -127,7 +121,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
         break;
       case 'stop':
         AnimationBarComponent.animate = false;
-        this.animating = false;
         this.mechanismService.animate(0, AnimationBarComponent.animate);
         break;
     }
@@ -136,21 +129,6 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     } else {
       this.settingsService.animating.next(false);
     }
-  }
-
-  setAnim() {
-    if (AnimationBarComponent.adjustAnimation) {
-      this.mechanismService.animate(
-        Number(AnimationBarComponent.slider.value),
-        AnimationBarComponent.animate
-      );
-    }
-  }
-
-  //Where true means the user is dragging the animation bar
-  adjustMechanismAnimation(condition: boolean) {
-    AnimationBarComponent.adjustAnimation = condition;
-    this.setAnim();
   }
 
   noJointExsits() {
@@ -185,23 +163,45 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
     this.svgGrid.zoomOut();
   }
 
-  onZoomResetPressed() {
-    this.svgGrid.scaleToFitLinkage();
-  }
-
-  getSpeed() {
-    return AnimationBarComponent.speed;
-  }
-
-  getMechanismTimeStep() {
-    return this.mechanismService.mechanismTimeStep;
-  }
-
-  getAnimate() {
-    return AnimationBarComponent.animate;
-  }
-
   invalidMechanism() {
     return !this.mechanismService.oneValidMechanismExists();
+  }
+
+  handleSpeedChange() {
+    //Switch from 1 -> 2 -> 4 -> 1
+    this.mechanismService.mechanismAnimationIncrement =
+      (this.mechanismService.mechanismAnimationIncrement % 4) + 1;
+    if (this.mechanismService.mechanismAnimationIncrement === 3)
+      this.mechanismService.mechanismAnimationIncrement++;
+  }
+
+  sliderDown() {
+    // console.log('slider down');
+    this.userIsDragging = true;
+    this.wasAnimating = AnimationBarComponent.animate;
+    this.startAnimation('pause');
+    setTimeout(() => {
+      this.sliderChange();
+    }, 0);
+  }
+
+  sliderUp() {
+    // console.log('slider up');
+    this.userIsDragging = false;
+    if (this.wasAnimating) this.startAnimation('play');
+  }
+
+  sliderChange() {
+    if (this.userIsDragging) {
+      // console.log('real slider change');
+      this.mechanismService.animate(
+        Number(AnimationBarComponent.slider.value),
+        AnimationBarComponent.animate
+      );
+    }
+  }
+
+  getStaticAnimating() {
+    return AnimationBarComponent.animate;
   }
 }

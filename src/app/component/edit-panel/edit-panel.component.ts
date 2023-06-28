@@ -1,6 +1,6 @@
 import { AfterContentInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
-import { PrisJoint, RealJoint, RevJoint } from 'src/app/model/joint';
+import { PrisJoint, RevJoint } from 'src/app/model/joint';
 import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
 import {
@@ -33,8 +33,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private nup: NumberUnitParserService,
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
-    public gridUtils: GridUtilsService
-  ) { }
+    public gridUtils: GridUtilsService,
+  ) {}
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
   angleUnit: AngleUnit = this.settingsService.angleUnit.value;
@@ -48,6 +48,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
       slider: [false, { updateOn: 'change' }],
+      curve: [false, { updateOn: 'change' }],
     },
     { updateOn: 'blur' }
   );
@@ -97,8 +98,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   onChanges(): void {
     this.settingsService.lengthUnit.subscribe((val) => {
-      switch (val) {
+      switch (
+        val
         //when length unit changes, rescale grid?
+      ) {
       }
       var unit = this.settingsService.lengthUnit.value;
       if (unit !== this.lengthUnit) {
@@ -234,6 +237,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       this.mechanismService.onMechUpdateState.next(2);
     });
 
+    this.jointForm.controls['curve'].valueChanges.subscribe((val) => {
+      if (this.hideEditPanel()) {
+        return;
+      }
+      this.gridUtils.toggleCurve(this.activeSrv.selectedJoint);
+    });
+
     this.linkForm.controls['length'].valueChanges.subscribe((val) => {
       const [success, value] = this.nup.parseLengthString(
         val!,
@@ -263,32 +273,25 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       );
       if (!success) {
         this.linkForm.patchValue({
-          angle: this.activeSrv.selectedLink.angleDeg.toFixed(2).toString(),
+          angle: this.nup
+            .convertAngle(
+              this.activeSrv.selectedLink.angleRad,
+              AngleUnit.RADIAN,
+              this.settingsService.angleUnit.getValue()
+            )
+            .toFixed(2)
+            .toString(),
         });
       } else {
-        const [num, unit] = this.nup.preProcessInput(val!);
-        let correctAngle = 0;
-        if (this.nup.getAngleUnit(unit) !== this.settingsService.angleUnit.getValue()) {
-          correctAngle = this.nup.convertAngle(
-            num,
-            this.nup.getAngleUnit(unit),
-            this.settingsService.angleUnit.getValue()
-          );
-        } else {
-          correctAngle = num;
-        }
-        this.activeSrv.selectedLink.angleDeg =
-          this.nup.getAngleUnit(unit) == AngleUnit.DEGREE
-            ? parseFloat(val!)
-            : this.nup.convertAngle(parseFloat(val!), AngleUnit.RADIAN, AngleUnit.DEGREE);
-        this.activeSrv.selectedLink.angleRad =
-          this.nup.getAngleUnit(unit) == AngleUnit.RADIAN
-            ? parseFloat(val!)
-            : this.nup.convertAngle(parseFloat(val!), AngleUnit.DEGREE, AngleUnit.RADIAN);
+        this.activeSrv.selectedLink.angleRad = this.nup.convertAngle(
+          value,
+          this.settingsService.angleUnit.getValue(),
+          AngleUnit.RADIAN
+        );
         this.resolveNewLink();
         this.mechanismService.onMechUpdateState.next(2);
         this.linkForm.patchValue(
-          { angle: this.nup.formatValueAndUnit(correctAngle, this.nup.getAngleUnit(unit)) },
+          { angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()) },
           { emitEvent: false }
         );
       }
@@ -306,7 +309,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         });
       } else {
         this.activeSrv.selectedForce.mag = value;
-        // this.resolveNewLink();
+        this.resolveNewForceAngle();
         this.mechanismService.onMechUpdateState.next(2);
         this.forceForm.patchValue(
           {
@@ -426,6 +429,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
             ground: this.activeSrv.selectedJoint.ground,
             input: this.activeSrv.selectedJoint.input,
             slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
+            curve: this.activeSrv.selectedJoint.showCurve,
           },
           { emitEvent: false }
         );
@@ -438,9 +442,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               this.settingsService.lengthUnit.getValue()
             ),
             angle: this.nup.formatValueAndUnit(
-              this.settingsService.angleUnit.getValue() == AngleUnit.DEGREE
-                ? this.activeSrv.selectedLink.angleDeg
-                : this.activeSrv.selectedLink.angleRad,
+              this.nup.convertAngle(
+                this.activeSrv.selectedLink.angleRad,
+                AngleUnit.RADIAN,
+                this.settingsService.angleUnit.getValue()
+              ),
               this.settingsService.angleUnit.getValue()
             ),
           },
@@ -488,6 +494,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         );
         this.gridUtils.dragJoint(this.activeSrv.selectedLink.joints[0] as RevJoint, newJ1);
       } else {
+        //If the second joint is ground, then the first joint is dragged
         let newJ2 = getNewOtherJointPos(
           this.activeSrv.selectedLink.joints[0],
           this.activeSrv.selectedLink.angleRad,

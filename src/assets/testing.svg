@@ -12,12 +12,7 @@
              L 50 65
              A 5 5 0 0 0 55 60
              L 55 40
-          '
-        stroke='black' fill='green' stroke-width='1' fill-opacity='0.5' />
-
-  <path d='M 55 40
-             L 55 60
-             A 5 5 0 0 1 50 65
+             Z M 35 45 L 50 45 L 50 60 L 35 60 Z
           '
         stroke='black' fill='green' stroke-width='1' fill-opacity='0.5' />
   <!--  <path-->

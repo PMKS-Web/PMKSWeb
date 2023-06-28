@@ -4,6 +4,15 @@
 
 export const environment = {
   production: false,
+  firebase: {
+    apiKey: 'AIzaSyAXFfav2hbsikfFeUpVCH5dDfhJbAtNpds',
+    authDomain: 'pmksplus-dev.firebaseapp.com',
+    projectId: 'pmksplus-dev',
+    storageBucket: 'pmksplus-dev.appspot.com',
+    messagingSenderId: '544614835896',
+    appId: '1:544614835896:web:e4ce898265bbcdca43b64d',
+    measurementId: 'G-SQWWVNMK8Q',
+  },
 };
 
 /*
