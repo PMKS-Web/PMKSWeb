@@ -297,7 +297,6 @@ export class NewGridComponent {
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y
     );
-    // TODO: Add logic to add joint to selectedLink. Also, add adjacent joint to tracer joint
     const newId = this.mechanismSrv.determineNextLetter();
     const newJoint = new RevJoint(newId, coord.x, coord.y);
     this.activeObjService.selectedLink.joints.forEach((j) => {
@@ -307,6 +306,11 @@ export class NewGridComponent {
       j.connectedJoints.push(newJoint);
       newJoint.connectedJoints.push(j);
     });
+    if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
+      this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
+      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({id: newJoint.id, label: newJoint.id});
+      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
+    }
     newJoint.links.push(this.activeObjService.selectedLink);
     this.activeObjService.selectedLink.joints.push(newJoint);
     this.activeObjService.selectedLink.id += newJoint.id;
@@ -345,7 +349,6 @@ export class NewGridComponent {
     switch (this.lastRightClick.constructor.name) {
       case 'String':
         this.gridStates = gridStates.createJointFromGrid;
-
         break;
       case 'PrisJoint':
       case 'RevJoint':
@@ -597,6 +600,11 @@ export class NewGridComponent {
                   j.connectedJoints.push(joint1);
                   joint1.connectedJoints.push(j);
                 });
+                if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
+                  this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(joint1.id);
+                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({id: joint1.id, label: joint1.id});
+                  this.activeObjService.selectedLink.lastSelectedSublink.joints.push(joint1);
+                }
                 joint1.links.push(this.activeObjService.selectedLink);
                 this.activeObjService.selectedLink.joints.push(joint1);
                 // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
