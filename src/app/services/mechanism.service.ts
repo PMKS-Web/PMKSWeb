@@ -508,15 +508,17 @@ export class MechanismService {
         });
       }
     });
-    if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
-      this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink.id.replace(this.activeObjService.selectedJoint.id, '');
-      const fixedLocationIndex = this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.findIndex(fl => fl.id === this.activeObjService.selectedJoint.id);
-      if (this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint === this.activeObjService.selectedJoint.id) {
-        this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint = "com";
+    if (this.activeObjService.selectedLink !== undefined) {
+      if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
+        this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink.id.replace(this.activeObjService.selectedJoint.id, '');
+        const fixedLocationIndex = this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.findIndex(fl => fl.id === this.activeObjService.selectedJoint.id);
+        if (this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint === this.activeObjService.selectedJoint.id) {
+          this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint = "com";
+        }
+        this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.splice(fixedLocationIndex, 1);
+        const jointIndex = this.activeObjService.selectedLink.lastSelectedSublink.joints.findIndex(j => j.id === this.activeObjService.selectedJoint.id);
+        this.activeObjService.selectedLink.lastSelectedSublink.joints.splice(jointIndex, 1);
       }
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.splice(fixedLocationIndex, 1);
-      const jointIndex = this.activeObjService.selectedLink.lastSelectedSublink.joints.findIndex(j => j.id === this.activeObjService.selectedJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.joints.splice(jointIndex, 1);
     }
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
