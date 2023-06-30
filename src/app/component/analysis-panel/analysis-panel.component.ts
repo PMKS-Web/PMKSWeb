@@ -105,6 +105,7 @@ export class AnalysisPanelComponent {
   }
 
   resetVariablesAndSolve() {
+    ForceSolver.resetVariables();
     KinematicsSolver.resetVariables();
     ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
     ForceSolver.determineForceAnalysis(
