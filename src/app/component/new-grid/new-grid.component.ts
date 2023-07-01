@@ -193,7 +193,7 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
-              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
           ); //Rev Joint Slider
@@ -210,7 +210,7 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
-              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             ) //Rev Joint - Input
           );

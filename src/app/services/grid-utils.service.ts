@@ -200,6 +200,16 @@ export class GridUtilsService {
     return false;
   }
 
+  connectedToPrisJoint(joints: Joint[]) {
+    let connectedToPrisJoint = false;
+    joints.forEach(j => {
+      if (j instanceof PrisJoint) {
+        connectedToPrisJoint = true;
+      }
+    });
+    return connectedToPrisJoint;
+  }
+
   getSliderJoint(joint: Joint) {
     if (!(joint instanceof RevJoint)) {
       return;

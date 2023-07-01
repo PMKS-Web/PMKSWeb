@@ -23,7 +23,7 @@ import { GridUtilsService } from '../../services/grid-utils.service';
 })
 export class EditPanelComponent implements OnInit, AfterContentInit {
   hideEditPanel() {
-    return AnimationBarComponent.animate === true || this.mechanismService.mechanismTimeStep !== 0;
+    return AnimationBarComponent.animate || this.mechanismService.mechanismTimeStep !== 0;
   }
 
   constructor(
@@ -223,7 +223,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) {
         return;
       }
-      this.activeSrv.selectedJoint.input = val!;
+      //  grounded joint is revolute
+      if (this.activeSrv.selectedJoint.ground) {
+        this.activeSrv.selectedJoint.input = val!;
+      } else { // grounded joint is prismatic
+        this.activeSrv.selectedJoint.connectedJoints.forEach(j => {
+          if (j instanceof PrisJoint) {
+            j.input = val!
+          }
+        });
+      }
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);
     });

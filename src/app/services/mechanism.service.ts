@@ -607,7 +607,7 @@ export class MechanismService {
     this.updateMechanism();
   }
 
-  toggleInput() {
+  adjustInput() {
     // TODO: Adjust this logic when there are multiple mechanisms created
     let jointsTraveled = ''.concat(this.activeObjService.selectedJoint.id);
     this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
