@@ -232,6 +232,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // this.ngOnDestroy();
     // this.ngOnInit();
     // this.ngAfterViewInit();
+    ForceSolver.resetVariables();
+    KinematicsSolver.resetVariables();
+    ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
+    ForceSolver.determineForceAnalysis(
+        this.mechanismService.joints,
+        this.mechanismService.links,
+        'static',
+        ToolbarComponent.gravity,
+        ToolbarComponent.unit
+    );
+
+    KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
+    KinematicsSolver.determineKinematics(
+        this.mechanismService.joints,
+        this.mechanismService.links,
+        ToolbarComponent.inputAngularVelocity
+    );
     this.updateChartData();
   }
 
@@ -369,23 +386,6 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
         case 2:
           if (this.mechanismService.oneValidMechanismExists()) {
-            ForceSolver.resetVariables();
-            KinematicsSolver.resetVariables();
-            ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
-            ForceSolver.determineForceAnalysis(
-                this.mechanismService.joints,
-                this.mechanismService.links,
-                'static',
-                ToolbarComponent.gravity,
-                ToolbarComponent.unit
-            );
-
-            KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
-            KinematicsSolver.determineKinematics(
-                this.mechanismService.joints,
-                this.mechanismService.links,
-                ToolbarComponent.inputAngularVelocity
-            );
             this.updateChartData();
             this.mechanismService.onMechUpdateState.next(0);
           }
