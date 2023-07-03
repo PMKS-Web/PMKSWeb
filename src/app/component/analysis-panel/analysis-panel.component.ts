@@ -23,7 +23,6 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
-import { CustomIdService } from '../../services/custom-id.service';
 import { SettingsService } from '../../services/settings.service';
 
 export type ChartOptions = {
@@ -77,7 +76,6 @@ export class AnalysisPanelComponent {
     public activeSrv: ActiveObjService,
     private fb: FormBuilder,
     public mechanismService: MechanismService,
-    public customIDService: CustomIdService,
     public settingsService: SettingsService
   ) {
     if (this.mechanismService.oneValidMechanismExists()) {

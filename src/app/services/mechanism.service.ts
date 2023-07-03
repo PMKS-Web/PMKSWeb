@@ -55,7 +55,8 @@ export class MechanismService {
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
     private settingsService: SettingsService
-  ) {}
+  ) {
+  }
 
   getJoints() {
     return this.joints;
@@ -250,16 +251,16 @@ export class MechanismService {
       });
       this.links.push(newLink);
 
-      //Update the joints of the new link with the right links
-      newLink.joints.forEach((j: Joint | RealJoint) => {
-        if (!(j instanceof RealJoint)) return;
-        //Remove any links that are subsets of the new link
-        j.links = j.links.filter((l: Link) => {
-          return !linksAtJoint.some((l2) => l2.id === l.id);
-        });
-        //Add the new link to the joints
-        j.links.push(newLink);
+    //Update the joints of the new link with the right links
+    newLink.joints.forEach((j: Joint | RealJoint) => {
+      if (!(j instanceof RealJoint)) return;
+      //Remove any links that are subsets of the new link
+      j.links = j.links.filter((l: Link) => {
+        return !linksAtJoint.some((l2) => l2.id === l.id);
       });
+      //Add the new link to the joints
+      j.links.push(newLink);
+    });
 
       //For every joint in the new link, add all other joints in the new link as connected joints
       // newLink.joints.forEach((j: Joint | RealJoint) => {
@@ -766,6 +767,9 @@ export class MechanismService {
   }
 
   animate(progress: number, animationState?: boolean) {
+    //Round progress to nearest integer
+    progress = Math.round(progress);
+
     this.onMechPositionChange.next(progress);
     this.mechanismTimeStep = progress;
     this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);

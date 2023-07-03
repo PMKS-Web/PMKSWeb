@@ -62,6 +62,7 @@ export interface Bound {
 
 export class Link {
   private _id: string;
+  private _name: string = ''; //The name of the link
   private _mass: number;
   private _joints: Joint[];
   private _forces: Force[] = [];
@@ -96,6 +97,17 @@ export class Link {
     this._id = value;
   }
 
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
+  }
+
   get mass(): number {
     return this._mass;
   }
@@ -127,6 +139,7 @@ export class RealLink extends Link {
   // private _bound: Bound; //The rectengualr area the link is encompassed by
   private _d: string; //SVG path
   // private _mass: number;
+
   private _massMoI: number; //The value passed in from the linakge table
   private _CoM: Coord; //Same passed in from the linkage table
   private _CoM_d1: string = ''; //

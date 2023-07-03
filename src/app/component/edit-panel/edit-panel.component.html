@@ -30,7 +30,7 @@
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">
-    <editable-title-block originalID='{{ this.activeSrv.selectedJoint.id | uppercase }}'>
+    <editable-title-block>
       Edit Joint
     </editable-title-block>
 
@@ -76,10 +76,10 @@
 
     <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>
       <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'
-                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Weld Joint
+                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Weld Joint
       </button-block>
       <button-block *ngIf='this.activeSrv.selectedJoint.isWelded' customIcon='unweld_joint'
-                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Unweld Joint
+                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Unweld Joint
       </button-block>
     </ng-container>
     <!-- <p>Value: {{ jointForm.value | json }}</p>
@@ -102,8 +102,7 @@
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
-    <editable-title-block description='Changing the length or angle will change the non-grounded joint.'
-                          originalID='{{ this.activeSrv.selectedLink.id | uppercase }}'>
+    <editable-title-block description='Changing the length or angle will change the non-grounded joint.'>
       Edit Link
     </editable-title-block>
     <subtitle-block *ngIf='this.activeSrv.selectedLink.isWelded'>LastSelectedSublink
@@ -150,7 +149,6 @@
     *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">
     <editable-title-block
       description='Changing the angle will change the end point of the force. The length of the force does not affect the magnitude of the force.'
-      originalID='{{ this.activeSrv.selectedForce.id | uppercase }}'
     >Edit Force
     </editable-title-block>
 
@@ -183,7 +181,7 @@
       [formGroup]='forceForm'
       _formControl='isGlobal'
       tooltip='The frame of reference for the force.'
-      option1='Local (Link {{customIDService.getVisualID(this.activeSrv.selectedForce.link.id)}})'
+      option1='Local (Link {{this.activeSrv.selectedForce.link.name}})'
       option2='Global'
     >
       Force Base Frame

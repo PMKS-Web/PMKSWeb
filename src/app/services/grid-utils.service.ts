@@ -239,6 +239,9 @@ export class GridUtilsService {
 
   getAngleFromJoint(joint: Joint) {
     //This joint must be a welded joint, get the angle of one of the sublinks
+    //console.log("gaf1", (joint as RealJoint));
+    //console.log("gaf2", (joint as RealJoint).links);
+    //console.log("gaf3", (joint as RealJoint).links[0] as RealLink);
     return ((joint as RealJoint).links[0] as RealLink).angleRad;
   }
 

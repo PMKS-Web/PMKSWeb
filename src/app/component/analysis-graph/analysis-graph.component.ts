@@ -201,6 +201,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   animationTimestep: number = 0;
   numberOfSeries: number = 0;
 
+  noDataSelected: boolean = false;
+
   mechPositionSub: any;
   mechStateSub: any;
 
@@ -311,41 +313,24 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.seriesCheckboxForm.valueChanges.subscribe((data) => {
-      if (this.numberOfSeries === 3 && this.chart !== null) {
-        if (data.x) {
-          this.chart.showSeries('X');
-        } else {
-          this.chart.hideSeries('X');
-        }
-        if (data.y) {
-          this.chart.showSeries('Y');
-        } else {
-          this.chart.hideSeries('Y');
-        }
-        if (data.z) {
-          this.chart.showSeries('Z');
-        } else {
-          this.chart.hideSeries('Z');
-        }
-      }
-      if (this.numberOfSeries === 2 && this.chart !== null) {
-        if (data.x) {
-          this.chart.showSeries('X');
-        } else {
-          this.chart.hideSeries('X');
-        }
-        if (data.y) {
-          this.chart.showSeries('Y');
-        } else {
-          this.chart.hideSeries('Y');
-        }
-      }
-      if (this.numberOfSeries === 1 && this.chart !== null) {
-        if (data.z) {
-          this.chart.showSeries('Z');
-        } else {
-          this.chart.hideSeries('Z');
-        }
+      if (this.chart === null) return;
+
+      switch (this.numberOfSeries) {
+        case 3:
+          data.x ? this.chart.showSeries('X') : this.chart.hideSeries('X');
+          data.y ? this.chart.showSeries('Y') : this.chart.hideSeries('Y');
+          data.z ? this.chart.showSeries('Z') : this.chart.hideSeries('Z');
+          this.noDataSelected = !data.x && !data.y && !data.z;
+          break;
+        case 2:
+          data.x ? this.chart.showSeries('X') : this.chart.hideSeries('X');
+          data.y ? this.chart.showSeries('Y') : this.chart.hideSeries('Y');
+          this.noDataSelected = !data.x && !data.y;
+          break;
+        case 1:
+          data.z ? this.chart.showSeries('Z') : this.chart.hideSeries('Z');
+          this.noDataSelected = !data.z;
+          break;
       }
     });
 
