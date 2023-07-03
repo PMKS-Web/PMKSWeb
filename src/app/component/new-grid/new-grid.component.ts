@@ -227,7 +227,7 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
+              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
           );
