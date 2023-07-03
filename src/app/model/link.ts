@@ -534,28 +534,6 @@ export class RealLink extends Link {
     }
   }
 
-  // Return a list of lines that make up the convex hull of the link
-  getHullLines(): Line[] {
-
-    let lines: Line[] = [];
-
-    const points = this.joints.map((j) => [j.x, j.y]);
-    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
-
-
-    let firstPoint = hullPoints[0];
-    let firstPointCoord = new Coord(firstPoint[0], firstPoint[1]);
-    for (let i = 1; i < hullPoints.length; i++) {
-      let secondPoint = hullPoints[i];
-      let secondPointCoord = new Coord(secondPoint[0], secondPoint[1]);
-
-      lines.push(new Line(firstPointCoord, secondPointCoord));
-
-      firstPointCoord = secondPointCoord;
-    }
-    return lines;
-  }
-
   getSimplePathString(): string {
     this.externalLines = [];
     let l = this;
