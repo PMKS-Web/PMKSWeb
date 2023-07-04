@@ -526,7 +526,10 @@ export class MechanismService {
       this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     }
     this.updateMechanism();
-    this.onMechUpdateState.next(3);
+    setTimeout(() => {
+      this.onMechUpdateState.next(3);
+    })
+
   }
 
   splitSubset(subset: Link[], joint: RealJoint): Link[][] {
