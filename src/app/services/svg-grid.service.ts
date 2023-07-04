@@ -49,7 +49,7 @@ export class SvgGridService {
 
         // Handle double tap
         this.hammer.on('doubletap', function (ev: any) {
-          instance.zoomIn();
+          // instance.zoomIn();
         });
 
         // Handle tap (click) and no drag.
