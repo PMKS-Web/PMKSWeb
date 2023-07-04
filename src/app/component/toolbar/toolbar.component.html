@@ -34,7 +34,7 @@
   <div class='spacer'></div>
   <ng-container *ngIf='isDevMode()' matTooltip='This message and the debug panel will disappear'
                 matTooltipShowDelay='1000'>
-    <p style='font-size: 10px; pointer-events: none; max-height: 50px; overflow: hidden'>
+    <p style='font-size: 10px; pointer-events: none; max-height: 50px; max-width: 270px;'>
       You are in Development Mode. The color will return to normal when you build with the production flag. </p>
   </ng-container>
   <button *ngIf='isDevMode()' mat-button (click)='openRightPanelDebug()'
@@ -42,6 +42,14 @@
           matTooltipShowDelay='1000'>
     <mat-icon>bug_report</mat-icon>
     Debug
+  </button>
+  <button mat-button (click)='handleUndo()' matTooltip='Undo' matTooltipShowDelay='1000'>
+    <mat-icon>undo</mat-icon>
+    Undo
+  </button>
+  <button mat-button (click)='handleRedo()' matTooltip='Redo' matTooltipShowDelay='1000'>
+    <mat-icon>redo</mat-icon>
+    Redo
   </button>
   <button mat-button (click)='openRightPanelSettings()' matTooltip='Change Linkage Settings' matTooltipShowDelay='1000'>
     <mat-icon>settings</mat-icon>

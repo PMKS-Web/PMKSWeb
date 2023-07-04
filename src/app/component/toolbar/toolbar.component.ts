@@ -13,7 +13,16 @@ import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Bound, Link, Piston, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit, roundNumber, stringToBoolean, stringToFloat, stringToShape } from '../../model/utils';
+import {
+  AngleUnit,
+  ForceUnit,
+  GlobalUnit,
+  LengthUnit,
+  roundNumber,
+  stringToBoolean,
+  stringToFloat,
+  stringToShape,
+} from '../../model/utils';
 import { ForceSolver } from '../../model/mechanism/force-solver';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
@@ -30,9 +39,20 @@ import { UrlProcessorService } from '../../services/url-processor.service';
 import { MatDialog } from '@angular/material/dialog';
 import { TemplatesComponent } from '../MODALS/templates/templates.component';
 import { StringTranscoder } from 'src/app/services/transcoding/string-transcoder';
-import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from 'src/app/services/transcoding/transcoder-data';
+import {
+  ForceData,
+  JOINT_TYPE,
+  JointData,
+  LINK_TYPE,
+  LinkData,
+} from 'src/app/services/transcoding/transcoder-data';
 import { SettingsService } from 'src/app/services/settings.service';
-import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from 'src/app/services/transcoding/stored-settings';
+import {
+  BoolSetting,
+  DecimalSetting,
+  EnumSetting,
+  IntSetting,
+} from 'src/app/services/transcoding/stored-settings';
 
 const parseCSV = require('papaparse');
 
@@ -81,7 +101,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
     public dialog: MatDialog,
-    public settings: SettingsService,
+    public settings: SettingsService
   ) {}
 
   openTemplates() {
@@ -416,86 +436,94 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
     if (joint instanceof RevJoint) {
-      encoder.addJoint(new JointData(
-        JOINT_TYPE.REVOLUTE,
-        joint.id,
-        joint.name,
-        joint.x,
-        joint.y,
-        joint.ground,
-        joint.input,
-        joint.isWelded,
-        0,
-        joint.showCurve
-      ))
+      encoder.addJoint(
+        new JointData(
+          JOINT_TYPE.REVOLUTE,
+          joint.id,
+          joint.name,
+          joint.x,
+          joint.y,
+          joint.ground,
+          joint.input,
+          joint.isWelded,
+          0,
+          joint.showCurve
+        )
+      );
     } else if (joint instanceof PrisJoint) {
-      encoder.addJoint(new JointData(
-        JOINT_TYPE.PRISMATIC,
-        joint.id,
-        joint.name,
-        joint.x,
-        joint.y,
-        joint.ground,
-        joint.input,
-        joint.isWelded,
-        joint.angle_rad,
-        joint.showCurve
-      ));
+      encoder.addJoint(
+        new JointData(
+          JOINT_TYPE.PRISMATIC,
+          joint.id,
+          joint.name,
+          joint.x,
+          joint.y,
+          joint.ground,
+          joint.input,
+          joint.isWelded,
+          joint.angle_rad,
+          joint.showCurve
+        )
+      );
     }
   }
 
   _addLinkToEncoder(encoder: StringTranscoder, link: Link, isRoot: boolean) {
     if (link instanceof RealLink) {
-      encoder.addLink(new LinkData(
-        isRoot,
-        LINK_TYPE.REAL,
-        link.id,
-        link.name,
-        link.mass,
-        link.massMoI,
-        link.CoM.x,
-        link.CoM.y,
-        link.fill,
-        link.joints.map((joint) => joint.id),
-        link.subset.map((subset) => subset.id)
+      encoder.addLink(
+        new LinkData(
+          isRoot,
+          LINK_TYPE.REAL,
+          link.id,
+          link.name,
+          link.mass,
+          link.massMoI,
+          link.CoM.x,
+          link.CoM.y,
+          link.fill,
+          link.joints.map((joint) => joint.id),
+          link.subset.map((subset) => subset.id)
         )
       );
     } else if (link instanceof Piston) {
-      encoder.addLink(new LinkData(
-        isRoot,
-        LINK_TYPE.PISTON,
-        link.id,
-        link.name,
-        link.mass,
-        0,
-        0,
-        0,
-        "",
-        link.joints.map((joint) => joint.id),
-        []
+      encoder.addLink(
+        new LinkData(
+          isRoot,
+          LINK_TYPE.PISTON,
+          link.id,
+          link.name,
+          link.mass,
+          0,
+          0,
+          0,
+          '',
+          link.joints.map((joint) => joint.id),
+          []
         )
       );
     }
   }
 
   _addForceToEncoder(encoder: StringTranscoder, force: Force) {
-    encoder.addForce(new ForceData(
-      force.id,
-      force.link.id,
-      force.name,
-      force.startCoord.x,
-      force.startCoord.y,
-      force.endCoord.x,
-      force.endCoord.y,
-      force.local,
-      force.arrowOutward,
-      force.mag
-    ));
-    }
+    encoder.addForce(
+      new ForceData(
+        force.id,
+        force.link.id,
+        force.name,
+        force.startCoord.x,
+        force.startCoord.y,
+        force.endCoord.x,
+        force.endCoord.y,
+        force.local,
+        force.arrowOutward,
+        force.mag
+      )
+    );
+  }
 
   /*
-    *  Copy the URL of the current mechanism to the clipboard
-  */
+   *  Copy the URL of the current mechanism to the clipboard
+   */
   copyURL() {
     logEvent(this.analytics, 'copyURL');
 
@@ -503,18 +531,18 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     let cachedAnimationFrame = this.mechanismService.mechanismTimeStep;
     if (cachedAnimationFrame > 0) this.mechanismService.animate(0, false);
 
-    let encoder = new StringTranscoder()
-    
+    let encoder = new StringTranscoder();
+
     // add each joint
     this.mechanismService.joints.forEach((joint) => {
       this._addJointToEncoder(encoder, joint);
-    })
+    });
 
     // add each (non-subset) link
     this.mechanismService.links.forEach((link) => {
       this._addLinkToEncoder(encoder, link, true);
-    })
-    
+    });
+
     // for each link, add subset links
     this.mechanismService.links.forEach((link) => {
       if (link instanceof RealLink) {
@@ -526,24 +554,38 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
     this.mechanismService.forces.forEach((force) => {
       this._addForceToEncoder(encoder, force);
-    })
+    });
 
-   // Encode global settings
-    encoder.addEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit, this.settings.lengthUnit.getValue());
+    // Encode global settings
+    encoder.addEnumSetting(
+      EnumSetting.LENGTH_UNIT,
+      LengthUnit,
+      this.settings.lengthUnit.getValue()
+    );
     encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit.getValue());
     encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit.getValue());
-    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, this.settings.globalUnit.getValue());
+    encoder.addEnumSetting(
+      EnumSetting.GLOBAL_UNIT,
+      GlobalUnit,
+      this.settings.globalUnit.getValue()
+    );
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
     encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID, this.settings.isShowMajorGrid.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID, this.settings.isShowMinorGrid.getValue());
+    encoder.addBoolSetting(
+      BoolSetting.IS_SHOW_MAJOR_GRID,
+      this.settings.isShowMajorGrid.getValue()
+    );
+    encoder.addBoolSetting(
+      BoolSetting.IS_SHOW_MINOR_GRID,
+      this.settings.isShowMinorGrid.getValue()
+    );
     encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
     encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
-    
+
     let urlRaw = encoder.encodeURL();
 
     // Restore animation frame
@@ -919,5 +961,13 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   isDevMode() {
     //Used to change the color of the topbar when not running prod
     return isDevMode();
+  }
+
+  handleUndo() {
+    NewGridComponent.sendNotification('Undo Called!', 0);
+  }
+
+  handleRedo() {
+    NewGridComponent.sendNotification('Redo Called!', 0);
   }
 }
