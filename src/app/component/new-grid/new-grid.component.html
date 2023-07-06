@@ -162,7 +162,7 @@
         (pointerover)='link.showHighlight = true'
         (pointerout)='link.showHighlight = false'
         (pointerdown)='setLastLeftClick(link, $event)'
-        (contextmenu)='setLastRightClick(link)'
+        (contextmenu)='setLastRightClick(link, $event)'
         [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
         [attr.id]='link.id'
         [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
@@ -178,7 +178,7 @@
           (pointerover)='link.showHighlight = true'
           (pointerout)='link.showHighlight = false'
           (pointerdown)='setLastLeftClick(link, $event)'
-          (contextmenu)='setLastRightClick(link)'
+          (contextmenu)='setLastRightClick(link, $event)'
           [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
           [attr.id]='link.id'
           [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"

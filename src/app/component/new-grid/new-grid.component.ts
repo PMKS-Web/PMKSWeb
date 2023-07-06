@@ -253,8 +253,18 @@ export class NewGridComponent {
     }
   }
 
-  setLastRightClick(clickedObj: Joint | Link | String | Force) {
+  setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
     this.lastRightClick = clickedObj;
+
+    switch (clickedObj.constructor.name) {
+      case 'RealLink':
+        this.lastLeftClickType = 'Link';
+        if ((clickedObj as RealLink).subset.length > 1) {
+          this.gridUtils.updateLastSelectedSublink(event!, clickedObj as RealLink);
+        }
+        break;
+    }
+
     this.updateContextMenuItems();
   }
 
@@ -306,7 +316,7 @@ export class NewGridComponent {
     });
     if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
       this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({id: newJoint.id, label: newJoint.id});
+      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({ id: newJoint.id, label: newJoint.id });
       this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
     }
     newJoint.links.push(this.activeObjService.selectedLink);
@@ -510,11 +520,11 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-        // let clickPos = new Coord($event.pageX, $event.pageY);
-        // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
-        // console.warn('Mouse down: ');
-        // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
-        // console.warn(this.activeObjService.objType);
+              // let clickPos = new Coord($event.pageX, $event.pageY);
+              // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
+              // console.warn('Mouse down: ');
+              // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
+              // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
             switch (this.gridStates) {
@@ -600,7 +610,7 @@ export class NewGridComponent {
                 });
                 if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
                   this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(joint1.id);
-                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({id: joint1.id, label: joint1.id});
+                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({ id: joint1.id, label: joint1.id });
                   this.activeObjService.selectedLink.lastSelectedSublink.joints.push(joint1);
                 }
                 joint1.links.push(this.activeObjService.selectedLink);
