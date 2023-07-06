@@ -55,8 +55,7 @@ export class MechanismService {
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
     private settingsService: SettingsService
-  ) {
-  }
+  ) {}
 
   getJoints() {
     return this.joints;
@@ -95,6 +94,12 @@ export class MechanismService {
     );
     this.links.forEach((l) => {
       if (l instanceof RealLink) {
+        if (l.isWelded) {
+          //Call reCompute on each link in the subset
+          l.subset.forEach((subLink) => {
+            (subLink as RealLink).reComputeDPath();
+          });
+        }
         (l as RealLink).reComputeDPath();
       }
     });
@@ -251,16 +256,16 @@ export class MechanismService {
       });
       this.links.push(newLink);
 
-    //Update the joints of the new link with the right links
-    newLink.joints.forEach((j: Joint | RealJoint) => {
-      if (!(j instanceof RealJoint)) return;
-      //Remove any links that are subsets of the new link
-      j.links = j.links.filter((l: Link) => {
-        return !linksAtJoint.some((l2) => l2.id === l.id);
+      //Update the joints of the new link with the right links
+      newLink.joints.forEach((j: Joint | RealJoint) => {
+        if (!(j instanceof RealJoint)) return;
+        //Remove any links that are subsets of the new link
+        j.links = j.links.filter((l: Link) => {
+          return !linksAtJoint.some((l2) => l2.id === l.id);
+        });
+        //Add the new link to the joints
+        j.links.push(newLink);
       });
-      //Add the new link to the joints
-      j.links.push(newLink);
-    });
 
       //For every joint in the new link, add all other joints in the new link as connected joints
       // newLink.joints.forEach((j: Joint | RealJoint) => {
@@ -509,34 +514,40 @@ export class MechanismService {
         });
       }
     });
+
     function deleteJointWithinLinkAndSubsets(link: RealLink, joint: Joint) {
       // Delete desired properties within link
       link.id = link.id.replace(joint.id, '');
-      const fixedLocationIndex = link.fixedLocations.findIndex(fl => fl.id === joint.id);
+      const fixedLocationIndex = link.fixedLocations.findIndex((fl) => fl.id === joint.id);
       if (fixedLocationIndex !== -1) {
         if (link.fixedLocation.fixedPoint === joint.id) {
-          link.fixedLocation.fixedPoint = "com";
+          link.fixedLocation.fixedPoint = 'com';
         }
         link.fixedLocations.splice(fixedLocationIndex, 1);
       }
-      const jointIndex = link.joints.findIndex(j => j.id === joint.id);
+      const jointIndex = link.joints.findIndex((j) => j.id === joint.id);
       if (jointIndex !== -1) {
         link.joints.splice(jointIndex, 1);
       }
       // Check to see if link contains multiple subsets
       if (!link.isWelded) {
       } else {
-        link.subset.forEach(li => {
-          if (!(li instanceof RealLink)) {return}
+        link.subset.forEach((li) => {
+          if (!(li instanceof RealLink)) {
+            return;
+          }
           deleteJointWithinLinkAndSubsets(li, joint);
         });
       }
     }
+
     // Need to update the link's subset properties
     if (this.activeObjService.selectedJoint) {
-      this.activeObjService.selectedJoint.links.forEach(l => {
-        if (!(l instanceof RealLink)) {return}
-          deleteJointWithinLinkAndSubsets(l, this.activeObjService.selectedJoint);
+      this.activeObjService.selectedJoint.links.forEach((l) => {
+        if (!(l instanceof RealLink)) {
+          return;
+        }
+        deleteJointWithinLinkAndSubsets(l, this.activeObjService.selectedJoint);
       });
     }
     this.joints.splice(jointIndex, 1);
@@ -546,8 +557,7 @@ export class MechanismService {
     this.updateMechanism();
     setTimeout(() => {
       this.onMechUpdateState.next(3);
-    })
-
+    });
   }
 
   splitSubset(subset: Link[], joint: RealJoint): Link[][] {
