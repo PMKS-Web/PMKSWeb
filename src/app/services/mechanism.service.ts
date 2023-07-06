@@ -509,17 +509,35 @@ export class MechanismService {
         });
       }
     });
-    if (this.activeObjService.selectedLink !== undefined) {
-      if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
-        this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink.id.replace(this.activeObjService.selectedJoint.id, '');
-        const fixedLocationIndex = this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.findIndex(fl => fl.id === this.activeObjService.selectedJoint.id);
-        if (this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint === this.activeObjService.selectedJoint.id) {
-          this.activeObjService.selectedLink.lastSelectedSublink.fixedLocation.fixedPoint = "com";
+    function deleteJointWithinLinkAndSubsets(link: RealLink, joint: Joint) {
+      // Delete desired properties within link
+      link.id = link.id.replace(joint.id, '');
+      const fixedLocationIndex = link.fixedLocations.findIndex(fl => fl.id === joint.id);
+      if (fixedLocationIndex !== -1) {
+        if (link.fixedLocation.fixedPoint === joint.id) {
+          link.fixedLocation.fixedPoint = "com";
         }
-        this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.splice(fixedLocationIndex, 1);
-        const jointIndex = this.activeObjService.selectedLink.lastSelectedSublink.joints.findIndex(j => j.id === this.activeObjService.selectedJoint.id);
-        this.activeObjService.selectedLink.lastSelectedSublink.joints.splice(jointIndex, 1);
+        link.fixedLocations.splice(fixedLocationIndex, 1);
       }
+      const jointIndex = link.joints.findIndex(j => j.id === joint.id);
+      if (jointIndex !== -1) {
+        link.joints.splice(jointIndex, 1);
+      }
+      // Check to see if link contains multiple subsets
+      if (!link.isWelded) {
+      } else {
+        link.subset.forEach(li => {
+          if (!(li instanceof RealLink)) {return}
+          deleteJointWithinLinkAndSubsets(li, joint);
+        });
+      }
+    }
+    // Need to update the link's subset properties
+    if (this.activeObjService.selectedJoint) {
+      this.activeObjService.selectedJoint.links.forEach(l => {
+        if (!(l instanceof RealLink)) {return}
+          deleteJointWithinLinkAndSubsets(l, this.activeObjService.selectedJoint);
+      });
     }
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
