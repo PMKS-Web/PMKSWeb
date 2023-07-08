@@ -25,6 +25,8 @@ For development, we recommend using WebStorm, a powerful IDE ideal for JavaScrip
 
 2. **Clone the Repository**: Using WebStorm, clone the PMKS+ repository to your local machine.
 
+3. **Install Node JS**: https://nodejs.org/en/download
+
 3. **Install Dependencies**: The necessary dependencies should automatically install when the repository is cloned. If any dependencies are missing, you can run `npm install` to add them.
 
 4. **Set Up Run Configurations**: Create two run configurations in WebStorm:
