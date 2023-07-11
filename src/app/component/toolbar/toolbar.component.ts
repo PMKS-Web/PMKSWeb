@@ -53,6 +53,7 @@ import {
   EnumSetting,
   IntSetting,
 } from 'src/app/services/transcoding/stored-settings';
+import { UrlGenerationService } from 'src/app/services/url-generation.service';
 
 const parseCSV = require('papaparse');
 
@@ -100,6 +101,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   constructor(
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
+    private urlGenerationService: UrlGenerationService,
     public dialog: MatDialog,
     public settings: SettingsService
   ) {}
@@ -433,166 +435,16 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     //   this.localUnit.selectedUnit = selectedUnit;
     // }
   }
-
-  _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
-    if (joint instanceof RevJoint) {
-      encoder.addJoint(
-        new JointData(
-          JOINT_TYPE.REVOLUTE,
-          joint.id,
-          joint.name,
-          joint.x,
-          joint.y,
-          joint.ground,
-          joint.input,
-          joint.isWelded,
-          0,
-          joint.showCurve
-        )
-      );
-    } else if (joint instanceof PrisJoint) {
-      encoder.addJoint(
-        new JointData(
-          JOINT_TYPE.PRISMATIC,
-          joint.id,
-          joint.name,
-          joint.x,
-          joint.y,
-          joint.ground,
-          joint.input,
-          joint.isWelded,
-          joint.angle_rad,
-          joint.showCurve
-        )
-      );
-    }
-  }
-
-  _addLinkToEncoder(encoder: StringTranscoder, link: Link, isRoot: boolean) {
-    if (link instanceof RealLink) {
-      encoder.addLink(
-        new LinkData(
-          isRoot,
-          LINK_TYPE.REAL,
-          link.id,
-          link.name,
-          link.mass,
-          link.massMoI,
-          link.CoM.x,
-          link.CoM.y,
-          link.fill,
-          link.joints.map((joint) => joint.id),
-          link.subset.map((subset) => subset.id)
-        )
-      );
-    } else if (link instanceof Piston) {
-      encoder.addLink(
-        new LinkData(
-          isRoot,
-          LINK_TYPE.PISTON,
-          link.id,
-          link.name,
-          link.mass,
-          0,
-          0,
-          0,
-          '',
-          link.joints.map((joint) => joint.id),
-          []
-        )
-      );
-    }
-  }
-
-  _addForceToEncoder(encoder: StringTranscoder, force: Force) {
-    encoder.addForce(
-      new ForceData(
-        force.id,
-        force.link.id,
-        force.name,
-        force.startCoord.x,
-        force.startCoord.y,
-        force.endCoord.x,
-        force.endCoord.y,
-        force.local,
-        force.arrowOutward,
-        force.mag
-      )
-    );
-  }
-
   /*
    *  Copy the URL of the current mechanism to the clipboard
    */
   copyURL() {
     logEvent(this.analytics, 'copyURL');
 
-    // First, reset animation to the beginning, but cache animation frame to restore afterwards
-    let cachedAnimationFrame = this.mechanismService.mechanismTimeStep;
-    if (cachedAnimationFrame > 0) this.mechanismService.animate(0, false);
-
-    let encoder = new StringTranscoder();
-
-    // add each joint
-    this.mechanismService.joints.forEach((joint) => {
-      this._addJointToEncoder(encoder, joint);
-    });
-
-    // add each (non-subset) link
-    this.mechanismService.links.forEach((link) => {
-      this._addLinkToEncoder(encoder, link, true);
-    });
-
-    // for each link, add subset links
-    this.mechanismService.links.forEach((link) => {
-      if (link instanceof RealLink) {
-        link.subset.forEach((subsetLink) => {
-          this._addLinkToEncoder(encoder, subsetLink, false);
-        });
-      }
-    });
-
-    this.mechanismService.forces.forEach((force) => {
-      this._addForceToEncoder(encoder, force);
-    });
-
-    // Encode global settings
-    encoder.addEnumSetting(
-      EnumSetting.LENGTH_UNIT,
-      LengthUnit,
-      this.settings.lengthUnit.getValue()
-    );
-    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit.getValue());
-    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit.getValue());
-    encoder.addEnumSetting(
-      EnumSetting.GLOBAL_UNIT,
-      GlobalUnit,
-      this.settings.globalUnit.getValue()
-    );
-    encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
-    encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
-    encoder.addBoolSetting(
-      BoolSetting.IS_SHOW_MAJOR_GRID,
-      this.settings.isShowMajorGrid.getValue()
-    );
-    encoder.addBoolSetting(
-      BoolSetting.IS_SHOW_MINOR_GRID,
-      this.settings.isShowMinorGrid.getValue()
-    );
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
-    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
-
-    encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
-
-    let urlRaw = encoder.encodeURL();
-
-    // Restore animation frame
-    if (cachedAnimationFrame > 0) this.mechanismService.animate(cachedAnimationFrame, false);
+    let urlQuery = this.urlGenerationService.generateUrlQuery();
 
     const url = this.getURL();
-    const dataURLString = `${url}?${urlRaw}`;
+    const dataURLString = `${url}?${urlQuery}`;
     const dataURL = encodeURI(dataURLString);
     console.log(dataURL.length);
     if (dataURL.length > 2000) {
