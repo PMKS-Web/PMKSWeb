@@ -157,7 +157,7 @@ export class GridUtilsService {
         });
         break;
     }
-    NewGridComponent.instance.mechanismSrv.updateMechanism();
+    NewGridComponent.instance.mechanismSrv.updateMechanism(false);
     return selectedJoint;
   }
 

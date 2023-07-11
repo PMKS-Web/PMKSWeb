@@ -32,6 +32,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { SaveHistoryService } from 'src/app/services/save-history.service';
 
 @Component({
   selector: 'app-new-grid',
@@ -52,6 +53,8 @@ export class NewGridComponent {
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
+    public saveHistoryService: SaveHistoryService,
+
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;

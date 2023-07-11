@@ -54,7 +54,6 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
-    private settingsService: SettingsService
   ) {
   }
 
@@ -70,7 +69,8 @@ export class MechanismService {
     return this.forces;
   }
 
-  updateMechanism() {
+  updateMechanism(save: boolean = true) {
+    console.log('update mechanism');
     // console.log(this.mechanisms[0]);
     //There are multiple mechanisms since there was a plan to support multiple mechanisms
     //You can treat this as a single mechanism for now at index 0
@@ -99,6 +99,11 @@ export class MechanismService {
       }
     });
     this.activeObjService.fakeUpdateSelectedObj();
+
+    if (save) {
+      //this.saveHistoryService.save()
+    }
+
   }
 
   getLinkProp(l: Link, propType: string) {

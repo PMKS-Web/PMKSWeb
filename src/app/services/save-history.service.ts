@@ -45,6 +45,8 @@ export class SaveHistoryService {
 
     // update index to point to the new last state
     this.index = this.history.length - 1;
+
+    console.log('history: ' + this.history)
   }
 
   /*
@@ -57,6 +59,7 @@ export class SaveHistoryService {
   private setMechanismToState(index: number) {
     this.index = index;
     this.urlProcessorService.updateFromURL(this.history[this.index]);
+    console.log("update to state " + this.index + ": " + this.history[this.index])
   }
 
   /*

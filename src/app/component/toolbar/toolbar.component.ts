@@ -54,6 +54,7 @@ import {
   IntSetting,
 } from 'src/app/services/transcoding/stored-settings';
 import { UrlGenerationService } from 'src/app/services/url-generation.service';
+import { SaveHistoryService } from 'src/app/services/save-history.service';
 
 const parseCSV = require('papaparse');
 
@@ -102,6 +103,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
     private urlGenerationService: UrlGenerationService,
+    private saveHistoryService: SaveHistoryService,
     public dialog: MatDialog,
     public settings: SettingsService
   ) {}
@@ -817,9 +819,19 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   handleUndo() {
     NewGridComponent.sendNotification('Undo Called!', 0);
+    this.saveHistoryService.undo()
+  }
+
+  canUndo(): boolean {
+    return this.saveHistoryService.canUndo();
   }
 
   handleRedo() {
     NewGridComponent.sendNotification('Redo Called!', 0);
+    this.saveHistoryService.redo()
+  }
+
+  canRedo(): boolean {
+    return this.saveHistoryService.canRedo();
   }
 }
