@@ -9,6 +9,11 @@ import { Joint, RevJoint, PrisJoint } from '../model/joint';
 import { JointData, JOINT_TYPE, LinkData, LINK_TYPE, ForceData } from './transcoding/transcoder-data';
 import { SettingsService } from './settings.service';
 
+/*
+  * This service is responsible for generating the URL from the current mechanism.
+  * It is not responsible for decoding the URL.
+*/
+
 @Injectable({
   providedIn: 'root'
 })
@@ -107,8 +112,6 @@ export class UrlGenerationService {
       )
     );
   }
-
-
 
   generateUrlQuery(): string {
     // First, reset animation to the beginning, but cache animation frame to restore afterwards

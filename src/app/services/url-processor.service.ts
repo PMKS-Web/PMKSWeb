@@ -15,41 +15,16 @@ import { SvgGridService } from './svg-grid.service';
 })
 export class UrlProcessorService {
   constructor(
-    mechanismSrv: MechanismService,
-    settingsSrv: SettingsService,
+    private mechanismSrv: MechanismService,
+    private settingsSrv: SettingsService,
     private svgGrid: SvgGridService
   ) {
-    // the transcoder is responsible for decoding the url into a mechanism
-    const decoder = new StringTranscoder();
 
     // the content part of the url (the part after the ?)
     const url = this.getURLContent();
 
-    // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
-    if (url !== null) {
-      console.log('decoded url: ' + url);
-      decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
-      builder.build();
-
-      //Now set the URL back to the original URL without the query string.
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    mechanismSrv.updateMechanism();
-
-    // animate the mechanism
-    if (mechanismSrv.mechanismTimeStep > 0) {
-      setTimeout(() => {
-        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
-      }, 0);
-    }
-
-    //After the mechanism is built, scale the mechanism to fit the screen
-    //Do this after a 1 sec timeout to allow the mechanism to be built first.
-    setTimeout(() => {
-      this.svgGrid.scaleToFitLinkage();
-    }, 1000);
+    // update the mechanism from the url
+    this.updateFromURL(url);
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
@@ -60,4 +35,38 @@ export class UrlProcessorService {
     if (index === -1) return null;
     return fullURL.substring(fullURL.indexOf('?') + 1);
   }
+
+  // Decode the url and update mechanism
+  updateFromURL(url: string | null) {
+    
+    // the transcoder is responsible for decoding the url into a mechanism
+    const decoder = new StringTranscoder();
+    
+    // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
+    if (url !== null) {
+      console.log('decoded url: ' + url);
+      decoder.decodeURL(url as string);
+      const builder = new MechanismBuilder(this.mechanismSrv, decoder, this.settingsSrv);
+      builder.build();
+
+      //Now set the URL back to the original URL without the query string.
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    this.mechanismSrv.updateMechanism();
+
+    // animate the mechanism
+    if (this.mechanismSrv.mechanismTimeStep > 0) {
+      setTimeout(() => {
+        this.mechanismSrv.animate(this.mechanismSrv.mechanismTimeStep, false);
+      }, 0);
+    }
+
+    //After the mechanism is built, scale the mechanism to fit the screen
+    //Do this after a 1 sec timeout to allow the mechanism to be built first.
+    setTimeout(() => {
+      this.svgGrid.scaleToFitLinkage();
+    }, 1000);
+  }
+
 }
