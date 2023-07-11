@@ -1,53 +1,49 @@
 <div id='synthesisWrapper'>
-  <panel-section>
-    <title-block description='PMKS+ will create a 4-bar linkage based on 3 coupler poses you define.'>3 Position
-      Synthesis
-    </title-block>
-    <!--    <subtitle-block>PMKS+ will create a 4-bar linkage based on 3 poses.</subtitle-block>-->
-    <!--    <input-block unit='cm'>Length</input-block>-->
-    <!--    <app-not-ready-warning></app-not-ready-warning>-->
-    <img src='assets/temp3pos.png'>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='a0x'
-      formControl2='a0y'
-      tooltip='The x and y position of A0'>
-      A0 Position
-    </dual-input-block>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='b0x'
-      formControl2='b0y'
-      tooltip='The x and y position of B0'>
-      B0 Position
-    </dual-input-block>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='a1x'
-      formControl2='a1y'>
-      A1 Position
-    </dual-input-block>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='b1x'
-      formControl2='b1y'>
-      B1 Position
-    </dual-input-block>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='a2x'
-      formControl2='a2y'>
-      A2 Position
-    </dual-input-block>
-    <dual-input-block
-      [formGroup]='synthesisForm'
-      formControl1='b2x'
-      formControl2='b2y'>
-      B2 Position
-    </dual-input-block>
-    <button-block [click]='handleButton.bind(this)'>Call Backend Function</button-block>
-    <app-not-ready-warning></app-not-ready-warning>
-  </panel-section>
+    <panel-section>
+        <title-block description='PMKS+ will create a 4-bar linkage based on 3 coupler poses you define.'>
+            3 Position
+            Synthesis
+        </title-block>
+        <!--    <subtitle-block>PMKS+ will create a 4-bar linkage based on 3 poses.</subtitle-block>-->
+        <!--    <input-block unit='cm'>Length</input-block>-->
+        <!--    <app-not-ready-warning></app-not-ready-warning>-->
+        <img src='assets/temp3pos.png'>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='a0x'
+                          formControl2='a0y'
+                          tooltip='The x and y position of A0'>
+            A0 Position
+        </dual-input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='b0x'
+                          formControl2='b0y'
+                          tooltip='The x and y position of B0'>
+            B0 Position
+        </dual-input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='a1x'
+                          formControl2='a1y'>
+            A1 Position
+        </dual-input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='b1x'
+                          formControl2='b1y'>
+            B1 Position
+        </dual-input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='a2x'
+                          formControl2='a2y'>
+            A2 Position
+        </dual-input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='b2x'
+                          formControl2='b2y'>
+            B2 Position
+        </dual-input-block>
+     <!-- <button-block [click]='handleButton.bind(this)'>Call Backend Function</button-block> -->
+        <button-block [click]='synthesisFunction.bind(this)'>Call Backend Function</button-block>
+        <app-not-ready-warning></app-not-ready-warning>
+    </panel-section>
   <!--  <panel-section-collapsible [expanded]='true'>-->
   <!--    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 1</subtitle-block>-->
   <!--    <dual-input-block>Pose 1 Position</dual-input-block>-->
