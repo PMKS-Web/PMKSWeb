@@ -168,8 +168,25 @@ export class GridUtilsService {
   dragForce(selectedForce: Force, trueCoord: Coord, isStartSelected: boolean) {
     // TODO: Determine how to optimize this so screen is more fluid
     if (isStartSelected) {
-      selectedForce.startCoord.x = trueCoord.x;
-      selectedForce.startCoord.y = trueCoord.y;
+      if (selectedForce.link.joints.length !== 2) {
+        selectedForce.startCoord.x = trueCoord.x;
+        selectedForce.startCoord.y = trueCoord.y;
+      } else {
+        const joint1 = selectedForce.link.joints[0];
+        const joint2 = selectedForce.link.joints[1];
+        const leftMostX = selectedForce.link.joints[0].x < selectedForce.link.joints[1].x ? selectedForce.link.joints[0].x : selectedForce.link.joints[1].x
+        const rightMostX = selectedForce.link.joints[0].x > selectedForce.link.joints[1].x ? selectedForce.link.joints[0].x : selectedForce.link.joints[1].x
+        const m = (joint1.y - joint2.y) / (joint1.x - joint2.x);
+        const b = joint1.y - (m * joint1.x);
+        if (trueCoord.x < leftMostX) {
+          selectedForce.startCoord.x = leftMostX;
+        } else if (trueCoord.x > rightMostX) {
+          selectedForce.startCoord.x = rightMostX;
+        } else {
+          selectedForce.startCoord.x = trueCoord.x;
+        }
+        selectedForce.startCoord.y = (m * selectedForce.startCoord.x) + b;
+      }
     } else {
       selectedForce.endCoord.x = trueCoord.x;
       selectedForce.endCoord.y = trueCoord.y;
