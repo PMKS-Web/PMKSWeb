@@ -11,6 +11,7 @@
       from the help panel on the top right!</p>
   </div>
   <div mat-dialog-actions align='end'>
-    <button mat-button cdkFocusInitial (click)='onNoClick()'>Continue</button>
+    <button mat-button (click)='onDismissClick()'>Don't show again</button>
+    <button mat-raised-button cdkFocusInitial (click)='onNoClick()' color='primary'>Continue</button>
   </div>
 </div>

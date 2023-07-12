@@ -15,9 +15,11 @@ import {
   forceStates,
   gridStates,
   is_touch_enabled,
+  has_mouse_pointer,
   jointStates,
   line_line_intersect,
   linkStates,
+  local_storage_available,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -29,7 +31,6 @@ import { CdkContextMenuTrigger, Menu } from '@angular/cdk/menu';
 import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
-import { CustomIdService } from '../../services/custom-id.service';
 import { Line } from '../../model/line';
 
 @Component({
@@ -51,7 +52,6 @@ export class NewGridComponent {
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
-    public customIDService: CustomIdService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -88,17 +88,20 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    if (is_touch_enabled()) {
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+
+    // Touchscreen warning for when no mouse pointer
+    if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    // fromEvent(window, 'resize')
-    //   .pipe(debounceTime(200))
-    //   .subscribe((event) => {
-    //     console.log('resize');
-    //     this.svgGrid.panZoomObject.resize();
-    //     this.svgGrid.scaleToFitLinkage();
-    //   });
+    fromEvent(window, 'resize')
+      .pipe(debounceTime(200))
+      .subscribe((event) => {
+        console.log('resize');
+        this.svgGrid.panZoomObject.resize();
+        this.svgGrid.scaleToFitLinkage();
+      });
   }
 
   ngAfterViewInit() {
@@ -229,7 +232,7 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+              this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
           );

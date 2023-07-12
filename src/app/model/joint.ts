@@ -4,6 +4,7 @@ import { Coord } from './coord';
 
 export class Joint extends Coord {
   private _id: string;
+  private _name: string = '';
   private _showHighlight: boolean = false;
 
   constructor(id: string, x: number, y: number) {
@@ -17,6 +18,17 @@ export class Joint extends Coord {
 
   set id(value: string) {
     this._id = value;
+  }
+
+  get name(): string {
+    if (this._name === '') {
+      return this.id;
+    }
+    return this._name;
+  }
+
+  set name(value: string) {
+    this._name = value;
   }
 
   get showHighlight(): boolean {
@@ -103,7 +115,13 @@ export class RealJoint extends Joint {
     }
     //If the joint is an input or ground, it cannot be welded
     //It also cannot be welded unless there are two or more links connected to it
-    if (this.input || this.ground || this.links.length < 2) {
+    //also if this.connectedJoints contains a pris joint, this cannot be welded
+    if (
+      this.input ||
+      this.ground ||
+      this.links.length < 2 ||
+      this.connectedJoints.some((joint) => joint instanceof PrisJoint)
+    ) {
       return false;
     } else {
       return true;

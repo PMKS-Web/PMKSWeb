@@ -1,6 +1,5 @@
 @use '@angular/material' as mat;
 @use 'src/app/component/toolbar/toolbar.component.scss' as toolbar;
-@use 'src/app/component/tab/tab.component.scss' as tab;
 @use 'src/app/component/left-tabs/left-tabs.component.scss' as left-tabs;
 @use 'src/app/component/animation-bar/animation-bar.component.scss' as animation-bar;
 @use 'app/component/BLOCKS/title/title.component.scss' as title-block;
@@ -24,6 +23,7 @@
 @use 'src/app/component/new-grid/new-grid.component.scss' as new-grid;
 @use 'src/app/component/context-menu/context-menu.component.scss' as context-menu;
 @use 'src/app/component/equation-panel/equation-panel.component.scss' as equation-panel;
+@use 'src/app/component/MODALS/templates/templates.component.scss' as templates;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -44,7 +44,6 @@ $my-theme: mat.define-light-theme(
 @include mat.all-component-themes($my-theme);
 @include mat.strong-focus-indicators-theme($my-theme);
 @include toolbar.css($my-theme);
-@include tab.css($my-theme);
 @include left-tabs.css($my-theme);
 @include animation-bar.css($my-theme);
 @include edit-panel.css($my-theme);
@@ -68,3 +67,5 @@ $my-theme: mat.define-light-theme(
 @include subtitle-block.css($my-theme);
 @include toggle-block.css($my-theme);
 @include editable-title-block.css($my-theme);
+
+@include templates.css($my-theme);

@@ -140,7 +140,7 @@
              style='overflow: visible'>
         <image xlink:href='../../../assets/SliderTrackMid.svg'
                  [attr.width]='settings.objectScale*2.6' [attr.height]='settings.objectScale*2.6'  [attr.x]='settings.objectScale*-1.3' [attr.y]='settings.objectScale*-1.3'
-               style='transform: scaleY(-1) rotateZ({{gridUtils.getPrisAngle(link.joints[1])}}rad)'
+               style='transform: scaleY(-1) rotateZ({{-gridUtils.getPrisAngle(link.joints[1])}}rad)'
         />
       </svg>
     </ng-container>
@@ -258,7 +258,6 @@
       [attr.d]='mechanismSrv.getJointPath(joint)'
       fill='none'
       [attr.stroke-width]='0.01 * settings.objectScale'
-      [attr.stroke-dasharray]='0.1 * settings.objectScale'
       style='transform: scaleY(-1); pointer-events: none'
     ></path>
     </ng-container>
@@ -337,7 +336,7 @@
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
-        {{customIDService.getVisualID(joint.id)}}
+      {{joint.name}}
       </text>
     </svg>
   </g>
@@ -354,7 +353,7 @@
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
-        {{customIDService.getVisualID(link.id)}}
+        {{link.name}}
       </text>
     </svg>
   </g>
@@ -369,7 +368,7 @@
     >
       <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
             style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
-        {{customIDService.getVisualID(force.id)}}
+        {{force.name}}
       </text>
     </svg>
   </g>

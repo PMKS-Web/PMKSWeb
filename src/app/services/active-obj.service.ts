@@ -20,7 +20,21 @@ export class ActiveObjService {
 
   onActiveObjChange = new EventEmitter<string>();
 
+  getSelectedObj(): RealJoint | Force | RealLink {
+    switch (this.objType) {
+      case 'Joint':
+        return this.selectedJoint;
+      case 'Force':
+        return this.selectedForce;
+      case 'Link':
+        return this.selectedLink;
+      default:
+        throw new Error('No object selected');
+    }
+  }
+
   fakeUpdateSelectedObj() {
+    //Don't actually update the selected object, just emit the event so subscribers can update
     this.onActiveObjChange.emit(this.objType);
   }
 
