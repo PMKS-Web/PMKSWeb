@@ -69,7 +69,7 @@ export class MechanismService {
     return this.forces;
   }
 
-  updateMechanism(save: boolean = true) {
+  updateMechanism(save: boolean = false) {
     console.log('update mechanism');
     // console.log(this.mechanisms[0]);
     //There are multiple mechanisms since there was a plan to support multiple mechanisms
