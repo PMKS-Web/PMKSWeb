@@ -10,7 +10,7 @@
     <mat-icon>note_add</mat-icon>
     New
   </button>
-  <input #csvInput style='display: none' type='file' accept='.txt' (change)='upload($event)' />
+  <input #csvInput style='display: none' type='file' accept='text' (change)='upload($event)' />
   <button mat-button (click)='csvInput.click()' matTooltip='Open a linkage from a file on your device'
           matTooltipShowDelay='1000'>
     <mat-icon>file_open</mat-icon>

@@ -103,6 +103,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
     private urlGenerationService: UrlGenerationService,
+    private urlProcessorService: UrlProcessorService,
     private saveHistoryService: SaveHistoryService,
     public dialog: MatDialog,
     public settings: SettingsService
@@ -160,283 +161,24 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   upload($event: any) {
+    console.log("upload");
     logEvent(this.analytics, 'upload_file');
     const input = $event.target;
     if (input.files.length !== 1) {
+      console.log('No file selected', input.files.length);
       return;
     }
     const reader = new FileReader();
-    // const that = this;
-    let selectedUnit: string = '';
 
     reader.onload = () => {
-      const newFile = reader.result as string;
-      console.log("open", newFile);
-      const csv = parseCSV(newFile);
+      const data = reader.result as string;
+      console.log("open", data);
 
-      if (csv.errors.length > 0) {
-        console.error(csv.errors);
-        throw new Error('parse csv failed');
-      }
+      this.urlProcessorService.updateFromURL(data);
+    }
 
-      const lines = csv.data;
-      let currentParseMode = 'none';
-      let parsing = false;
-      let propsLine = false;
-      const jointArray: Joint[] = [];
-      const linkArray: Link[] = [];
-      const forceArray: Force[] = [];
-      // const pathPointArray = [];
-      // const threePositionArray = [];
-      // const gearSynthesisArray = [];
-      // let settings_: {
-      //   input_speed_mag: number;
-      //   clockwise: boolean;
-      //   gravity: boolean;
-      //   unit: string};
-      // let inputJoint: Joint;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i] as string[];
-
-        if (line.length === 1) {
-          switch (line[0]) {
-            case 'joints': {
-              currentParseMode = 'joint';
-              propsLine = true;
-              break;
-            }
-            case 'links': {
-              currentParseMode = 'link';
-              propsLine = true;
-              break;
-            }
-            case 'forces': {
-              currentParseMode = 'force';
-              propsLine = true;
-              break;
-            }
-            case 'pathPoints': {
-              currentParseMode = 'pathPoint';
-              propsLine = true;
-              break;
-            }
-            case 'threePositions': {
-              currentParseMode = 'threePosition';
-              propsLine = true;
-              break;
-            }
-            case 'settings': {
-              currentParseMode = 'setting';
-              propsLine = true;
-              break;
-            }
-            default: {
-              currentParseMode = 'none';
-              break;
-            }
-          }
-          parsing = false;
-          continue;
-        }
-
-        // ignore props line
-        if (propsLine) {
-          propsLine = false;
-          parsing = true;
-          continue;
-        }
-
-        if (!parsing) {
-          continue;
-        }
-        switch (currentParseMode) {
-          case 'joint':
-            try {
-              const id = line[0];
-              const x = stringToFloat(line[1]);
-              const y = stringToFloat(line[2]);
-              // const links = getLinksByIds(line[3].split(','), linkArray);
-              const type = line[4];
-              const ground = stringToBoolean(line[5]);
-              // const coeff_of_friction = stringToFloat(line[7]);
-              const input = stringToBoolean(line[7]);
-
-              let newJoint: RealJoint;
-              switch (type) {
-                case 'R':
-                  newJoint = new RevJoint(id, x, y, input, ground);
-                  break;
-                case 'P':
-                  newJoint = new PrisJoint(id, x, y, input, ground);
-                  if (!(newJoint instanceof PrisJoint)) {
-                    return;
-                  }
-                  const angle = stringToFloat(line[6]);
-                  newJoint.angle_rad = angle;
-                  break;
-                default:
-                  return;
-              }
-              // newJoint.angle = angle;
-              // newJoint.coeffFriction = coeff_of_friction;
-              // newJoint.links = links;
-              jointArray.push(newJoint);
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'link':
-            try {
-              const id = line[0];
-              const linkType = line[1];
-              const mass = stringToFloat(line[2]);
-              let joints: RealJoint[] = [];
-              const jointIDArray = line[6].split(',');
-              jointIDArray.forEach((jointID) => {
-                const joint = jointArray.find((jt) => jt.id === jointID)!;
-                if (!(joint instanceof RealJoint)) {
-                  return;
-                }
-                // TODO: Maybe put check here to see if they got a joint
-                joints.push(joint);
-              });
-              let newLink: Link;
-              switch (linkType) {
-                case 'R':
-                  const mass_moi = stringToFloat(line[3]);
-                  const CoM_x = stringToFloat(line[4]);
-                  const CoM_y = stringToFloat(line[5]);
-                  const CoM = new Coord(CoM_x, CoM_y);
-
-                  // TODO: Adjust for this after finished welded joints
-                  newLink = new RealLink(id, joints);
-                  // newLink = new RealLink(id, joints, mass, mass_moi, CoM, subset);
-                  break;
-                case 'P':
-                  newLink = new Piston(id, joints, mass);
-                  break;
-                default:
-                  return;
-              }
-              // const newLink = new RealLink(id, joints, mass, mass_moi, shape, bound, CoM);
-              // const newLink = new RealLink(id, joints);
-              // const newLink = new RealLink(id, joints, shape);
-              // newLink.tryNewBounds({ b1: b1, b2: b2, b3: b3, b4: b4, arrow: arrow });
-              // newLink.saveBounds();
-              for (let j_index = 0; j_index < joints.length - 1; j_index++) {
-                for (let next_j_index = j_index + 1; next_j_index < joints.length; next_j_index++) {
-                  joints[j_index].connectedJoints.push(joints[next_j_index]);
-                  joints[next_j_index].connectedJoints.push(joints[j_index]);
-                }
-              }
-              joints.forEach((j) => {
-                j.links.push(newLink);
-              });
-              linkArray.push(newLink);
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'force':
-            try {
-              const id = line[0];
-              const linkId = line[1];
-              const link = linkArray.find((l) => {
-                return l.id === linkId;
-              });
-              // if (!link) { throw new Error('link referenced in force does not exist'); }
-              if (!(link instanceof RealLink)) {
-                return;
-              }
-              const start = new Coord(stringToFloat(line[2]), stringToFloat(line[3]));
-              const end = new Coord(stringToFloat(line[4]), stringToFloat(line[5]));
-              const global = stringToBoolean(line[6]);
-              const newForce = new Force(id, link, start, end, global);
-              newForce.arrowOutward = stringToBoolean(line[7]);
-              newForce.mag = stringToFloat(line[8]);
-              // newForce.yMag = this.stringToFloat(line[9]);
-              forceArray.push(newForce);
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'pathPoint':
-            try {
-              // const id = line[0];
-              // const x = this.stringToFloat(line[1]);
-              // const y = this.stringToFloat(line[2]);
-              // const newPathPoint = new PathPoint(id, x, y);
-              // const neighborOne = this.getPathPointById(line[3], pathPointArray);
-              // const neighborTwo = this.getPathPointById(line[4], pathPointArray);
-              // if (neighborOne !== undefined) {
-              //   newPathPoint.neighbor_one = neighborOne;
-              //   newPathPoint.neighbor_one.neighbor_two = newPathPoint;
-              // }
-              // if (neighborTwo !== undefined) {
-              //   newPathPoint.neighbor_two = neighborTwo;
-              //   newPathPoint.neighbor_two.neighbor_one = newPathPoint;
-              // }
-              // pathPointArray.push(newPathPoint);
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'threePosition':
-            try {
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'gearSynthesis':
-            try {
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-          case 'setting':
-            try {
-              const input_speed_mag = stringToFloat(line[0]);
-              const clockwise = stringToBoolean(line[1]);
-              const gravity = stringToBoolean(line[2]);
-              const unit = line[3];
-              ToolbarComponent.inputAngularVelocity = input_speed_mag;
-              ToolbarComponent.clockwise = clockwise;
-              // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-              ToolbarComponent.gravity = gravity;
-              // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
-              // this.localUnit.selectedUnit = unit;
-              // selectedUnit = unit;
-              ToolbarComponent.unit = unit;
-            } catch (e) {
-              console.error(line);
-              console.error(e);
-              throw new Error('parse csv failed');
-            }
-            break;
-        }
-      }
-      this.mechanismService.joints = jointArray;
-      this.mechanismService.links = linkArray;
-      this.mechanismService.forces = forceArray;
-      this.mechanismService.updateMechanism();
-    };
+    // actually read the file to call the onload callback above
     reader.readAsText(input.files[0]);
-    // if (selectedUnit !== '') {
-    //   this.localUnit.selectedUnit = selectedUnit;
-    // }
   }
   /*
    *  Copy the URL of the current mechanism to the clipboard
@@ -498,7 +240,6 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      // }
     }
   }
 
