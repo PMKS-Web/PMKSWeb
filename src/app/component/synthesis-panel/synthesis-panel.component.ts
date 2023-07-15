@@ -3,12 +3,12 @@ import { FormBuilder } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Pose } from '../../model/pose';
 import { Coord } from '../../model/coord';
-import { Joint, RealJoint } from '../../model/joint';
+import { Joint, RealJoint, RevJoint } from '../../model/joint';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { MechanismBuilder } from '../../services/transcoding/mechanism-builder';
 import { Mechanism } from '../../model/mechanism/mechanism';
-import { Link } from '../../model/link';
+import { Link, RealLink } from '../../model/link';
 
 @Component({
   selector: 'app-synthesis-panel',
@@ -16,9 +16,12 @@ import { Link } from '../../model/link';
   styleUrls: ['./synthesis-panel.component.scss'],
 })
 export class SynthesisPanelComponent implements OnInit {
-    constructor(private fb: FormBuilder) { }
+    constructor(private fb: FormBuilder,
+    public mechanismSrv: MechanismService) {
+        
+    }
 
-    private static mechanismService: MechanismService
+    
 
   ngOnInit() {
     //Set initial values
@@ -110,23 +113,75 @@ export class SynthesisPanelComponent implements OnInit {
 
         //now create joints, links, etc. from the above four coordinates
 
-        var joint1 = new Joint("a", firstPoint.x, firstPoint.y);
-        var joint2 = new Joint("b", secondPoint.x, secondPoint.y);
-        var joint3 = new Joint("c", thirdPoint.x, thirdPoint.y);
-        var joint4 = new Joint("d", fourthPoint.x, fourthPoint.y);
+        var joint1 = new RevJoint("a", firstPoint.x, firstPoint.y,true,true);
+        var joint2 = new RevJoint("b", secondPoint.x, secondPoint.y,false,false);
+        var joint3 = new RevJoint("c", thirdPoint.x, thirdPoint.y,false,false);
+        var joint4 = new RevJoint("d", fourthPoint.x, fourthPoint.y,false,true);
 
-        var jointList = [joint1, joint2, joint3, joint4];
-       // var realJoint1=new RealJoint("a",firstPoint.x,firstPoint.y,true,true)
+        joint1.connectedJoints.push(joint2);
+        joint2.connectedJoints.push(joint1, joint3);
+        joint3.connectedJoints.push(joint2, joint4);
+        joint4.connectedJoints.push(joint3);
 
-        var link1 = new Link("ab", [joint1, joint2]);
-        var link2 = new Link("bc", [joint2, joint3]);
-        var link3 = new Link("cd", [joint3, joint4]);
+      
 
-        var linkList = [link1, link2, link3];
+        var link1 = new RealLink("ab", [joint1, joint2]);
+        var link2 = new RealLink("bc", [joint2, joint3]);
+        var link3 = new RealLink("cd", [joint3, joint4]);
+
+        joint1.links.push(link1);
+        joint2.links.push(link1, link2);
+        joint3.links.push(link2, link3);
+        joint4.links.push(link3);
+
+        this.mechanismSrv.mergeToJoints([joint1, joint2, joint3, joint4]);
+        this.mechanismSrv.mergeToLinks([link1, link2, link3]);
+        this.mechanismSrv.updateMechanism();
+
+        var posCoords = [pose1_coord1, pose1_coord2, pose2_coord1, pose2_coord2, pose3_coord1, pose3_coord2];
+
+        var quality = this.compareTheQualityofSynthesis(this.mechanismSrv.mechanisms[0].joints, posCoords);
+
+        var trialCoord = new Coord(this.mechanismSrv.mechanisms[0].joints[0][0].x, this.mechanismSrv.mechanisms[0].joints[0][0].y);
+
+       // NewGridComponent.sendNotification(firstPoint.x + ',' + firstPoint.y + ',' + fourthPoint.x + ',' + fourthPoint.y);
+
+        NewGridComponent.sendNotification(trialCoord.x+','+trialCoord.y);
+    }
+
+    compareTheQualityofSynthesis(jointValues:Joint[][],posCoords:Coord[]) {
+        //get position analysis data 
+        //joint B, Joint C, 
+        //compare that with poses 
+
+        let quality1_b: number;
+        let quality2_b: number;
+        let quality3_b: number;
+
+        let quality1_c: number;
+        let quality2_c: number;
+        let quality3_c: number;
 
 
-        NewGridComponent.sendNotification(firstPoint.x + ',' + firstPoint.y + ',' + fourthPoint.x + ',' + fourthPoint.y);
+        //compare Joint B with pose 1, pose2, and pose3;
 
+        let index: number = 1;
+
+        for (var val in jointValues) {
+            var pos1Value_b = Math.sqrt(Math.pow(jointValues[val][1].x - posCoords[0].x, 2) + Math.pow(jointValues[val][1].y - posCoords[0].y, 2));
+            var pos2Value_b = Math.sqrt(Math.pow(jointValues[val][1].x - posCoords[2].x, 2) + Math.pow(jointValues[val][1].y - posCoords[2].y, 2));
+            var pos3Value_b = Math.sqrt(Math.pow(jointValues[val][1].x - posCoords[4].x, 2) + Math.pow(jointValues[val][1].y - posCoords[4].y, 2));
+
+            var pos1Value_c = Math.sqrt(Math.pow(jointValues[val][2].x - posCoords[1].x, 2) + Math.pow(jointValues[val][1].y - posCoords[1].y, 2));
+            var pos2Value_c = Math.sqrt(Math.pow(jointValues[val][2].x - posCoords[3].x, 2) + Math.pow(jointValues[val][1].y - posCoords[3].y, 2));
+            var pos3Value_c = Math.sqrt(Math.pow(jointValues[val][2].x - posCoords[5].x, 2) + Math.pow(jointValues[val][1].y - posCoords[5].y, 2));
+
+            //need to compare if less than 0.09 
+            //need to store in quality
+            //need to check if exact match
+            //need to extract time step. 
+
+        }
     }
     findIntersectionPoint(pose1_coord1: Coord, pose2_coord1: Coord, pose3_coord1: Coord) {
 
