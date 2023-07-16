@@ -44,16 +44,16 @@
       <rect *ngIf='mechanismSrv.joints.length == 0'
             [attr.x]='-10' [attr.y]='-10'
             [attr.width]='20'
-            [attr.height]='20' fill='#ffffff' stroke='#00000000'>
+            [attr.height]='20' fill='none' stroke='#00000000' opacity='0.5'>
       </rect>
 <!--      <rect *ngIf='mechanismSrv.joints.length == 0'-->
 <!--            [attr.x]='-100' [attr.y]='100'-->
 <!--            [attr.width]='200'-->
 <!--            [attr.height]='20' fill='#ffffff' stroke='#00000000'>-->
 <!--      </rect>-->
-      <rect x='-10px' y='-10px' width='20px' height='20px' fill='#aaaaff'></rect>
 
-
+  <!-- This is a strucrially intergral rect and should not be removed! -->
+      <rect x='-1px' y='-1px' width='2px' height='2px' fill='white'></rect>
 
 
       <!-- Axes and Grid-->
@@ -449,11 +449,9 @@
         <path fill='black' d=''></path>
       </g>
 
-<!--  &lt;!&ndash; Blue Square &ndash;&gt;-->
-<!--  <rect x='0' y='0' width='100px' height='100px' fill='#0000ff'></rect>-->
 
 </svg>
-<div *ngIf='!settings.isGridDebugOn' id='mouseLocation'>
+<div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
   Zoom: {{svgGrid.getZoom()}}
   <br />

@@ -535,13 +535,11 @@ export class NewGridComponent {
                 joint2.connectedJoints.push(joint1);
 
                 if (this.mechanismSrv.links.length == 0) {
-                  console.log('first link');
-                  SettingsService._objectScale.next(
-                    Number((2 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
-                  );
-                  console.log(this.svgGrid.panZoomObject);
-                  console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
-                  console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
+                  // console.log('first link');
+                  this.svgGrid.updateObjectScale();
+                  // console.log(this.svgGrid.panZoomObject);
+                  // console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
+                  // console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
                 }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);

@@ -165,7 +165,7 @@ export class SettingsPanelComponent {
   }
 
   updateObjectScale() {
-    SettingsService._objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
+    this.svgGrid.updateObjectScale();
   }
 }
 

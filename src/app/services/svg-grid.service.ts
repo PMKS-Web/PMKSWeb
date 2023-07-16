@@ -24,6 +24,7 @@ export class SvgGridService {
   private cellSize: number = this.defualtCellSize;
 
   // defaultZoom: number = 80;
+  private panLockOut: boolean = false;
 
   constructor(private settingsService: SettingsService) {}
 
@@ -104,8 +105,8 @@ export class SvgGridService {
       center: true,
       zoomScaleSensitivity: 0.15,
       dblClickZoomEnabled: false,
-      maxZoom: 8,
-      minZoom: 0.01,
+      maxZoom: 10000,
+      minZoom: 0.00001,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
       beforePan: this.handleBeforePan.bind(this),
@@ -150,6 +151,11 @@ export class SvgGridService {
   }
 
   handleBeforePan(oldPan: any, newPan: any) {
+    if (this.panLockOut) {
+      this.panLockOut = false;
+      return oldPan;
+    }
+
     if (
       NewGridComponent.debugGetJointState() == jointStates.dragging ||
       NewGridComponent.debugGetForceState() == forceStates.draggingStart ||
@@ -200,10 +206,20 @@ export class SvgGridService {
   }
 
   handleBeforeZoom(oldZoom: any, newZoom: any) {
+    let isZoomingIn = newZoom > oldZoom;
     // console.log('handleBeforeZoom');
     // console.log(oldZoom, newZoom);
-    // if (this.customZoom < 0.1 || newZoom > 10) {
-    //   this.panLockOut = true;
+    console.log(this.getZoom());
+    if (isZoomingIn && this.getZoom() > 330) {
+      this.panLockOut = true;
+      return false;
+    } else if (!isZoomingIn && this.getZoom() < 0.4) {
+      this.panLockOut = true;
+      return false;
+    }
+    return;
+    // if (this.getZoom() < 0.4 || this.getZoom() > 330) {
+    //   // this.panLockOut = true;
     //   return false;
     // } else {
     //   return true;
@@ -220,13 +236,13 @@ export class SvgGridService {
       i++;
     }
     this.handlePan();
-    if (this.panZoomObject.getZoom() / this.settingsService.objectScale < 10) {
+    if (this.getZoom() * this.settingsService.objectScale < 5) {
       NewGridComponent.sendNotification(
         'The visual size of the links might be too small. Try using the "Update Object Scale" button in the settings menu.',
         20000
       );
     }
-    if (this.panZoomObject.getZoom() / this.settingsService.objectScale > 150) {
+    if (this.getZoom() * this.settingsService.objectScale > 200) {
       NewGridComponent.sendNotification(
         'The visual size of the links might be too large. Try using the "Update Object Scale" button in the settings menu.',
         20000
@@ -263,14 +279,18 @@ export class SvgGridService {
   }
 
   scaleToFitLinkage() {
-    // this.settingsService.tempGridDisable = true;
+    this.settingsService.tempGridDisable = true;
     setTimeout(() => {
-      // this.panZoomObject.updateBBox(); // Update viewport bounding box
-      // this.settingsService.tempGridDisable = false;
+      this.panZoomObject.updateBBox(); // Update viewport bounding box
+      this.settingsService.tempGridDisable = false;
       NewGridComponent.instance.enableGridAnimationForThisAction();
       this.panZoomObject.fit();
       this.panZoomObject.center();
       this.zoomOut();
     }, 1);
+  }
+
+  updateObjectScale() {
+    SettingsService._objectScale.next(Number((60 / this.getZoom()).toFixed(2)));
   }
 }
