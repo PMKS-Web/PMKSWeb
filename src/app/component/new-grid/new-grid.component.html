@@ -453,7 +453,8 @@
 </svg>
 <div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
-  Zoom: {{svgGrid.getZoom()}}
+  Zoom: {{svgGrid.getZoom().toFixed(2)}} Mouse Raw: {{mouseLocationRaw.x.toFixed(2)}}, {{mouseLocationRaw.y.toFixed(2)}}
+  0,0: {{originInScreen.x.toFixed(2)}}, {{originInScreen.y.toFixed(2)}}
   <br />
   {{returnDebugValue()}}
 </div>

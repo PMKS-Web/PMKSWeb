@@ -42,6 +42,7 @@ export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
+  public originInScreen: Coord = new Coord(0, 0);
 
   constructor(
     public svgGrid: SvgGridService,
@@ -81,6 +82,7 @@ export class NewGridComponent {
   private startX!: number;
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
+  mouseLocationRaw: Coord = new Coord(0, 0);
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 
@@ -96,7 +98,7 @@ export class NewGridComponent {
     }
 
     fromEvent(window, 'resize').subscribe((event) => {
-      console.log('resize');
+      // console.log('resize');
       this.svgGrid.panZoomObject.resize();
       // this.svgGrid.panZoomObject.fit();
       // this.svgGrid.panZoomObject.center();
@@ -147,7 +149,7 @@ export class NewGridComponent {
   updateContextMenuItems() {
     //Switch case based on what type the object is
     this.cMenuItems = [];
-    console.log(this.lastRightClick.constructor.name);
+    // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
         //Switch force direction, switch force local, delete Force
@@ -343,8 +345,8 @@ export class NewGridComponent {
   }
 
   createLink() {
-    console.log('createLink');
-    console.log(this.lastRightClickCoord);
+    // console.log('createLink');
+    // console.log(this.lastRightClickCoord);
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
     switch (this.lastRightClick.constructor.name) {
       case 'String':
@@ -373,7 +375,7 @@ export class NewGridComponent {
     // const mousePos = this.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
     // // TODO: having to call setAttribute and have HTML update for you automatically
-    console.log(startCoord);
+    // console.log(startCoord);
     this.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
     this.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
     this.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
@@ -383,7 +385,9 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
+    this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocationRaw = new Coord($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
 
     switch (this.gridStates) {

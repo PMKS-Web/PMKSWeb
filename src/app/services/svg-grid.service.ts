@@ -19,12 +19,14 @@ export class SvgGridService {
   verticalLinesMinor: number[] = [];
   horizontalLines: number[] = [];
   horizontalLinesMinor: number[] = [];
-  private defualtCellSize: number = 500;
+  private defualtCellSize: number = 10000;
 
   private cellSize: number = this.defualtCellSize;
 
-  // defaultZoom: number = 80;
   private panLockOut: boolean = false;
+
+  private MAX_ZOOM: number = 3300;
+  private MIN_ZOOM: number = 0.04;
 
   constructor(private settingsService: SettingsService) {}
 
@@ -105,8 +107,8 @@ export class SvgGridService {
       center: true,
       zoomScaleSensitivity: 0.15,
       dblClickZoomEnabled: false,
-      maxZoom: 10000,
-      minZoom: 0.00001,
+      maxZoom: 10000, //These are not used, look at MAX_ZOOM
+      minZoom: 0.00001, //These are not used, look at MIN_ZOOM
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
       beforePan: this.handleBeforePan.bind(this),
@@ -119,7 +121,7 @@ export class SvgGridService {
 
   screenToSVG(screenPos: Coord): Coord {
     const CTM: SVGMatrix = this.CTM;
-    // TODO: Temporary solution. Maybe okay to have...
+    //Temporary solution. Maybe okay to have...
     if (this.CTM === undefined) {
       return new Coord(0, 0);
     }
@@ -127,6 +129,17 @@ export class SvgGridService {
     const svgPos = screenPos.applyMatrix(inverseCTM);
     svgPos.y = svgPos.y * -1;
     return svgPos;
+  }
+
+  SVGtoScreen(svgPos: Coord): Coord {
+    const CTM: SVGMatrix = this.CTM;
+    //Temporary solution. Maybe okay to have...
+    if (this.CTM === undefined) {
+      return new Coord(0, 0);
+    }
+    const screenPos = svgPos.applyMatrix(CTM);
+    // screenPos.y = screenPos.y * -1;
+    return screenPos;
   }
 
   screenToSVGfromXY(screenX: number, screenY: number): Coord {
@@ -148,6 +161,7 @@ export class SvgGridService {
     // this.panZoomObject.updateBBox(); // Update viewport bounding box
     // console.log(viewBox);
     // console.log(this.viewBoxMinX, this.viewBoxMaxX);
+    // console.log(this.viewBoxMinY, this.viewBoxMaxY);
   }
 
   handleBeforePan(oldPan: any, newPan: any) {
@@ -171,7 +185,7 @@ export class SvgGridService {
     this.verticalLines = [];
     let currentLine = Math.floor(this.viewBoxMinX / this.cellSize) * this.cellSize;
     while (currentLine < this.viewBoxMaxX) {
-      if (currentLine === 0) {
+      if (Math.abs(currentLine) < 0.001) {
         currentLine += this.cellSize;
         continue;
       }
@@ -189,7 +203,7 @@ export class SvgGridService {
     this.horizontalLines = [];
     currentLine = Math.floor(this.viewBoxMinY / this.cellSize) * this.cellSize;
     while (currentLine < this.viewBoxMaxY) {
-      if (currentLine === 0) {
+      if (Math.abs(currentLine) < 0.001) {
         currentLine += this.cellSize;
         continue;
       }
@@ -203,17 +217,34 @@ export class SvgGridService {
       this.horizontalLinesMinor.push(currentLine);
       currentLine += this.cellSize / 4;
     }
+
+    //Clean up the lines by rounding them to 2 decimal places
+    this.verticalLines = this.verticalLines.map((line) => {
+      return Math.round(line * 10000) / 10000;
+    });
+    this.horizontalLines = this.horizontalLines.map((line) => {
+      return Math.round(line * 10000) / 10000;
+    });
+    this.verticalLinesMinor = this.verticalLinesMinor.map((line) => {
+      return Math.round(line * 10000) / 10000;
+    });
+    this.horizontalLinesMinor = this.horizontalLinesMinor.map((line) => {
+      return Math.round(line * 10000) / 10000;
+    });
+
+    // console.log(this.verticalLines);
+    // console.log(this.verticalLinesMinor);
   }
 
   handleBeforeZoom(oldZoom: any, newZoom: any) {
     let isZoomingIn = newZoom > oldZoom;
     // console.log('handleBeforeZoom');
     // console.log(oldZoom, newZoom);
-    console.log(this.getZoom());
-    if (isZoomingIn && this.getZoom() > 330) {
+    // console.log(this.getZoom());
+    if (isZoomingIn && this.getZoom() > this.MAX_ZOOM) {
       this.panLockOut = true;
       return false;
-    } else if (!isZoomingIn && this.getZoom() < 0.4) {
+    } else if (!isZoomingIn && this.getZoom() < this.MIN_ZOOM) {
       this.panLockOut = true;
       return false;
     }
@@ -227,18 +258,19 @@ export class SvgGridService {
   }
 
   handleZoom(zoomLevel: number) {
-    console.log(this.getZoom());
+    // console.log(this.getZoom());
     this.cellSize = this.defualtCellSize;
     const divisionSequnece: number[] = [2.5, 2, 2];
     let i = 0;
     while (this.cellSize * this.getZoom() > 200) {
+      //This number is the maximum size of the cell, if it's any larger it will get sub-divided
       this.cellSize = this.cellSize / divisionSequnece[i % divisionSequnece.length];
       i++;
     }
     this.handlePan();
     if (this.getZoom() * this.settingsService.objectScale < 5) {
       NewGridComponent.sendNotification(
-        'The visual size of the links might be too small. Try using the "Update Object Scale" button in the settings menu.',
+        'The visual size of the links might be too small. Try using the "Update Object Scale" button in the settings menu or use the "Reset View" button on the bottom right.',
         20000
       );
     }

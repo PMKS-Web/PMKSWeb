@@ -8,6 +8,8 @@ import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { Coord } from '../../model/coord';
 
 @Component({
   selector: 'app-settings-panel',
@@ -19,7 +21,8 @@ export class SettingsPanelComponent {
     public settingsService: SettingsService,
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
-    private svgGrid: SvgGridService
+    private svgGrid: SvgGridService,
+    private nup: NumberUnitParserService
   ) {}
 
   currentLengthUnit!: LengthUnit;
@@ -111,9 +114,18 @@ export class SettingsPanelComponent {
         this.currentForceUnit = ForceUnit.NEWTON;
       }
       this.settingsService.forceUnit.next(this.currentForceUnit);
+      let prevLengthUnit = this.settingsService.lengthUnit.value;
       this.currentLengthUnit = ParseLengthUnit(val);
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
-      this.svgGrid.scaleToFitLinkage();
+      let tempOriginInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
+      this.svgGrid.panZoomObject.zoomAtPointBy(
+        this.nup.convertLength(1, this.currentLengthUnit, prevLengthUnit),
+        { x: tempOriginInScreen.x, y: tempOriginInScreen.y }
+      );
+      SettingsService._objectScale.next(
+        this.nup.convertLength(SettingsService.objectScale, prevLengthUnit, this.currentLengthUnit)
+      );
+      // this.svgGrid.scaleToFitLinkage();
       ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
