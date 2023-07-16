@@ -41,13 +41,15 @@
                 Invalid email address
               </mat-error>
             </mat-form-field>
-            <mat-checkbox color='primary' checked formControlName='diagnostics'>Send browser and application data for
-              debugging
+            <mat-checkbox color='primary' checked formControlName='diagnostics'>Send browser and application data
+            </mat-checkbox>
+            <mat-checkbox color='primary' checked formControlName='project'>Send of copy of the open project
             </mat-checkbox>
             <button-block icon='send' [click]='sendCommentEmail.bind(this)'>Send Message</button-block>
           </form>
         </panel-section>
       </div>
+      <div style='width: 100%; height: 80px;'></div>
     </div>
     <div *ngIf='getOpenTab() === 4' class='page4'>
       <div id='debugWrapper'>

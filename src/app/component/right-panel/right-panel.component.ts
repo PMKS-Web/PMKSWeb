@@ -25,7 +25,6 @@ import { environment } from '../../../environments/environment';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
 import { SettingsService } from '../../services/settings.service';
 import { Arc, Line } from '../../model/line';
-import { C } from '@angular/cdk/keycodes';
 import { Coord } from '../../model/coord';
 
 @Component({
