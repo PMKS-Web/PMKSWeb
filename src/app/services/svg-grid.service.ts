@@ -23,7 +23,7 @@ export class SvgGridService {
 
   private cellSize: number = this.defualtCellSize;
 
-  defaultZoom: number = 80;
+  // defaultZoom: number = 80;
 
   constructor(private settingsService: SettingsService) {}
 
@@ -100,15 +100,16 @@ export class SvgGridService {
     //This is like the constructor, and allows you to set the root element where the library is loaded
     this.panZoomObject = svgPanZoom(root, {
       zoomEnabled: true,
-      fit: false,
-      center: false,
+      fit: true,
+      center: true,
       zoomScaleSensitivity: 0.15,
       dblClickZoomEnabled: false,
-      maxZoom: 200,
+      maxZoom: 8,
       minZoom: 0.01,
       onPan: this.handlePan.bind(this),
       onZoom: this.handleZoom.bind(this),
       beforePan: this.handleBeforePan.bind(this),
+      beforeZoom: this.handleBeforeZoom.bind(this),
       onUpdatedCTM: this.handleUpdatedCTM.bind(this),
       customEventsHandler: eventsHandler,
     });
@@ -198,7 +199,19 @@ export class SvgGridService {
     }
   }
 
-  handleZoom() {
+  handleBeforeZoom(oldZoom: any, newZoom: any) {
+    // console.log('handleBeforeZoom');
+    // console.log(oldZoom, newZoom);
+    // if (this.customZoom < 0.1 || newZoom > 10) {
+    //   this.panLockOut = true;
+    //   return false;
+    // } else {
+    //   return true;
+    // }
+  }
+
+  handleZoom(zoomLevel: number) {
+    console.log(this.getZoom());
     this.cellSize = this.defualtCellSize;
     const divisionSequnece: number[] = [2.5, 2, 2];
     let i = 0;
@@ -250,10 +263,10 @@ export class SvgGridService {
   }
 
   scaleToFitLinkage() {
-    this.settingsService.tempGridDisable = true;
+    // this.settingsService.tempGridDisable = true;
     setTimeout(() => {
-      this.panZoomObject.updateBBox(); // Update viewport bounding box
-      this.settingsService.tempGridDisable = false;
+      // this.panZoomObject.updateBBox(); // Update viewport bounding box
+      // this.settingsService.tempGridDisable = false;
       NewGridComponent.instance.enableGridAnimationForThisAction();
       this.panZoomObject.fit();
       this.panZoomObject.center();

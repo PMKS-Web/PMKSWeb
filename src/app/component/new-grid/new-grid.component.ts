@@ -51,7 +51,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -88,20 +88,24 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === 'true';
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    fromEvent(window, 'resize')
-      .pipe(debounceTime(200))
-      .subscribe((event) => {
-        console.log('resize');
-        this.svgGrid.panZoomObject.resize();
-        this.svgGrid.scaleToFitLinkage();
-      });
+    fromEvent(window, 'resize').subscribe((event) => {
+      console.log('resize');
+      this.svgGrid.panZoomObject.resize();
+      // this.svgGrid.panZoomObject.fit();
+      // this.svgGrid.panZoomObject.center();
+      // this.svgGrid.panZoomObject.resize();
+      this.svgGrid.handlePan();
+      // console.log(this.svgGrid.getZoom());
+      // this.svgGrid.panZoomObject.updateBBox();
+      // this.svgGrid.scaleToFitLinkage();
+    });
   }
 
   ngAfterViewInit() {
@@ -533,8 +537,11 @@ export class NewGridComponent {
                 if (this.mechanismSrv.links.length == 0) {
                   console.log('first link');
                   SettingsService._objectScale.next(
-                    Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
+                    Number((2 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
                   );
+                  console.log(this.svgGrid.panZoomObject);
+                  console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
+                  console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
                 }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
