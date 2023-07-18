@@ -503,6 +503,45 @@ export class MechanismService {
           (jj) => jj.id === this.activeObjService.selectedJoint.id
         );
         l.joints.splice(delJointIndex, 1);
+        // TODO: We should put this within a helper function since I feel that this function is called often in the code...
+        if (!(l instanceof RealLink)) {return}
+        l.subset.forEach((sub, subIndex) => {
+          const delJointIndex = sub.joints.findIndex(subj => subj.id === this.activeObjService.selectedJoint.id);
+          if (delJointIndex === -1) {return}
+          // need to delete joint, fixedPoint, and ID
+          sub.joints.splice(delJointIndex, 1);
+          const delFixedJointIndex = sub.fixedLocations.findIndex(sub_fixedJoint => sub_fixedJoint.id === this.activeObjService.selectedJoint.id);
+          sub.fixedLocations.splice(delFixedJointIndex, 1);
+          if (sub.fixedLocation.fixedPoint === this.activeObjService.selectedJoint.id) {
+            sub.fixedLocation.fixedPoint = "com";
+          }
+          sub.id = sub.id.replace(this.activeObjService.selectedJoint.id, '');
+          // If the subset only contains one joint, delete the subset.
+        });
+        // TODO: May wanna check this logic since we have foreach and we delete index within foreach loop...
+        for (let subLinkIndex = 0; subLinkIndex < l.subset.length; subLinkIndex++) {
+          if (l.subset[subLinkIndex].joints.length < 2) {
+            l.subset.splice(subLinkIndex, 1);
+            subLinkIndex = subLinkIndex - 1;
+          }
+        }
+        // If there is only one subset for a link, then we do not need that subset
+        if (l.subset.length === 1) {
+          l.subset.splice(0, 1);
+          l.joints.forEach(jt => {
+            if (!(jt instanceof RealJoint)) {return}
+            jt.isWelded = false;
+          })
+        }
+        // if (l.joints.length === 2) {
+        //   if (!(l.joints[0] instanceof RealJoint) || !(l.joints[1] instanceof RealJoint)) {return}
+        //   if (l.joints[0].isWelded) {
+        //     l.joints[0].isWelded = false;
+        //   }
+        //   if (l.joints[1].isWelded) {
+        //     l.joints[1].isWelded = false;
+        //   }
+        // }
       }
 
       if (l instanceof Piston) {
