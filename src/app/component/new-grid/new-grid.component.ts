@@ -617,7 +617,30 @@ export class NewGridComponent {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                // TODO: Be sure the force added is at correct position for binary link
+                // TODO: utilize dot product to find point that is closest to the line
+                if (this.activeObjService.selectedLink.joints.length === 2) {
+                  const lineVector: Coord = new Coord(
+                    this.activeObjService.selectedLink.joints[0].x - this.activeObjService.selectedLink.joints[1].x,
+                    this.activeObjService.selectedLink.joints[0].y - this.activeObjService.selectedLink.joints[1].y);
+
+                  // Calculate the vector from the first point on the line to the given point
+                  const givenPointVector: Coord = new Coord(
+                    startCoord.x - this.activeObjService.selectedLink.joints[0].x,
+                    startCoord.y - this.activeObjService.selectedLink.joints[0].y);
+
+                  // Calculate the dot product of the line vector and the given point vector
+                  const dotProduct: number = givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
+
+                  // Calculate the length of the line vector squared
+                  const lineLengthSquared: number = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+
+                  // Calculate the parameter t for the projection onto the line
+                  const t: number = dotProduct / lineLengthSquared;
+
+                  // Calculate the projected point on the line
+                  startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
+                  startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
+                }
                 const force = new Force(
                   'F' + (this.mechanismSrv.forces.length + 1).toString(),
                   this.activeObjService.selectedLink,
