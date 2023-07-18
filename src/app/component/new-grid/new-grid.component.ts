@@ -15,9 +15,11 @@ import {
   forceStates,
   gridStates,
   is_touch_enabled,
+  has_mouse_pointer,
   jointStates,
   line_line_intersect,
   linkStates,
+  local_storage_available, getDistance,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -40,6 +42,7 @@ export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
+  private timeMouseDown: number = 0;
 
   constructor(
     public svgGrid: SvgGridService,
@@ -86,7 +89,10 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    if (is_touch_enabled()) {
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+
+    // Touchscreen warning for when no mouse pointer
+    if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
@@ -416,6 +422,15 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+
+        //Break the timeout if the user is clearly trying to drag the joint
+        if(getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10){
+          this.timeMouseDown = 0;
+        }
+        //If it has been less than 1 seccond since the mouse was pressed down, ignore the drag
+        if (this.timeMouseDown !== undefined && Date.now() - this.timeMouseDown < 100) {
+          return;
+        }
         this.activeObjService.selectedJoint = this.gridUtils.dragJoint(
           this.activeObjService.selectedJoint,
           mousePosInSvg
@@ -506,6 +521,8 @@ export class NewGridComponent {
   }
 
   mouseDown($event: MouseEvent) {
+    // Log the time that the mouse was clicked
+    this.timeMouseDown = new Date().getTime();
     // console.warn('mouseDown');
     // console.log(typeChosen);
     // console.log(thing);
@@ -514,6 +531,7 @@ export class NewGridComponent {
     // this.disappearContext();
     this.startX = $event.pageX;
     this.startY = $event.pageY;
+    // console.log(this.startX, this.startY);
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink;
@@ -654,6 +672,7 @@ export class NewGridComponent {
           case 'Joint':
             // this.jointXatMouseDown = thing.x;
             // this.jointYatMouseDown = thing.y;
+            // Get the joint that was clicked on and top left of the rectangualr bounds
             switch (this.gridStates) {
               case gridStates.waiting:
                 break;

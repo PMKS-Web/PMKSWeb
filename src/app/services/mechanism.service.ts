@@ -949,4 +949,9 @@ export class MechanismService {
     });
     return subsetBuilder;
   }
+
+  isJointOrphan(joint: Joint) {
+    //Return true if the given joint is an orphan (not part of a link).
+    return this.links.every((l) => !l.joints.includes(joint));
+  }
 }
