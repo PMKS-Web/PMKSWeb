@@ -110,6 +110,10 @@ export class GridUtilsService {
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
+    
+    let oldX = selectedJoint.x;
+    let oldY = selectedJoint.y;
+    
     selectedJoint.x = roundNumber(trueCoord.x, 6);
     selectedJoint.y = roundNumber(trueCoord.y, 6);
     switch (selectedJoint.constructor) {
@@ -141,16 +145,31 @@ export class GridUtilsService {
               subLink.updateLengthAndAngle();
             });
           }
+
           // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
           PositionSolver.setUpInitialJointLocations(l.joints);
           l.forces.forEach((f) => {
             // TODO: adjust the location of force endpoints and update the line and arrow
-            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
-            PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
-            f.endCoord.x = PositionSolver.forcePositionMap.get(f.id + 'end')!.x;
-            f.endCoord.y = PositionSolver.forcePositionMap.get(f.id + 'end')!.y;
-            f.startCoord.x = PositionSolver.forcePositionMap.get(f.id + 'start')!.x;
-            f.startCoord.y = PositionSolver.forcePositionMap.get(f.id + 'start')!.y;
+            //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
+            //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+            
+            // Calculate force vectors relative to start position, as the vector will be shifted but not scaled or rotated
+            let fdx = f.endCoord.x - f.startCoord.x;
+            let fdy = f.endCoord.y - f.startCoord.y;
+
+            // drag offset
+            let offsetX = selectedJoint.x - oldX;
+            let offsetY = selectedJoint.y - oldY;
+
+            // Offset is divided by number of joints to average out change
+            f.startCoord.x += offsetX / f.link.joints.length;
+            f.startCoord.y += offsetY / f.link.joints.length;
+
+            // Now that new start position is computed, maintain vector for end position
+            f.endCoord.x = f.startCoord.x + fdx
+            f.endCoord.y = f.startCoord.y + fdy
+            
+            // Update force line and arrow
             f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
             f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
           });
