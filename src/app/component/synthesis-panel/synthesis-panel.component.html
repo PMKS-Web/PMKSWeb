@@ -55,14 +55,29 @@
                      _formControl='position1Match'>
             Position 1:
         </input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='bValue'
+                          formControl2='cValue'>
+            Distance of Coordinates from Original Position
+        </dual-input-block>
         <input-block [formGroup]='synthesisForm'
                      _formControl='position2Match'>
             Position 2:
         </input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='bValue'
+                          formControl2='cValue'>
+            Distance of Coordinates from Original Position
+        </dual-input-block>
         <input-block [formGroup]='synthesisForm'
                      _formControl='position3Match'>
             Position 3:
         </input-block>
+        <dual-input-block [formGroup]='synthesisForm'
+                          formControl1='bValue'
+                          formControl2='cValue'>
+            Distance of Coordinates from Original Position
+        </dual-input-block>
 
         <app-not-ready-warning></app-not-ready-warning>
     </panel-section>
