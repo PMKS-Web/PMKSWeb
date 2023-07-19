@@ -72,16 +72,8 @@ export class SaveHistoryService {
       return;
     }
 
-    // If the actual mechanism state is not the same as the
-    // state set by index, then the user has made changes
-    // to the mechanism since the last save, and we should
-    // revert to the last saved state.
-    if (this.urlGenerationService.generateUrlQuery() !== this.history[this.index]) {
-      this.setMechanismToState(this.index);
-    } else {
-      // Otherwise, update index to point to the new current state
-      this.setMechanismToState(this.index - 1);
-    }
+    // Otherwise, update index to point to the new current state
+    this.setMechanismToState(this.index - 1);
   }
 
   /*

@@ -44,6 +44,8 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
+import { MechanismService } from './services/mechanism.service';
+import { GridUtilsService } from './services/grid-utils.service';
 
 @NgModule({
   declarations: [

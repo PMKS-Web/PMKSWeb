@@ -24,6 +24,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
+import { SaveHistoryInterface } from './save-history-interface';
 
 @Injectable({
   providedIn: 'root',
@@ -54,6 +55,7 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
+    //private saveHistoryService: SaveHistoryInterface
   ) {
   }
 
@@ -101,7 +103,7 @@ export class MechanismService {
     this.activeObjService.fakeUpdateSelectedObj();
 
     if (save) {
-      //this.saveHistoryService.save()
+      //this.saveHistoryService.save();
     }
 
   }
