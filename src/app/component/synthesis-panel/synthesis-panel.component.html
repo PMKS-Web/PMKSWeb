@@ -40,8 +40,30 @@
                           formControl2='b2y'>
             B2 Position
         </dual-input-block>
-     <!-- <button-block [click]='handleButton.bind(this)'>Call Backend Function</button-block> -->
+
+        <input-block [formGroup]='synthesisForm'
+                     _formControl='quality'>
+            Quality (0.05 to 0.1)
+        </input-block>
+        <!-- <button-block [click]='handleButton.bind(this)'>Call Backend Function</button-block> -->
         <button-block [click]='synthesisFunction.bind(this)'>Call Backend Function</button-block>
+
+        <title-block description='Synthesis results are presented below:'>
+            Synthesis Results
+        </title-block>
+        <input-block [formGroup]='synthesisForm'
+                     _formControl='position1Match'>
+            Position 1:
+        </input-block>
+        <input-block [formGroup]='synthesisForm'
+                     _formControl='position2Match'>
+            Position 2:
+        </input-block>
+        <input-block [formGroup]='synthesisForm'
+                     _formControl='position3Match'>
+            Position 3:
+        </input-block>
+
         <app-not-ready-warning></app-not-ready-warning>
     </panel-section>
   <!--  <panel-section-collapsible [expanded]='true'>-->
