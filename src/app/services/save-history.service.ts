@@ -46,7 +46,7 @@ export class SaveHistoryService {
     // update index to point to the new last state
     this.index = this.history.length - 1;
 
-    console.log('history: ' + this.history)
+    console.log("save", state);
   }
 
   /*
@@ -69,6 +69,7 @@ export class SaveHistoryService {
   undo() {
 
     if (!this.canUndo()) {
+      console.log("cannot undo");
       return;
     }
 
@@ -90,6 +91,7 @@ export class SaveHistoryService {
   redo() {
 
     if (!this.canRedo()) {
+      console.log("cannot redo");
       return;
     }
     this.setMechanismToState(this.index + 1);

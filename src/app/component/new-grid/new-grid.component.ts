@@ -315,7 +315,7 @@ export class NewGridComponent {
     this.activeObjService.selectedLink.id += newJoint.id;
     this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     this.mechanismSrv.joints.push(newJoint);
-    this.mechanismSrv.updateMechanism();
+    this.mechanismSrv.updateMechanism(true);
   }
 
   createForce() {
@@ -545,7 +545,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint1, joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -566,7 +566,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.jointStates = jointStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -609,7 +609,7 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.activeObjService.selectedLink.d =
                   this.activeObjService.selectedLink.getPathString();
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -631,7 +631,7 @@ export class NewGridComponent {
                 this.mechanismSrv.forces.push(force);
                 PositionSolver.setUpSolvingForces(this.activeObjService.selectedLink.forces); // needed to determine force position when dragging a joint
                 // PositionSolver.setUpInitialJointLocations(this.selectedLink.joints);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.forceStates = forceStates.waiting;
                 this.forceTempHolderSVG.style.display = 'none';
@@ -663,7 +663,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint1]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 // PositionSolver.setUpSolvingForces(link.forces); // needed to determine force location when dragging a joint
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
@@ -705,7 +705,7 @@ export class NewGridComponent {
                 this.activeObjService.prevSelectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.jointStates = jointStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -743,7 +743,7 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.id.concat(joint1.id);
                 this.mechanismSrv.mergeToJoints([joint1]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';

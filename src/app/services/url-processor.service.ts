@@ -17,7 +17,7 @@ export class UrlProcessorService {
   constructor(
     private mechanismSrv: MechanismService,
     private settingsSrv: SettingsService,
-    private svgGrid: SvgGridService
+    private svgGrid: SvgGridService,
   ) {
 
     // the content part of the url (the part after the ?)
@@ -25,6 +25,10 @@ export class UrlProcessorService {
 
     // update the mechanism from the url
     this.updateFromURL(url);
+
+    // initial save
+    //this.mechanismSrv.save();
+
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null

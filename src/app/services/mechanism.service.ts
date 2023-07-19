@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Link, Piston, RealLink } from '../model/link';
 import { Force } from '../model/force';
@@ -24,7 +24,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
-import { SaveHistoryInterface } from './save-history-interface';
+import { SaveHistoryService } from './save-history.service';
 
 @Injectable({
   providedIn: 'root',
@@ -55,7 +55,7 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
-    //private saveHistoryService: SaveHistoryInterface
+    private injector: Injector,
   ) {
   }
 
@@ -72,7 +72,8 @@ export class MechanismService {
   }
 
   updateMechanism(save: boolean = false) {
-    console.log('update mechanism');
+    console.log('update mechanism', save);
+    console.trace();
     // console.log(this.mechanisms[0]);
     //There are multiple mechanisms since there was a plan to support multiple mechanisms
     //You can treat this as a single mechanism for now at index 0
@@ -103,9 +104,13 @@ export class MechanismService {
     this.activeObjService.fakeUpdateSelectedObj();
 
     if (save) {
-      //this.saveHistoryService.save();
+      this.save();
     }
+  }
 
+  save() {
+    const saveHistoryService = this.injector.get(SaveHistoryService);
+    saveHistoryService.save()
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -468,7 +473,7 @@ export class MechanismService {
     if (this.activeObjService.selectedLink !== undefined) {
       this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
     this.onMechUpdateState.next(3);
   }
 
@@ -523,7 +528,7 @@ export class MechanismService {
       this.activeObjService.selectedForce.stroke = 'black';
       this.activeObjService.selectedForce.fill = 'black';
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   deleteLink() {
@@ -569,7 +574,7 @@ export class MechanismService {
       }
     }
     this.links.splice(linkIndex, 1);
-    this.updateMechanism();
+    this.updateMechanism(true);
     this.onMechUpdateState.next(3);
   }
 
@@ -616,7 +621,7 @@ export class MechanismService {
     } else {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   toggleInput($event: MouseEvent) {
@@ -639,7 +644,7 @@ export class MechanismService {
       return jointsTraveled;
     }
 
-    this.updateMechanism();
+    this.updateMechanism(true);
     this.onMechUpdateState.next(3);
   }
 
@@ -695,7 +700,7 @@ export class MechanismService {
 
       this.activeObjService.selectedJoint.ground = true;
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
     console.log(this.joints);
     console.log(this.links);
   }
