@@ -172,6 +172,7 @@ export class GridUtilsService {
           }
 
           if (l.joints.length == 2) {
+            
             // special binary link case, maintain ratio
             let linkDistance = this.getPointDistance(jointA[0], jointA[1], jointB[0], jointB[1]);
             
