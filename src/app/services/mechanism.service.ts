@@ -495,7 +495,7 @@ export class MechanismService {
       (f) => f.id === this.activeObjService.selectedForce.id
     );
     this.forces.splice(forceIndex, 1);
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   changeForceDirection() {
