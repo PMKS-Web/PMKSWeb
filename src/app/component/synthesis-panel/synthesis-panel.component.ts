@@ -203,7 +203,7 @@ export class SynthesisPanelComponent implements OnInit {
 
         var whichPositionMatches = this.checkQuality(quality);
 
-        //  NewGridComponent.sendNotification('Position Matches:'+ whichPositionMatches[0] + ',' + whichPositionMatches[1] + ','+whichPositionMatches[2]);
+         NewGridComponent.sendNotification('Position Matches:'+ whichPositionMatches[0] + ',' + whichPositionMatches[1] + ','+whichPositionMatches[2]);
 
        
     }
