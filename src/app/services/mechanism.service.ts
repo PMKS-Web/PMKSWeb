@@ -73,7 +73,6 @@ export class MechanismService {
 
   updateMechanism(save: boolean = false) {
     console.log('update mechanism', save);
-    console.trace();
     // console.log(this.mechanisms[0]);
     //There are multiple mechanisms since there was a plan to support multiple mechanisms
     //You can treat this as a single mechanism for now at index 0

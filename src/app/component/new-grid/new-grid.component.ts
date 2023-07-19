@@ -74,6 +74,9 @@ export class NewGridComponent {
   private linkStates: linkStates = linkStates.waiting;
   private forceStates: forceStates = forceStates.waiting;
 
+  private mouseWasDragged: boolean = false;
+  private modifyMechanismWhileDrag: boolean = false;
+
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
 
@@ -385,6 +388,8 @@ export class NewGridComponent {
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
 
+    this.mouseWasDragged = true;
+
     switch (this.gridStates) {
       case gridStates.createForce:
       case gridStates.createJointFromGrid:
@@ -413,6 +418,7 @@ export class NewGridComponent {
           mousePosInSvg
         );
         this.mechanismSrv.updateMechanism();
+        this.modifyMechanismWhileDrag = true;
         //So that the panel values update continously
         this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
         if (this.mechanismSrv.mechanisms[0].joints[0].length !== 0) {
@@ -448,6 +454,7 @@ export class NewGridComponent {
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
+        this.modifyMechanismWhileDrag = true;
         break;
       case forceStates.draggingStart:
         if (AnimationBarComponent.animate) {
@@ -462,6 +469,7 @@ export class NewGridComponent {
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
+        this.modifyMechanismWhileDrag = true;
         break;
     }
   }
@@ -495,6 +503,16 @@ export class NewGridComponent {
     }
     this.mechanismSrv.showPathHolder = false;
     // this.activeObjService.updateSelectedObj(thing);
+
+    console.log(this.jointStates);
+
+    // create a save if, while dragging, mechanism was updated
+    if (this.mouseWasDragged && this.modifyMechanismWhileDrag) {
+      this.mechanismSrv.save()
+    }
+
+    this.mouseWasDragged = false;
+    this.modifyMechanismWhileDrag = false;
   }
 
   mouseDown($event: MouseEvent) {
