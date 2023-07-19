@@ -307,6 +307,7 @@ export class NewGridComponent {
     // const newJoint = this.createRevJoint()
     // const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     // const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
+    // TODO: Make sure you add logic within here so that joint is part of fixedLocations for respective link subset
     const coord = this.svgGrid.screenToSVGfromXY(
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y

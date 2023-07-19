@@ -505,6 +505,7 @@ export class MechanismService {
         l.joints.splice(delJointIndex, 1);
         // TODO: We should put this within a helper function since I feel that this function is called often in the code...
         if (!(l instanceof RealLink)) {return}
+        const subsetNum = l.subset.length;
         l.subset.forEach((sub, subIndex) => {
           const delJointIndex = sub.joints.findIndex(subj => subj.id === this.activeObjService.selectedJoint.id);
           if (delJointIndex === -1) {return}
@@ -524,6 +525,11 @@ export class MechanismService {
             l.subset.splice(subLinkIndex, 1);
             subLinkIndex = subLinkIndex - 1;
           }
+          if (l.subset[subLinkIndex].joints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) === -1) {
+            this.links.push(l.subset[subLinkIndex]);
+            l.subset.splice(subLinkIndex, 1);
+            subLinkIndex = subLinkIndex - 1;
+          }
         }
         // If there is only one subset for a link, then we do not need that subset
         if (l.subset.length === 1) {
@@ -533,6 +539,13 @@ export class MechanismService {
             jt.isWelded = false;
           })
         }
+        if (l.subset.length !== subsetNum) {
+          if (l.subset.length < 2) {
+            const lIndex = this.links.findIndex(li => li.id === l.id);
+            this.links.splice(lIndex, 1);
+          }
+        }
+        // if (l.subset === 0) {}
         // if (l.joints.length === 2) {
         //   if (!(l.joints[0] instanceof RealJoint) || !(l.joints[1] instanceof RealJoint)) {return}
         //   if (l.joints[0].isWelded) {
