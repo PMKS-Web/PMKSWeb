@@ -209,7 +209,7 @@ export class MechanismService {
 
   toggleWeldedJoint() {
     const joint = this.joints.find(
-      (j) => j.id === this.activeObjService.selectedJoint.id
+        (j) => j.id === this.activeObjService.selectedJoint.id
     ) as RealJoint;
 
     if (!joint.isWelded) {
@@ -224,8 +224,8 @@ export class MechanismService {
       //Remove all the links that are being merged from this.links
       linksAtJoint.forEach((l1: Link) => {
         this.links.splice(
-          this.links.findIndex((l2) => l2.id === l1.id),
-          1
+            this.links.findIndex((l2) => l2.id === l1.id),
+            1
         );
       });
       // Make sure that the joints that are connected to the welded joints know that they are connected joints
@@ -248,8 +248,12 @@ export class MechanismService {
               if (j2.id === joint.id) {
                 return;
               }
-              j1.connectedJoints.push(j2);
-              j2.connectedJoints.push(j1);
+              if (j1.connectedJoints.findIndex(jt => jt.id === j2.id) === -1) {
+                j1.connectedJoints.push(j2);
+              }
+              if (j2.connectedJoints.findIndex(jt => jt.id === j1.id) === -1) {
+                j2.connectedJoints.push(j1);
+              }
             });
           });
         }
@@ -311,32 +315,32 @@ export class MechanismService {
               return;
             }
             j.links.splice(
-              j.links.findIndex((l2) => l2.id === mainLink.id),
-              1
+                j.links.findIndex((l2) => l2.id === mainLink.id),
+                1
             );
           });
           j1.links.push(l);
           mainLink.joints.splice(
-            mainLink.joints.findIndex((j3) => j3.id === j1.id),
-            1
+              mainLink.joints.findIndex((j3) => j3.id === j1.id),
+              1
           );
           mainLink.id = mainLink.id.replace(j1.id, '');
           mainLink.fixedLocations.splice(
-            mainLink.fixedLocations.findIndex((obj) => obj.id === j1.id),
-            1
+              mainLink.fixedLocations.findIndex((obj) => obj.id === j1.id),
+              1
           );
           if (mainLink.fixedLocation.fixedPoint === j1.id) {
             mainLink.fixedLocation.fixedPoint = 'com';
           }
           mainLink.subset.splice(
-            mainLink.subset.findIndex((l2) => l2.id === l.id),
-            1
+              mainLink.subset.findIndex((l2) => l2.id === l.id),
+              1
           );
           if (mainLink.subset.length === 1) {
             mainLink = mainLink.subset[0] as RealLink;
             this.links.splice(
-              this.links.findIndex((l2) => l2.id === mainLink.id),
-              1
+                this.links.findIndex((l2) => l2.id === mainLink.id),
+                1
             );
             this.links.push(mainLink);
           }
@@ -347,9 +351,9 @@ export class MechanismService {
             j3.links.push(mainLink);
           });
           for (
-            let connectedLinkIndex = l_index + 1;
-            connectedLinkIndex < subset.length;
-            connectedLinkIndex++
+              let connectedLinkIndex = l_index + 1;
+              connectedLinkIndex < subset.length;
+              connectedLinkIndex++
           ) {
             subset[connectedLinkIndex].joints.forEach((j2) => {
               if (!(j2 instanceof RealJoint)) {
@@ -362,12 +366,12 @@ export class MechanismService {
                 return;
               }
               j1.connectedJoints.splice(
-                j1.connectedJoints.findIndex((j3) => j3.id === j1.id),
-                1
+                  j1.connectedJoints.findIndex((j3) => j3.id === j1.id),
+                  1
               );
               j2.connectedJoints.splice(
-                j2.connectedJoints.findIndex((j3) => j3.id === j2.id),
-                1
+                  j2.connectedJoints.findIndex((j3) => j3.id === j2.id),
+                  1
               );
               j2.links.push(mainLink);
             });
@@ -394,7 +398,7 @@ export class MechanismService {
       });
     });
 
-    //Make sure newLinkJoints only contains unique joints
+    //Make sure newLinkJoints only contains unique joints (not sure if this is needed...)
     newLinkJoints.filter((j, index) => {
       return newLinkJoints.indexOf(j) === index;
     });
