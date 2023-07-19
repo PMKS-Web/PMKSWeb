@@ -534,6 +534,15 @@ export class RealLink extends Link {
     }
   }
 
+  getHullPoints(): number[][] {
+
+    const allJoints = this.joints;
+
+    //Convert joints to simple x, y array
+    const points = allJoints.map((j) => [j.x, j.y]);
+    return hull(points, Infinity);
+  }
+
   getSimplePathString(): string {
     this.externalLines = [];
     let l = this;
