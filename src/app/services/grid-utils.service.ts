@@ -9,6 +9,7 @@ import {
   createModes,
   moveModes,
   roundNumber,
+  getDistance,
 } from '../model/utils';
 import { Link, Piston, RealLink } from '../model/link';
 import { MechanismService } from './mechanism.service';
@@ -19,6 +20,7 @@ import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { link } from 'fs';
 
 @Injectable({
   providedIn: 'root',
@@ -148,31 +150,85 @@ export class GridUtilsService {
 
           // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
           PositionSolver.setUpInitialJointLocations(l.joints);
-          l.forces.forEach((f) => {
-            // TODO: adjust the location of force endpoints and update the line and arrow
-            //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
-            //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+          
+          // move forces only if dragged joint is not inside link
+          let jointInHull: boolean = false;
+          let hull = l.getHullPoints()
+          hull.forEach((point) => {
+            if (selectedJoint.x == point[0] && selectedJoint.y == point[1]) jointInHull = true;
+          })
+
+          console.log(jointInHull);
+
+          // find original joint A and joint B
+          let jointA = [l.joints[0].x, l.joints[0].y];
+          let jointB = [l.joints[1].x, l.joints[1].y];
+          let newJointA = jointA;
+          let newJointB = jointB;
+          if (selectedJoint.x === jointA[0] && selectedJoint.y === jointA[1]) {
+            jointA = [oldX, oldY];
+          } else {
+            jointB = [oldX, oldY];
+          }
+
+          if (l.joints.length == 2) {
             
-            // Calculate force vectors relative to start position, as the vector will be shifted but not scaled or rotated
-            let fdx = f.endCoord.x - f.startCoord.x;
-            let fdy = f.endCoord.y - f.startCoord.y;
-
-            // drag offset
-            let offsetX = selectedJoint.x - oldX;
-            let offsetY = selectedJoint.y - oldY;
-
-            // Offset is divided by number of joints to average out change
-            f.startCoord.x += offsetX / f.link.joints.length;
-            f.startCoord.y += offsetY / f.link.joints.length;
-
-            // Now that new start position is computed, maintain vector for end position
-            f.endCoord.x = f.startCoord.x + fdx
-            f.endCoord.y = f.startCoord.y + fdy
+            // special binary link case, maintain ratio
+            let linkDistance = this.getPointDistance(jointA[0], jointA[1], jointB[0], jointB[1]);
             
-            // Update force line and arrow
-            f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
-            f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
-          });
+            l.forces.forEach((f) => {
+
+              // Calculate force vectors relative to start position, as the vector will be shifted but not scaled or rotated
+              let fdx = f.endCoord.x - f.startCoord.x;
+              let fdy = f.endCoord.y - f.startCoord.y;
+
+              // calculate ratio to be maintained
+              let forceDistance = this.getPointDistance(jointA[0], jointA[1], f.startCoord.x, f.startCoord.y);
+              let ratio = forceDistance / linkDistance;
+              
+              // update force start position with ratio
+              f.startCoord.x = newJointA[0] + (newJointB[0] - newJointA[0]) * ratio;
+              f.startCoord.y = newJointA[1] + (newJointB[1] - newJointA[1]) * ratio;
+
+              // Now that new start position is computed, maintain vector for end position
+              f.endCoord.x = f.startCoord.x + fdx
+              f.endCoord.y = f.startCoord.y + fdy
+              
+              // Update force line and arrow
+              f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+              f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
+
+            })
+
+          }
+          else if (jointInHull) {
+
+            l.forces.forEach((f) => {
+              // TODO: adjust the location of force endpoints and update the line and arrow
+              //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
+              //PositionSolver.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
+              
+              // Calculate force vectors relative to start position, as the vector will be shifted but not scaled or rotated
+              let fdx = f.endCoord.x - f.startCoord.x;
+              let fdy = f.endCoord.y - f.startCoord.y;
+
+              // drag offset
+              let offsetX = selectedJoint.x - oldX;
+              let offsetY = selectedJoint.y - oldY;
+
+              // Offset is divided by number of joints to average out change
+              f.startCoord.x += offsetX / f.link.joints.length;
+              f.startCoord.y += offsetY / f.link.joints.length;
+
+              // Now that new start position is computed, maintain vector for end position
+              f.endCoord.x = f.startCoord.x + fdx
+              f.endCoord.y = f.startCoord.y + fdy
+              
+              // Update force line and arrow
+              f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+              f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
+            });
+          }
         });
         break;
     }
@@ -278,4 +334,11 @@ export class GridUtilsService {
     //console.log("gaf3", (joint as RealJoint).links[0] as RealLink);
     return ((joint as RealJoint).links[0] as RealLink).angleRad;
   }
+
+  getPointDistance(x1: number, y1: number, x2: number, y2: number): number {
+    let x = x2 - x1;
+    let y = y2 - y1;
+    return Math.sqrt(x*x + y*y);
+  }
+
 }
