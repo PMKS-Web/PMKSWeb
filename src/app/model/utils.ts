@@ -1017,3 +1017,29 @@ export function local_storage_available() {
 export function isLeft(a: Coord, b: Coord, c: Coord) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0;
 }
+
+// Vector projection algorithm
+// Given (x, y), find the closest point on the line SEGMENT between (x1, y1) and (x2, y2)
+export function point_on_line_segment_closest_to_point(x: number, y: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
+  let ax = x - x1;
+  let ay = y - y1;
+  let bx = x2 - x1;
+  let by = y2 - y1;
+
+  let scalar = (ax * bx + ay * by) / (bx * bx + by * by);
+  
+  // scalar is a parametric value between 0 and 1, must bound between 0 and 1
+  // to get the closest point on the line SEGMENT, not line
+  if (scalar < 0) {
+    scalar = 0;
+  } else if (scalar > 1) {
+    scalar = 1;
+  }
+
+  return [x1 + scalar * bx, y1 + scalar * by];
+}
+
+// Find distance given (x1, y1), (x2, y2)
+export function distance_points(x1: number, y1: number, x2: number, y2: number): number {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}

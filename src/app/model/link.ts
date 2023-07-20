@@ -543,6 +543,25 @@ export class RealLink extends Link {
     return hull(points, Infinity);
   }
 
+  // whether (x,y) is inside the hull. To calculate this, create a new
+  // hull with the point added to allJoints, and determine if the new hull
+  // contains the added (x,y) point
+  isPointInsideHull(x: number, y: number): boolean {
+
+    let points = this.joints.map((j) => [j.x, j.y]);
+    points.push([x, y]);
+    const hullPoints = hull(points, Infinity);
+
+    let hullContainsPoint = false;
+    hullPoints.forEach((point: any) => {
+      if (point[0] === x && point[1] === y) {
+        hullContainsPoint = true;
+      }
+    })
+
+    return !hullContainsPoint;
+  }
+
   getSimplePathString(): string {
     this.externalLines = [];
     let l = this;

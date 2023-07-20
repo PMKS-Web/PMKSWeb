@@ -14,6 +14,9 @@ import {
   createModes,
   moveModes,
   roundNumber,
+  point_on_line_segment_closest_to_point,
+  getDistance,
+  distance_points,
 } from '../model/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -455,7 +458,61 @@ export class MechanismService {
           }
         });
       }
+
+      // for any forces that are outside of the link, move them to the closest point on the hull
+      if (l instanceof RealLink) {
+        l.forces.forEach((f) => {
+
+          let fx = f.startCoord.x;
+          let fy = f.startCoord.y;
+
+          // if force is already inside hull, do nothing
+          if (l.isPointInsideHull(fx, fy)) {
+            return;
+          }
+
+          // get the offset between startCoord and endCoord,
+          // to restore vector magnitude and theta after moving force start position
+          let fdx = f.endCoord.x - f.startCoord.x;
+          let fdy = f.endCoord.y - f.startCoord.y;
+
+          // go through hull and find closest point
+          let hull = l.getHullPoints();
+          let closestDistance = -1;
+          let cx, cy;
+          for (let i = 0; i < hull.length - 1; i++) {
+            let x1 = hull[i][0];
+            let y1 = hull[i][1];
+            let x2 = hull[i + 1][0];
+            let y2 = hull[i + 1][1];
+
+            [cx, cy] = point_on_line_segment_closest_to_point(fx, fy, x1, y1, x2, y2);
+            let distance = distance_points(fx, fy, cx, cy);
+
+            if (closestDistance === -1 || distance < closestDistance) {
+              closestDistance = distance;
+              fx = cx;
+              fy = cy;
+            }
+          }
+
+          // (fx, fy) is now the closest point on the hull to the force start position
+          // move the force start position to (fx, fy)
+          f.startCoord.x = fx;
+          f.startCoord.y = fy;
+
+          // restore vector magnitude and theta
+          f.endCoord.x = fx + fdx;
+          f.endCoord.y = fy + fdy;
+
+          // Update force line and arrow
+          f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
+          f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
+        });
+      }
+
     });
+
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
