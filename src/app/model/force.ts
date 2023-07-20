@@ -51,6 +51,20 @@ export class Force {
     this.visualWidth = Math.min(this.mag * 0.1, 0.5);
   }
 
+  // update start coord to (x,y), but keep the same angle and magnitude, and update everything else
+  moveForceTo(x: number, y: number) {
+    const dx = x - this.startCoord.x;
+    const dy = y - this.startCoord.y;
+    this.startCoord.x = x;
+    this.startCoord.y = y;
+    this.endCoord.x += dx;
+    this.endCoord.y += dy;
+
+    // Update force line and arrow
+    this.forceLine = this.createForceLine(this.startCoord, this.endCoord);
+    this.forceArrow = this.createForceArrow(this.startCoord, this.endCoord);
+  }
+
   updateAngle(startCoord: Coord, endCoord: Coord) {
     return Math.atan2(endCoord.y - startCoord.y, endCoord.x - startCoord.x);
   }

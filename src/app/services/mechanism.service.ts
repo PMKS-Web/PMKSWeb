@@ -471,11 +471,6 @@ export class MechanismService {
             return;
           }
 
-          // get the offset between startCoord and endCoord,
-          // to restore vector magnitude and theta after moving force start position
-          let fdx = f.endCoord.x - f.startCoord.x;
-          let fdy = f.endCoord.y - f.startCoord.y;
-
           // go through hull and find closest point
           let hull = l.getHullPoints();
           let closestDistance = -1;
@@ -497,20 +492,10 @@ export class MechanismService {
           }
 
           // (fx, fy) is now the closest point on the hull to the force start position
-          // move the force start position to (fx, fy)
-          f.startCoord.x = fx;
-          f.startCoord.y = fy;
-
-          // restore vector magnitude and theta
-          f.endCoord.x = fx + fdx;
-          f.endCoord.y = fy + fdy;
-
-          // Update force line and arrow
-          f.forceLine = f.createForceLine(f.startCoord, f.endCoord);
-          f.forceArrow = f.createForceArrow(f.startCoord, f.endCoord);
+          // move force there
+          f.moveForceTo(fx, fy);
         });
       }
-
     });
 
 
