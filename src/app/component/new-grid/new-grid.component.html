@@ -345,7 +345,7 @@
     >
       <text
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
       {{joint.name}}
       </text>
@@ -362,7 +362,7 @@
     >
       <text
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
         {{link.name}}
       </text>

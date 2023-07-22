@@ -55,8 +55,9 @@
     pointer-events: none;
     padding-top: 80px;
   }
-
-  .apexcharts-canvas {
-    margin-bottom: -50px;
+  
+  apx-chart > div {
+    min-height: 0 !important;
+    height: 225px !important;
   }
 }
