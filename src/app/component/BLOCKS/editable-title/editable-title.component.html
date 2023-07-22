@@ -1,7 +1,7 @@
 <div id='editable-title-block'>
   <div *ngIf='!editMode' class='editModeRow'>
     <ng-container *ngTemplateOutlet='contentTpl'></ng-container>
-    {{customIDService.getVisualID(originalID)}}
+    {{activeObjService.getSelectedObj().name}}
     <button id='title-icon-button' mat-icon-button (click)='gotoEditMode()' matTooltip='Edit the name of this object.'
             [matTooltipShowDelay]='1000' matTooltipPosition='above'>
       <mat-icon>edit</mat-icon>

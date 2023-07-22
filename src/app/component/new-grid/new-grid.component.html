@@ -191,6 +191,17 @@
     </ng-container>
   </g>
   <g id='jointHolder' style='transform: scaleY(-1)'>
+    <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
+      <circle
+        *ngIf='mechanismSrv.isJointOrphan(joint)'
+        [attr.r]='0.25*settings.objectScale'
+        [attr.cx]='joint.x' [attr.cy]='joint.y'
+        [attr.fill]="'#c5cae9'"
+        [attr.fill-opacity]=0.7
+        [attr.stroke]="'#F44336'"
+        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+      ></circle>
+    </ng-container>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
       [attr.x]='joint.x' [attr.y]='joint.y'
@@ -336,7 +347,7 @@
         *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
-        {{customIDService.getVisualID(joint.id)}}
+      {{joint.name}}
       </text>
     </svg>
   </g>
@@ -353,7 +364,7 @@
         *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
       >
-        {{customIDService.getVisualID(link.id)}}
+        {{link.name}}
       </text>
     </svg>
   </g>
@@ -367,8 +378,8 @@
       style='overflow: visible; text-anchor: middle'
     >
       <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
-            style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: left'>
-        {{customIDService.getVisualID(force.id)}}
+            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
+        {{force.name}}
       </text>
     </svg>
   </g>

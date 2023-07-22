@@ -1007,6 +1007,12 @@ export function has_mouse_pointer() {
   return matchMedia('(pointer:fine)').matches;
 }
 
+// Whether HTML5's local storage is available
+export function local_storage_available() {
+  return typeof(Storage) !== "undefined";
+}
+
+
 // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 export function isLeft(a: Coord, b: Coord, c: Coord) {
   return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0;
