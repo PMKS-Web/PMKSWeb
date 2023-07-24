@@ -58,8 +58,7 @@ export class MechanismService {
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
     private settingsService: SettingsService
-  ) {
-  }
+  ) {}
 
   getJoints() {
     return this.joints;
@@ -209,7 +208,7 @@ export class MechanismService {
     const joint = this.joints.find(
       (j) => j.id === this.activeObjService.selectedJoint.id
     ) as RealJoint;
-    
+
     if (joint.isWelded) {
       this.unweldJoint(joint);
     } else {
@@ -218,15 +217,14 @@ export class MechanismService {
   }
 
   weldJoint(joint: RealJoint) {
-    
     //WE NEED TO WELD THE JOINT
     const linksAtJoint = joint.links as RealLink[];
-//     if (!joint.isWelded) {
-      //       NewGridComponent.sendNotification(
-      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-      //       );
-      //WE NEED TO WELD THE JOINT
-//       const linksAtJoint = joint.links as RealLink[];
+    //     if (!joint.isWelded) {
+    //       NewGridComponent.sendNotification(
+    //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+    //       );
+    //WE NEED TO WELD THE JOINT
+    //       const linksAtJoint = joint.links as RealLink[];
 
     const newLink = this.createNewCompoundLink(linksAtJoint);
 
@@ -270,12 +268,9 @@ export class MechanismService {
     // });
 
     joint.isWelded = true;
-
   }
 
-
   unweldJoint(joint: RealJoint) {
-
     //WE ARE UNWELDING THE JOINT
     const mainLink = joint.links[0] as RealLink;
     //Get the list of all subsets of the main link
@@ -849,5 +844,10 @@ export class MechanismService {
       });
     });
     return subsetBuilder;
+  }
+
+  isJointOrphan(joint: Joint) {
+    //Return true if the given joint is an orphan (not part of a link).
+    return this.links.every((l) => !l.joints.includes(joint));
   }
 }
