@@ -19,7 +19,7 @@ import {
   jointStates,
   line_line_intersect,
   linkStates,
-  local_storage_available,
+  local_storage_available, isInside,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -455,8 +455,23 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
-        //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
-        this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
+        const fake_link = document.getElementById(this.activeObjService.selectedLink.id) as unknown;
+        const link_svg = fake_link as SVGElement;
+        const geo = fake_link as SVGGeometryElement;
+        let isIn = false;
+        if (geo.isPointInFill) {
+          const fakeGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          const svgp = fakeGrid.createSVGPoint();
+          svgp.x = mousePosInSvg.x;
+          svgp.y = mousePosInSvg.y;
+          isIn = geo.isPointInFill(svgp);
+        } else {
+          isIn = isInside([mousePosInSvg.x, mousePosInSvg.y], geo.getAttribute('d')); //1634 in SVGFuncs.ts
+        }
+        if (isIn) {
+          //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
+          this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
+        }
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
         break;
