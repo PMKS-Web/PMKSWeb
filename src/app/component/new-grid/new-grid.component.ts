@@ -19,7 +19,8 @@ import {
   jointStates,
   line_line_intersect,
   linkStates,
-  local_storage_available, getDistance,
+  local_storage_available,
+  getDistance,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -52,7 +53,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -89,7 +90,7 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === 'true';
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
@@ -179,13 +180,18 @@ export class NewGridComponent {
             'remove'
           )
         );
-        this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
-        );
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
-        this.cMenuItems.push(
-          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-        );
+        //Don't give options if a fillet it selected and not a primary link
+        if ((this.lastRightClick as RealLink).lastSelectedSublink != null) {
+          this.cMenuItems.push(
+            new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
+          );
+          this.cMenuItems.push(
+            new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
+          );
+          this.cMenuItems.push(
+            new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+          );
+        }
         break;
       case 'RevJoint':
         this.cMenuItems.push(
@@ -321,9 +327,16 @@ export class NewGridComponent {
       j.connectedJoints.push(newJoint);
       newJoint.connectedJoints.push(j);
     });
-    if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
-      this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({ id: newJoint.id, label: newJoint.id });
+    if (
+      this.activeObjService.selectedLink.isWelded &&
+      this.activeObjService.selectedLink.lastSelectedSublink
+    ) {
+      this.activeObjService.selectedLink.lastSelectedSublink.id =
+        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
+      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
+        id: newJoint.id,
+        label: newJoint.id,
+      });
       this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
     }
     newJoint.links.push(this.activeObjService.selectedLink);
@@ -425,7 +438,7 @@ export class NewGridComponent {
         }
 
         //Break the timeout if the user is clearly trying to drag the joint
-        if(getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10){
+        if (getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10) {
           this.timeMouseDown = 0;
         }
         //If it has been less than 1 seccond since the mouse was pressed down, ignore the drag
@@ -539,11 +552,11 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
-              // let clickPos = new Coord($event.pageX, $event.pageY);
-              // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
-              // console.warn('Mouse down: ');
-              // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
-              // console.warn(this.activeObjService.objType);
+        // let clickPos = new Coord($event.pageX, $event.pageY);
+        // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
+        // console.warn('Mouse down: ');
+        // console.log(NewGridComponent.isInsideLink(this.mechanismSrv.links[0], mousePosInSvg));
+        // console.warn(this.activeObjService.objType);
         switch (this.lastLeftClickType) {
           case 'Grid':
             switch (this.gridStates) {
@@ -627,9 +640,16 @@ export class NewGridComponent {
                   j.connectedJoints.push(joint1);
                   joint1.connectedJoints.push(j);
                 });
-                if (this.activeObjService.selectedLink.isWelded && this.activeObjService.selectedLink.lastSelectedSublink) {
-                  this.activeObjService.selectedLink.lastSelectedSublink.id = this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(joint1.id);
-                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({ id: joint1.id, label: joint1.id });
+                if (
+                  this.activeObjService.selectedLink.isWelded &&
+                  this.activeObjService.selectedLink.lastSelectedSublink
+                ) {
+                  this.activeObjService.selectedLink.lastSelectedSublink.id =
+                    this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(joint1.id);
+                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
+                    id: joint1.id,
+                    label: joint1.id,
+                  });
                   this.activeObjService.selectedLink.lastSelectedSublink.joints.push(joint1);
                 }
                 joint1.links.push(this.activeObjService.selectedLink);
