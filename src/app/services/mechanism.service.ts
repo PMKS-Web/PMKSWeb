@@ -556,6 +556,10 @@ export class MechanismService {
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
+    this.activeObjService.selectedLink.forces.forEach(f => {
+      const forceIndex = this.forces.findIndex(force => force.id === f.id);
+      this.forces.splice(forceIndex, 1);
+    });
     this.links.splice(linkIndex, 1);
     this.updateMechanism();
     this.onMechUpdateState.next(3);
