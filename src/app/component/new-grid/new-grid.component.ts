@@ -478,6 +478,21 @@ export class NewGridComponent {
         } else {
           isIn = isInside([mousePosInSvg.x, mousePosInSvg.y], geo.getAttribute('d')); //1634 in SVGFuncs.ts
         }
+        // force is in link. Check to make sure that the force is not on top of a joint
+        if (isIn) {
+          this.activeObjService.selectedLink.joints.forEach(j => {
+            if (!(j instanceof RealJoint)) {return}
+            const x = j.x;
+            const y = j.y;
+            const r = this.settings.objectScale * j.r * 2;
+            let dx = x - mousePosInSvg.x;
+            let dy = y - mousePosInSvg.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance <= r) {
+              isIn = false;
+            }
+          });
+        }
         if (isIn) {
           //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
           this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
