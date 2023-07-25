@@ -681,7 +681,7 @@ export class MechanismService {
       this.joints.splice(prismaticJointIndex, 1);
       this.links.splice(pistonIndex, 1);
 
-      this.activeObjService.selectedJoint.ground = true;
+      this.activeObjService.selectedJoint.ground = false;
     }
     this.updateMechanism();
     console.log(this.joints);
