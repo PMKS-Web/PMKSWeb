@@ -707,7 +707,7 @@ export class MechanismService {
       this.joints.splice(prismaticJointIndex, 1);
       this.links.splice(pistonIndex, 1);
 
-      this.activeObjService.selectedJoint.ground = true;
+      this.activeObjService.selectedJoint.ground = false;
     }
     this.updateMechanism();
     console.log(this.joints);
@@ -724,6 +724,9 @@ export class MechanismService {
   }
 
   animate(progress: number, animationState?: boolean) {
+    //Round progress to nearest integer
+    progress = Math.round(progress);
+
     this.onMechPositionChange.next(progress);
     this.mechanismTimeStep = progress;
     this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
@@ -825,5 +828,10 @@ export class MechanismService {
       });
     });
     return subsetBuilder;
+  }
+
+  isJointOrphan(joint: Joint) {
+    //Return true if the given joint is an orphan (not part of a link).
+    return this.links.every((l) => !l.joints.includes(joint));
   }
 }
