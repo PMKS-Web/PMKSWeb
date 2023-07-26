@@ -188,6 +188,16 @@ export class NewGridComponent {
         );
         break;
       case 'RevJoint':
+        if ((this.lastRightClick as RealJoint).isWelded) {
+          this.cMenuItems.push(
+              new cMenuItem(
+                  (this.lastRightClick as RealJoint).isWelded ? 'Unweld Location' : 'Weld Location',
+                  this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
+                  (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
+              )
+          );
+          break;
+        }
         this.cMenuItems.push(
           new cMenuItem(
             'Delete Joint',
