@@ -150,13 +150,6 @@ export class NewGridComponent {
         //Switch force direction, switch force local, delete Force
         this.cMenuItems.push(
           new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
             (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
             this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
             (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
@@ -169,16 +162,16 @@ export class NewGridComponent {
             'switch_force_dir'
           )
         );
+        this.cMenuItems.push(
+            new cMenuItem(
+                'Delete Force',
+                this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+                'remove'
+            )
+        );
         break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Link',
-            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         this.cMenuItems.push(
           new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
         );
@@ -186,15 +179,15 @@ export class NewGridComponent {
         this.cMenuItems.push(
           new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
+        this.cMenuItems.push(
+            new cMenuItem(
+                'Delete Link',
+                this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+                'remove'
+            )
+        );
         break;
       case 'RevJoint':
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
@@ -252,7 +245,13 @@ export class NewGridComponent {
             )
           );
         }
-
+        this.cMenuItems.push(
+            new cMenuItem(
+                'Delete Joint',
+                this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+                'remove'
+            )
+        );
         break;
       case 'String': //This means grid
         this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'new_link'));
