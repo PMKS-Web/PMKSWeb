@@ -199,7 +199,7 @@ export class NewGridComponent {
           );
           this.cMenuItems.push(
             new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Attach Input',
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
             )
@@ -208,7 +208,7 @@ export class NewGridComponent {
           if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
             this.cMenuItems.push(
               new cMenuItem(
-                'Ground Joint',
+                'Add Ground',
                 this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
                 'add_ground'
               )
