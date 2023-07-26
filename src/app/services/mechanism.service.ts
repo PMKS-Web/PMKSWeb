@@ -661,6 +661,8 @@ export class MechanismService {
   toggleSlider() {
     if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
+      const selectedJointInput = this.activeObjService.selectedJoint.input;
+      this.activeObjService.selectedJoint.input = false;
       this.activeObjService.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
@@ -677,7 +679,7 @@ export class MechanismService {
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
         this.activeObjService.selectedJoint.y,
-        this.activeObjService.selectedJoint.input,
+          selectedJointInput,
         true,
         [],
         connectedJoints
