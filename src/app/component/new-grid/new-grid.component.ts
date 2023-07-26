@@ -630,9 +630,12 @@ export class NewGridComponent {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                // TODO: Be sure the force added is at correct position for binary link
+                let maxNumber = 1;
+                if (this.mechanismSrv.forces.length !== 0) {
+                  maxNumber = Math.max(...this.mechanismSrv.forces.map(f => parseInt(f.id.replace(/\D/g, '')))) + 1;
+                }
                 const force = new Force(
-                  'F' + (this.mechanismSrv.forces.length + 1).toString(),
+                  'F' + maxNumber.toString(),
                   this.activeObjService.selectedLink,
                   startCoord,
                   endCoord
