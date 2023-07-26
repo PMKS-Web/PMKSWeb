@@ -174,7 +174,7 @@ export class MechanismService {
   determineNextLetter(additionalLetters?: string[]) {
     let lastLetter = '';
     if (this.joints.length === 0 && additionalLetters === undefined) {
-      return 'a';
+      return 'A';
     }
     this.joints.forEach((j) => {
       if (j.id > lastLetter) {
@@ -603,6 +603,7 @@ export class MechanismService {
       // this.joints[selectedJointIndex] = joint;
     } else {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
+      this.activeObjService.selectedJoint.input = false;
     }
     this.updateMechanism();
   }
