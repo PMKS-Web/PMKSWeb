@@ -603,6 +603,7 @@ export class MechanismService {
       // this.joints[selectedJointIndex] = joint;
     } else {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
+      this.activeObjService.selectedJoint.input = false;
     }
     this.updateMechanism();
   }
