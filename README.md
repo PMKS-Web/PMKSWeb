@@ -141,6 +141,7 @@ PMKS+ is based on PMKS, developed by Prof. Matthew I. Campbell, Professor, Mecha
 
 ### Contributors
 
+- Jessica M Rhodes (BS/MS RBE '25)
 - Ansel Chang (CS '25)
 - Jacob Adamski (CS' 24)
 - Kohmei Kadoya (BS/MS RBE '23)
