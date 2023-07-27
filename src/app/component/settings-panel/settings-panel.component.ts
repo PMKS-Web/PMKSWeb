@@ -114,19 +114,45 @@ export class SettingsPanelComponent {
         this.currentForceUnit = ForceUnit.NEWTON;
       }
       this.settingsService.forceUnit.next(this.currentForceUnit);
+
       let prevLengthUnit = this.settingsService.lengthUnit.value;
       this.currentLengthUnit = ParseLengthUnit(val);
+
+      //Scale the grid to the new length unit
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
+
+      let fromUnit = prevLengthUnit;
+      let toUnit = this.currentLengthUnit;
+
+      //If either unit is in meters, convert that one to cm
+      if (fromUnit === LengthUnit.METER) {
+        fromUnit = LengthUnit.CM;
+      }
+      if (toUnit === LengthUnit.METER) {
+        toUnit = LengthUnit.CM;
+      }
+
+      this.mechanismSrv.updateLinkageUnits(fromUnit, toUnit);
+
       let tempOriginInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
-      this.svgGrid.panZoomObject.zoomAtPointBy(
-        this.nup.convertLength(1, this.currentLengthUnit, prevLengthUnit),
-        { x: tempOriginInScreen.x, y: tempOriginInScreen.y }
-      );
+      this.svgGrid.panZoomObject.zoomAtPointBy(this.nup.convertLength(1, toUnit, fromUnit), {
+        x: tempOriginInScreen.x,
+        y: tempOriginInScreen.y,
+      });
+
+      //Scale the object to the new length unit
       SettingsService._objectScale.next(
-        this.nup.convertLength(SettingsService.objectScale, prevLengthUnit, this.currentLengthUnit)
+        this.nup.convertLength(SettingsService.objectScale, fromUnit, toUnit)
       );
+
+      //Update graphs with new units
+      this.mechanismSrv.onMechUpdateState.next(2);
+      // setTimeout(() => {
+      //   this.mechanismSrv.onMechUpdateState.next(2);
+      // });
       // this.svgGrid.scaleToFitLinkage();
-      ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+      // ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+      // NewGridComponent.sendNotification('Updated Global Units!');
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);

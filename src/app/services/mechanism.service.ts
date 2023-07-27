@@ -14,6 +14,7 @@ import {
   createModes,
   moveModes,
   roundNumber,
+  LengthUnit,
 } from '../model/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -24,6 +25,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
+import { NumberUnitParserService } from './number-unit-parser.service';
 
 @Injectable({
   providedIn: 'root',
@@ -54,7 +56,8 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private nup: NumberUnitParserService
   ) {}
 
   getJoints() {
@@ -98,6 +101,39 @@ export class MechanismService {
       }
     });
     this.activeObjService.fakeUpdateSelectedObj();
+  }
+
+  updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
+    // For each joint, move the joint
+    this.joints.forEach((joint) => {
+      this.gridUtils.dragJoint(
+        joint as RealJoint,
+        new Coord(
+          this.nup.convertLength(joint.x, fromUnits, toUnits),
+          this.nup.convertLength(joint.y, fromUnits, toUnits)
+        )
+      );
+    });
+    // this.settingsService.lengthUnit.subscribe((val) => {
+    //For each jo
+    // let unit = this.settingsService.lengthUnit.value;
+    // if (unit !== this.lengthUnit) {
+    //   this.mechanismService.joints.forEach((joint) => {
+    //     this.activeSrv.updateSelectedObj(joint);
+    //     this.activeSrv.fakeUpdateSelectedObj();
+    //     this.gridUtils.dragJoint(
+    //       this.activeSrv.selectedJoint,
+    //       new Coord(
+    //         this.nup.convertLength(joint.x, this.lengthUnit, unit),
+    //         this.nup.convertLength(joint.y, this.lengthUnit, unit)
+    //       )
+    //     );
+    //     this.jointForm.controls['input'].patchValue(wasInput);
+    //   });
+    //   this.lengthUnit = this.settingsService.lengthUnit.value;
+    //   this.activeSrv.fakeUpdateSelectedObj();
+    // }
+    // });
   }
 
   getLinkProp(l: Link, propType: string) {
