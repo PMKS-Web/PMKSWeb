@@ -78,6 +78,19 @@ export class SynthesisPanelComponent implements OnInit {
 
   }
 
+  synthesisPoseForm = this.fb.group({
+    length: [''],
+    p1x: [''],
+    p1y: [''],
+    p1theta: [''],
+    p2x: [''],
+    p2y: [''],
+    p2theta: [''],
+    p3x: [''],
+    p3y: [''],
+    p3theta: [''],
+});
+
   //Angular form stuff with 12 numbers, a0x, a0y, b0x, b0y, a1x, a1y, b1x, b1y, a2x, a2y, b2x, b2y
   synthesisForm = this.fb.group({
     a0x: [''],

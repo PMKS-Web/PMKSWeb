@@ -7,7 +7,34 @@
         <!--    <subtitle-block>PMKS+ will create a 4-bar linkage based on 3 poses.</subtitle-block>-->
         <!--    <input-block unit='cm'>Length</input-block>-->
         <!--    <app-not-ready-warning></app-not-ready-warning>-->
-        <img src='assets/temp3pos.png'>
+        <!-- <img src='assets/temp3pos.png'> -->
+
+        <subtitle-block>End-Effector Link</subtitle-block>
+        <input-block [formGroup]='synthesisPoseForm'
+                     _formControl='length'
+                     tooltip='The length of the end-effector link'>
+            Length
+        </input-block>
+
+        <mat-divider></mat-divider>
+
+        <subtitle-block>Pose 1</subtitle-block>
+        <div class = "pose" *ngIf="true">
+            pose 1 content
+        </div>
+        <mat-divider></mat-divider>
+        <subtitle-block>Pose 2</subtitle-block>
+        <div class = "pose" *ngIf="true">
+            pose 2 content
+        </div>
+        <mat-divider></mat-divider>
+        <subtitle-block>Pose 3</subtitle-block>
+        <div class = "pose" *ngIf="true">
+            pose 3 content
+        </div>
+        <mat-divider></mat-divider>
+        
+
         <dual-input-block [formGroup]='synthesisForm'
                           formControl1='a0x'
                           formControl2='a0y'
