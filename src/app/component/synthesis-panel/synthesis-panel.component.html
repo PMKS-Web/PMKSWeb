@@ -16,46 +16,21 @@
             Length
         </input-block>
 
-        <mat-divider></mat-divider>
-        <subtitle-block class = "poseheader">
-            <p>Pose 1</p>
-            <button-block icon="edit" (click)="setCurrentPose(1)">Edit</button-block>
-        </subtitle-block>
-        <div class = "pose" *ngIf="getCurrentPose() == 1">
-            <dual-input-block [formGroup]='synthesisPoseForm'
-                          formControl1='p1x'
-                          formControl2='p1y'>
-                Pose 1 Position
-            </dual-input-block>
+        <!-- Construct panel sections for each pose -->
+        <div *ngFor="let i of [1,2,3]">
+            <mat-divider></mat-divider>
+            <subtitle-block class = "poseheader">
+                <p>Pose {{i}}</p>
+                <button-block icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
+            </subtitle-block>
+            <div class = "pose" *ngIf="getCurrentPose() == i">
+                <dual-input-block [formGroup]='synthesisPoseForm'
+                            formControl1='{{getFormIDPoseX(i)}}'
+                            formControl2='{{getFormIDPoseY(i)}}'>
+                    Pose {{i}} Position
+                </dual-input-block>
+            </div>
         </div>
-
-        <mat-divider></mat-divider>
-        <subtitle-block class = "poseheader">
-            <p>Pose 2</p>
-            <button-block icon="edit" (click)="setCurrentPose(2)">Edit</button-block>
-        </subtitle-block>
-        <div class = "pose" *ngIf="getCurrentPose() == 2">
-            <dual-input-block [formGroup]='synthesisPoseForm'
-                          formControl1='p2x'
-                          formControl2='p2y'>
-                Pose 2 Position
-            </dual-input-block>
-        </div>
-
-        <mat-divider></mat-divider>
-        <subtitle-block class = "poseheader">
-            <p>Pose 3</p>
-            <button-block icon="edit" (click)="setCurrentPose(3)">Edit</button-block>
-        </subtitle-block>
-        <div class = "pose" *ngIf="getCurrentPose() == 3">
-            <dual-input-block [formGroup]='synthesisPoseForm'
-                          formControl1='p3x'
-                          formControl2='p3y'>
-                Pose 3 Position
-            </dual-input-block>
-        </div>
-        
-
 
         <app-not-ready-warning></app-not-ready-warning>
     </panel-section>

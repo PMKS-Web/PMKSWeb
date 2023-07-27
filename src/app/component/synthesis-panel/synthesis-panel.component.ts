@@ -165,6 +165,18 @@ PoseID: any;
         else this.synthesisBuilder.selectedPose.next(PoseID.POSE_THREE);
     }
 
+    getFormIDPoseX(pose: number): string {
+        if (pose == 1) return 'p1x';
+        else if (pose == 2) return 'p2x';
+        else return 'p3x';
+    }
+
+    getFormIDPoseY(pose: number): string {
+        if (pose == 1) return 'p1y';
+        else if (pose == 2) return 'p2y';
+        else return 'p3y';
+    }
+
     synthesisFunction() {
         //call synthesis functions 
 
