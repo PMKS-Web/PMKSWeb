@@ -17,94 +17,45 @@
         </input-block>
 
         <mat-divider></mat-divider>
+        <subtitle-block class = "poseheader">
+            <p>Pose 1</p>
+            <button-block icon="edit" (click)="setCurrentPose(1)">Edit</button-block>
+        </subtitle-block>
+        <div class = "pose" *ngIf="getCurrentPose() == 1">
+            <dual-input-block [formGroup]='synthesisPoseForm'
+                          formControl1='p1x'
+                          formControl2='p1y'>
+                Pose 1 Position
+            </dual-input-block>
+        </div>
 
-        <subtitle-block>Pose 1</subtitle-block>
-        <div class = "pose" *ngIf="true">
-            pose 1 content
-        </div>
         <mat-divider></mat-divider>
-        <subtitle-block>Pose 2</subtitle-block>
-        <div class = "pose" *ngIf="true">
-            pose 2 content
+        <subtitle-block class = "poseheader">
+            <p>Pose 2</p>
+            <button-block icon="edit" (click)="setCurrentPose(2)">Edit</button-block>
+        </subtitle-block>
+        <div class = "pose" *ngIf="getCurrentPose() == 2">
+            <dual-input-block [formGroup]='synthesisPoseForm'
+                          formControl1='p2x'
+                          formControl2='p2y'>
+                Pose 2 Position
+            </dual-input-block>
         </div>
+
         <mat-divider></mat-divider>
-        <subtitle-block>Pose 3</subtitle-block>
-        <div class = "pose" *ngIf="true">
-            pose 3 content
+        <subtitle-block class = "poseheader">
+            <p>Pose 3</p>
+            <button-block icon="edit" (click)="setCurrentPose(3)">Edit</button-block>
+        </subtitle-block>
+        <div class = "pose" *ngIf="getCurrentPose() == 3">
+            <dual-input-block [formGroup]='synthesisPoseForm'
+                          formControl1='p3x'
+                          formControl2='p3y'>
+                Pose 3 Position
+            </dual-input-block>
         </div>
-        <mat-divider></mat-divider>
         
 
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='a0x'
-                          formControl2='a0y'
-                          tooltip='The x and y position of A0'>
-            A0 Position
-        </dual-input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='b0x'
-                          formControl2='b0y'
-                          tooltip='The x and y position of B0'>
-            B0 Position
-        </dual-input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='a1x'
-                          formControl2='a1y'>
-            A1 Position
-        </dual-input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='b1x'
-                          formControl2='b1y'>
-            B1 Position
-        </dual-input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='a2x'
-                          formControl2='a2y'>
-            A2 Position
-        </dual-input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='b2x'
-                          formControl2='b2y'>
-            B2 Position
-        </dual-input-block>
-
-        <input-block [formGroup]='synthesisForm'
-                     _formControl='quality'>
-            Quality (0.05 to 0.1)
-        </input-block>
-        <!-- <button-block [click]='handleButton.bind(this)'>Call Backend Function</button-block> -->
-        <button-block [click]='synthesisFunction.bind(this)'>Call Backend Function</button-block>
-
-        <title-block description='Synthesis results are presented below:'>
-            Synthesis Results
-        </title-block>
-        <input-block [formGroup]='synthesisForm'
-                     _formControl='position1Match'>
-            Position 1:
-        </input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='bValue'
-                          formControl2='cValue'>
-            Distance of Coordinates from Original Position
-        </dual-input-block>
-        <input-block [formGroup]='synthesisForm'
-                     _formControl='position2Match'>
-            Position 2:
-        </input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='bValue'
-                          formControl2='cValue'>
-            Distance of Coordinates from Original Position
-        </dual-input-block>
-        <input-block [formGroup]='synthesisForm'
-                     _formControl='position3Match'>
-            Position 3:
-        </input-block>
-        <dual-input-block [formGroup]='synthesisForm'
-                          formControl1='bValue'
-                          formControl2='cValue'>
-            Distance of Coordinates from Original Position
-        </dual-input-block>
 
         <app-not-ready-warning></app-not-ready-warning>
     </panel-section>

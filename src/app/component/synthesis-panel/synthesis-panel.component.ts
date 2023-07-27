@@ -9,6 +9,8 @@ import { MechanismService } from '../../services/mechanism.service';
 import { MechanismBuilder } from '../../services/transcoding/mechanism-builder';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { Link, RealLink } from '../../model/link';
+import { PoseID } from 'src/app/services/synthesis/synthesis-util';
+import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 
 @Component({
   selector: 'app-synthesis-panel',
@@ -16,8 +18,11 @@ import { Link, RealLink } from '../../model/link';
   styleUrls: ['./synthesis-panel.component.scss'],
 })
 export class SynthesisPanelComponent implements OnInit {
+PoseID: any;
     constructor(private fb: FormBuilder,
-    public mechanismSrv: MechanismService) {
+    public mechanismSrv: MechanismService,
+    public synthesisBuilder: SynthesisBuilderService
+    ) {
         
     }
 
@@ -146,6 +151,19 @@ export class SynthesisPanelComponent implements OnInit {
     console.log(Number(this.synthesisForm.value.a0x!));
     }
 
+    // for html to get current pose as a number
+    getCurrentPose(): number {
+        let value = this.synthesisBuilder.selectedPose.getValue();
+        if (value == PoseID.POSE_ONE) return 1;
+        else if (value == PoseID.POSE_TWO) return 2;
+        else return 3;
+    }
+
+    setCurrentPose(pose: number) {
+        if (pose == 1) this.synthesisBuilder.selectedPose.next(PoseID.POSE_ONE);
+        else if (pose == 2) this.synthesisBuilder.selectedPose.next(PoseID.POSE_TWO);
+        else this.synthesisBuilder.selectedPose.next(PoseID.POSE_THREE);
+    }
 
     synthesisFunction() {
         //call synthesis functions 
