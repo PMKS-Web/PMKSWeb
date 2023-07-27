@@ -1,459 +1,461 @@
 <svg id='canvas' display='block' width='100%' height='100%' [cdkContextMenuTriggerFor]='context_menu'
      (contextmenu)='onContextMenu($event)' (pointermove)='mouseMove($event)' (pointerup)='mouseUp($event)'
      (pointerdown)='mouseDown($event)'>
-  <defs>
-    <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.008*settings.objectScale'/>
-      <feOffset [attr.dx]='0.004*settings.objectScale' [attr.dy]='-0.004*settings.objectScale' />
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.4"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <filter id="elevation-2" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.016*settings.objectScale'/>
-      <feOffset [attr.dx]='0.012*settings.objectScale' [attr.dy]='-0.012*settings.objectScale' />
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.5"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <filter id="elevation-3" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.024*settings.objectScale'/>
-      <feOffset [attr.dx]='0.02*settings.objectScale' [attr.dy]='-0.02*settings.objectScale' />
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.6"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
+      <defs>
+        <filter id="elevation-1" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.008*settings.objectScale'/>
+          <feOffset [attr.dx]='0.004*settings.objectScale' [attr.dy]='-0.004*settings.objectScale' />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.4"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <filter id="elevation-2" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.016*settings.objectScale'/>
+          <feOffset [attr.dx]='0.012*settings.objectScale' [attr.dy]='-0.012*settings.objectScale' />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.5"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <filter id="elevation-3" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" [attr.stdDeviation]='0.024*settings.objectScale'/>
+          <feOffset [attr.dx]='0.02*settings.objectScale' [attr.dy]='-0.02*settings.objectScale' />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.6"/>
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
 
-    <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
-      <polygon points="0 0, 5 1.75, 0 3.5" />
-    </marker>
-  </defs>
-  <!-- This is only used to to scale onto when there is not link -->
-  <rect *ngIf='mechanismSrv.joints.length == 0'
-        [attr.x]='-10' [attr.y]='-10'
-        [attr.width]='20'
-        [attr.height]='20' fill='#ffffff' stroke='#00000000'>
-  </rect>
-  <!-- Axes and Grid-->
-  <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")' (pointerdown)='setLastLeftClick("grid")' >
-    <!--  The Background-->
-    <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
-          [attr.width]='svgGrid.viewBoxMaxX-svgGrid.viewBoxMinX'
-          [attr.height]='svgGrid.viewBoxMaxY-svgGrid.viewBoxMinY' fill='white' stroke='#00000000'>
+        <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
+          <polygon points="0 0, 5 1.75, 0 3.5" />
+        </marker>
+      </defs>
+      <!-- This is only used to to scale onto when there is not link -->
+      <rect *ngIf='mechanismSrv.joints.length == 0'
+            [attr.x]='-10' [attr.y]='-10'
+            [attr.width]='20'
+            [attr.height]='20' fill='none' stroke='#00000000' opacity='0.5'>
+      </rect>
+<!--      <rect *ngIf='mechanismSrv.joints.length == 0'-->
+<!--            [attr.x]='-100' [attr.y]='100'-->
+<!--            [attr.width]='200'-->
+<!--            [attr.height]='20' fill='#ffffff' stroke='#00000000'>-->
+<!--      </rect>-->
 
-    </rect>
-
-    <!--  The Minor Axes-->
-    <ng-container *ngIf='settings.isShowMajorGrid.getValue() && settings.isShowMinorGrid.getValue()'>
-      <ng-container *ngFor='let line of svgGrid.verticalLinesMinor'>
-        <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
-              stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
-      </ng-container>
-      <ng-container *ngFor='let line of svgGrid.horizontalLinesMinor'>
-        <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
-              stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
-      </ng-container>
-    </ng-container>
-
-    <!--  The Major Axes-->
-    <ng-container *ngIf='settings.isShowMajorGrid.getValue()'>
-      <ng-container *ngFor='let line of svgGrid.verticalLines'>
-        <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
-              stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
-      </ng-container>
-      <ng-container *ngFor='let line of svgGrid.horizontalLines'>
-        <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
-              stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
-      </ng-container>
-    </ng-container>
+  <!-- This is a strucrially intergral rect and should not be removed! -->
+      <rect x='-1px' y='-1px' width='2px' height='2px' fill='white'></rect>
 
 
-    <!--  The X and Y Axis-->
-    <line id='axes' [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0'
-          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
+      <!-- Axes and Grid-->
+      <g *ngIf='!settings.tempGridDisable' id='backgroundAndGrid' (contextmenu)='setLastRightClick("grid")' (pointerdown)='setLastLeftClick("grid")' >
+        <!--  The Background-->
+        <rect [attr.x]='svgGrid.viewBoxMinX' [attr.y]='svgGrid.viewBoxMinY'
+              [attr.width]='svgGrid.viewBoxMaxX-svgGrid.viewBoxMinX'
+              [attr.height]='svgGrid.viewBoxMaxY-svgGrid.viewBoxMinY' fill='white' stroke='#00000000'>
 
-    <line id='axes' x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY'
-          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
+        </rect>
 
-    <!-- Axes Labels -->
-    <ng-container>
-      <ng-container *ngFor='let line of svgGrid.verticalLines'>
-        <text id='axes_numbers' text-anchor='middle' [attr.x]='line' [attr.y]='svgGrid.scaleWithZoom(20)'
-              [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
-              [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{line}}</text>
-      </ng-container>
-      <ng-container *ngFor='let line of svgGrid.horizontalLines'>
-        <text id='axes_numbers' text-anchor='end' [attr.y]='line' [attr.x]='svgGrid.scaleWithZoom(-10)'
-              [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
-              [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{-line}}</text>
-      </ng-container>
-      <text id='axes_numbers' text-anchor='end' [attr.y]='svgGrid.scaleWithZoom(20)'
-            [attr.x]='svgGrid.scaleWithZoom(-10)'
-            [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
-            [attr.font-size]='svgGrid.scaleWithZoom(15)'>
-        0
-      </text>
-    </ng-container>
-  </g>
-
-  <g id='jointBGHolder' style='transform: scaleY(-1)'>
-    <svg
-      *ngFor='let joint of mechanismSrv.getJoints()'
-      [attr.x]='joint.x' [attr.y]='joint.y'
-      width='10'
-      height='10'
-      style='overflow: visible'
-    >
-      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && !gridUtils.getInput(joint)'
-             xlink:href='../../../assets/Ground.svg'
-             [attr.width]='settings.objectScale * 1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.35' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
-      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && settings.isInputCW'
-             xlink:href='../../../assets/InputCCW.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
-      <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && !settings.isInputCW'
-             xlink:href='../../../assets/InputCW.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
-      <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
-             xlink:href='../../../assets/SliderPill.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
-
-    </svg>
-  </g>
-  <g id='linkBGHolder' style='transform: scaleY(-1); pointer-events: none'>
-    <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
-      <svg *ngIf='gridUtils.typeOfLink(link) == "P"'
-             [attr.x]='getFirstXPos(link)' [attr.y]='getFirstYPos(link)'
-             width='10'
-             height='10'
-             style='overflow: visible'>
-        <image xlink:href='../../../assets/SliderTrackMid.svg'
-                 [attr.width]='settings.objectScale*2.6' [attr.height]='settings.objectScale*2.6'  [attr.x]='settings.objectScale*-1.3' [attr.y]='settings.objectScale*-1.3'
-               style='transform: scaleY(-1) rotateZ({{-gridUtils.getPrisAngle(link.joints[1])}}rad)'
-        />
-      </svg>
-    </ng-container>
-  </g>
-  <g id='linkHolder' style='transform: scaleY(-1)'>
-    <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
-      <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && activeObjService.objType== "Link" && activeObjService.selectedLink == link' style='pointer-events: none;'>
-        <path
-          *ngFor='let subLink of gridUtils.getLinkSubset(link)'
-          [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
-          fill="rgba(0,0,0,0.3)"
-          [attr.stroke]="'black'"
-          [attr.stroke-width]='0.01 * settings.objectScale'
-          [attr.stroke-dasharray]='0.1 * settings.objectScale'>
-        </path>
-      </ng-container>
-      <path
-        *ngIf='gridUtils.typeOfLink(link) == "R" && !isRenderFail(link)'
-        (pointerover)='link.showHighlight = true'
-        (pointerout)='link.showHighlight = false'
-        (pointerdown)='setLastLeftClick(link)'
-        (contextmenu)='setLastRightClick(link)'
-        [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
-        [attr.id]='link.id'
-        [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
-        [attr.fill-opacity]=0.7
-        [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
-        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-        [class]='mechanismSrv.getLinkCSSClass(link)'
-      >
-      </path>
-      <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && isRenderFail(link)' >
-        <path
-          *ngFor='let subLink of gridUtils.getLinkSubset(link)'
-          (pointerover)='link.showHighlight = true'
-          (pointerout)='link.showHighlight = false'
-          (pointerdown)='setLastLeftClick(link)'
-          (contextmenu)='setLastRightClick(link)'
-          [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
-          [attr.id]='link.id'
-          [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
-          [attr.fill-opacity]=0.7
-          [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
-          [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-          [class]='mechanismSrv.getLinkCSSClass(link)'>
-        </path>
-      </ng-container>
-    </ng-container>
-  </g>
-  <g id='jointHolder' style='transform: scaleY(-1)'>
-    <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
-      <circle
-        *ngIf='mechanismSrv.isJointOrphan(joint)'
-        [attr.r]='0.25*settings.objectScale'
-        [attr.cx]='joint.x' [attr.cy]='joint.y'
-        [attr.fill]="'#c5cae9'"
-        [attr.fill-opacity]=0.7
-        [attr.stroke]="'#F44336'"
-        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-      ></circle>
-    </ng-container>
-    <svg
-      *ngFor='let joint of mechanismSrv.getJoints()'
-      [attr.x]='joint.x' [attr.y]='joint.y'
-      (pointerover)='joint.showHighlight = true'
-      (pointerout)='joint.showHighlight = false'
-      (contextmenu)='setLastRightClick(joint)'
-      (pointerdown)='setLastLeftClick(joint)'
-      width='20'
-      height='20'
-      style='overflow: visible'
-      cursor='move'
-    >
-
-      <!-- Hitbox -->
-      <circle *ngIf='gridUtils.typeOfJoint(joint) == "R"' [attr.r]='settings.objectScale/4' cx='0' cy='0' fill='transparent' />
-<!--      Normal Joint-->
-      <circle *ngIf='!gridUtils.getWelded(joint)'
-        id='joint_{{ joint.id }}' class='joint_circles'
-        [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
-        [attr.cx]='0'
-        [attr.cy]='0'
-        [class]='mechanismSrv.getJointCSSClass(joint)'
-      />
-
-<!--      Welded Joint-->
-      <path *ngIf='gridUtils.getWelded(joint)' [class]='mechanismSrv.getJointCSSClass(joint)'
-            d='M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z'
-            style='transform: scale({{0.01*settings.objectScale}}) rotateZ({{gridUtils.getAngleFromJoint(joint)}}rad)' >
-      </path>
-    </svg>
-  </g>
-<!--  For Debugging-->
-  <g *ngIf='settings.isGridDebugOn' style='transform: scaleY(-1); pointer-events: none'>
-    <ng-container *ngFor='let line of getDebugLines()'>
-      <circle [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
-      <circle [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
-      <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
-      <line
-        [attr.x1]='line.startPosition.x'
-        [attr.y1]='line.startPosition.y'
-        [attr.x2]='line.endPosition.x'
-        [attr.y2]='line.endPosition.y'
-        [attr.stroke]='line.color'
-        [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
-        marker-end="url(#arrowhead)"
-      ></line>
-    </ng-container>
-
-    <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
-      <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && link.subset.length == 0'>
-        <circle *ngFor='let line of link.externalLines' [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
-        <circle *ngFor='let line of link.externalLines' [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
-        <ng-container *ngFor='let line of link.externalLines'>
-          <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
+        <!--  The Minor Axes-->
+        <ng-container *ngIf='settings.isShowMajorGrid.getValue() && settings.isShowMinorGrid.getValue()'>
+          <ng-container *ngFor='let line of svgGrid.verticalLinesMinor'>
+            <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
+                  stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
+          </ng-container>
+          <ng-container *ngFor='let line of svgGrid.horizontalLinesMinor'>
+            <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
+                  stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.15)'></line>
+          </ng-container>
         </ng-container>
-      </ng-container>
-      <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='hotpink' />
-    </ng-container>
 
-  </g>
-
-  <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
-    <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
-    <path *ngIf='gridUtils.getJointShowCurve(joint)'
-      [attr.d]='mechanismSrv.getJointPath(joint)'
-      fill='none'
-      [attr.stroke-width]='0.01 * settings.objectScale'
-      style='transform: scaleY(-1); pointer-events: none'
-    ></path>
-    </ng-container>
-  </g>
-  <g
-    id='forcesHolder' style='transform: scaleY(-1);'
-    *ngFor='let force of mechanismSrv.getForces()'
-    (contextmenu)='setLastRightClick(force)'
-    (pointerdown)='setLastLeftClick(force)'
-    (pointerover)='force.showHighlight = true'
-    (pointerout)='force.showHighlight = false'
-  >
-    <g [attr.id]='force.id'>
-      <svg
-        [attr.x]='force.startCoord.x'
-        [attr.y]='force.startCoord.y'
-        style='pointer-events: none; overflow: visible'
-      >
-        <circle *ngIf='!force.local' [attr.r]='settings.objectScale*0.15' class='forceAnchor'></circle>
-        <rect *ngIf='force.local' [attr.width]='settings.objectScale*0.25' [attr.height]='settings.objectScale*0.25' [attr.x]='settings.objectScale*-0.125' [attr.y]='settings.objectScale*-0.125'  class='forceAnchor'
-        style='transform: rotateZ({{force.angleRad+0.785}}rad)'></rect>
-      </svg>
-      <!-- Transpent thicker force to increase hitbox for the group for highliting-->
-      <path [attr.d]='force.forceLine' class='forceLine' [attr.stroke-width]='force.visualWidth*settings.objectScale'></path>
-      <path [attr.d]='force.forceLineLong' stroke='transparent' [attr.stroke-width]='force.visualWidth*settings.objectScale+svgGrid.scaleWithZoom(10)'></path>
-      <path [attr.d]='force.forceArrow' class='forceArrow' [attr.fill]='force.fill'></path>
-    </g>
+        <!--  The Major Axes-->
+        <ng-container *ngIf='settings.isShowMajorGrid.getValue()'>
+          <ng-container *ngFor='let line of svgGrid.verticalLines'>
+            <line [attr.x1]='line' [attr.y1]='svgGrid.viewBoxMinY' [attr.x2]='line' [attr.y2]='svgGrid.viewBoxMaxY'
+                  stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
+          </ng-container>
+          <ng-container *ngFor='let line of svgGrid.horizontalLines'>
+            <line [attr.x1]='svgGrid.viewBoxMinX' [attr.y1]='line' [attr.x2]='svgGrid.viewBoxMaxX' [attr.y2]='line'
+                  stroke='black' [attr.stroke-width]='svgGrid.scaleWithZoom(0.75)'></line>
+          </ng-container>
+        </ng-container>
 
 
-    <ng-container *ngIf='activeObjService.selectedForce == force && activeObjService.objType == "Force"'>
-      <line [attr.x1]='force.startCoord.x'
-            [attr.y1]='force.startCoord.y'
-            [attr.x2]='force.endCoord.x'
-            [attr.y2]='force.endCoord.y'
-            class='forceSelectedLine'
-            [attr.stroke-width]='0.03*settings.objectScale'>
-      ></line>
-      <svg
-        id='startForceEndpoint'
-        [attr.x]='force.startCoord.x'
-        [attr.y]='force.startCoord.y'
-        [attr.stroke-width]='0.03*settings.objectScale'
-        (pointerdown)='setLastLeftClick(force); activeObjService.updateSelectedObj(force.startCoord, force); mouseDown($event); $event.stopPropagation()'
-        height='10'
-        width='10'
-        style='overflow: visible; cursor: move'
-      >
-        <rect [attr.x]='-0.075*settings.objectScale' [attr.y]='-0.075*settings.objectScale' [attr.width]='0.15*settings.objectScale' [attr.height]='0.15*settings.objectScale' class='forceEndpointSquare' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
-      </svg>
+        <!--  The X and Y Axis-->
+        <line id='axes' [attr.x1]='svgGrid.viewBoxMinX' y1='0' [attr.x2]='svgGrid.viewBoxMaxX' y2='0'
+              [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
 
-      <svg
-        id='endForceEndpoint'
-        [attr.x]='force.endCoord.x'
-        [attr.y]='force.endCoord.y'
-        [attr.stroke-width]='0.03*settings.objectScale'
-        (pointerdown)='setLastLeftClick(force); activeObjService.updateSelectedObj(force.endCoord, force); mouseDown($event); $event.stopPropagation()'
-        height='10'
-        width='10'
-        style='overflow: visible; cursor: move'
-      >
-        <rect [attr.x]='-0.075*settings.objectScale' [attr.y]='-0.075*settings.objectScale' [attr.width]='0.15*settings.objectScale' [attr.height]='0.15*settings.objectScale' class='forceEndpointSquare' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
-      </svg>
-    </ng-container>
-  </g>
+        <line id='axes' x1='0' [attr.y1]='svgGrid.viewBoxMinY' x2='0' [attr.y2]='svgGrid.viewBoxMaxY'
+              [attr.stroke-width]='svgGrid.scaleWithZoom(3)'></line>
 
-  <g id='jointTagHolder' style='pointer-events: none'>
-    <svg
-      *ngFor='let joint of mechanismSrv.getJoints()'
-      [attr.x]='joint.x - settings.objectScale*0.3'
-      [attr.y]='-1 * joint.y - settings.objectScale*0.5'
-      [attr.height]='10'
-      [attr.width]='10'
-      style='overflow: visible; text-anchor: middle'
-    >
-      <text
-        *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
-      >
-      {{joint.name}}
-      </text>
-    </svg>
-  </g>
-  <g id='linkTagHolder' style='pointer-events: none'>
-    <svg
-      *ngFor='let link of mechanismSrv.getLinks()'
-      [attr.x]="mechanismSrv.getLinkProp(link, 'CoMX')"
-      [attr.y]="mechanismSrv.getLinkProp(link, 'CoMY')"
-      [attr.height]='10'
-      [attr.width]='10'
-      style='overflow: visible; text-anchor: middle'
-    >
-      <text
-        *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
-      >
-        {{link.name}}
-      </text>
-    </svg>
-  </g>
-  <g id='forceTagHolder' style='pointer-events: none'>
-    <svg
-      *ngFor='let force of mechanismSrv.getForces()'
-      [attr.x]='(force.startCoord.x + force.endCoord.x) / 2 - settings.objectScale*0.3'
-      [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1 - settings.objectScale*0.3'
-      [attr.height]='10'
-      [attr.width]='10'
-      style='overflow: visible; text-anchor: middle'
-    >
-      <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
-            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
-        {{force.name}}
-      </text>
-    </svg>
-  </g>
-  <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
-    <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible;'>
-        <path
-          stroke-width='2'
-          stroke-linejoin='round'
-          fill='black'
-          opacity='1.0'
-          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+        <!-- Axes Labels -->
+        <ng-container>
+          <ng-container *ngFor='let line of svgGrid.verticalLines'>
+            <text id='axes_numbers' text-anchor='middle' [attr.x]='line' [attr.y]='svgGrid.scaleWithZoom(20)'
+                  [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+                  [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{line}}</text>
+          </ng-container>
+          <ng-container *ngFor='let line of svgGrid.horizontalLines'>
+            <text id='axes_numbers' text-anchor='end' [attr.y]='line' [attr.x]='svgGrid.scaleWithZoom(-10)'
+                  [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+                  [attr.font-size]='svgGrid.scaleWithZoom(15)'>{{-line}}</text>
+          </ng-container>
+          <text id='axes_numbers' text-anchor='end' [attr.y]='svgGrid.scaleWithZoom(20)'
+                [attr.x]='svgGrid.scaleWithZoom(-10)'
+                [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+                [attr.font-size]='svgGrid.scaleWithZoom(15)'>
+            0
+          </text>
+        </ng-container>
+      </g>
+
+      <g id='jointBGHolder' style='transform: scaleY(-1)'>
+        <svg
+          *ngFor='let joint of mechanismSrv.getJoints()'
+          [attr.x]='joint.x' [attr.y]='joint.y'
+          width='10'
+          height='10'
+          style='overflow: visible'
+        >
+          <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && !gridUtils.getInput(joint)'
+                 xlink:href='../../../assets/Ground.svg'
+                 [attr.width]='settings.objectScale * 1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.35' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+          <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && settings.isInputCW'
+                 xlink:href='../../../assets/InputCCW.svg'
+                 [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+          <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && !settings.isInputCW'
+                 xlink:href='../../../assets/InputCW.svg'
+                 [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+          <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
+                 xlink:href='../../../assets/SliderPill.svg'
+                 [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
+
+        </svg>
+      </g>
+      <g id='linkBGHolder' style='transform: scaleY(-1); pointer-events: none'>
+        <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+          <svg *ngIf='gridUtils.typeOfLink(link) == "P"'
+                 [attr.x]='getFirstXPos(link)' [attr.y]='getFirstYPos(link)'
+                 width='10'
+                 height='10'
+                 style='overflow: visible'>
+            <image xlink:href='../../../assets/SliderTrackMid.svg'
+                     [attr.width]='settings.objectScale*2.6' [attr.height]='settings.objectScale*2.6'  [attr.x]='settings.objectScale*-1.3' [attr.y]='settings.objectScale*-1.3'
+                   style='transform: scaleY(-1) rotateZ({{-gridUtils.getPrisAngle(link.joints[1])}}rad)'
+            />
+          </svg>
+        </ng-container>
+      </g>
+      <g id='linkHolder' style='transform: scaleY(-1)'>
+        <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+          <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && activeObjService.objType== "Link" && activeObjService.selectedLink == link' style='pointer-events: none;'>
+            <path
+              *ngFor='let subLink of gridUtils.getLinkSubset(link)'
+              [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
+              fill="rgba(0,0,0,0.3)"
+              [attr.stroke]="'black'"
+              [attr.stroke-width]='0.01 * settings.objectScale'
+              [attr.stroke-dasharray]='0.1 * settings.objectScale'>
+            </path>
+          </ng-container>
+          <path
+            *ngIf='gridUtils.typeOfLink(link) == "R" && !isRenderFail(link)'
+            (pointerover)='link.showHighlight = true'
+            (pointerout)='link.showHighlight = false'
+            (pointerdown)='setLastLeftClick(link)'
+            (contextmenu)='setLastRightClick(link)'
+            [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
+            [attr.id]='link.id'
+            [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
+            [attr.fill-opacity]=0.7
+            [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
+            [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+            [class]='mechanismSrv.getLinkCSSClass(link)'
+          >
+          </path>
+          <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && isRenderFail(link)' >
+            <path
+              *ngFor='let subLink of gridUtils.getLinkSubset(link)'
+              (pointerover)='link.showHighlight = true'
+              (pointerout)='link.showHighlight = false'
+              (pointerdown)='setLastLeftClick(link)'
+              (contextmenu)='setLastRightClick(link)'
+              [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
+              [attr.id]='link.id'
+              [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
+              [attr.fill-opacity]=0.7
+              [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
+              [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+              [class]='mechanismSrv.getLinkCSSClass(link)'>
+            </path>
+          </ng-container>
+        </ng-container>
+      </g>
+      <g id='jointHolder' style='transform: scaleY(-1)'>
+        <svg
+          *ngFor='let joint of mechanismSrv.getJoints()'
+          [attr.x]='joint.x' [attr.y]='joint.y'
+          (pointerover)='joint.showHighlight = true'
+          (pointerout)='joint.showHighlight = false'
+          (contextmenu)='setLastRightClick(joint)'
+          (pointerdown)='setLastLeftClick(joint)'
+          width='20'
+          height='20'
+          style='overflow: visible'
+          cursor='move'
+        >
+
+          <!-- Hitbox -->
+          <circle *ngIf='gridUtils.typeOfJoint(joint) == "R"' [attr.r]='settings.objectScale/4' cx='0' cy='0' fill='transparent' />
+    <!--      Normal Joint-->
+          <circle *ngIf='!gridUtils.getWelded(joint)'
+            id='joint_{{ joint.id }}' class='joint_circles'
+            [attr.r]='settings.objectScale * gridUtils.getJointR(joint)'
+            [attr.cx]='0'
+            [attr.cy]='0'
+            [class]='mechanismSrv.getJointCSSClass(joint)'
+          />
+
+    <!--      Welded Joint-->
+          <path *ngIf='gridUtils.getWelded(joint)' [class]='mechanismSrv.getJointCSSClass(joint)'
+                d='M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z'
+                style='transform: scale({{0.01*settings.objectScale}}) rotateZ({{gridUtils.getAngleFromJoint(joint)}}rad)' >
+          </path>
+        </svg>
+      </g>
+    <!--  For Debugging-->
+      <g *ngIf='settings.isGridDebugOn' style='transform: scaleY(-1); pointer-events: none'>
+        <ng-container *ngFor='let line of getDebugLines()'>
+          <circle [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
+          <circle [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
+          <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
+          <line
+            [attr.x1]='line.startPosition.x'
+            [attr.y1]='line.startPosition.y'
+            [attr.x2]='line.endPosition.x'
+            [attr.y2]='line.endPosition.y'
+            [attr.stroke]='line.color'
+            [attr.stroke-width]='svgGrid.scaleWithZoom(3)'
+            marker-end="url(#arrowhead)"
+          ></line>
+        </ng-container>
+
+        <ng-container *ngFor='let link of mechanismSrv.getLinks()'>
+          <ng-container *ngIf='gridUtils.typeOfLink(link) == "R" && link.subset.length == 0'>
+            <circle *ngFor='let line of link.externalLines' [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>
+            <circle *ngFor='let line of link.externalLines' [attr.r]='svgGrid.scaleWithZoom(5.5)' [attr.cx]='line.endPosition.x' [attr.cy]='line.endPosition.y' [attr.fill]='line.color' />
+            <ng-container *ngFor='let line of link.externalLines'>
+              <circle *ngIf='line.isArc' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='gridUtils.getCenter(line).x' [attr.cy]='gridUtils.getCenter(line).y' [attr.fill]='line.color' />
+            </ng-container>
+          </ng-container>
+          <circle *ngFor='let coord of getDebugPoints()' [attr.r]='svgGrid.scaleWithZoom(5)' [attr.cx]='getDebugPointX(coord)' [attr.cy]='getDebugPointY(coord)' fill='hotpink' />
+        </ng-container>
+
+      </g>
+
+      <g id='pathsHolder' *ngIf='mechanismSrv.showPathHolder'>
+        <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
+        <path *ngIf='gridUtils.getJointShowCurve(joint)'
+          [attr.d]='mechanismSrv.getJointPath(joint)'
+          fill='none'
+          [attr.stroke-width]='0.01 * settings.objectScale'
+          style='transform: scaleY(-1); pointer-events: none'
         ></path>
-        <path
-          stroke-width='2'
-          stroke-linejoin='round'
-          fill='white'
-          opacity='1.0'
-          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
-        ></path>
-        <path
-          stroke-width='2'
-          stroke-linejoin='round'
-          fill='black'
-          opacity='1.0'
-          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
-        ></path>
-        <path
-          stroke-width='2'
-          stroke-linejoin='round'
-          fill='white'
-          opacity='1.0'
-          [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
-        ></path>
-    </svg>
-  </g>
-  <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
-    <line
-      stroke='black'
-      [attr.stroke-width]='0.02 * settings.objectScale'
-      stroke-opacity='0.5'
-      style='pointer-events: none'
-    ></line>
-    <svg height='10' width='10' style='overflow: visible' cursor='move'>
-      <circle
-        [attr.r]='0.14 * settings.objectScale'
-        cx='0%'
-        cy='0%'
-        fill='black'
-        fill-opacity='0.5'
-        stroke-opacity='0.5'
-      ></circle>
-      <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
-      <circle
-        [attr.r]='0.1 * settings.objectScale'
-        cx='0%'
-        cy='0%'
-        fill='gray'
-        stroke='#00000000'
-        stroke-width='0.2'
-      ></circle>
-    </svg>
-  </g>
-  <g id='forceTempHolder'
-     opacity='0.5'
-     style='display: none; pointer-events: none; transform: scaleY(-1)'
-  >
-    <path stroke-width='0.04' stroke='black' d=''></path>
-    <path fill='black' d=''></path>
-  </g>
+        </ng-container>
+      </g>
+      <g
+        id='forcesHolder' style='transform: scaleY(-1);'
+        *ngFor='let force of mechanismSrv.getForces()'
+        (contextmenu)='setLastRightClick(force)'
+        (pointerdown)='setLastLeftClick(force)'
+        (pointerover)='force.showHighlight = true'
+        (pointerout)='force.showHighlight = false'
+      >
+        <g [attr.id]='force.id'>
+          <svg
+            [attr.x]='force.startCoord.x'
+            [attr.y]='force.startCoord.y'
+            style='pointer-events: none; overflow: visible'
+          >
+            <circle *ngIf='!force.local' [attr.r]='settings.objectScale*0.15' class='forceAnchor'></circle>
+            <rect *ngIf='force.local' [attr.width]='settings.objectScale*0.25' [attr.height]='settings.objectScale*0.25' [attr.x]='settings.objectScale*-0.125' [attr.y]='settings.objectScale*-0.125'  class='forceAnchor'
+            style='transform: rotateZ({{force.angleRad+0.785}}rad)'></rect>
+          </svg>
+          <!-- Transpent thicker force to increase hitbox for the group for highliting-->
+          <path [attr.d]='force.forceLine' class='forceLine' [attr.stroke-width]='force.visualWidth*settings.objectScale'></path>
+          <path [attr.d]='force.forceLineLong' stroke='transparent' [attr.stroke-width]='force.visualWidth*settings.objectScale+svgGrid.scaleWithZoom(10)'></path>
+          <path [attr.d]='force.forceArrow' class='forceArrow' [attr.fill]='force.fill'></path>
+        </g>
+
+
+        <ng-container *ngIf='activeObjService.selectedForce == force && activeObjService.objType == "Force"'>
+          <line [attr.x1]='force.startCoord.x'
+                [attr.y1]='force.startCoord.y'
+                [attr.x2]='force.endCoord.x'
+                [attr.y2]='force.endCoord.y'
+                class='forceSelectedLine'
+                [attr.stroke-width]='0.03*settings.objectScale'>
+          ></line>
+          <svg
+            id='startForceEndpoint'
+            [attr.x]='force.startCoord.x'
+            [attr.y]='force.startCoord.y'
+            [attr.stroke-width]='0.03*settings.objectScale'
+            (pointerdown)='setLastLeftClick(force); activeObjService.updateSelectedObj(force.startCoord, force); mouseDown($event); $event.stopPropagation()'
+            height='10'
+            width='10'
+            style='overflow: visible; cursor: move'
+          >
+            <rect [attr.x]='-0.075*settings.objectScale' [attr.y]='-0.075*settings.objectScale' [attr.width]='0.15*settings.objectScale' [attr.height]='0.15*settings.objectScale' class='forceEndpointSquare' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
+          </svg>
+
+          <svg
+            id='endForceEndpoint'
+            [attr.x]='force.endCoord.x'
+            [attr.y]='force.endCoord.y'
+            [attr.stroke-width]='0.03*settings.objectScale'
+            (pointerdown)='setLastLeftClick(force); activeObjService.updateSelectedObj(force.endCoord, force); mouseDown($event); $event.stopPropagation()'
+            height='10'
+            width='10'
+            style='overflow: visible; cursor: move'
+          >
+            <rect [attr.x]='-0.075*settings.objectScale' [attr.y]='-0.075*settings.objectScale' [attr.width]='0.15*settings.objectScale' [attr.height]='0.15*settings.objectScale' class='forceEndpointSquare' style='transform: rotateZ({{force.angleRad}}rad)'></rect>
+          </svg>
+        </ng-container>
+      </g>
+
+      <g id='jointTagHolder' style='pointer-events: none'>
+        <svg
+          *ngFor='let joint of mechanismSrv.getJoints()'
+          [attr.x]='joint.x - settings.objectScale*0.3'
+          [attr.y]='-1 * joint.y - settings.objectScale*0.5'
+          [attr.height]='10'
+          [attr.width]='10'
+          style='overflow: visible; text-anchor: middle'
+        >
+          <text
+            *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
+            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+          >
+          {{joint.name}}
+          </text>
+        </svg>
+      </g>
+      <g id='linkTagHolder' style='pointer-events: none'>
+        <svg
+          *ngFor='let link of mechanismSrv.getLinks()'
+          [attr.x]="mechanismSrv.getLinkProp(link, 'CoMX')"
+          [attr.y]="mechanismSrv.getLinkProp(link, 'CoMY')"
+          [attr.height]='10'
+          [attr.width]='10'
+          style='overflow: visible; text-anchor: middle'
+        >
+          <text
+            *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
+            style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+          >
+            {{link.name}}
+          </text>
+        </svg>
+      </g>
+      <g id='forceTagHolder' style='pointer-events: none'>
+        <svg
+          *ngFor='let force of mechanismSrv.getForces()'
+          [attr.x]='(force.startCoord.x + force.endCoord.x) / 2 - settings.objectScale*0.3'
+          [attr.y]='((force.startCoord.y + force.endCoord.y) / 2) * -1 - settings.objectScale*0.3'
+          [attr.height]='10'
+          [attr.width]='10'
+          style='overflow: visible; text-anchor: middle'
+        >
+          <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
+                style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: left'>
+            {{force.name}}
+          </text>
+        </svg>
+      </g>
+      <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
+        <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible;'>
+            <path
+              stroke-width='2'
+              stroke-linejoin='round'
+              fill='black'
+              opacity='1.0'
+              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+            ></path>
+            <path
+              stroke-width='2'
+              stroke-linejoin='round'
+              fill='white'
+              opacity='1.0'
+              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
+            ></path>
+            <path
+              stroke-width='2'
+              stroke-linejoin='round'
+              fill='black'
+              opacity='1.0'
+              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
+            ></path>
+            <path
+              stroke-width='2'
+              stroke-linejoin='round'
+              fill='white'
+              opacity='1.0'
+              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
+            ></path>
+        </svg>
+      </g>
+      <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
+        <line
+          stroke='black'
+          [attr.stroke-width]='0.02 * settings.objectScale'
+          stroke-opacity='0.5'
+          style='pointer-events: none'
+        ></line>
+        <svg height='10' width='10' style='overflow: visible' cursor='move'>
+          <circle
+            [attr.r]='0.14 * settings.objectScale'
+            cx='0%'
+            cy='0%'
+            fill='black'
+            fill-opacity='0.5'
+            stroke-opacity='0.5'
+          ></circle>
+          <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
+          <circle
+            [attr.r]='0.1 * settings.objectScale'
+            cx='0%'
+            cy='0%'
+            fill='gray'
+            stroke='#00000000'
+            stroke-width='0.2'
+          ></circle>
+        </svg>
+      </g>
+      <g id='forceTempHolder'
+         opacity='0.5'
+         style='display: none; pointer-events: none; transform: scaleY(-1)'
+      >
+        <path stroke-width='0.04' stroke='black' d=''></path>
+        <path fill='black' d=''></path>
+      </g>
+
 
 </svg>
 <div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
-  <br/>
+  Zoom: {{svgGrid.getZoom().toFixed(2)}} Mouse Raw: {{mouseLocationRaw.x.toFixed(2)}}, {{mouseLocationRaw.y.toFixed(2)}}
+  0,0: {{originInScreen.x.toFixed(2)}}, {{originInScreen.y.toFixed(2)}}
+  <br />
   {{returnDebugValue()}}
 </div>
 <ng-template #context_menu>

@@ -42,6 +42,8 @@ export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
+  
+  public originInScreen: Coord = new Coord(0, 0);
   private timeMouseDown: number = 0;
 
   constructor(
@@ -52,7 +54,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -82,6 +84,7 @@ export class NewGridComponent {
   private startX!: number;
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
+  mouseLocationRaw: Coord = new Coord(0, 0);
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 
@@ -89,20 +92,24 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === 'true';
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    fromEvent(window, 'resize')
-      .pipe(debounceTime(200))
-      .subscribe((event) => {
-        console.log('resize');
-        this.svgGrid.panZoomObject.resize();
-        this.svgGrid.scaleToFitLinkage();
-      });
+    fromEvent(window, 'resize').subscribe((event) => {
+      // console.log('resize');
+      this.svgGrid.panZoomObject.resize();
+      // this.svgGrid.panZoomObject.fit();
+      // this.svgGrid.panZoomObject.center();
+      // this.svgGrid.panZoomObject.resize();
+      this.svgGrid.handlePan();
+      // console.log(this.svgGrid.getZoom());
+      // this.svgGrid.panZoomObject.updateBBox();
+      // this.svgGrid.scaleToFitLinkage();
+    });
   }
 
   ngAfterViewInit() {
@@ -144,7 +151,7 @@ export class NewGridComponent {
   updateContextMenuItems() {
     //Switch case based on what type the object is
     this.cMenuItems = [];
-    console.log(this.lastRightClick.constructor.name);
+    // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
         //Switch force direction, switch force local, delete Force
@@ -339,8 +346,8 @@ export class NewGridComponent {
   }
 
   createLink() {
-    console.log('createLink');
-    console.log(this.lastRightClickCoord);
+    // console.log('createLink');
+    // console.log(this.lastRightClickCoord);
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
     switch (this.lastRightClick.constructor.name) {
       case 'String':
@@ -369,7 +376,7 @@ export class NewGridComponent {
     // const mousePos = this.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
     // // TODO: having to call setAttribute and have HTML update for you automatically
-    console.log(startCoord);
+    // console.log(startCoord);
     this.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
     this.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
     this.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
@@ -379,7 +386,9 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
+    this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocationRaw = new Coord($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
 
     switch (this.gridStates) {
@@ -573,10 +582,11 @@ export class NewGridComponent {
                 joint2.connectedJoints.push(joint1);
 
                 if (this.mechanismSrv.links.length == 0) {
-                  console.log('first link');
-                  SettingsService._objectScale.next(
-                    Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
-                  );
+                  // console.log('first link');
+                  this.svgGrid.updateObjectScale();
+                  // console.log(this.svgGrid.panZoomObject);
+                  // console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
+                  // console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
                 }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);

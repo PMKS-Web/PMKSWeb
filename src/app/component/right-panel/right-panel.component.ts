@@ -26,6 +26,7 @@ import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
 import { SettingsService } from '../../services/settings.service';
 import { Arc, Line } from '../../model/line';
 import { Coord } from '../../model/coord';
+import { SvgGridService } from '../../services/svg-grid.service';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 
 @Component({
@@ -84,6 +85,7 @@ export class RightPanelComponent {
     public activeObjService: ActiveObjService,
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
+    public svgService: SvgGridService,
     private fb: FormBuilder
   ) {}
 
@@ -182,6 +184,7 @@ export class RightPanelComponent {
   }
 
   runGeometryUnitTests() {
+    this.svgService.panZoomObject.zoomAtPoint(2, { x: 0, y: 0 });
     console.log('Running interseciton tests');
     let arc = new Arc(new Coord(0, 0), new Coord(0, 2), new Coord(0, 1));
     let arc2 = new Arc(new Coord(-1, 1), new Coord(1, 1), new Coord(0, 1));
