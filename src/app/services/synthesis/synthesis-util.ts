@@ -12,6 +12,5 @@ export class Pose {
         public id: PoseID,
         public position: Coord,
         public thetaRadians: number) {
-    }
-    
+    }   
 }
