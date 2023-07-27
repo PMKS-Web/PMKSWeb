@@ -5,6 +5,7 @@ import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { Analytics, logEvent } from '@angular/fire/analytics';
+import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 
 @Component({
   selector: 'app-left-tabs',
@@ -72,30 +73,60 @@ import { Analytics, logEvent } from '@angular/fire/analytics';
 })
 export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
-  openTab = 2; //Default open tab to "Edit" /
-  isOpen = true; // Is the tab open?
 
-  tabClicked(tabID: number) {
-    if (!this.isOpen) {
-      this.isOpen = true;
-      this.openTab = tabID;
+
+  constructor(private tabs: SelectedTabService) {
+
+  }
+
+  public get TabID(): typeof TabID {
+    return TabID;
+  }
+
+  getCurrentTab(): TabID {
+    return this.tabs.tabNum.getValue();
+  }
+
+  getTabNum(): number {
+
+    if (!this.isTabVisible()) return 0;
+
+    switch (this.getCurrentTab()) {
+      case TabID.SYNTHESIZE:
+        return 1;
+      case TabID.EDIT:
+        return 2;
+      case TabID.ANALYZE:
+        return 3;
+    }
+  }
+
+  isTabVisible(): boolean {
+    return this.tabs.tabVisible.getValue();
+  }
+
+  tabClicked(tabID: TabID) {
+    if (!this.isTabVisible()) {
+      this.tabs.tabVisible.next(true);
+      this.tabs.tabNum.next(tabID);
     } else {
-      if (this.openTab === tabID) {
-        this.isOpen = false;
-        this.openTab = 0;
+      if (this.getCurrentTab() === tabID) {
+        this.tabs.tabVisible.next(false);
+        this.tabs.tabNum.next(0);
       } else {
-        this.openTab = tabID;
+        this.tabs.tabNum.next(tabID);
       }
     }
-    if (this.isOpen) {
-      switch (tabID) {
-        case 1:
+
+    if (this.isTabVisible()) {
+      switch (this.getCurrentTab()) {
+        case TabID.SYNTHESIZE:
           logEvent(this.analytics, 'open_synthesis_tab');
           break;
-        case 2:
+        case TabID.EDIT:
           logEvent(this.analytics, 'open_edit_tab');
           break;
-        case 3:
+        case TabID.ANALYZE:
           logEvent(this.analytics, 'open_analysis_tab');
           break;
       }
