@@ -19,7 +19,9 @@ import {
   jointStates,
   line_line_intersect,
   linkStates,
-  local_storage_available, isInside, getDistance,
+  local_storage_available,
+  isInside,
+  getDistance,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -42,7 +44,7 @@ export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
-  
+
   public originInScreen: Coord = new Coord(0, 0);
   private timeMouseDown: number = 0;
 
@@ -170,11 +172,11 @@ export class NewGridComponent {
           )
         );
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Force',
-                this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'RealLink':
@@ -187,14 +189,27 @@ export class NewGridComponent {
           new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Link',
-                this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Link',
+            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'RevJoint':
+        if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'Remove Input'
+                : 'Make Input',
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'remove_input'
+                : 'add_input'
+            )
+          ); //Rev Joint Slider
+        }
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
@@ -203,13 +218,13 @@ export class NewGridComponent {
               this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
               'remove_ground'
             )
-          );
+          ); //Rev Joint - Ground
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Attach Input',
-              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
-            )
+            ) //Rev Joint - Input
           );
         } else {
           if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
@@ -219,7 +234,7 @@ export class NewGridComponent {
                 this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
                 'add_ground'
               )
-            );
+            ); //Rev Joint - Not Ground
           }
         }
         this.cMenuItems.push(
@@ -228,7 +243,7 @@ export class NewGridComponent {
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
-        );
+        ); //Rev Joint - Always
         if ((this.lastRightClick as RealJoint).canBeWelded()) {
           this.cMenuItems.push(
             new cMenuItem(
@@ -236,7 +251,7 @@ export class NewGridComponent {
               this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
-          );
+          ); //Rev Joint - Can be welded
         }
         if (
           !(this.lastRightClick as RealJoint).ground &&
@@ -250,14 +265,14 @@ export class NewGridComponent {
               },
               (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
             )
-          );
+          ); //Rev Joint - Not Ground and at least one valid mechanism exists
         }
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Joint',
-                this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'String': //This means grid
@@ -416,7 +431,7 @@ export class NewGridComponent {
         }
 
         //Break the timeout if the user is clearly trying to drag the joint
-        if(getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10){
+        if (getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10) {
           this.timeMouseDown = 0;
         }
         //If it has been less than 1 seccond since the mouse was pressed down, ignore the drag
