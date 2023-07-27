@@ -14,6 +14,10 @@ import {
   createModes,
   moveModes,
   roundNumber,
+  LengthUnit,
+  point_on_line_segment_closest_to_point,
+  getDistance,
+  distance_points,
 } from '../model/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -24,6 +28,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
+import { NumberUnitParserService } from './number-unit-parser.service';
 
 @Injectable({
   providedIn: 'root',
@@ -54,7 +59,8 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private nup: NumberUnitParserService
   ) {}
 
   getJoints() {
@@ -98,6 +104,39 @@ export class MechanismService {
       }
     });
     this.activeObjService.fakeUpdateSelectedObj();
+  }
+
+  updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
+    // For each joint, move the joint
+    this.joints.forEach((joint) => {
+      this.gridUtils.dragJoint(
+        joint as RealJoint,
+        new Coord(
+          this.nup.convertLength(joint.x, fromUnits, toUnits),
+          this.nup.convertLength(joint.y, fromUnits, toUnits)
+        )
+      );
+    });
+    // this.settingsService.lengthUnit.subscribe((val) => {
+    //For each jo
+    // let unit = this.settingsService.lengthUnit.value;
+    // if (unit !== this.lengthUnit) {
+    //   this.mechanismService.joints.forEach((joint) => {
+    //     this.activeSrv.updateSelectedObj(joint);
+    //     this.activeSrv.fakeUpdateSelectedObj();
+    //     this.gridUtils.dragJoint(
+    //       this.activeSrv.selectedJoint,
+    //       new Coord(
+    //         this.nup.convertLength(joint.x, this.lengthUnit, unit),
+    //         this.nup.convertLength(joint.y, this.lengthUnit, unit)
+    //       )
+    //     );
+    //     this.jointForm.controls['input'].patchValue(wasInput);
+    //   });
+    //   this.lengthUnit = this.settingsService.lengthUnit.value;
+    //   this.activeSrv.fakeUpdateSelectedObj();
+    // }
+    // });
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -450,7 +489,46 @@ export class MechanismService {
           }
         });
       }
+
+      // for any forces that are outside of the link, move them to the closest point on the hull
+      if (l instanceof RealLink) {
+        l.forces.forEach((f) => {
+
+          let fx = f.startCoord.x;
+          let fy = f.startCoord.y;
+
+          // if force is already inside hull, do nothing
+          if (l.isPointInsideHull(fx, fy)) {
+            return;
+          }
+
+          // go through hull and find closest point
+          let hull = l.getHullPoints();
+          let closestDistance = -1;
+          let cx, cy;
+          for (let i = 0; i < hull.length - 1; i++) {
+            let x1 = hull[i][0];
+            let y1 = hull[i][1];
+            let x2 = hull[i + 1][0];
+            let y2 = hull[i + 1][1];
+
+            [cx, cy] = point_on_line_segment_closest_to_point(fx, fy, x1, y1, x2, y2);
+            let distance = distance_points(fx, fy, cx, cy);
+
+            if (closestDistance === -1 || distance < closestDistance) {
+              closestDistance = distance;
+              fx = cx;
+              fy = cy;
+            }
+          }
+
+          // (fx, fy) is now the closest point on the hull to the force start position
+          // move force there
+          f.moveForceTo(fx, fy);
+        });
+      }
     });
+
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
