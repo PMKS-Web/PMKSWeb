@@ -211,7 +211,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   constructor(
     private fb: FormBuilder,
     private mechanismService: MechanismService,
-    private settingsService: SettingsService,
+    public settingsService: SettingsService,
     private nup: NumberUnitParserService,
     private activeSrv: ActiveObjService
   ) {}
@@ -336,28 +336,32 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
 
     this.settingsService.angleUnit.subscribe((t) => {
       //Force update the Y axis text with the new label
-      if (this.chart.chart) {
-        this.chart.updateOptions(
-          {
-            yaxis: this.chartOptions.yaxis,
-          },
-          false,
-          true
-        );
-      }
+      setTimeout(() => {
+        if (this.chart.chart) {
+          this.chart.updateOptions(
+            {
+              yaxis: this.chartOptions.yaxis,
+            },
+            false,
+            true
+          );
+        }
+      }, 1);
     });
 
     this.settingsService.lengthUnit.subscribe((t) => {
       //Force update the Y axis text with the new label
-      if (this.chart.chart) {
-        this.chart.updateOptions(
-          {
-            yaxis: this.chartOptions.yaxis,
-          },
-          false,
-          true
-        );
-      }
+      setTimeout(() => {
+        if (this.chart.chart) {
+          this.chart.updateOptions(
+            {
+              yaxis: this.chartOptions.yaxis,
+            },
+            false,
+            true
+          );
+        }
+      }, 1);
     });
 
     this.mechStateSub = this.mechanismService.onMechUpdateState.subscribe((data) => {
@@ -487,9 +491,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         return 'm';
       default:
         if (typeof unit === typeof LengthUnit) {
-          return 'cm';
+          return 'broken';
         } else {
-          return 'deg';
+          return 'broken';
         }
     }
   }
@@ -504,13 +508,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let datum: number[][] = [];
     let categories: string[] = [];
     const seriesData = [];
-    let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + ')';
-    let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s)';
-    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s^2)';
-    const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + ')';
+    let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + ')';
+    let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s)';
+    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s^2)';
+    const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + ')';
     // const posAngUnit = '(rad)';
-    const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s)';
-    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s^2)';
+    const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s)';
+    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s^2)';
     if (ToolbarComponent.unit === 'm') {
       posLinUnit = 'm';
       velLinUnit = 'm/s';

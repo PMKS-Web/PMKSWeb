@@ -20,6 +20,7 @@ import {
   line_line_intersect,
   linkStates,
   local_storage_available,
+  isInside,
   getDistance,
 } from '../../model/utils';
 import { Force } from '../../model/force';
@@ -43,6 +44,8 @@ export class NewGridComponent {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
+
+  public originInScreen: Coord = new Coord(0, 0);
   private timeMouseDown: number = 0;
 
   constructor(
@@ -83,6 +86,7 @@ export class NewGridComponent {
   private startX!: number;
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
+  mouseLocationRaw: Coord = new Coord(0, 0);
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 
@@ -97,13 +101,17 @@ export class NewGridComponent {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    fromEvent(window, 'resize')
-      .pipe(debounceTime(200))
-      .subscribe((event) => {
-        console.log('resize');
-        this.svgGrid.panZoomObject.resize();
-        this.svgGrid.scaleToFitLinkage();
-      });
+    fromEvent(window, 'resize').subscribe((event) => {
+      // console.log('resize');
+      this.svgGrid.panZoomObject.resize();
+      // this.svgGrid.panZoomObject.fit();
+      // this.svgGrid.panZoomObject.center();
+      // this.svgGrid.panZoomObject.resize();
+      this.svgGrid.handlePan();
+      // console.log(this.svgGrid.getZoom());
+      // this.svgGrid.panZoomObject.updateBBox();
+      // this.svgGrid.scaleToFitLinkage();
+    });
   }
 
   ngAfterViewInit() {
@@ -145,17 +153,10 @@ export class NewGridComponent {
   updateContextMenuItems() {
     //Switch case based on what type the object is
     this.cMenuItems = [];
-    console.log(this.lastRightClick.constructor.name);
+    // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
         //Switch force direction, switch force local, delete Force
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         this.cMenuItems.push(
           new cMenuItem(
             (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
@@ -170,16 +171,16 @@ export class NewGridComponent {
             'switch_force_dir'
           )
         );
-        break;
-      case 'RealLink':
-        //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         this.cMenuItems.push(
           new cMenuItem(
-            'Delete Link',
-            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
             'remove'
           )
         );
+        break;
+      case 'RealLink':
+        //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         //Don't give options if a fillet it selected and not a primary link
         if ((this.lastRightClick as RealLink).lastSelectedSublink != null) {
           this.cMenuItems.push(
@@ -192,15 +193,28 @@ export class NewGridComponent {
             new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
           );
         }
+        this.cMenuItems.push(
+            new cMenuItem(
+                'Delete Link',
+                this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+                'remove'
+            )
+        );
         break;
       case 'RevJoint':
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
+        if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'Remove Input'
+                : 'Make Input',
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'remove_input'
+                : 'add_input'
+            )
+          ); //Rev Joint Slider
+        }
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
@@ -209,23 +223,23 @@ export class NewGridComponent {
               this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
               'remove_ground'
             )
-          );
+          ); //Rev Joint - Ground
           this.cMenuItems.push(
             new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
-              this.mechanismSrv.toggleInput.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Attach Input',
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
-            )
+            ) //Rev Joint - Input
           );
         } else {
           if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
             this.cMenuItems.push(
               new cMenuItem(
-                'Add Ground',
+                'Ground Joint',
                 this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
                 'add_ground'
               )
-            );
+            ); //Rev Joint - Not Ground
           }
         }
         this.cMenuItems.push(
@@ -234,7 +248,7 @@ export class NewGridComponent {
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
-        );
+        ); //Rev Joint - Always
         if ((this.lastRightClick as RealJoint).canBeWelded()) {
           this.cMenuItems.push(
             new cMenuItem(
@@ -242,7 +256,7 @@ export class NewGridComponent {
               this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
-          );
+          ); //Rev Joint - Can be welded
         }
         if (
           !(this.lastRightClick as RealJoint).ground &&
@@ -256,9 +270,15 @@ export class NewGridComponent {
               },
               (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
             )
-          );
+          ); //Rev Joint - Not Ground and at least one valid mechanism exists
         }
-
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         break;
       case 'String': //This means grid
         this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'new_link'));
@@ -371,8 +391,8 @@ export class NewGridComponent {
   }
 
   createLink() {
-    console.log('createLink');
-    console.log(this.lastRightClickCoord);
+    // console.log('createLink');
+    // console.log(this.lastRightClickCoord);
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
     switch (this.lastRightClick.constructor.name) {
       case 'String':
@@ -400,7 +420,7 @@ export class NewGridComponent {
     // const mousePos = this.screenToGrid(mouseRawPos.x, mouseRawPos.y * -1);
     // // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
     // // TODO: having to call setAttribute and have HTML update for you automatically
-    console.log(startCoord);
+    // console.log(startCoord);
     this.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
     this.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
     this.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
@@ -410,7 +430,9 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
+    this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocationRaw = new Coord($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
 
     switch (this.gridStates) {
@@ -495,8 +517,38 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
-        //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
-        this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
+        const fake_link = document.getElementById(this.activeObjService.selectedLink.id) as unknown;
+        const link_svg = fake_link as SVGElement;
+        const geo = fake_link as SVGGeometryElement;
+        let isIn = false;
+        if (geo.isPointInFill) {
+          const fakeGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          const svgp = fakeGrid.createSVGPoint();
+          svgp.x = mousePosInSvg.x;
+          svgp.y = mousePosInSvg.y;
+          isIn = geo.isPointInFill(svgp);
+        } else {
+          isIn = isInside([mousePosInSvg.x, mousePosInSvg.y], geo.getAttribute('d')); //1634 in SVGFuncs.ts
+        }
+        // force is in link. Check to make sure that the force is not on top of a joint
+        if (isIn) {
+          this.activeObjService.selectedLink.joints.forEach(j => {
+            if (!(j instanceof RealJoint)) {return}
+            const x = j.x;
+            const y = j.y;
+            const r = this.settings.objectScale * j.r * 2;
+            let dx = x - mousePosInSvg.x;
+            let dy = y - mousePosInSvg.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance <= r) {
+              isIn = false;
+            }
+          });
+        }
+        if (isIn) {
+          //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
+          this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
+        }
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
         break;
@@ -574,10 +626,11 @@ export class NewGridComponent {
                 joint2.connectedJoints.push(joint1);
 
                 if (this.mechanismSrv.links.length == 0) {
-                  console.log('first link');
-                  SettingsService._objectScale.next(
-                    Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2))
-                  );
+                  // console.log('first link');
+                  this.svgGrid.updateObjectScale();
+                  // console.log(this.svgGrid.panZoomObject);
+                  // console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
+                  // console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
                 }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
@@ -672,7 +725,30 @@ export class NewGridComponent {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                // TODO: Be sure the force added is at correct position for binary link
+                // TODO: utilize dot product to find point that is closest to the line
+                if (this.activeObjService.selectedLink.joints.length === 2) {
+                  const lineVector: Coord = new Coord(
+                    this.activeObjService.selectedLink.joints[0].x - this.activeObjService.selectedLink.joints[1].x,
+                    this.activeObjService.selectedLink.joints[0].y - this.activeObjService.selectedLink.joints[1].y);
+
+                  // Calculate the vector from the first point on the line to the given point
+                  const givenPointVector: Coord = new Coord(
+                    startCoord.x - this.activeObjService.selectedLink.joints[0].x,
+                    startCoord.y - this.activeObjService.selectedLink.joints[0].y);
+
+                  // Calculate the dot product of the line vector and the given point vector
+                  const dotProduct: number = givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
+
+                  // Calculate the length of the line vector squared
+                  const lineLengthSquared: number = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+
+                  // Calculate the parameter t for the projection onto the line
+                  const t: number = dotProduct / lineLengthSquared;
+
+                  // Calculate the projected point on the line
+                  startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
+                  startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
+                }
                 const force = new Force(
                   'F' + (this.mechanismSrv.forces.length + 1).toString(),
                   this.activeObjService.selectedLink,
