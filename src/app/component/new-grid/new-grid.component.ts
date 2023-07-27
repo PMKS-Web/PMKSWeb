@@ -181,18 +181,13 @@ export class NewGridComponent {
         break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
-        //Don't give options if a fillet it selected and not a primary link
-        if ((this.lastRightClick as RealLink).lastSelectedSublink != null) {
-          this.cMenuItems.push(
+        this.cMenuItems.push(
             new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
-          );
-          this.cMenuItems.push(
-            new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
-          );
-          this.cMenuItems.push(
+        );
+        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
+        this.cMenuItems.push(
             new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-          );
-        }
+        );
         this.cMenuItems.push(
             new cMenuItem(
                 'Delete Link',
@@ -200,6 +195,27 @@ export class NewGridComponent {
                 'remove'
             )
         );
+        // TODO: Kohmei, I think check this...
+        // //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
+        // //Don't give options if a fillet it selected and not a primary link
+        // if ((this.lastRightClick as RealLink).lastSelectedSublink != null) {
+        //   this.cMenuItems.push(
+        //     new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
+        //   );
+        //   this.cMenuItems.push(
+        //     new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
+        //   );
+        //   this.cMenuItems.push(
+        //     new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+        //   );
+        // }
+        // this.cMenuItems.push(
+        //     new cMenuItem(
+        //         'Delete Link',
+        //         this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+        //         'remove'
+        //     )
+        // );
         break;
       case 'RevJoint':
         if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {

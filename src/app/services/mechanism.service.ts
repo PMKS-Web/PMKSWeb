@@ -549,55 +549,58 @@ export class MechanismService {
         // TODO: We should put this within a helper function since I feel that this function is called often in the code...
         if (!(l instanceof RealLink)) {return}
         const subsetNum = l.subset.length;
-        l.subset.forEach((sub, subIndex) => {
-          const delJointIndex = sub.joints.findIndex(subj => subj.id === this.activeObjService.selectedJoint.id);
-          if (delJointIndex === -1) {return}
-          // need to delete joint, fixedPoint, and ID
-          sub.joints.splice(delJointIndex, 1);
-          const delFixedJointIndex = sub.fixedLocations.findIndex(sub_fixedJoint => sub_fixedJoint.id === this.activeObjService.selectedJoint.id);
-          sub.fixedLocations.splice(delFixedJointIndex, 1);
-          if (sub.fixedLocation.fixedPoint === this.activeObjService.selectedJoint.id) {
-            sub.fixedLocation.fixedPoint = "com";
+        if (subsetNum === 0) {return}
+        // I believe at this point, the joint has been removed within the link.
+        // Algorithm:
+        //    * Recursively go through all the subsets and remove all instances of the desiredJoint (Need to store the IDs of first child to iteratively go through)
+        //    * Once a subset with no other child has been reached, and you delete a joint from that subset, follow this logic:
+        //        - If subset contains joints that are not shared with the 1st layers subsets, this subset can be popped off.
+        //          + If there is only one joint, then this link can be deleted.
+        //          + If there are more than one joint, then this sub is pushed within links.
+        //        - If the lowest child has neighbors that also share at least 1 joint name, that sub stays as a child
+        //    * Once all the subset has been gone over:
+        //      - If the subset now contains zero subsets (and did not previously), then the original subset is sliced.
+        //      - If the subset has one subset, that child subset replaces the parent
+        function deleteSubJoint(idSubs: string[], childSub: RealLink, parentSub: RealLink, selectedJoint: Joint, links: Link[]) {
+          childSub.joints.splice(delJointIndex, 1);
+          const delFixedJointIndex = childSub.fixedLocations.findIndex(sub_fixedJoint => sub_fixedJoint.id === selectedJoint.id);
+          childSub.fixedLocations.splice(delFixedJointIndex, 1);
+          if (childSub.fixedLocation.fixedPoint === selectedJoint.id) {
+            childSub.fixedLocation.fixedPoint = "com";
           }
-          sub.id = sub.id.replace(this.activeObjService.selectedJoint.id, '');
-          // If the subset only contains one joint, delete the subset.
-        });
-        // TODO: May wanna check this logic since we have foreach and we delete index within foreach loop...
-        for (let subLinkIndex = 0; subLinkIndex < l.subset.length; subLinkIndex++) {
-          if (l.subset[subLinkIndex].joints.length < 2) {
-            l.subset.splice(subLinkIndex, 1);
-            subLinkIndex = subLinkIndex - 1;
-          }
-          if (l.subset[subLinkIndex].joints.findIndex(jt => jt.id === this.activeObjService.selectedJoint.id) === -1) {
-            this.links.push(l.subset[subLinkIndex]);
-            l.subset.splice(subLinkIndex, 1);
-            subLinkIndex = subLinkIndex - 1;
-          }
-        }
-        // If there is only one subset for a link, then we do not need that subset
-        if (l.subset.length === 1) {
-          l.subset.splice(0, 1);
-          l.joints.forEach(jt => {
-            if (!(jt instanceof RealJoint)) {return}
-            jt.isWelded = false;
-          })
-        }
-        if (l.subset.length !== subsetNum) {
-          if (l.subset.length < 2) {
-            const lIndex = this.links.findIndex(li => li.id === l.id);
-            this.links.splice(lIndex, 1);
+          childSub.id = childSub.id.replace(selectedJoint.id, '');
+          if (childSub.subset.length === 0) {
+            // sub contains id that is not shared with any other subset
+            idSubs = idSubs.filter(str => str !== childSub.id);
+            if (!childSub.id.split('').some(char => idSubs.some(str => str.includes(char)))) {
+              if (childSub.joints.length > 1) {
+                // add this within links
+                links.push(childSub);
+              }
+              const sliceIndex = parentSub.subset.findIndex(s => s.id === childSub.id);
+              parentSub.subset.splice(sliceIndex, 1);
+            }
+          } else {
+            childSub.subset.forEach(nextChildSub => {
+              deleteSubJoint(idSubs, nextChildSub as RealLink, childSub, selectedJoint, links);
+            });
           }
         }
-        // if (l.subset === 0) {}
-        // if (l.joints.length === 2) {
-        //   if (!(l.joints[0] instanceof RealJoint) || !(l.joints[1] instanceof RealJoint)) {return}
-        //   if (l.joints[0].isWelded) {
-        //     l.joints[0].isWelded = false;
-        //   }
-        //   if (l.joints[1].isWelded) {
-        //     l.joints[1].isWelded = false;
-        //   }
+        let idSubs: string[] = [];
+        l.subset.forEach(s => idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, "")));
+        // {
+          // const replacedID = s.id.replace(this.activeObjService.selectedJoint.id, "");
+          // idSubs.push(replacedID);
         // }
+        // );
+        l.subset.forEach(s => deleteSubJoint(idSubs, s as RealLink, l as RealLink, this.activeObjService.selectedJoint, this.links));
+        // Now that all subsets have been gone over, do the final check
+        if (l.subset.length === 1) {
+          l = l.subset[0];
+        } else if (l.subset.length === 0) {
+          const sliceIndex = this.links.findIndex(li => li.id === l.id);
+          this.links.splice(sliceIndex, 1);
+        }
       }
 
       if (l instanceof Piston) {
@@ -612,7 +615,7 @@ export class MechanismService {
       // for any forces that are outside of the link, move them to the closest point on the hull
       if (l instanceof RealLink) {
         l.forces.forEach((f) => {
-
+          if (!(l instanceof RealLink)) {return}
           let fx = f.startCoord.x;
           let fy = f.startCoord.y;
 
