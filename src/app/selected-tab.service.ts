@@ -20,4 +20,13 @@ export class SelectedTabService {
     this.tabNum = new BehaviorSubject<TabID>(TabID.EDIT);
     this.tabVisible = new BehaviorSubject<boolean>(true);
   }
+
+  public getCurrentTab() {
+    return this.tabNum.getValue();
+  }
+
+  public isTabVisible() {
+    return this.tabVisible.getValue();
+  }
+
 }

@@ -75,7 +75,7 @@ export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
 
 
-  constructor(private tabs: SelectedTabService) {
+  constructor(public tabs: SelectedTabService) {
 
   }
 
@@ -83,15 +83,11 @@ export class LeftTabsComponent {
     return TabID;
   }
 
-  getCurrentTab(): TabID {
-    return this.tabs.tabNum.getValue();
-  }
-
   getTabNum(): number {
 
-    if (!this.isTabVisible()) return 0;
+    if (!this.tabs.isTabVisible()) return 0;
 
-    switch (this.getCurrentTab()) {
+    switch (this.tabs.getCurrentTab()) {
       case TabID.SYNTHESIZE:
         return 1;
       case TabID.EDIT:
@@ -101,16 +97,13 @@ export class LeftTabsComponent {
     }
   }
 
-  isTabVisible(): boolean {
-    return this.tabs.tabVisible.getValue();
-  }
 
   tabClicked(tabID: TabID) {
-    if (!this.isTabVisible()) {
+    if (!this.tabs.isTabVisible()) {
       this.tabs.tabVisible.next(true);
       this.tabs.tabNum.next(tabID);
     } else {
-      if (this.getCurrentTab() === tabID) {
+      if (this.tabs.getCurrentTab() === tabID) {
         this.tabs.tabVisible.next(false);
         this.tabs.tabNum.next(0);
       } else {
@@ -118,8 +111,8 @@ export class LeftTabsComponent {
       }
     }
 
-    if (this.isTabVisible()) {
-      switch (this.getCurrentTab()) {
+    if (this.tabs.isTabVisible()) {
+      switch (this.tabs.getCurrentTab()) {
         case TabID.SYNTHESIZE:
           logEvent(this.analytics, 'open_synthesis_tab');
           break;

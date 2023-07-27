@@ -30,6 +30,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
+import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 
 @Component({
   selector: 'app-new-grid',
@@ -48,6 +50,7 @@ export class NewGridComponent {
     public gridUtils: GridUtilsService,
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
+    private tabService: SelectedTabService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
   ) {
@@ -125,6 +128,11 @@ export class NewGridComponent {
   static debugGetForceState() {
     return this.instance.forceStates;
     //This is for debug purposes, do not make anything else static!
+  }
+
+  // whether to show the synthesis poses
+  showSynthesis(): boolean {
+    return this.tabService.getCurrentTab() === TabID.SYNTHESIZE;
   }
 
   enableGridAnimationForThisAction() {
