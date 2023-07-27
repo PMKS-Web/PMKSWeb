@@ -19,7 +19,8 @@ import {
   jointStates,
   line_line_intersect,
   linkStates,
-  local_storage_available, getDistance,
+  local_storage_available,
+  getDistance,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -52,7 +53,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog,
+    public dialog: MatDialog
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -89,7 +90,7 @@ export class NewGridComponent {
     const svgElement = document.getElementById('canvas') as HTMLElement;
     this.svgGrid.setNewElement(svgElement);
 
-    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === "true";
+    let dismissWarning = local_storage_available() && localStorage.getItem('dismiss') === 'true';
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
@@ -163,11 +164,11 @@ export class NewGridComponent {
           )
         );
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Force',
-                this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'RealLink':
@@ -180,21 +181,25 @@ export class NewGridComponent {
           new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
         );
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Link',
-                this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Link',
+            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'RevJoint':
         if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
           this.cMenuItems.push(
-              new cMenuItem(
-                  (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
-                  this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-                  (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
-              )
+            new cMenuItem(
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'Remove Input'
+                : 'Make Input',
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
+              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
+                ? 'remove_input'
+                : 'add_input'
+            )
           ); //Rev Joint Slider
         }
         this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
@@ -255,11 +260,11 @@ export class NewGridComponent {
           ); //Rev Joint - Not Ground and at least one valid mechanism exists
         }
         this.cMenuItems.push(
-            new cMenuItem(
-                'Delete Joint',
-                this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-                'remove'
-            )
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
         );
         break;
       case 'String': //This means grid
@@ -416,7 +421,7 @@ export class NewGridComponent {
         }
 
         //Break the timeout if the user is clearly trying to drag the joint
-        if(getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10){
+        if (getDistance(new Coord(this.startX, this.startY), new Coord($event.x, $event.y)) > 10) {
           this.timeMouseDown = 0;
         }
         //If it has been less than 1 seccond since the mouse was pressed down, ignore the drag

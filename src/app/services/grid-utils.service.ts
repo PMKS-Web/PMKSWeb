@@ -202,7 +202,7 @@ export class GridUtilsService {
 
   connectedToPrisJoint(joints: Joint[]) {
     let connectedToPrisJoint = false;
-    joints.forEach(j => {
+    joints.forEach((j) => {
       if (j instanceof PrisJoint) {
         connectedToPrisJoint = true;
       }
@@ -210,11 +210,11 @@ export class GridUtilsService {
     return connectedToPrisJoint;
   }
 
-  getSliderJoint(joint: Joint) {
+  getSliderJoint(joint: Joint): Joint {
     if (!(joint instanceof RevJoint)) {
-      return;
+      return joint;
     }
-    return joint.connectedJoints.find((j) => j instanceof PrisJoint);
+    return <Joint>joint.connectedJoints.find((j) => j instanceof PrisJoint);
   }
 
   toggleCurve(lastRightClick: Joint | Link | Force | String) {

@@ -609,50 +609,32 @@ export class MechanismService {
   }
 
   adjustInput() {
-    // TODO: Adjust this logic when there are multiple mechanisms created
-    let jointsTraveled = ''.concat(this.activeObjService.selectedJoint.id);
-    this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
-      jointsTraveled = checkConnectedJoints(j, jointsTraveled);
-    });
-    const indexVal = this.joints.findIndex((j) => {
-      // if (!(j instanceof RealJoint)) {return}
-      if (!(j instanceof PrisJoint)) {
-        return;
-      }
-      return (
-        j.connectedJoints.findIndex((jt) => jt.id === this.activeObjService.selectedJoint.id) !==
-          -1 && j.ground
-      );
-    });
-    if (indexVal !== -1) {
-      // If the selected joint is a prismatic joint
-      const desiredGroundIndex = this.joints.findIndex((j) => {
+    let jointToToggleInput: RealJoint;
+    if (this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
+      //Find the prismatic joint and toggle ground
+      jointToToggleInput = this.gridUtils.getSliderJoint(
+        this.activeObjService.selectedJoint
+      ) as RealJoint;
+    } else {
+      //Normal joint case
+      jointToToggleInput = this.activeObjService.selectedJoint;
+    }
+
+    //If we are about to enable input, we need to check to see if there is an existing input joint
+    if (!jointToToggleInput.input) {
+      //Go through all other joints and disable input
+      this.joints.forEach((j) => {
         if (!(j instanceof RealJoint)) {
           return;
         }
-        return (
-          j.ground &&
-          j.connectedJoints.findIndex((jt) => jt.id === this.activeObjService.selectedJoint.id) !==
-            -1
-        );
+        if (j.input) {
+          j.input = false;
+        }
       });
-      const desiredJoint = this.joints[desiredGroundIndex] as RealJoint;
-      desiredJoint.input = true;
-    } else {
-      this.activeObjService.selectedJoint.input = !this.activeObjService.selectedJoint.input;
     }
 
-    function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
-      if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {
-        return jointsTraveled;
-      }
-      j.input = false;
-      jointsTraveled = jointsTraveled.concat(j.id);
-      j.connectedJoints.forEach((jt) => {
-        jointsTraveled = checkConnectedJoints(jt, jointsTraveled);
-      });
-      return jointsTraveled;
-    }
+    //Toggle the input joint
+    jointToToggleInput.input = !jointToToggleInput.input;
 
     this.updateMechanism();
     this.onMechUpdateState.next(3);
@@ -679,7 +661,7 @@ export class MechanismService {
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
         this.activeObjService.selectedJoint.y,
-          selectedJointInput,
+        selectedJointInput,
         true,
         [],
         connectedJoints
