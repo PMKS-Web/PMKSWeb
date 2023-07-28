@@ -84,6 +84,11 @@ PoseID: any;
     // initialize form values from model
     this.updateFormFromModel();
 
+    // when model updates, update form values as well
+    this.synthesisBuilder.valueChanges.subscribe((value) => {
+        this.updateFormFromModel();
+    });
+
     // set up subscriptions to synthesis form changes to update model
     this.synthesisPoseForm.valueChanges.subscribe((value) => {
 

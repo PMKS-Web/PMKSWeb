@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { SynthesisPose } from './synthesis-util';
 import { Coord } from 'src/app/model/coord';
 import { SynthesisConstants } from './synthesis-constants';
@@ -15,6 +15,8 @@ into fourbars. Relevant to the Synthesis tab of the app.
 })
 export class SynthesisBuilderService {
 
+  public valueChanges: Subject<any>;
+
   public constants: SynthesisConstants;
 
   _length: number; // length of the end-effector link
@@ -25,6 +27,7 @@ export class SynthesisBuilderService {
 
   constructor() { 
 
+    this.valueChanges = new Subject<any>();
     this.constants = new SynthesisConstants();
 
     // start with a length of 1
@@ -61,11 +64,12 @@ export class SynthesisBuilderService {
   // create a new pose. put it in some preset default position
   createPose(id: number): void {
 
-    let defaultPosition = new Coord(0, 0);
+    let defaultPosition = new Coord(id, id);
     let defaultThetaRadians = 0;
 
     // create pose with a callback to always get current length
     this.poses[id] = new SynthesisPose(id, defaultPosition, defaultThetaRadians, () => this.length);
+    this.valueChanges.next(true);
   }
 
   getPose(id: number): SynthesisPose {
@@ -118,7 +122,9 @@ export class SynthesisBuilderService {
     }
 
     // if we get here, form is valid
+    console.log(this);
     return true;
   }
+
 
 }
