@@ -109,7 +109,10 @@ export class SynthesisBuilderService {
 
     // if length is a number and positive, update length
     let maybeLength = Number(form["length"]);
-    if (isNaN(maybeLength) || maybeLength <= 0) return false;
+    if (isNaN(maybeLength) || maybeLength <= 0) {
+      console.log("invalid length");
+      return false;
+    }
     this.length = maybeLength;
 
     for (let i = 1; i <= 3; i++) {
@@ -118,13 +121,19 @@ export class SynthesisBuilderService {
       // if x and y are numbers, update position
       let maybeX = Number(form[`p${i}x`]);
       let maybeY = Number(form[`p${i}y`]);
-      if (isNaN(maybeX) || isNaN(maybeY)) return false;
-      this.poses[1].position = new Coord(maybeX, maybeY);
+      if (isNaN(maybeX) || isNaN(maybeY)) {
+        console.log("invalid coord");
+        return false;
+      }
+      this.poses[i].position = new Coord(maybeX, maybeY);
 
       // if theta is a number, update theta
       let maybeTheta = Number(form[`p${i}theta`]);
-      if (isNaN(maybeTheta)) return false;
-      this.poses[i].thetaRadians = maybeTheta;
+      if (isNaN(maybeTheta)) {
+        console.log("invalid theta");
+        return false;
+      }
+      this.poses[i].thetaDegrees = maybeTheta;
     }
 
     // if we get here, form is valid

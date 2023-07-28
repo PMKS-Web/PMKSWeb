@@ -11,21 +11,27 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
-  #synthesisWrapper {
+#synthesisWrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin: 10px;
   }
-
 }
 
 .poseHeader {
   display: flex;
   justify-content: space-between;
+  width: 100%;
 }
 
 .poseEdit {
   zoom: 0.7;
   justify-content: flex-end;
+}
+
+.poseData {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }

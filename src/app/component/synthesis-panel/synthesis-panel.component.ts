@@ -118,17 +118,17 @@ PoseID: any;
     if (this.synthesisBuilder.isPoseDefined(1)) {
         controls.p1x.setValue(poses[1].position.x.toString());
         controls.p1y.setValue(poses[1].position.y.toString());
-        controls.p1theta.setValue(poses[1].thetaRadians.toString());
+        controls.p1theta.setValue(poses[1].thetaDegrees.toString());
     }
     if (this.synthesisBuilder.isPoseDefined(2)) {
         controls.p2x.setValue(poses[2].position.x.toString());
         controls.p2y.setValue(poses[2].position.y.toString());
-        controls.p2theta.setValue(poses[2].thetaRadians.toString());
+        controls.p2theta.setValue(poses[2].thetaDegrees.toString());
     }
     if (this.synthesisBuilder.isPoseDefined(3)) {
         controls.p3x.setValue(poses[3].position.x.toString());
         controls.p3y.setValue(poses[3].position.y.toString());
-        controls.p3theta.setValue(poses[3].thetaRadians.toString());
+        controls.p3theta.setValue(poses[3].thetaDegrees.toString());
     }
   }
 
@@ -222,6 +222,12 @@ PoseID: any;
         if (pose == 1) return 'p1y';
         else if (pose == 2) return 'p2y';
         else return 'p3y';
+    }
+
+    getFormIDPoseTheta(pose: number): string {
+        if (pose == 1) return 'p1theta';
+        else if (pose == 2) return 'p2theta';
+        else return 'p3theta';
     }
 
     synthesisFunction() {

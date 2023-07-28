@@ -25,6 +25,10 @@ export class SynthesisPose {
         return this._position;
     }
 
+    get thetaDegrees(): number {
+        return this._thetaRadians * 180 / Math.PI;
+    }
+
     get thetaRadians(): number {
         return this._thetaRadians;
     }
@@ -42,8 +46,8 @@ export class SynthesisPose {
         this.recompute();
     }
 
-    set thetaRadians(thetaRadians: number) {
-        this._thetaRadians = thetaRadians;
+    set thetaDegrees(thetaDegrees: number) {
+        this._thetaRadians = thetaDegrees * Math.PI / 180;
         this.recompute();
     }
 

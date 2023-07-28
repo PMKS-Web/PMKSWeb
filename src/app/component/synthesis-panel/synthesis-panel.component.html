@@ -25,7 +25,7 @@
             <div>
                 <subtitle-block class = "poseHeader">
                     <p>Pose {{i}}</p>
-                    <button-block class = "poseEdit" *ngIf="synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
+                    <button-block class = "poseEdit" *ngIf="getCurrentPose() !== i && synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
                 </subtitle-block>
             </div>
 
@@ -33,9 +33,17 @@
             <div class = "poseData" *ngIf="getCurrentPose() == i && synthesisBuilder.isPoseDefined(i)">
                 <dual-input-block [formGroup]='synthesisPoseForm'
                             formControl1='{{getFormIDPoseX(i)}}'
-                            formControl2='{{getFormIDPoseY(i)}}'>
+                            formControl2='{{getFormIDPoseY(i)}}'
+                            tooltip = "The position of the center of the end effector link"
+                            >
                     Pose {{i}} Position
                 </dual-input-block>
+                <input-block [formGroup]='synthesisPoseForm'
+                            _formControl='{{getFormIDPoseTheta(i)}}'
+                            tooltip = "The angle of the end effector link in degrees"
+                            >
+                    Pose {{i}} Angle
+                </input-block>
             </div>
 
             <!-- if pose has not yet been created and its the first undefined pose, show "create pose" button -->
