@@ -91,4 +91,34 @@ export class SynthesisBuilderService {
     }
     return undefined;
   }
+
+  // given form, update poses
+  // if form is invalid, return false to revert form
+  updatePosesFromForm(form: {[key: string]: any}): boolean {
+    console.log(form);
+
+    // if length is a number and positive, update length
+    let maybeLength = Number(form["length"]);
+    if (isNaN(maybeLength) || maybeLength <= 0) return false;
+    this.length = maybeLength;
+
+    for (let i = 1; i <= 3; i++) {
+      if (!this.isPoseDefined(i)) continue;
+
+      // if x and y are numbers, update position
+      let maybeX = Number(form[`p${i}x`]);
+      let maybeY = Number(form[`p${i}y`]);
+      if (isNaN(maybeX) || isNaN(maybeY)) return false;
+      this.poses[1].position = new Coord(maybeX, maybeY);
+
+      // if theta is a number, update theta
+      let maybeTheta = Number(form[`p${i}theta`]);
+      if (isNaN(maybeTheta)) return false;
+      this.poses[i].thetaRadians = maybeTheta;
+    }
+
+    // if we get here, form is valid
+    return true;
+  }
+
 }

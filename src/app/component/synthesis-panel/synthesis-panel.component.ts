@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { Pose } from '../../model/pose';
 import { Coord } from '../../model/coord';
@@ -19,11 +19,14 @@ import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-bu
 })
 export class SynthesisPanelComponent implements OnInit {
 PoseID: any;
+
+    private _alreadyHandlingPoseChange: boolean = false;
+
     constructor(private fb: FormBuilder,
     public mechanismSrv: MechanismService,
     public synthesisBuilder: SynthesisBuilderService
     ) {
-   
+
     }
 
   ngOnInit() {
@@ -78,7 +81,50 @@ PoseID: any;
 
     });
 
+    // initialize form values from model
+    this.updateFormFromModel();
 
+    // set up subscriptions to synthesis form changes to update model
+    this.synthesisPoseForm.valueChanges.subscribe((value) => {
+
+        // prevent infinite loop
+        if (this._alreadyHandlingPoseChange) return;
+
+        this._alreadyHandlingPoseChange = true;
+
+        let valid = this.synthesisBuilder.updatePosesFromForm(value);
+
+        // if form change was invalid, revert form to sync with unchanged model
+        if (!valid) this.updateFormFromModel();
+
+        this._alreadyHandlingPoseChange = false;
+    });
+
+  }
+
+  // given synthesis model, update form values to sync with model
+  updateFormFromModel() {
+
+    let poses = this.synthesisBuilder.poses;
+    let controls = this.synthesisPoseForm.controls;
+
+    controls.length.setValue(this.synthesisBuilder.length.toString());
+    
+    if (this.synthesisBuilder.isPoseDefined(1)) {
+        controls.p1x.setValue(poses[1].position.x.toString());
+        controls.p1y.setValue(poses[1].position.y.toString());
+        controls.p1theta.setValue(poses[1].thetaRadians.toString());
+    }
+    if (this.synthesisBuilder.isPoseDefined(2)) {
+        controls.p2x.setValue(poses[2].position.x.toString());
+        controls.p2y.setValue(poses[2].position.y.toString());
+        controls.p2theta.setValue(poses[2].thetaRadians.toString());
+    }
+    if (this.synthesisBuilder.isPoseDefined(3)) {
+        controls.p3x.setValue(poses[3].position.x.toString());
+        controls.p3y.setValue(poses[3].position.y.toString());
+        controls.p3theta.setValue(poses[3].thetaRadians.toString());
+    }
   }
 
   synthesisPoseForm = this.fb.group({
@@ -92,7 +138,10 @@ PoseID: any;
     p3x: [''],
     p3y: [''],
     p3theta: [''],
-});
+  }, {
+    updateOn: 'blur'
+  });
+   
 
   //Angular form stuff with 12 numbers, a0x, a0y, b0x, b0y, a1x, a1y, b1x, b1y, a2x, a2y, b2x, b2y
   synthesisForm = this.fb.group({
