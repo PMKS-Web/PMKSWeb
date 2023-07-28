@@ -51,6 +51,7 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private tabService: SelectedTabService,
+    public synthesisBuilder: SynthesisBuilderService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
   ) {

@@ -108,6 +108,8 @@
     </ng-container>
   </g>
 
+  <g id = "synthesis" *ngIf="showSynthesis()" ng-include="/synthesis.html"></g> 
+
   <g id='jointBGHolder' style='transform: scaleY(-1)'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'

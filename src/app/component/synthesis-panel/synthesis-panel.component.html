@@ -19,20 +19,31 @@
         <!-- Construct panel sections for each pose -->
         <div *ngFor="let i of [1,2,3]">
             <mat-divider></mat-divider>
-            <subtitle-block class = "poseheader">
-                <p>Pose {{i}}</p>
-                <button-block icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
-            </subtitle-block>
-            <div class = "pose" *ngIf="getCurrentPose() == i">
+
+            <!-- display header, with edit button on right if pose already has been created -->
+            
+            <div>
+                <subtitle-block class = "poseHeader">
+                    <p>Pose {{i}}</p>
+                    <button-block class = "poseEdit" *ngIf="synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
+                </subtitle-block>
+            </div>
+
+            <!-- display editable pose configuration if pose is both created AND selected -->
+            <div class = "poseData" *ngIf="getCurrentPose() == i && synthesisBuilder.isPoseDefined(i)">
                 <dual-input-block [formGroup]='synthesisPoseForm'
                             formControl1='{{getFormIDPoseX(i)}}'
                             formControl2='{{getFormIDPoseY(i)}}'>
                     Pose {{i}} Position
                 </dual-input-block>
             </div>
-        </div>
 
-        <app-not-ready-warning></app-not-ready-warning>
+            <!-- if pose has not yet been created and its the first undefined pose, show "create pose" button -->
+            <div class = "poseCreate" *ngIf="synthesisBuilder.getFirstUndefinedPose() === i">
+                <button-block icon="add" (click)="synthesisBuilder.createPose(i)">Create Pose</button-block>
+            </div>
+
+        </div>
     </panel-section>
   <!--  <panel-section-collapsible [expanded]='true'>-->
   <!--    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 1</subtitle-block>-->

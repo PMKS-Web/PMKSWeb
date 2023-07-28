@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
-import { Pose, PoseID } from './synthesis-util';
+import { SynthesisPose } from './synthesis-util';
 import { Coord } from 'src/app/model/coord';
+import { SynthesisConstants } from './synthesis-constants';
 
 /*
 Service responsible for storing end effector poses to be synthesized
@@ -14,47 +15,80 @@ into fourbars. Relevant to the Synthesis tab of the app.
 })
 export class SynthesisBuilderService {
 
-  length: BehaviorSubject<number>; // length of the end-effector link
-  poses: { [key in PoseID]?: Pose }; // a dictionary of poses, but including each pose is optional
+  public constants: SynthesisConstants;
 
-  selectedPose: BehaviorSubject<PoseID>;
+  _length: number; // length of the end-effector link
+  _selectedPose: number; // currently selected pose (1-3)
+
+  poses: { [key : number]: SynthesisPose }; // a dictionary of poses, but including each pose is optional
 
 
   constructor() { 
 
+    this.constants = new SynthesisConstants();
+
     // start with a length of 1
-    this.length = new BehaviorSubject<number>(1);
+    this._length = 1;
+    this._selectedPose = 1;
 
     // start with no defined poses
     this.poses = {};
-    this.selectedPose = new BehaviorSubject<PoseID>(PoseID.POSE_ONE);
   }
 
-  isPoseDefined(id: PoseID): boolean {
+  get length(): number {
+    return this._length;
+  }
+
+  set length(length: number) {
+    this._length = length;
+    for (let pose of this.getAllPoses()) {
+      pose.recompute();
+    }
+  }
+
+  get selectedPose(): number {
+    return this._selectedPose;
+  }
+
+  set selectedPose(selectedPose: number) {
+    this._selectedPose = selectedPose;
+  }
+
+  isPoseDefined(id: number): boolean {
     return this.poses[id] !== undefined;
   }
 
-  definePose(id: PoseID, pose: Pose): void {
-    this.poses[id] = pose;
+  // create a new pose. put it in some preset default position
+  createPose(id: number): void {
+
+    let defaultPosition = new Coord(0, 0);
+    let defaultThetaRadians = 0;
+
+    // create pose with a callback to always get current length
+    this.poses[id] = new SynthesisPose(id, defaultPosition, defaultThetaRadians, () => this.length);
   }
 
-  // calculate and return the coordinates of the end effector for a given pose
-  getPoseCoords(id: PoseID): [Coord, Coord] {
+  getPose(id: number): SynthesisPose {
 
-    if (this.poses[id] === undefined) {
-      throw new Error("Pose is not defined");
+    if (!this.isPoseDefined(id)) {
+      throw new Error(`Pose ${id} is not defined`);
     }
 
-    let pose = this.poses[id]!;
-    let halfLength = this.length.getValue() / 2;
-
-    let dx = Math.cos(pose.thetaRadians) * halfLength;
-    let dy = Math.sin(pose.thetaRadians) * halfLength;
-
-    let coord1 = new Coord(pose.position.x - dx, pose.position.y - dy);
-    let coord2 = new Coord(pose.position.x + dx, pose.position.y + dy);
-
-    return [coord1, coord2];
+    return this.poses[id]!;
   }
 
+  // return all existing poses
+  getAllPoses(): SynthesisPose[] {
+    return Object.values(this.poses);
+  }
+
+  // get the first pose that needs to be created
+  getFirstUndefinedPose(): number | undefined {
+    for (let i = 1; i <= 3; i++) {
+      if (!this.isPoseDefined(i)) {
+        return i;
+      }
+    }
+    return undefined;
+  }
 }
