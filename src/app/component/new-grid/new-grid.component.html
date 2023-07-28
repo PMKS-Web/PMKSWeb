@@ -125,9 +125,7 @@
           *ngFor="let nodePos of [pose.posA, pose.posB]"
           class='joint_circles'
           [attr.r]='settings.objectScale * synthesisBuilder.constants.CIRCLE_RADIUS'
-          [attr.x]='nodePos.x' [attr.y]='nodePos.y'
-          [attr.cx]='0'
-          [attr.cy]='0'
+          [attr.cx]='nodePos.x' [attr.cy]='nodePos.y'
           [class]=""
         />
   

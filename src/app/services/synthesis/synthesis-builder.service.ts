@@ -83,7 +83,13 @@ export class SynthesisBuilderService {
 
   // return all existing poses
   getAllPoses(): SynthesisPose[] {
-    return Object.values(this.poses);
+    let poses: SynthesisPose[] = [];
+    for (let i = 1; i <= 3; i++) {
+      if (this.isPoseDefined(i)) {
+        poses.push(this.getPose(i));
+      }
+    }
+    return poses;
   }
 
   // get the first pose that needs to be created
