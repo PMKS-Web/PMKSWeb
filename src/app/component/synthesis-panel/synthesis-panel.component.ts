@@ -235,12 +235,12 @@ PoseID: any;
 
         //populate pose information 
 
-        var pose1_coord1 = new Coord(Number(this.synthesisForm.value.a0x!), Number(this.synthesisForm.value.a0y!));
-        var pose1_coord2 = new Coord(Number(this.synthesisForm.value.b0x!), Number(this.synthesisForm.value.b0y!));
-        var pose2_coord1 = new Coord(Number(this.synthesisForm.value.a1x!), Number(this.synthesisForm.value.a1y!));
-        var pose2_coord2 = new Coord(Number(this.synthesisForm.value.b1x!), Number(this.synthesisForm.value.b1y!));
-        var pose3_coord1 = new Coord(Number(this.synthesisForm.value.a2x!), Number(this.synthesisForm.value.a2y!));
-        var pose3_coord2 = new Coord(Number(this.synthesisForm.value.b2x!), Number(this.synthesisForm.value.b2y!));
+        var pose1_coord1 = this.synthesisBuilder.poses[1].posA;
+        var pose1_coord2 = this.synthesisBuilder.poses[1].posB;
+        var pose2_coord1 = this.synthesisBuilder.poses[2].posA;
+        var pose2_coord2 = this.synthesisBuilder.poses[2].posB;
+        var pose3_coord1 = this.synthesisBuilder.poses[3].posA;
+        var pose3_coord2 = this.synthesisBuilder.poses[3].posB;
 
         var qualityfromUser = Number(this.synthesisForm.value.quality);
 
@@ -264,7 +264,6 @@ PoseID: any;
         joint2.connectedJoints.push(joint1, joint3);
         joint3.connectedJoints.push(joint2, joint4);
         joint4.connectedJoints.push(joint3);
-
 
 
         var link1 = new RealLink("ab", [joint1, joint2]);
