@@ -58,6 +58,15 @@ export class MechanismService {
   ) {
   }
 
+  // delete mechanism and reset
+  resetMechanism() {
+    this.joints = [];
+    this.links = [];
+    this.forces = [];
+    this.mechanismTimeStep = 0;
+    this.updateMechanism();
+  }
+
   getJoints() {
     return this.joints;
   }

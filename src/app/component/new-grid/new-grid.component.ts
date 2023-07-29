@@ -31,7 +31,7 @@ import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touch
 import * as util from 'util';
 import { Line } from '../../model/line';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
-import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
+import { SelectedTabService, TabID } from 'src/app/services/selected-tab.service';
 import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
 import { SynthesisConstants } from 'src/app/services/synthesis/synthesis-constants';
 

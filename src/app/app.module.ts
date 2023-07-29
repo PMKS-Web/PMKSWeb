@@ -44,6 +44,7 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
+import { SynthesisWarningComponent } from './synthesis-warning/synthesis-warning.component';
 
 @NgModule({
   declarations: [
@@ -77,6 +78,7 @@ import { TemplatesComponent } from './component/MODALS/templates/templates.compo
     EquationPanelComponent,
     NotReadyWarningComponent,
     TemplatesComponent,
+    SynthesisWarningComponent,
   ],
   imports: [
     BrowserModule,

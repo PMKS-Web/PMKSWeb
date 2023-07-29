@@ -5,7 +5,9 @@ import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { Analytics, logEvent } from '@angular/fire/analytics';
-import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
+import { SelectedTabService, TabID } from 'src/app/services/selected-tab.service';
+import { SynthesisWarningComponent } from '../MODALS/synthesis-warning/synthesis-warning.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-left-tabs',
@@ -75,9 +77,9 @@ export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
 
 
-  constructor(public tabs: SelectedTabService) {
-
-  }
+  constructor(
+    public tabs: SelectedTabService,
+    public dialog: MatDialog) {}
 
   public get TabID(): typeof TabID {
     return TabID;
@@ -85,29 +87,30 @@ export class LeftTabsComponent {
 
   getTabNum(): number {
 
-    if (!this.tabs.isTabVisible()) return 0;
-
     switch (this.tabs.getCurrentTab()) {
       case TabID.SYNTHESIZE:
         return 1;
       case TabID.EDIT:
         return 2;
-      case TabID.ANALYZE:
+      default:
         return 3;
     }
   }
 
 
   tabClicked(tabID: TabID) {
+
+    if (tabID = TabID.SYNTHESIZE) {
+      this.dialog.open(SynthesisWarningComponent);
+    }
+
     if (!this.tabs.isTabVisible()) {
-      this.tabs.tabVisible.next(true);
-      this.tabs.tabNum.next(tabID);
+      this.tabs.setTab(tabID);
     } else {
       if (this.tabs.getCurrentTab() === tabID) {
-        this.tabs.tabVisible.next(false);
-        this.tabs.tabNum.next(0);
+        this.tabs.hideTab()
       } else {
-        this.tabs.tabNum.next(tabID);
+        this.tabs.setTab(tabID);
       }
     }
 
