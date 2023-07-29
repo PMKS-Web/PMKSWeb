@@ -111,6 +111,22 @@
   <!-- show synthesis poses if on the synthesis tab -->
   <g id = "synthesis" *ngIf="showSynthesis()">
 
+    <g id='synthesisLinkHolder' style='transform: scaleY(-1)'>
+      <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
+        <path
+          (pointerover)='pose.showHighlight = true'
+          (pointerout)='pose.showHighlight = false'
+          (pointerdown)='setLastLeftClick(pose)'
+          [attr.d]="pose.pathString"
+          [attr.id]=''
+          [attr.fill]="sConstants.LINK_COLOR"
+          [attr.fill-opacity]=0.7
+          [class]=''
+        >
+        </path>
+      </ng-container>
+    </g>
+
     <g id='synthesisPoseHolder' style='transform: scaleY(-1)'>
       <svg
         *ngFor='let pose of synthesisBuilder.getAllPoses()'
@@ -119,18 +135,19 @@
         style='overflow: visible'
         cursor='move'
       >
-  
-  <!--first circle-->
         <circle
           *ngFor="let nodePos of [pose.posA, pose.posB]"
           class='joint_circles'
-          [attr.r]='settings.objectScale * synthesisBuilder.constants.CIRCLE_RADIUS'
+          [attr.r]='sConstants.CIRCLE_RADIUS'
           [attr.cx]='nodePos.x' [attr.cy]='nodePos.y'
+          [attr.fill]="sConstants.CIRCLE_COLOR"
           [class]=""
         />
-  
       </svg>
     </g>
+
+    
+
 
   </g> 
 

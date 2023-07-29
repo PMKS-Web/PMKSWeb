@@ -32,6 +32,8 @@ import * as util from 'util';
 import { Line } from '../../model/line';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
+import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
+import { SynthesisConstants } from 'src/app/services/synthesis/synthesis-constants';
 
 @Component({
   selector: 'app-new-grid',
@@ -64,7 +66,7 @@ export class NewGridComponent {
   public lastRightClick: Joint | Link | Force | String = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
 
-  public lastLeftClick: Joint | Link | Force | String = '';
+  public lastLeftClick: Joint | Link | Force | String | SynthesisPose = '';
   lastLeftClickType: string = 'Nothing';
 
   //TODO: These states should be a one stateMachine that is a service
@@ -83,6 +85,8 @@ export class NewGridComponent {
   private startX!: number;
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
+
+  public sConstants = new SynthesisConstants();
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 
@@ -130,6 +134,7 @@ export class NewGridComponent {
     return this.instance.forceStates;
     //This is for debug purposes, do not make anything else static!
   }
+
 
   // whether to show the synthesis poses
   showSynthesis(): boolean {
@@ -267,7 +272,7 @@ export class NewGridComponent {
     this.updateContextMenuItems();
   }
 
-  setLastLeftClick(clickedObj: Joint | Link | String | Force) {
+  setLastLeftClick(clickedObj: Joint | Link | String | Force | SynthesisPose) {
     this.lastLeftClick = clickedObj;
     // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
@@ -285,6 +290,9 @@ export class NewGridComponent {
         break;
       case 'String':
         this.lastLeftClickType = 'Grid';
+        break;
+      case 'SynthesisPose':
+        this.lastLeftClickType = 'SynthesisPose';
         break;
       default:
         this.lastLeftClickType = 'Unknown';

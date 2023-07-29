@@ -1,4 +1,5 @@
 import { Coord } from "src/app/model/coord"
+import { SynthesisConstants } from "./synthesis-constants";
 
 // storing state for a pose
 export class SynthesisPose {
@@ -6,6 +7,12 @@ export class SynthesisPose {
     // cached values for graphical display
     private _posA: Coord;
     private _posB: Coord;
+
+    // string for SVG link
+    private _pathString: string = "";
+
+    public showHighlight: boolean = false;
+    private sConstants = new SynthesisConstants();
 
 
     constructor(
@@ -41,6 +48,10 @@ export class SynthesisPose {
         return this._posB;
     }
 
+    get pathString(): string {
+        return this._pathString;
+    }
+
     set position(position: Coord) {
         this._position = position;
         this.recompute();
@@ -62,6 +73,28 @@ export class SynthesisPose {
         this._posA = new Coord(this.position.x - dx, this.position.y - dy);
         this._posB = new Coord(this.position.x + dx, this.position.y + dy);
 
+        this._pathString = this._createPath(this.posA.x, this.posA.y, this.posB.x, this.posB.y, this.sConstants.LINK_CIRCLE_RADIUS);
+
+    }
+
+    // generate SVG path for a link given two points and a radius
+    private _createPath(x1: number, y1: number, x2: number, y2: number, r: number): string {
+        // The path will start at the top of the first circle
+        let d = `M ${x1},${y1-r} `;
+    
+        // Draw arc (half of first circle)
+        d += `A ${r},${r} 0 1,0 ${x1},${y1+r} `;
+    
+        // Draw line to second circle
+        d += `L ${x2},${y2+r} `;
+    
+        // Draw arc (half of second circle)
+        d += `A ${r},${r} 0 1,0 ${x2},${y2-r} `;
+    
+        // Draw line back to first circle
+        d += `L ${x1},${y1-r} `;
+    
+        return d;
     }
 
 }
