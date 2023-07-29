@@ -81,6 +81,11 @@ export class SynthesisBuilderService {
     return this.poses[id]!;
   }
 
+  // whether all poses are defined to be synthesized
+  isFullyDefined(): boolean {
+    return this.getAllPoses().length === 3;
+  }
+
   // return all existing poses
   getAllPoses(): SynthesisPose[] {
     let poses: SynthesisPose[] = [];

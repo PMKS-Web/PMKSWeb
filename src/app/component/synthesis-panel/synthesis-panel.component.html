@@ -55,7 +55,9 @@
 
         <mat-divider></mat-divider>
 
-        <button-block icon="add" (click)="synthesisFunction()">Generate Linkage</button-block>
+        <button-block icon="add" [disabled]="!synthesisBuilder.isFullyDefined()" (click)="synthesisFunction()">
+            Generate Linkage
+        </button-block>
 
     </panel-section>
   <!--  <panel-section-collapsible [expanded]='true'>-->

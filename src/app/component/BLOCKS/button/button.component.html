@@ -1,4 +1,4 @@
-<button id='button-block' (click)='click()' mat-flat-button>
+<button id='button-block' (click)='click()' [disabled]="disabled" mat-flat-button>
   <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>
   <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>
   </mat-icon>

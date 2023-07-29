@@ -13,4 +13,5 @@ export class ButtonComponent {
   @Input() click!: () => void;
 
   @Input() customIcon: string | undefined;
+  @Input() disabled: boolean = false;
 }

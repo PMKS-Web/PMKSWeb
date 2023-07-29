@@ -24,5 +24,10 @@
     mat-icon {
       color: mat.get-color-from-palette($foreground, 'icon');
     }
+
+    &:disabled {
+      background-color: grey;
+      cursor: not-allowed;
+    }
   }
 }
