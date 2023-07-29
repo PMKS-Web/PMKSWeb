@@ -6,6 +6,8 @@ import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { Analytics, logEvent } from '@angular/fire/analytics';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
+import { MatDialog } from '@angular/material/dialog';
+import { SynthesisWarningComponent } from '../MODALS/synthesis-warning/synthesis-warning.component';
 
 @Component({
   selector: 'app-left-tabs',
@@ -75,9 +77,9 @@ export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
 
 
-  constructor(public tabs: SelectedTabService) {
-
-  }
+  constructor(
+    public tabs: SelectedTabService,
+    public dialog: MatDialog) {}
 
   public get TabID(): typeof TabID {
     return TabID;
@@ -97,9 +99,11 @@ export class LeftTabsComponent {
 
 
   tabClicked(tabID: TabID) {
-    // if (tabID === TabID.SYNTHESIZE) {
-    //   this.dialog.open(SynthesisWarningComponent);
-    // }
+    if (tabID === TabID.SYNTHESIZE) {
+      // stay on the same tab. The dialog will handle the tab change if the user clicks "yes"
+      this.dialog.open(SynthesisWarningComponent);
+      return; 
+    }
 
     if (!this.tabs.isTabVisible()) {
       this.tabs.setTab(tabID);
