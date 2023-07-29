@@ -14,6 +14,10 @@ import {
   createModes,
   moveModes,
   roundNumber,
+  LengthUnit,
+  point_on_line_segment_closest_to_point,
+  getDistance,
+  distance_points,
 } from '../model/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -24,6 +28,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
+import { NumberUnitParserService } from './number-unit-parser.service';
 
 @Injectable({
   providedIn: 'root',
@@ -54,7 +59,8 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private nup: NumberUnitParserService
   ) {}
 
   getJoints() {
@@ -98,6 +104,39 @@ export class MechanismService {
       }
     });
     this.activeObjService.fakeUpdateSelectedObj();
+  }
+
+  updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
+    // For each joint, move the joint
+    this.joints.forEach((joint) => {
+      this.gridUtils.dragJoint(
+        joint as RealJoint,
+        new Coord(
+          this.nup.convertLength(joint.x, fromUnits, toUnits),
+          this.nup.convertLength(joint.y, fromUnits, toUnits)
+        )
+      );
+    });
+    // this.settingsService.lengthUnit.subscribe((val) => {
+    //For each jo
+    // let unit = this.settingsService.lengthUnit.value;
+    // if (unit !== this.lengthUnit) {
+    //   this.mechanismService.joints.forEach((joint) => {
+    //     this.activeSrv.updateSelectedObj(joint);
+    //     this.activeSrv.fakeUpdateSelectedObj();
+    //     this.gridUtils.dragJoint(
+    //       this.activeSrv.selectedJoint,
+    //       new Coord(
+    //         this.nup.convertLength(joint.x, this.lengthUnit, unit),
+    //         this.nup.convertLength(joint.y, this.lengthUnit, unit)
+    //       )
+    //     );
+    //     this.jointForm.controls['input'].patchValue(wasInput);
+    //   });
+    //   this.lengthUnit = this.settingsService.lengthUnit.value;
+    //   this.activeSrv.fakeUpdateSelectedObj();
+    // }
+    // });
   }
 
   getLinkProp(l: Link, propType: string) {
@@ -174,7 +213,7 @@ export class MechanismService {
   determineNextLetter(additionalLetters?: string[]) {
     let lastLetter = '';
     if (this.joints.length === 0 && additionalLetters === undefined) {
-      return 'a';
+      return 'A';
     }
     this.joints.forEach((j) => {
       if (j.id > lastLetter) {
@@ -205,7 +244,7 @@ export class MechanismService {
     const joint = this.joints.find(
       (j) => j.id === this.activeObjService.selectedJoint.id
     ) as RealJoint;
-    
+
     if (joint.isWelded) {
       this.unweldJoint(joint);
     } else {
@@ -214,15 +253,14 @@ export class MechanismService {
   }
 
   weldJoint(joint: RealJoint) {
-    
     //WE NEED TO WELD THE JOINT
     const linksAtJoint = joint.links as RealLink[];
-//     if (!joint.isWelded) {
-      //       NewGridComponent.sendNotification(
-      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-      //       );
-      //WE NEED TO WELD THE JOINT
-//       const linksAtJoint = joint.links as RealLink[];
+    //     if (!joint.isWelded) {
+    //       NewGridComponent.sendNotification(
+    //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+    //       );
+    //WE NEED TO WELD THE JOINT
+    //       const linksAtJoint = joint.links as RealLink[];
 
     const newLink = this.createNewCompoundLink(linksAtJoint);
 
@@ -266,12 +304,9 @@ export class MechanismService {
     // });
 
     joint.isWelded = true;
-
   }
 
-
   unweldJoint(joint: RealJoint) {
-
     //WE ARE UNWELDING THE JOINT
     const mainLink = joint.links[0] as RealLink;
     //Get the list of all subsets of the main link
@@ -454,7 +489,46 @@ export class MechanismService {
           }
         });
       }
+
+      // for any forces that are outside of the link, move them to the closest point on the hull
+      if (l instanceof RealLink) {
+        l.forces.forEach((f) => {
+
+          let fx = f.startCoord.x;
+          let fy = f.startCoord.y;
+
+          // if force is already inside hull, do nothing
+          if (l.isPointInsideHull(fx, fy)) {
+            return;
+          }
+
+          // go through hull and find closest point
+          let hull = l.getHullPoints();
+          let closestDistance = -1;
+          let cx, cy;
+          for (let i = 0; i < hull.length - 1; i++) {
+            let x1 = hull[i][0];
+            let y1 = hull[i][1];
+            let x2 = hull[i + 1][0];
+            let y2 = hull[i + 1][1];
+
+            [cx, cy] = point_on_line_segment_closest_to_point(fx, fy, x1, y1, x2, y2);
+            let distance = distance_points(fx, fy, cx, cy);
+
+            if (closestDistance === -1 || distance < closestDistance) {
+              closestDistance = distance;
+              fx = cx;
+              fy = cy;
+            }
+          }
+
+          // (fx, fy) is now the closest point on the hull to the force start position
+          // move force there
+          f.moveForceTo(fx, fy);
+        });
+      }
     });
+
 
     this.joints.splice(jointIndex, 1);
     if (this.activeObjService.selectedLink !== undefined) {
@@ -607,29 +681,38 @@ export class MechanismService {
       // this.joints[selectedJointIndex] = joint;
     } else {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
+      this.activeObjService.selectedJoint.input = false;
     }
     this.updateMechanism();
   }
 
-  toggleInput($event: MouseEvent) {
-    // TODO: Adjust this logic when there are multiple mechanisms created
-    this.activeObjService.selectedJoint.input = !this.activeObjService.selectedJoint.input;
-    let jointsTraveled = ''.concat(this.activeObjService.selectedJoint.id);
-    this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
-      jointsTraveled = checkConnectedJoints(j, jointsTraveled);
-    });
-
-    function checkConnectedJoints(j: Joint, jointsTraveled: string): string {
-      if (!(j instanceof RealJoint) || jointsTraveled.includes(j.id)) {
-        return jointsTraveled;
-      }
-      j.input = false;
-      jointsTraveled = jointsTraveled.concat(j.id);
-      j.connectedJoints.forEach((jt) => {
-        jointsTraveled = checkConnectedJoints(jt, jointsTraveled);
-      });
-      return jointsTraveled;
+  adjustInput() {
+    let jointToToggleInput: RealJoint;
+    if (this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
+      //Find the prismatic joint and toggle ground
+      jointToToggleInput = this.gridUtils.getSliderJoint(
+        this.activeObjService.selectedJoint
+      ) as RealJoint;
+    } else {
+      //Normal joint case
+      jointToToggleInput = this.activeObjService.selectedJoint;
     }
+
+    //If we are about to enable input, we need to check to see if there is an existing input joint
+    if (!jointToToggleInput.input) {
+      //Go through all other joints and disable input
+      this.joints.forEach((j) => {
+        if (!(j instanceof RealJoint)) {
+          return;
+        }
+        if (j.input) {
+          j.input = false;
+        }
+      });
+    }
+
+    //Toggle the input joint
+    jointToToggleInput.input = !jointToToggleInput.input;
 
     this.updateMechanism();
     this.onMechUpdateState.next(3);
@@ -638,6 +721,8 @@ export class MechanismService {
   toggleSlider() {
     if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
+      const selectedJointInput = this.activeObjService.selectedJoint.input;
+      this.activeObjService.selectedJoint.input = false;
       this.activeObjService.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
@@ -654,7 +739,7 @@ export class MechanismService {
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
         this.activeObjService.selectedJoint.y,
-        this.activeObjService.selectedJoint.input,
+        selectedJointInput,
         true,
         [],
         connectedJoints
@@ -685,7 +770,7 @@ export class MechanismService {
       this.joints.splice(prismaticJointIndex, 1);
       this.links.splice(pistonIndex, 1);
 
-      this.activeObjService.selectedJoint.ground = true;
+      this.activeObjService.selectedJoint.ground = false;
     }
     this.updateMechanism();
     console.log(this.joints);
@@ -702,6 +787,9 @@ export class MechanismService {
   }
 
   animate(progress: number, animationState?: boolean) {
+    //Round progress to nearest integer
+    progress = Math.round(progress);
+
     this.onMechPositionChange.next(progress);
     this.mechanismTimeStep = progress;
     this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
@@ -803,5 +891,10 @@ export class MechanismService {
       });
     });
     return subsetBuilder;
+  }
+
+  isJointOrphan(joint: Joint) {
+    //Return true if the given joint is an orphan (not part of a link).
+    return this.links.every((l) => !l.joints.includes(joint));
   }
 }

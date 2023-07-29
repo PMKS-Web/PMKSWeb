@@ -110,6 +110,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JPos"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Pos'
@@ -137,6 +138,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Vel'
@@ -164,6 +166,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Linear Joint Acc'
@@ -215,6 +218,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JForce"]'
         analysis='force'
         analysisType="{{ this.inputSpeedFormGroup.value.speed === 'One' ? 'dynamic' : 'static' }}"
         mechProp='Joint Forces'
@@ -243,6 +247,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["JInputForce"]'
         analysis='force'
         analysisType="{{ this.inputSpeedFormGroup.value.speed === 'One' ? 'dynamic' : 'static' }}"
         mechProp='Input Torque'
@@ -301,6 +306,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAng"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Pos'
@@ -330,6 +336,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAngVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Vel'
@@ -359,6 +366,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAngAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp='Angular Link Acc'
@@ -392,6 +400,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LPos"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Pos"
@@ -421,6 +430,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LVel"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Vel"
@@ -450,6 +460,7 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <app-analysis-graph
+        *ngIf='graphExpanded["LAcc"]'
         analysis='kinematic'
         analysisType='loop'
         mechProp="Linear Link's CoM Acc"

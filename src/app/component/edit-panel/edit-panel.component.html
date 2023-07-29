@@ -58,11 +58,11 @@
     </toggle-block>
 
     <toggle-block
-      *ngIf='this.activeSrv.selectedJoint.ground && !this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint) '
+      *ngIf='this.activeSrv.selectedJoint.ground || this.gridUtils.connectedToPrisJoint(this.activeSrv.selectedJoint.connectedJoints)'
       [formGroup]='jointForm'
       _formControl='input'
       tooltip='Make this joint the driven. Only one joint can be a input at a time.'
-    >Input
+    >Input (Todo!)
     </toggle-block>
 
     <toggle-block *ngIf='!this.activeSrv.selectedJoint.input'

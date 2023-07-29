@@ -1,5 +1,8 @@
 # Planar Mechanism Kinematic Simulator Plus (PMKS+)
 
+![Github Hero](https://github.com/PMKS-Web/PMKSWeb/assets/19924289/02b57e93-5421-47e0-92fc-b24798eb6867)
+
+
 PMKS+ (Planar Mechanism Kinematic Simulator Plus) is an educational web-based tool designed for comprehensive 2D linkage analysis. It offers an interactive platform for users to rapidly create, edit, and analyze planar linkages. Along with performing kinematic and force analysis, PMKS+ allows for easy sharing of linkages with peers or teaching staff.
 
 Built with a strong emphasis on the four core principles of education, flexibility, collaboration, and accessibility, PMKS+ aims to provide a user-friendly experience that aids learning and promotes understanding of complex concepts in a simplified manner.
@@ -21,6 +24,8 @@ For development, we recommend using WebStorm, a powerful IDE ideal for JavaScrip
 1. **Download & Install WebStorm**: Visit the [WebStorm site](https://www.jetbrains.com/community/education) and download the software. Remember to register with your .edu email to get it for free.
 
 2. **Clone the Repository**: Using WebStorm, clone the PMKS+ repository to your local machine.
+
+3. **Install Node JS**: https://nodejs.org/en/download
 
 3. **Install Dependencies**: The necessary dependencies should automatically install when the repository is cloned. If any dependencies are missing, you can run `npm install` to add them.
 

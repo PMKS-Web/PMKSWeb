@@ -12,4 +12,10 @@ export class TouchscreenWarningComponent {
   onNoClick(): void {
     this.dialogRef.close();
   }
+
+  onDismissClick(): void {
+    localStorage.setItem("dismiss", "true");
+    this.onNoClick();
+  }
+
 }
