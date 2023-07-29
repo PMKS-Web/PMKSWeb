@@ -114,12 +114,13 @@
     <g id='synthesisLinkHolder' style='transform: scaleY(-1)'>
       <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
         <path
+          cursor='move'
           (pointerover)='pose.showHighlight = true'
           (pointerout)='pose.showHighlight = false'
           (pointerdown)='setLastLeftClick(pose)'
           [attr.d]="pose.pathString"
           [attr.id]=''
-          [attr.fill]="sConstants.LINK_COLOR"
+          [attr.fill]="pose.showHighlight ? sConstants.LINK_COLOR_H : sConstants.LINK_COLOR"
           [attr.fill-opacity]=0.7
           [class]=''
         >
@@ -134,13 +135,16 @@
         height='20'
         style='overflow: visible'
         cursor='move'
+        (pointerover)='pose.showHighlight = true'
+        (pointerout)='pose.showHighlight = false'
+        (pointerdown)='setLastLeftClick(pose)'
       >
         <circle
           *ngFor="let nodePos of [pose.posA, pose.posB]"
           class='joint_circles'
           [attr.r]='sConstants.CIRCLE_RADIUS'
           [attr.cx]='nodePos.x' [attr.cy]='nodePos.y'
-          [attr.fill]="sConstants.CIRCLE_COLOR"
+          [attr.fill]="pose.showHighlight ? sConstants.CIRCLE_COLOR_H : sConstants.CIRCLE_COLOR"
           [class]=""
         />
       </svg>
