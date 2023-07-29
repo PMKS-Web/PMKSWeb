@@ -562,9 +562,9 @@ export class MechanismService {
           if (delJointIndex === -1) {return}
           l.joints.splice(delJointIndex, 1);
           // TODO: Should we also iterate through the joint as well and delete the link from the joint...?
+          l.id = l.id.replace(j.id, '');
           delJointIndex = l.fixedLocations.findIndex(fixed => fixed.id === j.id);
           if (delJointIndex === -1) {return}
-          l.id = l.id.replace(j.id, '');
           l.fixedLocations.splice(delJointIndex, 1);
           if (l.fixedLocation.fixedPoint === j.id) {
             l.fixedLocation.fixedPoint = "com";
@@ -661,6 +661,9 @@ export class MechanismService {
               }
             });
             l_subset_index = l_subset_index - 1;
+          } else if (sub.id.length === 1) { // special case, can slice this subset
+            l.subset.splice(l_subset_index, 1);
+            l_subset_index = l_subset_index - 1;
           }
             // make sure to also delete this within parentSub as well
             // for (let childJointIndex = 0; childJointIndex < sub.joints.length; childJointIndex++) {
@@ -692,9 +695,14 @@ export class MechanismService {
         // Now that all subsets have been gone over, do the final check
         if (l.subset.length === 1) {
           l = l.subset[0];
+          const delLinkIndex = this.links.findIndex(li => li.id === l.id);
+          this.links.splice(delLinkIndex, 1);
+          this.links.push(l);
           l.joints.forEach(jt => {
             if (!(jt instanceof RealJoint)) {return}
             jt.isWelded = false;
+            jt.links = [];
+            jt.links.push(l);
           });
         } else if (l.subset.length === 0) {
           const sliceIndex = this.links.findIndex(li => li.id === l.id);
