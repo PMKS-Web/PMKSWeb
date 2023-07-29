@@ -5,9 +5,7 @@ import { RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { Analytics, logEvent } from '@angular/fire/analytics';
-import { SelectedTabService, TabID } from 'src/app/services/selected-tab.service';
-import { SynthesisWarningComponent } from '../MODALS/synthesis-warning/synthesis-warning.component';
-import { MatDialog } from '@angular/material/dialog';
+import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 
 @Component({
   selector: 'app-left-tabs',
@@ -77,9 +75,9 @@ export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
 
 
-  constructor(
-    public tabs: SelectedTabService,
-    public dialog: MatDialog) {}
+  constructor(public tabs: SelectedTabService) {
+
+  }
 
   public get TabID(): typeof TabID {
     return TabID;
@@ -99,10 +97,9 @@ export class LeftTabsComponent {
 
 
   tabClicked(tabID: TabID) {
-
-    if (tabID = TabID.SYNTHESIZE) {
-      this.dialog.open(SynthesisWarningComponent);
-    }
+    // if (tabID === TabID.SYNTHESIZE) {
+    //   this.dialog.open(SynthesisWarningComponent);
+    // }
 
     if (!this.tabs.isTabVisible()) {
       this.tabs.setTab(tabID);

@@ -1,7 +1,7 @@
 import { T } from '@angular/cdk/keycodes';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { MechanismService } from './mechanism.service';
+import { MechanismService } from './services/mechanism.service';
 
 export enum TabID {
   SYNTHESIZE,
@@ -50,7 +50,7 @@ export class SelectedTabService {
   }
 
   private onNewTab() {
-    
+
     // if new tab is synthesis, reset mechanism
     if (this.getCurrentTab() === TabID.SYNTHESIZE) {
       this.mechanism.resetMechanism();
