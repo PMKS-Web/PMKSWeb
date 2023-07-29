@@ -25,12 +25,12 @@
             <div>
                 <subtitle-block class = "poseHeader">
                     <p>Pose {{i}}</p>
-                    <button-block class = "poseEdit" *ngIf="getCurrentPose() !== i && synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block>
+                    <!-- <button-block class = "poseEdit" *ngIf="getCurrentPose() !== i && synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block> -->
                 </subtitle-block>
             </div>
 
             <!-- display editable pose configuration if pose is both created AND selected -->
-            <div class = "poseData" *ngIf="getCurrentPose() == i && synthesisBuilder.isPoseDefined(i)">
+            <div class = "poseData" *ngIf="synthesisBuilder.isPoseDefined(i)">
                 <dual-input-block [formGroup]='synthesisPoseForm'
                             formControl1='{{getFormIDPoseX(i)}}'
                             formControl2='{{getFormIDPoseY(i)}}'
