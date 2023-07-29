@@ -284,7 +284,7 @@ export class MechanismService {
               if (!(j2 instanceof RealJoint)) {
                 return;
               }
-              if (j2.id === joint.id) {
+              if (j2.id === j1.id) {
                 return;
               }
               if (j1.connectedJoints.findIndex(jt => jt.id === j2.id) === -1) {
