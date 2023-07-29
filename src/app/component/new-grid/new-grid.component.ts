@@ -85,6 +85,8 @@ export class NewGridComponent {
   private startX!: number;
   private startY!: number;
   mouseLocation: Coord = new Coord(0, 0);
+  lastMouseLocation: Coord = new Coord(0, 0);
+  
 
   public sConstants = new SynthesisConstants();
 
@@ -391,8 +393,17 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
+
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.lastMouseLocation = this.mouseLocation;
     this.mouseLocation = mousePosInSvg;
+
+    let deltaMouseX = this.mouseLocation.x - this.lastMouseLocation.x;
+    let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
+
+    if (this.lastLeftClickType === 'SynthesisPose') {
+      this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY);
+    }
 
     switch (this.gridStates) {
       case gridStates.createForce:
@@ -518,6 +529,9 @@ export class NewGridComponent {
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink;
+
+    const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocation = mousePosInSvg;
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas

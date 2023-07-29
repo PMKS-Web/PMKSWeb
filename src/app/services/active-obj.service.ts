@@ -3,6 +3,7 @@ import { Force } from '../model/force';
 import { RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
 import { Coord } from '../model/coord';
+import { SynthesisPose } from './synthesis/synthesis-util';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class ActiveObjService {
   prevSelectedJoint!: RealJoint;
   selectedForce!: Force;
   selectedLink!: RealLink;
+  selectedPose!: SynthesisPose;
   selectedForceEndPoint: string = '';
   private skipThisSeleciton: boolean = false;
 
@@ -62,6 +64,10 @@ export class ActiveObjService {
           this.selectedForce.isEndSelected = false;
           break;
         }
+        case SynthesisPose:
+          this.objType = 'SynthesisPose';
+          this.selectedPose = newActiveObj;
+          break;
         case Coord: {
           console.log('Force endpoint selected');
           this.objType = 'Force';

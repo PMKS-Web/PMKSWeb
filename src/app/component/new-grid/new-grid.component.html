@@ -117,7 +117,7 @@
           cursor='move'
           (pointerover)='pose.showHighlight = true'
           (pointerout)='pose.showHighlight = false'
-          (pointerdown)='setLastLeftClick(pose)'
+          (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
           [attr.d]="pose.pathString"
           [attr.id]=''
           [attr.fill]="pose.showHighlight ? sConstants.LINK_COLOR_H : sConstants.LINK_COLOR"
@@ -137,7 +137,7 @@
         cursor='move'
         (pointerover)='pose.showHighlight = true'
         (pointerout)='pose.showHighlight = false'
-        (pointerdown)='setLastLeftClick(pose)'
+        (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
       >
         <circle
           *ngFor="let nodePos of [pose.posA, pose.posB]"
