@@ -110,9 +110,9 @@
 
   <!-- show synthesis poses if on the synthesis tab -->
   <g id = "synthesis" *ngIf="showSynthesis()">
+  <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
 
     <g id='synthesisLinkHolder' style='transform: scaleY(-1)'>
-      <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
         <path
           cursor='move'
           (pointerover)='pose.showHighlight = true'
@@ -125,12 +125,10 @@
           [class]=''
         >
         </path>
-      </ng-container>
     </g>
 
     <g id='synthesisPoseHolder' style='transform: scaleY(-1)'>
       <svg
-        *ngFor='let pose of synthesisBuilder.getAllPoses()'
         width='20'
         height='20'
         style='overflow: visible'
@@ -148,12 +146,23 @@
           [class]=""
         />
       </svg>
+      <svg
+      [attr.cx]="pose.position.x"
+      [attr.cy]="pose.position.y"
+      [attr.height]='10'
+      [attr.width]='10'
+      style='overflow: visible; text-anchor: middle'
+    >
+      <text
+        transform="scale(+1,-1)"
+        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
+      >
+        {{pose.id}}
+      </text>
+    </svg>
     </g>
 
-    
-
-
-  </g> 
+  </ng-container></g> 
 
   <!-- show mechanism if not on synthesis tab -->
   <g id = "mechanism">
