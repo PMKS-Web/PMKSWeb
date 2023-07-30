@@ -45,6 +45,8 @@ import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
 import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-subseciton/collapsible-subseciton.component';
+import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.component';
+import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
 
 @NgModule({
   declarations: [
@@ -78,6 +80,8 @@ import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-s
     NotReadyWarningComponent,
     TemplatesComponent,
     CollapsibleSubsecitonComponent,
+    DualButtonComponent,
+    ColorPickerComponent,
   ],
   imports: [
     BrowserModule,

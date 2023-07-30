@@ -18,6 +18,8 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
           height: '0px',
           opacity: 0,
           padding: '0px',
+          pointerEvents: 'none',
+          marginBottom: '-1px',
         })
       ),
       transition('* => *', [animate('0.15s ease-in-out')]),
