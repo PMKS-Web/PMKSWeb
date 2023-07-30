@@ -1,24 +1,34 @@
-<div id="title-block">
-  <div class="row">
+<div id='title-block'>
+  <div class='row'>
     <ng-content></ng-content>
     <button
-      id="title-button"
+      id='title-button'
       mat-flat-button
-      (click)="toggleExpand()"
-      color="primary"
-      *ngIf="buttonLabel && icon"
+      (click)='toggleExpand()'
+      color='primary'
+      *ngIf='buttonLabel && icon'
     >
-      <mat-icon *ngIf="icon">{{ icon }}</mat-icon>
+      <mat-icon *ngIf='icon'>{{ icon }}</mat-icon>
       {{ buttonLabel }}
     </button>
     <button
-      id="title-icon-button"
-      (click)="toggleExpand()"
-      *ngIf="!buttonLabel && icon"
+      id='title-icon-button'
+      (click)='toggleExpand()'
+      *ngIf='!buttonLabel && icon'
       mat-icon-button
     >
       <mat-icon>{{ this.shownIcon }}</mat-icon>
     </button>
   </div>
-  <p id="title-description" *ngIf="description">{{ description }}</p>
+  <p id='title-description' *ngIf='description'>{{ description }}</p>
+  <div class='row'>
+    <button class='mini-buttons blue' mat-stroked-button color='primary'>
+      <mat-icon svgIcon='edit_outline'></mat-icon>
+      Edit Name
+    </button>
+    <button class='mini-buttons red' mat-stroked-button color='warn'>
+      <mat-icon svgIcon='remove'></mat-icon>
+      Delete
+    </button>
+  </div>
 </div>

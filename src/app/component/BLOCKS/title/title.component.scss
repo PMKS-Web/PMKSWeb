@@ -12,6 +12,9 @@
   $foreground: map.get($theme, foreground);
 
   #title-block {
+
+    padding: 10px 15px;
+
     .row {
       display: flex;
       align-items: center;
@@ -36,6 +39,30 @@
 
     mat-icon {
       //color: mat.get-color-from-palette($foreground, 'icon');
+    }
+
+    .mini-buttons {
+      @include mat.typography-level($typography-config, 'body-2');
+      padding: 0 10px;
+      margin: 0;
+      height: 30px;
+      flex-grow: 1;
+
+      &.blue {
+        border-color: mat.get-color-from-palette($primary-palette, 500);
+
+        svg > path {
+          fill: mat.get-color-from-palette($primary-palette, 500) !important;
+        }
+      }
+
+      &.red {
+        border-color: var(--mat-warning-color);
+
+        svg > path {
+          fill: var(--mat-warning-color);
+        }
+      }
     }
   }
 }
