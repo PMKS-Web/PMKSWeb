@@ -8,6 +8,7 @@ import { Analytics, logEvent } from '@angular/fire/analytics';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 import { MatDialog } from '@angular/material/dialog';
 import { SynthesisWarningComponent } from '../MODALS/synthesis-warning/synthesis-warning.component';
+import { MechanismService } from 'src/app/services/mechanism.service';
 
 @Component({
   selector: 'app-left-tabs',
@@ -79,6 +80,7 @@ export class LeftTabsComponent {
 
   constructor(
     public tabs: SelectedTabService,
+    private mechanism: MechanismService,
     public dialog: MatDialog) {}
 
   public get TabID(): typeof TabID {
@@ -99,7 +101,7 @@ export class LeftTabsComponent {
 
 
   tabClicked(tabID: TabID) {
-    if (tabID === TabID.SYNTHESIZE) {
+    if (tabID === TabID.SYNTHESIZE && this.mechanism.exists()) {
       // stay on the same tab. The dialog will handle the tab change if the user clicks "yes"
       this.dialog.open(SynthesisWarningComponent);
       return; 

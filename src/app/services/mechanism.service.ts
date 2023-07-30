@@ -65,6 +65,12 @@ export class MechanismService {
     this.forces = [];
     this.mechanismTimeStep = 0;
     this.updateMechanism();
+    this.onMechPositionChange.next(3);
+  }
+
+  // whether there is a valid mechanism
+  exists(): boolean {
+    return this.joints.length > 0;
   }
 
   getJoints() {
