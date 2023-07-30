@@ -9,14 +9,14 @@
   </div>
   <div class='row' [formGroup]='formGroup'>
 
-    <span class='label'>X</span>
+    <span class='label'>{{label1}}</span>
     <mat-form-field class='customInputForm'>
       <input class='customInput' matInput type='text' #field (keyup.enter)='field.blur()'
              [formControlName]='this.formControl1'>
     </mat-form-field>
 
     <div class='spacer'></div>
-    <span class='label'>Y</span>
+    <span class='label' style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
     <mat-form-field class='customInputForm'>
       <input class='customInput' matInput type='text' #field (keyup.enter)='field.blur()'
              [formControlName]='this.formControl2'>

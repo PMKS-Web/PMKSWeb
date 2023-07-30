@@ -13,31 +13,32 @@
     id='placeholderContainer'
     *ngIf="(this.activeSrv.objType == 'Grid' ||  this.activeSrv.objType == 'Nothing') && mechanismService.joints.length == 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown icon='expand_more' description='Right click on the grid to create a link.'>Edit Help
+    <title-block alwaysShown description='Right click on the grid to create a link.'>Edit
+      Help
     </title-block>
-    <collapsible-subseciton [expanded]='true' alwaysShown>
-      <dual-input-block>
-        Link Length and Angle
-      </dual-input-block>
-      <input-block>
-        Link Mass
-      </input-block>
-      <dual-button>
-      </dual-button>
-    </collapsible-subseciton>
-    <collapsible-subseciton alwaysShown [expanded]='true'>
-      <color-picker>
-        Link Color
-      </color-picker>
-    </collapsible-subseciton>
-    <collapsible-subseciton alwaysShown>
-      <dual-input-block>
-        Link Length and Angle
-      </dual-input-block>
-      <input-block>
-        Link Mass
-      </input-block>
-    </collapsible-subseciton>
+    <!--    <collapsible-subseciton [expanded]='true' alwaysShown>-->
+    <!--      <dual-input-block>-->
+    <!--        Link Length and Angle-->
+    <!--      </dual-input-block>-->
+    <!--      <input-block>-->
+    <!--        Link Mass-->
+    <!--      </input-block>-->
+    <!--      <dual-button>-->
+    <!--      </dual-button>-->
+    <!--    </collapsible-subseciton>-->
+    <!--    <collapsible-subseciton alwaysShown [expanded]='true'>-->
+    <!--      <color-picker>-->
+    <!--        Link Color-->
+    <!--      </color-picker>-->
+    <!--    </collapsible-subseciton>-->
+    <!--    <collapsible-subseciton alwaysShown>-->
+    <!--      <dual-input-block>-->
+    <!--        Link Length and Angle-->
+    <!--      </dual-input-block>-->
+    <!--      <input-block>-->
+    <!--        Link Mass-->
+    <!--      </input-block>-->
+    <!--    </collapsible-subseciton>-->
     <img src='assets/gifs/Create.gif' />
   </panel-section-collapsible>
 
@@ -126,48 +127,28 @@
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
-    <editable-title-block description='Changing the length / angle will change the non-grounded joint.'>
+    <editable-title-block [deleteAction]='deleteLink.bind(this)'>
       Edit Link
     </editable-title-block>
-    <collapsible-subseciton>
-      <dual-input-block>
+    <collapsible-subseciton [expanded]='true' title='Basic Settings'>
+      <dual-input-block label1='L' label2='⊾' formControl1='length' formControl2='angle' [formGroup]='linkForm'
+                        tooltip='The length and angle of this link. A counter-clockwise rotation is a positive angle (Right hand rule).'>
         Link Length and Angle
       </dual-input-block>
+      <dual-button>
+      </dual-button>
     </collapsible-subseciton>
-    <div class='spacer5px'></div>
-    <input-block
-      [formGroup]='linkForm'
-      _formControl='length'
-      unit='cm'
-      tooltip="The length of the link in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}."
-    >Link Length
-    </input-block
-    >
-
-    <input-block
-      [formGroup]='linkForm'
-      _formControl='angle'
-      unit='deg'
-      tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'
-    >Link Angle
-    </input-block>
-    <!--    <div class='spacer5px'></div>-->
-    <!--    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete</button-block>-->
-  </panel-section>
-
-  <panel-section
-    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
-    <subtitle-block> Actions for Link AB</subtitle-block>
-    <button mat-stroked-button>
-      <mat-icon svgIcon='add_tracer'></mat-icon>
-      Add Tracer Point
-    </button>
-    <button mat-stroked-button>
-      <mat-icon svgIcon='add_force'></mat-icon>
-      Attach Force
-    </button>
-    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete</button-block>
-
+    <collapsible-subseciton title='Visual Settings'>
+      <color-picker>Link Color</color-picker>
+    </collapsible-subseciton>
+    <collapsible-subseciton title='Mass Settings'>
+      <input-block>
+        Link Mass
+      </input-block>
+      <dual-input-block>
+        Center of Mass Position
+      </dual-input-block>
+    </collapsible-subseciton>
   </panel-section>
 
   <!--  <panel-section-collapsible-->

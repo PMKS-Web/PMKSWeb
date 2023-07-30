@@ -2,22 +2,39 @@
   <div *ngIf='!editMode' class='editModeRow'>
     <ng-container *ngTemplateOutlet='contentTpl'></ng-container>
     {{activeObjService.getSelectedObj().name}}
-    <button id='title-icon-button' mat-icon-button (click)='gotoEditMode()' matTooltip='Edit the name of this object.'
-            [matTooltipShowDelay]='1000' matTooltipPosition='above'>
-      <mat-icon>edit</mat-icon>
-    </button>
+    <!--    <button id='title-icon-button' mat-icon-button (click)='gotoEditMode()' matTooltip='Edit the name of this object.'-->
+    <!--            [matTooltipShowDelay]='1000' matTooltipPosition='above'>-->
+    <!--      <mat-icon>edit</mat-icon>-->
+    <!--    </button>-->
   </div>
   <div *ngIf='editMode' class='editModeRow' [formGroup]='newIDForm'>
     <ng-container *ngTemplateOutlet='contentTpl'></ng-container>
-    <input id='title-input-box' type='text' formControlName='newID' (keyup.enter)='saveNewID()'
-           (keyup.escape)='exitEditModeWithoutSaving()' appPrefixFocusAndSelect />
-    <button id='title-icon-button' mat-icon-button color='primary' (click)='saveNewID()'
-            matTooltip='Save this name. Escape to cancel.'
-            [matTooltipShowDelay]='1000' matTooltipPosition='above'>
+    <mat-form-field class='customInputForm'>
+      <input class='customInput' id='title-input-box' matInput type='text' #field formControlName='newID'
+             (keyup.enter)='saveNewID()' (keyup.escape)='exitEditModeWithoutSaving()' appPrefixFocusAndSelect />
+    </mat-form-field>
+    <!--    <input id='title-input-box' type='text' formControlName='newID' (keyup.enter)='saveNewID()'-->
+    <!--           (keyup.escape)='exitEditModeWithoutSaving()' appPrefixFocusAndSelect />-->
+    <!--    <button id='title-icon-button' mat-icon-button color='primary' (click)='saveNewID()'-->
+    <!--            matTooltip='Save this name. Escape to cancel.'-->
+    <!--            [matTooltipShowDelay]='1000' matTooltipPosition='above'>-->
+    <!--      <mat-icon>check</mat-icon>-->
+    <!--    </button>-->
+  </div>
+  <div class='row'>
+    <button *ngIf='!editMode' class='mini-buttons blue' mat-stroked-button color='primary' (click)='gotoEditMode()'>
+      <mat-icon svgIcon='edit_outline'></mat-icon>
+      Edit Name
+    </button>
+    <button *ngIf='editMode' class='mini-buttons blue' mat-stroked-button color='primary' (click)='saveNewID()'>
       <mat-icon>check</mat-icon>
+      Save Name
+    </button>
+    <button class='mini-buttons red' mat-stroked-button color='warn' (click)='deleteAction()'>
+      <mat-icon svgIcon='remove'></mat-icon>
+      Delete
     </button>
   </div>
-  <p id='title-description' *ngIf='description'>{{ description }}</p>
 </div>
 
 <ng-template #contentTpl>

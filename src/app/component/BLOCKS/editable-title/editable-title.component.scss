@@ -13,54 +13,68 @@
 
   #editable-title-block {
 
+    padding: 10px 15px;
+
     @include mat.typography-level($typography-config, 'headline-6');
 
     .editModeRow {
       height: 34px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      //font-size: 20px;
+      justify-content: start;
+      gap: 10px;
 
-      #title-button {
-        // font-size: 0.8em !important;
-        // font-weight: 600 !important;
-        height: 24px !important;
-      }
+      .customInputForm {
 
-      #title-icon-button {
-        zoom: 0.7; // NOTE: You may need to adjust this value to achieve exactly 48px.
-      }
+        margin-top: -5px;
 
-      #title-input-box {
-        //font-size: 20px;
-        //font-weight: 300;
-        width: 60px;
-        border: 0;
-        outline: none;
-        background-color: mat.get-color-from-palette($primary-palette, 50);
-        border-radius: var(--border-radius);
-        padding: 5px;
+        .customInput {
+          @include mat.typography-level($typography-config, 'subtitle-2');
+        }
 
-        //When the input is focused
-        &:focus {
-          margin-bottom: 0px;
-          background-color: mat.get-color-from-palette($primary-palette, 100);
-          //add a bottom border
-          border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
-          //no more roudned corners in for the bottom
-          border-radius: var(--border-radius) var(--border-radius) 0 0;
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+
+        .mat-mdc-form-field-infix {
+          padding: 6px 0;
+        }
+
+        .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+          //background-color: #eff1f8;
+          background-color: #f0f1f5;
+        }
+
+        .mat-mdc-text-field-wrapper {
+          height: 30px;
+          width: 100px;
+          padding: 0 6px;
         }
       }
     }
 
-    #title-description {
+    .mini-buttons {
       @include mat.typography-level($typography-config, 'body-2');
-      color: rgba(0, 0, 0, 0.6);
-    }
+      padding: 0 10px;
+      margin: 0;
+      height: 30px;
+      flex-grow: 1;
 
-    mat-icon {
-      //color: mat.get-color-from-palette($foreground, 'icon');
+      &.blue {
+        border-color: mat.get-color-from-palette($primary-palette, 500);
+
+        svg > path {
+          fill: mat.get-color-from-palette($primary-palette, 500) !important;
+        }
+      }
+
+      &.red {
+        border-color: var(--mat-warning-color);
+
+        svg > path {
+          fill: var(--mat-warning-color);
+        }
+      }
     }
   }
 }

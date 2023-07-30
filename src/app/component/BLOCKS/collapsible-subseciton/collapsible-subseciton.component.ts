@@ -30,6 +30,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 })
 export class CollapsibleSubsecitonComponent {
   @Input() expanded: boolean = false;
+  @Input() title: string = '';
 
   toggleExpand() {
     this.expanded = !this.expanded;

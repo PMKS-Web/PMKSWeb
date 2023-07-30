@@ -21,11 +21,11 @@
       @include mat.typography-level($typography-config, 'body-2');
       padding: 0 10px;
       margin: 0;
-      height: 60px !important;
+      height: 50px !important;
       flex-grow: 1;
 
       .mat-mdc-button-touch-target {
-        height: 60px !important;
+        height: 50px !important;
       }
 
       .mat-icon {
