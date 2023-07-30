@@ -64,8 +64,8 @@ export class SynthesisBuilderService {
   // create a new pose. put it in some preset default position
   createPose(id: number): void {
 
-    let defaultPosition = new Coord(id - 1, id - 1);
-    let defaultThetaRadians = id * 20;
+    let defaultPosition = new Coord(0, 0);
+    let defaultThetaRadians = 0;
 
     // create pose with a callback to always get current length
     this.poses[id] = new SynthesisPose(id, defaultPosition, defaultThetaRadians, () => this.length);

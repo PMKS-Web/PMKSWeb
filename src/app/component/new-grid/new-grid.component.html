@@ -147,8 +147,6 @@
         />
       </svg>
       <svg
-      [attr.cx]="pose.position.x"
-      [attr.cy]="pose.position.y"
       [attr.height]='10'
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
@@ -156,6 +154,8 @@
     >
       <text
         transform="scale(+1,-1)"
+        [attr.x]="pose.position.x"
+        [attr.y]="-pose.position.y"
         style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
       >
         {{pose.id}}
