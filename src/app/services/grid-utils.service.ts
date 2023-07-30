@@ -20,12 +20,13 @@ import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SynthesisPose } from './synthesis/synthesis-util';
+import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GridUtilsService {
-  constructor() {}
+  constructor(private synthesisBuilder: SynthesisBuilderService) {}
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -195,7 +196,7 @@ export class GridUtilsService {
   }
 
   dragPose(pose: SynthesisPose, dx: number, dy: number) {
-    console.log("pose", dx, dy);
+    this.synthesisBuilder.movePoseByOffset(pose, dx, dy);
   }
 
   isAttachedToSlider(lastRightClick: Joint | Link | Force | String) {

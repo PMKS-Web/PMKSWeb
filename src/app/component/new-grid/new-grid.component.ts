@@ -84,6 +84,7 @@ export class NewGridComponent {
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
+  private isMouseDown: boolean = false;
   mouseLocation: Coord = new Coord(0, 0);
   lastMouseLocation: Coord = new Coord(0, 0);
   
@@ -149,6 +150,10 @@ export class NewGridComponent {
     setTimeout(() => {
       this.svgGridElement.removeAttribute('class');
     }, 300);
+  }
+
+  static getLastLeftClickType(): string {
+    return this.instance.lastLeftClick.constructor.name;
   }
 
   updateContextMenuItems() {
@@ -401,7 +406,7 @@ export class NewGridComponent {
     let deltaMouseX = this.mouseLocation.x - this.lastMouseLocation.x;
     let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
 
-    if (this.lastLeftClickType === 'SynthesisPose') {
+    if (this.isMouseDown && this.lastLeftClickType === 'SynthesisPose') {
       this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY);
     }
 
@@ -503,6 +508,7 @@ export class NewGridComponent {
   mouseUp($event: MouseEvent) {
     //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
+    this.isMouseDown = false;
     this.gridStates = gridStates.waiting;
     this.jointStates = jointStates.waiting;
     this.linkStates = linkStates.waiting;
@@ -524,6 +530,7 @@ export class NewGridComponent {
     // $event.preventDefault();
     // $event.stopPropagation();
     // this.disappearContext();
+    this.isMouseDown = true;
     this.startX = $event.pageX;
     this.startY = $event.pageY;
     let joint1: RevJoint;

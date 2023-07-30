@@ -25,6 +25,8 @@ export class SynthesisPose {
         this._posA = new Coord(0, 0);
         this._posB = new Coord(0, 0);
 
+        this._thetaRadians %= Math.PI * 2;
+
         this.recompute();
     }
 
@@ -53,11 +55,13 @@ export class SynthesisPose {
     }
 
     set position(position: Coord) {
+        console.log("setting position", position.x, position.y);
         this._position = position;
         this.recompute();
     }
 
     set thetaDegrees(thetaDegrees: number) {
+        thetaDegrees %= 360;
         this._thetaRadians = thetaDegrees * Math.PI / 180;
         this.recompute();
     }

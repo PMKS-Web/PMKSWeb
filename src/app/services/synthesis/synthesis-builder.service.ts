@@ -64,8 +64,8 @@ export class SynthesisBuilderService {
   // create a new pose. put it in some preset default position
   createPose(id: number): void {
 
-    let defaultPosition = new Coord(id, id);
-    let defaultThetaRadians = 0;
+    let defaultPosition = new Coord(id - 1, id - 1);
+    let defaultThetaRadians = id * 20;
 
     // create pose with a callback to always get current length
     this.poses[id] = new SynthesisPose(id, defaultPosition, defaultThetaRadians, () => this.length);
@@ -84,6 +84,11 @@ export class SynthesisBuilderService {
   // whether all poses are defined to be synthesized
   isFullyDefined(): boolean {
     return this.getAllPoses().length === 3;
+  }
+
+  movePoseByOffset(pose: SynthesisPose, dx: number, dy: number) {
+    pose.position = new Coord(pose.position.x + dx, pose.position.y + dy);
+    this.valueChanges.next(true);
   }
 
   // return all existing poses
@@ -142,7 +147,6 @@ export class SynthesisBuilderService {
     }
 
     // if we get here, form is valid
-    console.log(this);
     return true;
   }
 

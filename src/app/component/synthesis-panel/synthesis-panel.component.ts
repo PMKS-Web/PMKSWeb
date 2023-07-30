@@ -92,15 +92,15 @@ PoseID: any;
     // set up subscriptions to synthesis form changes to update model
     this.synthesisPoseForm.valueChanges.subscribe((value) => {
 
+        console.log("sp", this._alreadyHandlingPoseChange);
+
         // prevent infinite loop
         if (this._alreadyHandlingPoseChange) return;
 
         this._alreadyHandlingPoseChange = true;
 
         let valid = this.synthesisBuilder.updatePosesFromForm(value);
-
-        // if form change was invalid, revert form to sync with unchanged model
-        if (!valid) this.updateFormFromModel();
+        this.updateFormFromModel();
 
         this._alreadyHandlingPoseChange = false;
     });
@@ -110,6 +110,8 @@ PoseID: any;
   // given synthesis model, update form values to sync with model
   updateFormFromModel() {
 
+    this._alreadyHandlingPoseChange = true;
+
     let poses = this.synthesisBuilder.poses;
     let controls = this.synthesisPoseForm.controls;
 
@@ -118,6 +120,7 @@ PoseID: any;
     if (this.synthesisBuilder.isPoseDefined(1)) {
         controls.p1x.setValue(poses[1].position.x.toString());
         controls.p1y.setValue(poses[1].position.y.toString());
+        console.log("one", poses[1].thetaDegrees.toString())
         controls.p1theta.setValue(poses[1].thetaDegrees.toString());
     }
     if (this.synthesisBuilder.isPoseDefined(2)) {
@@ -130,6 +133,8 @@ PoseID: any;
         controls.p3y.setValue(poses[3].position.y.toString());
         controls.p3theta.setValue(poses[3].thetaDegrees.toString());
     }
+
+    this._alreadyHandlingPoseChange = false;
   }
 
   synthesisPoseForm = this.fb.group({

@@ -152,6 +152,7 @@
       [attr.height]='10'
       [attr.width]='10'
       style='overflow: visible; text-anchor: middle'
+      (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
     >
       <text
         transform="scale(+1,-1)"
