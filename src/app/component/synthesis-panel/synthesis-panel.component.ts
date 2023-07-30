@@ -138,6 +138,7 @@ PoseID: any;
   }
 
   synthesisPoseForm = this.fb.group({
+    cor: ['center'],
     length: [''],
     p1x: [''],
     p1y: [''],

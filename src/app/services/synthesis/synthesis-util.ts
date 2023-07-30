@@ -83,23 +83,33 @@ export class SynthesisPose {
 
     // generate SVG path for a link given two points and a radius
     private _createPath(x1: number, y1: number, x2: number, y2: number, r: number): string {
-        // The path will start at the top of the first circle
-        let d = `M ${x1},${y1-r} `;
-    
-        // Draw arc (half of first circle)
-        d += `A ${r},${r} 0 1,0 ${x1},${y1+r} `;
-    
-        // Draw line to second circle
-        d += `L ${x2},${y2+r} `;
-    
-        // Draw arc (half of second circle)
-        d += `A ${r},${r} 0 1,0 ${x2},${y2-r} `;
-    
-        // Draw line back to first circle
-        d += `L ${x1},${y1-r} `;
-    
-        return d;
-    }
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+      
+        // calculate angle between the two points
+        const theta = Math.atan2(dy, dx);
+      
+        // calculate points for the rectangle
+        const p1x = x1 - r * Math.sin(theta);
+        const p1y = y1 + r * Math.cos(theta);
+        const p2x = x2 - r * Math.sin(theta);
+        const p2y = y2 + r * Math.cos(theta);
+        const p3x = x2 + r * Math.sin(theta);
+        const p3y = y2 - r * Math.cos(theta);
+        const p4x = x1 + r * Math.sin(theta);
+        const p4y = y1 - r * Math.cos(theta);
+      
+        // draw the path
+        return `
+          M ${p1x} ${p1y}
+          A ${r} ${r} 0 1 1 ${p4x} ${p4y}
+          L ${p3x} ${p3y}
+          A ${r} ${r} 0 1 1 ${p2x} ${p2y}
+          Z
+        `;
+      }
+      
+      
 
 }
 

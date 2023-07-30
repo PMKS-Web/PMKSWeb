@@ -10,6 +10,15 @@
         <!-- <img src='assets/temp3pos.png'> -->
 
         <subtitle-block>End-Effector Link</subtitle-block>
+        <radio-block
+                    [formGroup]='synthesisPoseForm'
+                    _formControl='cor'
+                    option1='left'
+                    option2='center'
+                    option3='right'
+                    tooltip='The center of rotation of the end-effector link, and what the position coordinate represents'>
+            Center of rotation
+        </radio-block>
         <input-block [formGroup]='synthesisPoseForm'
                      _formControl='length'
                      tooltip='The length of the end-effector link'>
