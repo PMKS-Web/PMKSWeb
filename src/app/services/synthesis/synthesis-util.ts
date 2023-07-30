@@ -1,12 +1,19 @@
 import { Coord } from "src/app/model/coord"
 import { SynthesisConstants } from "./synthesis-constants";
 
+export enum COR {
+    BACK = "BACK",
+    CENTER = "CENTER",
+    FRONT = "FRONT"
+}
+
 // storing state for a pose
 export class SynthesisPose {
 
     // cached values for graphical display
-    private _posA: Coord;
-    private _posB: Coord;
+    private _posBack: Coord;
+    private _posCenter: Coord;
+    private _posFront: Coord;
 
     // string for SVG link
     private _pathString: string = "";
@@ -19,11 +26,13 @@ export class SynthesisPose {
         public id: number,
         private _position: Coord,
         private _thetaRadians: number,
+        private getCOR: () => COR,
         private getLength: () => number
     ) {
         // dummy values to be overwritten by recompute
-        this._posA = new Coord(0, 0);
-        this._posB = new Coord(0, 0);
+        this._posBack = new Coord(0, 0);
+        this._posCenter = new Coord(0, 0);
+        this._posFront = new Coord(0, 0);
 
         this._thetaRadians %= Math.PI * 2;
 
@@ -42,12 +51,16 @@ export class SynthesisPose {
         return this._thetaRadians;
     }
 
-    get posA(): Coord {
-        return this._posA;
+    get posBack(): Coord {
+        return this._posBack;
     }
 
-    get posB(): Coord {
-        return this._posB;
+    get posCenter(): Coord {
+        return this._posCenter;
+    }
+
+    get posFront(): Coord {
+        return this._posFront;
     }
 
     get pathString(): string {
@@ -55,7 +68,6 @@ export class SynthesisPose {
     }
 
     set position(position: Coord) {
-        console.log("setting position", position.x, position.y);
         this._position = position;
         this.recompute();
     }
@@ -74,10 +86,21 @@ export class SynthesisPose {
         let dx = Math.cos(this.thetaRadians) * halfLength;
         let dy = Math.sin(this.thetaRadians) * halfLength;
 
-        this._posA = new Coord(this.position.x - dx, this.position.y - dy);
-        this._posB = new Coord(this.position.x + dx, this.position.y + dy);
+        if (this.getCOR() === COR.BACK) {
+            this._posBack = new Coord(this.position.x, this.position.y);
+            this._posCenter = new Coord(this.position.x + dx, this.position.y + dy);
+            this._posFront = new Coord(this.position.x + dx * 2, this.position.y + dy * 2);
+        } else if (this.getCOR() === COR.CENTER) {
+            this._posBack = new Coord(this.position.x - dx, this.position.y - dy);
+            this._posCenter = new Coord(this.position.x, this.position.y);
+            this._posFront = new Coord(this.position.x + dx, this.position.y + dy);
+        } else {
+            this._posBack = new Coord(this.position.x - dx * 2, this.position.y - dy * 2);
+            this._posCenter = new Coord(this.position.x - dx, this.position.y - dy);
+            this._posFront = new Coord(this.position.x, this.position.y);
+        }
 
-        this._pathString = this._createPath(this.posA.x, this.posA.y, this.posB.x, this.posB.y, this.sConstants.LINK_CIRCLE_RADIUS);
+        this._pathString = this._createPath(this.posBack.x, this.posBack.y, this.posFront.x, this.posFront.y, this.sConstants.LINK_CIRCLE_RADIUS);
 
     }
 

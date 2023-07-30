@@ -92,8 +92,6 @@ PoseID: any;
     // set up subscriptions to synthesis form changes to update model
     this.synthesisPoseForm.valueChanges.subscribe((value) => {
 
-        console.log("sp", this._alreadyHandlingPoseChange);
-
         // prevent infinite loop
         if (this._alreadyHandlingPoseChange) return;
 
@@ -138,7 +136,7 @@ PoseID: any;
   }
 
   synthesisPoseForm = this.fb.group({
-    cor: ['center'],
+    cor: ['1'],
     length: [''],
     p1x: [''],
     p1y: [''],
@@ -241,12 +239,12 @@ PoseID: any;
 
         //populate pose information 
 
-        var pose1_coord1 = this.synthesisBuilder.poses[1].posA;
-        var pose1_coord2 = this.synthesisBuilder.poses[1].posB;
-        var pose2_coord1 = this.synthesisBuilder.poses[2].posA;
-        var pose2_coord2 = this.synthesisBuilder.poses[2].posB;
-        var pose3_coord1 = this.synthesisBuilder.poses[3].posA;
-        var pose3_coord2 = this.synthesisBuilder.poses[3].posB;
+        var pose1_coord1 = this.synthesisBuilder.poses[1].posBack;
+        var pose1_coord2 = this.synthesisBuilder.poses[1].posFront;
+        var pose2_coord1 = this.synthesisBuilder.poses[2].posBack;
+        var pose2_coord2 = this.synthesisBuilder.poses[2].posFront;
+        var pose3_coord1 = this.synthesisBuilder.poses[3].posBack;
+        var pose3_coord2 = this.synthesisBuilder.poses[3].posFront;
 
         var qualityfromUser = Number(this.synthesisForm.value.quality);
 

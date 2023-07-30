@@ -7,6 +7,9 @@ export class SynthesisConstants {
     public LINK_COLOR: string = "rgb(219,183,108)";
     public LINK_COLOR_H: string = "rgb(209, 173, 98)";
 
+    public COR_RADIUS: number = 0.1;
+    public COR_COLOR: string = "black";
+
     constructor() {
 
     }

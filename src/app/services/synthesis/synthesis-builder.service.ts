@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { SynthesisPose } from './synthesis-util';
+import { COR, SynthesisPose } from './synthesis-util';
 import { Coord } from 'src/app/model/coord';
 import { SynthesisConstants } from './synthesis-constants';
 
@@ -19,6 +19,7 @@ export class SynthesisBuilderService {
 
   public constants: SynthesisConstants;
 
+  _COR: COR;
   _length: number; // length of the end-effector link
   _selectedPose: number; // currently selected pose (1-3)
 
@@ -31,11 +32,16 @@ export class SynthesisBuilderService {
     this.constants = new SynthesisConstants();
 
     // start with a length of 1
+    this._COR = COR.CENTER;
     this._length = 1;
     this._selectedPose = 1;
 
     // start with no defined poses
     this.poses = {};
+  }
+
+  get COR(): COR {
+    return this._COR;
   }
 
   get length(): number {
@@ -68,7 +74,12 @@ export class SynthesisBuilderService {
     let defaultThetaRadians = 0;
 
     // create pose with a callback to always get current length
-    this.poses[id] = new SynthesisPose(id, defaultPosition, defaultThetaRadians, () => this.length);
+    this.poses[id] = new SynthesisPose(id,
+      defaultPosition,
+      defaultThetaRadians,
+      () => this.COR,
+      () => this.length
+    );
     this.valueChanges.next(true);
   }
 
@@ -115,7 +126,10 @@ export class SynthesisBuilderService {
   // given form, update poses
   // if form is invalid, return false to revert form
   updatePosesFromForm(form: {[key: string]: any}): boolean {
-    console.log(form);
+    
+    if (form["cor"] === "0") this._COR = COR.BACK;
+    else if (form["cor"] === "1") this._COR = COR.CENTER;
+    else this._COR = COR.FRONT;
 
     // if length is a number and positive, update length
     let maybeLength = Number(form["length"]);
