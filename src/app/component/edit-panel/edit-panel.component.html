@@ -15,6 +15,14 @@
   >
     <title-block alwaysShown icon='expand_more' description='Right click on the grid to create a link.'>Edit Help
     </title-block>
+    <collapsible-subseciton [expanded]='true' alwaysShown>
+      <dual-input-block>
+        Link Length and Angle
+      </dual-input-block>
+      <input-block>
+        Link Mass
+      </input-block>
+    </collapsible-subseciton>
     <img src='assets/gifs/Create.gif' />
   </panel-section-collapsible>
 
@@ -106,6 +114,11 @@
     <editable-title-block description='Changing the length / angle will change the non-grounded joint.'>
       Edit Link
     </editable-title-block>
+    <collapsible-subseciton>
+      <dual-input-block>
+        Link Length and Angle
+      </dual-input-block>
+    </collapsible-subseciton>
     <div class='spacer5px'></div>
     <input-block
       [formGroup]='linkForm'
@@ -126,6 +139,7 @@
     <!--    <div class='spacer5px'></div>-->
     <!--    <button-block customIcon='remove' [click]='deleteLink.bind(this)'>Delete</button-block>-->
   </panel-section>
+
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <subtitle-block> Actions for Link AB</subtitle-block>

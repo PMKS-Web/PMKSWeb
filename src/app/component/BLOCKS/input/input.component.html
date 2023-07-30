@@ -1,22 +1,13 @@
 <div id='input-block'>
   <div class='row' [formGroup]='formGroup'>
     <span class='label'><ng-content></ng-content></span>
-    <!--    <mat-icon matTooltip='{{ this.tooltip }}' [matTooltipShowDelay]='1000' class='label-help'>-->
-    <!--      help_outline-->
-    <!--    </mat-icon>-->
+    <mat-icon matTooltip='{{ this.tooltip }}' [matTooltipShowDelay]='1000' class='label-help'>
+      help_outline
+    </mat-icon>
     <div class='spacer'></div>
-    <mat-form-field class='test'>
-      <input id='test-input' matInput type='text' #field (keyup.enter)='field.blur()'
+    <mat-form-field class='customInputForm'>
+      <input class='customInput' matInput type='text' #field (keyup.enter)='field.blur()'
              [formControlName]='this._formControl'>
     </mat-form-field>
-
-    <!--    <input-->
-    <!--      id='block-input-box'-->
-    <!--      type='text'-->
-    <!--      #field-->
-    <!--      (keyup.enter)='field.blur()'-->
-    <!--      [formControlName]='this._formControl'-->
-    <!--    />-->
-    <!--    <span id='block-input-units'>{{ this.unit }}</span>-->
   </div>
 </div>

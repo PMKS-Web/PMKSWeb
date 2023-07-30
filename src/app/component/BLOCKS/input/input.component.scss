@@ -13,33 +13,10 @@
 
   #input-block {
 
-    #block-input-box {
-      //font-size: 14px;
-      //font-weight: 400;
-      width: 80px;
-      border: 0;
-      outline: none;
-      background-color: mat.get-color-from-palette($primary-palette, 50);
-      border-radius: var(--border-radius);
-      padding: 5px;
-
-      //When the input is focused
-      &:focus {
-        margin-bottom: 0px;
-        background-color: mat.get-color-from-palette($primary-palette, 100);
-        //add a bottom border
-        border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
-        //no more roudned corners in for the bottom
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    .customInputForm {
+      .customInput {
+        @include mat.typography-level($typography-config, 'body-2');
       }
-    }
-
-    #test-input {
-      //color: red;
-      @include mat.typography-level($typography-config, 'body-2');
-    }
-
-    .test {
 
       .mat-mdc-form-field-subscript-wrapper {
         display: none;
@@ -53,23 +30,13 @@
         //background-color: #eff1f8;
         background-color: #f0f1f5;
       }
+
+      .mat-mdc-text-field-wrapper {
+        height: 30px;
+        width: 100px;
+        padding: 0 6px;
+      }
     }
 
-    .test > .mat-mdc-text-field-wrapper {
-      height: 30px;
-      width: 100px;
-      padding: 0 6px;
-    }
-
-    //#block-input-units {
-    //  //font-size: 14px;
-    //  //font-weight: 200;
-    //  color: mat.get-color-from-palette($foreground, 'disabled-text');
-    //
-    //  text-align: right;
-    //  padding-right: 5px;
-    //  margin-left: -35px;
-    //  width: 30px;
-    //}
   }
 }

@@ -15,6 +15,7 @@
 @use 'app/component/BLOCKS/toggle/toggle.component.scss' as toggle-block;
 @use 'app/component/BLOCKS/blocks.common.scss' as blocks-common;
 @use 'app/component/BLOCKS/editable-title/editable-title.component.scss' as editable-title-block;
+@use 'app/component/BLOCKS/collapsible-subseciton/collapsible-subseciton.component.scss' as collapsible-subseciton;
 @use 'src/app/component/analysis-panel/analysis-panel.component.scss' as analysis-panel;
 @use 'src/app/component/analysis-graph/analysis-graph.component.scss' as analysis-graph;
 @use 'src/app/component/right-panel/right-panel.component.scss' as right-panel;
@@ -95,5 +96,6 @@ $my-theme: mat.define-light-theme(
 @include subtitle-block.css($my-theme);
 @include toggle-block.css($my-theme);
 @include editable-title-block.css($my-theme);
+@include collapsible-subseciton.css($my-theme);
 
 @include templates.css($my-theme);

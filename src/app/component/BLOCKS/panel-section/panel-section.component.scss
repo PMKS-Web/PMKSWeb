@@ -17,10 +17,10 @@
     border-radius: var(--border-radius);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    //gap: 10px;
     background-color: mat.get-color-from-palette($background, 'background');
     border-top: 5px solid mat.get-color-from-palette($primary-palette, 500);
-    padding: 20px;
+    //padding: 20px;
 
     > * {
       width: 100%;
