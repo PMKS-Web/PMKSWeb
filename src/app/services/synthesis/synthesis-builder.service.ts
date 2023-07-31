@@ -163,9 +163,9 @@ export class SynthesisBuilderService {
       this.poses[i].position = new Coord(maybeX, maybeY);
 
       // if theta is a number, update theta
-      const [successTheta, maybeTheta] = this.nup.parseLengthString(
+      const [successTheta, maybeTheta] = this.nup.parseAngleString(
         form[`p${i}theta`],
-        this.settings.lengthUnit.getValue()
+        this.settings.angleUnit.getValue()
       );
       if (!successTheta) {
         console.log("invalid theta");
