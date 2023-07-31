@@ -330,96 +330,155 @@ export class MechanismService {
       // });
     } else if (joint.isWelded) {
       //WE ARE UNWELDING THE JOINT
-      let mainLink = joint.links[0] as RealLink;
-      const subset = mainLink.subset;
-      subset.forEach((l, l_index) => {
+      // TODO: INSERT AFTER HERE
+      // Previous Logic
+      // this.activeObjService.selectedJoint.isWelded = false;
+      // joint.isWelded = false;
+      this.activeObjService.selectedJoint.links.forEach(l => {
         if (!(l instanceof RealLink)) {
-          return;
+          return
         }
-        if (l.joints.findIndex((j) => j.id === joint.id) === -1) {
-          return;
-        }
-        if (l_index === subset.length - 1) {
-          return;
-        }
-        l.joints.forEach((j1, j_index) => {
-          if (!(j1 instanceof RealJoint)) {
-            return;
+        let idSubs: string[] = [];
+        l.subset.forEach((s) =>
+            idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, ''))
+        );
+        for (let l_subset_index = 0; l_subset_index < (l as RealLink).subset.length; l_subset_index = l_subset_index + 1) {
+          if (!(l instanceof RealLink)) {
+            return
           }
-          if (j1.id === joint.id) {
-            return;
-          }
-          mainLink.joints.forEach((j) => {
-            if (!(j instanceof RealJoint)) {
-              return;
+          const sub = l.subset[l_subset_index];
+          const selectedJoint = this.activeObjService.selectedJoint;
+          const tempIdSubs = idSubs.filter((str) => str !== sub.id);
+          // sub contains id that is not shared with any other subset
+          let sharedJoint = false;
+          for (let letterIndex = 0; letterIndex < sub.id.length; letterIndex = letterIndex + 1) {
+            const letter = sub.id[letterIndex];
+            if (letter === selectedJoint.id) {
+              continue
             }
-            j.links.splice(
-              j.links.findIndex((l2) => l2.id === mainLink.id),
-              1
-            );
-          });
-          j1.links.push(l);
-          mainLink.joints.splice(
-            mainLink.joints.findIndex((j3) => j3.id === j1.id),
-            1
-          );
-          mainLink.id = mainLink.id.replace(j1.id, '');
-          mainLink.fixedLocations.splice(
-            mainLink.fixedLocations.findIndex((obj) => obj.id === j1.id),
-            1
-          );
-          if (mainLink.fixedLocation.fixedPoint === j1.id) {
-            mainLink.fixedLocation.fixedPoint = 'com';
-          }
-          mainLink.subset.splice(
-            mainLink.subset.findIndex((l2) => l2.id === l.id),
-            1
-          );
-          if (mainLink.subset.length === 1) {
-            mainLink = mainLink.subset[0] as RealLink;
-            this.links.splice(
-              this.links.findIndex((l2) => l2.id === mainLink.id),
-              1
-            );
-            this.links.push(mainLink);
-          }
-          mainLink.joints.forEach((j3) => {
-            if (!(j3 instanceof RealJoint)) {
-              return;
+            if (tempIdSubs.includes(letter)) {
+              sharedJoint = true;
             }
-            j3.links.push(mainLink);
-          });
-          for (
-            let connectedLinkIndex = l_index + 1;
-            connectedLinkIndex < subset.length;
-            connectedLinkIndex++
-          ) {
-            subset[connectedLinkIndex].joints.forEach((j2) => {
-              if (!(j2 instanceof RealJoint)) {
-                return;
-              }
-              if (j2.id === j1.id) {
-                return;
-              }
-              if (j2.id === joint.id) {
-                return;
-              }
-              j1.connectedJoints.splice(
-                j1.connectedJoints.findIndex((j3) => j3.id === j1.id),
-                1
+          }
+          // determine whether subset contains any joints that other subsets rather besides the selected joint
+          if (sharedJoint) {
+            // This link will be pushed to this.links
+            if (sub.joints.length > 1) {
+              sub.joints.forEach((childJoint) => {
+                if (!(childJoint instanceof RealJoint)) {
+                  return;
+                }
+                let delLinkIndex = childJoint.links.findIndex((li) => li.id === l.id);
+                if (delLinkIndex !== -1) {
+                  childJoint.links.splice(delLinkIndex, 1);
+                }
+                childJoint.links.push(sub);
+                if (childJoint.id === selectedJoint.id) {
+                  return;
+                }
+                childJoint.connectedJoints = [];
+                childJoint.links.forEach((li) => {
+                  if (!(li instanceof RealLink)) {
+                    return;
+                  }
+                  li.joints.forEach((jt) => {
+                    // childJoint does not contain this joint and it is not replicate of itself
+                    if (
+                        childJoint.connectedJoints.findIndex((jt2) => jt2.id === jt.id) !== -1 ||
+                        jt.id === childJoint.id
+                    ) {
+                      return;
+                    }
+                    childJoint.connectedJoints.push(jt);
+                  });
+                });
+              });
+              this.links.push(sub);
+              // This is an orphaned joint
+            } else if (sub.joints.length === 1) {
+              // regular orphaned joint
+              const delLinkIndex = (sub.joints[0] as RealJoint).links.findIndex(
+                  (li) => li.id === l.id
               );
-              j2.connectedJoints.splice(
-                j2.connectedJoints.findIndex((j3) => j3.id === j2.id),
-                1
+              (sub.joints[0] as RealJoint).links.splice(delLinkIndex, 1);
+              (sub.joints[0] as RealJoint).connectedJoints = [];
+              (sub.joints[0] as RealJoint).links.forEach((childLink) => {
+                if (!(childLink instanceof RealLink)) {
+                  return;
+                }
+                // Check to see if joint from link already within connectedJoints
+                childLink.joints.forEach((jt) =>
+                    (sub.joints[0] as RealJoint).connectedJoints.push(jt)
+                );
+              });
+              const fixedLocationIndex = l.fixedLocations.findIndex(
+                  (fixedloc) => fixedloc.id === sub.joints[0].id
               );
-              j2.links.push(mainLink);
+              l.fixedLocations.splice(fixedLocationIndex, 1);
+              if (l.fixedLocation.fixedPoint === sub.joints[0].id) {
+                l.fixedLocation.fixedPoint = 'com';
+              }
+            }
+            const sliceIndex = l.subset.findIndex((s) => s.id === sub.id);
+            l.subset.splice(sliceIndex, 1);
+            // go through the original link (l) and make sure
+            // 1. the link does not contain any joints from sub
+            // 2. l's joints' neighboring joint does not contain joints from sub
+            sub.joints.forEach((jt) => {
+              if (!(jt instanceof RealJoint) || jt.id === selectedJoint.id) {
+                return;
+              }
+              const deleteJointIndex = l.joints.findIndex((jt2) => jt2.id === jt.id);
+              if (deleteJointIndex === -1) {
+                return;
+              }
+              l.joints.splice(deleteJointIndex, 1);
+              l.id = l.id.replace(jt.id, '');
             });
+            // l.joints.forEach((jt) => {
+            //   if (!(jt instanceof RealJoint)) {
+            //     return;
+            //   }
+            //   for (let connectedJointIndex = 0; connectedJointIndex < jt.connectedJoints.length; connectedJointIndex++) {
+            //     const jt2 = jt.connectedJoints[connectedJointIndex] as RealJoint;
+            //     // if jt2 within sub, splice jt2
+            //     const delConnectedJoint = sub.joints.findIndex((jt3) => jt3.id === jt2.id) !== -1;
+            //     if (delConnectedJoint || jt2.id === selectedJoint.id) {
+            //       jt.connectedJoints.splice(connectedJointIndex, 1);
+            //       connectedJointIndex = connectedJointIndex - 1;
+            //     }
+            //     // make sure the deletedJoint is also not a connectedJoint
+            //   }
+            // });
+            l_subset_index = l_subset_index - 1;
+          } else if (sub.id.length === 1) {
+            // special case, can slice this subset
+            // TODO: Verify this is still needed...
+            l.subset.splice(l_subset_index, 1);
+            l_subset_index = l_subset_index - 1;
           }
+        }
+        // Now that all subsets have been gone over, do the final check
+        if (l.subset.length === 1) {
+          l = l.subset[0];
+          const delLinkIndex = this.links.findIndex((li) => li.id === l.id);
+          this.links.splice(delLinkIndex, 1);
           this.links.push(l);
-          joint.links.push(l);
-        });
-        // subset.splice(l_index, 1);
+          l.joints.forEach((jt) => {
+            if (!(jt instanceof RealJoint)) {
+              return;
+            }
+            // jt.isWelded = false;
+            if (jt.id === joint.id) {
+              jt.links.push(l);
+            }
+          });
+        } else if (l.subset.length === 0) {
+          const sliceIndex = this.links.findIndex((li) => li.id === l.id);
+          this.links.splice(sliceIndex, 1);
+        }
       });
+      // TODO: INSERT BEFORE HERE
     }
     joint.isWelded = !joint.isWelded;
     this.updateMechanism();
@@ -558,18 +617,12 @@ export class MechanismService {
         l.subset.forEach((s) =>
           idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, ''))
         );
-        // {
-        // const replacedID = s.id.replace(this.activeObjService.selectedJoint.id, "");
-        // idSubs.push(replacedID);
-        // }
-        // )
         function deleteJointFromLink(l: Link, j: Joint) {
           let delJointIndex = l.joints.findIndex((jt) => jt.id === j.id);
           if (delJointIndex === -1) {
             return;
           }
           l.joints.splice(delJointIndex, 1);
-          // TODO: Should we also iterate through the joint as well and delete the link from the joint...?
           l.id = l.id.replace(j.id, '');
           delJointIndex = l.fixedLocations.findIndex((fixed) => fixed.id === j.id);
           if (delJointIndex === -1) {
@@ -581,11 +634,7 @@ export class MechanismService {
           }
         }
 
-        for (
-          let l_subset_index = 0;
-          l_subset_index < l.subset.length;
-          l_subset_index = l_subset_index + 1
-        ) {
+        for (let l_subset_index = 0; l_subset_index < l.subset.length; l_subset_index = l_subset_index + 1) {
           const sub = l.subset[l_subset_index];
           const selectedJoint = this.activeObjService.selectedJoint;
           deleteJointFromLink(l, selectedJoint);
@@ -640,7 +689,6 @@ export class MechanismService {
                 l_subset_index = l_subset_index - 1;
                 continue;
               }
-              // const cond1 = l.joints.findIndex(jt => jt.id === sub.joints[0].id) !== -1;
               // regular orphaned joint
               const delLinkIndex = (sub.joints[0] as RealJoint).links.findIndex(
                 (li) => li.id === l.id
@@ -710,33 +758,7 @@ export class MechanismService {
             l.subset.splice(l_subset_index, 1);
             l_subset_index = l_subset_index - 1;
           }
-          // make sure to also delete this within parentSub as well
-          // for (let childJointIndex = 0; childJointIndex < sub.joints.length; childJointIndex++) {
-          //   const jointIndex = l.joints.findIndex(jt2 => jt2.id === sub.joints[childJointIndex].id);
-          //   if (jointIndex === -1) {continue}
-          //   l.id = l.id.replace(l.joints[jointIndex].id, '');
-          //   l.joints.splice(jointIndex, 1);
-          // }
-          // for (let parentJointIndex = 0; parentJointIndex < parentSub.joints.length; parentJointIndex = parentJointIndex + 1) {
-          //   // parentSub.joints.forEach(jt => {
-          //     const jointIndex = childSub.joints.findIndex(jt2 => jt2.id === parentSub.joints[parentJointIndex].id);
-          //     if (jointIndex === -1) {continue}
-          //     parentSub.id = parentSub.id.replace(childSub.joints[jointIndex].id, '');
-          //   // parentSub.id = parentSub.id.replace(parentSub.joints[parentJointIndex].id, '');
-          //   // TODO: Is this correct???
-          //     parentSub.joints.splice(jointIndex, 1);
-          //     parentJointIndex = parentJointIndex - 1;
-          //   // });
-          // }
-          // childSub.joints.forEach(jt => {
-          //   const jointIndex = parentSub.joints.findIndex(jt2 => jt2.id === jt.id);
-          //   if (jointIndex === -1) {return}
-          //   parentSub.joints.splice(jointIndex, 1);
-          //   parentSub.id = parentSub.id.replace(jt.id, '');
-          // });
-          // deleteSubJoint(idSubs, l.subset[l_subset_index] as RealLink, l as RealLink, this.activeObjService.selectedJoint, this.links)
         }
-        // l.subset.forEach(s => deleteSubJoint(idSubs, s as RealLink, l as RealLink, this.activeObjService.selectedJoint, this.links));
         // Now that all subsets have been gone over, do the final check
         if (l.subset.length === 1) {
           l = l.subset[0];
