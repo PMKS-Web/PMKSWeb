@@ -34,6 +34,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { ColorService } from '../../services/color.service';
 
 @Component({
   selector: 'app-new-grid',
@@ -56,7 +57,8 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private colorService: ColorService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -503,8 +505,10 @@ export class NewGridComponent {
         }
         // force is in link. Check to make sure that the force is not on top of a joint
         if (isIn) {
-          this.activeObjService.selectedLink.joints.forEach(j => {
-            if (!(j instanceof RealJoint)) {return}
+          this.activeObjService.selectedLink.joints.forEach((j) => {
+            if (!(j instanceof RealJoint)) {
+              return;
+            }
             const x = j.x;
             const y = j.y;
             const r = this.settings.objectScale * j.r * 2;
@@ -687,19 +691,25 @@ export class NewGridComponent {
                 // TODO: utilize dot product to find point that is closest to the line
                 if (this.activeObjService.selectedLink.joints.length === 2) {
                   const lineVector: Coord = new Coord(
-                    this.activeObjService.selectedLink.joints[0].x - this.activeObjService.selectedLink.joints[1].x,
-                    this.activeObjService.selectedLink.joints[0].y - this.activeObjService.selectedLink.joints[1].y);
+                    this.activeObjService.selectedLink.joints[0].x -
+                      this.activeObjService.selectedLink.joints[1].x,
+                    this.activeObjService.selectedLink.joints[0].y -
+                      this.activeObjService.selectedLink.joints[1].y
+                  );
 
                   // Calculate the vector from the first point on the line to the given point
                   const givenPointVector: Coord = new Coord(
                     startCoord.x - this.activeObjService.selectedLink.joints[0].x,
-                    startCoord.y - this.activeObjService.selectedLink.joints[0].y);
+                    startCoord.y - this.activeObjService.selectedLink.joints[0].y
+                  );
 
                   // Calculate the dot product of the line vector and the given point vector
-                  const dotProduct: number = givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
+                  const dotProduct: number =
+                    givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
 
                   // Calculate the length of the line vector squared
-                  const lineLengthSquared: number = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+                  const lineLengthSquared: number =
+                    lineVector.x * lineVector.x + lineVector.y * lineVector.y;
 
                   // Calculate the parameter t for the projection onto the line
                   const t: number = dotProduct / lineLengthSquared;

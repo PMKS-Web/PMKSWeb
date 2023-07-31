@@ -30,6 +30,7 @@ import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { Arc, Line } from './line';
 import { get, set } from '@angular/fire/database';
 import { first, last } from 'rxjs';
+import { ColorService } from '../services/color.service';
 
 export enum Shape {
   line = 'line',
@@ -134,7 +135,7 @@ export class Link {
 }
 
 export class RealLink extends Link {
-  private _fill: string = RealLink.colorOptions[0]; //The fill color
+  private _fill: string = 'Set Later';
   // private _shape: Shape; //Shape is the shape of the link
   // private _bound: Bound; //The rectengualr area the link is encompassed by
   private _d: string; //SVG path
@@ -158,18 +159,6 @@ export class RealLink extends Link {
   //For debugging:
   public unqiqueRandomID: string =
     Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-  private static colorOptions = [
-    '#0d125a',
-    // '#283493',
-    '#303e9f',
-    // '#3948ab',
-    // '#3f50b5',
-    // '#5c6ac0',
-    // '#7986cb',
-    // '#9fa8da',
-    '#c5cae9',
-  ].reverse();
 
   // TODO: Have an optional argument of forces
 
@@ -197,35 +186,8 @@ export class RealLink extends Link {
     // this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
     // this._fill = RealLink.colorOptions[Math.floor(Math.random() * RealLink.colorOptions.length)];
 
-    //Find the colors of the other links connected
-    let colors: string[] = [];
-    joints.forEach((j) => {
-      //Check if the joint is a real joint
-      if (j instanceof RealJoint) {
-        //Cast to real joint
-        let rj = j as RealJoint;
-        rj.links.forEach((l) => {
-          if (l.id !== this.id) {
-            colors.push((l as RealLink)._fill);
-          }
-        });
-      }
-    });
+    this._fill = ColorService.instance.getNextColor();
 
-    if (colors.length > 0) {
-      //Set the color to the first color that is not already used
-      let found = false;
-      for (let i = 0; i < RealLink.colorOptions.length; i++) {
-        if (!colors.includes(RealLink.colorOptions[i])) {
-          this._fill = RealLink.colorOptions[i];
-          found = true;
-          break;
-        }
-      }
-    } else {
-      // console.log('No colors found');
-      this._fill = RealLink.colorOptions[0];
-    }
     if (subSet === undefined || subSet.length === 0) {
       // this.subset = [];
     } else {
@@ -535,7 +497,6 @@ export class RealLink extends Link {
   }
 
   getHullPoints(): number[][] {
-
     const allJoints = this.joints;
 
     //Convert joints to simple x, y array
@@ -547,7 +508,6 @@ export class RealLink extends Link {
   // hull with the point added to allJoints, and determine if the new hull
   // contains the added (x,y) point
   isPointInsideHull(x: number, y: number): boolean {
-
     let points = this.joints.map((j) => [j.x, j.y]);
     points.push([x, y]);
     const hullPoints = hull(points, Infinity);
@@ -557,7 +517,7 @@ export class RealLink extends Link {
       if (point[0] === x && point[1] === y) {
         hullContainsPoint = true;
       }
-    })
+    });
 
     return !hullContainsPoint;
   }
