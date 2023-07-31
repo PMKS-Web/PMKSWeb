@@ -4,6 +4,8 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { COR, SynthesisPose } from './synthesis-util';
 import { Coord } from 'src/app/model/coord';
 import { SynthesisConstants } from './synthesis-constants';
+import { NumberUnitParserService } from '../number-unit-parser.service';
+import { SettingsService } from '../settings.service';
 
 /*
 Service responsible for storing end effector poses to be synthesized
@@ -26,7 +28,7 @@ export class SynthesisBuilderService {
   poses: { [key : number]: SynthesisPose }; // a dictionary of poses, but including each pose is optional
 
 
-  constructor() { 
+  constructor(private nup: NumberUnitParserService, private settings: SettingsService) { 
 
     this.valueChanges = new Subject<any>();
     this.constants = new SynthesisConstants();
@@ -132,8 +134,11 @@ export class SynthesisBuilderService {
     else this._COR = COR.FRONT;
 
     // if length is a number and positive, update length
-    let maybeLength = Number(form["length"]);
-    if (isNaN(maybeLength) || maybeLength <= 0) {
+    const [success, maybeLength] = this.nup.parseLengthString(
+      form["length"],
+      this.settings.lengthUnit.getValue()
+    );
+    if (!success) {
       console.log("invalid length");
       return false;
     }
@@ -143,17 +148,26 @@ export class SynthesisBuilderService {
       if (!this.isPoseDefined(i)) continue;
 
       // if x and y are numbers, update position
-      let maybeX = Number(form[`p${i}x`]);
-      let maybeY = Number(form[`p${i}y`]);
-      if (isNaN(maybeX) || isNaN(maybeY)) {
+      const [successX, maybeX] = this.nup.parseLengthString(
+        form[`p${i}x`],
+        this.settings.lengthUnit.getValue()
+      );
+      const [successY, maybeY] = this.nup.parseLengthString(
+        form[`p${i}y`],
+        this.settings.lengthUnit.getValue()
+      );
+      if (!successX || !successY) {
         console.log("invalid coord");
         return false;
       }
       this.poses[i].position = new Coord(maybeX, maybeY);
 
       // if theta is a number, update theta
-      let maybeTheta = Number(form[`p${i}theta`]);
-      if (isNaN(maybeTheta)) {
+      const [successTheta, maybeTheta] = this.nup.parseLengthString(
+        form[`p${i}theta`],
+        this.settings.lengthUnit.getValue()
+      );
+      if (!successTheta) {
         console.log("invalid theta");
         return false;
       }

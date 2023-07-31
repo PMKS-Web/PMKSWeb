@@ -11,6 +11,8 @@ import { Mechanism } from '../../model/mechanism/mechanism';
 import { Link, RealLink } from '../../model/link';
 import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
+import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
+import { SettingsService } from 'src/app/services/settings.service';
 
 @Component({
   selector: 'app-synthesis-panel',
@@ -24,7 +26,9 @@ PoseID: any;
 
     constructor(private fb: FormBuilder,
     public mechanismSrv: MechanismService,
-    public synthesisBuilder: SynthesisBuilderService
+    public synthesisBuilder: SynthesisBuilderService,
+    private nup: NumberUnitParserService,
+    private settings: SettingsService
     ) {
 
     }
@@ -105,6 +109,14 @@ PoseID: any;
 
   }
 
+  private convertL(value: number): string {
+    return this.nup.formatValueAndUnit(value, this.settings.lengthUnit.getValue());
+  }
+
+  private convertA(value: number): string {
+    return this.nup.formatValueAndUnit(value, this.settings.angleUnit.getValue());
+  }
+
   // given synthesis model, update form values to sync with model
   updateFormFromModel() {
 
@@ -113,23 +125,22 @@ PoseID: any;
     let poses = this.synthesisBuilder.poses;
     let controls = this.synthesisPoseForm.controls;
 
-    controls.length.setValue(this.synthesisBuilder.length.toString());
+    controls.length.setValue(this.convertL(this.synthesisBuilder.length));
     
     if (this.synthesisBuilder.isPoseDefined(1)) {
-        controls.p1x.setValue(poses[1].position.x.toString());
-        controls.p1y.setValue(poses[1].position.y.toString());
-        console.log("one", poses[1].thetaDegrees.toString())
-        controls.p1theta.setValue(poses[1].thetaDegrees.toString());
+        controls.p1x.setValue(this.convertL(poses[1].position.x));
+        controls.p1y.setValue(this.convertL(poses[1].position.y));
+        controls.p1theta.setValue(this.convertA(poses[1].thetaDegrees));
     }
     if (this.synthesisBuilder.isPoseDefined(2)) {
-        controls.p2x.setValue(poses[2].position.x.toString());
-        controls.p2y.setValue(poses[2].position.y.toString());
-        controls.p2theta.setValue(poses[2].thetaDegrees.toString());
+        controls.p2x.setValue(this.convertL(poses[2].position.x));
+        controls.p2y.setValue(this.convertL(poses[2].position.y));
+        controls.p2theta.setValue(this.convertA(poses[2].thetaDegrees));
     }
     if (this.synthesisBuilder.isPoseDefined(3)) {
-        controls.p3x.setValue(poses[3].position.x.toString());
-        controls.p3y.setValue(poses[3].position.y.toString());
-        controls.p3theta.setValue(poses[3].thetaDegrees.toString());
+        controls.p3x.setValue(this.convertL(poses[3].position.x));
+        controls.p3y.setValue(this.convertL(poses[3].position.y));
+        controls.p3theta.setValue(this.convertA(poses[3].thetaDegrees));
     }
 
     this._alreadyHandlingPoseChange = false;
