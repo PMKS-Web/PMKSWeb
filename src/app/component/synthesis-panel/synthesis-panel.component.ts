@@ -91,6 +91,9 @@ PoseID: any;
     // when model updates, update form values as well
     this.synthesisBuilder.valueChanges.subscribe((value) => {
         this.updateFormFromModel();
+        if (this.synthesisBuilder.isFullyDefined()) {
+            this.synthesisFunction();
+        }
     });
 
     // set up subscriptions to synthesis form changes to update model
@@ -103,6 +106,10 @@ PoseID: any;
 
         let valid = this.synthesisBuilder.updatePosesFromForm(value);
         this.updateFormFromModel();
+
+        if (this.synthesisBuilder.isFullyDefined()) {
+            this.synthesisFunction();
+        }
 
         this._alreadyHandlingPoseChange = false;
     });
@@ -295,6 +302,8 @@ PoseID: any;
 
         this.mechanismSrv.mergeToJoints([joint1, joint2, joint3, joint4]);
         this.mechanismSrv.mergeToLinks([link1, link2, link3]);
+
+        this.mechanismSrv.mechanismTimeStep = 0;
         this.mechanismSrv.updateMechanism();
 
         var posCoords = [pose1_coord1, pose1_coord2, pose2_coord1, pose2_coord2, pose3_coord1, pose3_coord2];
