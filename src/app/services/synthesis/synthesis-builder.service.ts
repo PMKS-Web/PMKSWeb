@@ -125,6 +125,11 @@ export class SynthesisBuilderService {
     return undefined;
   }
 
+  deleteAllPoses(): void {
+    this.poses = {};
+    this.valueChanges.next(true);
+  }
+
   // given form, update poses
   // if form is invalid, return false to revert form
   updatePosesFromForm(form: {[key: string]: any}): boolean {
