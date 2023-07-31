@@ -10,6 +10,8 @@ export class SynthesisConstants {
     public COR_RADIUS: number = 0.1;
     public COR_COLOR: string = "black";
 
+    public ROTATION_SIZE: number = 0.2;
+
     constructor() {
 
     }

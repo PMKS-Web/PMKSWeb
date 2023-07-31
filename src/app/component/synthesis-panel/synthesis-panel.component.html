@@ -68,7 +68,7 @@
             Generate Linkage
         </button-block>
 
-        <button-block icon="trash" [disabled]="synthesisBuilder.getAllPoses().length === 0" (click)="synthesisBuilder.deleteAllPoses()">
+        <button-block [disabled]="synthesisBuilder.getAllPoses().length === 0" (click)="synthesisBuilder.deleteAllPoses()">
             Reset All
         </button-block>
 

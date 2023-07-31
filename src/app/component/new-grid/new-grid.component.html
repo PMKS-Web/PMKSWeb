@@ -161,14 +161,20 @@
     [attr.fill]="sConstants.COR_COLOR"
     [class]=""
     />
-      <text
-        transform="scale(+1,-1)"
-        [attr.x]="pose.posCenter.x"
-        [attr.y]="-pose.posCenter.y"
-        style='font-size: {{svgGrid.scaleWithZoom(30)}}; text-anchor: middle'
-      >
-        {{pose.id}}
-      </text>
+
+    <text
+      transform="scale(+1,-1)"
+      [attr.x]="pose.posCenter.x"
+      [attr.y]="-pose.posCenter.y-0.2"
+      style='font-size: {{svgGrid.scaleWithZoom(35)}}; text-anchor: middle'
+    >
+      {{pose.id}}
+    </text>
+
+    <image
+    xlink:href='../../../assets/rotate.svg'
+    [attr.x]='pose.position.x' [attr.y]='pose.position.y' [attr.height]='svgGrid.scaleWithZoom(10)' [attr.height]='svgGrid.scaleWithZoom(10)' />
+
     </svg>
     </g>
 
