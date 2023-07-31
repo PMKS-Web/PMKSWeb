@@ -433,6 +433,10 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+          return;
+        }
         this.activeObjService.selectedJoint = this.gridUtils.dragJoint(
           this.activeObjService.selectedJoint,
           mousePosInSvg
@@ -469,6 +473,10 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+          return;
+        }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
         //So that the panel values update continously
@@ -483,6 +491,10 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+          return;
+        }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
         //So that the panel values update continously
@@ -492,6 +504,12 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+      this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+      console.log(this.contextMenu);
+      this.contextMenu.close();
+      return;
+    }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
       this.sendNotification('Stop animation (or reset to 0 position) to edit');
       //Close the MatContextMenu
