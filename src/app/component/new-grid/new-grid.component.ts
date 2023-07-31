@@ -506,8 +506,7 @@ export class NewGridComponent {
   onContextMenu($event: MouseEvent) {
     if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
       this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
-      console.log(this.contextMenu);
-      this.contextMenu.close();
+      this.cMenuItems = [];
       return;
     }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
