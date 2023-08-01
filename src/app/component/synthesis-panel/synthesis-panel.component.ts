@@ -9,10 +9,10 @@ import { MechanismService } from '../../services/mechanism.service';
 import { MechanismBuilder } from '../../services/transcoding/mechanism-builder';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import { Link, RealLink } from '../../model/link';
-import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 import { NumberUnitParserService } from 'src/app/services/number-unit-parser.service';
 import { SettingsService } from 'src/app/services/settings.service';
+import { SynthesisStatus } from 'src/app/services/synthesis/synthesis-constants';
 
 @Component({
   selector: 'app-synthesis-panel',
@@ -320,7 +320,7 @@ PoseID: any;
 
         //now check if there is 999 in the quality. Count 999 and say which position matches
 
-        var whichPositionMatches = this.checkQuality(quality);
+        let whichPositionMatches = this.checkQuality(quality);
 
          NewGridComponent.sendNotification('Position Matches:'+ whichPositionMatches[0] + ',' + whichPositionMatches[1] + ','+whichPositionMatches[2]);
 
@@ -330,9 +330,24 @@ PoseID: any;
     checkQuality(quality: number[]) {
 
         let positionMatches: string[]=['Position 1','Position 2','Position 3'];
-        if (quality[0] >= 0.09 || quality[1] >= 0.09) { positionMatches[0] = "No Match"; }
-        if (quality[3] >= 0.09 || quality[4] >= 0.09) { positionMatches[1] = "No Match"; }
-        if (quality[6] >= 0.09 || quality[7] >= 0.09) { positionMatches[2] = "No Match"; }
+        if (quality[0] >= 0.09 || quality[1] >= 0.09) {
+            positionMatches[0] = "No Match";
+            this.synthesisBuilder.poses[1].status = SynthesisStatus.INVALID;
+        } else {
+            this.synthesisBuilder.poses[1].status = SynthesisStatus.VALID;
+        }
+        if (quality[3] >= 0.09 || quality[4] >= 0.09) {
+            positionMatches[1] = "No Match";
+            this.synthesisBuilder.poses[2].status = SynthesisStatus.INVALID;
+        } else {
+            this.synthesisBuilder.poses[2].status = SynthesisStatus.VALID;
+        }
+        if (quality[6] >= 0.09 || quality[7] >= 0.09) {
+            positionMatches[2] = "No Match";
+            this.synthesisBuilder.poses[3].status = SynthesisStatus.INVALID;
+        } else {
+            this.synthesisBuilder.poses[3].status = SynthesisStatus.VALID;
+        }
 
         return positionMatches;
 

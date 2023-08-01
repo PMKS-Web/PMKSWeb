@@ -120,7 +120,7 @@
           (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
           [attr.d]="pose.pathString"
           [attr.id]=''
-          [attr.fill]="pose.showHighlight ? sConstants.LINK_COLOR_H : sConstants.LINK_COLOR"
+          [attr.fill]="pose.showHighlight ? sConstants.LINK_COLOR_H[pose.status] : sConstants.LINK_COLOR[pose.status]"
           [attr.fill-opacity]=0.7
           [class]=''
         >

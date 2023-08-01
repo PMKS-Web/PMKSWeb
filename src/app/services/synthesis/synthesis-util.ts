@@ -1,5 +1,5 @@
 import { Coord } from "src/app/model/coord"
-import { SynthesisConstants } from "./synthesis-constants";
+import { SynthesisConstants, SynthesisStatus } from "./synthesis-constants";
 
 export enum COR {
     BACK = "BACK",
@@ -20,6 +20,8 @@ export class SynthesisPose {
 
     public showHighlight: boolean = false;
     private sConstants = new SynthesisConstants();
+
+    private _status: SynthesisStatus = SynthesisStatus.DISABLED;
 
 
     constructor(
@@ -76,6 +78,14 @@ export class SynthesisPose {
         thetaDegrees %= 360;
         this._thetaRadians = thetaDegrees * Math.PI / 180;
         this.recompute();
+    }
+
+    get status(): SynthesisStatus {
+        return this._status;
+    }
+
+    set status(status: SynthesisStatus) {
+        this._status = status;
     }
 
     // recompute cached data like endpoint positions
