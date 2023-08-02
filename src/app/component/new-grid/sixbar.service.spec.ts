@@ -908,15 +908,181 @@ describe('SixbarService', () => {
 
   describe('AngularLinkVelocity', () => {
     it('should show the calculated Angular Position DO match the expected', () => {
-      const resultMatch = true;
-      expect(resultMatch).toBe(true);
+      const expectedALV = {
+        LinkAB:  [10, 10, 10, 10, 10, 10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, 10, 10, 10, 10, 10],
+        LinkBCD: [-16.26554262, -17.93748258, -20.34706128, -24.22280652, -31.97606093, -64.13140386, 31.97606093, 24.22280652, 20.34706128, 17.93748258, 16.26554262, 15.02556858, 14.06393749, 13.29391597, 12.6623574, 12.13464763, -12.6623574, -13.29391597, -14.06393749, -15.02556858, -16.26554262],
+        LinkDE:  [24.08730567, 24.997205, 26.93016342, 30.62743855, 38.73173765, 74.19256461, -38.73173765, -30.62743855, -26.93016342, -24.997205, -24.08730567, -23.97737158, -24.71807142, -26.70779569, -31.33707245, -46.45258511, 31.33707245, 26.70779569, 24.71807142, 23.97737158, 24.08730567],
+        LinkEF:  [-29.23901075, -29.43643172, -30.69634164, -33.65027184, -40.65219965, -72.2101153, 40.65219965, 33.65027184, 30.69634164, 29.43643172, 29.23901075, 29.96842117, 31.79920229, 35.3836738, 42.84201734, 65.98981041, -42.84201734, -35.3836738, -31.79920229, -29.96842117, -29.23901075],
+        LinkCFG: [10.40798489, 11.56146546, 13.17468028, 15.70200282, 20.64575458, 40.7765713, -20.64575458, -15.70200282, -13.17468028, -11.56146546, -10.40798489, -9.523404364, -8.811724515, -8.21869629, -7.711049901, -7.267100173, 7.711049901, 8.21869629, 8.811724515, 9.523404364, 10.40798489],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedALV = KinematicsSolver.linkAngVelMap.get(link.id)!;
+
+          let expectedALVz = 0;
+          if (lcount == 0) {
+            expectedALVz = expectedALV['LinkAB'][index];
+          } else if (lcount == 1) {
+            expectedALVz = expectedALV['LinkBCD'][index];
+          } else if (lcount == 2) {
+            expectedALVz = expectedALV['LinkDE'][index];
+          } else if (lcount == 3) {
+            expectedALVz = expectedALV['LinkEF'][index];
+          } else if (lcount == 4) {
+            expectedALVz = expectedALV['LinkCFG'][index];
+          }
+          const distance = Math.abs(calculatedALV - expectedALVz);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(true);
+      });
+    })
+
+    it('should show the calculated Angular Position DO NOT match the expected', () => {
+      const expectedALV = {
+        LinkAB:  [5, 5, 5, 10, 10, 10, -10, -10, -10, -10, -10, -10, -10, -10, -10, -10, 10, 10, 10, 10, 10],
+        LinkBCD: [-16.26554262, -17.93748258, -20.34706128, -24.22280652, -31.97606093, -64.13140386, 31.97606093, 24.22280652, 20.34706128, 17.93748258, 16.26554262, 15.02556858, 14.06393749, 13.29391597, 12.6623574, 12.13464763, -12.6623574, -13.29391597, -14.06393749, -15.02556858, -16.26554262],
+        LinkDE:  [24.08730567, 24.997205, 26.93016342, 30.62743855, 38.73173765, 74.19256461, -38.73173765, -30.62743855, -26.93016342, -24.997205, -24.08730567, -23.97737158, -24.71807142, -26.70779569, -31.33707245, -46.45258511, 31.33707245, 26.70779569, 24.71807142, 23.97737158, 24.08730567],
+        LinkEF:  [-29.23901075, -29.43643172, -30.69634164, -33.65027184, -40.65219965, -72.2101153, 40.65219965, 33.65027184, 30.69634164, 29.43643172, 29.23901075, 29.96842117, 31.79920229, 35.3836738, 42.84201734, 65.98981041, -42.84201734, -35.3836738, -31.79920229, -29.96842117, -29.23901075],
+        LinkCFG: [10.40798489, 11.56146546, 13.17468028, 15.70200282, 20.64575458, 40.7765713, -20.64575458, -15.70200282, -13.17468028, -11.56146546, -10.40798489, -9.523404364, -8.811724515, -8.21869629, -7.711049901, -7.267100173, 7.711049901, 8.21869629, 8.811724515, 9.523404364, 10.40798489],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedALV = KinematicsSolver.linkAngVelMap.get(link.id)!;
+
+          let expectedALVz = 0;
+          if (lcount == 0) {
+            expectedALVz = expectedALV['LinkAB'][index];
+          } else if (lcount == 1) {
+            expectedALVz = expectedALV['LinkBCD'][index];
+          } else if (lcount == 2) {
+            expectedALVz = expectedALV['LinkDE'][index];
+          } else if (lcount == 3) {
+            expectedALVz = expectedALV['LinkEF'][index];
+          } else if (lcount == 4) {
+            expectedALVz = expectedALV['LinkCFG'][index];
+          }
+          const distance = Math.abs(calculatedALV - expectedALVz);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(false);
+      });
     })
   });
 
   describe('AngularLinkAcceleration', () => {
-    it('should be calculate the CoM correctly', () => {
-      const resultMatch = true;
-      expect(resultMatch).toBe(true);
+    it('should show the calculated Angular Acceleration DO match the expected', () => {
+      const expectedALA = {
+        LinkAB:  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        LinkBCD: [-814.737189, -1128.348238, -1694.720999, -2929.245, -6857.771912, -55508.48144, -6857.771912, -2929.245, -1694.720999, -1128.348238, -814.737189, -620.1492913, -489.7984134, -397.52472, -329.4261209, -277.5047308, -329.4261209, -397.52472, -489.7984134, -620.1492913, -814.737189],
+        LinkDE:  [238.0335082, 723.2802092, 1440.22527, 2869.845271, 7284.193387, 61842.45176, 7284.193387, 2869.845271, 1440.22527, 723.2802092, 238.0335082, -202.271494, -747.8814214, -1684.764203, -4087.493651, -18632.83367, -4087.493651, -1684.764203, -747.8814214, -202.271494, 238.0335082],
+        LinkEF:  [15.24971074, -518.3094244, -1234.7535, -2578.739018, -6594.689281, -55365.38237, -6594.689281, -2578.739018, -1234.7535, -518.3094244, 15.24971074, 557.7279493, 1298.600197, 2650.017171, 6217.276596, 28056.52698, 6217.276596, 2650.017171, 1298.600197, 557.7279493, 15.24971074],
+        LinkCFG: [571.7024918, 767.062113, 1120.156551, 1889.792552, 4337.153963, 34600.0401, 4337.153963, 1889.792552, 1120.156551, 767.062113, 571.7024918, 450.68982, 369.8392265, 312.8159167, 270.9327033, 239.1880013, 270.9327033, 312.8159167, 369.8392265, 450.68982, 571.7024918],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedALA = KinematicsSolver.linkAngAccMap.get(link.id)!;
+
+          let expectedALAz = 0;
+          if (lcount == 0) {
+            expectedALAz = expectedALA['LinkAB'][index];
+          } else if (lcount == 1) {
+            expectedALAz = expectedALA['LinkBCD'][index];
+          } else if (lcount == 2) {
+            expectedALAz = expectedALA['LinkDE'][index];
+          } else if (lcount == 3) {
+            expectedALAz = expectedALA['LinkEF'][index];
+          } else if (lcount == 4) {
+            expectedALAz = expectedALA['LinkCFG'][index];
+          }
+          const distance = Math.abs(calculatedALA - expectedALAz);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(true);
+      });
+    })
+
+    it('should show the calculated Angular Acceleration DO NOT match the expected', () => {
+      const expectedALA = {
+        LinkAB:  [0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        LinkBCD: [-814.737189, -1128.348238, -1694.720999, -2929.245, -6857.771912, -55508.48144, -6857.771912, -2929.245, -1694.720999, -1128.348238, -814.737189, -620.1492913, -489.7984134, -397.52472, -329.4261209, -277.5047308, -329.4261209, -397.52472, -489.7984134, -620.1492913, -814.737189],
+        LinkDE:  [238.0335082, 723.2802092, 1440.22527, 2869.845271, 7284.193387, 61842.45176, 7284.193387, 2869.845271, 1440.22527, 723.2802092, 238.0335082, -202.271494, -747.8814214, -1684.764203, -4087.493651, -18632.83367, -4087.493651, -1684.764203, -747.8814214, -202.271494, 238.0335082],
+        LinkEF:  [15.24971074, -518.3094244, -1234.7535, -2578.739018, -6594.689281, -55365.38237, -6594.689281, -2578.739018, -1234.7535, -518.3094244, 15.24971074, 557.7279493, 1298.600197, 2650.017171, 6217.276596, 28056.52698, 6217.276596, 2650.017171, 1298.600197, 557.7279493, 15.24971074],
+        LinkCFG: [571.7024918, 767.062113, 1120.156551, 1889.792552, 4337.153963, 34600.0401, 4337.153963, 1889.792552, 1120.156551, 767.062113, 571.7024918, 450.68982, 369.8392265, 312.8159167, 270.9327033, 239.1880013, 270.9327033, 312.8159167, 369.8392265, 450.68982, 571.7024918],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedALA = KinematicsSolver.linkAngAccMap.get(link.id)!;
+
+          let expectedALAz = 0;
+          if (lcount == 0) {
+            expectedALAz = expectedALA['LinkAB'][index];
+          } else if (lcount == 1) {
+            expectedALAz = expectedALA['LinkBCD'][index];
+          } else if (lcount == 2) {
+            expectedALAz = expectedALA['LinkDE'][index];
+          } else if (lcount == 3) {
+            expectedALAz = expectedALA['LinkEF'][index];
+          } else if (lcount == 4) {
+            expectedALAz = expectedALA['LinkCFG'][index];
+          }
+          const distance = Math.abs(calculatedALA - expectedALAz);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(false);
+      });
     })
   });
 });
