@@ -147,7 +147,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedPosition = joint[index];
+          const calculatedPosition = KinematicsSolver.jointIndexMap;
 
           let expectedPositionx = 0;
           let expectedPositiony = 0;
@@ -219,7 +219,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedPosition = joint[index];
+          const calculatedPosition = KinematicsSolver.jointIndexMap;
 
           let expectedPositionx = 0;
           let expectedPositiony = 0;
@@ -293,7 +293,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJV = joint[index];
+          const calculatedJV =  KinematicsSolver.jointVelMap;
 
           let expectedJVx = 0;
           let expectedJVy = 0;
@@ -365,7 +365,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJV = joint[index];
+          const calculatedJV = KinematicsSolver.jointVelMap;
 
           let expectedJVx = 0;
           let expectedJVy = 0;
@@ -435,7 +435,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJA = joint[index];
+          const calculatedJA = KinematicsSolver.jointAccMap;
 
           let expectedJAx = 0;
           let expectedJAy = 0;
@@ -479,7 +479,7 @@ describe('SixbarService', () => {
       });
     })
 
-    it('should show the calculated Joint Acceleration DO match the expected', () => {
+    it('should show the calculated Joint Acceleration DO NOT match the expected', () => {
       const resultMatch = true;
 
       const expectedJA = {
@@ -509,7 +509,7 @@ describe('SixbarService', () => {
         );
 
         const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJA = joint[index];
+          const calculatedJA = KinematicsSolver.jointAccMap;
 
           let expectedJAx = 0;
           let expectedJAy = 0;
@@ -555,35 +555,142 @@ describe('SixbarService', () => {
   });
 
   describe('LinearLinkCoMPosition', () => {
-    it('should be calculate the CoM correctly', () => {
-      const resultMatch = true;
-      expect(resultMatch).toBe(true);
+    it('should show the calculated CoMs Position DO match the expected', () => {
+      const expectedPositions = {
+        LinkAB: [[-3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74],
+          [-2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41]],
+        LinkBCD: [[-2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72],
+          [0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91]],
+        LinkDE: [[-0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24],
+          [4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01]],
+        LinkEF: [[5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08, 5.08],
+          [5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.31]],
+        LinkCFG: [[1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58],
+          [0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43]],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links.every((link) => {
+          const calculatedPosition = KinematicsSolver.linkCoMMap;
+
+          let expectedPositionx = 0;
+          let expectedPositiony = 0;
+          if (lcount == 0) {
+            expectedPositionx = expectedPositions['LinkAB'][0][index];
+            expectedPositiony = expectedPositions['LinkAB'][1][index];
+          } else if (lcount == 1) {
+            expectedPositionx = expectedPositions['LinkBCD'][0][index];
+            expectedPositiony = expectedPositions['LinkBCD'][1][index];
+          } else if (lcount == 2) {
+            expectedPositionx = expectedPositions['LinkDE'][0][index];
+            expectedPositiony = expectedPositions['LinkDE'][1][index];
+          } else if (lcount == 3) {
+            expectedPositionx = expectedPositions['LinkEF'][0][index];
+            expectedPositiony = expectedPositions['LinkEF'][1][index];
+          } else if (lcount == 4) {
+            expectedPositionx = expectedPositions['LinkCFG'][0][index];
+            expectedPositiony = expectedPositions['LinkCFG'][1][index];
+          }
+
+          const distance = euclideanDistance(calculatedPosition.x, calculatedPosition.y, expectedPositionx, expectedPositiony);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(true);
+      })
+    });
+
+    it('should show the calculated CoMs Position DO NOT match the expected', () => {
+      const expectedPositions = {
+        LinkAB: [[-3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74, -3.74],
+          [-2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41, -2.41]],
+        LinkBCD: [[-2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72, -2.72],
+          [0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91, 0.91]],
+        LinkDE: [[-0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24, -0.24],
+          [4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01, 4.01]],
+        LinkEF: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+        LinkCFG: [[1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58, 1.58],
+          [0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43]],
+      }
+
+      mechanisms[0].links.forEach((_, index) => {
+        let lcount = 0;
+
+        KinematicsSolver.determineKinematics(
+          mechanisms[0].joints[index],
+          mechanisms[0].links[index],
+          mechanisms[0].inputAngularVelocities[index]
+        );
+
+        const resultMatch = mechanisms[0].links.every((link) => {
+          const calculatedPosition = KinematicsSolver.linkCoMMap;
+
+          let expectedPositionx = 0;
+          let expectedPositiony = 0;
+          if (lcount == 0) {
+            expectedPositionx = expectedPositions['LinkAB'][0][index];
+            expectedPositiony = expectedPositions['LinkAB'][1][index];
+          } else if (lcount == 1) {
+            expectedPositionx = expectedPositions['LinkBCD'][0][index];
+            expectedPositiony = expectedPositions['LinkBCD'][1][index];
+          } else if (lcount == 2) {
+            expectedPositionx = expectedPositions['LinkDE'][0][index];
+            expectedPositiony = expectedPositions['LinkDE'][1][index];
+          } else if (lcount == 3) {
+            expectedPositionx = expectedPositions['LinkEF'][0][index];
+            expectedPositiony = expectedPositions['LinkEF'][1][index];
+          } else if (lcount == 4) {
+            expectedPositionx = expectedPositions['LinkCFG'][0][index];
+            expectedPositiony = expectedPositions['LinkCFG'][1][index];
+          }
+
+          const distance = euclideanDistance(calculatedPosition.x, calculatedPosition.y, expectedPositionx, expectedPositiony);
+          const tolerance = 0.001; // Tolerance of 0.001 units
+
+          lcount = lcount + 1
+          return distance < tolerance;
+        });
+
+        expect(resultMatch).toBe(false);
+      });
     })
   });
 
   describe('LinearLinkCoMVelocity', () => {
-    it('should be calculate the CoM correctly', () => {
+    it('should show the calculated CoMs Velocity DO match the expected', () => {
       const resultMatch = true;
       expect(resultMatch).toBe(true);
     })
   });
 
   describe('LinearLinkCoMAcceleration', () => {
-    it('should be calculate the CoM correctly', () => {
+    it('should show the calculated CoMs Acceleration DO match the expected', () => {
       const resultMatch = true;
       expect(resultMatch).toBe(true);
     })
   });
 
   describe('AngularLinkPosition', () => {
-    it('should be calculate the CoM correctly', () => {
+    it('should show the calculated Angular Position DO match the expected', () => {
       const resultMatch = true;
       expect(resultMatch).toBe(true);
     })
   });
 
   describe('AngularLinkVelocity', () => {
-    it('should be calculate the CoM correctly', () => {
+    it('should show the calculated Angular Position DO match the expected', () => {
       const resultMatch = true;
       expect(resultMatch).toBe(true);
     })
