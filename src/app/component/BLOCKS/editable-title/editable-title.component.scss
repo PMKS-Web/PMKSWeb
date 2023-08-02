@@ -17,6 +17,9 @@
 
     @include mat.typography-level($typography-config, 'headline-6');
 
+    //Don't wrap text
+    white-space: nowrap;
+
     .editModeRow {
       height: 34px;
       display: flex;

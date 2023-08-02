@@ -27,27 +27,51 @@ export class ColorService {
     '#00695C',
   ];
 
+  private jointColorOptions = ['#ffecb2'];
+
+  private forceColorOptions = ['#3f50b5'];
+
   private linkLastColorIndex = 0;
 
-  public getNextColor(): string {
+  public getNextLinkColor(): string {
     let color = this.linkColorOptions[this.linkLastColorIndex];
     this.linkLastColorIndex = (this.linkLastColorIndex + 1) % this.linkColorOptions.length;
     return color;
-  }
-
-  public linkNumColors(): number {
-    return this.linkColorOptions.length;
   }
 
   public getLinkColorOptions(): string[] {
     return this.linkColorOptions;
   }
 
-  getIndexFromColor(fill: string) {
+  public getJointColorOptions(): string[] {
+    return this.jointColorOptions;
+  }
+
+  public getForceColorOptions(): string[] {
+    return this.forceColorOptions;
+  }
+
+  getIndexFromLinkColor(fill: string) {
     return this.linkColorOptions.indexOf(fill);
   }
 
-  getColorFromIndex(index: number) {
+  getIndexFromJointColor(fill: string) {
+    return this.jointColorOptions.indexOf(fill);
+  }
+
+  getIndexFromForceColor(fill: string) {
+    return this.forceColorOptions.indexOf(fill);
+  }
+
+  getLinkColorFromIndex(index: number) {
     return this.linkColorOptions[index];
+  }
+
+  getJointColorFromIndex(index: number) {
+    return this.jointColorOptions[index];
+  }
+
+  getForceColorFromIndex(index: number) {
+    return this.forceColorOptions[index];
   }
 }

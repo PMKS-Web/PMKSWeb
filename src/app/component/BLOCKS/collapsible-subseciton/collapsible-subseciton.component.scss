@@ -52,6 +52,12 @@
       gap: 10px;
       display: flex;
       flex-direction: column;
+      transition: transform 0.15s ease-in-out;
+
+      &.hidden {
+        transform: scaleY(0);
+        height: 0;
+      }
     }
 
   }

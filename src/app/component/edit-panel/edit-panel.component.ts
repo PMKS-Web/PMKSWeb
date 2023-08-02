@@ -15,11 +15,13 @@ import { NumberUnitParserService } from 'src/app/services/number-unit-parser.ser
 import { SettingsService } from '../../services/settings.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
+import { RealLink } from '../../model/link';
 
 @Component({
   selector: 'app-edit-panel',
   templateUrl: './edit-panel.component.html',
   styleUrls: ['./edit-panel.component.scss'],
+  // styles: [':host {max-width: 100%; overflow-x: hidden; }'],
 })
 export class EditPanelComponent implements OnInit, AfterContentInit {
   hideEditPanel() {
@@ -198,10 +200,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       //  grounded joint is revolute
       if (this.activeSrv.selectedJoint.ground) {
         this.activeSrv.selectedJoint.input = val!;
-      } else { // grounded joint is prismatic
-        this.activeSrv.selectedJoint.connectedJoints.forEach(j => {
+      } else {
+        // grounded joint is prismatic
+        this.activeSrv.selectedJoint.connectedJoints.forEach((j) => {
           if (j instanceof PrisJoint) {
-            j.input = val!
+            j.input = val!;
           }
         });
       }
@@ -527,4 +530,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     this.activeSrv.updateSelectedObj(undefined);
     this.mechanismService.deleteForce();
   }
+
+  protected readonly RealLink = RealLink;
 }

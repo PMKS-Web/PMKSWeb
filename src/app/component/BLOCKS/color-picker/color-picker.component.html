@@ -9,7 +9,7 @@
   </div>
   <div class='row color-picker'>
     <!-- Use an *ngFor directive to iterate over the colors array -->
-    <div *ngFor='let color of colorService.getLinkColorOptions(); let i = index'>
+    <div *ngFor='let color of getCorrectColors(); let i=index'>
       <!-- Use a div element to represent each color swatch -->
       <div class='swatch'
            [style.backgroundColor]='color'

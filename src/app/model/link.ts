@@ -186,7 +186,7 @@ export class RealLink extends Link {
     // this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
     // this._fill = RealLink.colorOptions[Math.floor(Math.random() * RealLink.colorOptions.length)];
 
-    this._fill = ColorService.instance.getNextColor();
+    this._fill = ColorService.instance.getNextLinkColor();
 
     if (subSet === undefined || subSet.length === 0) {
       // this.subset = [];
@@ -925,6 +925,10 @@ export class RealLink extends Link {
 
   get subset(): Link[] {
     return this._subset;
+  }
+
+  get isCompound(): boolean {
+    return this._subset.length > 0;
   }
 
   set subset(value: Link[]) {

@@ -12,12 +12,7 @@
   $foreground: map.get($theme, foreground);
 
 
-  .dual-button {
-
-    display: grid;
-    //Equal width columns 10px apart
-    grid-template-columns: repeat(2, 1fr);
-
+  #tri-button {
     button {
       display: flex;
       flex-direction: column;
@@ -27,7 +22,7 @@
       padding: 0 10px;
       margin: 0;
       height: 50px !important;
-      flex-grow: 1;
+      //flex-grow: 1;
 
       .mat-mdc-button-touch-target {
         height: 50px !important;
@@ -47,5 +42,42 @@
       }
 
     }
+
+    .groupedButtons {
+      display: flex;
+      //background-color: red;
+      //width: 100px !important;
+
+      button:first-child {
+        padding: 0;
+        width: 60px !important;
+        min-width: unset !important;
+
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+
+        margin-right: -1px;
+      }
+
+      button:last-child {
+        padding: 0;
+        width: 60px !important;
+        min-width: unset !important;
+
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+
+    }
+
+    .button3 {
+      padding: 0;
+      flex-grow: 1;
+      //font-size: 12px;
+      //background-color: red;
+    }
+
   }
+
+
 }

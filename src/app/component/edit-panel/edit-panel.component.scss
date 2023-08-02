@@ -11,6 +11,12 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  //Kinda sketchy...
+  panel-section {
+    max-width: 100%;
+    //overflow-x: hidden;
+  }
+
   #editWrapper {
     display: flex;
     flex-direction: column;

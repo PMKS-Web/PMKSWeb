@@ -53,77 +53,120 @@
     <img src='assets/gifs/Click.gif' />
   </panel-section-collapsible>
 
+  <!--  <panel-section-->
+  <!--    *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">-->
+  <!--    <editable-title-block>-->
+  <!--      Edit Joint-->
+  <!--    </editable-title-block>-->
+
+  <!--    <dual-input-block-->
+  <!--      [formGroup]='this.jointForm'-->
+  <!--      formControl1='xPos'-->
+  <!--      formControl2='yPos'-->
+  <!--      tooltip="The location of the joint in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}."-->
+  <!--    >Joint Position-->
+  <!--    </dual-input-block>-->
+
+  <!--    <input-block *ngIf='this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'-->
+  <!--                 [formGroup]='this.jointForm'-->
+  <!--                 _formControl='angle'-->
+  <!--                 tooltip="The angle of the slider in {{this.settingsService.angleUnit.value == 10 ? 'degrees':'radians'}}."-->
+  <!--    >Slider Angle-->
+  <!--    </input-block>-->
+
+  <!--    <toggle-block *ngIf='!this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'-->
+  <!--                  [formGroup]='jointForm'-->
+  <!--                  _formControl='ground'-->
+  <!--                  tooltip='Ground this joint, making it non-moving.'-->
+  <!--    >Ground-->
+  <!--    </toggle-block>-->
+
+  <!--    <toggle-block-->
+  <!--      *ngIf='this.activeSrv.selectedJoint.ground || this.gridUtils.connectedToPrisJoint(this.activeSrv.selectedJoint.connectedJoints)'-->
+  <!--      [formGroup]='jointForm'-->
+  <!--      _formControl='input'-->
+  <!--      tooltip='Make this joint the driven. Only one joint can be a input at a time.'-->
+  <!--    >Input (Todo!)-->
+  <!--    </toggle-block>-->
+
+  <!--    <toggle-block *ngIf='!this.activeSrv.selectedJoint.input'-->
+  <!--                  [formGroup]='jointForm'-->
+  <!--                  _formControl='slider'-->
+  <!--                  tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'-->
+  <!--    >Slider-->
+  <!--    </toggle-block>-->
+
+  <!--    &lt;!&ndash; <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> &ndash;&gt;-->
+  <!--    <button-block customIcon='remove' [click]='deleteJoint.bind(this)'>Delete Joint</button-block>-->
+
+  <!--    <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>-->
+  <!--      <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'-->
+  <!--                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Weld Joint-->
+  <!--      </button-block>-->
+  <!--      <button-block *ngIf='this.activeSrv.selectedJoint.isWelded' customIcon='unweld_joint'-->
+  <!--                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Unweld Joint-->
+  <!--      </button-block>-->
+  <!--    </ng-container>-->
+  <!--    &lt;!&ndash; <p>Value: {{ jointForm.value | json }}</p>-->
+  <!--    <p>Valid: {{ jointForm.valid }}</p>-->
+  <!--    Test: {{ this.activeSrv.Joint.x }}; &ndash;&gt;-->
+  <!--  </panel-section>-->
+
+  <!--  <panel-section-collapsible-->
+  <!--    *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel() && mechanismService.oneValidMechanismExists()"-->
+  <!--    [expanded]='true'-->
+  <!--  >-->
+  <!--    <title-block alwaysShown icon='expand_more'>Visual Settings</title-block>-->
+  <!--    <toggle-block *ngIf='!this.activeSrv.selectedJoint.ground'-->
+  <!--                  [formGroup]='jointForm'-->
+  <!--                  _formControl='curve'-->
+  <!--                  tooltip='Show / hide the path the joint takes.'-->
+  <!--    >Show Joint Path-->
+  <!--    </toggle-block>-->
+  <!--  </panel-section-collapsible>-->
+
   <panel-section
     *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel()">
-    <editable-title-block>
+    <editable-title-block [deleteAction]='deleteJoint.bind(this)'>
       Edit Joint
     </editable-title-block>
-
-    <dual-input-block
-      [formGroup]='this.jointForm'
-      formControl1='xPos'
-      formControl2='yPos'
-      tooltip="The location of the joint in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}."
-    >Joint Position
-    </dual-input-block>
-
-    <input-block *ngIf='this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'
-                 [formGroup]='this.jointForm'
-                 _formControl='angle'
-                 tooltip="The angle of the slider in {{this.settingsService.angleUnit.value == 10 ? 'degrees':'radians'}}."
-    >Slider Angle
-    </input-block>
-
-    <toggle-block *ngIf='!this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)'
-                  [formGroup]='jointForm'
-                  _formControl='ground'
-                  tooltip='Ground this joint, making it non-moving.'
-    >Ground
-    </toggle-block>
-
-    <toggle-block
-      *ngIf='this.activeSrv.selectedJoint.ground || this.gridUtils.connectedToPrisJoint(this.activeSrv.selectedJoint.connectedJoints)'
-      [formGroup]='jointForm'
-      _formControl='input'
-      tooltip='Make this joint the driven. Only one joint can be a input at a time.'
-    >Input (Todo!)
-    </toggle-block>
-
-    <toggle-block *ngIf='!this.activeSrv.selectedJoint.input'
-                  [formGroup]='jointForm'
-                  _formControl='slider'
-                  tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'
-    >Slider
-    </toggle-block>
-
-    <!-- <toggle-block tooltip="Trace the path of this joint on the grid">Show Path</toggle-block> -->
-    <button-block customIcon='remove' [click]='deleteJoint.bind(this)'>Delete Joint</button-block>
-
-    <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>
-      <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'
-                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Weld Joint
-      </button-block>
-      <button-block *ngIf='this.activeSrv.selectedJoint.isWelded' customIcon='unweld_joint'
-                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Unweld Joint
-      </button-block>
-    </ng-container>
-    <!-- <p>Value: {{ jointForm.value | json }}</p>
-    <p>Valid: {{ jointForm.valid }}</p>
-    Test: {{ this.activeSrv.Joint.x }}; -->
+    <collapsible-subseciton title='Basic Settings' [expanded]='true'>
+      <dual-input-block label1='X' label2='Y' formControl1='xPos' formControl2='yPos' [formGroup]='jointForm'
+                        tooltip="The location of the joint in {{this.settingsService.lengthUnit.value == 0 ? 'inches' :this.settingsService.lengthUnit.value == 1 ? 'centimeters' : 'meters'}}.">
+        Joint Position
+      </dual-input-block>
+      <toggle-block [formGroup]='jointForm' _formControl='ground' tooltip='Ground this joint, making it non-moving.'>
+        Ground
+      </toggle-block>
+      <toggle-block [addInput]='true' [formGroup]='jointForm' _formControl='slider'
+                    tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'>
+        Slider
+      </toggle-block>
+      <tri-button [joint]='activeSrv.selectedJoint'>
+      </tri-button>
+    </collapsible-subseciton>
+    <collapsible-subseciton title='Visual Settings'>
+      <toggle-block
+        [formGroup]='jointForm'
+        _formControl='curve'
+        tooltip='Show / hide the path the joint takes.'
+      >Show Joint Path
+      </toggle-block>
+      <color-picker type='joint'>
+        Joint Color
+      </color-picker>
+    </collapsible-subseciton>
+    <collapsible-subseciton title='Distance To Joints'>
+      <dual-input-block label1='D' label2='⊾'
+                        tooltip='TODO'>
+        Joint B
+      </dual-input-block>
+      <dual-input-block label1='D' label2='⊾'
+                        tooltip='TODO'>
+        Joint C
+      </dual-input-block>
+    </collapsible-subseciton>
   </panel-section>
-
-  <panel-section-collapsible
-    *ngIf="this.activeSrv.objType == 'Joint' && !hideEditPanel() && mechanismService.oneValidMechanismExists()"
-    [expanded]='true'
-  >
-    <title-block alwaysShown icon='expand_more'>Visual Settings</title-block>
-    <toggle-block *ngIf='!this.activeSrv.selectedJoint.ground'
-                  [formGroup]='jointForm'
-                  _formControl='curve'
-                  tooltip='Show / hide the path the joint takes.'
-    >Show Joint Path
-    </toggle-block>
-  </panel-section-collapsible>
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
@@ -135,11 +178,11 @@
                         tooltip='The length and angle of this link. A counter-clockwise rotation is a positive angle (Right hand rule).'>
         Link Length and Angle
       </dual-input-block>
-      <dual-button>
+      <dual-button but1Text='Add Tracer' but1Icon='add_tracer' but2Text='Add Force' but2Icon='add_force'>
       </dual-button>
     </collapsible-subseciton>
     <collapsible-subseciton title='Visual Settings'>
-      <color-picker [link]='activeSrv.selectedLink'>Link Color</color-picker>
+      <color-picker type='link' [link]='activeSrv.selectedLink'>Link Color</color-picker>
     </collapsible-subseciton>
     <collapsible-subseciton title='Mass Settings'>
       <input-block>
@@ -149,25 +192,11 @@
         Center of Mass Position
       </dual-input-block>
     </collapsible-subseciton>
+    <collapsible-subseciton *ngIf='activeSrv.selectedLink.isCompound' [expanded]='true' title='Compound Link Settings'>
+      <dual-button but1Text='Un-weld All' but1Icon='add_force'>
+      </dual-button>
+    </collapsible-subseciton>
   </panel-section>
-
-  <!--  <panel-section-collapsible-->
-  <!--    *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()"-->
-  <!--    [expanded]='false'-->
-  <!--  >-->
-  <!--    <title-block alwaysShown icon='expand_more'>Related Objects</title-block>-->
-  <!--    <app-not-ready-warning></app-not-ready-warning>-->
-  <!--    <ng-container *ngFor='let joint of this.activeSrv.selectedLink.joints'>-->
-  <!--      <subtitle-block icon='open_in_new' style='margin-bottom: -10px'-->
-  <!--      >Joint {{ joint.id | uppercase }}</subtitle-block-->
-  <!--      >-->
-  <!--      <dual-input-block-->
-  <!--        unit='cm'-->
-  <!--        tooltip='The location of the joint in cm.'-->
-  <!--      >Joint {{ joint.id | uppercase }} Position-->
-  <!--      </dual-input-block>-->
-  <!--    </ng-container>-->
-  <!--  </panel-section-collapsible>-->
 
   <panel-section
     *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">

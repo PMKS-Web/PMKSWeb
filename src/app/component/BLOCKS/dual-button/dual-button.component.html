@@ -1,10 +1,10 @@
 <div class='row dual-button'>
-  <button mat-stroked-button color='primary'>
-    <mat-icon svgIcon='add_tracer'></mat-icon>
-    Add Tracer
+  <button mat-stroked-button color='primary' (click)='but1Action()'>
+    <mat-icon svgIcon='{{but1Icon}}'></mat-icon>
+    {{but1Text}}
   </button>
-  <button mat-stroked-button color='primary'>
-    <mat-icon svgIcon='add_force'></mat-icon>
-    Add Force
+  <button *ngIf='but2Text' mat-stroked-button color='primary' (click)='but2Action()'>
+    <mat-icon svgIcon='{{but2Icon}}'></mat-icon>
+    {{but2Text}}
   </button>
 </div>

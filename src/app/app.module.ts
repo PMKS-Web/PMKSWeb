@@ -47,6 +47,7 @@ import { TemplatesComponent } from './component/MODALS/templates/templates.compo
 import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-subseciton/collapsible-subseciton.component';
 import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.component';
 import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
+import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.component';
 
 @NgModule({
   declarations: [
@@ -82,6 +83,7 @@ import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-pick
     CollapsibleSubsecitonComponent,
     DualButtonComponent,
     ColorPickerComponent,
+    TriButtonComponent,
   ],
   imports: [
     BrowserModule,

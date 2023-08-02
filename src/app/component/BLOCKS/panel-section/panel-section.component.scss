@@ -11,6 +11,7 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+
   #normalPanel {
     pointer-events: all;
     @include mat.elevation(4);

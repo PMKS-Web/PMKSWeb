@@ -10,4 +10,33 @@
   $typography-config: mat.get-typography-config($theme);
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
+
+
+  #toggle-block {
+    .customInputForm {
+      .customInput {
+        @include mat.typography-level($typography-config, 'body-2');
+      }
+
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+
+      .mat-mdc-form-field-infix {
+        padding: 6px 0;
+      }
+
+      .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+        //background-color: #eff1f8;
+        background-color: #f0f1f5;
+      }
+
+      .mat-mdc-text-field-wrapper {
+        height: 30px;
+        width: 70px;
+        padding: 0 6px;
+      }
+    }
+  }
+
 }
