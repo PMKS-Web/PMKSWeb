@@ -146,11 +146,11 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedPosition = KinematicsSolver.jointIndexMap;
-
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
           let expectedPositionx = 0;
           let expectedPositiony = 0;
+          const calculatedPosition = mechanisms[0].joints[index][KinematicsSolver.jointIndexMap.get(joint.id)!];
+
           if (jcount == 0) {
             expectedPositionx = expectedPositions['JointA'][0][index];
             expectedPositiony = expectedPositions['JointA'][1][index];
@@ -218,11 +218,11 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedPosition = KinematicsSolver.jointIndexMap;
-
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const calculatedPosition = mechanisms[0].joints[index][KinematicsSolver.jointIndexMap.get(joint.id)!];
           let expectedPositionx = 0;
           let expectedPositiony = 0;
+
           if (jcount == 0) {
             expectedPositionx = expectedPositions['JointA'][0][index];
             expectedPositiony = expectedPositions['JointA'][1][index];
@@ -292,8 +292,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJV =  KinematicsSolver.jointVelMap;
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const calculatedJVx = mechanisms[0].joints[index][KinematicsSolver.jointVelMap.get(joint.id)![0]];
+          const calculatedJVy = mechanisms[0].joints[index][KinematicsSolver.jointVelMap.get(joint.id)![1]];
 
           let expectedJVx = 0;
           let expectedJVy = 0;
@@ -326,7 +327,7 @@ describe('SixbarService', () => {
             expectedJVy = expectedJV['JointG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedJV.x, calculatedJV.y, expectedJVx, expectedJVy);
+          const distance = euclideanDistance(calculatedJVx.x, calculatedJVy.y, expectedJVx, expectedJVy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           jcount = jcount + 1
@@ -364,8 +365,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJV = KinematicsSolver.jointVelMap;
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const calculatedJVx = mechanisms[0].joints[index][KinematicsSolver.jointVelMap.get(joint.id)![0]];
+          const calculatedJVy = mechanisms[0].joints[index][KinematicsSolver.jointVelMap.get(joint.id)![1]];
 
           let expectedJVx = 0;
           let expectedJVy = 0;
@@ -392,7 +394,7 @@ describe('SixbarService', () => {
             expectedJVy = expectedJV['JointG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedJV.x, calculatedJV.y, expectedJVx, expectedJVy);
+          const distance = euclideanDistance(calculatedJVx.x, calculatedJVy.y, expectedJVx, expectedJVy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           jcount = jcount + 1
@@ -432,8 +434,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJA = KinematicsSolver.jointAccMap;
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const calculatedJAx = mechanisms[0].joints[index][KinematicsSolver.jointAccMap.get(joint.id)![0]];
+          const calculatedJAy = mechanisms[0].joints[index][KinematicsSolver.jointAccMap.get(joint.id)![0]];
 
           let expectedJAx = 0;
           let expectedJAy = 0;
@@ -466,7 +469,7 @@ describe('SixbarService', () => {
             expectedJAy = expectedJA['JointG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedJA.x, calculatedJA.y, expectedJAx, expectedJAy);
+          const distance = euclideanDistance(calculatedJAx.x, calculatedJAy.y, expectedJAx, expectedJAy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           jcount = jcount + 1
@@ -504,8 +507,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedJA = KinematicsSolver.jointAccMap;
+        const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const calculatedJAx = mechanisms[0].joints[index][KinematicsSolver.jointAccMap.get(joint.id)![0]];
+          const calculatedJAy = mechanisms[0].joints[index][KinematicsSolver.jointAccMap.get(joint.id)![0]];
 
           let expectedJAx = 0;
           let expectedJAy = 0;
@@ -538,7 +542,7 @@ describe('SixbarService', () => {
             expectedJAy = expectedJA['JointG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedJA.x, calculatedJA.y, expectedJAx, expectedJAy);
+          const distance = euclideanDistance(calculatedJAx.x, calculatedJAy.y, expectedJAx, expectedJAy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           jcount = jcount + 1
@@ -574,8 +578,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].links.every((link) => {
-          const calculatedPosition = KinematicsSolver.linkCoMMap;
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedPositionx = KinematicsSolver.linkCoMMap.get(link.id)![0];
+          const calculatedPositiony = KinematicsSolver.linkCoMMap.get(link.id)![1];
 
           let expectedPositionx = 0;
           let expectedPositiony = 0;
@@ -596,7 +601,7 @@ describe('SixbarService', () => {
             expectedPositiony = expectedPositions['LinkCFG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedPosition.x, calculatedPosition.y, expectedPositionx, expectedPositiony);
+          const distance = euclideanDistance(calculatedPositionx, calculatedPositiony, expectedPositionx, expectedPositiony);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -630,8 +635,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].links.every((link) => {
-          const calculatedPosition = KinematicsSolver.linkCoMMap;
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedPositionx = KinematicsSolver.linkCoMMap.get(link.id)![0];
+          const calculatedPositiony = KinematicsSolver.linkCoMMap.get(link.id)![1];
 
           let expectedPositionx = 0;
           let expectedPositiony = 0;
@@ -652,7 +658,7 @@ describe('SixbarService', () => {
             expectedPositiony = expectedPositions['LinkCFG'][1][index];
           }
 
-          const distance = euclideanDistance(calculatedPosition.x, calculatedPosition.y, expectedPositionx, expectedPositiony);
+          const distance = euclideanDistance(calculatedPositionx, calculatedPositiony, expectedPositionx, expectedPositiony);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -688,9 +694,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].links.every((link) => {
-          const calculatedLV =  KinematicsSolver.linkVelMap;
-
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedLVx = KinematicsSolver.linkVelMap.get(link.id)![0];
+          const calculatedLVy = KinematicsSolver.linkVelMap.get(link.id)![1];
           let expectedLVx = 0;
           let expectedLVy = 0;
           if (lcount == 0) {
@@ -709,7 +715,7 @@ describe('SixbarService', () => {
             expectedLVx = expectedLV['LinkCFG'][0][index]
             expectedLVy = expectedLV['LinkCFG'][1][index]
           }
-          const distance = euclideanDistance(calculatedLV.x, calculatedLV.y, expectedLVx, expectedLVy);
+          const distance = euclideanDistance(calculatedLVx, calculatedLVy, expectedLVx, expectedLVy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -743,8 +749,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].links.every((link) => {
-          const calculatedLV =  KinematicsSolver.linkVelMap;
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedLVx =  KinematicsSolver.linkVelMap.get(link.id)![0];
+          const calculatedLVy =  KinematicsSolver.linkVelMap.get(link.id)![0];
 
           let expectedLVx = 0;
           let expectedLVy = 0;
@@ -764,7 +771,7 @@ describe('SixbarService', () => {
             expectedLVx = expectedLV['LinkCFG'][0][index]
             expectedLVy = expectedLV['LinkCFG'][1][index]
           }
-          const distance = euclideanDistance(calculatedLV.x, calculatedLV.y, expectedLVx, expectedLVy);
+          const distance = euclideanDistance(calculatedLVx, calculatedLVy, expectedLVx, expectedLVy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -800,8 +807,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedLA = KinematicsSolver.jointAccMap;
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedLAx = KinematicsSolver.linkAccMap.get(link.id)![0];
+          const calculatedLAy = KinematicsSolver.linkAccMap.get(link.id)![1];
 
           let expectedLAx = 0;
           let expectedLAy = 0;
@@ -822,7 +830,7 @@ describe('SixbarService', () => {
             expectedLAy = expectedLA['LinkCFG'][1][index]
           }
 
-          const distance = euclideanDistance(calculatedLA.x, calculatedLA.y, expectedLAx, expectedLAy);
+          const distance = euclideanDistance(calculatedLAx, calculatedLAy, expectedLAx, expectedLAy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -856,8 +864,9 @@ describe('SixbarService', () => {
           mechanisms[0].inputAngularVelocities[index]
         );
 
-        const resultMatch = mechanisms[0].joints.every((joint) => {
-          const calculatedLA = KinematicsSolver.jointAccMap;
+        const resultMatch = mechanisms[0].links[index].every((link) => {
+          const calculatedLAx = KinematicsSolver.linkAccMap.get(link.id)![0];
+          const calculatedLAy = KinematicsSolver.linkAccMap.get(link.id)![1];
 
           let expectedLAx = 0;
           let expectedLAy = 0;
@@ -878,7 +887,7 @@ describe('SixbarService', () => {
             expectedLAy = expectedLA['LinkCFG'][1][index]
           }
 
-          const distance = euclideanDistance(calculatedLA.x, calculatedLA.y, expectedLAx, expectedLAy);
+          const distance = euclideanDistance(calculatedLAx, calculatedLAy, expectedLAx, expectedLAy);
           const tolerance = 0.001; // Tolerance of 0.001 units
 
           lcount = lcount + 1
@@ -890,12 +899,12 @@ describe('SixbarService', () => {
     })
   });
 
-  describe('AngularLinkPosition', () => {
-    it('should show the calculated Angular Position DO match the expected', () => {
-      const resultMatch = true;
-      expect(resultMatch).toBe(true);
-    })
-  });
+  // describe('AngularLinkPosition', () => {
+  //   it('should show the calculated Angular Position DO match the expected', () => {
+  //     const resultMatch = true;
+  //     expect(resultMatch).toBe(true);
+  //   })
+  // });
 
   describe('AngularLinkVelocity', () => {
     it('should show the calculated Angular Position DO match the expected', () => {
