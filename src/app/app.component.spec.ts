@@ -252,13 +252,11 @@ import { MechanismService } from './services/mechanism.service';
 import { GridUtilsService } from './services/grid-utils.service';
 import { ActiveObjService } from './services/active-obj.service';
 import { SettingsService } from './services/settings.service';
-// import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { KinematicsSolver} from "./model/mechanism/kinematic-solver";
-// import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { ForceSolver } from './model/mechanism/force-solver';
 import { euclideanDistance } from './model/utils';
-// import { join } from '@angular/compiler-cli';
-
+import { join } from '@angular/compiler-cli';
 
 describe('SixbarService', () => {
   // let service: SixbarService;
@@ -379,9 +377,8 @@ describe('SixbarService', () => {
         [-3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51]],
       }
 
-      mechanisms[0].joints.forEach((_, index) => {
+      mechanisms[0].joints.forEach((j, index) => {
         let jcount = 0;
-
         KinematicsSolver.determineKinematics(
           mechanisms[0].joints[index],
           mechanisms[0].links[index],
@@ -451,7 +448,7 @@ describe('SixbarService', () => {
           [-3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51]],
       }
 
-      mechanisms[0].joints.forEach((_, index) => {
+      mechanisms[0].joints.forEach((j, index) => {
         let jcount = 0;
 
         KinematicsSolver.determineKinematics(
