@@ -25,14 +25,16 @@
       flex: 10 0 auto;
     }
 
+    border-color: mat.get-color-from-palette($primary-palette, 500) !important;
+
     mat-icon {
       svg {
         path {
           //fill: rgba(0, 0, 0, 0.6);
           //fill: white;
           //Indigo
-          //fill: mat.get-color-from-palette($primary-palette, 400);
-          fill: #F44336;
+          fill: mat.get-color-from-palette($primary-palette, 500);
+          //fill: #F44336;
         }
       }
     }

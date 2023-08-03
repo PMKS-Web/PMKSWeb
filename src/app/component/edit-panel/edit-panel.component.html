@@ -13,32 +13,9 @@
     id='placeholderContainer'
     *ngIf="(this.activeSrv.objType == 'Grid' ||  this.activeSrv.objType == 'Nothing') && mechanismService.joints.length == 0 && !hideEditPanel()"
   >
-    <title-block alwaysShown description='Right click on the grid to create a link.'>Edit
+    <title-block alwaysShown icon='expand_more' description='Right click on the grid to create a link.'>Edit
       Help
     </title-block>
-    <!--    <collapsible-subseciton [expanded]='true' alwaysShown>-->
-    <!--      <dual-input-block>-->
-    <!--        Link Length and Angle-->
-    <!--      </dual-input-block>-->
-    <!--      <input-block>-->
-    <!--        Link Mass-->
-    <!--      </input-block>-->
-    <!--      <dual-button>-->
-    <!--      </dual-button>-->
-    <!--    </collapsible-subseciton>-->
-    <!--    <collapsible-subseciton alwaysShown [expanded]='true'>-->
-    <!--      <color-picker>-->
-    <!--        Link Color-->
-    <!--      </color-picker>-->
-    <!--    </collapsible-subseciton>-->
-    <!--    <collapsible-subseciton alwaysShown>-->
-    <!--      <dual-input-block>-->
-    <!--        Link Length and Angle-->
-    <!--      </dual-input-block>-->
-    <!--      <input-block>-->
-    <!--        Link Mass-->
-    <!--      </input-block>-->
-    <!--    </collapsible-subseciton>-->
     <img src='assets/gifs/Create.gif' />
   </panel-section-collapsible>
 

@@ -2,109 +2,83 @@
   <panel-section>
     <!-- {{ this.currentAngleUnit }} -->
     <title-block> Settings</title-block>
-    <radio-block
-      option1='English'
-      option2='Metric (cm)'
-      option3='SI (m)'
-      [formGroup]='this.settingsForm'
-      _formControl='globalunit'
-      tooltip='Select the global units to be used for the analysis.'
-      [disabled]='this.settingsService.animating.value'
-    >Global Units
-    </radio-block
-    >
-    <!--    <div [formGroup]='this.settingsForm'>-->
-    <!--      Length-->
-    <!--      Unit: {{this.currentLengthUnit == 0 ? 'Inch' : this.currentLengthUnit == 1 ? 'Centimeter' : this.currentLengthUnit == 2 ? 'Meter' : 'Centimeter' }}-->
-    <!--      <br />-->
-    <!--      Force-->
-    <!--      Unit: {{this.settingsService.forceUnit.value == 20 ? 'LBF' : 'Newton'}}-->
-    <!--    </div>-->
-    <!--    <radio-block
-          option1='Inch'
-          option2='cm'
-          option3='Meter'
-          [formGroup]='this.settingsForm'
-          _formControl='lengthunit'
-          tooltip='Select the units to be used for length. This updates units for derived units as well (e.g. velocity, area, etc.)'
-          [disabled]='true'
-        >Length Units
-        </radio-block
-        >
-        <radio-block
-          option1='lbf-in'
-          option2='N-cm'
-          option3='N-m'
-          [formGroup]='this.settingsForm'
-          _formControl='torqueunit'
-          tooltip='Select the torque units to be used for the analysis. Change the base length units for different torque units.'
-          [disabled]='true'
-        >Torque Units
-        </radio-block
-        >-->
-    <radio-block
-      option1='Degree'
-      option2='Radian'
-      [formGroup]='this.settingsForm'
-      _formControl='angleunit'
-      tooltip='Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)'
-    >Angle Units
-    </radio-block
-    >
-    <radio-block
-      option1='Clockwise'
-      option2='Counter-Clockwise'
-      [formGroup]='this.settingsForm'
-      _formControl='rotation'
-      tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
-    >Input Direction
-    </radio-block
-    >
+    <collapsible-subseciton title='Basic Settings' [expanded]='true'>
+      <radio-block
+        option1='English'
+        option2='Metric (cm)'
+        option3='SI (m)'
+        [formGroup]='this.settingsForm'
+        _formControl='globalunit'
+        tooltip='Select the global units to be used for the analysis.'
+        [disabled]='this.settingsService.animating.value'
+      >Global Units
+      </radio-block>
+      <radio-block
+        option1='Degree'
+        option2='Radian'
+        [formGroup]='this.settingsForm'
+        _formControl='angleunit'
+        tooltip='Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)'
+      >Angle Units
+      </radio-block
+      >
+      <radio-block
+        option1='Clockwise'
+        option2='Counter-Clockwise'
+        [formGroup]='this.settingsForm'
+        _formControl='rotation'
+        tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
+      >Input Direction
+      </radio-block
+      >
 
-    <input-block
-      unit='deg/sec'
-      type='number'
-      [formGroup]='this.settingsForm'
-      _formControl='speed'
-      tooltip='The speed that the animation will run at.'
-    >Input Speed
-    </input-block>
+      <input-block
+        unit='deg/sec'
+        type='number'
+        [formGroup]='this.settingsForm'
+        _formControl='speed'
+        tooltip='The speed that the animation will run at.'
+      >Input Speed
+      </input-block>
+    </collapsible-subseciton>
 
-    <subtitle-block>Force Settings</subtitle-block>
-    <toggle-block
-      [formGroup]='this.settingsForm'
-      _formControl='gravity'
-      tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
-    >Enable Forces
-    </toggle-block
-    >
+    <collapsible-subseciton title='Force Settings' [expanded]='true'>
+      <toggle-block
+        [formGroup]='this.settingsForm'
+        _formControl='gravity'
+        tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
+      >Enable Forces
+      </toggle-block
+      >
 
-    <ng-container *ngIf='settingsService.isGravity.value'>
-      <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
-      <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
-    </ng-container>
+      <ng-container *ngIf='settingsService.isGravity.value'>
+        <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
+        <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
+      </ng-container>
 
-    <subtitle-block>Visual Settings</subtitle-block>
-    <toggle-block
-      [formGroup]='this.settingsForm'
-      _formControl='showMajorGrid'
-      tooltip='Show / hide the major grid lines.'>
-      Grid
-    </toggle-block>
-    <toggle-block *ngIf='settingsService.isShowMajorGrid.value'
-                  [formGroup]='this.settingsForm'
-                  _formControl='showMinorGrid'
-                  tooltip='Show / hide the minor grid lines.'>
-      Minor Gridlines
-    </toggle-block>
-    <input-block
-      type='number'
-      [formGroup]='this.settingsForm'
-      _formControl='objectScale'
-      tooltip='Scales all links, joints, and forces. A save and reload is for changes to take effect. (Default: 1)'
-    >Object Scale
-    </input-block>
-    <button-block icon='auto_fix_normal' [click]='updateObjectScale.bind(this)'>Update Object Scale</button-block>
+    </collapsible-subseciton>
+    <collapsible-subseciton title='Visual Settings' [expanded]='true'>
+      <toggle-block
+        [formGroup]='this.settingsForm'
+        _formControl='showMajorGrid'
+        tooltip='Show / hide the major grid lines.'>
+        Grid
+      </toggle-block>
+      <toggle-block *ngIf='settingsService.isShowMajorGrid.value'
+                    [formGroup]='this.settingsForm'
+                    _formControl='showMinorGrid'
+                    tooltip='Show / hide the minor grid lines.'>
+        Minor Gridlines
+      </toggle-block>
+      <input-block
+        type='number'
+        [formGroup]='this.settingsForm'
+        _formControl='objectScale'
+        tooltip='Scales all links, joints, and forces. A save and reload is for changes to take effect. (Default: 1)'
+      >Object Scale
+      </input-block>
+      <button-block icon='auto_fix_normal' [click]='updateObjectScale.bind(this)'>Update Object Scale</button-block>
+    </collapsible-subseciton>
 
   </panel-section>
 </div>
