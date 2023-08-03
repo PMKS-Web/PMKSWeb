@@ -183,13 +183,21 @@ export class NewGridComponent {
         break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
-        this.cMenuItems.push(
-          new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
-        );
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
-        this.cMenuItems.push(
-          new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-        );
+        //Don't give options if a fillet it selected and not a primary link
+        if (
+          !(this.lastRightClick as RealLink).isWelded ||
+          (this.lastRightClick as RealLink).lastSelectedSublink != null
+        ) {
+          this.cMenuItems.push(
+            new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
+          );
+          this.cMenuItems.push(
+            new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
+          );
+          this.cMenuItems.push(
+            new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+          );
+        }
         this.cMenuItems.push(
           new cMenuItem(
             'Delete Link',
@@ -250,7 +258,7 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleSelectedWeldedJoint.bind(this.mechanismSrv),
+              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
             )
           ); //Rev Joint - Can be welded
@@ -282,12 +290,22 @@ export class NewGridComponent {
     }
   }
 
-  setLastRightClick(clickedObj: Joint | Link | String | Force) {
+  setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
     this.lastRightClick = clickedObj;
+
+    switch (clickedObj.constructor.name) {
+      case 'RealLink':
+        this.lastLeftClickType = 'Link';
+        if ((clickedObj as RealLink).subset.length > 1) {
+          this.gridUtils.updateLastSelectedSublink(event!, clickedObj as RealLink);
+        }
+        break;
+    }
+
     this.updateContextMenuItems();
   }
 
-  setLastLeftClick(clickedObj: Joint | Link | String | Force) {
+  setLastLeftClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
     this.lastLeftClick = clickedObj;
     // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
@@ -297,6 +315,9 @@ export class NewGridComponent {
         break;
       case 'RealLink':
         this.lastLeftClickType = 'Link';
+        if ((clickedObj as RealLink).subset.length > 1) {
+          this.gridUtils.updateLastSelectedSublink(event!, clickedObj as RealLink);
+        }
         break;
       case 'PrisJoint':
       //Fall through intentional
@@ -317,11 +338,11 @@ export class NewGridComponent {
     // const newJoint = this.createRevJoint()
     // const screenX = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('x'));
     // const screenY = Number(GridComponent.contextMenuAddTracerPoint.children[0].getAttribute('y'));
+    // TODO: Make sure you add logic within here so that joint is part of fixedLocations for respective link subset
     const coord = this.svgGrid.screenToSVGfromXY(
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y
     );
-    // TODO: Add logic to add joint to selectedLink. Also, add adjacent joint to tracer joint
     const newId = this.mechanismSrv.determineNextLetter();
     const newJoint = new RevJoint(newId, coord.x, coord.y);
     this.activeObjService.selectedLink.joints.forEach((j) => {
@@ -331,6 +352,18 @@ export class NewGridComponent {
       j.connectedJoints.push(newJoint);
       newJoint.connectedJoints.push(j);
     });
+    if (
+      this.activeObjService.selectedLink.isWelded &&
+      this.activeObjService.selectedLink.lastSelectedSublink
+    ) {
+      this.activeObjService.selectedLink.lastSelectedSublink.id =
+        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
+      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
+        id: newJoint.id,
+        label: newJoint.id,
+      });
+      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
+    }
     newJoint.links.push(this.activeObjService.selectedLink);
     this.activeObjService.selectedLink.joints.push(newJoint);
     this.activeObjService.selectedLink.id += newJoint.id;
@@ -369,7 +402,6 @@ export class NewGridComponent {
     switch (this.lastRightClick.constructor.name) {
       case 'String':
         this.gridStates = gridStates.createJointFromGrid;
-
         break;
       case 'PrisJoint':
       case 'RevJoint':
@@ -668,6 +700,18 @@ export class NewGridComponent {
                   j.connectedJoints.push(joint1);
                   joint1.connectedJoints.push(j);
                 });
+                if (
+                  this.activeObjService.selectedLink.isWelded &&
+                  this.activeObjService.selectedLink.lastSelectedSublink
+                ) {
+                  this.activeObjService.selectedLink.lastSelectedSublink.id =
+                    this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(joint1.id);
+                  this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
+                    id: joint1.id,
+                    label: joint1.id,
+                  });
+                  this.activeObjService.selectedLink.lastSelectedSublink.joints.push(joint1);
+                }
                 joint1.links.push(this.activeObjService.selectedLink);
                 this.activeObjService.selectedLink.joints.push(joint1);
                 // TODO: Probably attach method within link so that when you add joint, it also changes the name of the link
