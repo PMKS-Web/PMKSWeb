@@ -9,6 +9,9 @@ import { RealJoint } from '../../../model/joint';
 })
 export class TriButtonComponent {
   @Input() joint!: RealJoint;
+  @Input() btn1Disabled: boolean = false;
+  @Input() btn2Disabled: boolean = false;
+  @Input() btn3Disabled: boolean = false;
 
   constructor() {}
 }

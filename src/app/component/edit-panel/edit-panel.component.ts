@@ -88,6 +88,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     // console.log(this.activeSrv);
     // console.log(this.profileForm);
     this.onChanges();
+    this.disableAndEnableFields();
   }
 
   ngAfterContentInit() {
@@ -96,6 +97,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   mouseDown(): void {
     console.log('test');
+  }
+
+  disableAndEnableFields(): void {
+    if (this.jointForm.get('slider')?.value === true) {
+      this.jointForm.get('angle')?.enable();
+      this.jointForm.get('ground')?.disable();
+    } else {
+      this.jointForm.get('angle')?.disable();
+      this.jointForm.get('ground')?.enable();
+    }
   }
 
   onChanges(): void {
@@ -216,6 +227,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) {
         return;
       }
+      this.disableAndEnableFields();
       this.mechanismService.toggleSlider();
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);

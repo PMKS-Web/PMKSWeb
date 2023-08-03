@@ -48,7 +48,7 @@
                     tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'>
         Slider
       </toggle-block>
-      <tri-button [joint]='activeSrv.selectedJoint'>
+      <tri-button [joint]='activeSrv.selectedJoint' [btn3Disabled]=!activeSrv.selectedJoint.ground>
       </tri-button>
     </collapsible-subseciton>
     <collapsible-subseciton title='Visual Settings'>

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { animate, state, style, transition, trigger } from '@angular/animations';
+import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'collapsible-subseciton',
@@ -8,17 +8,18 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
       state(
         'open',
         style({
-          height: '*',
-          opacity: 1,
+          visibility: AUTO_STYLE,
+          height: AUTO_STYLE,
+          opacity: '1',
         })
       ),
       state(
         'closed',
         style({
+          visibility: 'hidden',
+          opacity: '0',
           height: '0px',
-          opacity: 0,
           padding: '0px',
-          pointerEvents: 'none',
           marginBottom: '-1px',
         })
       ),

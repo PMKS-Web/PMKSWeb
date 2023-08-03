@@ -13,7 +13,15 @@
 
 
   #tri-button {
+
+    path {
+      fill: mat.get-color-from-palette($primary-palette, 500);
+      //fill: red;
+    }
+
+
     button {
+
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -37,9 +45,6 @@
 
       border-color: mat.get-color-from-palette($primary-palette, 500) !important;
 
-      path {
-        fill: mat.get-color-from-palette($primary-palette, 500) !important;
-      }
 
     }
 
@@ -75,6 +80,14 @@
       flex-grow: 1;
       //font-size: 12px;
       //background-color: red;
+    }
+
+    .buttonDisabled {
+      path {
+        fill: #969696;
+      }
+
+      border-color: #bbbbbb !important;
     }
 
   }
