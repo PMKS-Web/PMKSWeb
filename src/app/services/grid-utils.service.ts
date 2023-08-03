@@ -20,13 +20,15 @@ import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { SvgGridService } from './svg-grid.service';
 import { link } from 'fs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GridUtilsService {
-  constructor() {}
+  constructor(public svgGrid: SvgGridService) {
+  }
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -112,10 +114,10 @@ export class GridUtilsService {
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
-    
+
     let oldX = selectedJoint.x;
     let oldY = selectedJoint.y;
-    
+
     selectedJoint.x = roundNumber(trueCoord.x, 6);
     selectedJoint.y = roundNumber(trueCoord.y, 6);
     switch (selectedJoint.constructor) {
@@ -150,7 +152,7 @@ export class GridUtilsService {
 
           // PositionSolver.setUpSolvingForces(GridComponent.selectedLink.forces);
           PositionSolver.setUpInitialJointLocations(l.joints);
-          
+
           // move forces only if dragged joint is not inside link
           let jointInHull: boolean = false;
           let hull = l.getHullPoints()
@@ -171,16 +173,16 @@ export class GridUtilsService {
           }
 
           if (l.joints.length == 2) {
-            
+
             // special binary link case, maintain ratio
             let linkDistance = this.getPointDistance(jointA[0], jointA[1], jointB[0], jointB[1]);
-            
+
             l.forces.forEach((f) => {
 
               // calculate ratio to be maintained
               let forceDistance = this.getPointDistance(jointA[0], jointA[1], f.startCoord.x, f.startCoord.y);
               let ratio = forceDistance / linkDistance;
-              
+
               // update force start position with ratio
               let newX = newJointA[0] + (newJointB[0] - newJointA[0]) * ratio;
               let newY = newJointA[1] + (newJointB[1] - newJointA[1]) * ratio;
@@ -320,10 +322,54 @@ export class GridUtilsService {
     return ((joint as RealJoint).links[0] as RealLink).angleRad;
   }
 
+  updateLastSelectedSublink(mouseEvent: MouseEvent, clickedObj: RealLink) {
+    //Seach each link in the subset to see if the mouse is over it
+    // use isPointInsideLink()
+    //First convert the screen coordinates to true coordinates
+    let trueCoords = this.svgGrid.screenToSVG(new Coord(mouseEvent.offsetX, mouseEvent.offsetY));
+
+    // console.log(trueCoords.x, trueCoords.y);
+
+    clickedObj.lastSelectedSublink = null;
+
+    clickedObj.subset.forEach((link) => {
+      if (this.isPointInsideLink(trueCoords, link as RealLink)) {
+        clickedObj.lastSelectedSublink = link;
+        // console.log('Found a link');
+        // console.log(link);
+      }
+    });
+  }
+
+  isPointInsideLink(startPosition: Coord, link: RealLink) {
+    //Check if the point is inside of the shape created by the lines
+    //First, draw a line that is infinitely long and check if it intersects with the shape an odd number of times
+    const infiniteLine = new Line(startPosition, new Coord(10000, startPosition.y));
+
+    let intersections = 0;
+    link.initialExternalLines.forEach((line) => {
+      const intersectionPoint = infiniteLine.intersectsWith(line);
+      const otherIntersectionPoint = infiniteLine.clone().reverse().intersectsWith(line);
+
+      //Add two to the intersection count if intersectionPoint and otherIntersectionPoint are not equal
+      if (intersectionPoint && otherIntersectionPoint) {
+        if (!intersectionPoint.equals(otherIntersectionPoint)) {
+          intersections += 2;
+        } else {
+          intersections += 1;
+        }
+      } else if (intersectionPoint || otherIntersectionPoint) {
+        intersections += 1;
+      }
+    });
+
+    //If the number of intersections is odd, then the point is inside the shape
+    return intersections % 2 === 1;
+  }
+
   getPointDistance(x1: number, y1: number, x2: number, y2: number): number {
     let x = x2 - x1;
     let y = y2 - y1;
     return Math.sqrt(x*x + y*y);
   }
-
 }

@@ -175,6 +175,7 @@ export class RealLink extends Link {
 
   public static debugDesiredJointsIDs: any;
   public renderError: boolean = true;
+  public lastSelectedSublink: Link | null = null;
 
   constructor(
     id: string,
@@ -900,6 +901,10 @@ export class RealLink extends Link {
 
   set CoM_d4(value: string) {
     this._CoM_d4 = value;
+  }
+
+  get isWelded(): boolean {
+    return this.subset.length >= 1;
   }
 
   updateCoMDs() {
