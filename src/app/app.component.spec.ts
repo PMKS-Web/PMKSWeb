@@ -256,7 +256,6 @@ import { ToolbarComponent } from './component/toolbar/toolbar.component';
 import { KinematicsSolver} from "./model/mechanism/kinematic-solver";
 import { ForceSolver } from './model/mechanism/force-solver';
 import { euclideanDistance } from './model/utils';
-import { join } from '@angular/compiler-cli';
 
 describe('SixbarService', () => {
   it('should show the calculated position of the Joints DO match the expected', () => {
@@ -381,7 +380,8 @@ describe('SixbarService', () => {
             [-3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51, -3.51]],
         }
 
-        mechanisms[0].joints.forEach((j, index) => {
+        let resultMatch = true;
+        resultMatch = mechanisms[0].joints.every((j, index) => {
           let jcount = 0;
           KinematicsSolver.determineKinematics(
             mechanisms[0].joints[index],
@@ -389,7 +389,7 @@ describe('SixbarService', () => {
             mechanisms[0].inputAngularVelocities[index]
           );
 
-          const resultMatch = mechanisms[0].joints[index].every((joint) => {
+          const Match = mechanisms[0].joints[index].every((joint) => {
             let expectedPositionx = 0;
             let expectedPositiony = 0;
             const calculatedPosition = mechanisms[0].joints[index][KinematicsSolver.jointIndexMap.get(joint.id)!];
@@ -423,10 +423,10 @@ describe('SixbarService', () => {
             jcount = jcount + 1
             return distance < tolerance;
           });
-
-          expect(resultMatch).toBe(true);
+          return Match;
         });
-      })
+        expect(resultMatch).toBe(true);
+  });
 //
 //     it('should show the calculated position of the Joints DO NOT match the expected', () => {
 //       const expectedPositions = {
@@ -499,7 +499,7 @@ describe('SixbarService', () => {
 //         expect(resultMatch).toBe(false);
 //       });
 //     })
-    });
+});
 //
 //   describe('LinearJointVelocity', () => {
 //     it('should determine the velocity of the Joints DO match', () => {
@@ -1323,4 +1323,4 @@ describe('SixbarService', () => {
 //     })
 //   });
 //   })
-});
+// });
