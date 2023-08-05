@@ -57,11 +57,11 @@
     </toggle-block>
 
     <toggle-block
-      *ngIf='this.activeSrv.selectedJoint.ground && !this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint) '
+      *ngIf='this.activeSrv.selectedJoint.ground || this.gridUtils.connectedToPrisJoint(this.activeSrv.selectedJoint.connectedJoints)'
       [formGroup]='jointForm'
       _formControl='input'
       tooltip='Make this joint the driven. Only one joint can be a input at a time.'
-    >Input
+    >Input (Todo!)
     </toggle-block>
 
     <toggle-block *ngIf='!this.activeSrv.selectedJoint.input'
@@ -76,10 +76,10 @@
 
     <ng-container *ngIf='this.activeSrv.selectedJoint.canBeWelded()'>
       <button-block *ngIf='!this.activeSrv.selectedJoint.isWelded' customIcon='weld_joint'
-                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Weld Joint
+                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Weld Joint
       </button-block>
       <button-block *ngIf='this.activeSrv.selectedJoint.isWelded' customIcon='unweld_joint'
-                    [click]='mechanismService.toggleSelectedWeldedJoint.bind(this.mechanismService)'>Unweld Joint
+                    [click]='mechanismService.toggleWeldedJoint.bind(this.mechanismService)'>Unweld Joint
       </button-block>
     </ng-container>
     <!-- <p>Value: {{ jointForm.value | json }}</p>
@@ -105,6 +105,8 @@
     <editable-title-block description='Changing the length or angle will change the non-grounded joint.'>
       Edit Link
     </editable-title-block>
+    <subtitle-block *ngIf='this.activeSrv.selectedLink.isWelded'>LastSelectedSublink
+      is {{this.activeSrv.selectedLink.lastSelectedSublink ? this.activeSrv.selectedLink.lastSelectedSublink.id : 'null'}}</subtitle-block>
     <input-block
       [formGroup]='linkForm'
       _formControl='length'

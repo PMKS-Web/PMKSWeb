@@ -8,6 +8,8 @@ import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { Coord } from '../../model/coord';
 
 @Component({
   selector: 'app-settings-panel',
@@ -19,7 +21,8 @@ export class SettingsPanelComponent {
     public settingsService: SettingsService,
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
-    private svgGrid: SvgGridService
+    private svgGrid: SvgGridService,
+    private nup: NumberUnitParserService
   ) {}
 
   currentLengthUnit!: LengthUnit;
@@ -111,10 +114,45 @@ export class SettingsPanelComponent {
         this.currentForceUnit = ForceUnit.NEWTON;
       }
       this.settingsService.forceUnit.next(this.currentForceUnit);
+
+      let prevLengthUnit = this.settingsService.lengthUnit.value;
       this.currentLengthUnit = ParseLengthUnit(val);
+
+      //Scale the grid to the new length unit
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
-      this.svgGrid.scaleToFitLinkage();
-      ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+
+      let fromUnit = prevLengthUnit;
+      let toUnit = this.currentLengthUnit;
+
+      //If either unit is in meters, convert that one to cm
+      if (fromUnit === LengthUnit.METER) {
+        fromUnit = LengthUnit.CM;
+      }
+      if (toUnit === LengthUnit.METER) {
+        toUnit = LengthUnit.CM;
+      }
+
+      this.mechanismSrv.updateLinkageUnits(fromUnit, toUnit);
+
+      let tempOriginInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
+      this.svgGrid.panZoomObject.zoomAtPointBy(this.nup.convertLength(1, toUnit, fromUnit), {
+        x: tempOriginInScreen.x,
+        y: tempOriginInScreen.y,
+      });
+
+      //Scale the object to the new length unit
+      SettingsService._objectScale.next(
+        this.nup.convertLength(SettingsService.objectScale, fromUnit, toUnit)
+      );
+
+      //Update graphs with new units
+      this.mechanismSrv.onMechUpdateState.next(2);
+      // setTimeout(() => {
+      //   this.mechanismSrv.onMechUpdateState.next(2);
+      // });
+      // this.svgGrid.scaleToFitLinkage();
+      // ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+      // NewGridComponent.sendNotification('Updated Global Units!');
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);
@@ -165,7 +203,7 @@ export class SettingsPanelComponent {
   }
 
   updateObjectScale() {
-    SettingsService._objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
+    this.svgGrid.updateObjectScale();
   }
 }
 

@@ -23,7 +23,7 @@ import { GridUtilsService } from '../../services/grid-utils.service';
 })
 export class EditPanelComponent implements OnInit, AfterContentInit {
   hideEditPanel() {
-    return AnimationBarComponent.animate === true || this.mechanismService.mechanismTimeStep !== 0;
+    return AnimationBarComponent.animate || this.mechanismService.mechanismTimeStep !== 0;
   }
 
   constructor(
@@ -33,7 +33,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     private nup: NumberUnitParserService,
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
-    public gridUtils: GridUtilsService,
+    public gridUtils: GridUtilsService
   ) {}
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
@@ -97,34 +97,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
 
   onChanges(): void {
-    this.settingsService.lengthUnit.subscribe((val) => {
-      switch (
-        val
-        //when length unit changes, rescale grid?
-      ) {
-      }
-      var unit = this.settingsService.lengthUnit.value;
-      if (unit !== this.lengthUnit) {
-        this.mechanismService.joints.forEach((joint) => {
-          this.activeSrv.updateSelectedObj(joint);
-          var wasInput: boolean = this.jointForm.controls['input'].value!;
-          this.jointForm.controls['input'].patchValue(false);
-          this.activeSrv.selectedJoint.input = false;
-          this.activeSrv.fakeUpdateSelectedObj();
-          this.gridUtils.dragJoint(
-            this.activeSrv.selectedJoint,
-            new Coord(
-              this.nup.convertLength(joint.x, this.lengthUnit, unit),
-              this.nup.convertLength(joint.y, this.lengthUnit, unit)
-            )
-          );
-          this.jointForm.controls['input'].patchValue(wasInput);
-        });
-        this.lengthUnit = this.settingsService.lengthUnit.value;
-        this.activeSrv.fakeUpdateSelectedObj();
-      }
-    });
-
     this.settingsService.angleUnit.subscribe((val) => {
       this.activeSrv.fakeUpdateSelectedObj();
     });
@@ -223,7 +195,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) {
         return;
       }
-      this.activeSrv.selectedJoint.input = val!;
+      //  grounded joint is revolute
+      if (this.activeSrv.selectedJoint.ground) {
+        this.activeSrv.selectedJoint.input = val!;
+      } else { // grounded joint is prismatic
+        this.activeSrv.selectedJoint.connectedJoints.forEach(j => {
+          if (j instanceof PrisJoint) {
+            j.input = val!
+          }
+        });
+      }
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);
     });

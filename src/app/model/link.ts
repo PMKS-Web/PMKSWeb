@@ -175,6 +175,7 @@ export class RealLink extends Link {
 
   public static debugDesiredJointsIDs: any;
   public renderError: boolean = true;
+  public lastSelectedSublink: Link | null = null;
 
   constructor(
     id: string,
@@ -534,6 +535,34 @@ export class RealLink extends Link {
     }
   }
 
+  getHullPoints(): number[][] {
+
+    const allJoints = this.joints;
+
+    //Convert joints to simple x, y array
+    const points = allJoints.map((j) => [j.x, j.y]);
+    return hull(points, Infinity);
+  }
+
+  // whether (x,y) is inside the hull. To calculate this, create a new
+  // hull with the point added to allJoints, and determine if the new hull
+  // contains the added (x,y) point
+  isPointInsideHull(x: number, y: number): boolean {
+
+    let points = this.joints.map((j) => [j.x, j.y]);
+    points.push([x, y]);
+    const hullPoints = hull(points, Infinity);
+
+    let hullContainsPoint = false;
+    hullPoints.forEach((point: any) => {
+      if (point[0] === x && point[1] === y) {
+        hullContainsPoint = true;
+      }
+    })
+
+    return !hullContainsPoint;
+  }
+
   getSimplePathString(): string {
     this.externalLines = [];
     let l = this;
@@ -872,6 +901,10 @@ export class RealLink extends Link {
 
   set CoM_d4(value: string) {
     this._CoM_d4 = value;
+  }
+
+  get isWelded(): boolean {
+    return this.subset.length >= 1;
   }
 
   updateCoMDs() {
