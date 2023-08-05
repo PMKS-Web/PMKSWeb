@@ -1,15 +1,15 @@
-<div id='dual-input-block'>
+<div id='dual-input-block' style='{{disabled ? "cursor: default" : ""}}'>
   <div class='row'>
-    <span class='label'><ng-content></ng-content></span>
+    <span class='label {{disabled ? "disabled" : ""}}'><ng-content></ng-content></span>
     <mat-icon matTooltip='{{ this.tooltip }}' [matTooltipShowDelay]='1000' class='label-help'
+              [matTooltipDisabled]='disabled'
     >help_outline
-    </mat-icon
-    >
+    </mat-icon>
     <div class='spacer'></div>
   </div>
   <div class='row' [formGroup]='formGroup' style='gap: 5px'>
 
-    <span class='label'>{{label1}}</span>
+    <span class='label {{disabled ? "disabled" : ""}}'>{{label1}}</span>
     <mat-form-field class='customInputForm' (click)='field1.select()'
                     (mouseenter)='isField1MouseOver = true; updateOverlay()'
                     (mouseleave)='isField1MouseOver = false; updateOverlay()'
@@ -21,7 +21,8 @@
     </mat-form-field>
 
     <div class='spacer'></div>
-    <span class='label' style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
+    <span class='label {{disabled ? "disabled" : ""}}'
+          style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
     <mat-form-field class='customInputForm' (click)='field2.select()'
                     (mouseenter)='isField2MouseOver = true; updateOverlay()'
                     (mouseleave)='isField2MouseOver = false; updateOverlay()'

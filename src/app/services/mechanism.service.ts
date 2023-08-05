@@ -255,7 +255,7 @@ export class MechanismService {
     if (!joint.isWelded) {
       this.weldJoint();
     } else if (joint.isWelded) {
-      this.unweldJoint();
+      this.unweldSelectedJoint();
     }
     this.updateMechanism();
   }
@@ -743,6 +743,7 @@ export class MechanismService {
     this.activeObjService.selectedLink.id += newJoint.id;
     this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     this.joints.push(newJoint);
+    this.onMechUpdateState.next(3);
     this.updateMechanism();
   }
 
@@ -1059,6 +1060,14 @@ export class MechanismService {
     return this.links.every((l) => !l.joints.includes(joint));
   }
 
+  unweldAll() {
+    this.joints.forEach((j) => {
+      if ((j as RealJoint).isWelded) {
+        this.unWeldJoint(j as RealJoint);
+      }
+    });
+  }
+
   public weldJoint() {
     const joint = this.joints.find(
       (j) => j.id === this.activeObjService.selectedJoint.id
@@ -1124,17 +1133,13 @@ export class MechanismService {
     joint.isWelded = true;
   }
 
-  public unweldJoint() {
-    const joint = this.joints.find(
-      (j) => j.id === this.activeObjService.selectedJoint.id
-    ) as RealJoint;
-
+  unWeldJoint(jointToUnweld: RealJoint) {
     //WE ARE UNWELDING THE JOINT
     // TODO: INSERT AFTER HERE
     // Previous Logic
     // this.activeObjService.selectedJoint.isWelded = false;
     // joint.isWelded = false;
-    this.activeObjService.selectedJoint.links.forEach((l) => {
+    jointToUnweld.links.forEach((l) => {
       if (!(l instanceof RealLink)) {
         return;
       }
@@ -1149,7 +1154,7 @@ export class MechanismService {
         l_subset_index = l_subset_index + 1
       ) {
         const sub = l.subset[l_subset_index];
-        const selectedJoint = this.activeObjService.selectedJoint;
+        const selectedJoint = jointToUnweld;
         // sub contains id that is not shared with any other subset
         let noSharedJoint = true;
         const tempIdSubs = idSubs.filter((str) => str !== sub.id);
@@ -1265,14 +1270,20 @@ export class MechanismService {
         });
       } else if (l.subset.length === 0) {
         const sliceIndex = this.links.findIndex((li) => li.id === l.id);
-        const otherSliceIndex = this.activeObjService.selectedJoint.links.findIndex(
-          (li) => li.id === l.id
-        );
+        const otherSliceIndex = jointToUnweld.links.findIndex((li) => li.id === l.id);
         this.links.splice(sliceIndex, 1);
-        this.activeObjService.selectedJoint.links.splice(otherSliceIndex, 1);
+        jointToUnweld.links.splice(otherSliceIndex, 1);
       }
     });
-    joint.isWelded = false;
+    jointToUnweld.isWelded = false;
+  }
+
+  public unweldSelectedJoint() {
+    const joint = this.joints.find(
+      (j) => j.id === this.activeObjService.selectedJoint.id
+    ) as RealJoint;
+
+    this.unWeldJoint(joint);
   }
 
   createForceAtCOM() {

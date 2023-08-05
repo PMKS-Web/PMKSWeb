@@ -12,6 +12,11 @@
   $foreground: map.get($theme, foreground);
 
   #dual-input-block {
+
+    .disabled {
+      opacity: 0.5;
+    }
+
     .customInputForm {
       .customInput {
         @include mat.typography-level($typography-config, 'body-2');

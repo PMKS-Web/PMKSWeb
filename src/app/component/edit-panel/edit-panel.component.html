@@ -81,6 +81,7 @@
       </toggle-block>
       <toggle-block
         [addInput]='true'
+        [disableInput]='!(this.jointForm.controls["slider"].value)'
         [formGroup]='jointForm'
         _formControl='slider'
         _formControlForInput='angle'
@@ -93,7 +94,7 @@
         [btn1Disabled]='!isWeldable(activeSrv.selectedJoint)'
         [btn1Action]='mechanismService.weldJoint.bind(mechanismService)'
         [btn2Disabled]='!activeSrv.selectedJoint.isWelded'
-        [btn2Action]='mechanismService.unweldJoint.bind(mechanismService)'
+        [btn2Action]='mechanismService.unweldSelectedJoint.bind(mechanismService)'
         [btn3Disabled]='!canToggleInput(activeSrv.selectedJoint)'
         [btn3Action]='mechanismService.adjustInput.bind(mechanismService)'
         [btn3Icon]='gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? "remove_input" : "add_input"'
@@ -129,6 +130,7 @@
         tooltip='The length and angle of this link. A counter-clockwise rotation is a positive angle (Right hand rule).'
         (field1Entry)='setShowLinkLengthOverlay($event)'
         (field2Entry)='setShowLinkAngleOverlay($event)'
+        [disabled]='activeSrv.selectedLink.joints.length > 2'
       >
         Link Length and Angle
       </dual-input-block>
@@ -154,7 +156,8 @@
       [expanded]='true'
       title='Compound Link Settings'
     >
-      <dual-button but1Text='Un-weld All' but1Icon='add_force'></dual-button>
+      <dual-button but1Text='Un-weld All' but1Icon='unweld_joint'
+                   [but1Action]='mechanismService.unweldAll.bind(mechanismService)'></dual-button>
     </collapsible-subseciton>
   </panel-section>
 

@@ -29,6 +29,12 @@ export class DualInputComponent {
   lastShowField2Overlay: boolean = false;
 
   updateOverlay() {
+    if (this.disabled) {
+      this.showField1Overlay = false;
+      this.showField2Overlay = false;
+      return;
+    }
+
     this.showField1Overlay = this.isField1MouseOver || this.isField1Focused;
     if (this.lastShowField1Overlay != this.showField1Overlay) {
       this.field1Entry.emit(this.showField1Overlay);
