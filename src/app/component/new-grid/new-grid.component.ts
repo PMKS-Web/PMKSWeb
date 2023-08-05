@@ -22,6 +22,7 @@ import {
   local_storage_available,
   isInside,
   getDistance,
+  AngleUnit,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -35,6 +36,7 @@ import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touch
 import * as util from 'util';
 import { Line } from '../../model/line';
 import { ColorService } from '../../services/color.service';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 
 @Component({
   selector: 'app-new-grid',
@@ -58,7 +60,8 @@ export class NewGridComponent {
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
-    private colorService: ColorService
+    private colorService: ColorService,
+    public nup: NumberUnitParserService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -80,6 +83,9 @@ export class NewGridComponent {
 
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
+
+  public showLinkLengthOverlay: boolean = false;
+  public showLinkAngleOverlay: boolean = false;
 
   static instance: NewGridComponent;
   private lastNotificationTime: number = Date.now();
@@ -113,6 +119,15 @@ export class NewGridComponent {
       // console.log(this.svgGrid.getZoom());
       // this.svgGrid.panZoomObject.updateBBox();
       // this.svgGrid.scaleToFitLinkage();
+    });
+
+    this.activeObjService.onActiveObjChange.subscribe((obj) => {
+      this.showLinkAngleOverlay = false;
+      this.showLinkLengthOverlay = false;
+      //Disable focus on any text input when changing active object
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     });
   }
 
@@ -997,5 +1012,219 @@ export class NewGridComponent {
 
   getDebugLines(): Line[] {
     return NewGridComponent.debugLines;
+  }
+
+  getSVGPerpendicularLine1() {
+    //Return the SVG path of the line that is perpendicular to the first line and intersects the first line at the first joint
+    //The line will be 1 unit long and will be centered at the first joint
+    //It will act was an end cap for the line to represnet the lenght of the line
+    let length = SettingsService.objectScale / 7;
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Find the slope of the original line
+    let m1 = (y2 - y1) / (x2 - x1);
+
+    //Find the slope of the perpendicular line
+    let m2 = -1 / m1;
+
+    //Find the angle of the perpendicular line
+    let angle = Math.atan(m2);
+
+    //Find the endpoints of the perpendicular line
+    let x3 = x1 + length * Math.cos(angle);
+    let y3 = y1 + length * Math.sin(angle);
+    let x4 = x1 - length * Math.cos(angle);
+    let y4 = y1 - length * Math.sin(angle);
+
+    //Return the SVG path of the perpendicular line
+    return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
+  }
+
+  getSVGPerpendicularLine2() {
+    //Same as getSVGPerpendicularLine1 but for the second joint
+    let length = SettingsService.objectScale / 7;
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    let m1 = (y2 - y1) / (x2 - x1);
+    let m2 = -1 / m1;
+    let angle = Math.atan(m2);
+
+    let x3 = x2 + length * Math.cos(angle);
+    let y3 = y2 + length * Math.sin(angle);
+    let x4 = x2 - length * Math.cos(angle);
+    let y4 = y2 - length * Math.sin(angle);
+
+    return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
+  }
+
+  getSVGPrimaryAxisLine1() {
+    //Return the SVG path of the line that is the primary axis
+    //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
+    //Each line should start the joints
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Find the length of the original line
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    //Find the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1); //Use atan2 instead of atan
+
+    //Find the coordinates of the points that divide the line into three equal parts
+    let x3 = x1 + (length / 3) * Math.cos(angle);
+    let y3 = y1 + (length / 3) * Math.sin(angle);
+
+    //Return the SVG paths of the two lines that start from the joints and end at the middle points
+    return 'M' + x1 + ' ' + y1 + ' L' + x3 + ' ' + y3;
+  }
+
+  getSVGPrimaryAxisLine2() {
+    //Return the SVG path of the line that is the primary axis
+    //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
+    //Each line should start the joints
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Find the length of the original line
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    //Find the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1); //Use atan2 instead of atan
+
+    //Find the coordinates of the points that divide the line into three equal parts
+    let x4 = x2 - (length / 3) * Math.cos(angle);
+    let y4 = y2 - (length / 3) * Math.sin(angle);
+
+    //Return the SVG paths of the two lines that start from the joints and end at the middle points
+    return 'M' + x4 + ' ' + y4 + ' L' + x2 + ' ' + y2;
+  }
+
+  getSVGAngleOverlayLines() {
+    //This function returns the SVG path of the angle overlay
+    //Is has one line that goes along the primary axis of the link starting at the first joint
+    //The 2nd line starts at the first joint and is parallel to the x axis
+    //The third arc connects the endpoint of the first line to the endpoint of the second line
+    const lengthOfIndicator = SettingsService.objectScale * 2;
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Find the slope and the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Find the coordinates of the endpoints of the two lines that form the angle with the original line
+    let x3 = x1 + lengthOfIndicator * Math.cos(angle);
+    let y3 = y1 + lengthOfIndicator * Math.sin(angle);
+    let x4 = x1 + lengthOfIndicator;
+    let y4 = y1;
+
+    //Return the SVG paths of the angle overlay without the arrow
+    let line1 = 'M' + x3 + ' ' + y3 + ' L' + x1 + ' ' + y1;
+    let line2 = ' M' + x1 + ' ' + y1 + ' L' + x4 + ' ' + y4;
+
+    //Return the SVG path of the angle overlay with the arrow
+    return line1 + line2;
+  }
+
+  getSVGAngleOverlayArc() {
+    //This function returns the SVG path of the angle overlay
+    //Is has one line that goes along the primary axis of the link starting at the first joint
+    //The 2nd line starts at the first joint and is parallel to the x axis
+    //The third arc connects the endpoint of the first line to the endpoint of the second line
+    const lengthOfIndicator = SettingsService.objectScale * 1.8;
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Find the slope and the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Find the coordinates of the endpoints of the two lines that form the angle with the original line
+    let x3 = x1 + lengthOfIndicator * Math.cos(angle);
+    let y3 = y1 + lengthOfIndicator * Math.sin(angle);
+    let x4 = x1 + lengthOfIndicator;
+    let y4 = y1;
+
+    //Find the direction and flags for drawing the arc
+    //Assume that we want to draw a quarter circle with radius equal to lengthOfIndicator
+    let sweepFlag = angle > 0 ? 1 : 0;
+
+    //Return the SVG paths of the angle overlay without the arrow
+    let arc =
+      ' M' +
+      x4 +
+      ' ' +
+      y4 +
+      ' A' +
+      lengthOfIndicator +
+      ' ' +
+      lengthOfIndicator +
+      ' ' +
+      '90' +
+      ' ' +
+      0 +
+      ' ' +
+      sweepFlag +
+      ' ' +
+      x3 +
+      ' ' +
+      y3;
+
+    //Return the SVG path of the angle overlay with the arrow
+    return arc;
+  }
+
+  protected readonly AngleUnit = AngleUnit;
+
+  getSVGAngleOverlayTextPos() {
+    //Get the positon to put the angle label
+    //It needs to be at the midpoint of the arc which goes from x axis to the primary axis
+    //But with an offset so it's farther from the radius
+    //Make sure to use atan2
+    const offSetRadius = SettingsService.objectScale * 3;
+    let link = this.activeObjService.selectedLink;
+    let x1 = link.joints[0].x;
+    let y1 = link.joints[0].y;
+    let x2 = link.joints[1].x;
+    let y2 = link.joints[1].y;
+
+    //Calculate the angle between the x-axis and the primary axis
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Calculate the midpoint of the arc
+    let midAngle = angle / 2;
+    let midX = offSetRadius * Math.cos(midAngle);
+    let midY = offSetRadius * Math.sin(midAngle);
+
+    //Add the offset to the midpoint
+    let labelX = midX + x1;
+    let labelY = midY + y1;
+
+    //Return an object with x and y properties
+    return { x: labelX, y: labelY };
+  }
+
+  protected readonly RealJoint = RealJoint;
+
+  secondJointIsGrounded(selectedLink: RealLink) {
+    return (selectedLink.joints[1] as RealJoint).ground;
   }
 }

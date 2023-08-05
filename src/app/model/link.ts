@@ -186,9 +186,9 @@ export class RealLink extends Link {
     // this._shape = shape !== undefined ? shape : Shape.line;
     // this._fill = '#' + (0x1000000 + Math.random() * 0xffffff).toString(16).substr(1, 6);
     // this._fill = RealLink.colorOptions[Math.floor(Math.random() * RealLink.colorOptions.length)];
-
-    this._fill = ColorService.instance.getNextLinkColor();
-
+    setTimeout(() => {
+      this._fill = ColorService.instance.getNextLinkColor();
+    });
     if (subSet === undefined || subSet.length === 0) {
       // this.subset = [];
     } else {

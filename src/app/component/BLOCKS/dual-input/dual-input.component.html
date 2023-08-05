@@ -7,10 +7,14 @@
     >
     <div class='spacer'></div>
   </div>
-  <div class='row' [formGroup]='formGroup'>
+  <div class='row' [formGroup]='formGroup' style='gap: 5px'>
 
     <span class='label'>{{label1}}</span>
-    <mat-form-field class='customInputForm' (click)='field1.select()'>
+    <mat-form-field class='customInputForm' (click)='field1.select()'
+                    (mouseenter)='isField1MouseOver = true; updateOverlay()'
+                    (mouseleave)='isField1MouseOver = false; updateOverlay()'
+                    (focusin)='isField1Focused = true; updateOverlay()'
+                    (focusout)='isField1Focused = false; updateOverlay()'>
       <input class='customInput' matInput type='text' #field1
              (keyup.enter)='field1.blur()'
              [formControlName]='this.formControl1'>
@@ -18,30 +22,14 @@
 
     <div class='spacer'></div>
     <span class='label' style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
-    <mat-form-field class='customInputForm' (click)='field2.select()'>
+    <mat-form-field class='customInputForm' (click)='field2.select()'
+                    (mouseenter)='isField2MouseOver = true; updateOverlay()'
+                    (mouseleave)='isField2MouseOver = false; updateOverlay()'
+                    (focusin)='isField2Focused = true; updateOverlay()'
+                    (focusout)='isField2Focused = false; updateOverlay()'>
       <input class='customInput' matInput type='text' #field2
              (keyup.enter)='field2.blur()'
              [formControlName]='this.formControl2'>
     </mat-form-field>
-
-    <!--    <span class="label">X</span>-->
-    <!--    <input-->
-    <!--      id="block-input-box"-->
-    <!--      type="text"-->
-    <!--      [formControlName]="this.formControl1"-->
-    <!--      #field-->
-    <!--      (keyup.enter)="field.blur()"-->
-    <!--    />-->
-    <!--    &lt;!&ndash; <span id="block-input-units">{{ this.unit }}</span> &ndash;&gt;-->
-    <!--    <div class="spacer"></div>-->
-    <!--    <span class="label">Y</span>-->
-    <!--    <input-->
-    <!--      id="block-input-box"-->
-    <!--      type="text"-->
-    <!--      [formControlName]="this.formControl2"-->
-    <!--      #field2-->
-    <!--      (keyup.enter)="field2.blur()"-->
-    <!--    />-->
-    <!-- <span id="block-input-units">{{ this.unit }}</span> -->
   </div>
 </div>

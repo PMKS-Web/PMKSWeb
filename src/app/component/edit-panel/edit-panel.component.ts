@@ -16,6 +16,7 @@ import { SettingsService } from '../../services/settings.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
+import { NewGridComponent } from '../new-grid/new-grid.component';
 
 @Component({
   selector: 'app-edit-panel',
@@ -559,5 +560,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     }
     //If the joint is grounded, return true
     return selectedJoint.ground;
+  }
+
+  setShowLinkLengthOverlay($event: boolean) {
+    NewGridComponent.instance.showLinkLengthOverlay = $event;
+  }
+
+  setShowLinkAngleOverlay($event: boolean) {
+    NewGridComponent.instance.showLinkAngleOverlay = $event;
   }
 }

@@ -39,6 +39,13 @@
         <marker id="arrowhead" markerWidth="5" markerHeight="3.5" refX="0" refY="1.75" orient="auto">
           <polygon points="0 0, 5 1.75, 0 3.5" />
         </marker>
+        <marker id="arrowheadArc" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" />
+        </marker>
+        <marker id="arrowheadArcFlipped" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+          <polygon points="10 0, 0 3.5, 10 7" />
+        </marker>
+
       </defs>
       <!-- This is only used to to scale onto when there is not link -->
       <rect *ngIf='mechanismSrv.joints.length == 0'
@@ -200,8 +207,8 @@
               [class]='mechanismSrv.getLinkCSSClass(link)'>
             </path>
           </ng-container>
-
         </ng-container>
+        <!--          Angle and length indicator overlay-->
       </g>
       <g id='jointHolder' style='transform: scaleY(-1)'>
         <ng-container *ngFor='let joint of mechanismSrv.getJoints()'>
@@ -358,10 +365,42 @@
         >
           <text
             *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
-            style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
+            style='font-size: {{svgGrid.scaleWithZoom(20)}}px; text-anchor: middle'
           >
           {{joint.name}}
           </text>
+        </svg>
+      </g>
+      <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
+        <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible;'>
+          <path
+            stroke-width='2'
+            stroke-linejoin='round'
+            fill='black'
+            opacity='1.0'
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+          ></path>
+          <path
+            stroke-width='2'
+            stroke-linejoin='round'
+            fill='white'
+            opacity='1.0'
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
+          ></path>
+          <path
+            stroke-width='2'
+            stroke-linejoin='round'
+            fill='black'
+            opacity='1.0'
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
+          ></path>
+          <path
+            stroke-width='2'
+            stroke-linejoin='round'
+            fill='white'
+            opacity='1.0'
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
+          ></path>
         </svg>
       </g>
       <g id='linkTagHolder' style='pointer-events: none'>
@@ -374,8 +413,8 @@
           style='overflow: visible; text-anchor: middle'
         >
           <text
-            *ngIf="(gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link')"
-            style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: middle'
+            *ngIf="(!this.showLinkLengthOverlay && !this.showLinkAngleOverlay) && ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link'))"
+            style='font-size: {{svgGrid.scaleWithZoom(20)}}px; text-anchor: middle'
           >
             {{link.name}}
           </text>
@@ -391,41 +430,9 @@
           style='overflow: visible; text-anchor: middle'
         >
           <text *ngIf='settings.isShowID.value || force.showHighlight || (this.activeObjService.selectedForce == force && this.activeObjService.objType == "Force")'
-                style='font-size: {{svgGrid.scaleWithZoom(30)}}px; text-anchor: left'>
+                style='font-size: {{svgGrid.scaleWithZoom(20)}}px; text-anchor: left'>
             {{force.name}}
           </text>
-        </svg>
-      </g>
-      <g id='comTagHolder' style='transform: scaleY(-1); pointer-events: none' *ngIf='settings.isShowCOM.value'>
-        <svg *ngFor='let link of mechanismSrv.getLinks()' style='overflow: visible;'>
-            <path
-              stroke-width='2'
-              stroke-linejoin='round'
-              fill='black'
-              opacity='1.0'
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
-            ></path>
-            <path
-              stroke-width='2'
-              stroke-linejoin='round'
-              fill='white'
-              opacity='1.0'
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
-            ></path>
-            <path
-              stroke-width='2'
-              stroke-linejoin='round'
-              fill='black'
-              opacity='1.0'
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
-            ></path>
-            <path
-              stroke-width='2'
-              stroke-linejoin='round'
-              fill='white'
-              opacity='1.0'
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
-            ></path>
         </svg>
       </g>
       <g id='jointTempHolder' style='display: none; transform: scaleY(-1)'>
@@ -461,6 +468,48 @@
       >
         <path stroke-width='0.04' stroke='black' d=''></path>
         <path fill='black' d=''></path>
+      </g>
+
+      <g *ngIf='activeObjService.objType == "Link" && this.showLinkLengthOverlay && !this.showLinkAngleOverlay' style='pointer-events: none; transform: scaleY(-1)' [attr.transform]="'translate(' + activeObjService.selectedLink.CoM.x + ',' + activeObjService.selectedLink.CoM.y + ')'">
+        <path
+          [attr.d]='getSVGPerpendicularLine1() + getSVGPerpendicularLine2()'
+          [attr.stroke-width]='0.02 * settings.objectScale'
+          [attr.stroke]="'#000000'">
+        </path>
+        <path
+          [attr.d]='getSVGPrimaryAxisLine1()'
+          [attr.stroke-width]='0.02 * settings.objectScale'
+          [attr.stroke]="'#000000'"
+          [attr.marker-start]="secondJointIsGrounded(activeObjService.selectedLink) ? 'url(#arrowheadArcFlipped)' :''">
+        </path>
+        <path
+          [attr.d]='getSVGPrimaryAxisLine2()'
+          [attr.stroke-width]='0.02 * settings.objectScale'
+          [attr.stroke]="'#000000'"
+          [attr.marker-end]="secondJointIsGrounded(activeObjService.selectedLink) ? '':'url(#arrowheadArc)'">
+        </path>
+        <text text-anchor='middle' style='transform: scaleY(-1)' [attr.x]='activeObjService.selectedLink.CoM.x' [attr.y]='-activeObjService.selectedLink.CoM.y'
+              [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+              [attr.font-size]='svgGrid.scaleWithZoom(20)'>
+          {{this.nup.formatValueAndUnit(activeObjService.selectedLink.length, this.settings.lengthUnit.getValue())}}</text>
+      </g>
+      <g *ngIf='activeObjService.objType == "Link" && this.showLinkAngleOverlay' style='pointer-events: none; transform: scaleY(-1)' [attr.transform]="'translate(' + activeObjService.selectedLink.CoM.x + ',' + activeObjService.selectedLink.CoM.y + ')'">
+        <path
+          [attr.d]='getSVGAngleOverlayLines()'
+          [attr.stroke-width]='0.02 * settings.objectScale'
+          [attr.stroke]="'#000000'" [attr.stroke-dasharray]='0.1 * settings.objectScale'>
+        </path>
+        <path
+          [attr.d]='getSVGAngleOverlayArc()'
+          [attr.stroke-width]='0.02 * settings.objectScale' [attr.fill]='"transparent"'
+          [attr.stroke]="'#000000'" marker-end="url(#arrowheadArc)">
+        </path>
+        <text text-anchor='middle' style='transform: scaleY(-1)'
+          [attr.x]='getSVGAngleOverlayTextPos().x'
+          [attr.y]='-getSVGAngleOverlayTextPos().y'
+          [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
+          [attr.font-size]='svgGrid.scaleWithZoom(20)'>
+          {{this.nup.formatValueAndUnit(this.settings.angleUnit.getValue() == AngleUnit.DEGREE ? activeObjService.selectedLink.angleDeg : activeObjService.selectedLink.angleRad, this.settings.angleUnit.getValue())}}</text>
       </g>
 
 

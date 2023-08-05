@@ -127,6 +127,8 @@
         formControl2='angle'
         [formGroup]='linkForm'
         tooltip='The length and angle of this link. A counter-clockwise rotation is a positive angle (Right hand rule).'
+        (field1Entry)='setShowLinkLengthOverlay($event)'
+        (field2Entry)='setShowLinkAngleOverlay($event)'
       >
         Link Length and Angle
       </dual-input-block>
