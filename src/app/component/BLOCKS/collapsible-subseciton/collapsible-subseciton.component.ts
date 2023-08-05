@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { AfterViewInit, Component, Input } from '@angular/core';
 import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
@@ -23,6 +23,7 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
           marginBottom: '-1px',
         })
       ),
+      transition(':enter', []),
       transition('* => *', [animate('0.15s ease-in-out')]),
     ]),
   ],

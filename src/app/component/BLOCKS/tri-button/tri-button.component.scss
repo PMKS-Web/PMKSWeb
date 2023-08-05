@@ -55,7 +55,7 @@
 
       button:first-child {
         padding: 0;
-        width: 60px !important;
+        width: 53px !important;
         min-width: unset !important;
 
         border-top-right-radius: 0;
@@ -66,11 +66,15 @@
 
       button:last-child {
         padding: 0;
-        width: 60px !important;
+        width: 57px !important;
         min-width: unset !important;
 
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
+
+        &.buttonDisabled {
+          border-left-color: transparent !important;
+        }
       }
 
     }

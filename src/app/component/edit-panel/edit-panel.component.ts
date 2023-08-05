@@ -1,6 +1,6 @@
 import { AfterContentInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
-import { PrisJoint, RevJoint } from 'src/app/model/joint';
+import { PrisJoint, RealJoint, RevJoint } from 'src/app/model/joint';
 import { FormBuilder } from '@angular/forms';
 import { Coord } from 'src/app/model/coord';
 import {
@@ -544,4 +544,20 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
   }
 
   protected readonly RealLink = RealLink;
+
+  isWeldable(joint: RealJoint) {
+    //If there are at least two links that share this joint, return true
+    return (
+      this.mechanismService.getLinks().filter((link) => link.joints.includes(joint)).length > 1
+    );
+  }
+
+  canToggleInput(selectedJoint: RealJoint) {
+    //If this is attached to a slider, return true
+    if (this.gridUtils.isAttachedToSlider(selectedJoint)) {
+      return true;
+    }
+    //If the joint is grounded, return true
+    return selectedJoint.ground;
+  }
 }

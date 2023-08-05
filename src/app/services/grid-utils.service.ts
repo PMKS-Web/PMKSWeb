@@ -27,8 +27,7 @@ import { link } from 'fs';
   providedIn: 'root',
 })
 export class GridUtilsService {
-  constructor(public svgGrid: SvgGridService) {
-  }
+  constructor(public svgGrid: SvgGridService) {}
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -155,11 +154,10 @@ export class GridUtilsService {
 
           // move forces only if dragged joint is not inside link
           let jointInHull: boolean = false;
-          let hull = l.getHullPoints()
+          let hull = l.getHullPoints();
           hull.forEach((point) => {
             if (selectedJoint.x == point[0] && selectedJoint.y == point[1]) jointInHull = true;
-          })
-
+          });
 
           // find original joint A and joint B
           let jointA = [l.joints[0].x, l.joints[0].y];
@@ -173,14 +171,17 @@ export class GridUtilsService {
           }
 
           if (l.joints.length == 2) {
-
             // special binary link case, maintain ratio
             let linkDistance = this.getPointDistance(jointA[0], jointA[1], jointB[0], jointB[1]);
 
             l.forces.forEach((f) => {
-
               // calculate ratio to be maintained
-              let forceDistance = this.getPointDistance(jointA[0], jointA[1], f.startCoord.x, f.startCoord.y);
+              let forceDistance = this.getPointDistance(
+                jointA[0],
+                jointA[1],
+                f.startCoord.x,
+                f.startCoord.y
+              );
               let ratio = forceDistance / linkDistance;
 
               // update force start position with ratio
@@ -188,13 +189,9 @@ export class GridUtilsService {
               let newY = newJointA[1] + (newJointB[1] - newJointA[1]) * ratio;
 
               f.moveForceTo(newX, newY);
-            })
-
-          }
-          else if (jointInHull) {
-
+            });
+          } else if (jointInHull) {
             l.forces.forEach((f) => {
-
               // drag offset
               let offsetX = selectedJoint.x - oldX;
               let offsetY = selectedJoint.y - oldY;
@@ -226,10 +223,16 @@ export class GridUtilsService {
       } else {
         const joint1 = selectedForce.link.joints[0];
         const joint2 = selectedForce.link.joints[1];
-        const leftMostX = selectedForce.link.joints[0].x < selectedForce.link.joints[1].x ? selectedForce.link.joints[0].x : selectedForce.link.joints[1].x
-        const rightMostX = selectedForce.link.joints[0].x > selectedForce.link.joints[1].x ? selectedForce.link.joints[0].x : selectedForce.link.joints[1].x
+        const leftMostX =
+          selectedForce.link.joints[0].x < selectedForce.link.joints[1].x
+            ? selectedForce.link.joints[0].x
+            : selectedForce.link.joints[1].x;
+        const rightMostX =
+          selectedForce.link.joints[0].x > selectedForce.link.joints[1].x
+            ? selectedForce.link.joints[0].x
+            : selectedForce.link.joints[1].x;
         const m = (joint1.y - joint2.y) / (joint1.x - joint2.x);
-        const b = joint1.y - (m * joint1.x);
+        const b = joint1.y - m * joint1.x;
         if (trueCoord.x < leftMostX) {
           selectedForce.startCoord.x = leftMostX;
         } else if (trueCoord.x > rightMostX) {
@@ -237,7 +240,7 @@ export class GridUtilsService {
         } else {
           selectedForce.startCoord.x = trueCoord.x;
         }
-        selectedForce.startCoord.y = (m * selectedForce.startCoord.x) + b;
+        selectedForce.startCoord.y = m * selectedForce.startCoord.x + b;
       }
     } else {
       selectedForce.endCoord.x = trueCoord.x;
@@ -370,6 +373,16 @@ export class GridUtilsService {
   getPointDistance(x1: number, y1: number, x2: number, y2: number): number {
     let x = x2 - x1;
     let y = y2 - y1;
-    return Math.sqrt(x*x + y*y);
+    return Math.sqrt(x * x + y * y);
+  }
+
+  isVisuallyInput(selectedJoint: RealJoint) {
+    //This is used to update the edit and context menu since the selectable prismatic joints are technically not grounded
+    //If it's a slider return the ground of the prismatic joint
+    if (this.isAttachedToSlider(selectedJoint)) {
+      return (this.getSliderJoint(selectedJoint) as RealJoint).input;
+    } else {
+      return selectedJoint.input;
+    }
   }
 }

@@ -128,19 +128,19 @@
     >
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && !gridUtils.getInput(joint)'
              xlink:href='../../../assets/Ground.svg'
-             [attr.width]='settings.objectScale * 1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.35' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+             [attr.width]='settings.objectScale * 1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.35*1.2' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && settings.isInputCW'
              xlink:href='../../../assets/InputCCW.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.505*1.2' [attr.y]='settings.objectScale*-0.435*1.2' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf='gridUtils.getGround(joint) && gridUtils.typeOfJoint(joint) !== "P" && gridUtils.getInput(joint) && !settings.isInputCW'
              xlink:href='../../../assets/InputCW.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.505' [attr.y]='settings.objectScale*-0.435' [attr.height]='settings.objectScale*1.0' style='transform: scaleY(-1)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.505*1.2' [attr.y]='settings.objectScale*-0.435*1.2' [attr.height]='settings.objectScale*1.2' style='transform: scaleY(-1)' />
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && !gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPill.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.6' [attr.height]='settings.objectScale*1.2' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
       <image *ngIf="gridUtils.typeOfJoint(joint) === 'P' && gridUtils.getGround(joint) && gridUtils.getInput(joint)"
              xlink:href='../../../assets/SliderPillInput.svg'
-             [attr.width]='settings.objectScale*1.0' [attr.x]='settings.objectScale*-0.5' [attr.y]='settings.objectScale*-0.5' [attr.height]='settings.objectScale*1.0' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
+             [attr.width]='settings.objectScale*1.2' [attr.x]='settings.objectScale*-0.6' [attr.y]='settings.objectScale*-0.6' [attr.height]='settings.objectScale*1.2' style='transform: rotateZ({{gridUtils.getPrisAngle(joint)}}rad)' />
         </svg>
       </g>
       <g id='linkBGHolder' style='transform: scaleY(-1); pointer-events: none'>
@@ -151,7 +151,7 @@
                  height='10'
                  style='overflow: visible'>
             <image xlink:href='../../../assets/SliderTrackMid.svg'
-                     [attr.width]='settings.objectScale*2.6' [attr.height]='settings.objectScale*2.6'  [attr.x]='settings.objectScale*-1.3' [attr.y]='settings.objectScale*-1.3'
+                     [attr.width]='settings.objectScale*3' [attr.height]='settings.objectScale*3'  [attr.x]='settings.objectScale*-1.5' [attr.y]='settings.objectScale*-1.5'
                    style='transform: scaleY(-1) rotateZ({{-gridUtils.getPrisAngle(link.joints[1])}}rad)'
             />
           </svg>

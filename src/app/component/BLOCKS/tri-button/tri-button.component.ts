@@ -12,6 +12,11 @@ export class TriButtonComponent {
   @Input() btn1Disabled: boolean = false;
   @Input() btn2Disabled: boolean = false;
   @Input() btn3Disabled: boolean = false;
+  @Input() btn3Text: string = '';
+  @Input() btn3Icon: string = '';
+  @Input() btn1Action!: () => void;
+  @Input() btn2Action!: () => void;
+  @Input() btn3Action!: () => void;
 
   constructor() {}
 }

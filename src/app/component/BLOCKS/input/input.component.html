@@ -6,7 +6,7 @@
     </mat-icon>
     <div class='spacer'></div>
     <mat-form-field class='customInputForm'>
-      <input matInput class='customInput' type='text' #field (keyup.enter)='field.blur()'
+      <input matInput class='customInput' type='text' #field (keyup.enter)='field.blur()' (click)='field.select()'
              [formControlName]='this._formControl'>
     </mat-form-field>
   </div>
