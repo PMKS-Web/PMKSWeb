@@ -343,33 +343,8 @@ export class NewGridComponent {
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y
     );
-    const newId = this.mechanismSrv.determineNextLetter();
-    const newJoint = new RevJoint(newId, coord.x, coord.y);
-    this.activeObjService.selectedLink.joints.forEach((j) => {
-      if (!(j instanceof RealJoint)) {
-        return;
-      }
-      j.connectedJoints.push(newJoint);
-      newJoint.connectedJoints.push(j);
-    });
-    if (
-      this.activeObjService.selectedLink.isWelded &&
-      this.activeObjService.selectedLink.lastSelectedSublink
-    ) {
-      this.activeObjService.selectedLink.lastSelectedSublink.id =
-        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
-        id: newJoint.id,
-        label: newJoint.id,
-      });
-      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
-    }
-    newJoint.links.push(this.activeObjService.selectedLink);
-    this.activeObjService.selectedLink.joints.push(newJoint);
-    this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
-    this.mechanismSrv.joints.push(newJoint);
-    this.mechanismSrv.updateMechanism();
+
+    this.mechanismSrv.addJointAt(coord);
   }
 
   createForce() {
@@ -732,46 +707,7 @@ export class NewGridComponent {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                // TODO: utilize dot product to find point that is closest to the line
-                if (this.activeObjService.selectedLink.joints.length === 2) {
-                  const lineVector: Coord = new Coord(
-                    this.activeObjService.selectedLink.joints[0].x -
-                      this.activeObjService.selectedLink.joints[1].x,
-                    this.activeObjService.selectedLink.joints[0].y -
-                      this.activeObjService.selectedLink.joints[1].y
-                  );
-
-                  // Calculate the vector from the first point on the line to the given point
-                  const givenPointVector: Coord = new Coord(
-                    startCoord.x - this.activeObjService.selectedLink.joints[0].x,
-                    startCoord.y - this.activeObjService.selectedLink.joints[0].y
-                  );
-
-                  // Calculate the dot product of the line vector and the given point vector
-                  const dotProduct: number =
-                    givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
-
-                  // Calculate the length of the line vector squared
-                  const lineLengthSquared: number =
-                    lineVector.x * lineVector.x + lineVector.y * lineVector.y;
-
-                  // Calculate the parameter t for the projection onto the line
-                  const t: number = dotProduct / lineLengthSquared;
-
-                  // Calculate the projected point on the line
-                  startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
-                  startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
-                }
-                const force = new Force(
-                  'F' + (this.mechanismSrv.forces.length + 1).toString(),
-                  this.activeObjService.selectedLink,
-                  startCoord,
-                  endCoord
-                );
-                this.activeObjService.selectedLink.forces.push(force);
-                this.mechanismSrv.forces.push(force);
-                PositionSolver.setUpSolvingForces(this.activeObjService.selectedLink.forces); // needed to determine force position when dragging a joint
-                // PositionSolver.setUpInitialJointLocations(this.selectedLink.joints);
+                this.mechanismSrv.createForce(startCoord, endCoord);
                 this.mechanismSrv.updateMechanism();
                 this.gridStates = gridStates.waiting;
                 this.forceStates = forceStates.waiting;

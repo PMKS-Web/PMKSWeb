@@ -135,6 +135,8 @@
         but1Icon='add_tracer'
         but2Text='Add Force'
         but2Icon='add_force'
+        [but1Action]='mechanismService.addJointAtCOM.bind(mechanismService)'
+        [but2Action]='mechanismService.createForceAtCOM.bind(mechanismService)'
       >
       </dual-button>
     </collapsible-subseciton>
@@ -157,7 +159,7 @@
   <!--  FORCE PANEL-->
 
   <panel-section *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">
-    <editable-title-block>Edit Force</editable-title-block>
+    <editable-title-block [deleteAction]='deleteForce.bind(this)'>Edit Force</editable-title-block>
     <collapsible-subseciton [expanded]='true' title='Basic Settings'>
       <dual-input-block
         label1='M'

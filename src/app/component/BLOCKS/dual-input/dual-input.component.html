@@ -10,16 +10,16 @@
   <div class='row' [formGroup]='formGroup'>
 
     <span class='label'>{{label1}}</span>
-    <mat-form-field class='customInputForm'>
-      <input class='customInput' matInput (click)='field1.select()' type='text' #field1
+    <mat-form-field class='customInputForm' (click)='field1.select()'>
+      <input class='customInput' matInput type='text' #field1
              (keyup.enter)='field1.blur()'
              [formControlName]='this.formControl1'>
     </mat-form-field>
 
     <div class='spacer'></div>
     <span class='label' style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
-    <mat-form-field class='customInputForm'>
-      <input class='customInput' matInput (click)='field2.select()' type='text' #field2
+    <mat-form-field class='customInputForm' (click)='field2.select()'>
+      <input class='customInput' matInput type='text' #field2
              (keyup.enter)='field2.blur()'
              [formControlName]='this.formControl2'>
     </mat-form-field>
