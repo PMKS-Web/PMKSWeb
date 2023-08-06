@@ -88,7 +88,7 @@ export class NewGridComponent {
   mouseLocation: Coord = new Coord(0, 0);
   lastMouseLocation: Coord = new Coord(0, 0);
   private synthesisClickMode: SynthesisClickMode = SynthesisClickMode.NORMAL;
-  
+  private synthesisRotateStart: number = 0;
 
   public sConstants = new SynthesisConstants();
 
@@ -287,6 +287,8 @@ export class NewGridComponent {
   setSynthesisClickMode(mode: SynthesisClickMode) {
     console.log('Setting synthesis click mode to ' + mode);
     this.synthesisClickMode = mode;
+    let pose = (this.lastLeftClick as SynthesisPose);
+    this.synthesisRotateStart = pose.thetaRadians - Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x);
   }
 
   setLastLeftClick(clickedObj: Joint | Link | String | Force | SynthesisPose) {
@@ -417,7 +419,13 @@ export class NewGridComponent {
     let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
 
     if (this.isMouseDown && this.lastLeftClickType === 'SynthesisPose') {
-      this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY, this.synthesisClickMode);
+      if (this.synthesisClickMode === SynthesisClickMode.ROTATE) {
+        let pose = (this.lastLeftClick as SynthesisPose);
+        let rotate = Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x) + this.synthesisRotateStart;
+        if (!isNaN(rotate)) pose.thetaRadians = rotate;
+      } else {
+        this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY, this.synthesisClickMode);
+      }
     }
 
     switch (this.gridStates) {

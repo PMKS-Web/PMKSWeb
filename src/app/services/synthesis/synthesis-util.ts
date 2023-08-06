@@ -21,6 +21,8 @@ export class SynthesisPose {
     public showHighlight: boolean = false;
     public showHighlightX: boolean = false;
     public showHighlightY: boolean = false;
+    public showHighlightR: boolean = false;
+
     private sConstants = new SynthesisConstants();
 
     private _status: SynthesisStatus = SynthesisStatus.DISABLED;
@@ -76,6 +78,19 @@ export class SynthesisPose {
         this.recompute();
     }
 
+    set thetaRadians(thetaRadians: number) {
+        this._thetaRadians = thetaRadians;
+        this.recompute();
+    }
+
+    get rotationCircleX(): number {
+        return this.position.x + this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR * Math.cos(this.thetaRadians);
+    }
+
+    get rotationCircleY(): number {
+        return this.position.y + this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR * Math.sin(this.thetaRadians);
+    }
+
     set thetaDegrees(thetaDegrees: number) {
         thetaDegrees %= 360;
         this._thetaRadians = thetaDegrees * Math.PI / 180;
@@ -88,6 +103,10 @@ export class SynthesisPose {
 
     set status(status: SynthesisStatus) {
         this._status = status;
+    }
+
+    isAnyHighlight(): boolean {
+        return this.showHighlight || this.showHighlightX || this.showHighlightY || this.showHighlightR;
     }
 
     // recompute cached data like endpoint positions

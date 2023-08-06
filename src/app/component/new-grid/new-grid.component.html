@@ -120,7 +120,7 @@
           (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
           [attr.d]="pose.pathString"
           [attr.id]=''
-          [attr.fill]="pose.showHighlight ? sConstants.LINK_COLOR_H[pose.status] : sConstants.LINK_COLOR[pose.status]"
+          [attr.fill]="pose.isAnyHighlight() ? sConstants.LINK_COLOR_H[pose.status] : sConstants.LINK_COLOR[pose.status]"
           [attr.fill-opacity]=0.7
           [class]=''
         >
@@ -190,9 +190,20 @@
     [class]=""
     />
 
+    <!-- rotation circle -->
+    <circle
+    (pointerover)='pose.showHighlightR = true'
+    (pointerout)='pose.showHighlightR = false'
+    (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.ROTATE);'
+    class='joint_circles'
+    [attr.r]='sConstants.ROTATION_CIRCLE_RADIUS'
+    [attr.cx]='pose.rotationCircleX' [attr.cy]='pose.rotationCircleY'
+    [attr.fill]="pose.showHighlightR ? sConstants.ROTATION_CIRCLE_COLOR_H : sConstants.ROTATION_CIRCLE_COLOR"
+    [class]=""
+    />
+
     <text
-      (pointerover)='pose.showHighlight = true'
-      (pointerout)='pose.showHighlight = false'
+      style="pointer-events: none"
       transform="scale(+1,-1)"
       [attr.x]="pose.posCenter.x+0.2"
       [attr.y]="-pose.posCenter.y-0.2"

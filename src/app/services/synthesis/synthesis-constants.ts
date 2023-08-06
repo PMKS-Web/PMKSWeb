@@ -8,6 +8,7 @@ export enum SynthesisClickMode {
     NORMAL = "NORMAL",
     X = "X",
     Y = "Y",
+    ROTATE = "ROTATE"
 }
 
 export class SynthesisConstants {
@@ -40,6 +41,11 @@ export class SynthesisConstants {
 
     public ARROW_Y_COLOR: string = "rgb(0,230,0)";
     public ARROW_Y_COLOR_H: string = "rgb(0,190,0)";
+
+    public ROTATION_CIRCLE_RADIUS: number = 0.08;
+    public ROTATION_CIRCLE_LOCATION_SCALAR = 0.4;
+    public ROTATION_CIRCLE_COLOR: string = "rgb(150, 0, 0)";
+    public ROTATION_CIRCLE_COLOR_H: string = "rgb(130, 0, 0)";
 
     constructor() {
 
