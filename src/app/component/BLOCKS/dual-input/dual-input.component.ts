@@ -14,6 +14,7 @@ export class DualInputComponent {
   @Input() label2: string = 'Y';
   @Input() formControl2!: string;
   @Input() formGroup!: FormGroup;
+  @Input() formSubGroup: string | undefined;
   @Input() disabled: boolean = false;
   @Output() field1Entry: EventEmitter<boolean> = new EventEmitter();
   @Output() field2Entry: EventEmitter<boolean> = new EventEmitter();

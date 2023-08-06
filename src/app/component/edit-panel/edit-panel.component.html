@@ -111,9 +111,13 @@
       </toggle-block>
       <color-picker type='joint'> Joint Color</color-picker>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Distance To Joints'>
-      <dual-input-block label1='D' label2='⊾' tooltip='TODO'> Joint B</dual-input-block>
-      <dual-input-block label1='D' label2='⊾' tooltip='TODO'> Joint C</dual-input-block>
+    <collapsible-subseciton title='Distance To Joints' [expanded]='true'>
+      <div *ngFor='let joint of listOfOtherJoints; let i=index'>
+        <!-- The repeated alias template -->
+        <dual-input-block label1='D' label2='⊾' tooltip='TODO' [formGroup]='jointForm' formSubGroup='otherJoints'
+                          [formControl1]='(i*2).toString()' [formControl2]='(i*2+1).toString()'>
+          Joint {{joint!.name}}</dual-input-block>
+      </div>
     </collapsible-subseciton>
   </panel-section>
 
@@ -147,10 +151,11 @@
     <collapsible-subseciton title='Visual Settings'>
       <color-picker type='link' [link]='activeSrv.selectedLink'>Link Color</color-picker>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Mass Settings'>
-      <input-block> Link Mass</input-block>
-      <dual-input-block> Center of Mass Position</dual-input-block>
-    </collapsible-subseciton>
+    <!--    <collapsible-subseciton title='Mass Settings'>-->
+    <!--      <input-block> Link Mass</input-block>-->
+    <!--      <dual-input-block> Center of Mass Position</dual-input-block>-->
+    <!--    </collapsible-subseciton>-->
+
     <collapsible-subseciton
       *ngIf='activeSrv.selectedLink.isCompound'
       [expanded]='true'
@@ -200,50 +205,4 @@
       <color-picker type='force' [force]='activeSrv.selectedForce'>Force Color</color-picker>
     </collapsible-subseciton>
   </panel-section>
-
-  <!--  <panel-section-->
-  <!--    *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">-->
-  <!--    <editable-title-block-->
-  <!--      description='Changing the angle will change the end point of the force. The length of the force does not affect the magnitude of the force.'-->
-  <!--    >Edit Force-->
-  <!--    </editable-title-block>-->
-
-  <!--    <input-block-->
-  <!--      [formGroup]='forceForm'-->
-  <!--      _formControl='magnitude'-->
-  <!--      tooltip='The length of the link in Newtons | lbf.'-->
-  <!--    >Magnitude-->
-  <!--    </input-block-->
-  <!--    >-->
-
-  <!--    <input-block-->
-  <!--      [formGroup]='forceForm'-->
-  <!--      _formControl='angle'-->
-  <!--      tooltip='The angle of the link relative to horizontal x-axis. A counter-clockwise rotation is positive (Right hand rule).'-->
-  <!--    >Force Angle-->
-  <!--    </input-block-->
-  <!--    >-->
-
-  <!--    <dual-input-block-->
-  <!--      [formGroup]='forceForm'-->
-  <!--      formControl1='xComp'-->
-  <!--      formControl2='yComp'-->
-  <!--      tooltip='The x and y components of the force in Newtons | lbf.'>-->
-  <!--      Force Components-->
-  <!--    </dual-input-block>-->
-
-  <!--    <radio-block-->
-  <!--      [formGroup]='forceForm'-->
-  <!--      _formControl='isGlobal'-->
-  <!--      tooltip='The frame of reference for the force.'-->
-  <!--      option1='Local (Link {{this.activeSrv.selectedForce.link.name}})'-->
-  <!--      option2='Global'-->
-  <!--    >-->
-  <!--      Force Base Frame-->
-  <!--    </radio-block>-->
-  <!--    <button-block icon='multiple_stop' [click]='this.mechanismService.changeForceDirection.bind(this.mechanismService)'>-->
-  <!--      Switch Direction-->
-  <!--    </button-block>-->
-  <!--    <button-block icon='delete' [click]='deleteForce.bind(this)'>Delete Force</button-block>-->
-  <!--  </panel-section>-->
 </div>

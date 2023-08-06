@@ -971,7 +971,7 @@ export class NewGridComponent {
     if ($event.keyCode == 46) {
       //Delete Key
       if (true) {
-        //Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
+        //TODO: Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
         if (this.activeObjService.objType === 'Grid') {
           NewGridComponent.sendNotification('Select an object to delete.');
           return;
@@ -1204,7 +1204,7 @@ export class NewGridComponent {
     //It needs to be at the midpoint of the arc which goes from x axis to the primary axis
     //But with an offset so it's farther from the radius
     //Make sure to use atan2
-    const offSetRadius = SettingsService.objectScale * 3;
+    const offSetRadius = SettingsService.objectScale * 2;
     let link = this.activeObjService.selectedLink;
     let x1 = link.joints[0].x;
     let y1 = link.joints[0].y;
