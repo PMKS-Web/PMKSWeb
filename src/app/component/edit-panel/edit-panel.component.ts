@@ -581,9 +581,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
 
   isWeldable(joint: RealJoint) {
     //If there are at least two links that share this joint, return true
-    return (
-      this.mechanismService.getLinks().filter((link) => link.joints.includes(joint)).length > 1
-    );
+    return joint.canBeWelded();
   }
 
   canToggleInput(selectedJoint: RealJoint) {

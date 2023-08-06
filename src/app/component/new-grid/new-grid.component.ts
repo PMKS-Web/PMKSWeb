@@ -269,7 +269,7 @@ export class NewGridComponent {
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         ); //Rev Joint - Always
-        if ((this.lastRightClick as RealJoint).canBeWelded()) {
+        if ((this.lastRightClick as RealJoint).canBeWeldedOrUnwelded()) {
           this.cMenuItems.push(
             new cMenuItem(
               (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
