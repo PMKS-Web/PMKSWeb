@@ -89,7 +89,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     // console.log(this.activeSrv);
     // console.log(this.profileForm);
     this.onChanges();
-    this.disableAndEnableFields();
+    this.disableAndEnableJointFields();
   }
 
   ngAfterContentInit() {
@@ -100,19 +100,49 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
     console.log('test');
   }
 
-  disableAndEnableFields(): void {
+  disableAndEnableJointFields(): void {
     if (this.jointForm.get('slider')?.value === true) {
-      this.jointForm.get('angle')?.enable();
-      this.jointForm.get('ground')?.disable();
+      //This is such a werid bug, the only way to update the visual of the input to be enabled is to emit the event
+      //But emitting the event causes the update to be called, which calls this function, which causes an infinite loop
+      //So we have to only call the enable on change
+      if (this.jointForm.get('angle')?.disabled) {
+        this.jointForm.get('angle')?.enable({ emitEvent: true });
+      }
+      if (this.jointForm.get('ground')?.enabled) {
+        this.jointForm.get('ground')?.disable({ emitEvent: true });
+      }
     } else {
-      this.jointForm.get('angle')?.disable();
-      this.jointForm.get('ground')?.enable();
+      if (this.jointForm.get('angle')?.enabled) {
+        this.jointForm.get('angle')?.disable({ emitEvent: true });
+      }
+      if (this.jointForm.get('ground')?.disabled) {
+        this.jointForm.get('ground')?.enable({ emitEvent: true });
+      }
+    }
+  }
+
+  disableAndEnableLinkFields(): void {
+    if (this.activeSrv.selectedLink) {
+      if (this.activeSrv.selectedLink.joints.length > 2) {
+        this.linkForm.get('angle')?.disable({ emitEvent: false });
+        this.linkForm.get('length')?.disable({ emitEvent: false });
+      } else {
+        this.linkForm.get('angle')?.enable({ emitEvent: false });
+        this.linkForm.get('length')?.enable({ emitEvent: false });
+      }
     }
   }
 
   onChanges(): void {
     this.settingsService.angleUnit.subscribe((val) => {
       this.activeSrv.fakeUpdateSelectedObj();
+    });
+
+    this.activeSrv.onActiveObjChange.subscribe((val) => {
+      this.disableAndEnableLinkFields();
+      setTimeout(() => {
+        this.disableAndEnableJointFields();
+      });
     });
 
     // this.settingsService.inputTorque.subscribe((val) => {
@@ -173,6 +203,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
         val!,
         this.settingsService.angleUnit.getValue()
       );
+      if (!this.activeSrv.selectedJoint) return;
       if (!success) {
         this.jointForm.patchValue({
           angle: this.nup
@@ -181,7 +212,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               AngleUnit.RADIAN,
               this.settingsService.angleUnit.getValue()
             )
-            .toFixed(2)
+            .toFixed(0)
             .toString(),
         });
       } else {
@@ -200,7 +231,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) {
         return;
       }
+      // if (!this.activeSrv.selectedJoint) return;
       this.activeSrv.selectedJoint.ground = val!;
+      // this.disableAndEnableFields();
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);
     });
@@ -228,10 +261,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
       if (this.hideEditPanel()) {
         return;
       }
-      this.disableAndEnableFields();
       this.mechanismService.toggleSlider();
       this.mechanismService.updateMechanism();
       this.mechanismService.onMechUpdateState.next(2);
+      this.disableAndEnableJointFields();
     });
 
     this.jointForm.controls['curve'].valueChanges.subscribe((val) => {
@@ -276,7 +309,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit {
               AngleUnit.RADIAN,
               this.settingsService.angleUnit.getValue()
             )
-            .toFixed(2)
+            .toFixed(0)
             .toString(),
         });
       } else {

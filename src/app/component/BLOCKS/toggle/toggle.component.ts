@@ -6,7 +6,7 @@ import { FormGroup } from '@angular/forms';
   templateUrl: './toggle.component.html',
   styleUrls: ['./toggle.component.scss'],
 })
-export class ToggleComponent implements OnChanges {
+export class ToggleComponent {
   @Input() tooltip: string | undefined;
   @Input() formGroup!: FormGroup;
   @Input() _formControl!: string;
@@ -17,11 +17,11 @@ export class ToggleComponent implements OnChanges {
 
   @ViewChild('field', { static: false }) field!: ElementRef;
 
-  ngOnChanges() {
-    //Get the #field input element
-    // const field = document.getElementById('field');
-    console.log(this.field.nativeElement);
-    (this.field.nativeElement as HTMLInputElement).select();
-    (this.field.nativeElement as HTMLInputElement).blur();
-  }
+  // ngOnChanges() {
+  //   //Get the #field input element
+  //   // const field = document.getElementById('field');
+  //   console.log(this.field.nativeElement);
+  //   (this.field.nativeElement as HTMLInputElement).select();
+  //   (this.field.nativeElement as HTMLInputElement).blur();
+  // }
 }
