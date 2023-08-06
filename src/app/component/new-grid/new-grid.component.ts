@@ -553,6 +553,11 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (AnimationBarComponent.animate == true) {
+      this.sendNotification('Cannot open context menu while animating. Stop animation to edit');
+      this.cMenuItems = [];
+      return;
+    }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
       this.sendNotification('Stop animation (or reset to 0 position) to edit');
       //Close the MatContextMenu
