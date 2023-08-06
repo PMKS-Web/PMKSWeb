@@ -4,6 +4,12 @@ export enum SynthesisStatus {
     VALID = "VALID"
 }
 
+export enum SynthesisClickMode {
+    NORMAL = "NORMAL",
+    X = "X",
+    Y = "Y",
+}
+
 export class SynthesisConstants {
     
     public CIRCLE_RADIUS: number = 0.25;
@@ -28,6 +34,12 @@ export class SynthesisConstants {
     public COR_COLOR: string = "black";
 
     public ROTATION_SIZE: number = 0.2;
+
+    public ARROW_X_COLOR: string = "rgb(255,0,0)";
+    public ARROW_X_COLOR_H: string = "rgb(200,0,0)";
+
+    public ARROW_Y_COLOR: string = "rgb(0,230,0)";
+    public ARROW_Y_COLOR_H: string = "rgb(0,190,0)";
 
     constructor() {
 

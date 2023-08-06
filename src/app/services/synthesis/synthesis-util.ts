@@ -19,6 +19,8 @@ export class SynthesisPose {
     private _pathString: string = "";
 
     public showHighlight: boolean = false;
+    public showHighlightX: boolean = false;
+    public showHighlightY: boolean = false;
     private sConstants = new SynthesisConstants();
 
     private _status: SynthesisStatus = SynthesisStatus.DISABLED;

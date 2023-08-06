@@ -33,7 +33,7 @@ import { Line } from '../../model/line';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
-import { SynthesisConstants } from 'src/app/services/synthesis/synthesis-constants';
+import { SynthesisClickMode, SynthesisConstants } from 'src/app/services/synthesis/synthesis-constants';
 
 @Component({
   selector: 'app-new-grid',
@@ -87,6 +87,7 @@ export class NewGridComponent {
   private isMouseDown: boolean = false;
   mouseLocation: Coord = new Coord(0, 0);
   lastMouseLocation: Coord = new Coord(0, 0);
+  private synthesisClickMode: SynthesisClickMode = SynthesisClickMode.NORMAL;
   
 
   public sConstants = new SynthesisConstants();
@@ -279,6 +280,15 @@ export class NewGridComponent {
     this.updateContextMenuItems();
   }
 
+  get mode(): typeof SynthesisClickMode {
+    return SynthesisClickMode;
+  }
+
+  setSynthesisClickMode(mode: SynthesisClickMode) {
+    console.log('Setting synthesis click mode to ' + mode);
+    this.synthesisClickMode = mode;
+  }
+
   setLastLeftClick(clickedObj: Joint | Link | String | Force | SynthesisPose) {
     this.lastLeftClick = clickedObj;
     // console.warn('Last Left Click: ');
@@ -407,7 +417,7 @@ export class NewGridComponent {
     let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
 
     if (this.isMouseDown && this.lastLeftClickType === 'SynthesisPose') {
-      this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY);
+      this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY, this.synthesisClickMode);
     }
 
     switch (this.gridStates) {
@@ -526,6 +536,7 @@ export class NewGridComponent {
     //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
     this.isMouseDown = false;
+    this.synthesisClickMode = SynthesisClickMode.NORMAL;
     this.gridStates = gridStates.waiting;
     this.jointStates = jointStates.waiting;
     this.linkStates = linkStates.waiting;

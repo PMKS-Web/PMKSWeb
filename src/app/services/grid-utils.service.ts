@@ -21,6 +21,7 @@ import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SynthesisPose } from './synthesis/synthesis-util';
 import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
+import { SynthesisClickMode } from './synthesis/synthesis-constants';
 
 @Injectable({
   providedIn: 'root',
@@ -195,8 +196,8 @@ export class GridUtilsService {
     return selectedForce;
   }
 
-  dragPose(pose: SynthesisPose, dx: number, dy: number) {
-    this.synthesisBuilder.movePoseByOffset(pose, dx, dy);
+  dragPose(pose: SynthesisPose, dx: number, dy: number, mode: SynthesisClickMode) {
+    this.synthesisBuilder.movePoseByOffset(pose, mode, dx, dy);
   }
 
   isAttachedToSlider(lastRightClick: Joint | Link | Force | String) {

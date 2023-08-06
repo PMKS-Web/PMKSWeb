@@ -3,7 +3,7 @@ import { FormBuilder } from '@angular/forms';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { COR, SynthesisPose } from './synthesis-util';
 import { Coord } from 'src/app/model/coord';
-import { SynthesisConstants } from './synthesis-constants';
+import { SynthesisClickMode, SynthesisConstants } from './synthesis-constants';
 import { NumberUnitParserService } from '../number-unit-parser.service';
 import { SettingsService } from '../settings.service';
 
@@ -99,7 +99,19 @@ export class SynthesisBuilderService {
     return this.getAllPoses().length === 3;
   }
 
-  movePoseByOffset(pose: SynthesisPose, dx: number, dy: number) {
+  movePoseByOffset(pose: SynthesisPose, mode: SynthesisClickMode, dx: number, dy: number) {
+
+    // if dragging by coordinate axis, project onto axis
+    if (mode !== SynthesisClickMode.NORMAL) {
+
+      let theta = pose.thetaRadians;
+      if (mode === SynthesisClickMode.Y) theta += Math.PI / 2;
+
+      let d = dx * Math.cos(theta) + dy * Math.sin(theta);
+      dx = d * Math.cos(theta);
+      dy = d * Math.sin(theta);
+    }
+
     pose.position = new Coord(pose.position.x + dx, pose.position.y + dy);
     this.valueChanges.next(true);
   }

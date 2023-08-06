@@ -45,6 +45,7 @@ import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
 import { SynthesisWarningComponent } from './component/MODALS/synthesis-warning/synthesis-warning.component';
+import { SvgArrowComponent } from './component/svg-arrow/svg-arrow.component';
 
 @NgModule({
   declarations: [
@@ -79,6 +80,7 @@ import { SynthesisWarningComponent } from './component/MODALS/synthesis-warning/
     NotReadyWarningComponent,
     TemplatesComponent,
     SynthesisWarningComponent,
+    SvgArrowComponent,
   ],
   imports: [
     BrowserModule,
