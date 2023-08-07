@@ -40,7 +40,8 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     //Subscribte to the emitter inside mechanismStateService
     this.mechanismService.onMechPositionChange.subscribe((v) => {
-      this.timestepDisplay = Number((v / 62.5).toFixed(2));
+      this.timestepDisplay = Number(this.mechanismService.mechanisms[0].timeNum[v].toFixed(2));
+      // this.timestepDisplay = Number((v / 62.5).toFixed(2));
     });
   }
 
@@ -55,6 +56,8 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   }
 
   onNewTimeSubmit(simpleForm: any) {
+    // TODO: Don't want to use this.maxTimeSteps like this unless it's to pull the max number of timesteps...
+    //  Want to pull timeNum within mechanism and showcase this
     console.log(simpleForm.value.timestep);
     if (simpleForm.value.timestep * 62.5 > this.maxTimeSteps()) {
       simpleForm.value.timestep = this.maxTimeSteps() / 62.5;

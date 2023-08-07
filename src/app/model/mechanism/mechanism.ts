@@ -16,6 +16,7 @@ export class Mechanism {
   private _links: Link[][] = [[]];
   private _forces: Force[][] = [[]];
   private _ics: InstantCenter[][] = [[]];
+  private _timeNum: number[] = [];
   private _internalTriangleSimLinkMap = new Map<string, number[]>();
 
   private _gravity: boolean;
@@ -185,6 +186,9 @@ export class Mechanism {
     let currentTimeStamp = 0;
     const TOLERANCE = 0.008;
     let max_counter = 0;
+    let curTimeNum = 0;
+    // TODO: Make sure to also account for m/s for slider and for other units, such as degree per second
+    let timeNumIncrement = (Math.PI / 180) / inputAngVel;
     this.joints[0].forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
@@ -219,6 +223,7 @@ export class Mechanism {
     const startingPositionY = desiredJoint.y;
     let xDiff = Math.abs(startingPositionX - Math.round(desiredJoint.x * 100) / 100);
     let yDiff = Math.abs(startingPositionY - Math.round(desiredJoint.y * 100) / 100);
+    this._timeNum.push(curTimeNum);
 
     while (!simForward || currentTimeStamp === 0 || xDiff > TOLERANCE || yDiff > TOLERANCE) {
       const possible = PositionSolver.determinePositionAnalysis(
@@ -349,6 +354,11 @@ export class Mechanism {
         // }
         falseTwice = 0;
         currentTimeStamp++;
+        if (curTimeNum + timeNumIncrement <= 0) {
+          timeNumIncrement = timeNumIncrement * -1;
+        }
+        curTimeNum = curTimeNum + timeNumIncrement;
+        this._timeNum.push(curTimeNum);
         this._inputAngularVelocities.push(inputAngVel);
         // TODO: Create own function to determine this. Probably just utilize tracer joint logic
         // const ffs = this.calculateForces(this.SimulationLinks, this.SimulationForces);
@@ -365,6 +375,7 @@ export class Mechanism {
         simForward = !simForward;
         inputAngVel = inputAngVel * -1;
         inputAngVelDirection = !inputAngVelDirection;
+        timeNumIncrement = timeNumIncrement * -1;
       }
       xDiff = Math.abs(
         startingPositionX - roundNumber(this._joints[currentTimeStamp][desiredJointIndex].x, 2)
@@ -456,6 +467,14 @@ export class Mechanism {
 
   set joints(value: Joint[][]) {
     this._joints = value;
+  }
+
+  get timeNum(): number[] {
+    return this._timeNum;
+  }
+
+  set timeNum(value: number[]) {
+    this._timeNum = value;
   }
 
   get links(): Link[][] {
