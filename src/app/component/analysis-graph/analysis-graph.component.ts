@@ -1,42 +1,28 @@
+import {AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild,} from '@angular/core';
 import {
-  AfterViewInit,
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  SimpleChange,
-  SimpleChanges,
-  ViewChild,
-} from '@angular/core';
-import {
-  ChartComponent,
+  ApexAnnotations,
   ApexAxisChartSeries,
-  ApexChart,
-  ApexXAxis,
-  ApexYAxis,
   ApexDataLabels,
-  ApexGrid,
+  ApexFill,
+  ApexLegend,
+  ApexMarkers,
   ApexStroke,
   ApexTitleSubtitle,
-  ApexMarkers,
-  ApexFill,
   ApexTooltip,
-  ApexAnnotations,
-  ApexLegend,
+  ApexXAxis,
+  ApexYAxis,
+  ChartComponent,
 } from 'ng-apexcharts';
-import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
-import { ForceSolver } from 'src/app/model/mechanism/force-solver';
-import { AngleUnit, crossProduct, LengthUnit, roundNumber } from '../../model/utils';
-import { ToolbarComponent } from '../toolbar/toolbar.component';
-import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { animate, state, style, transition, trigger } from '@angular/animations';
-import { FormBuilder } from '@angular/forms';
-import { MechanismService } from '../../services/mechanism.service';
-import { SettingsService } from '../../services/settings.service';
-import { NumberUnitParserService } from '../../services/number-unit-parser.service';
-import { ActiveObjService } from '../../services/active-obj.service';
-import { NewGridComponent } from '../new-grid/new-grid.component';
+import {KinematicsSolver} from 'src/app/model/mechanism/kinematic-solver';
+import {ForceSolver} from 'src/app/model/mechanism/force-solver';
+import {AngleUnit, GlobalUnit, LengthUnit, roundNumber} from '../../model/utils';
+import {ToolbarComponent} from '../toolbar/toolbar.component';
+import {animate, state, style, transition, trigger} from '@angular/animations';
+import {FormBuilder} from '@angular/forms';
+import {MechanismService} from '../../services/mechanism.service';
+import {SettingsService} from '../../services/settings.service';
+import {NumberUnitParserService} from '../../services/number-unit-parser.service';
+import {ActiveObjService} from '../../services/active-obj.service';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -234,23 +220,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // this.ngOnDestroy();
     // this.ngOnInit();
     // this.ngAfterViewInit();
-    ForceSolver.resetVariables();
-    KinematicsSolver.resetVariables();
-    ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
-    ForceSolver.determineForceAnalysis(
-        this.mechanismService.joints,
-        this.mechanismService.links,
-        'static',
-        ToolbarComponent.gravity,
-        ToolbarComponent.unit
-    );
-
-    KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
-    KinematicsSolver.determineKinematics(
-        this.mechanismService.joints,
-        this.mechanismService.links,
-        ToolbarComponent.inputAngularVelocity
-    );
+    // ForceSolver.resetVariables();
+    // KinematicsSolver.resetVariables();
+    // ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
+    // ForceSolver.determineForceAnalysis(
+    //     this.mechanismService.joints,
+    //     this.mechanismService.links,
+    //     'static',
+    //     this.settingsService.isGravity.value,
+    //     unitStr
+    // );
+    //
+    // KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
+    // KinematicsSolver.determineKinematics(
+    //     this.mechanismService.joints,
+    //     this.mechanismService.links,
+    //     ToolbarComponent.inputAngularVelocity
+    // );
     this.updateChartData();
   }
 
@@ -515,7 +501,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // const posAngUnit = '(rad)';
     const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s)';
     const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s^2)';
-    if (ToolbarComponent.unit === 'm') {
+    if (this.settingsService.globalUnit.value === GlobalUnit.METRIC) {
       posLinUnit = 'm';
       velLinUnit = 'm/s';
       accLinUnit = 'm/s^2';
@@ -711,6 +697,21 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let y = 0;
     let z = 0;
     const categories: string[] = [];
+    let unitStr = 'cm';
+    switch(this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'cm';
+        break;
+    }
     this.mechanismService.mechanisms[0].joints.forEach((_, index) => {
       switch (mechProp) {
         case 'Input Torque':
@@ -727,8 +728,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].joints[index],
             this.mechanismService.mechanisms[0].links[index],
             analysisType,
-            ToolbarComponent.gravity,
-            ToolbarComponent.unit
+            this.settingsService.isGravity.value,
+            unitStr
           );
           datum_X.push(roundNumber(ForceSolver.unknownVariableTorque, 3));
           break;
@@ -745,8 +746,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].joints[index],
             this.mechanismService.mechanisms[0].links[index],
             analysisType,
-            ToolbarComponent.gravity,
-            ToolbarComponent.unit
+            this.settingsService.isGravity.value,
+            unitStr
           );
           x = ForceSolver.unknownVariableForcesMap.get(mechPart)![0];
           y = ForceSolver.unknownVariableForcesMap.get(mechPart)![1];
