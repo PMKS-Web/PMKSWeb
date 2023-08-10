@@ -26,6 +26,7 @@ import { NewGridComponent } from '../new-grid/new-grid.component';
 })
 export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   listOfOtherJoints: RealJoint[] = [];
+  private currentlyOpenJointID: string = '';
 
   hideEditPanel() {
     return AnimationBarComponent.animate || this.mechanismService.mechanismTimeStep !== 0;
@@ -89,11 +90,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   get otherJoints() {
     return this.jointForm.get('otherJoints') as FormArray;
-  }
-
-  addOtherJoint() {
-    this.otherJoints.push(this.fb.control('Hello!', { updateOn: 'blur' }));
-    this.otherJoints.push(this.fb.control('Angle', { updateOn: 'blur' }));
   }
 
   debug() {
@@ -164,60 +160,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
     this.onDestroySubscriptions.push(
       this.activeSrv.onActiveObjChange.subscribe((val) => {
-        if (this.activeSrv.objType == 'Joint') {
-          this.listOfOtherJoints = this.getOtherJointsInLink(this.activeSrv.selectedJoint);
-          this.jointForm.controls['otherJoints'] = this.fb.array([]);
-          console.log('killed all subscriptions to other joints');
-          this.otherJoitnsSubscriptions.forEach((subscription) => subscription.unsubscribe());
-
-          this.listOfOtherJoints.forEach((joint, i) => {
-            this.addOtherJoint();
-            //Now we need to subscribe to the value changes of the new form control
-            this.otherJoitnsSubscriptions.push(
-              this.otherJoints.controls[i * 2].valueChanges.subscribe((val) => {
-                console.log(val, 'callback for other joints, length', i);
-                const [success, value] = this.nup.parseLengthString(
-                  val!,
-                  this.settingsService.lengthUnit.getValue()
-                );
-                if (!success) {
-                  this.otherJoints.controls[i * 2].patchValue(
-                    this.getDistanceBetweenJoints(this.activeSrv.selectedJoint, joint)
-                  );
-                } else {
-                  // this.activeSrv.selectedLink.length = value;
-                  this.updateDistanceBetweenJoints(this.activeSrv.selectedJoint, joint, value);
-                  this.mechanismService.onMechUpdateState.next(2);
-                  this.otherJoints.controls[i * 2].patchValue(
-                    this.nup.formatValueAndUnit(value, this.settingsService.lengthUnit.getValue()),
-                    { emitEvent: false }
-                  );
-                }
-              })
-            );
-            this.otherJoitnsSubscriptions.push(
-              this.otherJoints.controls[i * 2 + 1].valueChanges.subscribe((val) => {
-                //This one is for angle
-              })
-            );
-          });
-          console.log(this.jointForm);
-        }
-
         this.disableAndEnableLinkFields();
         setTimeout(() => {
           this.disableAndEnableJointFields();
         });
       })
     );
-
-    // this.settingsService.inputTorque.subscribe((val) => {
-    //   var unit = this.settingsService.inputTorque.value;
-    //   if (unit !== this.torqueUnit) {
-    //   }
-    //   this.torqueUnit = this.settingsService.inputTorque.value;
-    //   this.activeSrv.fakeUpdateSelectedObj();
-    // });
 
     this.onDestroySubscriptions.push(
       this.jointForm.controls['xPos'].valueChanges.subscribe((val) => {
@@ -547,6 +495,18 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.onDestroySubscriptions.push(
       this.activeSrv.onActiveObjChange.subscribe((newObjType: string) => {
         if (newObjType == 'Joint') {
+          //Is this a real change where the form needs to get updated?
+          if (this.currentlyOpenJointID != this.activeSrv.selectedJoint.id) {
+            this.reloadOtherJointForm();
+            // console.log('reload other joint form');
+          }
+          this.listOfOtherJoints.forEach((joint, i) => {
+            this.setFormDistAndAngle(this.activeSrv.selectedJoint, joint, i);
+            // console.log('set form dist and angle');
+          });
+
+          this.currentlyOpenJointID = this.activeSrv.selectedJoint.id;
+
           const angleTemp_rad = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
             ? (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle_rad
             : 0;
@@ -576,7 +536,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             { emitEvent: false }
           );
           this.settingsService.globalUnit.next(this.lengthUnit + 30);
+
+          this.disableAndEnableLinkFields();
+          setTimeout(() => {
+            this.disableAndEnableJointFields();
+          });
         } else if (newObjType == 'Link') {
+          this.currentlyOpenJointID = '';
           this.linkForm.patchValue(
             {
               length: this.nup.formatValueAndUnit(
@@ -595,6 +561,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             { emitEvent: false }
           );
         } else if (newObjType == 'Force') {
+          this.currentlyOpenJointID = '';
           this.forceForm.patchValue(
             {
               magnitude: this.nup.formatValueAndUnit(
@@ -621,6 +588,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             },
             { emitEvent: false }
           );
+        } else {
+          this.currentlyOpenJointID = '';
         }
       })
     );
@@ -714,8 +683,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.mechanismService.deleteForce();
   }
 
-  protected readonly RealLink = RealLink;
-
   isWeldable(joint: RealJoint) {
     //If there are at least two links that share this joint, return true
     return joint.canBeWelded();
@@ -759,5 +726,100 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     }
 
     return otherJoints as RealJoint[];
+  }
+
+  private reloadOtherJointForm() {
+    this.listOfOtherJoints = this.getOtherJointsInLink(this.activeSrv.selectedJoint);
+    this.jointForm.controls['otherJoints'] = this.fb.array([]);
+    // console.log('killed all subscriptions to other joints');
+    this.otherJoitnsSubscriptions.forEach((subscription) => subscription.unsubscribe());
+
+    this.listOfOtherJoints.forEach((joint, i) => {
+      this.otherJoints.push(this.fb.control('', { updateOn: 'blur' }));
+      this.otherJoitnsSubscriptions.push(
+        this.otherJoints.controls[i * 2].valueChanges.subscribe((val) => {
+          const [success, value] = this.nup.parseLengthString(
+            val!,
+            this.settingsService.lengthUnit.getValue()
+          );
+          if (!success) {
+            this.otherJoints.controls[i * 2].patchValue(
+              this.getDistanceBetweenJoints(this.activeSrv.selectedJoint, joint)
+            );
+          } else {
+            // this.activeSrv.selectedLink.length = value;
+            this.updateDistanceBetweenJoints(this.activeSrv.selectedJoint, joint, value);
+            this.mechanismService.onMechUpdateState.next(2);
+            this.otherJoints.controls[i * 2].patchValue(
+              this.nup.formatValueAndUnit(value, this.settingsService.lengthUnit.getValue()),
+              { emitEvent: false }
+            );
+          }
+        })
+      );
+      this.otherJoints.push(this.fb.control('', { updateOn: 'blur' }));
+      this.otherJoitnsSubscriptions.push(
+        this.otherJoints.controls[i * 2 + 1].valueChanges.subscribe((val) => {
+          const [success, value] = this.nup.parseAngleString(
+            val!,
+            this.settingsService.angleUnit.getValue()
+          );
+          if (!success) {
+            this.otherJoints.controls[i * 2 + 1].patchValue(
+              this.nup
+                .convertAngle(
+                  this.activeSrv.selectedLink.angleRad,
+                  AngleUnit.RADIAN,
+                  this.settingsService.angleUnit.getValue()
+                )
+                .toFixed(0)
+                .toString()
+            );
+          } else {
+            this.updateAngleBetweenJoints(
+              this.activeSrv.selectedJoint,
+              joint,
+              this.nup.convertAngle(
+                value,
+                this.settingsService.angleUnit.getValue(),
+                AngleUnit.RADIAN
+              )
+            );
+            this.mechanismService.onMechUpdateState.next(2);
+            this.otherJoints.controls[i * 2 + 1].patchValue(
+              this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()),
+              { emitEvent: false }
+            );
+          }
+        })
+      );
+    });
+  }
+
+  private setFormDistAndAngle(
+    currentJoint: RealJoint,
+    otherJoint: RealJoint,
+    otherJointID: number
+  ) {
+    // console.log('setFormDistAndAngle', otherJointID);
+    // console.log(this.otherJoints);
+    let distance = this.getDistanceBetweenJoints(currentJoint, otherJoint);
+    let angle = this.getAngleBetweenJoints(currentJoint, otherJoint);
+
+    angle = this.nup.convertAngle(
+      angle,
+      AngleUnit.RADIAN,
+      this.settingsService.angleUnit.getValue()
+    );
+
+    this.otherJoints.controls[otherJointID * 2].setValue(
+      this.nup.formatValueAndUnit(distance, this.settingsService.lengthUnit.getValue()),
+      { emitEvent: false }
+    );
+
+    this.otherJoints.controls[otherJointID * 2 + 1].setValue(
+      this.nup.formatValueAndUnit(angle, this.settingsService.angleUnit.getValue()),
+      { emitEvent: false }
+    );
   }
 }
