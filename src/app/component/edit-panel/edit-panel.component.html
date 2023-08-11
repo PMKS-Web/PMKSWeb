@@ -84,7 +84,7 @@
         [disableInput]='!(this.jointForm.controls["slider"].value)'
         [formGroup]='jointForm'
         _formControl='slider'
-        _formControlForInput='angle'
+        _formControlForInput='prisAngle'
         tooltip='Make this joint a prismatic joint. Only one joint can be a slider at a time.'
       >
         Slider
@@ -115,7 +115,10 @@
       <div *ngFor='let joint of listOfOtherJoints; let i=index'>
         <!-- The repeated alias template -->
         <dual-input-block label1='D' label2='⊾' tooltip='TODO' [formGroup]='jointForm' formSubGroup='otherJoints'
-                          [formControl1]='(i*2).toString()' [formControl2]='(i*2+1).toString()'>
+                          [formControl1]='(i*2).toString()' [formControl2]='(i*2+1).toString()'
+                          (field1Entry)='setShowLinkLengthOverlay($event)'
+                          (field2Entry)='setShowLinkAngleOverlay($event)'
+                          [emitterOutputID]='i'>
           Joint {{joint!.name}}</dual-input-block>
       </div>
     </collapsible-subseciton>
@@ -135,6 +138,7 @@
         (field1Entry)='setShowLinkLengthOverlay($event)'
         (field2Entry)='setShowLinkAngleOverlay($event)'
         [disabled]='activeSrv.selectedLink.joints.length > 2'
+        [emitterOutputID]='-1'
       >
         Link Length and Angle
       </dual-input-block>

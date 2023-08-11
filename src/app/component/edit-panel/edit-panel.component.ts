@@ -40,7 +40,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
     public gridUtils: GridUtilsService
-  ) {}
+  ) {
+    //Set the instance to this
+    EditPanelComponent.instance = this;
+  }
+
+  //Instance of this
+  static instance: EditPanelComponent;
 
   //maintain a list of subcriptions to unsubscribe later
   onDestroySubscriptions: any[] = [];
@@ -60,7 +66,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     {
       xPos: [''],
       yPos: [''],
-      angle: [''],
+      prisAngle: [''],
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
       slider: [false, { updateOn: 'change' }],
@@ -123,15 +129,15 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       //This is such a werid bug, the only way to update the visual of the input to be enabled is to emit the event
       //But emitting the event causes the update to be called, which calls this function, which causes an infinite loop
       //So we have to only call the enable on change
-      if (this.jointForm.get('angle')?.disabled) {
-        this.jointForm.get('angle')?.enable({ emitEvent: true });
+      if (this.jointForm.get('prisAngle')?.disabled) {
+        this.jointForm.get('prisAngle')?.enable({ emitEvent: true });
       }
       if (this.jointForm.get('ground')?.enabled) {
         this.jointForm.get('ground')?.disable({ emitEvent: true });
       }
     } else {
-      if (this.jointForm.get('angle')?.enabled) {
-        this.jointForm.get('angle')?.disable({ emitEvent: true });
+      if (this.jointForm.get('prisAngle')?.enabled) {
+        this.jointForm.get('prisAngle')?.disable({ emitEvent: true });
       }
       if (this.jointForm.get('ground')?.disabled) {
         this.jointForm.get('ground')?.enable({ emitEvent: true });
@@ -220,16 +226,17 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     );
 
     this.onDestroySubscriptions.push(
-      this.jointForm.controls['angle'].valueChanges.subscribe((val) => {
+      this.jointForm.controls['prisAngle'].valueChanges.subscribe((val) => {
         if (this.hideEditPanel()) return;
         const [success, value] = this.nup.parseAngleString(
           val!,
           this.settingsService.angleUnit.getValue()
         );
         if (!this.activeSrv.selectedJoint) return;
+        if (!this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)) return;
         if (!success) {
           this.jointForm.patchValue({
-            angle: this.nup
+            prisAngle: this.nup
               .convertAngle(
                 (this.activeSrv.selectedJoint as PrisJoint).angle_rad,
                 AngleUnit.RADIAN,
@@ -247,7 +254,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             );
           this.jointForm.patchValue(
             {
-              angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()),
+              prisAngle: this.nup.formatValueAndUnit(
+                value,
+                this.settingsService.angleUnit.getValue()
+              ),
             },
             { emitEvent: false }
           );
@@ -497,14 +507,19 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         if (newObjType == 'Joint') {
           //Is this a real change where the form needs to get updated?
           if (this.currentlyOpenJointID != this.activeSrv.selectedJoint.id) {
-            this.reloadOtherJointForm();
-            // console.log('reload other joint form');
+            this.listOfOtherJoints = [];
+            setTimeout(() => {
+              this.reloadOtherJointForm();
+              this.listOfOtherJoints.forEach((joint, i) => {
+                this.setFormDistAndAngle(this.activeSrv.selectedJoint, joint, i);
+              });
+            });
           }
+
           this.listOfOtherJoints.forEach((joint, i) => {
             this.setFormDistAndAngle(this.activeSrv.selectedJoint, joint, i);
             // console.log('set form dist and angle');
           });
-
           this.currentlyOpenJointID = this.activeSrv.selectedJoint.id;
 
           const angleTemp_rad = this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)
@@ -520,7 +535,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
                 this.activeSrv.selectedJoint.y,
                 this.settingsService.lengthUnit.getValue()
               ),
-              angle: this.nup.formatValueAndUnit(
+              prisAngle: this.nup.formatValueAndUnit(
                 this.nup.convertAngle(
                   angleTemp_rad,
                   AngleUnit.RADIAN,
@@ -697,11 +712,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return selectedJoint.ground;
   }
 
-  setShowLinkLengthOverlay($event: boolean) {
+  setShowLinkLengthOverlay($event: number) {
     NewGridComponent.instance.showLinkLengthOverlay = $event;
   }
 
-  setShowLinkAngleOverlay($event: boolean) {
+  setShowLinkAngleOverlay($event: number) {
     NewGridComponent.instance.showLinkAngleOverlay = $event;
   }
 
@@ -721,6 +736,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       })
       .flat();
 
+    // Remove joints that are prismatic
+    otherJoints = otherJoints.filter((joint) => {
+      return !(joint instanceof PrisJoint);
+    });
+
     if (otherJoints == undefined) {
       return [];
     }
@@ -733,6 +753,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.jointForm.controls['otherJoints'] = this.fb.array([]);
     // console.log('killed all subscriptions to other joints');
     this.otherJoitnsSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    this.otherJoitnsSubscriptions = [];
 
     this.listOfOtherJoints.forEach((joint, i) => {
       this.otherJoints.push(this.fb.control('', { updateOn: 'blur' }));

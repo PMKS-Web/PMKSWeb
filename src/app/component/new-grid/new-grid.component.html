@@ -364,7 +364,9 @@
           style='overflow: visible; text-anchor: middle'
         >
           <text
-            *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) || joint.showHighlight || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
+            *ngIf="(gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value)
+            || joint.showHighlight
+            || (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')"
             style='font-size: {{svgGrid.scaleWithZoom(20)}}px; text-anchor: middle'
           >
           {{joint.name}}
@@ -470,7 +472,8 @@
         <path fill='black' d=''></path>
       </g>
 
-      <g *ngIf='activeObjService.objType == "Link" && this.showLinkLengthOverlay && !this.showLinkAngleOverlay' style='pointer-events: none; transform: scaleY(-1)' [attr.transform]="'translate(' + activeObjService.selectedLink.CoM.x + ',' + activeObjService.selectedLink.CoM.y + ')'">
+      <g *ngIf='(activeObjService.objType == "Link" || activeObjService.objType == "Joint") && this.showLinkLengthOverlay >= -1 && this.showLinkAngleOverlay < -1'
+         style='pointer-events: none; transform: scaleY(-1)'>
         <path
           [attr.d]='getSVGPerpendicularLine1() + getSVGPerpendicularLine2()'
           [attr.stroke-width]='0.02 * settings.objectScale'
@@ -488,12 +491,13 @@
           [attr.stroke]="'#000000'"
           [attr.marker-end]="secondJointIsGrounded(activeObjService.selectedLink) ? '':'url(#arrowheadArc)'">
         </path>
-        <text text-anchor='middle' style='transform: scaleY(-1)' [attr.x]='activeObjService.selectedLink.CoM.x' [attr.y]='-activeObjService.selectedLink.CoM.y'
+        <text text-anchor='middle' style='transform: scaleY(-1)' [attr.x]='getSVGLengthOverlayTextPos().x' [attr.y]='-getSVGLengthOverlayTextPos().y'
               [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
               [attr.font-size]='svgGrid.scaleWithZoom(20)'>
-          {{this.nup.formatValueAndUnit(activeObjService.selectedLink.length, this.settings.lengthUnit.getValue())}}</text>
+          {{this.nup.formatValueAndUnit(getLengthBetweenOverlayPoints(), this.settings.lengthUnit.getValue())}}</text>
       </g>
-      <g *ngIf='activeObjService.objType == "Link" && this.showLinkAngleOverlay' style='pointer-events: none; transform: scaleY(-1)' [attr.transform]="'translate(' + activeObjService.selectedLink.CoM.x + ',' + activeObjService.selectedLink.CoM.y + ')'">
+      <g *ngIf='(activeObjService.objType == "Link" || activeObjService.objType == "Joint") && this.showLinkAngleOverlay >= -1'
+         style='pointer-events: none; transform: scaleY(-1)'>
         <path
           [attr.d]='getSVGAngleOverlayLines()'
           [attr.stroke-width]='0.02 * settings.objectScale'
@@ -509,7 +513,7 @@
           [attr.y]='-getSVGAngleOverlayTextPos().y'
           [attr.stroke-width]='svgGrid.scaleWithZoom(5)'
           [attr.font-size]='svgGrid.scaleWithZoom(20)'>
-          {{this.nup.formatValueAndUnit(this.settings.angleUnit.getValue() == AngleUnit.DEGREE ? activeObjService.selectedLink.angleDeg : activeObjService.selectedLink.angleRad, this.settings.angleUnit.getValue())}}</text>
+          {{this.nup.formatValueAndUnit(getAngleBetweenOverlayPoints(), this.settings.angleUnit.getValue())}}</text>
       </g>
 
 

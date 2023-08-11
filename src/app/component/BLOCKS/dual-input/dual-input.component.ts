@@ -16,8 +16,9 @@ export class DualInputComponent {
   @Input() formGroup!: FormGroup;
   @Input() formSubGroup: string | undefined;
   @Input() disabled: boolean = false;
-  @Output() field1Entry: EventEmitter<boolean> = new EventEmitter();
-  @Output() field2Entry: EventEmitter<boolean> = new EventEmitter();
+  @Output() field1Entry: EventEmitter<number> = new EventEmitter();
+  @Output() field2Entry: EventEmitter<number> = new EventEmitter();
+  @Input() emitterOutputID: number = -2;
 
   isField1MouseOver: boolean = false;
   isField1Focused: boolean = false;
@@ -38,13 +39,21 @@ export class DualInputComponent {
 
     this.showField1Overlay = this.isField1MouseOver || this.isField1Focused;
     if (this.lastShowField1Overlay != this.showField1Overlay) {
-      this.field1Entry.emit(this.showField1Overlay);
+      if (this.showField1Overlay) {
+        this.field1Entry.emit(this.emitterOutputID);
+      } else {
+        this.field1Entry.emit(-2);
+      }
     }
     this.lastShowField1Overlay = this.showField1Overlay;
 
     this.showField2Overlay = this.isField2MouseOver || this.isField2Focused;
     if (this.lastShowField2Overlay != this.showField2Overlay) {
-      this.field2Entry.emit(this.showField2Overlay);
+      if (this.showField2Overlay) {
+        this.field2Entry.emit(this.emitterOutputID);
+      } else {
+        this.field2Entry.emit(-2);
+      }
     }
     this.lastShowField2Overlay = this.showField2Overlay;
   }

@@ -23,6 +23,7 @@ import {
   isInside,
   getDistance,
   AngleUnit,
+  radToDeg,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -37,6 +38,7 @@ import * as util from 'util';
 import { Line } from '../../model/line';
 import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 
 @Component({
   selector: 'app-new-grid',
@@ -84,8 +86,12 @@ export class NewGridComponent {
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
 
-  public showLinkLengthOverlay: boolean = false;
-  public showLinkAngleOverlay: boolean = false;
+  //This is terrible but:
+  // -2 => hidden
+  // -1 => Link length and angle shown
+  // 0-N => Joint length and angle shown for joint N (in list from edit panel)
+  public showLinkLengthOverlay: number = -2;
+  public showLinkAngleOverlay: number = -2;
 
   static instance: NewGridComponent;
   private lastNotificationTime: number = Date.now();
@@ -122,8 +128,8 @@ export class NewGridComponent {
     });
 
     this.activeObjService.onActiveObjChange.subscribe((obj) => {
-      this.showLinkAngleOverlay = false;
-      this.showLinkLengthOverlay = false;
+      this.showLinkAngleOverlay = -2;
+      this.showLinkLengthOverlay = -2;
       //Disable focus on any text input when changing active object
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
@@ -1019,16 +1025,67 @@ export class NewGridComponent {
     return NewGridComponent.debugLines;
   }
 
+  findStartAndEndPoints() {
+    let x1, y1, x2, y2;
+    if (this.showLinkAngleOverlay == -2) {
+      switch (this.showLinkLengthOverlay) {
+        case -2:
+          //Throw an error
+          throw new Error(
+            'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
+          );
+          break;
+        case -1:
+          let link = this.activeObjService.selectedLink;
+          x1 = link.joints[0].x;
+          y1 = link.joints[0].y;
+          x2 = link.joints[1].x;
+          y2 = link.joints[1].y;
+          break;
+        default:
+          let thisJoint = this.activeObjService.selectedJoint;
+          let otherJoint =
+            EditPanelComponent.instance.listOfOtherJoints[this.showLinkLengthOverlay];
+          x1 = thisJoint.x;
+          y1 = thisJoint.y;
+          x2 = otherJoint.x;
+          y2 = otherJoint.y;
+      }
+    } else {
+      switch (this.showLinkAngleOverlay) {
+        case -2:
+          //Throw an error
+          throw new Error(
+            'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
+          );
+          break;
+        case -1:
+          let link = this.activeObjService.selectedLink;
+          x1 = link.joints[0].x;
+          y1 = link.joints[0].y;
+          x2 = link.joints[1].x;
+          y2 = link.joints[1].y;
+          break;
+        default:
+          let thisJoint = this.activeObjService.selectedJoint;
+          let otherJoint = EditPanelComponent.instance.listOfOtherJoints[this.showLinkAngleOverlay];
+          x1 = thisJoint.x;
+          y1 = thisJoint.y;
+          x2 = otherJoint.x;
+          y2 = otherJoint.y;
+      }
+    }
+
+    return { x1, y1, x2, y2 };
+  }
+
   getSVGPerpendicularLine1() {
     //Return the SVG path of the line that is perpendicular to the first line and intersects the first line at the first joint
     //The line will be 1 unit long and will be centered at the first joint
     //It will act was an end cap for the line to represnet the lenght of the line
     let length = SettingsService.objectScale / 7;
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Find the slope of the original line
     let m1 = (y2 - y1) / (x2 - x1);
@@ -1052,11 +1109,7 @@ export class NewGridComponent {
   getSVGPerpendicularLine2() {
     //Same as getSVGPerpendicularLine1 but for the second joint
     let length = SettingsService.objectScale / 7;
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     let m1 = (y2 - y1) / (x2 - x1);
     let m2 = -1 / m1;
@@ -1074,11 +1127,7 @@ export class NewGridComponent {
     //Return the SVG path of the line that is the primary axis
     //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
     //Each line should start the joints
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Find the length of the original line
     let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -1098,11 +1147,7 @@ export class NewGridComponent {
     //Return the SVG path of the line that is the primary axis
     //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
     //Each line should start the joints
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Find the length of the original line
     let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
@@ -1124,18 +1169,15 @@ export class NewGridComponent {
     //The 2nd line starts at the first joint and is parallel to the x axis
     //The third arc connects the endpoint of the first line to the endpoint of the second line
     const lengthOfIndicator = SettingsService.objectScale * 2;
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Find the slope and the angle of the original line
     let angle = Math.atan2(y2 - y1, x2 - x1);
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
     //Find the coordinates of the endpoints of the two lines that form the angle with the original line
-    let x3 = x1 + lengthOfIndicator * Math.cos(angle);
-    let y3 = y1 + lengthOfIndicator * Math.sin(angle);
+    let x3 = x1 + length * Math.cos(angle);
+    let y3 = y1 + length * Math.sin(angle);
     let x4 = x1 + lengthOfIndicator;
     let y4 = y1;
 
@@ -1153,11 +1195,7 @@ export class NewGridComponent {
     //The 2nd line starts at the first joint and is parallel to the x axis
     //The third arc connects the endpoint of the first line to the endpoint of the second line
     const lengthOfIndicator = SettingsService.objectScale * 1.8;
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Find the slope and the angle of the original line
     let angle = Math.atan2(y2 - y1, x2 - x1);
@@ -1199,17 +1237,21 @@ export class NewGridComponent {
 
   protected readonly AngleUnit = AngleUnit;
 
+  getSVGLengthOverlayTextPos() {
+    //Return the average of the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let x = (x1 + x2) / 2;
+    let y = (y1 + y2) / 2;
+    return { x, y };
+  }
+
   getSVGAngleOverlayTextPos() {
     //Get the positon to put the angle label
     //It needs to be at the midpoint of the arc which goes from x axis to the primary axis
     //But with an offset so it's farther from the radius
     //Make sure to use atan2
     const offSetRadius = SettingsService.objectScale * 2;
-    let link = this.activeObjService.selectedLink;
-    let x1 = link.joints[0].x;
-    let y1 = link.joints[0].y;
-    let x2 = link.joints[1].x;
-    let y2 = link.joints[1].y;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
 
     //Calculate the angle between the x-axis and the primary axis
     let angle = Math.atan2(y2 - y1, x2 - x1);
@@ -1230,6 +1272,33 @@ export class NewGridComponent {
   protected readonly RealJoint = RealJoint;
 
   secondJointIsGrounded(selectedLink: RealLink) {
+    //If we are looking at distToJoints, we always move the 2nd joint
+    if (this.activeObjService.objType == 'Joint') {
+      return false;
+    }
     return (selectedLink.joints[1] as RealJoint).ground;
+  }
+
+  getLengthBetweenOverlayPoints() {
+    //Get the length between the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    return length;
+  }
+
+  getAngleBetweenOverlayPoints() {
+    //Get the angle between the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Convert the angle to this.settings.angleUnit.getValue();
+    switch (this.settings.angleUnit.getValue()) {
+      case AngleUnit.DEGREE:
+        angle = radToDeg(angle);
+        break;
+      case AngleUnit.RADIAN:
+        break;
+    }
+    return angle;
   }
 }
