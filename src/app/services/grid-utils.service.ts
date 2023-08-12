@@ -22,6 +22,7 @@ import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SvgGridService } from './svg-grid.service';
 import { link } from 'fs';
+import { ColorService } from './color.service';
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +39,9 @@ export class GridUtilsService {
   }
 
   createRealLink(id: string, joints: Joint[]) {
-    return new RealLink(id, joints);
+    let newLink = new RealLink(id, joints);
+    newLink.fill = ColorService.instance.getNextLinkColor();
+    return newLink;
   }
 
   containsSlider(joint: Joint) {
