@@ -12,8 +12,8 @@
   $foreground: map.get($theme, foreground);
 
   #speedButton {
-    //font-weight: bold;
-    //font-size: 20px;
+    font-weight: bold;
+    font-size: 20px;
   }
 
   #barContainer {
@@ -65,19 +65,19 @@
       /* Chrome, Safari, Edge, Opera */
       input::-webkit-outer-spin-button,
       input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
+        -webkit-appearance: none;
+        margin: 0;
       }
 
       /* Firefox */
       input[type=number] {
-      -moz-appearance: textfield;
+        -moz-appearance: textfield;
       }
 
       #timeInputWrapper {
         display: flex;
-        //font-size: 20px;
-        //font-weight: 200;
+        font-size: 20px;
+        font-weight: 200;
         align-items: baseline;
         // @include mat.typography-level($typography-config, 'headline-6');
         #tLabel {
@@ -89,8 +89,8 @@
       }
 
       #animationBar-input {
-        //font-size: 20px;
-        //font-weight: 200;
+        font-size: 20px;
+        font-weight: 200;
         width: 40px;
         border: 0;
         outline: none;
