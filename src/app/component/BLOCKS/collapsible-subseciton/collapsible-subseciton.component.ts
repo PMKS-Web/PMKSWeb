@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
@@ -34,7 +34,16 @@ export class CollapsibleSubsecitonComponent {
   @Input() expanded: boolean = false;
   @Input() title: string = '';
 
+  @Output() closed: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() opened: EventEmitter<boolean> = new EventEmitter<boolean>();
+
   toggleExpand() {
     this.expanded = !this.expanded;
+
+    if (this.expanded) {
+      this.opened.emit(true);
+    } else {
+      this.closed.emit(true);
+    }
   }
 }

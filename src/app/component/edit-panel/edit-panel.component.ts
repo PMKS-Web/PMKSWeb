@@ -28,6 +28,19 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   listOfOtherJoints: RealJoint[] = [];
   private currentlyOpenJointID: string = '';
 
+  //A dictionary for whether each collapsible section is expanded or not
+  sectionExpanded: { [key: string]: boolean } = {
+    JBasic: true,
+    JVisual: false,
+    JDistToJ: true,
+    LBasic: true,
+    LVisual: false,
+    LMass: false,
+    LCompound: true,
+    FBasic: true,
+    FVisual: false,
+  };
+
   hideEditPanel() {
     return AnimationBarComponent.animate || this.mechanismService.mechanismTimeStep !== 0;
   }

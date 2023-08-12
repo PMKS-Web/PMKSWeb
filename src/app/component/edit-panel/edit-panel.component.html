@@ -55,7 +55,10 @@
     <editable-title-block [deleteAction]='deleteJoint.bind(this)'>
       Edit Joint
     </editable-title-block>
-    <collapsible-subseciton title='Basic Settings' [expanded]='true'>
+    <collapsible-subseciton title='Basic Settings'
+                            [expanded]="sectionExpanded['JBasic']"
+                            (opened)="sectionExpanded['JBasic'] = true"
+                            (closed)="sectionExpanded['JBasic'] = false">
       <dual-input-block
         label1='X'
         label2='Y'
@@ -102,7 +105,9 @@
       >
       </tri-button>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings'>
+    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['JVisual']"
+                            (opened)="sectionExpanded['JVisual'] = true"
+                            (closed)="sectionExpanded['JVisual'] = false">
       <toggle-block
         [formGroup]='jointForm'
         _formControl='curve'
@@ -111,7 +116,9 @@
       </toggle-block>
       <color-picker type='joint'> Joint Color</color-picker>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Distance To Joints' [expanded]='true'>
+    <collapsible-subseciton title='Distance To Joints' [expanded]="sectionExpanded['JDistToJ']"
+                            (opened)="sectionExpanded['JDistToJ'] = true"
+                            (closed)="sectionExpanded['JDistToJ'] = false">
       <div *ngFor='let joint of listOfOtherJoints; let i=index'>
         <!-- The repeated alias template -->
         <dual-input-block label1='D' label2='⊾' tooltip='TODO' [formGroup]='jointForm' formSubGroup='otherJoints'
@@ -127,7 +134,9 @@
   <!--  LINK PANEL-->
   <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <editable-title-block [deleteAction]='deleteLink.bind(this)'> Edit Link</editable-title-block>
-    <collapsible-subseciton [expanded]='true' title='Basic Settings'>
+    <collapsible-subseciton [expanded]='true' title='Basic Settings' [expanded]="sectionExpanded['LBasic']"
+                            (opened)="sectionExpanded['LBasic'] = true"
+                            (closed)="sectionExpanded['LBasic'] = false">
       <dual-input-block
         label1='L'
         label2='⊾'
@@ -152,17 +161,23 @@
       >
       </dual-button>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings'>
+    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['LVisual']"
+                            (opened)="sectionExpanded['LVisual'] = true"
+                            (closed)="sectionExpanded['LVisual'] = false">
       <color-picker type='link' [link]='activeSrv.selectedLink'>Link Color</color-picker>
     </collapsible-subseciton>
-    <!--    <collapsible-subseciton title='Mass Settings'>-->
-    <!--      <input-block> Link Mass</input-block>-->
-    <!--      <dual-input-block> Center of Mass Position</dual-input-block>-->
-    <!--    </collapsible-subseciton>-->
+    <!--        <collapsible-subseciton title='Mass Settings' [expanded]="sectionExpanded['LMass']"-->
+    <!--                                (opened)="sectionExpanded['LMass'] = true"-->
+    <!--                                (closed)="sectionExpanded['LMass'] = false">-->
+    <!--          <input-block> Link Mass</input-block>-->
+    <!--          <dual-input-block> Center of Mass Position</dual-input-block>-->
+    <!--        </collapsible-subseciton>-->
 
     <collapsible-subseciton
       *ngIf='activeSrv.selectedLink.isCompound'
-      [expanded]='true'
+      [expanded]="sectionExpanded['LCompound']"
+      (opened)="sectionExpanded['LCompound'] = true"
+      (closed)="sectionExpanded['LCompound'] = false"
       title='Compound Link Settings'
     >
       <dual-button but1Text='Un-weld All' but1Icon='unweld_joint'
@@ -174,7 +189,9 @@
 
   <panel-section *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">
     <editable-title-block [deleteAction]='deleteForce.bind(this)'>Edit Force</editable-title-block>
-    <collapsible-subseciton [expanded]='true' title='Basic Settings'>
+    <collapsible-subseciton title='Basic Settings' [expanded]="sectionExpanded['FBasic']"
+                            (opened)="sectionExpanded['FBasic'] = true"
+                            (closed)="sectionExpanded['FBasic'] = false">
       <dual-input-block
         label1='M'
         label2='⊾'
@@ -205,7 +222,9 @@
         Force Base Frame
       </radio-block>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings'>
+    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['FVisual']"
+                            (opened)="sectionExpanded['FVisual'] = true"
+                            (closed)="sectionExpanded['FVisual'] = false">
       <color-picker type='force' [force]='activeSrv.selectedForce'>Force Color</color-picker>
     </collapsible-subseciton>
   </panel-section>
