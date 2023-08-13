@@ -110,7 +110,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   //Create a static method to get an instance of the toolbar component
 
   openTemplates() {
-    this.dialog.open(TemplatesComponent);
+    this.dialog.open(TemplatesComponent, {
+      height: '90%',
+      width: '90%',
+    });
   }
 
   ngOnInit(): void {
