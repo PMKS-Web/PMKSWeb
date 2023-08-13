@@ -48,6 +48,7 @@ import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-s
 import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.component';
 import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
 import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.component';
+import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-forces.component';
 
 @NgModule({
   declarations: [
@@ -84,6 +85,7 @@ import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.com
     DualButtonComponent,
     ColorPickerComponent,
     TriButtonComponent,
+    EnableForcesComponent,
   ],
   imports: [
     BrowserModule,

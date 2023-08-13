@@ -13,7 +13,7 @@ export class ColorService {
   }
 
   private linkColorOptions = [
-    '#9fa8da',
+    '#c5cae9',
     '#303e9f',
     '#0d125a',
     // '#283493',

@@ -604,7 +604,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       this.settings.globalUnit.getValue()
     );
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isForces.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,

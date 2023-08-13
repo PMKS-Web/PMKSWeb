@@ -14,6 +14,14 @@
 
   .dual-button {
 
+    .buttonDisabled {
+      path {
+        fill: #969696 !important;
+      }
+
+      border-color: #bbbbbb !important;
+    }
+
     display: grid;
     //Equal width columns 10px apart
     grid-template-columns: repeat(2, 1fr);
@@ -45,7 +53,7 @@
       path {
         fill: mat.get-color-from-palette($primary-palette, 500) !important;
       }
-
     }
+
   }
 }

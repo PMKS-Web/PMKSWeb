@@ -30,12 +30,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   //A dictionary for whether each collapsible section is expanded or not
   sectionExpanded: { [key: string]: boolean } = {
-    JBasic: true,
+    JBasic: true, //This is the default (starting) state
     JVisual: false,
     JDistToJ: true,
     LBasic: true,
     LVisual: false,
-    LMass: false,
+    LMass: true,
     LCompound: true,
     FBasic: true,
     FVisual: false,

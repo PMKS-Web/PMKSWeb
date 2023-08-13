@@ -43,15 +43,17 @@
     </collapsible-subseciton>
 
     <collapsible-subseciton title='Force Settings' [expanded]='true'>
-      <toggle-block
-        [formGroup]='this.settingsForm'
-        _formControl='gravity'
-        tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'
-      >Enable Forces
-      </toggle-block
-      >
+      <!--      <toggle-block-->
+      <!--        [formGroup]='this.settingsForm'-->
+      <!--        _formControl='gravity'-->
+      <!--        tooltip='Allows users to assign weights to links and enables analysis options for torque and forces.'-->
+      <!--      >Enable Forces-->
+      <!--      </toggle-block>-->
+      <button-block *ngIf='!settingsService.isForces.value' customIcon='com' [click]='openEnableForceDialog.bind(this)'>
+        Enable Masses / Forces
+      </button-block>
 
-      <ng-container *ngIf='settingsService.isGravity.value'>
+      <ng-container *ngIf='settingsService.isForces.value'>
         <button-block icon='edit' [click]='sendComingSoon'>Edit Force Directions</button-block>
         <button-block icon='edit' [click]='sendComingSoon'>Edit Moment Centers</button-block>
       </ng-container>

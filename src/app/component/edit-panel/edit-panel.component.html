@@ -158,6 +158,7 @@
         but2Icon='add_force'
         [but1Action]='mechanismService.addJointAtCOM.bind(mechanismService)'
         [but2Action]='mechanismService.createForceAtCOM.bind(mechanismService)'
+        [btn2Disabled]='!settingsService.isForces.value'
       >
       </dual-button>
     </collapsible-subseciton>
@@ -166,12 +167,13 @@
                             (closed)="sectionExpanded['LVisual'] = false">
       <color-picker type='link' [link]='activeSrv.selectedLink'>Link Color</color-picker>
     </collapsible-subseciton>
-    <!--        <collapsible-subseciton title='Mass Settings' [expanded]="sectionExpanded['LMass']"-->
-    <!--                                (opened)="sectionExpanded['LMass'] = true"-->
-    <!--                                (closed)="sectionExpanded['LMass'] = false">-->
-    <!--          <input-block> Link Mass</input-block>-->
-    <!--          <dual-input-block> Center of Mass Position</dual-input-block>-->
-    <!--        </collapsible-subseciton>-->
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Mass Settings'
+                            [expanded]="sectionExpanded['LMass']"
+                            (opened)="sectionExpanded['LMass'] = true"
+                            (closed)="sectionExpanded['LMass'] = false">
+      <input-block> Link Mass</input-block>
+      <dual-input-block> Center of Mass Position</dual-input-block>
+    </collapsible-subseciton>
 
     <collapsible-subseciton
       *ngIf='activeSrv.selectedLink.isCompound'

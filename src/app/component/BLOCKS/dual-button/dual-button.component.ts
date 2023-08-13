@@ -13,4 +13,5 @@ export class DualButtonComponent {
   @Input() but2Text: string | undefined;
   @Input() but2Icon: string | undefined;
   @Input() but2Action!: () => void;
+  @Input() btn2Disabled: boolean = false;
 }

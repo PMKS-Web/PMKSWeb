@@ -215,9 +215,11 @@ export class NewGridComponent {
           this.cMenuItems.push(
             new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
           );
-          this.cMenuItems.push(
-            new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-          );
+          if (this.settings.isForces.value) {
+            this.cMenuItems.push(
+              new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
+            );
+          }
         }
         this.cMenuItems.push(
           new cMenuItem(

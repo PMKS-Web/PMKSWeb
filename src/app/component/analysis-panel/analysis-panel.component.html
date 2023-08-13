@@ -177,7 +177,8 @@
       </mat-expansion-panel>
     </collapsible-subseciton>
 
-    <collapsible-subseciton title='Force Analysis' [expanded]="graphExpanded['JForceAna']"
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Force Analysis'
+                            [expanded]="graphExpanded['JForceAna']"
                             (opened)="graphExpanded['JForceAna'] = true"
                             (closed)="graphExpanded['JForceAna'] = false">
 
@@ -465,7 +466,8 @@
     </collapsible-subseciton>
 
     <!-- Link Forces-->
-    <collapsible-subseciton title='Force Analysis' [expanded]="graphExpanded['LForceAna']"
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Force Analysis'
+                            [expanded]="graphExpanded['LForceAna']"
                             (opened)="graphExpanded['LForceAna'] = true"
                             (closed)="graphExpanded['LForceAna'] = false">
 

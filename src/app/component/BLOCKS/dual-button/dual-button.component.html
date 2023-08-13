@@ -3,7 +3,8 @@
     <mat-icon svgIcon='{{but1Icon}}'></mat-icon>
     {{but1Text}}
   </button>
-  <button *ngIf='but2Text' mat-stroked-button color='primary' (click)='but2Action()'>
+  <button *ngIf='but2Text' mat-stroked-button color='primary' (click)='but2Action()' [disabled]='btn2Disabled'
+          class='{{btn2Disabled? "buttonDisabled" :""}}'>
     <mat-icon svgIcon='{{but2Icon}}'></mat-icon>
     {{but2Text}}
   </button>
