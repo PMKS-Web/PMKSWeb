@@ -2,7 +2,7 @@
   <panel-section>
     <!-- {{ this.currentAngleUnit }} -->
     <title-block> Settings</title-block>
-    <collapsible-subseciton title='Basic Settings' [expanded]='true'>
+    <collapsible-subseciton titleLabel='Basic Settings' [expanded]='true'>
       <radio-block
         option1='English'
         option2='Metric (cm)'
@@ -42,7 +42,7 @@
       </input-block>
     </collapsible-subseciton>
 
-    <collapsible-subseciton title='Force Settings' [expanded]='true'>
+    <collapsible-subseciton titleLabel='Force Settings' [expanded]='true'>
       <!--      <toggle-block-->
       <!--        [formGroup]='this.settingsForm'-->
       <!--        _formControl='gravity'-->
@@ -59,7 +59,7 @@
       </ng-container>
 
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings' [expanded]='true'>
+    <collapsible-subseciton titleLabel='Visual Settings' [expanded]='true'>
       <toggle-block
         [formGroup]='this.settingsForm'
         _formControl='showMajorGrid'

@@ -213,7 +213,7 @@ export class NewGridComponent {
             new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
           );
           this.cMenuItems.push(
-            new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
+            new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
           );
           if (this.settings.isForces.value) {
             this.cMenuItems.push(
@@ -243,7 +243,9 @@ export class NewGridComponent {
             )
           ); //Rev Joint Slider
         }
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
+        this.cMenuItems.push(
+          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+        );
         if ((this.lastRightClick as RealJoint).ground) {
           this.cMenuItems.push(
             new cMenuItem(
@@ -309,7 +311,9 @@ export class NewGridComponent {
         );
         break;
       case 'String': //This means grid
-        this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'new_link'));
+        this.cMenuItems.push(
+          new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
+        );
     }
   }
 
@@ -393,7 +397,7 @@ export class NewGridComponent {
     );
   }
 
-  createLink() {
+  startCreatingLink() {
     // console.log('createLink');
     // console.log(this.lastRightClickCoord);
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
@@ -623,6 +627,7 @@ export class NewGridComponent {
           case 'Grid':
             switch (this.gridStates) {
               case gridStates.createJointFromGrid:
+                //Here's where you actaully make the link
                 joint1 = this.mechanismSrv.createRevJoint(
                   this.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y1')!

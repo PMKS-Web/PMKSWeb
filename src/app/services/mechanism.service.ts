@@ -30,6 +30,7 @@ import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
 import { NumberUnitParserService } from './number-unit-parser.service';
 import { PositionSolver } from '../model/mechanism/position-solver';
+import { ColorService } from './color.service';
 
 @Injectable({
   providedIn: 'root',
@@ -712,7 +713,22 @@ export class MechanismService {
   addJointAtCOM() {
     let link = this.activeObjService.selectedLink;
     let com = link.CoM;
-    com.x += 0.01; //To avoid visually breaking by perfectly lining up
+    //To avoid visually breaking the link by having it perfectly line up
+    //Find the first two joints of the link and move the com perpendicular to the line
+    let joint1 = link.joints[0];
+    let joint2 = link.joints[1];
+
+    //Get the angle of the line between the two joints
+    let angle = Math.atan2(joint2.y - joint1.y, joint2.x - joint1.x);
+    //Get the perpendicular angle
+    let perpAngle = angle + Math.PI / 2;
+    //Get the perpendicular vector
+    let perpVector = new Coord(Math.cos(perpAngle), Math.sin(perpAngle));
+    //Scale this vector to be 0.01
+    perpVector = perpVector.normalize().scale(0.01);
+    //Add this vector to the com
+    com = com.add(perpVector);
+
     this.addJointAt(com);
   }
 
@@ -1117,6 +1133,7 @@ export class MechanismService {
         });
       }
     });
+    newLink.fill = ColorService.instance.getNextLinkColor();
     this.links.push(newLink);
 
     //Update the joints of the new link with the right links

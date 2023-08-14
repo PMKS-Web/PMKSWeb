@@ -32,7 +32,7 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
 })
 export class CollapsibleSubsecitonComponent {
   @Input() expanded: boolean = false;
-  @Input() title: string = '';
+  @Input() titleLabel: string = '';
 
   @Output() closed: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() opened: EventEmitter<boolean> = new EventEmitter<boolean>();

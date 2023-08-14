@@ -415,7 +415,7 @@
           style='overflow: visible; text-anchor: middle'
         >
           <text
-            *ngIf="(!this.showLinkLengthOverlay && !this.showLinkAngleOverlay) && ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link'))"
+            *ngIf="(this.showLinkLengthOverlay<-1 && this.showLinkAngleOverlay<-1) && ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) || link.showHighlight || (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link'))"
             style='font-size: {{svgGrid.scaleWithZoom(20)}}px; text-anchor: middle'
           >
             {{link.name}}

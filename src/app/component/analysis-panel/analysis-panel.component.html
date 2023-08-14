@@ -87,7 +87,7 @@
       {{this.activeSrv.selectedJoint.name}}
     </title-block>
 
-    <collapsible-subseciton title='Kinematic Analysis'
+    <collapsible-subseciton titleLabel='Kinematic Analysis'
                             [expanded]="graphExpanded['JKineAna']"
                             (opened)="graphExpanded['JKineAna'] = true"
                             (closed)="graphExpanded['JKineAna'] = false">
@@ -177,7 +177,7 @@
       </mat-expansion-panel>
     </collapsible-subseciton>
 
-    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Force Analysis'
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' titleLabel='Force Analysis'
                             [expanded]="graphExpanded['JForceAna']"
                             (opened)="graphExpanded['JForceAna'] = true"
                             (closed)="graphExpanded['JForceAna'] = false">
@@ -280,7 +280,7 @@
     //Param 4: mechPart: If Joint 'a','b','c'... If Link 'ab','bc','cd'... 
   -->
 
-    <collapsible-subseciton title='Kinematic Analysis' [expanded]="graphExpanded['LKineAna']"
+    <collapsible-subseciton titleLabel='Kinematic Analysis' [expanded]="graphExpanded['LKineAna']"
                             (opened)="graphExpanded['LKineAna'] = true"
                             (closed)="graphExpanded['LKineAna'] = false">
       <mat-expansion-panel
@@ -466,7 +466,7 @@
     </collapsible-subseciton>
 
     <!-- Link Forces-->
-    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Force Analysis'
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' titleLabel='Force Analysis'
                             [expanded]="graphExpanded['LForceAna']"
                             (opened)="graphExpanded['LForceAna'] = true"
                             (closed)="graphExpanded['LForceAna'] = false">

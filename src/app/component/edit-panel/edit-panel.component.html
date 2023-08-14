@@ -55,7 +55,7 @@
     <editable-title-block [deleteAction]='deleteJoint.bind(this)'>
       Edit Joint
     </editable-title-block>
-    <collapsible-subseciton title='Basic Settings'
+    <collapsible-subseciton titleLabel='Basic Settings'
                             [expanded]="sectionExpanded['JBasic']"
                             (opened)="sectionExpanded['JBasic'] = true"
                             (closed)="sectionExpanded['JBasic'] = false">
@@ -105,7 +105,7 @@
       >
       </tri-button>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['JVisual']"
+    <collapsible-subseciton titleLabel='Visual Settings' [expanded]="sectionExpanded['JVisual']"
                             (opened)="sectionExpanded['JVisual'] = true"
                             (closed)="sectionExpanded['JVisual'] = false">
       <toggle-block
@@ -116,7 +116,7 @@
       </toggle-block>
       <color-picker type='joint'> Joint Color</color-picker>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Distance To Joints' [expanded]="sectionExpanded['JDistToJ']"
+    <collapsible-subseciton titleLabel='Distance To Joints' [expanded]="sectionExpanded['JDistToJ']"
                             (opened)="sectionExpanded['JDistToJ'] = true"
                             (closed)="sectionExpanded['JDistToJ'] = false">
       <div *ngFor='let joint of listOfOtherJoints; let i=index'>
@@ -134,7 +134,7 @@
   <!--  LINK PANEL-->
   <panel-section *ngIf="this.activeSrv.objType == 'Link' && !hideEditPanel()">
     <editable-title-block [deleteAction]='deleteLink.bind(this)'> Edit Link</editable-title-block>
-    <collapsible-subseciton [expanded]='true' title='Basic Settings' [expanded]="sectionExpanded['LBasic']"
+    <collapsible-subseciton [expanded]='true' titleLabel='Basic Settings' [expanded]="sectionExpanded['LBasic']"
                             (opened)="sectionExpanded['LBasic'] = true"
                             (closed)="sectionExpanded['LBasic'] = false">
       <dual-input-block
@@ -162,12 +162,12 @@
       >
       </dual-button>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['LVisual']"
+    <collapsible-subseciton titleLabel='Visual Settings' [expanded]="sectionExpanded['LVisual']"
                             (opened)="sectionExpanded['LVisual'] = true"
                             (closed)="sectionExpanded['LVisual'] = false">
       <color-picker type='link' [link]='activeSrv.selectedLink'>Link Color</color-picker>
     </collapsible-subseciton>
-    <collapsible-subseciton *ngIf='settingsService.isForces.value' title='Mass Settings'
+    <collapsible-subseciton *ngIf='settingsService.isForces.value' titleLabel='Mass Settings'
                             [expanded]="sectionExpanded['LMass']"
                             (opened)="sectionExpanded['LMass'] = true"
                             (closed)="sectionExpanded['LMass'] = false">
@@ -180,7 +180,7 @@
       [expanded]="sectionExpanded['LCompound']"
       (opened)="sectionExpanded['LCompound'] = true"
       (closed)="sectionExpanded['LCompound'] = false"
-      title='Compound Link Settings'
+      titleLabel='Compound Link Settings'
     >
       <dual-button but1Text='Un-weld All' but1Icon='unweld_joint'
                    [but1Action]='mechanismService.unweldAll.bind(mechanismService)'></dual-button>
@@ -191,7 +191,7 @@
 
   <panel-section *ngIf="this.activeSrv.objType == 'Force' && !hideEditPanel()">
     <editable-title-block [deleteAction]='deleteForce.bind(this)'>Edit Force</editable-title-block>
-    <collapsible-subseciton title='Basic Settings' [expanded]="sectionExpanded['FBasic']"
+    <collapsible-subseciton titleLabel='Basic Settings' [expanded]="sectionExpanded['FBasic']"
                             (opened)="sectionExpanded['FBasic'] = true"
                             (closed)="sectionExpanded['FBasic'] = false">
       <dual-input-block
@@ -224,7 +224,7 @@
         Force Base Frame
       </radio-block>
     </collapsible-subseciton>
-    <collapsible-subseciton title='Visual Settings' [expanded]="sectionExpanded['FVisual']"
+    <collapsible-subseciton titleLabel='Visual Settings' [expanded]="sectionExpanded['FVisual']"
                             (opened)="sectionExpanded['FVisual'] = true"
                             (closed)="sectionExpanded['FVisual'] = false">
       <color-picker type='force' [force]='activeSrv.selectedForce'>Force Color</color-picker>
