@@ -179,6 +179,13 @@ export class NewGridComponent {
     // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         //Switch force direction, switch force local, delete Force
         this.cMenuItems.push(
           new cMenuItem(
@@ -194,33 +201,14 @@ export class NewGridComponent {
             'switch_force_dir'
           )
         );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         //Don't give options if a fillet it selected and not a primary link
-        if (
-          !(this.lastRightClick as RealLink).isWelded ||
-          (this.lastRightClick as RealLink).lastSelectedSublink != null
-        ) {
-          this.cMenuItems.push(
-            new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
-          );
-          this.cMenuItems.push(
-            new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
-          );
-          if (this.settings.isForces.value) {
-            this.cMenuItems.push(
-              new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-            );
-          }
-        }
+        let weldedLinkFilletSelected =
+          (this.lastRightClick as RealLink).isWelded &&
+          (this.lastRightClick as RealLink).lastSelectedSublink == null;
+
         this.cMenuItems.push(
           new cMenuItem(
             'Delete Link',
@@ -228,9 +216,60 @@ export class NewGridComponent {
             'remove'
           )
         );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Link',
+            this.startCreatingLink.bind(this),
+            'new_link',
+            weldedLinkFilletSelected
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Tracer Point',
+            this.addJoint.bind(this),
+            'add_tracer',
+            weldedLinkFilletSelected
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Force',
+            this.createForce.bind(this),
+            'add_force',
+            weldedLinkFilletSelected || !this.settings.isForces.value
+          )
+        );
         break;
       case 'RevJoint':
-        if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+        let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
+        let jointIsGround = (this.lastRightClick as RealJoint).ground;
+        let canBeWeldedOrUnwelded = (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded();
+        let canTogglePath =
+          !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
+
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
+
+        this.cMenuItems.push(
+          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+        );
+
+        this.cMenuItems.push(
+          new cMenuItem(
+            jointIsGround ? 'Remove Ground' : 'Add Ground',
+            this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
+            jointIsGround ? 'remove_ground' : 'add_ground',
+            jointIsSlider
+          )
+        ); //Rev Joint - Ground
+
+        if (jointIsSlider) {
           this.cMenuItems.push(
             new cMenuItem(
               (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
@@ -242,36 +281,17 @@ export class NewGridComponent {
                 : 'add_input'
             )
           ); //Rev Joint Slider
-        }
-        this.cMenuItems.push(
-          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
-        );
-        if ((this.lastRightClick as RealJoint).ground) {
+        } else {
           this.cMenuItems.push(
             new cMenuItem(
-              'Remove Ground',
-              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'remove_ground'
-            )
-          ); //Rev Joint - Ground
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Attach Input',
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
+              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
+              !jointIsGround
             ) //Rev Joint - Input
           );
-        } else {
-          if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
-            this.cMenuItems.push(
-              new cMenuItem(
-                'Ground Joint',
-                this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-                'add_ground'
-              )
-            ); //Rev Joint - Not Ground
-          }
         }
+
         this.cMenuItems.push(
           new cMenuItem(
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'Remove Slider' : 'Add Slider',
@@ -279,37 +299,28 @@ export class NewGridComponent {
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         ); //Rev Joint - Always
-        if ((this.lastRightClick as RealJoint).canBeWeldedOrUnwelded()) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
-            )
-          ); //Rev Joint - Can be welded
-        }
-        if (
-          !(this.lastRightClick as RealJoint).ground &&
-          this.mechanismSrv.oneValidMechanismExists()
-        ) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
-              () => {
-                this.gridUtils.toggleCurve(this.lastRightClick);
-              },
-              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
-            )
-          ); //Rev Joint - Not Ground and at least one valid mechanism exists
-        }
+
         this.cMenuItems.push(
           new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
+            (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+            this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
+            !canBeWeldedOrUnwelded
           )
-        );
+        ); //Rev Joint - Can be welded
+
+        // this.cMenuItems.push(
+        //   new cMenuItem(
+        //     (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
+        //     () => {
+        //       this.gridUtils.toggleCurve(this.lastRightClick);
+        //     },
+        //     (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path',
+        //     !canTogglePath
+        //   )
+        // ); //Rev Joint - Not Ground and at least one valid mechanism exists
         break;
+
       case 'String': //This means grid
         this.cMenuItems.push(
           new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
@@ -571,7 +582,8 @@ export class NewGridComponent {
       return;
     }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
-      this.sendNotification('Stop animation (or reset to 0 position) to edit');
+      this.sendNotification('Reset to T=0 (or push stop button) to edit');
+      this.cMenuItems = [];
       //Close the MatContextMenu
       // console.log(this.contextMenu);
       // this.contextMenu.close();
