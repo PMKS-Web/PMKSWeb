@@ -39,6 +39,7 @@ import { Line } from '../../model/line';
 import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
+import introJs from 'intro.js';
 
 @Component({
   selector: 'app-new-grid',
@@ -114,6 +115,42 @@ export class NewGridComponent {
     if (!dismissWarning && !has_mouse_pointer()) {
       this.dialog.open(TouchscreenWarningComponent);
     }
+
+    setTimeout(() => {
+      introJs()
+        .setOptions({
+          steps: [
+            {
+              title: '👋 Welcome',
+              intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
+            },
+            {
+              element: document.querySelector('.tabContainer') as HTMLElement,
+              intro: 'PMKS+ is divided into 3 modes. Synthesis, Editing, and Analysis.',
+            },
+            {
+              element: document.querySelector('#editWrapper') as HTMLElement,
+              intro:
+                'The Edit mode is active. Selecting a joint or link will show its properties here.',
+            },
+            {
+              element: document.querySelector('#barContainer') as HTMLElement,
+              intro: 'Once the mechanism is created, you can animate it here.',
+            },
+            {
+              element: document.querySelector('#helpButton') as HTMLElement,
+              intro: 'If you get stuck at any point, click here for help.',
+            },
+            {
+              element: document.querySelector('#templatesButton') as HTMLElement,
+              title: "🙌 That's it!",
+              intro: 'Get started by opening an example linkage!',
+            },
+          ],
+          dontShowAgain: true,
+        })
+        .start();
+    });
 
     fromEvent(window, 'resize').subscribe((event) => {
       // console.log('resize');

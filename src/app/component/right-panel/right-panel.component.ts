@@ -28,6 +28,7 @@ import { Arc, Line } from '../../model/line';
 import { Coord } from '../../model/coord';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import introJs from 'intro.js';
 
 @Component({
   selector: 'app-right-panel',
@@ -273,8 +274,9 @@ export class RightPanelComponent {
   }
 
   sendNotReady() {
-    NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
-    logEvent(this.analytics, 'tutorial_not_ready');
+    introJs().start();
+    // NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
+    // logEvent(this.analytics, 'tutorial_not_ready');
   }
 
   getBrowserName() {
