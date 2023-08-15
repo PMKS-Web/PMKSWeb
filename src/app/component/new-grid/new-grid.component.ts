@@ -24,6 +24,7 @@ import {
   getDistance,
   AngleUnit,
   radToDeg,
+  GlobalUnit,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -116,41 +117,43 @@ export class NewGridComponent {
       this.dialog.open(TouchscreenWarningComponent);
     }
 
-    setTimeout(() => {
-      introJs()
-        .setOptions({
-          steps: [
-            {
-              title: '👋 Welcome',
-              intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
-            },
-            {
-              element: document.querySelector('.tabContainer') as HTMLElement,
-              intro: 'PMKS+ is divided into 3 modes. Synthesis, Editing, and Analysis.',
-            },
-            {
-              element: document.querySelector('#editWrapper') as HTMLElement,
-              intro:
-                'The Edit mode is active. Selecting a joint or link will show its properties here.',
-            },
-            {
-              element: document.querySelector('#barContainer') as HTMLElement,
-              intro: 'Once the mechanism is created, you can animate it here.',
-            },
-            {
-              element: document.querySelector('#helpButton') as HTMLElement,
-              intro: 'If you get stuck at any point, click here for help.',
-            },
-            {
-              element: document.querySelector('#templatesButton') as HTMLElement,
-              title: "🙌 That's it!",
-              intro: 'Get started by opening an example linkage!',
-            },
-          ],
-          dontShowAgain: true,
-        })
-        .start();
-    });
+    if (this.mechanismSrv.joints.length == 0) {
+      setTimeout(() => {
+        introJs()
+          .setOptions({
+            steps: [
+              {
+                title: '👋 Welcome',
+                intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
+              },
+              {
+                element: document.querySelector('.tabContainer') as HTMLElement,
+                intro: 'PMKS+ is divided into 3 modes. Synthesis, Editing, and Analysis.',
+              },
+              {
+                element: document.querySelector('#editWrapper') as HTMLElement,
+                intro:
+                  'The Edit mode is active. Selecting a joint or link will show its properties here.',
+              },
+              {
+                element: document.querySelector('#barContainer') as HTMLElement,
+                intro: 'Once the mechanism is created, you can animate it here.',
+              },
+              {
+                element: document.querySelector('#helpButton') as HTMLElement,
+                intro: 'If you get stuck at any point, click here for help.',
+              },
+              {
+                element: document.querySelector('#templatesButton') as HTMLElement,
+                title: "🙌 That's it!",
+                intro: 'Get started by opening an example linkage!',
+              },
+            ],
+            dontShowAgain: true,
+          })
+          .start();
+      });
+    }
 
     fromEvent(window, 'resize').subscribe((event) => {
       // console.log('resize');
@@ -1356,5 +1359,18 @@ export class NewGridComponent {
         break;
     }
     return angle;
+  }
+
+  humanReadableString(value: GlobalUnit) {
+    switch (value) {
+      case GlobalUnit.SI:
+        return 'm';
+      case GlobalUnit.ENGLISH:
+        return 'in';
+      case GlobalUnit.METRIC:
+        return 'cm';
+      default:
+        return '';
+    }
   }
 }

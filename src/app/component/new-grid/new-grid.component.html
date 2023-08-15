@@ -515,8 +515,6 @@
           [attr.font-size]='svgGrid.scaleWithZoom(20)'>
           {{this.nup.formatValueAndUnit(getAngleBetweenOverlayPoints(), this.settings.angleUnit.getValue())}}</text>
       </g>
-
-
 </svg>
 <div *ngIf='settings.isGridDebugOn' id='mouseLocation'>
   Mouse Location: {{mouseLocation.x.toFixed(2)}}, {{mouseLocation.y.toFixed(2)}}
@@ -524,6 +522,13 @@
   0,0: {{originInScreen.x.toFixed(2)}}, {{originInScreen.y.toFixed(2)}}
   <br />
   {{returnDebugValue()}}
+</div>
+
+<div id='coordinateFrame' style='pointer-events: none'>
+  <div style='position: relative;display: flex; flex-direction: column; align-items: end'>
+    {{humanReadableString(settings.globalUnit.getValue())}}
+    <img src='assets/coords.svg' style='width: 80px; margin-top: -20px'>
+  </div>
 </div>
 <ng-template #context_menu>
   <app-context-menu [menuItems]='cMenuItems'>
