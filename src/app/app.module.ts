@@ -10,7 +10,7 @@ import { AnimationBarComponent } from './component/animation-bar/animation-bar.c
 import { ShapeSelectorComponent } from './component/shape-selector/shape-selector.component';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
-import { TemplatesPopupComponent } from './component/templates-popup/templates-popup.component';
+// import { TemplatesPopupComponent } from './component/templates-popup/templates-popup.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MaterialModule } from './material/material.module';
@@ -44,6 +44,11 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getAnalytics, provideAnalytics } from '@angular/fire/analytics';
 import { NotReadyWarningComponent } from './component/not-ready-warning/not-ready-warning.component';
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
+import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-subseciton/collapsible-subseciton.component';
+import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.component';
+import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
+import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.component';
+import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-forces.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +57,6 @@ import { TemplatesComponent } from './component/MODALS/templates/templates.compo
     ToolbarComponent,
     AnimationBarComponent,
     ShapeSelectorComponent,
-    TemplatesPopupComponent,
     LeftTabsComponent,
     TitleBlock,
     EditPanelComponent,
@@ -77,6 +81,11 @@ import { TemplatesComponent } from './component/MODALS/templates/templates.compo
     EquationPanelComponent,
     NotReadyWarningComponent,
     TemplatesComponent,
+    CollapsibleSubsecitonComponent,
+    DualButtonComponent,
+    ColorPickerComponent,
+    TriButtonComponent,
+    EnableForcesComponent,
   ],
   imports: [
     BrowserModule,

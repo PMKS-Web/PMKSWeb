@@ -16,7 +16,7 @@ export class NumberUnitParserService {
       case LengthUnit.INCH:
         return value.toFixed(2) + ' in';
       case AngleUnit.DEGREE:
-        return value.toFixed(2) + ' deg';
+        return value.toFixed(0) + ' deg';
       case AngleUnit.RADIAN:
         return value.toFixed(2) + ' rad';
       case ForceUnit.LBF:

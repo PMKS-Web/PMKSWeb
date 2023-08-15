@@ -13,8 +13,6 @@ export class ActiveObjService {
   prevSelectedJoint!: RealJoint;
   selectedForce!: Force;
   selectedLink!: RealLink;
-  selectedForceEndPoint: string = '';
-  private skipThisSeleciton: boolean = false;
 
   constructor() {}
 

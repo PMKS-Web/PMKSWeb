@@ -28,7 +28,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { Coord } from '../../model/coord';
-import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
+// import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
@@ -110,7 +110,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   //Create a static method to get an instance of the toolbar component
 
   openTemplates() {
-    this.dialog.open(TemplatesComponent);
+    this.dialog.open(TemplatesComponent, {
+      height: '90%',
+      width: '90%',
+      autoFocus: false,
+    });
   }
 
   ngOnInit(): void {
@@ -155,10 +159,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
-  popUpTemplates() {
-    TemplatesPopupComponent.showTemplates();
-    logEvent(this.analytics, 'open_templates');
-  }
+  // popUpTemplates() {
+  //   TemplatesPopupComponent.showTemplates();
+  //   logEvent(this.analytics, 'open_templates');
+  // }
 
   upload($event: any) {
     logEvent(this.analytics, 'upload_file');
@@ -601,7 +605,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       this.settings.globalUnit.getValue()
     );
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isForces.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,

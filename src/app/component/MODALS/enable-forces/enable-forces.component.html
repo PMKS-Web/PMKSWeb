@@ -1,0 +1,14 @@
+<div class='modal' id='forcesDialog'>
+  <div class='dialog-header'>
+    <h1 mat-dialog-title>Unlock Advanced Simulation and Analysis with PMKS+ Forces Module!</h1>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <img src='assets/forcesDialog.jpg' alt='Forces Module' class='dialogImage'>
+  <app-not-ready-warning></app-not-ready-warning>
+  <div mat-dialog-actions align='end'>
+    <button mat-button (click)='onNoClick()'>Cancel</button>
+    <button mat-raised-button cdkFocusInitial (click)='onYesClick()' color='primary'>Enable Forces (Free)</button>
+  </div>
+</div>
