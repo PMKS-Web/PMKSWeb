@@ -165,7 +165,9 @@ export class SettingsPanelComponent {
   }
 
   openEnableForceDialog(): void {
-    this.dialog.open(EnableForcesComponent);
+    this.dialog.open(EnableForcesComponent, {
+      autoFocus: false,
+    });
   }
 
   getUnitStr(unit: LengthUnit): string {

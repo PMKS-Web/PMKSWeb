@@ -114,7 +114,9 @@ export class NewGridComponent {
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
-      this.dialog.open(TouchscreenWarningComponent);
+      this.dialog.open(TouchscreenWarningComponent, {
+        autoFocus: false,
+      });
     }
 
     if (this.mechanismSrv.joints.length == 0) {

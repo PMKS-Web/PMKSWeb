@@ -113,6 +113,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     this.dialog.open(TemplatesComponent, {
       height: '90%',
       width: '90%',
+      autoFocus: false,
     });
   }
 
