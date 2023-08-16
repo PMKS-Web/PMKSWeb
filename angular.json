@@ -107,9 +107,12 @@
             ],
             "styles": [
               "src/mytheme.scss",
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/intro.js/introjs.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/intro.js/intro.js"
+            ]
           }
         }
       }
