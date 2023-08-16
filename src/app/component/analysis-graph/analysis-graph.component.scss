@@ -51,12 +51,13 @@
     justify-content: center;
     align-items: start;
     color: black;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     pointer-events: none;
     padding-top: 80px;
   }
 
-  .apexcharts-canvas {
-    margin-bottom: -50px;
+  apx-chart > div {
+    min-height: 0 !important;
+    height: 225px !important;
   }
 }

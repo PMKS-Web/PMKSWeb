@@ -13,16 +13,19 @@
 
   #radio-block {
     #radio-buttons {
-      font-size: 14px !important;
-      font-weight: 200 !important;
+      //font-size: 14px !important;
+      //font-weight: 200 !important;
       height: 36px;
       width: 100%;
       display: flex;
+
       mat-button-toggle {
         height: 100%;
         flex-grow: 1;
+
         button {
           height: 100%;
+
           span {
             height: 100%;
             line-height: 36px;

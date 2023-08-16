@@ -1,7 +1,17 @@
-<button id='button-block' (click)='click()' [disabled]="disabled" mat-flat-button>
-  <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>
-  <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>
-  </mat-icon>
-  <div id='spacer'></div>
-  <ng-content></ng-content>
-</button>
+<div class='row'>
+  <!--  <div style='flex-grow: 1'></div>-->
+  <!--  <button id='button-block' (click)='click()' mat-button>-->
+  <!--    &lt;!&ndash;    <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>&ndash;&gt;-->
+  <!--    &lt;!&ndash;    <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>&ndash;&gt;-->
+  <!--    &lt;!&ndash;    </mat-icon>&ndash;&gt;-->
+  <!--    <div id='spacer'></div>-->
+  <!--    Edit Name-->
+  <!--  </button>-->
+  <button id='button-block' (click)='click()' mat-stroked-button color='primary'>
+    <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>
+    <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>
+    </mat-icon>
+    <!--    <div id='spacer'></div>-->
+    <ng-content></ng-content>
+  </button>
+</div>

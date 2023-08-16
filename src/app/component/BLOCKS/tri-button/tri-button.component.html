@@ -1,0 +1,19 @@
+<div class='row' id='tri-button'>
+  <div class='groupedButtons'>
+    <button mat-stroked-button color='primary' [disabled]='btn1Disabled' class='{{btn1Disabled? "buttonDisabled" :""}}'
+            (click)='btn1Action()'>
+      <mat-icon svgIcon='weld_joint'></mat-icon>
+      Weld
+    </button>
+    <button mat-stroked-button color='primary' [disabled]='btn2Disabled' class='{{btn2Disabled? "buttonDisabled" :""}}'
+            (click)='btn2Action()'>
+      <mat-icon svgIcon='unweld_joint'></mat-icon>
+      Unweld
+    </button>
+  </div>
+  <button mat-stroked-button color='primary' [disabled]='btn3Disabled'
+          class='{{btn3Disabled? "buttonDisabled button3" :"button3"}}' (click)='btn3Action()'>
+    <mat-icon [svgIcon]=btn3Icon></mat-icon>
+    {{btn3Text}}
+  </button>
+</div>

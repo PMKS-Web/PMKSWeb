@@ -74,6 +74,7 @@
   </div>
   <div id='viewButtons'>
     <button
+      *ngIf='settingsService.isForces.value'
       disabled='{{ noLinkExsits() }}'
       matTooltip='Show Center of Mass'
       matTooltipPosition='above'

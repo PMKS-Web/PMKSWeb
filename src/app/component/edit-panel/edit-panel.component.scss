@@ -11,14 +11,25 @@
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
 
+  //Kinda sketchy...
+  panel-section {
+    max-width: 100%;
+    //overflow-x: hidden;
+  }
+
   #editWrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin: 10px;
+
+    //For child components, set border to dotted for debugging
+    //> * > * > * {
+    //  border: 1px dotted black;
+    //}
   }
 
   #errorMessage {
-    font-weight: 300;
+    //font-weight: 300;
   }
 }
