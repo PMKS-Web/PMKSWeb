@@ -31,6 +31,8 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
   styleUrls: ['./collapsible-subseciton.component.scss'],
 })
 export class CollapsibleSubsecitonComponent {
+  @Input() hideHeader: boolean = false; //If this is true the content cannot be expanded
+
   @Input() expanded: boolean = false;
   @Input() titleLabel: string = '';
 
