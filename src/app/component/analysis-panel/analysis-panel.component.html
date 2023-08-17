@@ -66,7 +66,7 @@
     [warning]='true'
     [expanded]='false'
     id='placeholderContainer'
-    *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
+    *ngIf="(this.activeSrv.objType == 'Grid' || this.activeSrv.objType == 'Nothing') && this.mechanismService.oneValidMechanismExists()"
   >
     <title-block alwaysShown icon='expand_more' description='Select a part of the linkage to analyze it.'>Analysis
       Help
