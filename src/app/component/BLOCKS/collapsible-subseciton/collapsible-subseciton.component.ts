@@ -16,7 +16,7 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
       state(
         'closed',
         style({
-          visibility: 'hidden',
+          display: 'none',
           opacity: '0',
           height: '0px',
           padding: '0px',
