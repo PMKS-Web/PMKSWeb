@@ -1,0 +1,59 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+
+  .dual-button {
+
+    .buttonDisabled {
+      path {
+        fill: #969696 !important;
+      }
+
+      border-color: #bbbbbb !important;
+    }
+
+    display: grid;
+    //Equal width columns 10px apart
+    grid-template-columns: repeat(2, 1fr);
+
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+      @include mat.typography-level($typography-config, 'body-2');
+      padding: 0 10px;
+      margin: 0;
+      height: 50px !important;
+      flex-grow: 1;
+
+      .mat-mdc-button-touch-target {
+        height: 50px !important;
+      }
+
+      .mat-icon {
+        margin: 0;
+        //background-color: red;
+        width: 24px;
+        height: 24px;
+      }
+
+      border-color: mat.get-color-from-palette($primary-palette, 500) !important;
+
+      path {
+        fill: mat.get-color-from-palette($primary-palette, 500) !important;
+      }
+    }
+
+  }
+}

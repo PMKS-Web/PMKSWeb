@@ -9,14 +9,12 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
   styleUrls: ['./editable-title.component.scss'],
 })
 export class EditableTitleComponent {
-  @Input() description: string = '';
+  @Input() showActionButtons: boolean = false;
+  @Input() deleteAction!: () => void;
 
   editMode = false;
 
-  constructor(
-    private fb: FormBuilder,
-    public activeObjService: ActiveObjService,
-    ) {}
+  constructor(private fb: FormBuilder, public activeObjService: ActiveObjService) {}
 
   newIDForm = this.fb.group({ newID: [''] });
 
@@ -32,7 +30,6 @@ export class EditableTitleComponent {
   // Check whether new id name is valid
   // Return empty string if valid, or error message if not
   validateNewID(newID: string): string {
-
     // If the new ID only contains spaces, don't save it
     if (newID === '') {
       return 'The new ID cannot be empty.';
@@ -40,14 +37,13 @@ export class EditableTitleComponent {
 
     // If new ID is not purely alphanumeric, don't save it
     if (!this.isAlphanumeric(newID)) {
-      return "The new ID must only contain letters and numbers."
+      return 'The new ID must only contain letters and numbers.';
     }
 
-    return "";
+    return '';
   }
 
   saveNewID() {
-
     let newID = this.newIDForm.value.newID!.trim();
 
     // If the new ID is not valid, send error notif and do not update to new id
@@ -60,7 +56,7 @@ export class EditableTitleComponent {
 
     let activeObj = this.activeObjService.getSelectedObj();
     activeObj.name = newID;
-    console.log("Set new name to " + newID + " for " + this.activeObjService.objType);
+    console.log('Set new name to ' + newID + ' for ' + this.activeObjService.objType);
     this.editMode = false;
   }
 

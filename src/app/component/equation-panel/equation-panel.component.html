@@ -5,33 +5,20 @@
       description='These equations allow you to solve for the position. velocity, acceleration, and forces for the entire linkage simultaneously. You first need to select loop(s) that provide enough equations to solve for each unknown value. '>
       Mechanism Equations
     </title-block>
+    <collapsible-subseciton titleLabel='Loop Selection' [expanded]='true'>
+      <img src='assets/placeholder.png' alt='placeholder'>
+    </collapsible-subseciton>
+    <collapsible-subseciton titleLabel='Position'>
+    </collapsible-subseciton>
+    <collapsible-subseciton titleLabel='Velocity' [expanded]='true'>
+      <img src='assets/placeholder2.png' alt='placeholder'>
+    </collapsible-subseciton>
+    <collapsible-subseciton titleLabel='Acceleration'>
+    </collapsible-subseciton>
+    <collapsible-subseciton titleLabel='Forces (Static)' [expanded]='true'>
+      <img src='assets/placeholder3.png' alt='placeholder'>
+    </collapsible-subseciton>
+    <collapsible-subseciton titleLabel='Forces (Dynamic)'>
+    </collapsible-subseciton>
   </panel-section>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Loop Selection</title-block>
-    <svg>
-      <circle r='10' cx='10' cy='10' fill='red' />
-      <circle r='10' cx='60' cy='50' fill='red' />
-    </svg>
-    <subtitle-block>Select Loop(s) to Create Equations from</subtitle-block>
-    <!--    <mat-checkbox formControlName='x' color='primary'>Loop 1</mat-checkbox>-->
-    <!--    <mat-checkbox formControlName='y' color='warn'>Loop 2</mat-checkbox>-->
-    <!--    <mat-checkbox formControlName='x' color='primary'>Loop 3</mat-checkbox>-->
-    <!--    <mat-checkbox formControlName='y' color='warn'>Loop 4</mat-checkbox>-->
-  </panel-section-collapsible>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Position</title-block>
-  </panel-section-collapsible>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Velocity</title-block>
-  </panel-section-collapsible>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Acceleration</title-block>
-  </panel-section-collapsible>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Forces (Static)</title-block>
-  </panel-section-collapsible>
-  <panel-section-collapsible>
-    <title-block alwaysShown icon='expand_more'>Forces (Dynamic)</title-block>
-    <div alwaysShown style='height: 50px'></div>
-  </panel-section-collapsible>
 </div>

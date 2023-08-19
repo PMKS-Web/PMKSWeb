@@ -8,6 +8,10 @@ import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { Coord } from '../../model/coord';
+import { MatDialog } from '@angular/material/dialog';
+import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -19,7 +23,9 @@ export class SettingsPanelComponent {
     public settingsService: SettingsService,
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
-    private svgGrid: SvgGridService
+    private svgGrid: SvgGridService,
+    private nup: NumberUnitParserService,
+    public dialog: MatDialog
   ) {}
 
   currentLengthUnit!: LengthUnit;
@@ -29,11 +35,9 @@ export class SettingsPanelComponent {
   currentGlobalUnit!: GlobalUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
-  gravityEnabled!: boolean;
   currentObjectScaleSetting!: number;
 
   ngOnInit(): void {
-    this.gravityEnabled = this.settingsService.isGravity.value;
     this.currentLengthUnit = this.settingsService.lengthUnit.value;
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
@@ -44,7 +48,6 @@ export class SettingsPanelComponent {
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       objectScale: this.currentObjectScaleSetting.toString(),
-      gravity: this.gravityEnabled,
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
       angleunit: (this.currentAngleUnit - 10).toString(),
@@ -72,10 +75,6 @@ export class SettingsPanelComponent {
   }
 
   onChanges(): void {
-    this.settingsForm.controls['gravity'].valueChanges.subscribe((val) => {
-      this.gravityEnabled = Boolean(val);
-      this.settingsService.isGravity.next(this.gravityEnabled);
-    });
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
       this.rotateDirection = String(val) === '0' ? true : false;
       this.settingsService.isInputCW.next(this.rotateDirection);
@@ -111,10 +110,45 @@ export class SettingsPanelComponent {
         this.currentForceUnit = ForceUnit.NEWTON;
       }
       this.settingsService.forceUnit.next(this.currentForceUnit);
+
+      let prevLengthUnit = this.settingsService.lengthUnit.value;
       this.currentLengthUnit = ParseLengthUnit(val);
+
+      //Scale the grid to the new length unit
       this.settingsForm.controls['lengthunit'].patchValue(String(this.currentLengthUnit));
-      this.svgGrid.scaleToFitLinkage();
-      ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+
+      let fromUnit = prevLengthUnit;
+      let toUnit = this.currentLengthUnit;
+
+      //If either unit is in meters, convert that one to cm
+      if (fromUnit === LengthUnit.METER) {
+        fromUnit = LengthUnit.CM;
+      }
+      if (toUnit === LengthUnit.METER) {
+        toUnit = LengthUnit.CM;
+      }
+
+      this.mechanismSrv.updateLinkageUnits(fromUnit, toUnit);
+
+      let tempOriginInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
+      this.svgGrid.panZoomObject.zoomAtPointBy(this.nup.convertLength(1, toUnit, fromUnit), {
+        x: tempOriginInScreen.x,
+        y: tempOriginInScreen.y,
+      });
+
+      //Scale the object to the new length unit
+      SettingsService._objectScale.next(
+        this.nup.convertLength(SettingsService.objectScale, fromUnit, toUnit)
+      );
+
+      //Update graphs with new units
+      this.mechanismSrv.onMechUpdateState.next(2);
+      // setTimeout(() => {
+      //   this.mechanismSrv.onMechUpdateState.next(2);
+      // });
+      // this.svgGrid.scaleToFitLinkage();
+      // ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
+      // NewGridComponent.sendNotification('Updated Global Units!');
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);
@@ -128,6 +162,12 @@ export class SettingsPanelComponent {
     // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
     //   this.settingsService.inputTorque.next(this.currentTorqueUnit);
     // });
+  }
+
+  openEnableForceDialog(): void {
+    this.dialog.open(EnableForcesComponent, {
+      autoFocus: false,
+    });
   }
 
   getUnitStr(unit: LengthUnit): string {
@@ -146,7 +186,6 @@ export class SettingsPanelComponent {
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
   settingsForm = this.fb.group(
     {
-      gravity: [false, { updateOn: 'change' }],
       speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],
@@ -165,7 +204,7 @@ export class SettingsPanelComponent {
   }
 
   updateObjectScale() {
-    SettingsService._objectScale.next(Number((100 / this.svgGrid.getZoom()).toFixed(2)));
+    this.svgGrid.updateObjectScale();
   }
 }
 

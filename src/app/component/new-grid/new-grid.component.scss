@@ -79,6 +79,23 @@
     background: rgba(255, 255, 255, 0.7);
   }
 
+  #coordinateFrame {
+    position: absolute;
+    right: 15px;
+    bottom: 80px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius);
+    font-size: 22px;
+    padding: 10px;
+    font-weight: lighter;
+
+    #unitsLabel {
+      poition: absolute;
+      top: 30px;
+      right: 30px;
+    }
+  }
+
   .forceEndpointSquare {
     fill: mat.get-color-from-palette($accent-palette, 50);
     stroke: mat.get-color-from-palette($accent-palette, 500);
