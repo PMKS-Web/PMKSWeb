@@ -41,7 +41,7 @@ export class UrlProcessorService {
   }
 
   // Decode the url and update mechanism
-  updateFromURL(url: string | null) {
+  updateFromURL(url: string | null, resetSvgScale: boolean = true, updateSettings: boolean = true) {
     
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
@@ -51,7 +51,7 @@ export class UrlProcessorService {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
       const builder = new MechanismBuilder(this.mechanismSrv, decoder, this.settingsSrv);
-      builder.build();
+      builder.build(updateSettings);
 
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -66,11 +66,14 @@ export class UrlProcessorService {
       }, 0);
     }
 
-    //After the mechanism is built, scale the mechanism to fit the screen
-    //Do this after a 1 sec timeout to allow the mechanism to be built first.
-    setTimeout(() => {
-      this.svgGrid.scaleToFitLinkage();
-    }, 1000);
+    if (resetSvgScale) {
+      //After the mechanism is built, scale the mechanism to fit the screen
+      //Do this after a 1 sec timeout to allow the mechanism to be built first.
+      setTimeout(() => {
+        this.svgGrid.scaleToFitLinkage();
+      }, 1000);
+    }
+    
   }
 
 }

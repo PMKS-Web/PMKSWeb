@@ -168,7 +168,7 @@ export class MechanismBuilder {
     });
   }
 
-  public build(): void {
+  public build(updateSettings: boolean = true): void {
     // Build Joints from JointData
     let joints: Joint[] = this.transcoder
       .getJoints()
@@ -196,28 +196,31 @@ export class MechanismBuilder {
 
     this.addAdjacentLinksForJoints();
 
-    // Configure mechanism global flags
-    this.settings.lengthUnit.next(
-      this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit)
-    );
-    this.settings.angleUnit.next(this.transcoder.getEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit));
-    this.settings.forceUnit.next(this.transcoder.getEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit));
-    this.settings.globalUnit.next(
-      this.transcoder.getEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit)
-    );
-    this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
-    this.settings.isForces.next(this.transcoder.getBoolSetting(BoolSetting.IS_GRAVITY));
-    this.settings.inputSpeed.next(this.transcoder.getIntSetting(IntSetting.INPUT_SPEED));
-    this.settings.animating.next(this.transcoder.getBoolSetting(BoolSetting.ANIMATING));
-    this.settings.isShowMajorGrid.next(
-      this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID)
-    );
-    this.settings.isShowMinorGrid.next(
-      this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID)
-    );
-    this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
-    this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
-    SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
+    if (updateSettings) {
+      // Configure mechanism global flags
+      this.settings.lengthUnit.next(
+        this.transcoder.getEnumSetting(EnumSetting.LENGTH_UNIT, LengthUnit)
+      );
+      this.settings.angleUnit.next(this.transcoder.getEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit));
+      this.settings.forceUnit.next(this.transcoder.getEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit));
+      this.settings.globalUnit.next(
+        this.transcoder.getEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit)
+      );
+      this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
+      this.settings.isForces.next(this.transcoder.getBoolSetting(BoolSetting.IS_GRAVITY));
+      this.settings.inputSpeed.next(this.transcoder.getIntSetting(IntSetting.INPUT_SPEED));
+      this.settings.animating.next(this.transcoder.getBoolSetting(BoolSetting.ANIMATING));
+      this.settings.isShowMajorGrid.next(
+        this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID)
+      );
+      this.settings.isShowMinorGrid.next(
+        this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MINOR_GRID)
+      );
+      this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
+      this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
+      SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
+    
+    }
 
     this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);
 

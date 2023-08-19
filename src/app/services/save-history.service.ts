@@ -58,7 +58,7 @@ export class SaveHistoryService {
 
   private setMechanismToState(index: number) {
     this.index = index;
-    this.urlProcessorService.updateFromURL(this.history[this.index]);
+    this.urlProcessorService.updateFromURL(this.history[this.index], false, false);
     console.log("update to state " + this.index + ": " + this.history[this.index])
   }
 
