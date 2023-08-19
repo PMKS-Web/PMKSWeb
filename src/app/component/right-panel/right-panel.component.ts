@@ -29,6 +29,7 @@ import { Coord } from '../../model/coord';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import introJs from 'intro.js';
+import { UrlGenerationService } from 'src/app/services/url-generation.service';
 
 @Component({
   selector: 'app-right-panel',
@@ -87,6 +88,7 @@ export class RightPanelComponent {
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
     public svgService: SvgGridService,
+    public urlGenerationService: UrlGenerationService,
     private fb: FormBuilder
   ) {}
 
@@ -352,7 +354,7 @@ export class RightPanelComponent {
 
       let projectURL: string = 'User did not leave a project URL';
       if (this.commentForm.value.project) {
-        projectURL = ToolbarComponent.instance.createURL();
+        projectURL = this.urlGenerationService.generateFullUrl();
       }
 
       const params = {

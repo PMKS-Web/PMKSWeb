@@ -157,7 +157,7 @@ export class UrlGenerationService {
       this.settings.globalUnit.getValue()
     );
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
+    //encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,
@@ -179,6 +179,23 @@ export class UrlGenerationService {
     if (cachedAnimationFrame > 0) this.mechanism.animate(cachedAnimationFrame, false);
 
     return urlRaw;
+  }
+
+  getURLPrefix(): string {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    const port = window.location.port;
+    return `${protocol}//${hostname}${port ? `:${port}` : ''}${pathname}`;
+  }
+
+  generateFullUrl(): string {
+    let urlQuery = this.generateUrlQuery();
+
+    const url = this.getURLPrefix();
+    const dataURLString = `${url}?${urlQuery}`;
+    const dataURL = encodeURI(dataURLString);
+    return dataURL;
   }
 
 }
