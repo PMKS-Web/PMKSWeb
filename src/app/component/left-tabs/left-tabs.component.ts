@@ -101,11 +101,6 @@ export class LeftTabsComponent {
 
 
   tabClicked(tabID: TabID) {
-    if (tabID === TabID.SYNTHESIZE && this.mechanism.exists()) {
-      // stay on the same tab. The dialog will handle the tab change if the user clicks "yes"
-      this.dialog.open(SynthesisWarningComponent);
-      return; 
-    }
 
     if (!this.tabs.isTabVisible()) {
       this.tabs.setTab(tabID);

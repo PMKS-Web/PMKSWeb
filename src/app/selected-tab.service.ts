@@ -51,11 +51,6 @@ export class SelectedTabService {
 
   private onNewTab() {
 
-    // if new tab is synthesis, reset mechanism
-    if (this.getCurrentTab() === TabID.SYNTHESIZE) {
-      this.mechanism.resetMechanism();
-    }
-
   }
 
 }
