@@ -271,6 +271,10 @@ export class GridUtilsService {
     return selectedForce;
   }
 
+  setPoseTheta(pose: SynthesisPose, thetaRadians: number) {
+    this.synthesisBuilder.setPoseTheta(pose, thetaRadians);
+  }
+
   dragPose(pose: SynthesisPose, dx: number, dy: number, mode: SynthesisClickMode) {
     this.synthesisBuilder.movePoseByOffset(pose, mode, dx, dy);
   }

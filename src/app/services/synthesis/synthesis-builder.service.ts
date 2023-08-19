@@ -99,6 +99,11 @@ export class SynthesisBuilderService {
     return this.getAllPoses().length === 3;
   }
 
+  setPoseTheta(pose: SynthesisPose, thetaRadians: number) {
+    pose.thetaRadians = thetaRadians;
+    this.valueChanges.next(true);
+  }
+
   movePoseByOffset(pose: SynthesisPose, mode: SynthesisClickMode, dx: number, dy: number) {
 
     // if dragging by coordinate axis, project onto axis

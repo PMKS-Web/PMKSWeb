@@ -540,7 +540,9 @@ export class NewGridComponent {
       if (this.synthesisClickMode === SynthesisClickMode.ROTATE) {
         let pose = (this.lastLeftClick as SynthesisPose);
         let rotate = Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x) + this.synthesisRotateStart;
-        if (!isNaN(rotate)) pose.thetaRadians = rotate;
+        if (!isNaN(rotate)) {
+          this.gridUtils.setPoseTheta(pose, rotate);
+        }
       } else {
         this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY, this.synthesisClickMode);
       }
