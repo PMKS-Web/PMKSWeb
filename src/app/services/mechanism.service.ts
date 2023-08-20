@@ -270,7 +270,7 @@ export class MechanismService {
     } else if (joint.isWelded) {
       this.unweldSelectedJoint();
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {
