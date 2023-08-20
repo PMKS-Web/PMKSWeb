@@ -277,10 +277,10 @@ PoseID: any;
 
         //now create joints, links, etc. from the above four coordinates
 
-        var joint1 = new RevJoint("a", firstPoint.x, firstPoint.y, true, true);
-        var joint2 = new RevJoint("b", secondPoint.x, secondPoint.y, false, false);
-        var joint3 = new RevJoint("c", thirdPoint.x, thirdPoint.y, false, false);
-        var joint4 = new RevJoint("d", fourthPoint.x, fourthPoint.y, false, true);
+        var joint1 = new RevJoint("A", firstPoint.x, firstPoint.y, true, true);
+        var joint2 = new RevJoint("B", secondPoint.x, secondPoint.y, false, false);
+        var joint3 = new RevJoint("C", thirdPoint.x, thirdPoint.y, false, false);
+        var joint4 = new RevJoint("D", fourthPoint.x, fourthPoint.y, false, true);
 
         joint1.connectedJoints.push(joint2);
         joint2.connectedJoints.push(joint1, joint3);
@@ -288,9 +288,9 @@ PoseID: any;
         joint4.connectedJoints.push(joint3);
 
 
-        var link1 = new RealLink("ab", [joint1, joint2]);
-        var link2 = new RealLink("bc", [joint2, joint3]);
-        var link3 = new RealLink("cd", [joint3, joint4]);
+        var link1 = new RealLink("AB", [joint1, joint2]);
+        var link2 = new RealLink("BC", [joint2, joint3]);
+        var link3 = new RealLink("CD", [joint3, joint4]);
 
         joint1.links.push(link1);
         joint2.links.push(link1, link2);
