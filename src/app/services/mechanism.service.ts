@@ -898,14 +898,14 @@ export class MechanismService {
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
       const connectedJoints: Joint[] = [this.activeObjService.selectedJoint];
-      this.joints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        if (j.ground) {
-          connectedJoints.push(j);
-        }
-      });
+      // this.joints.forEach((j) => {
+      //   if (!(j instanceof RealJoint)) {
+      //     return;
+      //   }
+      //   if (j.ground) {
+      //     connectedJoints.push(j);
+      //   }
+      // });
       const prisJoint = new PrisJoint(
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
