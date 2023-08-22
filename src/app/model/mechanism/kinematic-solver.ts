@@ -278,18 +278,27 @@ export class KinematicsSolver {
         }
       } else {
         // Joint
+        const desiredAngle = this.desiredAngleMap.get(linkOrJoint.id)!;
         switch (analysisType) {
           case 'Velocity':
-            this.jointVelMap.set(linkOrJoint.id, [
-              X[i][0] * Math.cos(linkOrJoint.angle),
-              X[i][0] * Math.sin(linkOrJoint.angle),
-            ]);
+            this.jointVelMap.set(linkOrJoint.id,
+                [
+                  X[i][0] * Math.cos(desiredAngle),
+                  X[i][0] * Math.sin(desiredAngle),
+              // X[i][0] * Math.cos(linkOrJoint.angle),
+              // X[i][0] * Math.sin(linkOrJoint.angle),
+            ]
+            );
             break;
           case 'Acceleration':
-            this.jointAccMap.set(linkOrJoint.id, [
-              X[i][0] * Math.cos(linkOrJoint.angle),
-              X[i][0] * Math.sin(linkOrJoint.angle),
-            ]);
+            this.jointAccMap.set(linkOrJoint.id,
+                [
+                  X[i][0] * Math.cos(desiredAngle),
+                  X[i][0] * Math.sin(desiredAngle),
+              // X[i][0] * Math.cos(linkOrJoint.angle),
+              // X[i][0] * Math.sin(linkOrJoint.angle),
+            ]
+            );
             break;
         }
       }
