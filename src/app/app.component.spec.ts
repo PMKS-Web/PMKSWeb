@@ -390,7 +390,7 @@ describe('SixbarService', () => {
             mechanisms[0].inputAngularVelocities[index]
           );
 
-          const JPTMatch = mechanisms[0].joints[index].every((joint) => {
+          const Match = mechanisms[0].joints[index].every((joint) => {
             let expectedPositionx = 0;
             let expectedPositiony = 0;
             const calculatedPosition = mechanisms[0].joints[index][KinematicsSolver.jointIndexMap.get(joint.id)!];
@@ -424,7 +424,7 @@ describe('SixbarService', () => {
             jcount = jcount + 1
             return distance < tolerance;
           });
-          return JPTMatch;
+          return Match;
         });
         expect(resultMatch).toBe(true);
       });
@@ -522,15 +522,13 @@ describe('SixbarService', () => {
         let resultMatch = true;
           resultMatch = mechanisms[0].joints.every((j, index) => {
           let jcount = 0;
-
           KinematicsSolver.determineKinematics(
             mechanisms[0].joints[index],
             mechanisms[0].links[index],
             mechanisms[0].inputAngularVelocities[index]
           );
 
-          let JVTMatch = true;
-          JVTMatch = mechanisms[0].joints[index].every((joint) => {
+            const Match = mechanisms[0].joints[index].every((joint) => {
             let expectedJVx = 0;
             let expectedJVy = 0;
             const calculatedJVx = mechanisms[0].joints[index][KinematicsSolver.jointVelMap.get(joint.id)![0]];
