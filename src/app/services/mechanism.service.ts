@@ -1160,6 +1160,9 @@ export class MechanismService {
       if (!(l instanceof RealLink)) {
         return;
       }
+      if (l.subset.length === 0) {
+        return
+      }
       let idSubs: string[] = [];
       l.subset.forEach(
         (s) => idSubs.push(s.id)
