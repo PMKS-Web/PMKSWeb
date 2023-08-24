@@ -16,16 +16,16 @@
     .panel-header {
 
       padding: 0 15px;
-      border-style: solid;
+      border-style: none;
       height: 30px;
 
       width: 100%;
-      border-color: mat.get-color-from-palette($primary-palette, 500);
+      //border-color: mat.get-color-from-palette($primary-palette, 500);
       //Hide left and right borders
-      border-left: 0;
-      border-right: 0;
+      //border-left: 0;
+      //border-right: 0;
       background-color: mat.get-color-from-palette($primary-palette, 50);
-      border-width: 1px;
+      //border-width: 1px;
       display: flex;
       justify-content: space-between;
       align-items: center;

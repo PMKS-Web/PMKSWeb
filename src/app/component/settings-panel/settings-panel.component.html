@@ -42,7 +42,7 @@
       </input-block>
     </collapsible-subseciton>
 
-    <collapsible-subseciton titleLabel='Force Settings' [expanded]='true'>
+    <collapsible-subseciton titleLabel='Experimental Features'>
       <!--      <toggle-block-->
       <!--        [formGroup]='this.settingsForm'-->
       <!--        _formControl='gravity'-->
@@ -51,6 +51,16 @@
       <!--      </toggle-block>-->
       <button-block *ngIf='!settingsService.isForces.value' customIcon='com' [click]='openEnableForceDialog.bind(this)'>
         Enable Masses / Forces
+      </button-block>
+
+      <button-block *ngIf='!settingsService.isWeldedJointsEnabled.value' customIcon='weld_joint'
+                    [click]='openEnableWeldedDialog.bind(this)'>
+        Enable Welded Joints
+      </button-block>
+
+      <button-block *ngIf='!settingsService.isEquationsEnabled.value' icon='format_list_numbered'
+                    [click]='openEnablEquationsDialog.bind(this)'>
+        Enable Loop Equations
       </button-block>
 
       <ng-container *ngIf='settingsService.isForces.value'>

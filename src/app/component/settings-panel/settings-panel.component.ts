@@ -12,6 +12,8 @@ import { NumberUnitParserService } from '../../services/number-unit-parser.servi
 import { Coord } from '../../model/coord';
 import { MatDialog } from '@angular/material/dialog';
 import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
+import { EnableWeldedComponent } from '../MODALS/enable-welded/enable-welded.component';
+import { EnableEquationsComponent } from '../MODALS/enable-equations/enable-equations.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -166,6 +168,18 @@ export class SettingsPanelComponent {
 
   openEnableForceDialog(): void {
     this.dialog.open(EnableForcesComponent, {
+      autoFocus: false,
+    });
+  }
+
+  openEnableWeldedDialog(): void {
+    this.dialog.open(EnableWeldedComponent, {
+      autoFocus: false,
+    });
+  }
+
+  openEnablEquationsDialog(): void {
+    this.dialog.open(EnableEquationsComponent, {
       autoFocus: false,
     });
   }
