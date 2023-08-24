@@ -40,7 +40,10 @@ import { Line } from '../../model/line';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
-import { SynthesisClickMode, SynthesisConstants } from 'src/app/services/synthesis/synthesis-constants';
+import {
+  SynthesisClickMode,
+  SynthesisConstants,
+} from 'src/app/services/synthesis/synthesis-constants';
 import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
@@ -218,7 +221,6 @@ export class NewGridComponent {
     return this.instance.forceStates;
     //This is for debug purposes, do not make anything else static!
   }
-
 
   // whether to show the synthesis poses
   showSynthesis(): boolean {
@@ -414,8 +416,10 @@ export class NewGridComponent {
   setSynthesisClickMode(mode: SynthesisClickMode) {
     console.log('Setting synthesis click mode to ' + mode);
     this.synthesisClickMode = mode;
-    let pose = (this.lastLeftClick as SynthesisPose);
-    this.synthesisRotateStart = pose.thetaRadians - Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x);
+    let pose = this.lastLeftClick as SynthesisPose;
+    this.synthesisRotateStart =
+      pose.thetaRadians -
+      Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x);
   }
 
   setLastLeftClick(clickedObj: Joint | Link | String | Force | SynthesisPose, event?: MouseEvent) {
@@ -526,7 +530,6 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
-
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
     this.lastMouseLocation = this.mouseLocation;
     this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
@@ -538,13 +541,22 @@ export class NewGridComponent {
 
     if (this.isMouseDown && this.lastLeftClickType === 'SynthesisPose') {
       if (this.synthesisClickMode === SynthesisClickMode.ROTATE) {
-        let pose = (this.lastLeftClick as SynthesisPose);
-        let rotate = Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x) + this.synthesisRotateStart;
+        let pose = this.lastLeftClick as SynthesisPose;
+        let rotate =
+          Math.atan2(
+            this.mouseLocation.y - pose.position.y,
+            this.mouseLocation.x - pose.position.x
+          ) + this.synthesisRotateStart;
         if (!isNaN(rotate)) {
           this.gridUtils.setPoseTheta(pose, rotate);
         }
       } else {
-        this.gridUtils.dragPose(this.activeObjService.selectedPose, deltaMouseX, deltaMouseY, this.synthesisClickMode);
+        this.gridUtils.dragPose(
+          this.activeObjService.selectedPose,
+          deltaMouseX,
+          deltaMouseY,
+          this.synthesisClickMode
+        );
       }
     }
 
@@ -642,7 +654,7 @@ export class NewGridComponent {
           this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
           return;
         }
-        
+
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         const fake_link = document.getElementById(this.activeObjService.selectedLink.id) as unknown;
         const link_svg = fake_link as SVGElement;
@@ -690,7 +702,7 @@ export class NewGridComponent {
       this.cMenuItems = [];
       return;
     }
-    
+
     if (AnimationBarComponent.animate == true) {
       this.sendNotification('Cannot open context menu while animating. Stop animation to edit');
       this.cMenuItems = [];

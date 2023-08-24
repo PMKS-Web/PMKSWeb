@@ -1,6 +1,6 @@
 <div id='synthesisWrapper'>
   <panel-section>
-    <title-block description='PMKS+ will create a 4-bar linkage based on 3 coupler poses you define.'>
+    <title-block description='Automatically create a 4-bar linkage based on 3 coupler poses.'>
       3 Position
       Synthesis
     </title-block>
@@ -11,25 +11,25 @@
 
     <collapsible-subseciton [expanded]='true' [hideHeader]='true'>
 
-      <subtitle-block>End-Effector Link</subtitle-block>
-      <radio-block
-        [formGroup]='synthesisPoseForm'
-        _formControl='cor'
-        option1='back'
-        option2='center'
-        option3='front'
-        tooltip='The center of rotation of the end-effector link, and what the position coordinate represents'>
-        Center of rotation
-      </radio-block>
+      <subtitle-block>End-Effector Link (Coupler)</subtitle-block>
       <input-block [formGroup]='synthesisPoseForm'
                    _formControl='length'
                    tooltip='The length of the end-effector link'>
         Length
       </input-block>
+      <radio-block
+        [formGroup]='synthesisPoseForm'
+        _formControl='cor'
+        option1='Back'
+        option2='Center'
+        option3='Front'
+        tooltip='The center of rotation of the end-effector link, and what the position coordinate represents'>
+        Fixed Reference
+      </radio-block>
+      <mat-divider></mat-divider>
 
       <!-- Construct panel sections for each pose -->
       <div *ngFor='let i of [1,2,3]'>
-        <mat-divider></mat-divider>
 
         <!-- display header, with edit button on right if pose already has been created -->
 
@@ -59,20 +59,22 @@
 
         <!-- if pose has not yet been created and its the first undefined pose, show "create pose" button -->
         <div class='poseCreate' *ngIf='synthesisBuilder.getFirstUndefinedPose() === i'>
-          <button-block icon='add' (click)='synthesisBuilder.createPose(i)'>Create Pose</button-block>
+          <button-block icon='add' (click)='synthesisBuilder.createPose(i); this.svgGrid.updateObjectScale()'>Create
+            Pose
+          </button-block>
         </div>
 
       </div>
 
       <mat-divider></mat-divider>
 
-      <button-block icon='add' [disabled]='!synthesisBuilder.isFullyDefined()' (click)='synthesisFunction()'>
-        Generate Linkage
-      </button-block>
+      <!--      <button-block icon='add' [disabled]='!synthesisBuilder.isFullyDefined()' (click)='synthesisFunction()'>-->
+      <!--        Generate Linkage-->
+      <!--      </button-block>-->
 
       <button-block [disabled]='synthesisBuilder.getAllPoses().length === 0'
-                    (click)='synthesisBuilder.deleteAllPoses()'>
-        Reset All
+                    (click)='synthesisBuilder.deleteAllPoses()' customIcon='remove' color='warn'>
+        Remove All Poses
       </button-block>
     </collapsible-subseciton>
 

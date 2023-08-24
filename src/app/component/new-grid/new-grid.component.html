@@ -125,117 +125,6 @@
         </ng-container>
       </g>
 
-  <!-- show synthesis poses if on the synthesis tab -->
-  <g id = "synthesis" *ngIf="showSynthesis()">
-  <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
-
-    <g id='synthesisLinkHolder' style='transform: scaleY(-1)'>
-        <path
-          cursor='move'
-          (pointerover)='pose.showHighlight = true'
-          (pointerout)='pose.showHighlight = false'
-          (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
-          [attr.d]="pose.pathString"
-          [attr.id]=''
-          [attr.fill]="pose.isAnyHighlight() ? sConstants.LINK_COLOR_H[pose.status] : sConstants.LINK_COLOR[pose.status]"
-          [attr.fill-opacity]=0.7
-          [class]=''
-        >
-        </path>
-    </g>
-
-    <g id='synthesisPoseHolder' style='transform: scaleY(-1)'>
-      <svg
-        width='20'
-        height='20'
-        style='overflow: visible'
-        cursor='move'
-        (pointerover)='pose.showHighlight = true'
-        (pointerout)='pose.showHighlight = false'
-        (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
-      >
-        <circle
-          *ngFor="let nodePos of [pose.posBack, pose.posFront]"
-          class='joint_circles'
-          [attr.r]='sConstants.CIRCLE_RADIUS'
-          [attr.cx]='nodePos.x' [attr.cy]='nodePos.y'
-          [attr.fill]="pose.showHighlight ? sConstants.CIRCLE_COLOR_H : sConstants.CIRCLE_COLOR"
-          [class]=""
-        />
-      </svg>
-
-
-    <svg
-      [attr.height]='10'
-      [attr.width]='10'
-      style='overflow: visible; text-anchor: middle'
-      cursor='move'
-      (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
-    >
-
-    <!-- reference frame arrows -->
-    <g app-svg-arrow
-    (pointerover)='pose.showHighlight = true; pose.showHighlightX = true'
-    (pointerout)='pose.showHighlight = false; pose.showHighlightX = false'
-    (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.X);'
-      [x]="pose.position.x"
-      [y]="pose.position.y"
-      [direction]="pose.thetaDegrees"
-      [magnitude]="1"
-      [width]="0.075"
-      [color]="pose.showHighlightX ? sConstants.ARROW_X_COLOR_H : sConstants.ARROW_X_COLOR"
-    ></g>
-
-    <g app-svg-arrow
-    (pointerover)='pose.showHighlight = true; pose.showHighlightY = true'
-    (pointerout)='pose.showHighlight = false; pose.showHighlightY = false'
-      (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.Y);'
-      [x]="pose.position.x"
-      [y]="pose.position.y"
-      [direction]="pose.thetaDegrees + 90"
-      [magnitude]="1"
-      [width]="0.075"
-      [color]="pose.showHighlightY ? sConstants.ARROW_Y_COLOR_H : sConstants.ARROW_Y_COLOR"
-    ></g>
-
-    <!-- small black circle for COR -->
-    <circle
-    (pointerover)='pose.showHighlight = true'
-    (pointerout)='pose.showHighlight = false'
-    class='joint_circles'
-    [attr.r]='sConstants.COR_RADIUS'
-    [attr.cx]='pose.position.x' [attr.cy]='pose.position.y'
-    [attr.fill]="sConstants.COR_COLOR"
-    [class]=""
-    />
-
-    <!-- rotation circle -->
-    <circle
-    (pointerover)='pose.showHighlightR = true'
-    (pointerout)='pose.showHighlightR = false'
-    (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.ROTATE);'
-    class='joint_circles'
-    [attr.r]='sConstants.ROTATION_CIRCLE_RADIUS'
-    [attr.cx]='pose.rotationCircleX' [attr.cy]='pose.rotationCircleY'
-    [attr.fill]="pose.showHighlightR ? sConstants.ROTATION_CIRCLE_COLOR_H : sConstants.ROTATION_CIRCLE_COLOR"
-    [class]=""
-    />
-
-    <text
-      style="pointer-events: none"
-      transform="scale(+1,-1)"
-      [attr.x]="pose.posCenter.x+0.2"
-      [attr.y]="-pose.posCenter.y-0.2"
-      style='font-size: {{svgGrid.scaleWithZoom(35)}}; text-anchor: middle'
-    >
-      {{pose.id}}
-
-    </text>
-    </svg>
-    </g>
-
-  </ng-container></g>
-
   <g id='jointBGHolder' style='transform: scaleY(-1)'>
     <svg
       *ngFor='let joint of mechanismSrv.getJoints()'
@@ -364,7 +253,126 @@
           </path>
         </svg>
       </g>
-    <!--  For Debugging-->
+
+  <!-- show synthesis poses if on the synthesis tab -->
+  <g id = "synthesis" *ngIf="showSynthesis()">
+    <ng-container *ngFor='let pose of synthesisBuilder.getAllPoses()'>
+
+      <g id='synthesisLinkHolder' style='transform: scaleY(-1)'>
+        <path
+          cursor='move'
+          (pointerover)='pose.showHighlight = true'
+          (pointerout)='pose.showHighlight = false'
+          (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
+          [attr.d]="pose.pathString"
+          [attr.id]=''
+          [attr.fill]="pose.isAnyHighlight() ? sConstants.LINK_COLOR_H[pose.status] : sConstants.LINK_COLOR[pose.status]"
+          [attr.fill-opacity]=0.4
+          [class]=''
+        >
+        </path>
+      </g>
+
+      <g id='synthesisPoseHolder' style='transform: scaleY(-1)'>
+        <svg
+          width='20'
+          height='20'
+          style='overflow: visible'
+          cursor='move'
+          (pointerover)='pose.showHighlight = true'
+          (pointerout)='pose.showHighlight = false'
+          (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
+        >
+          <circle
+            *ngFor="let nodePos of [pose.posBack, pose.posFront]"
+            class='joint_circles'
+            [attr.r]='sConstants.CIRCLE_RADIUS*settings.objectScale'
+            [attr.cx]='nodePos.x' [attr.cy]='nodePos.y'
+            [attr.fill]="pose.showHighlight ? sConstants.CIRCLE_COLOR_H : sConstants.CIRCLE_COLOR"
+            [class]=""
+          />
+        </svg>
+
+
+        <svg
+          [attr.height]='10'
+          [attr.width]='10'
+          style='overflow: visible; text-anchor: middle'
+          cursor='move'
+          (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose);'
+        >
+
+          <!-- reference frame arrows -->
+          <g app-svg-arrow
+             (pointerover)='pose.showHighlight = true; pose.showHighlightX = true'
+             (pointerout)='pose.showHighlight = false; pose.showHighlightX = false'
+             (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.X);'
+             [x]="pose.position.x"
+             [y]="pose.position.y"
+             [direction]="pose.thetaDegrees"
+             [magnitude]="1*settings.objectScale"
+             [width]="0.075*settings.objectScale"
+             [color]="pose.showHighlightX ? sConstants.ARROW_X_COLOR_H : sConstants.ARROW_X_COLOR"
+          ></g>
+
+          <g app-svg-arrow
+             (pointerover)='pose.showHighlight = true; pose.showHighlightY = true'
+             (pointerout)='pose.showHighlight = false; pose.showHighlightY = false'
+             (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.Y);'
+             [x]="pose.position.x"
+             [y]="pose.position.y"
+             [direction]="pose.thetaDegrees + 90"
+             [magnitude]="1*settings.objectScale"
+             [width]="0.075*settings.objectScale"
+             [color]="pose.showHighlightY ? sConstants.ARROW_Y_COLOR_H : sConstants.ARROW_Y_COLOR"
+          ></g>
+
+          <!-- small black circle for COR -->
+          <circle
+            (pointerover)='pose.showHighlight = true'
+            (pointerout)='pose.showHighlight = false'
+            class='joint_circles'
+            [attr.r]='sConstants.COR_RADIUS*settings.objectScale'
+            [attr.cx]='pose.position.x' [attr.cy]='pose.position.y'
+            [attr.fill]="sConstants.COR_COLOR"
+            [class]=""
+          />
+
+          <!-- rotation circle -->
+          <circle
+            (pointerover)='pose.showHighlightR = true'
+            (pointerout)='pose.showHighlightR = false'
+            (pointerdown)='setLastLeftClick(pose); activeObjService.updateSelectedObj(pose); setSynthesisClickMode(mode.ROTATE);'
+            [attr.r]='sConstants.ROTATION_CIRCLE_RADIUS*1.5*settings.objectScale'
+            [attr.cx]='pose.rotationCircleX' [attr.cy]='pose.rotationCircleY'
+            fill='black'
+            style='opacity: 0'
+          />
+          <circle
+            class='joint_circles'
+            [attr.r]='sConstants.ROTATION_CIRCLE_RADIUS*settings.objectScale'
+            [attr.cx]='pose.rotationCircleX' [attr.cy]='pose.rotationCircleY'
+            [attr.fill]="pose.showHighlightR ? sConstants.ROTATION_CIRCLE_COLOR_H : sConstants.ROTATION_CIRCLE_COLOR"
+            style='pointer-events: none'
+          />
+
+          <text
+            style="pointer-events: none"
+            transform="scale(+1,-1)"
+            [attr.x]="pose.posCenter.x+0.5"
+            [attr.y]="-pose.posCenter.y-0.5"
+            style='font-size: {{svgGrid.scaleWithZoom(20)}}; text-anchor: middle'
+          >
+            Pose {{pose.id}}
+
+          </text>
+        </svg>
+      </g>
+
+    </ng-container></g>
+
+
+  <!--  For Debugging-->
       <g *ngIf='settings.isGridDebugOn' style='transform: scaleY(-1); pointer-events: none'>
         <ng-container *ngFor='let line of getDebugLines()'>
           <circle [attr.r]='svgGrid.scaleWithZoom(8)' [attr.cx]='line.startPosition.x' [attr.cy]='line.startPosition.y' [attr.fill]='line.color'/>

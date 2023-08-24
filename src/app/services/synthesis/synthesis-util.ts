@@ -1,178 +1,185 @@
-import { Coord } from "src/app/model/coord"
-import { SynthesisConstants, SynthesisStatus } from "./synthesis-constants";
+import { Coord } from 'src/app/model/coord';
+import { SynthesisConstants, SynthesisStatus } from './synthesis-constants';
+import { SettingsService } from '../settings.service';
 
 export enum COR {
-    BACK = "BACK",
-    CENTER = "CENTER",
-    FRONT = "FRONT"
+  BACK = 'BACK',
+  CENTER = 'CENTER',
+  FRONT = 'FRONT',
 }
 
 // storing state for a pose
 export class SynthesisPose {
+  // cached values for graphical display
+  private _posBack: Coord;
+  private _posCenter: Coord;
+  private _posFront: Coord;
 
-    // cached values for graphical display
-    private _posBack: Coord;
-    private _posCenter: Coord;
-    private _posFront: Coord;
+  // string for SVG link
+  private _pathString: string = '';
 
-    // string for SVG link
-    private _pathString: string = "";
+  public showHighlight: boolean = false;
+  public showHighlightX: boolean = false;
+  public showHighlightY: boolean = false;
+  public showHighlightR: boolean = false;
 
-    public showHighlight: boolean = false;
-    public showHighlightX: boolean = false;
-    public showHighlightY: boolean = false;
-    public showHighlightR: boolean = false;
+  private sConstants = new SynthesisConstants();
 
-    private sConstants = new SynthesisConstants();
+  private _status: SynthesisStatus = SynthesisStatus.DISABLED;
 
-    private _status: SynthesisStatus = SynthesisStatus.DISABLED;
+  constructor(
+    public id: number,
+    private _position: Coord,
+    private _thetaRadians: number,
+    private getCOR: () => COR,
+    private getLength: () => number
+  ) {
+    // dummy values to be overwritten by recompute
+    this._posBack = new Coord(0, 0);
+    this._posCenter = new Coord(0, 0);
+    this._posFront = new Coord(0, 0);
 
+    this._thetaRadians %= Math.PI * 2;
 
-    constructor(
-        public id: number,
-        private _position: Coord,
-        private _thetaRadians: number,
-        private getCOR: () => COR,
-        private getLength: () => number
-    ) {
-        // dummy values to be overwritten by recompute
-        this._posBack = new Coord(0, 0);
-        this._posCenter = new Coord(0, 0);
-        this._posFront = new Coord(0, 0);
+    this.recompute();
+  }
 
-        this._thetaRadians %= Math.PI * 2;
+  get position(): Coord {
+    return this._position;
+  }
 
-        this.recompute();
+  get thetaDegrees(): number {
+    return (this._thetaRadians * 180) / Math.PI;
+  }
+
+  get thetaRadians(): number {
+    return this._thetaRadians;
+  }
+
+  get posBack(): Coord {
+    return this._posBack;
+  }
+
+  get posCenter(): Coord {
+    return this._posCenter;
+  }
+
+  get posFront(): Coord {
+    return this._posFront;
+  }
+
+  get pathString(): string {
+    return this._pathString;
+  }
+
+  set position(position: Coord) {
+    this._position = position;
+    this.recompute();
+  }
+
+  set thetaRadians(thetaRadians: number) {
+    this._thetaRadians = thetaRadians;
+    this.recompute();
+  }
+
+  get rotationCircleX(): number {
+    return (
+      this.position.x +
+      this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR *
+        SettingsService.objectScale *
+        Math.cos(this.thetaRadians)
+    );
+  }
+
+  get rotationCircleY(): number {
+    return (
+      this.position.y +
+      this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR *
+        SettingsService.objectScale *
+        Math.sin(this.thetaRadians)
+    );
+  }
+
+  set thetaDegrees(thetaDegrees: number) {
+    thetaDegrees %= 360;
+    this._thetaRadians = (thetaDegrees * Math.PI) / 180;
+    this.recompute();
+  }
+
+  get status(): SynthesisStatus {
+    return this._status;
+  }
+
+  set status(status: SynthesisStatus) {
+    this._status = status;
+  }
+
+  isAnyHighlight(): boolean {
+    return this.showHighlight || this.showHighlightX || this.showHighlightY || this.showHighlightR;
+  }
+
+  // recompute cached data like endpoint positions
+  recompute() {
+    let halfLength = this.getLength() / 2;
+
+    let dx = Math.cos(this.thetaRadians) * halfLength;
+    let dy = Math.sin(this.thetaRadians) * halfLength;
+
+    if (this.getCOR() === COR.BACK) {
+      this._posBack = new Coord(this.position.x, this.position.y);
+      this._posCenter = new Coord(this.position.x + dx, this.position.y + dy);
+      this._posFront = new Coord(this.position.x + dx * 2, this.position.y + dy * 2);
+    } else if (this.getCOR() === COR.CENTER) {
+      this._posBack = new Coord(this.position.x - dx, this.position.y - dy);
+      this._posCenter = new Coord(this.position.x, this.position.y);
+      this._posFront = new Coord(this.position.x + dx, this.position.y + dy);
+    } else {
+      this._posBack = new Coord(this.position.x - dx * 2, this.position.y - dy * 2);
+      this._posCenter = new Coord(this.position.x - dx, this.position.y - dy);
+      this._posFront = new Coord(this.position.x, this.position.y);
     }
 
-    get position(): Coord {
-        return this._position;
-    }
+    this._pathString = this._createPath(
+      this.posBack.x,
+      this.posBack.y,
+      this.posFront.x,
+      this.posFront.y,
+      this.sConstants.LINK_CIRCLE_RADIUS
+    );
+  }
 
-    get thetaDegrees(): number {
-        return this._thetaRadians * 180 / Math.PI;
-    }
+  // generate SVG path for a link given two points and a radius
+  private _createPath(x1: number, y1: number, x2: number, y2: number, r: number): string {
+    r = r * SettingsService.objectScale;
 
-    get thetaRadians(): number {
-        return this._thetaRadians;
-    }
+    const dx = x2 - x1;
+    const dy = y2 - y1;
 
-    get posBack(): Coord {
-        return this._posBack;
-    }
+    // calculate angle between the two points
+    const theta = Math.atan2(dy, dx);
 
-    get posCenter(): Coord {
-        return this._posCenter;
-    }
+    // calculate points for the rectangle
+    const p1x = x1 - r * Math.sin(theta);
+    const p1y = y1 + r * Math.cos(theta);
+    const p2x = x2 - r * Math.sin(theta);
+    const p2y = y2 + r * Math.cos(theta);
+    const p3x = x2 + r * Math.sin(theta);
+    const p3y = y2 - r * Math.cos(theta);
+    const p4x = x1 + r * Math.sin(theta);
+    const p4y = y1 - r * Math.cos(theta);
 
-    get posFront(): Coord {
-        return this._posFront;
-    }
-
-    get pathString(): string {
-        return this._pathString;
-    }
-
-    set position(position: Coord) {
-        this._position = position;
-        this.recompute();
-    }
-
-    set thetaRadians(thetaRadians: number) {
-        this._thetaRadians = thetaRadians;
-        this.recompute();
-    }
-
-    get rotationCircleX(): number {
-        return this.position.x + this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR * Math.cos(this.thetaRadians);
-    }
-
-    get rotationCircleY(): number {
-        return this.position.y + this.sConstants.ROTATION_CIRCLE_LOCATION_SCALAR * Math.sin(this.thetaRadians);
-    }
-
-    set thetaDegrees(thetaDegrees: number) {
-        thetaDegrees %= 360;
-        this._thetaRadians = thetaDegrees * Math.PI / 180;
-        this.recompute();
-    }
-
-    get status(): SynthesisStatus {
-        return this._status;
-    }
-
-    set status(status: SynthesisStatus) {
-        this._status = status;
-    }
-
-    isAnyHighlight(): boolean {
-        return this.showHighlight || this.showHighlightX || this.showHighlightY || this.showHighlightR;
-    }
-
-    // recompute cached data like endpoint positions
-    recompute() {
-
-        let halfLength = this.getLength() / 2;
-
-        let dx = Math.cos(this.thetaRadians) * halfLength;
-        let dy = Math.sin(this.thetaRadians) * halfLength;
-
-        if (this.getCOR() === COR.BACK) {
-            this._posBack = new Coord(this.position.x, this.position.y);
-            this._posCenter = new Coord(this.position.x + dx, this.position.y + dy);
-            this._posFront = new Coord(this.position.x + dx * 2, this.position.y + dy * 2);
-        } else if (this.getCOR() === COR.CENTER) {
-            this._posBack = new Coord(this.position.x - dx, this.position.y - dy);
-            this._posCenter = new Coord(this.position.x, this.position.y);
-            this._posFront = new Coord(this.position.x + dx, this.position.y + dy);
-        } else {
-            this._posBack = new Coord(this.position.x - dx * 2, this.position.y - dy * 2);
-            this._posCenter = new Coord(this.position.x - dx, this.position.y - dy);
-            this._posFront = new Coord(this.position.x, this.position.y);
-        }
-
-        this._pathString = this._createPath(this.posBack.x, this.posBack.y, this.posFront.x, this.posFront.y, this.sConstants.LINK_CIRCLE_RADIUS);
-
-    }
-
-    // generate SVG path for a link given two points and a radius
-    private _createPath(x1: number, y1: number, x2: number, y2: number, r: number): string {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-      
-        // calculate angle between the two points
-        const theta = Math.atan2(dy, dx);
-      
-        // calculate points for the rectangle
-        const p1x = x1 - r * Math.sin(theta);
-        const p1y = y1 + r * Math.cos(theta);
-        const p2x = x2 - r * Math.sin(theta);
-        const p2y = y2 + r * Math.cos(theta);
-        const p3x = x2 + r * Math.sin(theta);
-        const p3y = y2 - r * Math.cos(theta);
-        const p4x = x1 + r * Math.sin(theta);
-        const p4y = y1 - r * Math.cos(theta);
-      
-        // draw the path
-        return `
+    // draw the path
+    return `
           M ${p1x} ${p1y}
           A ${r} ${r} 0 1 1 ${p4x} ${p4y}
           L ${p3x} ${p3y}
           A ${r} ${r} 0 1 1 ${p2x} ${p2y}
           Z
         `;
-      }
-      
-      
-
+  }
 }
 
 // cached graphics data for a pose to be displayed as an SVG
 export class PoseGraphicsData {
-    
-        constructor(
-            public pose: SynthesisPose,
-            public pointA: Coord,
-            public pointB: Coord) {
-        }
+  constructor(public pose: SynthesisPose, public pointA: Coord, public pointB: Coord) {}
 }

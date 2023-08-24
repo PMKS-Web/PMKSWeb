@@ -68,6 +68,7 @@ export class SettingsPanelComponent {
       this.mechanismSrv.links.forEach((link: Link) => {
         (link as RealLink).reComputeDPath();
       });
+
       this.mechanismSrv.updateMechanism();
     });
 

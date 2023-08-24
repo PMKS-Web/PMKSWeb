@@ -1,27 +1,17 @@
 <svg style='overflow: visible'>
 
-    <line id="mainline"
+  <!--    //Make a oversized hibox to make it easier to click-->
+  <line id='hibox'
         [attr.x1]='x' [attr.y1]='y'
         [attr.x2]='x2' [attr.y2]='y2'
-        [attr.stroke-width]="width"
-        [attr.stroke]="color"
-        stroke-linecap="round"
-    ></line>
+        [attr.stroke-width]='width*5'
+        [attr.stroke]='color'
+        stroke-linecap='round'
+  ></line>
 
-    <line id="arrowline1"
-        [attr.x1]='ax1' [attr.y1]='ay1'
-        [attr.x2]='x2' [attr.y2]='y2'
-        [attr.stroke-width]="width"
-        [attr.stroke]="color"
-        stroke-linecap="round"
-    ></line>
 
-    <line id="arrowline2"
-        [attr.x1]='ax2' [attr.y1]='ay2'
-        [attr.x2]='x2' [attr.y2]='y2'
-        [attr.stroke-width]="width"
-        [attr.stroke]="color"
-        stroke-linecap="round"
-    ></line>
-
+  <path [attr.d]='getPath()'
+        [attr.stroke]='color'
+        [attr.stroke-width]='width'
+        stroke-linecap='round' />
 </svg>

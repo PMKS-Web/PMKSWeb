@@ -13,10 +13,9 @@ into fourbars. Relevant to the Synthesis tab of the app.
 */
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SynthesisBuilderService {
-
   public valueChanges: Subject<any>;
 
   public constants: SynthesisConstants;
@@ -25,17 +24,15 @@ export class SynthesisBuilderService {
   _length: number; // length of the end-effector link
   _selectedPose: number; // currently selected pose (1-3)
 
-  poses: { [key : number]: SynthesisPose }; // a dictionary of poses, but including each pose is optional
+  poses: { [key: number]: SynthesisPose }; // a dictionary of poses, but including each pose is optional
 
-
-  constructor(private nup: NumberUnitParserService, private settings: SettingsService) { 
-
+  constructor(private nup: NumberUnitParserService, private settings: SettingsService) {
     this.valueChanges = new Subject<any>();
     this.constants = new SynthesisConstants();
 
     // start with a length of 1
     this._COR = COR.CENTER;
-    this._length = 1;
+    this._length = 5;
     this._selectedPose = 1;
 
     // start with no defined poses
@@ -71,12 +68,12 @@ export class SynthesisBuilderService {
 
   // create a new pose. put it in some preset default position
   createPose(id: number): void {
-
     let defaultPosition = new Coord(0, 0);
     let defaultThetaRadians = 0;
 
     // create pose with a callback to always get current length
-    this.poses[id] = new SynthesisPose(id,
+    this.poses[id] = new SynthesisPose(
+      id,
       defaultPosition,
       defaultThetaRadians,
       () => this.COR,
@@ -86,7 +83,6 @@ export class SynthesisBuilderService {
   }
 
   getPose(id: number): SynthesisPose {
-
     if (!this.isPoseDefined(id)) {
       throw new Error(`Pose ${id} is not defined`);
     }
@@ -105,10 +101,8 @@ export class SynthesisBuilderService {
   }
 
   movePoseByOffset(pose: SynthesisPose, mode: SynthesisClickMode, dx: number, dy: number) {
-
     // if dragging by coordinate axis, project onto axis
     if (mode !== SynthesisClickMode.NORMAL) {
-
       let theta = pose.thetaRadians;
       if (mode === SynthesisClickMode.Y) theta += Math.PI / 2;
 
@@ -149,19 +143,18 @@ export class SynthesisBuilderService {
 
   // given form, update poses
   // if form is invalid, return false to revert form
-  updatePosesFromForm(form: {[key: string]: any}): boolean {
-    
-    if (form["cor"] === "0") this._COR = COR.BACK;
-    else if (form["cor"] === "1") this._COR = COR.CENTER;
+  updatePosesFromForm(form: { [key: string]: any }): boolean {
+    if (form['cor'] === '0') this._COR = COR.BACK;
+    else if (form['cor'] === '1') this._COR = COR.CENTER;
     else this._COR = COR.FRONT;
 
     // if length is a number and positive, update length
     const [success, maybeLength] = this.nup.parseLengthString(
-      form["length"],
+      form['length'],
       this.settings.lengthUnit.getValue()
     );
     if (!success) {
-      console.log("invalid length");
+      console.log('invalid length');
       return false;
     }
     this.length = maybeLength;
@@ -179,7 +172,7 @@ export class SynthesisBuilderService {
         this.settings.lengthUnit.getValue()
       );
       if (!successX || !successY) {
-        console.log("invalid coord");
+        console.log('invalid coord');
         return false;
       }
       this.poses[i].position = new Coord(maybeX, maybeY);
@@ -190,7 +183,7 @@ export class SynthesisBuilderService {
         this.settings.angleUnit.getValue()
       );
       if (!successTheta) {
-        console.log("invalid theta");
+        console.log('invalid theta');
         return false;
       }
       this.poses[i].thetaDegrees = maybeTheta;
@@ -199,6 +192,4 @@ export class SynthesisBuilderService {
     // if we get here, form is valid
     return true;
   }
-
-
 }
