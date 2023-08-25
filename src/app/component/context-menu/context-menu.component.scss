@@ -32,13 +32,23 @@
     padding: 5px 0;
     border-radius: var(--border-radius);
 
+    .disabledItem {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
     #menu-item {
 
       &:focus {
         outline: none;
       }
 
-      &:hover {
+      //&:hover {
+      //  background-color: #eeeeee;
+      //}
+
+      //If hover but not disabled
+      &:hover:not(.disabledItem) {
         background-color: #eeeeee;
       }
 

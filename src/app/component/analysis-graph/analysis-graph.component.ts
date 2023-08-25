@@ -75,7 +75,7 @@ export type ChartOptions = {
           opacity: 1,
         })
       ),
-      transition('* => *', [animate('0.1s ease-in-out')]),
+      transition('* => *', [animate('0.3s ease-in-out')]),
     ]),
   ],
 })
@@ -211,7 +211,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   constructor(
     private fb: FormBuilder,
     private mechanismService: MechanismService,
-    private settingsService: SettingsService,
+    public settingsService: SettingsService,
     private nup: NumberUnitParserService,
     private activeSrv: ActiveObjService
   ) {}
@@ -234,6 +234,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // this.ngOnDestroy();
     // this.ngOnInit();
     // this.ngAfterViewInit();
+    ForceSolver.resetVariables();
+    KinematicsSolver.resetVariables();
+    ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
+    ForceSolver.determineForceAnalysis(
+        this.mechanismService.joints,
+        this.mechanismService.links,
+        'static',
+        ToolbarComponent.gravity,
+        ToolbarComponent.unit
+    );
+
+    KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
+    KinematicsSolver.determineKinematics(
+        this.mechanismService.joints,
+        this.mechanismService.links,
+        ToolbarComponent.inputAngularVelocity
+    );
     this.updateChartData();
   }
 
@@ -255,9 +272,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   ngAfterViewInit(): void {
     //Delay this call by 1ms to make sure the chart is initialized
     setTimeout(() => {
-      // this.chart.clearAnnotations();
-      // this.showAnnotations(this.mechanismService.mechanismTimeStep);
-
+      this.chart.clearAnnotations();
       if (this.numberOfSeries === 3) {
         this.seriesCheckboxForm.patchValue({
           x: false,
@@ -298,7 +313,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.determineChart(this.analysis, this.analysisType, this.mechProp, this.mechPart);
 
     this.seriesCheckboxForm.valueChanges.subscribe((data) => {
-      if (this.chart == null) return;
+      if (this.chart === null) return;
 
       switch (this.numberOfSeries) {
         case 3:
@@ -317,34 +332,36 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           this.noDataSelected = !data.z;
           break;
       }
-
-      this.showAnnotations(this.mechanismService.mechanismTimeStep);
     });
 
     this.settingsService.angleUnit.subscribe((t) => {
       //Force update the Y axis text with the new label
-      if (this.chart.chart) {
-        this.chart.updateOptions(
-          {
-            yaxis: this.chartOptions.yaxis,
-          },
-          false,
-          true
-        );
-      }
+      setTimeout(() => {
+        if (this.chart.chart) {
+          this.chart.updateOptions(
+            {
+              yaxis: this.chartOptions.yaxis,
+            },
+            false,
+            true
+          );
+        }
+      }, 1);
     });
 
     this.settingsService.lengthUnit.subscribe((t) => {
       //Force update the Y axis text with the new label
-      if (this.chart.chart) {
-        this.chart.updateOptions(
-          {
-            yaxis: this.chartOptions.yaxis,
-          },
-          false,
-          true
-        );
-      }
+      setTimeout(() => {
+        if (this.chart.chart) {
+          this.chart.updateOptions(
+            {
+              yaxis: this.chartOptions.yaxis,
+            },
+            false,
+            true
+          );
+        }
+      }, 1);
     });
 
     this.mechStateSub = this.mechanismService.onMechUpdateState.subscribe((data) => {
@@ -365,98 +382,90 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
     });
     this.mechPositionSub = this.mechanismService.onMechPositionChange.subscribe((timeIndex) => {
-      this.showAnnotations(timeIndex);
-    });
-  }
-
-  private showAnnotations(timeIndex: number) {
-    if (timeIndex === 0) {
-      this.chart.clearAnnotations();
-      return;
-    }
-    if (
-      this.seriesCheckboxForm.value.x ||
-      this.seriesCheckboxForm.value.y ||
-      this.seriesCheckboxForm.value.z
-    ) {
-      this.chart.clearAnnotations();
-      this.chart.addXaxisAnnotation(
-        {
-          x: timeIndex,
-          borderColor: '#000000',
-          label: {
-            text: 'T= ' + String((timeIndex / 62.5).toFixed(2)),
-            orientation: 'horizontal',
-            offsetY: -20,
-          },
-        },
-        false
-      );
-    }
-
-    const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
-    const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
-    const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
-
-    this.seriesCheckboxForm.value.x &&
-      xSeries &&
-      this.chart.addPointAnnotation(
-        {
-          x: timeIndex,
-          y: xSeries.data[timeIndex],
-          marker: {
-            strokeColor: '#313aa7',
-            shape: 'square',
-          },
-          label: {
+      if (
+        this.seriesCheckboxForm.value.x ||
+        this.seriesCheckboxForm.value.y ||
+        this.seriesCheckboxForm.value.z
+      ) {
+        this.chart.clearAnnotations();
+        this.chart.addXaxisAnnotation(
+          {
+            x: timeIndex,
             borderColor: '#313aa7',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(xSeries.data[timeIndex]),
+            label: {
+              text: 'T= ' + String((timeIndex / 62.5).toFixed(2)),
+              orientation: 'horizontal',
+              offsetY: -20,
+            },
           },
-        },
-        false
-      );
+          false
+        );
+      }
 
-    this.seriesCheckboxForm.value.y &&
-      ySeries &&
-      this.chart.addPointAnnotation(
-        {
-          x: timeIndex,
-          y: ySeries.data[timeIndex],
-          marker: {
-            strokeColor: '#f42a2a',
-            shape: 'square',
-          },
-          label: {
-            borderColor: '#f42a2a',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(ySeries.data[timeIndex]),
-          },
-        },
-        false
-      );
+      const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
+      const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
+      const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
 
-    this.seriesCheckboxForm.value.z &&
-      zSeries &&
-      this.chart.addPointAnnotation(
-        {
-          x: timeIndex,
-          y: zSeries.data[timeIndex],
-          marker: {
-            strokeColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
-            shape: 'square',
+      this.seriesCheckboxForm.value.x &&
+        xSeries &&
+        this.chart.addPointAnnotation(
+          {
+            x: timeIndex,
+            y: xSeries.data[timeIndex],
+            marker: {
+              strokeColor: '#313aa7',
+              shape: 'square',
+            },
+            label: {
+              borderColor: '#313aa7',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(xSeries.data[timeIndex]),
+            },
           },
-          label: {
-            borderColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
-            fillColor: '#000000',
-            orientation: 'horizontal',
-            text: String(zSeries.data[timeIndex]),
+          false
+        );
+
+      this.seriesCheckboxForm.value.y &&
+        ySeries &&
+        this.chart.addPointAnnotation(
+          {
+            x: timeIndex,
+            y: ySeries.data[timeIndex],
+            marker: {
+              strokeColor: '#f42a2a',
+              shape: 'square',
+            },
+            label: {
+              borderColor: '#f42a2a',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(ySeries.data[timeIndex]),
+            },
           },
-        },
-        false
-      );
+          false
+        );
+
+      this.seriesCheckboxForm.value.z &&
+        zSeries &&
+        this.chart.addPointAnnotation(
+          {
+            x: timeIndex,
+            y: zSeries.data[timeIndex],
+            marker: {
+              strokeColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+              shape: 'square',
+            },
+            label: {
+              borderColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+              fillColor: '#000000',
+              orientation: 'horizontal',
+              text: String(zSeries.data[timeIndex]),
+            },
+          },
+          false
+        );
+    });
   }
 
   ngOnDestroy(): void {
@@ -482,9 +491,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         return 'm';
       default:
         if (typeof unit === typeof LengthUnit) {
-          return 'cm';
+          return 'broken';
         } else {
-          return 'deg';
+          return 'broken';
         }
     }
   }
@@ -499,13 +508,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let datum: number[][] = [];
     let categories: string[] = [];
     const seriesData = [];
-    let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + ')';
-    let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s)';
-    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.getValue()) + '/s^2)';
-    const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + ')';
+    let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + ')';
+    let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s)';
+    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s^2)';
+    const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + ')';
     // const posAngUnit = '(rad)';
-    const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s)';
-    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.getValue()) + '/s^2)';
+    const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s)';
+    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s^2)';
     if (ToolbarComponent.unit === 'm') {
       posLinUnit = 'm';
       velLinUnit = 'm/s';

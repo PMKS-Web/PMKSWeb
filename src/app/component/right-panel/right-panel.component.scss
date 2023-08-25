@@ -17,8 +17,8 @@
     right: 0px;
     // width: 300px;
     overflow-x: hidden;
-    overflow-y: scroll;
-    max-height: calc(100% - 30px);
+    overflow-y: auto;
+    max-height: calc(100% - 108px);
     display: flex;
     border-radius: var(--border-radius);
 

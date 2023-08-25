@@ -59,7 +59,7 @@ export class AppComponent {
     );
     this.matIconRegistry.addSvgIcon(
       'remove',
-      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/remove_joint.svg')
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/trash.svg')
     );
     this.matIconRegistry.addSvgIcon(
       'add_force',

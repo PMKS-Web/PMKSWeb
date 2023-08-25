@@ -34,7 +34,7 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
   constructor(
     public svgGrid: SvgGridService,
     public mechanismService: MechanismService,
-    private settingsService: SettingsService
+    public settingsService: SettingsService
   ) {}
 
   ngOnInit(): void {
