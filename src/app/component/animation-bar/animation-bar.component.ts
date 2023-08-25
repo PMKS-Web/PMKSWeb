@@ -65,6 +65,12 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
       Number(simpleForm.value.timestep * 62.5),
       AnimationBarComponent.animate
     );
+
+    if (this.mechanismService.mechanismTimeStep !== 0) {
+      this.settingsService.animating.next(true);
+    } else {
+      this.settingsService.animating.next(false);
+    }
   }
 
   maxTimeSteps() {
@@ -198,6 +204,11 @@ export class AnimationBarComponent implements OnInit, AfterViewInit {
         Number(AnimationBarComponent.slider.value),
         AnimationBarComponent.animate
       );
+    }
+    if (this.mechanismService.mechanismTimeStep !== 0) {
+      this.settingsService.animating.next(true);
+    } else {
+      this.settingsService.animating.next(false);
     }
   }
 

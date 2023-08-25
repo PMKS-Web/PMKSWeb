@@ -47,7 +47,7 @@
     <mat-icon>settings</mat-icon>
     Settings
   </button>
-  <button mat-button *ngIf='settings.isEquationsEnabled.value' (click)='openRightPanelEquations()'
+  <button mat-button *ngIf='settingsService.isEquationsEnabled.value' (click)='openRightPanelEquations()'
           matTooltip='View Equations of Equilibrium'
           matTooltipShowDelay='1000'>
     <mat-icon>format_list_numbered</mat-icon>

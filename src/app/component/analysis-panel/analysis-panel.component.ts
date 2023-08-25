@@ -17,7 +17,7 @@ import {
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
-import {crossProduct, GlobalUnit, roundNumber} from '../../model/utils';
+import { crossProduct, GlobalUnit, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
@@ -107,7 +107,7 @@ export class AnalysisPanelComponent {
     KinematicsSolver.resetVariables();
     ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
     let unitStr = 'cm';
-    switch(this.settingsService.globalUnit.value) {
+    switch (this.settingsService.globalUnit.value) {
       case GlobalUnit.ENGLISH:
         unitStr = 'in';
         break;
@@ -125,7 +125,7 @@ export class AnalysisPanelComponent {
       this.mechanismService.joints,
       this.mechanismService.links,
       'static',
-      this.settingsService.isGravity.value,
+      this.settingsService.isForces.value,
       unitStr
     );
 

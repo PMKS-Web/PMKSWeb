@@ -17,7 +17,8 @@ import {
   LengthUnit,
   point_on_line_segment_closest_to_point,
   getDistance,
-  distance_points, GlobalUnit,
+  distance_points,
+  GlobalUnit,
 } from '../model/utils';
 import { BehaviorSubject, connect, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -112,7 +113,7 @@ export class MechanismService {
         this.links,
         this.forces,
         this.ics,
-        this.settingsService.isGravity.value,
+        this.settingsService.isForces.value,
         unitStr,
         inputAngularVelocity
       )
@@ -1178,7 +1179,7 @@ export class MechanismService {
         return;
       }
       if (l.subset.length === 0) {
-        return
+        return;
       }
       let idSubs: string[] = [];
       l.subset.forEach(
