@@ -4,7 +4,7 @@
     <title-block> Settings</title-block>
     <collapsible-subseciton titleLabel='Basic Settings' [expanded]='true'>
       <radio-block
-        option1='English'
+        option1='English (in)'
         option2='Metric (cm)'
         option3='SI (m)'
         [formGroup]='this.settingsForm'
@@ -14,7 +14,7 @@
       >Global Units
       </radio-block>
       <radio-block
-        option1='Degree'
+        option1='Degree (&deg;)'
         option2='Radian'
         [formGroup]='this.settingsForm'
         _formControl='angleunit'
@@ -29,8 +29,7 @@
         _formControl='rotation'
         tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
       >Input Direction
-      </radio-block
-      >
+      </radio-block>
 
       <input-block
         unit='deg/sec'
