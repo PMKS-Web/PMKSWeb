@@ -78,8 +78,9 @@ export class SettingsPanelComponent {
 
   onChanges(): void {
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
-      this.rotateDirection = String(val) === '0' ? true : false;
+      this.rotateDirection = String(val) === '0';
       this.settingsService.isInputCW.next(this.rotateDirection);
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['speed'].invalid) {
@@ -88,6 +89,7 @@ export class SettingsPanelComponent {
         this.currentSpeedSetting = Number(val);
         this.settingsService.inputSpeed.next(this.currentSpeedSetting);
       }
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['objectScale'].invalid) {
@@ -96,10 +98,12 @@ export class SettingsPanelComponent {
         this.currentObjectScaleSetting = Number(val);
         SettingsService._objectScale.next(this.currentObjectScaleSetting);
       }
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angleUnit.next(this.currentAngleUnit);
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
@@ -145,6 +149,7 @@ export class SettingsPanelComponent {
 
       //Update graphs with new units
       this.mechanismSrv.onMechUpdateState.next(2);
+      // this.mechanismSrv.updateMechanism();
       // setTimeout(() => {
       //   this.mechanismSrv.onMechUpdateState.next(2);
       // });
@@ -154,12 +159,15 @@ export class SettingsPanelComponent {
     });
     this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
       this.settingsService.lengthUnit.next(this.currentLengthUnit);
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['showMajorGrid'].valueChanges.subscribe((val) => {
       this.settingsService.isShowMajorGrid.next(Boolean(val));
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['showMinorGrid'].valueChanges.subscribe((val) => {
       this.settingsService.isShowMinorGrid.next(Boolean(val));
+      this.mechanismSrv.updateMechanism();
     });
     // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
     //   this.settingsService.inputTorque.next(this.currentTorqueUnit);

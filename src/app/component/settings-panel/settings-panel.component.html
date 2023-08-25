@@ -19,6 +19,7 @@
         [formGroup]='this.settingsForm'
         _formControl='angleunit'
         tooltip='Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)'
+        [disabled]='this.settingsService.animating.value'
       >Angle Units
       </radio-block
       >
@@ -28,6 +29,7 @@
         [formGroup]='this.settingsForm'
         _formControl='rotation'
         tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
+        [disabled]='this.settingsService.animating.value'
       >Input Direction
       </radio-block>
 
@@ -36,7 +38,7 @@
         type='number'
         [formGroup]='this.settingsForm'
         _formControl='speed'
-        tooltip='The speed that the animation will run at.'
+        tooltip='The speed that the animation will run at. (rpm - I think)'
       >Input Speed
       </input-block>
     </collapsible-subseciton>
