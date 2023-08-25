@@ -20,6 +20,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
           opacity: 0,
         })
       ),
+      transition(':enter', []),
       transition('* => *', [animate('0.2s ease-in-out')]),
     ]),
   ],

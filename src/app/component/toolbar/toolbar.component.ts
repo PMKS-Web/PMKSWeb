@@ -28,7 +28,7 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { LinkageTableComponent } from '../linkage-table/linkage-table.component';
 import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { Coord } from '../../model/coord';
-import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
+// import { TemplatesPopupComponent } from '../templates-popup/templates-popup.component';
 
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { RightPanelComponent } from '../right-panel/right-panel.component';
@@ -110,7 +110,11 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   //Create a static method to get an instance of the toolbar component
 
   openTemplates() {
-    this.dialog.open(TemplatesComponent);
+    this.dialog.open(TemplatesComponent, {
+      height: '90%',
+      width: '90%',
+      autoFocus: false,
+    });
   }
 
   ngOnInit(): void {
@@ -155,10 +159,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     ToolbarComponent.helpButton = document.getElementById('helpButton') as unknown as SVGElement;
   }
 
-  popUpTemplates() {
-    TemplatesPopupComponent.showTemplates();
-    logEvent(this.analytics, 'open_templates');
-  }
+  // popUpTemplates() {
+  //   TemplatesPopupComponent.showTemplates();
+  //   logEvent(this.analytics, 'open_templates');
+  // }
 
   upload($event: any) {
     logEvent(this.analytics, 'upload_file');
@@ -433,7 +437,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               this.settingsService.inputSpeed.next(input_speed_mag);
               this.settingsService.isInputCW.next(clockwise);
               // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-              this.settingsService.isGravity.next(gravity);
+              this.settingsService.isForces.next(gravity);
               // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
               // this.localUnit.selectedUnit = unit;
               // selectedUnit = unit;
@@ -619,15 +623,23 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       LengthUnit,
       this.settingsService.lengthUnit.getValue()
     );
-    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settingsService.angleUnit.getValue());
-    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settingsService.forceUnit.getValue());
+    encoder.addEnumSetting(
+      EnumSetting.ANGLE_UNIT,
+      AngleUnit,
+      this.settingsService.angleUnit.getValue()
+    );
+    encoder.addEnumSetting(
+      EnumSetting.FORCE_UNIT,
+      ForceUnit,
+      this.settingsService.forceUnit.getValue()
+    );
     encoder.addEnumSetting(
       EnumSetting.GLOBAL_UNIT,
       GlobalUnit,
       this.settingsService.globalUnit.getValue()
     );
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settingsService.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settingsService.isGravity.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settingsService.isForces.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settingsService.inputSpeed.getValue());
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,
@@ -663,7 +675,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     logEvent(this.analytics, 'download_linkage');
     // TODO: Believe this should be this.unit.selectedUnit
     let unitStr: string;
-    switch(this.settingsService.globalUnit.value) {
+    switch (this.settingsService.globalUnit.value) {
       case GlobalUnit.ENGLISH:
         unitStr = 'english';
         break;
@@ -686,10 +698,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
       this.mechanismService.forces,
       [],
       [],
-        this.settingsService.inputSpeed.value,
-        this.settingsService.isInputCW.value,
-        this.settingsService.isGravity.value,
-        unitStr
+      this.settingsService.inputSpeed.value,
+      this.settingsService.isInputCW.value,
+      this.settingsService.isForces.value,
+      unitStr
     );
 
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });

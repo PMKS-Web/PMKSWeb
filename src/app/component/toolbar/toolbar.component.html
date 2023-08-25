@@ -17,7 +17,7 @@
     Open
   </button>
   <button mat-button (click)='openTemplates()' matTooltip='Show the library of available linkages'
-          matTooltipShowDelay='1000'>
+          matTooltipShowDelay='1000' id='templatesButton'>
     <mat-icon>apps</mat-icon>
     Templates
   </button>
@@ -47,12 +47,14 @@
     <mat-icon>settings</mat-icon>
     Settings
   </button>
-  <button mat-button (click)='openRightPanelEquations()' matTooltip='View Equations of Equilibrium'
+  <button mat-button *ngIf='settings.isEquationsEnabled.value' (click)='openRightPanelEquations()'
+          matTooltip='View Equations of Equilibrium'
           matTooltipShowDelay='1000'>
     <mat-icon>format_list_numbered</mat-icon>
     Equations
   </button>
-  <button mat-button (click)='openRightPanelHelp()' matTooltip='Get Support from our team' matTooltipShowDelay='1000'>
+  <button mat-button (click)='openRightPanelHelp()' matTooltip='Get Support from our team' matTooltipShowDelay='1000'
+          id='helpButton'>
     <mat-icon>help</mat-icon>
     Help / Feedback
   </button>
