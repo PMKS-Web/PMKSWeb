@@ -20,7 +20,6 @@ import { animate, AUTO_STYLE, state, style, transition, trigger } from '@angular
           opacity: '0',
           height: '0px',
           padding: '0px',
-          marginBottom: '-1px',
         })
       ),
       transition(':enter', []),

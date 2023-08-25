@@ -286,7 +286,9 @@ export class NewGridComponent {
       case 'RevJoint':
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
         let jointIsGround = (this.lastRightClick as RealJoint).ground;
-        let canBeWeldedOrUnwelded = (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded();
+        let canBeWeldedOrUnwelded =
+          (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded() &&
+          this.settings.isWeldedJointsEnabled.value;
         let canTogglePath =
           !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
 

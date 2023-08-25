@@ -49,6 +49,8 @@ import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.
 import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
 import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.component';
 import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-forces.component';
+import { EnableWeldedComponent } from './component/MODALS/enable-welded/enable-welded.component';
+import { EnableEquationsComponent } from './component/MODALS/enable-equations/enable-equations.component';
 
 @NgModule({
   declarations: [
@@ -86,6 +88,8 @@ import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-f
     ColorPickerComponent,
     TriButtonComponent,
     EnableForcesComponent,
+    EnableWeldedComponent,
+    EnableEquationsComponent,
   ],
   imports: [
     BrowserModule,

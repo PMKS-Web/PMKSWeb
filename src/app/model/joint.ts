@@ -1,6 +1,7 @@
 import { AppConstants } from './app-constants';
 import { Link, RealLink } from './link';
 import { Coord } from './coord';
+import { SettingsService } from '../services/settings.service';
 
 export class Joint extends Coord {
   private _id: string;
