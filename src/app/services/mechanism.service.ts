@@ -66,6 +66,21 @@ export class MechanismService {
     private nup: NumberUnitParserService
   ) {}
 
+  // delete mechanism and reset
+  resetMechanism() {
+    this.joints = [];
+    this.links = [];
+    this.forces = [];
+    this.mechanismTimeStep = 0;
+    this.updateMechanism();
+    this.onMechPositionChange.next(3);
+  }
+
+  // whether there is a valid mechanism
+  exists(): boolean {
+    return this.joints.length > 0;
+  }
+
   getJoints() {
     return this.joints;
   }

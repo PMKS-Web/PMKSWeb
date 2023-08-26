@@ -1,28 +1,28 @@
 <div>
   <div class='tabContainer'>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(1)' matTooltip='Synthesize' matTooltipShowDelay='0'
+    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.SYNTHESIZE)' matTooltip='Synthesize' matTooltipShowDelay='0'
             matTooltipPosition='right'>
       <mat-icon svgIcon='synthesis'></mat-icon>
     </button>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(2)' matTooltip='Edit' matTooltipShowDelay='0'
+    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.EDIT)' matTooltip='Edit' matTooltipShowDelay='0'
             matTooltipPosition='right'>
       <mat-icon svgIcon='edit_outline'></mat-icon>
     </button>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(3)' matTooltip='Analyze' matTooltipShowDelay='0'
+    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.ANALYZE)' matTooltip='Analyze' matTooltipShowDelay='0'
             matTooltipPosition='right'>
       <mat-icon>query_stats</mat-icon>
     </button>
-    <div [@activeTab]=this.openTab.toString() class='activeTabPill'>
+    <div [@activeTab]=this.getTabNum().toString() class='activeTabPill'>
     </div>
   </div>
-  <div [@openClose]="isOpen ? (this.openTab === 3 ? 'openWide' : 'open') : 'closed'" class='panel'>
-    <div *ngIf='this.openTab === 1 || (this.lastOpenTab === 1 && !this.openTab)' class='page1'>
+  <div [@openClose]="this.tabs.isTabVisible() ? (this.tabs.getCurrentTab() === TabID.ANALYZE ? 'openWide' : 'open') : 'closed'" class='panel'>
+    <div *ngIf='this.tabs.getCurrentTab() === TabID.SYNTHESIZE' class='page1'>
       <app-synthesis-panel></app-synthesis-panel>
     </div>
-    <div *ngIf='this.openTab === 2 || (this.lastOpenTab === 2 && !this.openTab)' class='page2'>
+    <div *ngIf='this.tabs.getCurrentTab() === TabID.EDIT' class='page2'>
       <app-edit-panel></app-edit-panel>
     </div>
-    <div *ngIf='this.openTab === 3 || (this.lastOpenTab === 3 && !this.openTab)' class='page3'>
+    <div *ngIf='this.tabs.getCurrentTab() === TabID.ANALYZE' class='page3'>
       <app-analysis-panel></app-analysis-panel>
     </div>
   </div>
