@@ -1344,8 +1344,12 @@ export class MechanismService {
       startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
       startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
     }
+    let maxNumber = 1;
+    if (this.forces.length !== 0) {
+      maxNumber = Math.max(...this.forces.map(f => parseInt(f.id.replace(/\D/g, '')))) + 1;
+    }
     const force = new Force(
-      'F' + (this.forces.length + 1).toString(),
+      'F' + maxNumber.toString(),
       this.activeObjService.selectedLink,
       startCoord,
       endCoord
