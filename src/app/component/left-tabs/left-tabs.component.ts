@@ -73,13 +73,16 @@ import { Analytics, logEvent } from '@angular/fire/analytics';
 export class LeftTabsComponent {
   private analytics: Analytics = inject(Analytics);
   openTab = 2; //Default open tab to "Edit" /
+  lastOpenTab = 2;
   isOpen = true; // Is the tab open?
 
   tabClicked(tabID: number) {
+    this.lastOpenTab = this.openTab;
     if (!this.isOpen) {
       this.isOpen = true;
       this.openTab = tabID;
     } else {
+      //If the tab is already open
       if (this.openTab === tabID) {
         this.isOpen = false;
         this.openTab = 0;
@@ -87,6 +90,7 @@ export class LeftTabsComponent {
         this.openTab = tabID;
       }
     }
+
     if (this.isOpen) {
       switch (tabID) {
         case 1:

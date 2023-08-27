@@ -13,16 +13,30 @@
 
   #button-block {
     width: 100%;
-    background-color: mat.get-color-from-palette($primary-palette, 200);
-    font-size: 14px !important;
-    font-weight: 200 !important;
+    //height: 30px;
+    //color: white;
+    //background-color: mat.get-color-from-palette($primary-palette, 400);
+    //@include mat.typography-level($typography-config, 'body-2');
+    //color: rgba(0, 0, 0, 0.6);
+    //font-size: 14px !important;
+    //font-weight: 200 !important;
 
     #spacer {
       flex: 10 0 auto;
     }
 
+    border-color: mat.get-color-from-palette($primary-palette, 500) !important;
+
     mat-icon {
-      color: mat.get-color-from-palette($foreground, 'icon');
+      svg {
+        path {
+          //fill: rgba(0, 0, 0, 0.6);
+          //fill: white;
+          //Indigo
+          fill: mat.get-color-from-palette($primary-palette, 500);
+          //fill: #F44336;
+        }
+      }
     }
   }
 }

@@ -10,6 +10,8 @@ import { AnimationBarComponent } from '../animation-bar/animation-bar.component'
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { Coord } from '../../model/coord';
+import { MatDialog } from '@angular/material/dialog';
+import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -22,7 +24,8 @@ export class SettingsPanelComponent {
     private fb: FormBuilder,
     public mechanismSrv: MechanismService,
     private svgGrid: SvgGridService,
-    private nup: NumberUnitParserService
+    private nup: NumberUnitParserService,
+    public dialog: MatDialog
   ) {}
 
   currentLengthUnit!: LengthUnit;
@@ -32,11 +35,9 @@ export class SettingsPanelComponent {
   currentGlobalUnit!: GlobalUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
-  gravityEnabled!: boolean;
   currentObjectScaleSetting!: number;
 
   ngOnInit(): void {
-    this.gravityEnabled = this.settingsService.isGravity.value;
     this.currentLengthUnit = this.settingsService.lengthUnit.value;
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
@@ -47,7 +48,6 @@ export class SettingsPanelComponent {
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       objectScale: this.currentObjectScaleSetting.toString(),
-      gravity: this.gravityEnabled,
       rotation: this.rotateDirection ? '0' : '1',
       lengthunit: this.currentLengthUnit.toString(),
       angleunit: (this.currentAngleUnit - 10).toString(),
@@ -75,10 +75,6 @@ export class SettingsPanelComponent {
   }
 
   onChanges(): void {
-    this.settingsForm.controls['gravity'].valueChanges.subscribe((val) => {
-      this.gravityEnabled = Boolean(val);
-      this.settingsService.isGravity.next(this.gravityEnabled);
-    });
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
       this.rotateDirection = String(val) === '0' ? true : false;
       this.settingsService.isInputCW.next(this.rotateDirection);
@@ -168,6 +164,12 @@ export class SettingsPanelComponent {
     // });
   }
 
+  openEnableForceDialog(): void {
+    this.dialog.open(EnableForcesComponent, {
+      autoFocus: false,
+    });
+  }
+
   getUnitStr(unit: LengthUnit): string {
     switch (unit) {
       case LengthUnit.CM:
@@ -184,7 +186,6 @@ export class SettingsPanelComponent {
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
   settingsForm = this.fb.group(
     {
-      gravity: [false, { updateOn: 'change' }],
       speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],

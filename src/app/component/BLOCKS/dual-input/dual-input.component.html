@@ -1,30 +1,67 @@
-<div id="dual-input-block">
-  <div class="row">
-    <span class="label"><ng-content></ng-content></span>
-    <mat-icon matTooltip="{{ this.tooltip }}" [matTooltipShowDelay]="1000" class="label-help"
-      >help_outline</mat-icon
-    >
-    <div class="spacer"></div>
+<div id='dual-input-block' style='{{disabled ? "cursor: default" : ""}}'>
+  <div class='row'>
+    <span class='label {{disabled ? "disabled" : ""}}'><ng-content></ng-content></span>
+    <mat-icon matTooltip='{{ this.tooltip }}' [matTooltipShowDelay]='1000' class='label-help'
+              [matTooltipDisabled]='disabled'
+    >help_outline
+    </mat-icon>
+    <div class='spacer'></div>
   </div>
-  <div class="row" [formGroup]="formGroup">
-    <span class="label">X</span>
-    <input
-      id="block-input-box"
-      type="text"
-      [formControlName]="this.formControl1"
-      #field
-      (keyup.enter)="field.blur()"
-    />
-    <!-- <span id="block-input-units">{{ this.unit }}</span> -->
-    <div class="spacer"></div>
-    <span class="label">Y</span>
-    <input
-      id="block-input-box"
-      type="text"
-      [formControlName]="this.formControl2"
-      #field2
-      (keyup.enter)="field2.blur()"
-    />
-    <!-- <span id="block-input-units">{{ this.unit }}</span> -->
+  <div class='row' [formGroup]='formGroup' style='gap: 5px'>
+    <ng-container *ngIf='formSubGroup'>
+      <span class='label {{disabled ? "disabled" : ""}}'>{{label1}}</span>
+      <mat-form-field class='customInputForm'
+                      formGroupName='{{formSubGroup}}'
+                      (click)='field1.select()'
+                      (mouseenter)='isField1MouseOver = true; updateOverlay()'
+                      (mouseleave)='isField1MouseOver = false; updateOverlay()'
+                      (focusin)='isField1Focused = true; updateOverlay()'
+                      (focusout)='isField1Focused = false; updateOverlay()'>
+        <input class='customInput' matInput type='text' #field1
+               (keyup.enter)='field1.blur()'
+               [formControlName]='this.formControl1'>
+      </mat-form-field>
+
+      <div class='spacer'></div>
+      <span class='label {{disabled ? "disabled" : ""}}'
+            style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
+      <mat-form-field class='customInputForm'
+                      formGroupName='{{formSubGroup}}'
+                      (click)='field2.select()'
+                      (mouseenter)='isField2MouseOver = true; updateOverlay()'
+                      (mouseleave)='isField2MouseOver = false; updateOverlay()'
+                      (focusin)='isField2Focused = true; updateOverlay()'
+                      (focusout)='isField2Focused = false; updateOverlay()'>
+        <input class='customInput' matInput type='text' #field2
+               (keyup.enter)='field2.blur()'
+               [formControlName]='this.formControl2'>
+      </mat-form-field>
+    </ng-container>
+    <ng-container *ngIf='!formSubGroup'>
+      <span class='label {{disabled ? "disabled" : ""}}'>{{label1}}</span>
+      <mat-form-field class='customInputForm'
+                      (click)='field1.select()'
+                      (mouseenter)='isField1MouseOver = true; updateOverlay()'
+                      (mouseleave)='isField1MouseOver = false; updateOverlay()'
+                      (focusin)='isField1Focused = true; updateOverlay()'
+                      (focusout)='isField1Focused = false; updateOverlay()'>
+        <input class='customInput' matInput type='text' #field1
+               (keyup.enter)='field1.blur()'
+               [formControlName]='this.formControl1'>
+      </mat-form-field>
+
+      <div class='spacer'></div>
+      <span class='label {{disabled ? "disabled" : ""}}'
+            style='{{label2 === "⊾" ? "font-size: 25px; padding-bottom: 5px" : ""}}'>{{label2}}</span>
+      <mat-form-field class='customInputForm' (click)='field2.select()'
+                      (mouseenter)='isField2MouseOver = true; updateOverlay()'
+                      (mouseleave)='isField2MouseOver = false; updateOverlay()'
+                      (focusin)='isField2Focused = true; updateOverlay()'
+                      (focusout)='isField2Focused = false; updateOverlay()'>
+        <input class='customInput' matInput type='text' #field2
+               (keyup.enter)='field2.blur()'
+               [formControlName]='this.formControl2'>
+      </mat-form-field>
+    </ng-container>
   </div>
 </div>

@@ -22,6 +22,9 @@ import {
   local_storage_available,
   isInside,
   getDistance,
+  AngleUnit,
+  radToDeg,
+  GlobalUnit,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -34,6 +37,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { ColorService } from '../../services/color.service';
+import { NumberUnitParserService } from '../../services/number-unit-parser.service';
+import { EditPanelComponent } from '../edit-panel/edit-panel.component';
+import introJs from 'intro.js';
 
 @Component({
   selector: 'app-new-grid',
@@ -56,7 +63,9 @@ export class NewGridComponent {
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
     private snackBar: MatSnackBar,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private colorService: ColorService,
+    public nup: NumberUnitParserService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -79,6 +88,13 @@ export class NewGridComponent {
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
 
+  //This is terrible but:
+  // -2 => hidden
+  // -1 => Link length and angle shown
+  // 0-N => Joint length and angle shown for joint N (in list from edit panel)
+  public showLinkLengthOverlay: number = -2;
+  public showLinkAngleOverlay: number = -2;
+
   static instance: NewGridComponent;
   private lastNotificationTime: number = Date.now();
   //To distinguish between a click and a drag
@@ -98,7 +114,47 @@ export class NewGridComponent {
 
     // Touchscreen warning for when no mouse pointer
     if (!dismissWarning && !has_mouse_pointer()) {
-      this.dialog.open(TouchscreenWarningComponent);
+      this.dialog.open(TouchscreenWarningComponent, {
+        autoFocus: false,
+      });
+    }
+
+    if (this.mechanismSrv.joints.length == 0) {
+      setTimeout(() => {
+        introJs()
+          .setOptions({
+            steps: [
+              {
+                title: '👋 Welcome',
+                intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
+              },
+              {
+                element: document.querySelector('.tabContainer') as HTMLElement,
+                intro: 'PMKS+ is divided into 3 modes. Synthesis, Editing, and Analysis.',
+              },
+              {
+                element: document.querySelector('#editWrapper') as HTMLElement,
+                intro:
+                  'The Edit mode is active. Selecting a joint or link will show its properties here.',
+              },
+              {
+                element: document.querySelector('#barContainer') as HTMLElement,
+                intro: 'Once the mechanism is created, you can animate it here.',
+              },
+              {
+                element: document.querySelector('#helpButton') as HTMLElement,
+                intro: 'If you get stuck at any point, click here for help.',
+              },
+              {
+                element: document.querySelector('#templatesButton') as HTMLElement,
+                title: "🙌 That's it!",
+                intro: 'Get started by opening an example linkage!',
+              },
+            ],
+            dontShowAgain: true,
+          })
+          .start();
+      });
     }
 
     fromEvent(window, 'resize').subscribe((event) => {
@@ -111,6 +167,15 @@ export class NewGridComponent {
       // console.log(this.svgGrid.getZoom());
       // this.svgGrid.panZoomObject.updateBBox();
       // this.svgGrid.scaleToFitLinkage();
+    });
+
+    this.activeObjService.onActiveObjChange.subscribe((obj) => {
+      this.showLinkAngleOverlay = -2;
+      this.showLinkLengthOverlay = -2;
+      //Disable focus on any text input when changing active object
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
     });
   }
 
@@ -156,6 +221,13 @@ export class NewGridComponent {
     // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         //Switch force direction, switch force local, delete Force
         this.cMenuItems.push(
           new cMenuItem(
@@ -171,31 +243,14 @@ export class NewGridComponent {
             'switch_force_dir'
           )
         );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         break;
       case 'RealLink':
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         //Don't give options if a fillet it selected and not a primary link
-        if (
-          !(this.lastRightClick as RealLink).isWelded ||
-          (this.lastRightClick as RealLink).lastSelectedSublink != null
-        ) {
-          this.cMenuItems.push(
-            new cMenuItem('Attach Tracer Point', this.addJoint.bind(this), 'add_tracer')
-          );
-          this.cMenuItems.push(
-            new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link')
-          );
-          this.cMenuItems.push(
-            new cMenuItem('Attach Force', this.createForce.bind(this), 'add_force')
-          );
-        }
+        let weldedLinkFilletSelected =
+          (this.lastRightClick as RealLink).isWelded &&
+          (this.lastRightClick as RealLink).lastSelectedSublink == null;
+
         this.cMenuItems.push(
           new cMenuItem(
             'Delete Link',
@@ -203,9 +258,60 @@ export class NewGridComponent {
             'remove'
           )
         );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Link',
+            this.startCreatingLink.bind(this),
+            'new_link',
+            weldedLinkFilletSelected
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Tracer Point',
+            this.addJoint.bind(this),
+            'add_tracer',
+            weldedLinkFilletSelected
+          )
+        );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Force',
+            this.createForce.bind(this),
+            'add_force',
+            weldedLinkFilletSelected || !this.settings.isForces.value
+          )
+        );
         break;
       case 'RevJoint':
-        if (this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
+        let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
+        let jointIsGround = (this.lastRightClick as RealJoint).ground;
+        let canBeWeldedOrUnwelded = (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded();
+        let canTogglePath =
+          !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
+
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
+
+        this.cMenuItems.push(
+          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+        );
+
+        this.cMenuItems.push(
+          new cMenuItem(
+            jointIsGround ? 'Remove Ground' : 'Add Ground',
+            this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
+            jointIsGround ? 'remove_ground' : 'add_ground',
+            jointIsSlider
+          )
+        ); //Rev Joint - Ground
+
+        if (jointIsSlider) {
           this.cMenuItems.push(
             new cMenuItem(
               (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
@@ -217,34 +323,17 @@ export class NewGridComponent {
                 : 'add_input'
             )
           ); //Rev Joint Slider
-        }
-        this.cMenuItems.push(new cMenuItem('Attach Link', this.createLink.bind(this), 'new_link'));
-        if ((this.lastRightClick as RealJoint).ground) {
+        } else {
           this.cMenuItems.push(
             new cMenuItem(
-              'Remove Ground',
-              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              'remove_ground'
-            )
-          ); //Rev Joint - Ground
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Attach Input',
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input'
+              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
+              !jointIsGround
             ) //Rev Joint - Input
           );
-        } else {
-          if (!this.gridUtils.isAttachedToSlider(this.lastRightClick)) {
-            this.cMenuItems.push(
-              new cMenuItem(
-                'Ground Joint',
-                this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-                'add_ground'
-              )
-            ); //Rev Joint - Not Ground
-          }
         }
+
         this.cMenuItems.push(
           new cMenuItem(
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'Remove Slider' : 'Add Slider',
@@ -252,39 +341,32 @@ export class NewGridComponent {
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
           )
         ); //Rev Joint - Always
-        if ((this.lastRightClick as RealJoint).canBeWelded()) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
-            )
-          ); //Rev Joint - Can be welded
-        }
-        if (
-          !(this.lastRightClick as RealJoint).ground &&
-          this.mechanismSrv.oneValidMechanismExists()
-        ) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
-              () => {
-                this.gridUtils.toggleCurve(this.lastRightClick);
-              },
-              (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path'
-            )
-          ); //Rev Joint - Not Ground and at least one valid mechanism exists
-        }
+
         this.cMenuItems.push(
           new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
+            (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+            this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
+            !canBeWeldedOrUnwelded
           )
-        );
+        ); //Rev Joint - Can be welded
+
+        // this.cMenuItems.push(
+        //   new cMenuItem(
+        //     (this.lastRightClick as RealJoint).showCurve ? 'Hide Path' : 'Show Path',
+        //     () => {
+        //       this.gridUtils.toggleCurve(this.lastRightClick);
+        //     },
+        //     (this.lastRightClick as RealJoint).showCurve ? 'hide_path' : 'show_path',
+        //     !canTogglePath
+        //   )
+        // ); //Rev Joint - Not Ground and at least one valid mechanism exists
         break;
+
       case 'String': //This means grid
-        this.cMenuItems.push(new cMenuItem('Add Link', this.createLink.bind(this), 'new_link'));
+        this.cMenuItems.push(
+          new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
+        );
     }
   }
 
@@ -341,33 +423,8 @@ export class NewGridComponent {
       this.lastRightClickCoord.x,
       this.lastRightClickCoord.y
     );
-    const newId = this.mechanismSrv.determineNextLetter();
-    const newJoint = new RevJoint(newId, coord.x, coord.y);
-    this.activeObjService.selectedLink.joints.forEach((j) => {
-      if (!(j instanceof RealJoint)) {
-        return;
-      }
-      j.connectedJoints.push(newJoint);
-      newJoint.connectedJoints.push(j);
-    });
-    if (
-      this.activeObjService.selectedLink.isWelded &&
-      this.activeObjService.selectedLink.lastSelectedSublink
-    ) {
-      this.activeObjService.selectedLink.lastSelectedSublink.id =
-        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
-        id: newJoint.id,
-        label: newJoint.id,
-      });
-      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
-    }
-    newJoint.links.push(this.activeObjService.selectedLink);
-    this.activeObjService.selectedLink.joints.push(newJoint);
-    this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
-    this.mechanismSrv.joints.push(newJoint);
-    this.mechanismSrv.updateMechanism();
+
+    this.mechanismSrv.addJointAt(coord);
   }
 
   createForce() {
@@ -393,7 +450,7 @@ export class NewGridComponent {
     );
   }
 
-  createLink() {
+  startCreatingLink() {
     // console.log('createLink');
     // console.log(this.lastRightClickCoord);
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
@@ -561,8 +618,14 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (AnimationBarComponent.animate == true) {
+      this.sendNotification('Cannot open context menu while animating. Stop animation to edit');
+      this.cMenuItems = [];
+      return;
+    }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
-      this.sendNotification('Stop animation (or reset to 0 position) to edit');
+      this.sendNotification('Reset to T=0 (or push stop button) to edit');
+      this.cMenuItems = [];
       //Close the MatContextMenu
       // console.log(this.contextMenu);
       // this.contextMenu.close();
@@ -618,6 +681,7 @@ export class NewGridComponent {
           case 'Grid':
             switch (this.gridStates) {
               case gridStates.createJointFromGrid:
+                //Here's where you actaully make the link
                 joint1 = this.mechanismSrv.createRevJoint(
                   this.jointTempHolderSVG.children[0].getAttribute('x1')!,
                   this.jointTempHolderSVG.children[0].getAttribute('y1')!
@@ -730,50 +794,7 @@ export class NewGridComponent {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                // TODO: utilize dot product to find point that is closest to the line
-                if (this.activeObjService.selectedLink.joints.length === 2) {
-                  const lineVector: Coord = new Coord(
-                    this.activeObjService.selectedLink.joints[0].x -
-                      this.activeObjService.selectedLink.joints[1].x,
-                    this.activeObjService.selectedLink.joints[0].y -
-                      this.activeObjService.selectedLink.joints[1].y
-                  );
-
-                  // Calculate the vector from the first point on the line to the given point
-                  const givenPointVector: Coord = new Coord(
-                    startCoord.x - this.activeObjService.selectedLink.joints[0].x,
-                    startCoord.y - this.activeObjService.selectedLink.joints[0].y
-                  );
-
-                  // Calculate the dot product of the line vector and the given point vector
-                  const dotProduct: number =
-                    givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
-
-                  // Calculate the length of the line vector squared
-                  const lineLengthSquared: number =
-                    lineVector.x * lineVector.x + lineVector.y * lineVector.y;
-
-                  // Calculate the parameter t for the projection onto the line
-                  const t: number = dotProduct / lineLengthSquared;
-
-                  // Calculate the projected point on the line
-                  startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
-                  startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
-                }
-                let maxNumber = 1;
-                if (this.mechanismSrv.forces.length !== 0) {
-                  maxNumber = Math.max(...this.mechanismSrv.forces.map(f => parseInt(f.id.replace(/\D/g, '')))) + 1;
-                }
-                const force = new Force(
-                  'F' + maxNumber.toString(),
-                  this.activeObjService.selectedLink,
-                  startCoord,
-                  endCoord
-                );
-                this.activeObjService.selectedLink.forces.push(force);
-                this.mechanismSrv.forces.push(force);
-                PositionSolver.setUpSolvingForces(this.activeObjService.selectedLink.forces); // needed to determine force position when dragging a joint
-                // PositionSolver.setUpInitialJointLocations(this.selectedLink.joints);
+                this.mechanismSrv.createForce(startCoord, endCoord);
                 this.mechanismSrv.updateMechanism();
                 this.gridStates = gridStates.waiting;
                 this.forceStates = forceStates.waiting;
@@ -1017,7 +1038,7 @@ export class NewGridComponent {
     if ($event.keyCode == 46) {
       //Delete Key
       if (true) {
-        //Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
+        //TODO: Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
         if (this.activeObjService.objType === 'Grid') {
           NewGridComponent.sendNotification('Select an object to delete.');
           return;
@@ -1063,5 +1084,295 @@ export class NewGridComponent {
 
   getDebugLines(): Line[] {
     return NewGridComponent.debugLines;
+  }
+
+  findStartAndEndPoints() {
+    let x1, y1, x2, y2;
+    if (this.showLinkAngleOverlay == -2) {
+      switch (this.showLinkLengthOverlay) {
+        case -2:
+          //Throw an error
+          throw new Error(
+            'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
+          );
+          break;
+        case -1:
+          let link = this.activeObjService.selectedLink;
+          x1 = link.joints[0].x;
+          y1 = link.joints[0].y;
+          x2 = link.joints[1].x;
+          y2 = link.joints[1].y;
+          break;
+        default:
+          let thisJoint = this.activeObjService.selectedJoint;
+          let otherJoint =
+            EditPanelComponent.instance.listOfOtherJoints[this.showLinkLengthOverlay];
+          x1 = thisJoint.x;
+          y1 = thisJoint.y;
+          x2 = otherJoint.x;
+          y2 = otherJoint.y;
+      }
+    } else {
+      switch (this.showLinkAngleOverlay) {
+        case -2:
+          //Throw an error
+          throw new Error(
+            'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
+          );
+          break;
+        case -1:
+          let link = this.activeObjService.selectedLink;
+          x1 = link.joints[0].x;
+          y1 = link.joints[0].y;
+          x2 = link.joints[1].x;
+          y2 = link.joints[1].y;
+          break;
+        default:
+          let thisJoint = this.activeObjService.selectedJoint;
+          let otherJoint = EditPanelComponent.instance.listOfOtherJoints[this.showLinkAngleOverlay];
+          x1 = thisJoint.x;
+          y1 = thisJoint.y;
+          x2 = otherJoint.x;
+          y2 = otherJoint.y;
+      }
+    }
+
+    return { x1, y1, x2, y2 };
+  }
+
+  getSVGPerpendicularLine1() {
+    //Return the SVG path of the line that is perpendicular to the first line and intersects the first line at the first joint
+    //The line will be 1 unit long and will be centered at the first joint
+    //It will act was an end cap for the line to represnet the lenght of the line
+    let length = SettingsService.objectScale / 7;
+
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Find the slope of the original line
+    let m1 = (y2 - y1) / (x2 - x1);
+
+    //Find the slope of the perpendicular line
+    let m2 = -1 / m1;
+
+    //Find the angle of the perpendicular line
+    let angle = Math.atan(m2);
+
+    //Find the endpoints of the perpendicular line
+    let x3 = x1 + length * Math.cos(angle);
+    let y3 = y1 + length * Math.sin(angle);
+    let x4 = x1 - length * Math.cos(angle);
+    let y4 = y1 - length * Math.sin(angle);
+
+    //Return the SVG path of the perpendicular line
+    return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
+  }
+
+  getSVGPerpendicularLine2() {
+    //Same as getSVGPerpendicularLine1 but for the second joint
+    let length = SettingsService.objectScale / 7;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    let m1 = (y2 - y1) / (x2 - x1);
+    let m2 = -1 / m1;
+    let angle = Math.atan(m2);
+
+    let x3 = x2 + length * Math.cos(angle);
+    let y3 = y2 + length * Math.sin(angle);
+    let x4 = x2 - length * Math.cos(angle);
+    let y4 = y2 - length * Math.sin(angle);
+
+    return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
+  }
+
+  getSVGPrimaryAxisLine1() {
+    //Return the SVG path of the line that is the primary axis
+    //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
+    //Each line should start the joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Find the length of the original line
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    //Find the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1); //Use atan2 instead of atan
+
+    //Find the coordinates of the points that divide the line into three equal parts
+    let x3 = x1 + (length / 3) * Math.cos(angle);
+    let y3 = y1 + (length / 3) * Math.sin(angle);
+
+    //Return the SVG paths of the two lines that start from the joints and end at the middle points
+    return 'M' + x1 + ' ' + y1 + ' L' + x3 + ' ' + y3;
+  }
+
+  getSVGPrimaryAxisLine2() {
+    //Return the SVG path of the line that is the primary axis
+    //Cut the middle 1/3 of the line off, return two lines that are 1/3 of the length of the original line
+    //Each line should start the joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Find the length of the original line
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    //Find the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1); //Use atan2 instead of atan
+
+    //Find the coordinates of the points that divide the line into three equal parts
+    let x4 = x2 - (length / 3) * Math.cos(angle);
+    let y4 = y2 - (length / 3) * Math.sin(angle);
+
+    //Return the SVG paths of the two lines that start from the joints and end at the middle points
+    return 'M' + x4 + ' ' + y4 + ' L' + x2 + ' ' + y2;
+  }
+
+  getSVGAngleOverlayLines() {
+    //This function returns the SVG path of the angle overlay
+    //Is has one line that goes along the primary axis of the link starting at the first joint
+    //The 2nd line starts at the first joint and is parallel to the x axis
+    //The third arc connects the endpoint of the first line to the endpoint of the second line
+    const lengthOfIndicator = SettingsService.objectScale * 2;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Find the slope and the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+    //Find the coordinates of the endpoints of the two lines that form the angle with the original line
+    let x3 = x1 + length * Math.cos(angle);
+    let y3 = y1 + length * Math.sin(angle);
+    let x4 = x1 + lengthOfIndicator;
+    let y4 = y1;
+
+    //Return the SVG paths of the angle overlay without the arrow
+    let line1 = 'M' + x3 + ' ' + y3 + ' L' + x1 + ' ' + y1;
+    let line2 = ' M' + x1 + ' ' + y1 + ' L' + x4 + ' ' + y4;
+
+    //Return the SVG path of the angle overlay with the arrow
+    return line1 + line2;
+  }
+
+  getSVGAngleOverlayArc() {
+    //This function returns the SVG path of the angle overlay
+    //Is has one line that goes along the primary axis of the link starting at the first joint
+    //The 2nd line starts at the first joint and is parallel to the x axis
+    //The third arc connects the endpoint of the first line to the endpoint of the second line
+    const lengthOfIndicator = SettingsService.objectScale * 1.8;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Find the slope and the angle of the original line
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Find the coordinates of the endpoints of the two lines that form the angle with the original line
+    let x3 = x1 + lengthOfIndicator * Math.cos(angle);
+    let y3 = y1 + lengthOfIndicator * Math.sin(angle);
+    let x4 = x1 + lengthOfIndicator;
+    let y4 = y1;
+
+    //Find the direction and flags for drawing the arc
+    //Assume that we want to draw a quarter circle with radius equal to lengthOfIndicator
+    let sweepFlag = angle > 0 ? 1 : 0;
+
+    //Return the SVG paths of the angle overlay without the arrow
+    let arc =
+      ' M' +
+      x4 +
+      ' ' +
+      y4 +
+      ' A' +
+      lengthOfIndicator +
+      ' ' +
+      lengthOfIndicator +
+      ' ' +
+      '90' +
+      ' ' +
+      0 +
+      ' ' +
+      sweepFlag +
+      ' ' +
+      x3 +
+      ' ' +
+      y3;
+
+    //Return the SVG path of the angle overlay with the arrow
+    return arc;
+  }
+
+  protected readonly AngleUnit = AngleUnit;
+
+  getSVGLengthOverlayTextPos() {
+    //Return the average of the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let x = (x1 + x2) / 2;
+    let y = (y1 + y2) / 2;
+    return { x, y };
+  }
+
+  getSVGAngleOverlayTextPos() {
+    //Get the positon to put the angle label
+    //It needs to be at the midpoint of the arc which goes from x axis to the primary axis
+    //But with an offset so it's farther from the radius
+    //Make sure to use atan2
+    const offSetRadius = SettingsService.objectScale * 2;
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+
+    //Calculate the angle between the x-axis and the primary axis
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Calculate the midpoint of the arc
+    let midAngle = angle / 2;
+    let midX = offSetRadius * Math.cos(midAngle);
+    let midY = offSetRadius * Math.sin(midAngle);
+
+    //Add the offset to the midpoint
+    let labelX = midX + x1;
+    let labelY = midY + y1;
+
+    //Return an object with x and y properties
+    return { x: labelX, y: labelY };
+  }
+
+  protected readonly RealJoint = RealJoint;
+
+  secondJointIsGrounded(selectedLink: RealLink) {
+    //If we are looking at distToJoints, we always move the 2nd joint
+    if (this.activeObjService.objType == 'Joint') {
+      return false;
+    }
+    return (selectedLink.joints[1] as RealJoint).ground;
+  }
+
+  getLengthBetweenOverlayPoints() {
+    //Get the length between the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    return length;
+  }
+
+  getAngleBetweenOverlayPoints() {
+    //Get the angle between the two joints
+    let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    let angle = Math.atan2(y2 - y1, x2 - x1);
+
+    //Convert the angle to this.settings.angleUnit.getValue();
+    switch (this.settings.angleUnit.getValue()) {
+      case AngleUnit.DEGREE:
+        angle = radToDeg(angle);
+        break;
+      case AngleUnit.RADIAN:
+        break;
+    }
+    return angle;
+  }
+
+  humanReadableString(value: GlobalUnit) {
+    switch (value) {
+      case GlobalUnit.SI:
+        return 'm';
+      case GlobalUnit.ENGLISH:
+        return 'in';
+      case GlobalUnit.METRIC:
+        return 'cm';
+      default:
+        return '';
+    }
   }
 }

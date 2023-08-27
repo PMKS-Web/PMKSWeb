@@ -29,6 +29,8 @@ import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
 import { NumberUnitParserService } from './number-unit-parser.service';
+import { PositionSolver } from '../model/mechanism/position-solver';
+import { ColorService } from './color.service';
 
 @Injectable({
   providedIn: 'root',
@@ -252,219 +254,10 @@ export class MechanismService {
     ) as RealJoint;
 
     if (!joint.isWelded) {
-      //       NewGridComponent.sendNotification(
-      //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
-      //       );
-      //WE NEED TO WELD THE JOINT
-      const linksAtJoint = joint.links as RealLink[];
-
-      const newLink = this.createNewCompoundLink(linksAtJoint);
-
-      //Remove all the links that are being merged from this.links
-      linksAtJoint.forEach((l1: Link) => {
-        this.links.splice(
-          this.links.findIndex((l2) => l2.id === l1.id),
-          1
-        );
-      });
-      // Make sure that the joints that are connected to the welded joints know that they are connected joints
-      linksAtJoint.forEach((l1: Link, l1Index) => {
-        if (l1Index === linksAtJoint.length - 1) {
-          return;
-        }
-        for (let l2Index = l1Index + 1; l2Index < linksAtJoint.length; l2Index++) {
-          l1.joints.forEach((j1: Joint) => {
-            if (!(j1 instanceof RealJoint)) {
-              return;
-            }
-            if (j1.id === joint.id) {
-              return;
-            }
-            linksAtJoint[l2Index].joints.forEach((j2: Joint) => {
-              if (!(j2 instanceof RealJoint)) {
-                return;
-              }
-              if (j2.id === j1.id) {
-                return;
-              }
-              if (j1.connectedJoints.findIndex((jt) => jt.id === j2.id) === -1) {
-                j1.connectedJoints.push(j2);
-              }
-              if (j2.connectedJoints.findIndex((jt) => jt.id === j1.id) === -1) {
-                j2.connectedJoints.push(j1);
-              }
-            });
-          });
-        }
-      });
-      this.links.push(newLink);
-
-      //Update the joints of the new link with the right links
-      newLink.joints.forEach((j: Joint | RealJoint) => {
-        if (!(j instanceof RealJoint)) return;
-        //Remove any links that are subsets of the new link
-        j.links = j.links.filter((l: Link) => {
-          return !linksAtJoint.some((l2) => l2.id === l.id);
-        });
-        //Add the new link to the joints
-        j.links.push(newLink);
-      });
-
-      //For every joint in the new link, add all other joints in the new link as connected joints
-      // newLink.joints.forEach((j: Joint | RealJoint) => {
-      //   if (!(j instanceof RealJoint)) return;
-      //   newLink.joints.forEach((j2: Joint | RealJoint) => {
-      //     if (!(j2 instanceof RealJoint)) return;
-      //     if (j.id !== j2.id) {
-      //       j.connectedJoints.push(j2);
-      //     }
-      //   });
-      // });
-      //
-      // //Lastly remove duplicate connected joints
-      // newLink.joints.forEach((j: Joint | RealJoint) => {
-      //   if (!(j instanceof RealJoint)) return;
-      //   j.connectedJoints = j.connectedJoints.filter((cj, index) => {
-      //     return j.connectedJoints.findIndex((cj2) => cj2.id === cj.id) === index;
-      //   });
-      // });
+      this.weldJoint();
     } else if (joint.isWelded) {
-      //WE ARE UNWELDING THE JOINT
-      // TODO: INSERT AFTER HERE
-      // Previous Logic
-      // this.activeObjService.selectedJoint.isWelded = false;
-      // joint.isWelded = false;
-      this.activeObjService.selectedJoint.links.forEach(l => {
-        if (!(l instanceof RealLink)) {
-          return
-        }
-        let idSubs: string[] = [];
-        l.subset.forEach((s) =>
-            idSubs.push(s.id)
-            // idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, ''))
-        );
-        for (let l_subset_index = 0; l_subset_index < (l as RealLink).subset.length; l_subset_index = l_subset_index + 1) {
-          const sub = l.subset[l_subset_index];
-          const selectedJoint = this.activeObjService.selectedJoint;
-          // sub contains id that is not shared with any other subset
-          let noSharedJoint = true;
-          const tempIdSubs = idSubs.filter((str) => str !== sub.id);
-          for (let letterIndex = 0; letterIndex < sub.id.length; letterIndex = letterIndex + 1) {
-            const letter = sub.id[letterIndex];
-            if (letter === selectedJoint.id) {
-              continue
-            }
-            // if (tempIdSubs.includes(letter)) {
-            if (tempIdSubs.some(str => str.includes(letter))) {
-              noSharedJoint = false;
-            }
-          }
-          // determine whether subset contains any joints that other subsets rather besides the selected joint
-          if (noSharedJoint && sub.id.includes(selectedJoint.id)) {
-            // This link will be pushed to this.links
-            if (sub.joints.length > 1) {
-              sub.joints.forEach((childJoint) => {
-                if (!(childJoint instanceof RealJoint)) {
-                  return;
-                }
-                childJoint.links.push(sub);
-                if (childJoint.id === selectedJoint.id) {
-                  return;
-                }
-                // Go through sub joints and delete themselves from connectedJoints
-                for (let jtIndex = 0; jtIndex < childJoint.connectedJoints.length; jtIndex++) {
-                  const jt = childJoint.connectedJoints[jtIndex] as RealJoint;
-                  if (jt.id === selectedJoint.id) {continue}
-                  const delJointIndex = jt.connectedJoints.findIndex(jt2 => jt2.id === childJoint.id);
-                  // check to be sure that this joint is not currently within the sub
-                  // if (sub.joints.findIndex(jt2 => jt2.id === jt.connectedJoints[delJointIndex].id) !== -1) {
-                  if (sub.joints.findIndex(jt2 => jt2.id === jt.id) !== -1) {
-                  continue;
-                  }
-                  jt.connectedJoints.splice(delJointIndex, 1);
-                  childJoint.connectedJoints.splice(jtIndex, 1);
-                  jtIndex = jtIndex - 1;
-                }
-                let delLinkIndex = childJoint.links.findIndex((li) => li.id === l.id);
-                if (delLinkIndex !== -1) {
-                  childJoint.links.splice(delLinkIndex, 1);
-                }
-              });
-              this.links.push(sub);
-              // This is an orphaned joint
-            } else if (sub.joints.length === 1) {
-              // regular orphaned joint
-              const delLinkIndex = (sub.joints[0] as RealJoint).links.findIndex(
-                  (li) => li.id === l.id
-              );
-              (sub.joints[0] as RealJoint).links.splice(delLinkIndex, 1);
-              (sub.joints[0] as RealJoint).connectedJoints = [];
-              (sub.joints[0] as RealJoint).links.forEach((childLink) => {
-                if (!(childLink instanceof RealLink)) {
-                  return;
-                }
-                // Check to see if joint from link already within connectedJoints
-                childLink.joints.forEach((jt) =>
-                    (sub.joints[0] as RealJoint).connectedJoints.push(jt)
-                );
-              });
-              const fixedLocationIndex = l.fixedLocations.findIndex(
-                  (fixedloc) => fixedloc.id === sub.joints[0].id
-              );
-              l.fixedLocations.splice(fixedLocationIndex, 1);
-              if (l.fixedLocation.fixedPoint === sub.joints[0].id) {
-                l.fixedLocation.fixedPoint = 'com';
-              }
-            }
-            const sliceIndex = l.subset.findIndex((s) => s.id === sub.id);
-            l.subset.splice(sliceIndex, 1);
-            // go through the original link (l) and make sure
-            // 1. the link does not contain any joints from sub
-            // 2. l's joints' neighboring joint does not contain joints from sub
-            sub.joints.forEach((jt) => {
-              if (!(jt instanceof RealJoint) || jt.id === selectedJoint.id) {
-                return;
-              }
-              const deleteJointIndex = l.joints.findIndex((jt2) => jt2.id === jt.id);
-              if (deleteJointIndex === -1) {
-                return;
-              }
-              l.joints.splice(deleteJointIndex, 1);
-              l.id = l.id.replace(jt.id, '');
-            });
-            l_subset_index = l_subset_index - 1;
-          }
-          // else if (sub.id.length === 1) {
-          //   // TODO: Verify this is still needed...
-          //   // l.subset.splice(l_subset_index, 1);
-          //   // l_subset_index = l_subset_index - 1;
-          // }
-        }
-        // every joint that is
-        // Now that all subsets have been gone over, do the final check
-        if (l.subset.length === 1) {
-          l = l.subset[0];
-          const delLinkIndex = this.links.findIndex((li) => li.id === l.id);
-          this.links.splice(delLinkIndex, 1);
-          this.links.push(l);
-          l.joints.forEach((jt) => {
-            if (!(jt instanceof RealJoint)) {
-              return;
-            }
-            const delLinkIndex = jt.links.findIndex(li => li.id === l.id);
-            jt.links.splice(delLinkIndex, 1);
-            jt.links.push(l);
-          });
-        } else if (l.subset.length === 0) {
-          const sliceIndex = this.links.findIndex((li) => li.id === l.id);
-          const otherSliceIndex = this.activeObjService.selectedJoint.links.findIndex(li => li.id === l.id);
-          this.links.splice(sliceIndex, 1);
-          this.activeObjService.selectedJoint.links.splice(otherSliceIndex, 1);
-        }
-      });
-      // TODO: INSERT BEFORE HERE
+      this.unweldSelectedJoint();
     }
-    joint.isWelded = !joint.isWelded;
     this.updateMechanism();
   }
 
@@ -601,6 +394,7 @@ export class MechanismService {
         l.subset.forEach((s) =>
           idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, ''))
         );
+
         function deleteJointFromLink(l: Link, j: Joint) {
           let delJointIndex = l.joints.findIndex((jt) => jt.id === j.id);
           if (delJointIndex === -1) {
@@ -618,7 +412,11 @@ export class MechanismService {
           }
         }
 
-        for (let l_subset_index = 0; l_subset_index < l.subset.length; l_subset_index = l_subset_index + 1) {
+        for (
+          let l_subset_index = 0;
+          l_subset_index < l.subset.length;
+          l_subset_index = l_subset_index + 1
+        ) {
           const sub = l.subset[l_subset_index];
           const selectedJoint = this.activeObjService.selectedJoint;
           deleteJointFromLink(l, selectedJoint);
@@ -909,6 +707,59 @@ export class MechanismService {
       this.activeObjService.selectedForce.stroke = 'black';
       this.activeObjService.selectedForce.fill = 'black';
     }
+    this.updateMechanism();
+  }
+
+  addJointAtCOM() {
+    let link = this.activeObjService.selectedLink;
+    let com = link.CoM;
+    //To avoid visually breaking the link by having it perfectly line up
+    //Find the first two joints of the link and move the com perpendicular to the line
+    let joint1 = link.joints[0];
+    let joint2 = link.joints[1];
+
+    //Get the angle of the line between the two joints
+    let angle = Math.atan2(joint2.y - joint1.y, joint2.x - joint1.x);
+    //Get the perpendicular angle
+    let perpAngle = angle + Math.PI / 2;
+    //Get the perpendicular vector
+    let perpVector = new Coord(Math.cos(perpAngle), Math.sin(perpAngle));
+    //Scale this vector to be 0.01
+    perpVector = perpVector.normalize().scale(0.01);
+    //Add this vector to the com
+    com = com.add(perpVector);
+
+    this.addJointAt(com);
+  }
+
+  addJointAt(coord: Coord) {
+    const newId = this.determineNextLetter();
+    const newJoint = new RevJoint(newId, coord.x, coord.y);
+    this.activeObjService.selectedLink.joints.forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      j.connectedJoints.push(newJoint);
+      newJoint.connectedJoints.push(j);
+    });
+    if (
+      this.activeObjService.selectedLink.isWelded &&
+      this.activeObjService.selectedLink.lastSelectedSublink
+    ) {
+      this.activeObjService.selectedLink.lastSelectedSublink.id =
+        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
+      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
+        id: newJoint.id,
+        label: newJoint.id,
+      });
+      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
+    }
+    newJoint.links.push(this.activeObjService.selectedLink);
+    this.activeObjService.selectedLink.joints.push(newJoint);
+    this.activeObjService.selectedLink.id += newJoint.id;
+    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
+    this.joints.push(newJoint);
+    this.onMechUpdateState.next(3);
     this.updateMechanism();
   }
 
@@ -1227,5 +1078,281 @@ export class MechanismService {
   isJointOrphan(joint: Joint) {
     //Return true if the given joint is an orphan (not part of a link).
     return this.links.every((l) => !l.joints.includes(joint));
+  }
+
+  unweldAll() {
+    this.joints.forEach((j) => {
+      if ((j as RealJoint).isWelded) {
+        this.unWeldJoint(j as RealJoint);
+      }
+    });
+  }
+
+  public weldJoint() {
+    const joint = this.joints.find(
+      (j) => j.id === this.activeObjService.selectedJoint.id
+    ) as RealJoint;
+    //       NewGridComponent.sendNotification(
+    //         'Welded Joints currently do not work when animating or analyzing the mechanism. Please un-weld the joint.'
+    //       );
+    //WE NEED TO WELD THE JOINT
+    const linksAtJoint = joint.links as RealLink[];
+
+    const newLink = this.createNewCompoundLink(linksAtJoint);
+
+    //Remove all the links that are being merged from this.links
+    linksAtJoint.forEach((l1: Link) => {
+      this.links.splice(
+        this.links.findIndex((l2) => l2.id === l1.id),
+        1
+      );
+    });
+    // Make sure that the joints that are connected to the welded joints know that they are connected joints
+    linksAtJoint.forEach((l1: Link, l1Index) => {
+      if (l1Index === linksAtJoint.length - 1) {
+        return;
+      }
+      for (let l2Index = l1Index + 1; l2Index < linksAtJoint.length; l2Index++) {
+        l1.joints.forEach((j1: Joint) => {
+          if (!(j1 instanceof RealJoint)) {
+            return;
+          }
+          if (j1.id === joint.id) {
+            return;
+          }
+          linksAtJoint[l2Index].joints.forEach((j2: Joint) => {
+            if (!(j2 instanceof RealJoint)) {
+              return;
+            }
+            if (j2.id === j1.id) {
+              return;
+            }
+            if (j1.connectedJoints.findIndex((jt) => jt.id === j2.id) === -1) {
+              j1.connectedJoints.push(j2);
+            }
+            if (j2.connectedJoints.findIndex((jt) => jt.id === j1.id) === -1) {
+              j2.connectedJoints.push(j1);
+            }
+          });
+        });
+      }
+    });
+    newLink.fill = ColorService.instance.getNextLinkColor();
+    this.links.push(newLink);
+
+    //Update the joints of the new link with the right links
+    newLink.joints.forEach((j: Joint | RealJoint) => {
+      if (!(j instanceof RealJoint)) return;
+      //Remove any links that are subsets of the new link
+      j.links = j.links.filter((l: Link) => {
+        return !linksAtJoint.some((l2) => l2.id === l.id);
+      });
+      //Add the new link to the joints
+      j.links.push(newLink);
+    });
+
+    joint.isWelded = true;
+  }
+
+  unWeldJoint(jointToUnweld: RealJoint) {
+    //WE ARE UNWELDING THE JOINT
+    // TODO: INSERT AFTER HERE
+    // Previous Logic
+    // this.activeObjService.selectedJoint.isWelded = false;
+    // joint.isWelded = false;
+    jointToUnweld.links.forEach((l) => {
+      if (!(l instanceof RealLink)) {
+        return;
+      }
+      let idSubs: string[] = [];
+      l.subset.forEach(
+        (s) => idSubs.push(s.id)
+        // idSubs.push(s.id.replace(this.activeObjService.selectedJoint.id, ''))
+      );
+      for (
+        let l_subset_index = 0;
+        l_subset_index < (l as RealLink).subset.length;
+        l_subset_index = l_subset_index + 1
+      ) {
+        const sub = l.subset[l_subset_index];
+        const selectedJoint = jointToUnweld;
+        // sub contains id that is not shared with any other subset
+        let noSharedJoint = true;
+        const tempIdSubs = idSubs.filter((str) => str !== sub.id);
+        for (let letterIndex = 0; letterIndex < sub.id.length; letterIndex = letterIndex + 1) {
+          const letter = sub.id[letterIndex];
+          if (letter === selectedJoint.id) {
+            continue;
+          }
+          // if (tempIdSubs.includes(letter)) {
+          if (tempIdSubs.some((str) => str.includes(letter))) {
+            noSharedJoint = false;
+          }
+        }
+        // determine whether subset contains any joints that other subsets rather besides the selected joint
+        if (noSharedJoint && sub.id.includes(selectedJoint.id)) {
+          // This link will be pushed to this.links
+          if (sub.joints.length > 1) {
+            sub.joints.forEach((childJoint) => {
+              if (!(childJoint instanceof RealJoint)) {
+                return;
+              }
+              childJoint.links.push(sub);
+              if (childJoint.id === selectedJoint.id) {
+                return;
+              }
+              // Go through sub joints and delete themselves from connectedJoints
+              for (let jtIndex = 0; jtIndex < childJoint.connectedJoints.length; jtIndex++) {
+                const jt = childJoint.connectedJoints[jtIndex] as RealJoint;
+                if (jt.id === selectedJoint.id) {
+                  continue;
+                }
+                const delJointIndex = jt.connectedJoints.findIndex(
+                  (jt2) => jt2.id === childJoint.id
+                );
+                // check to be sure that this joint is not currently within the sub
+                // if (sub.joints.findIndex(jt2 => jt2.id === jt.connectedJoints[delJointIndex].id) !== -1) {
+                if (sub.joints.findIndex((jt2) => jt2.id === jt.id) !== -1) {
+                  continue;
+                }
+                jt.connectedJoints.splice(delJointIndex, 1);
+                childJoint.connectedJoints.splice(jtIndex, 1);
+                jtIndex = jtIndex - 1;
+              }
+              let delLinkIndex = childJoint.links.findIndex((li) => li.id === l.id);
+              if (delLinkIndex !== -1) {
+                childJoint.links.splice(delLinkIndex, 1);
+              }
+            });
+            this.links.push(sub);
+            // This is an orphaned joint
+          } else if (sub.joints.length === 1) {
+            // regular orphaned joint
+            const delLinkIndex = (sub.joints[0] as RealJoint).links.findIndex(
+              (li) => li.id === l.id
+            );
+            (sub.joints[0] as RealJoint).links.splice(delLinkIndex, 1);
+            (sub.joints[0] as RealJoint).connectedJoints = [];
+            (sub.joints[0] as RealJoint).links.forEach((childLink) => {
+              if (!(childLink instanceof RealLink)) {
+                return;
+              }
+              // Check to see if joint from link already within connectedJoints
+              childLink.joints.forEach((jt) =>
+                (sub.joints[0] as RealJoint).connectedJoints.push(jt)
+              );
+            });
+            const fixedLocationIndex = l.fixedLocations.findIndex(
+              (fixedloc) => fixedloc.id === sub.joints[0].id
+            );
+            l.fixedLocations.splice(fixedLocationIndex, 1);
+            if (l.fixedLocation.fixedPoint === sub.joints[0].id) {
+              l.fixedLocation.fixedPoint = 'com';
+            }
+          }
+          const sliceIndex = l.subset.findIndex((s) => s.id === sub.id);
+          l.subset.splice(sliceIndex, 1);
+          // go through the original link (l) and make sure
+          // 1. the link does not contain any joints from sub
+          // 2. l's joints' neighboring joint does not contain joints from sub
+          sub.joints.forEach((jt) => {
+            if (!(jt instanceof RealJoint) || jt.id === selectedJoint.id) {
+              return;
+            }
+            const deleteJointIndex = l.joints.findIndex((jt2) => jt2.id === jt.id);
+            if (deleteJointIndex === -1) {
+              return;
+            }
+            l.joints.splice(deleteJointIndex, 1);
+            l.id = l.id.replace(jt.id, '');
+          });
+          l_subset_index = l_subset_index - 1;
+        }
+        // else if (sub.id.length === 1) {
+        //   // TODO: Verify this is still needed...
+        //   // l.subset.splice(l_subset_index, 1);
+        //   // l_subset_index = l_subset_index - 1;
+        // }
+      }
+      // every joint that is
+      // Now that all subsets have been gone over, do the final check
+      if (l.subset.length === 1) {
+        l = l.subset[0];
+        const delLinkIndex = this.links.findIndex((li) => li.id === l.id);
+        this.links.splice(delLinkIndex, 1);
+        this.links.push(l);
+        l.joints.forEach((jt) => {
+          if (!(jt instanceof RealJoint)) {
+            return;
+          }
+          const delLinkIndex = jt.links.findIndex((li) => li.id === l.id);
+          jt.links.splice(delLinkIndex, 1);
+          jt.links.push(l);
+        });
+      } else if (l.subset.length === 0) {
+        const sliceIndex = this.links.findIndex((li) => li.id === l.id);
+        const otherSliceIndex = jointToUnweld.links.findIndex((li) => li.id === l.id);
+        this.links.splice(sliceIndex, 1);
+        jointToUnweld.links.splice(otherSliceIndex, 1);
+      }
+    });
+    jointToUnweld.isWelded = false;
+  }
+
+  public unweldSelectedJoint() {
+    const joint = this.joints.find(
+      (j) => j.id === this.activeObjService.selectedJoint.id
+    ) as RealJoint;
+
+    this.unWeldJoint(joint);
+  }
+
+  createForceAtCOM() {
+    let link = this.activeObjService.selectedLink;
+    let com = link.CoM;
+    let endPoint = new Coord(com.x + 1, com.y + 3);
+    this.createForce(com, endPoint);
+  }
+
+  createForce(startCoord: Coord, endCoord: Coord) {
+    // TODO: utilize dot product to find point that is closest to the line
+    if (this.activeObjService.selectedLink.joints.length === 2) {
+      const lineVector: Coord = new Coord(
+        this.activeObjService.selectedLink.joints[0].x -
+          this.activeObjService.selectedLink.joints[1].x,
+        this.activeObjService.selectedLink.joints[0].y -
+          this.activeObjService.selectedLink.joints[1].y
+      );
+
+      // Calculate the vector from the first point on the line to the given point
+      const givenPointVector: Coord = new Coord(
+        startCoord.x - this.activeObjService.selectedLink.joints[0].x,
+        startCoord.y - this.activeObjService.selectedLink.joints[0].y
+      );
+
+      // Calculate the dot product of the line vector and the given point vector
+      const dotProduct: number =
+        givenPointVector.x * lineVector.x + givenPointVector.y * lineVector.y;
+
+      // Calculate the length of the line vector squared
+      const lineLengthSquared: number = lineVector.x * lineVector.x + lineVector.y * lineVector.y;
+
+      // Calculate the parameter t for the projection onto the line
+      const t: number = dotProduct / lineLengthSquared;
+
+      // Calculate the projected point on the line
+      startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
+      startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
+    }
+    const force = new Force(
+      'F' + (this.forces.length + 1).toString(),
+      this.activeObjService.selectedLink,
+      startCoord,
+      endCoord
+    );
+    this.activeObjService.selectedLink.forces.push(force);
+    this.forces.push(force);
+    PositionSolver.setUpSolvingForces(this.activeObjService.selectedLink.forces); // needed to determine force position when dragging a joint
+    // PositionSolver.setUpInitialJointLocations(this.selectedLink.joints);
   }
 }
