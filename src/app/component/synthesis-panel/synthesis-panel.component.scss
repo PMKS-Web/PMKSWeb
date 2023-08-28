@@ -10,69 +10,84 @@
   $typography-config: mat.get-typography-config($theme);
   $background: map.get($theme, background);
   $foreground: map.get($theme, foreground);
+}
 
-  #synthesisWrapper {
+#synthesisWrapper {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin: 10px;
-  }
+}
 
-  #headline-1 {
-    @include mat.typography-level($typography-config, 'headline-1');
-  }
+.poseHeader {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 
-  #headline-2 {
-    @include mat.typography-level($typography-config, 'headline-2');
-  }
+.poseEdit {
+  zoom: 0.7;
+  justify-content: flex-end;
+}
 
-  #headline-3 {
-    @include mat.typography-level($typography-config, 'headline-3');
-  }
+// #headline-1 {
+//   @include mat.typography-level($typography-config, 'headline-1');
+// }
 
-  #headline-4 {
-    @include mat.typography-level($typography-config, 'headline-4');
-  }
+// #headline-2 {
+//   @include mat.typography-level($typography-config, 'headline-2');
+// }
 
-  #headline-5 {
-    @include mat.typography-level($typography-config, 'headline-5');
-  }
+// #headline-3 {
+//   @include mat.typography-level($typography-config, 'headline-3');
+// }
 
-  #headline-6 {
-    @include mat.typography-level($typography-config, 'headline-6');
-  }
+// #headline-4 {
+//   @include mat.typography-level($typography-config, 'headline-4');
+// }
 
-  #subtitle-1 {
-    @include mat.typography-level($typography-config, 'subtitle-1');
-  }
+// #headline-5 {
+//   @include mat.typography-level($typography-config, 'headline-5');
+// }
 
-  #body-1 {
-    @include mat.typography-level($typography-config, 'body-2');
-  }
+// #headline-6 {
+//   @include mat.typography-level($typography-config, 'headline-6');
+// }
 
-  #body-2 {
-    @include mat.typography-level($typography-config, 'body-2');
-  }
+// #subtitle-1 {
+//   @include mat.typography-level($typography-config, 'subtitle-1');
+// }
 
-  #subtitle-2 {
-    @include mat.typography-level($typography-config, 'subtitle-2');
-  }
+// #body-1 {
+//   @include mat.typography-level($typography-config, 'body-2');
+// }
 
-  #caption {
-    @include mat.typography-level($typography-config, 'caption');
-  }
+// #body-2 {
+//   @include mat.typography-level($typography-config, 'body-2');
+// }
 
-  #overline {
-    @include mat.typography-level($typography-config, 'overline');
-  }
+// #subtitle-2 {
+//   @include mat.typography-level($typography-config, 'subtitle-2');
+// }
 
-  #button {
-    @include mat.typography-level($typography-config, 'button');
-  }
+// #caption {
+//   @include mat.typography-level($typography-config, 'caption');
+// }
 
-  //#input {
-  //  @include mat.typography-level($typography-config, 'input');
-  //}
+// #overline {
+//   @include mat.typography-level($typography-config, 'overline');
+// }
 
+// #button {
+//   @include mat.typography-level($typography-config, 'button');
+// }
 
+//#input {
+//  @include mat.typography-level($typography-config, 'input');
+//}
+
+.poseData {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }

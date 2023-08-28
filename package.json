@@ -27,6 +27,7 @@
     "@svgdotjs/svg.draggable.js": "^3.0.2",
     "@svgdotjs/svg.js": "^3.1.2",
     "@svgdotjs/svg.panzoom.js": "^2.1.2",
+    "@types/intro.js": "^5.1.1",
     "apexcharts": "^3.36.3",
     "firebase": "^9.18.0",
     "hammerjs": "^2.0.8",

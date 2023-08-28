@@ -8,7 +8,7 @@
     >
     <div class='spacer'></div>
     <span class='label {{disableInput ? "disabled":""}}' *ngIf='addInput' style='font-size: 25px; padding-bottom: 5px;'>⊾</span>
-    <mat-form-field *ngIf='addInput' class='customInputForm' (click)='field.select()'>
+    <mat-form-field *ngIf='addInput' class='customInputForm' (click)='disableInput ? null :field.select()'>
       <input class='customInput' matInput type='text' #field (keyup.enter)='field.blur()'
              [formControlName]='this._formControlForInput'>
     </mat-form-field>

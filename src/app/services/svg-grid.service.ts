@@ -173,7 +173,8 @@ export class SvgGridService {
     if (
       NewGridComponent.debugGetJointState() == jointStates.dragging ||
       NewGridComponent.debugGetForceState() == forceStates.draggingStart ||
-      NewGridComponent.debugGetForceState() == forceStates.draggingEnd
+      NewGridComponent.debugGetForceState() == forceStates.draggingEnd ||
+      NewGridComponent.getLastLeftClickType() === "SynthesisPose"
     ) {
       return oldPan;
     }

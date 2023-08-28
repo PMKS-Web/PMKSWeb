@@ -1,0 +1,17 @@
+<svg style='overflow: visible'>
+
+  <!--    //Make a oversized hibox to make it easier to click-->
+  <line id='hibox'
+        [attr.x1]='x' [attr.y1]='y'
+        [attr.x2]='x2' [attr.y2]='y2'
+        [attr.stroke-width]='width*5'
+        [attr.stroke]='color'
+        stroke-linecap='round'
+  ></line>
+
+
+  <path [attr.d]='getPath()'
+        [attr.stroke]='color'
+        [attr.stroke-width]='width'
+        stroke-linecap='round' />
+</svg>

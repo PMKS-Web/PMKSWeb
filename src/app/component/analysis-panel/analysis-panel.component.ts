@@ -17,7 +17,7 @@ import {
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
-import { crossProduct, roundNumber } from '../../model/utils';
+import { crossProduct, GlobalUnit, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
@@ -106,19 +106,34 @@ export class AnalysisPanelComponent {
     ForceSolver.resetVariables();
     KinematicsSolver.resetVariables();
     ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
+    let unitStr = 'cm';
+    switch (this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'in';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'm';
+        break;
+    }
     ForceSolver.determineForceAnalysis(
       this.mechanismService.joints,
       this.mechanismService.links,
       'static',
-      ToolbarComponent.gravity,
-      ToolbarComponent.unit
+      this.settingsService.isForces.value,
+      unitStr
     );
 
     KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
     KinematicsSolver.determineKinematics(
       this.mechanismService.joints,
       this.mechanismService.links,
-      ToolbarComponent.inputAngularVelocity
+      this.settingsService.inputSpeed.value
     );
   }
 

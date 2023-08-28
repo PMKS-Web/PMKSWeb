@@ -82,9 +82,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   animate: boolean = false;
 
-  static inputAngularVelocity: number = 10;
-  static clockwise: boolean = false;
-  static gravity: boolean = true; //Kohmei set this to true for testing, normally false
+  // static inputAngularVelocity: number = 10;
+  // static clockwise: boolean = false;
+  // static gravity: boolean = true; //Kohmei set this to true for testing, normally false
   private static fileButton: SVGElement;
   static analysisButton: SVGElement;
   static loopButton: SVGElement;
@@ -93,7 +93,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   static kinematicButton: SVGElement;
   private static settingsButton: SVGElement;
   private static helpButton: SVGElement;
-  static unit = 'cm';
+  // static unit = 'cm';
   // TODO: If possible, change this to static variable...
   url: any;
   static instance: ToolbarComponent;
@@ -102,7 +102,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private activeObjService: ActiveObjService,
     private mechanismService: MechanismService,
     public dialog: MatDialog,
-    public settings: SettingsService
+    public settingsService: SettingsService
   ) {
     ToolbarComponent.instance = this;
   }
@@ -416,14 +416,40 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
               const clockwise = stringToBoolean(line[1]);
               const gravity = stringToBoolean(line[2]);
               const unit = line[3];
-              ToolbarComponent.inputAngularVelocity = input_speed_mag;
-              ToolbarComponent.clockwise = clockwise;
+              let unitGlobal: GlobalUnit; // TODO: Determine what this unitStr should be...
+              switch (unit) {
+                case 'english':
+                  unitGlobal = GlobalUnit.ENGLISH;
+                  break;
+                case 'metric':
+                  unitGlobal = GlobalUnit.METRIC;
+                  break;
+                case 'si':
+                  unitGlobal = GlobalUnit.SI;
+                  break;
+                case 'null':
+                  unitGlobal = GlobalUnit.METRIC;
+                  break;
+                default:
+                  unitGlobal = GlobalUnit.METRIC;
+                  break;
+              }
+              this.settingsService.inputSpeed.next(input_speed_mag);
+              this.settingsService.isInputCW.next(clockwise);
               // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
-              ToolbarComponent.gravity = gravity;
+              this.settingsService.isForces.next(gravity);
               // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
               // this.localUnit.selectedUnit = unit;
               // selectedUnit = unit;
-              ToolbarComponent.unit = unit;
+              this.settingsService.globalUnit.next(unitGlobal);
+              // ToolbarComponent.inputAngularVelocity = input_speed_mag;
+              // ToolbarComponent.clockwise = clockwise;
+              // AnimationBarComponent.direction = ToolbarComponent.clockwise ? 'cw' : 'ccw';
+              // ToolbarComponent.gravity = gravity;
+              // TODO: Figure out in future how to change dropdown menu to match selectedUnit without calling this/that
+              // this.localUnit.selectedUnit = unit;
+              // selectedUnit = unit;
+              // ToolbarComponent.unit = unit;
             } catch (e) {
               console.error(line);
               console.error(e);
@@ -595,29 +621,37 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     encoder.addEnumSetting(
       EnumSetting.LENGTH_UNIT,
       LengthUnit,
-      this.settings.lengthUnit.getValue()
+      this.settingsService.lengthUnit.getValue()
     );
-    encoder.addEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit, this.settings.angleUnit.getValue());
-    encoder.addEnumSetting(EnumSetting.FORCE_UNIT, ForceUnit, this.settings.forceUnit.getValue());
+    encoder.addEnumSetting(
+      EnumSetting.ANGLE_UNIT,
+      AngleUnit,
+      this.settingsService.angleUnit.getValue()
+    );
+    encoder.addEnumSetting(
+      EnumSetting.FORCE_UNIT,
+      ForceUnit,
+      this.settingsService.forceUnit.getValue()
+    );
     encoder.addEnumSetting(
       EnumSetting.GLOBAL_UNIT,
       GlobalUnit,
-      this.settings.globalUnit.getValue()
+      this.settingsService.globalUnit.getValue()
     );
-    encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isForces.getValue());
-    encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settingsService.isInputCW.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settingsService.isForces.getValue());
+    encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settingsService.inputSpeed.getValue());
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,
-      this.settings.isShowMajorGrid.getValue()
+      this.settingsService.isShowMajorGrid.getValue()
     );
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MINOR_GRID,
-      this.settings.isShowMinorGrid.getValue()
+      this.settingsService.isShowMinorGrid.getValue()
     );
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
-    encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
-    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settingsService.isShowID.getValue());
+    encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settingsService.isShowCOM.getValue());
+    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settingsService.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
 
@@ -640,16 +674,34 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   downloadLinkage() {
     logEvent(this.analytics, 'download_linkage');
     // TODO: Believe this should be this.unit.selectedUnit
+    let unitStr: string;
+    switch (this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'english';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'metric';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'metric';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'si';
+        break;
+      default:
+        unitStr = 'metric';
+        break;
+    }
     const content = this.generateExportFile(
       this.mechanismService.joints,
       this.mechanismService.links,
       this.mechanismService.forces,
       [],
       [],
-      ToolbarComponent.inputAngularVelocity,
-      ToolbarComponent.clockwise,
-      ToolbarComponent.gravity,
-      ToolbarComponent.unit
+      this.settingsService.inputSpeed.value,
+      this.settingsService.isInputCW.value,
+      this.settingsService.isForces.value,
+      unitStr
     );
 
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
