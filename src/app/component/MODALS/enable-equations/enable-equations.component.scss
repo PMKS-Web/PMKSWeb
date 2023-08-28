@@ -1,0 +1,34 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  #equationsDialog {
+    .dialogImage {
+      height: 70vh;
+      padding-left: 24px;
+    }
+
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 0;
+
+    }
+
+    p {
+      @include mat.typography-level($typography-config, 'body-2');
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+}

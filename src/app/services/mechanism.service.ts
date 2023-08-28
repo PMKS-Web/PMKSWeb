@@ -18,6 +18,7 @@ import {
   point_on_line_segment_closest_to_point,
   getDistance,
   distance_points,
+  GlobalUnit,
 } from '../model/utils';
 import { BehaviorSubject, connect, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -65,6 +66,21 @@ export class MechanismService {
     private nup: NumberUnitParserService
   ) {}
 
+  // delete mechanism and reset
+  resetMechanism() {
+    this.joints = [];
+    this.links = [];
+    this.forces = [];
+    this.mechanismTimeStep = 0;
+    this.updateMechanism();
+    this.onMechPositionChange.next(3);
+  }
+
+  // whether there is a valid mechanism
+  exists(): boolean {
+    return this.joints.length > 0;
+  }
+
   getJoints() {
     return this.joints;
   }
@@ -83,9 +99,26 @@ export class MechanismService {
     //You can treat this as a single mechanism for now at index 0
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
-    let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
-    if (ToolbarComponent.clockwise) {
-      inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
+    let inputAngularVelocity = this.settingsService.inputSpeed.value;
+    if (this.settingsService.isInputCW.value) {
+      inputAngularVelocity = inputAngularVelocity * -1;
+    }
+    let unitStr = 'cm';
+    switch (this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'cm';
+        break;
+      default:
+        break;
     }
     this.mechanisms.push(
       //This creates a new mechanism with the current state of the joints, links, forces, and ics
@@ -95,8 +128,8 @@ export class MechanismService {
         this.links,
         this.forces,
         this.ics,
-        ToolbarComponent.gravity,
-        ToolbarComponent.unit,
+        this.settingsService.isForces.value,
+        unitStr,
         inputAngularVelocity
       )
     );
@@ -1158,6 +1191,9 @@ export class MechanismService {
     // joint.isWelded = false;
     jointToUnweld.links.forEach((l) => {
       if (!(l instanceof RealLink)) {
+        return;
+      }
+      if (l.subset.length === 0) {
         return;
       }
       let idSubs: string[] = [];

@@ -1,0 +1,20 @@
+<div class='modal' id='equationsDialog'>
+  <div class='dialog-header'>
+    <h1 mat-dialog-title>Enable the Equations add-on?</h1>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <p style='max-width: 500px; padding: 24px'>
+    This add-on shows a step-by-step guide for solving for kinematic and force values using loop equations, which can be
+    used to verify your own calculations.
+    All loop equations are shown which can be used to solve for the position. velocity, acceleration, and forces for the
+    entire linkage simultaneously. You first need to select loop(s) that provide enough equations to solve for each
+    unknown value.
+  </p>
+  <app-not-ready-warning></app-not-ready-warning>
+  <div mat-dialog-actions align='end'>
+    <button mat-button (click)='onNoClick()'>Cancel</button>
+    <button mat-raised-button cdkFocusInitial (click)='onYesClick()' color='primary'>Enable Equations</button>
+  </div>
+</div>

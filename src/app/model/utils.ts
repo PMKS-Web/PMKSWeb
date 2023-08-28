@@ -1,6 +1,8 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
 import { Coord } from './coord';
 import { Shape } from './link';
+import { Pose } from './pose';
+import { ConstrucLines } from './constructionlines_syn';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 export class Utils {}
@@ -522,6 +524,140 @@ export function find_angle(B: Coord, A: Coord, C: Coord) {
   // return Math.acos( (a+b-c) / Math.sqrt(4*a*b) ) * 180 / Math.PI;
 }
 
+//added by Pradeep Mar 25th 2023
+//determine the end point of each pose
+//we pass coord, length and angle of each pose to this function and store the end point under each pose
+export function getCoordofeachPose(pose1: Pose) {
+  if (pose1.angle == 0) {
+    pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle));
+    pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle));
+
+    pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+    pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+  } else if (pose1.angle > 0 && pose1.angle < 90) {
+    pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle + 180));
+    pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle + 180));
+
+    pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+    pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+  } else if (pose1.angle < 0 && pose1.angle < -90) {
+    pose1.coord1.x = pose1.midpoint.x - 0.5 * length * Math.cos(degToRad(pose1.angle + 180));
+    pose1.coord1.y = pose1.midpoint.y - 0.5 * length * Math.sin(degToRad(pose1.angle + 180));
+
+    pose1.coord2.x = pose1.midpoint.x + 0.5 * length * Math.cos(degToRad(pose1.angle));
+    pose1.coord2.y = pose1.midpoint.y + 0.5 * length * Math.sin(degToRad(pose1.angle));
+  }
+}
+
+//added by Pradeep Mar 25th 2023
+//obtain end points of lines. This will help draw the construction lines
+export function ConstructionLine_1(pose1: Pose, pose2: Pose) {
+  return new ConstrucLines(pose1.coord1, pose2.coord1);
+}
+
+export function ConstructionLine_2(pose2: Pose, pose3: Pose) {
+  return new ConstrucLines(pose2.coord1, pose3.coord1);
+}
+
+export function ConstructionLine_3(pose1: Pose, pose2: Pose) {
+  return new ConstrucLines(pose1.coord2, pose2.coord2);
+}
+
+export function ConstructionLine_4(pose2: Pose, pose3: Pose) {
+  return new ConstrucLines(pose2.coord2, pose3.coord2);
+}
+
+//added by Pradeep Mar 25th 2023
+//obtain the coordinates of intersection point
+//return one intersection point
+export function intersectionPoint_1(pose1: Pose, pose2: Pose, pose3: Pose) {
+  //slope of line 1
+  //var slope1 = 1 / ((Pos2_end1(2) - Pos1_end1(2)) / (Pos2_end1(1) - Pos1_end1(1)));
+  //slope of line 2
+  //slope2 = 1 / ((Pos3_end1(2) - Pos2_end1(2)) / (Pos3_end1(1) - Pos2_end1(1)));
+  //midpoints
+  //midpoint_line1 = (Pos1_end1 + Pos2_end1) / 2;
+  //midpoint_line2 = (Pos2_end1 + Pos3_end1) / 2;
+  //intercept
+  //c1 = midpoint_line1(2) + slope1 * midpoint_line1(1);
+  //c2 = midpoint_line2(2) + slope2 * midpoint_line2(1);
+  var slope1 = 1 / ((pose2.coord1.y - pose1.coord1.y) / (pose2.coord1.x - pose1.coord1.x));
+  //slope of line 2
+  var slope2 = 1 / ((pose3.coord1.y - pose2.coord1.y) / (pose3.coord1.x - pose2.coord1.x));
+
+  //midpoints of the above two lines
+  var midpoint_line1 = new Coord(
+    (pose1.coord1.x + pose2.coord1.x) / 2,
+    (pose1.coord1.y + pose2.coord1.y) / 2
+  );
+  var midpoint_line2 = new Coord(
+    (pose3.coord1.x + pose2.coord1.x) / 2,
+    (pose3.coord1.y + pose2.coord1.y) / 2
+  );
+
+  //intercept
+  var c1 = midpoint_line1.y + slope1 * midpoint_line1.x;
+  var c2 = midpoint_line2.y + slope2 * midpoint_line2.x;
+
+  //intersection point
+  var x1 = (c1 - c2) / (-slope2 + slope1);
+  var y1 = -slope1 * x1 + c1;
+
+  return new Coord(x1, y1);
+}
+
+//return second intersection point
+export function intersectionPoint_2(pose1: Pose, pose2: Pose, pose3: Pose) {
+  //slope of line 3
+  //slope3 = 1 / ((Pos2_end2(2) - Pos1_end2(2)) / (Pos2_end2(1) - Pos1_end2(1)));
+  //slope of line 4
+  //slope4 = 1 / ((Pos3_end2(2) - Pos2_end2(2)) / (Pos3_end2(1) - Pos2_end2(1)));
+  //midpoints
+  // midpoint_line3 = (Pos1_end2 + Pos2_end2) / 2;
+  // midpoint_line4 = (Pos2_end2 + Pos3_end2) / 2;
+  //intercept
+  //  c3 = midpoint_line3(2) + slope3 * midpoint_line3(1);
+  //   c4 = midpoint_line4(2) + slope4 * midpoint_line4(1);
+
+  //intersection point
+  //x2 = (c3 - c4) / (-slope4 + slope3);
+  //y2 = -slope3 * x2 + c3;
+
+  var slope1 = 1 / ((pose2.coord2.y - pose1.coord2.y) / (pose2.coord2.x - pose1.coord2.x));
+  //slope of line 2
+  var slope2 = 1 / ((pose3.coord2.y - pose2.coord2.y) / (pose3.coord2.x - pose2.coord2.x));
+
+  //midpoints of the above two lines
+  var midpoint_line1 = new Coord(
+    (pose1.coord2.x + pose2.coord2.x) / 2,
+    (pose1.coord2.y + pose2.coord2.y) / 2
+  );
+  var midpoint_line2 = new Coord(
+    (pose3.coord2.x + pose2.coord2.x) / 2,
+    (pose3.coord2.y + pose2.coord2.y) / 2
+  );
+
+  //intercept
+  var c1 = midpoint_line1.y + slope1 * midpoint_line1.x;
+  var c2 = midpoint_line2.y + slope2 * midpoint_line2.x;
+
+  //intersection point
+  var x1 = (c1 - c2) / (-slope2 + slope1);
+  var y1 = -slope1 * x1 + c1;
+
+  return new Coord(x1, y1);
+}
+
+//organize the four coordinates
+export function fourCoordinates(pose1: Pose, pose2: Pose, pose3: Pose) {
+  var coord_A = intersectionPoint_1(pose1, pose2, pose3);
+  var coord_B = pose1.coord1;
+  var coord_C = pose1.coord2;
+  var coord_D = intersectionPoint_1(pose1, pose2, pose3);
+
+  //we have the four coordinates that make up the
+}
+
 // TODO: Should put this all over the code...
 export function find_slope(point1: Coord, point2: Coord) {
   return (point1.y - point2.y) / (point1.x - point2.x);
@@ -1003,6 +1139,109 @@ export function is_touch_enabled() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
+// https://www.petercollingridge.co.uk/tutorials/computational-geometry/circle-circle-intersections/
+export function circleCircleIntersection(
+  x0: number,
+  y0: number,
+  r0: number,
+  x1: number,
+  y1: number,
+  r1: number
+) {
+  let dx = x1 - x0;
+  let dy = y1 - y0;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  // Circles too far apart
+  if (d > r0 + r1) {
+    return false;
+  }
+
+  // One circle completely inside the other
+  if (d < Math.abs(r0 - r1)) {
+    return false;
+  }
+
+  // const TOLERANCE = 0.001;
+  if (d <= 0.001) {
+    return false;
+  }
+  // if (d === 0) {
+  //   return false;
+  // }
+
+  dx /= d;
+  dy /= d;
+
+  const a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
+  const px = x0 + a * dx;
+  const py = y0 + a * dy;
+
+  const h = Math.sqrt(r0 * r0 - a * a);
+
+  const p1x = px + h * dy;
+  const p1y = py - h * dx;
+  const p2x = px - h * dy;
+  const p2y = py + h * dx;
+  return [
+    [p1x, p1y],
+    [p2x, p2y],
+  ];
+}
+
+// https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
+export function circleLineIntersection(r: number, h: number, k: number, m: number, n: number) {
+  // circle: (x - h)^2 + (y - k)^2 = r^2
+  // line: y = m * x + n
+  // r: circle radius
+  // h: x value of circle centre
+  // k: y value of circle centre
+  // m: slope
+  // n: y-intercept
+
+  // get a, b, c values
+  const a = 1 + Math.pow(m, 2);
+  const b = -h * 2 + m * (n - k) * 2;
+  const c = Math.pow(h, 2) + Math.pow(n - k, 2) - Math.pow(r, 2);
+
+  // get discriminant
+  const d = Math.pow(b, 2) - 4 * a * c;
+  return [a, b, c, d];
+}
+
+// https://dirask.com/posts/JavaScript-calculate-intersection-point-of-two-lines-for-given-4-points-VjvnAj
+export function lineLineIntersection(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  x3: number,
+  y3: number,
+  x4: number,
+  y4: number
+) {
+  const c2x = x3 - x4; // (x3 - x4)
+  const c3x = x1 - x2; // (x1 - x2)
+  const c2y = y3 - y4; // (y3 - y4)
+  const c3y = y1 - y2; // (y1 - y2)
+
+  // down part of intersection point formula
+  const d = c3x * c2y - c3y * c2x;
+
+  if (d == 0) {
+    throw new Error('Number of intersection points is zero or infinity.');
+  }
+
+  // upper part of intersection point formula
+  const u1 = x1 * y2 - y1 * x2; // (x1 * y2 - y1 * x2)
+  const u4 = x3 * y4 - y3 * x4; // (x3 * y4 - y3 * x4)
+
+  // intersection point formula
+
+  const px = (u1 * c2x - c3x * u4) / d;
+  const py = (u1 * c2y - c3y * u4) / d;
+
+  return new Coord(px, py);
+}
 export function has_mouse_pointer() {
   return matchMedia('(pointer:fine)').matches;
 }

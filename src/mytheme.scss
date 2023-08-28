@@ -29,6 +29,7 @@
 @use 'src/app/component/equation-panel/equation-panel.component.scss' as equation-panel;
 @use 'src/app/component/MODALS/templates/templates.component.scss' as templates;
 @use 'src/app/component/not-ready-warning/not-ready-warning.component.scss' as not-ready-warning;
+@use 'src/app/component/MODALS/enable-equations/enable-equations.component.scss' as enable-equations;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -87,6 +88,7 @@ $my-theme: mat.define-light-theme(
 @include context-menu.css($my-theme);
 @include equation-panel.css($my-theme);
 @include not-ready-warning.css($my-theme);
+@include enable-equations.css($my-theme);
 
 @include blocks-common.css($my-theme);
 @include panel-section.css($my-theme);

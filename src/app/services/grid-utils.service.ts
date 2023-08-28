@@ -20,6 +20,9 @@ import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { SynthesisPose } from './synthesis/synthesis-util';
+import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
+import { SynthesisClickMode } from './synthesis/synthesis-constants';
 import { SvgGridService } from './svg-grid.service';
 import { link } from 'fs';
 import { ColorService } from './color.service';
@@ -28,7 +31,7 @@ import { ColorService } from './color.service';
   providedIn: 'root',
 })
 export class GridUtilsService {
-  constructor(public svgGrid: SvgGridService) {}
+  constructor(private synthesisBuilder: SynthesisBuilderService, public svgGrid: SvgGridService) {}
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -266,6 +269,14 @@ export class GridUtilsService {
     }
     selectedForce.updateInternalValues();
     return selectedForce;
+  }
+
+  setPoseTheta(pose: SynthesisPose, thetaRadians: number) {
+    this.synthesisBuilder.setPoseTheta(pose, thetaRadians);
+  }
+
+  dragPose(pose: SynthesisPose, dx: number, dy: number, mode: SynthesisClickMode) {
+    this.synthesisBuilder.movePoseByOffset(pose, mode, dx, dy);
   }
 
   isAttachedToSlider(lastRightClick: Joint | Link | Force | String) {

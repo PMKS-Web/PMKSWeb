@@ -1,0 +1,12 @@
+<div class='modal'>
+    <h1 mat-dialog-title>Synthesis will delete any pre-existing mechanisms.</h1>
+    <div mat-dialog-content>
+      <p>️Synthesis generates a fourbar linkage given three poses. Any existing
+        mechanisms won't be saved. Are you sure you want to proceed?
+      </p>
+    </div>
+    <div mat-dialog-actions align='end'>
+        <button mat-button mat-dialog-close>Go back</button>
+      <button mat-button cdkFocusInitial mat-dialog-close (click)="goToSynthesisTab()">Continue</button>
+    </div>
+  </div>

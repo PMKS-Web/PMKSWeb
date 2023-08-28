@@ -37,6 +37,13 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
+import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
+import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
+import {
+  SynthesisClickMode,
+  SynthesisConstants,
+} from 'src/app/services/synthesis/synthesis-constants';
 import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
@@ -62,6 +69,8 @@ export class NewGridComponent {
     public gridUtils: GridUtilsService,
     public settings: SettingsService,
     public activeObjService: ActiveObjService,
+    private tabService: SelectedTabService,
+    public synthesisBuilder: SynthesisBuilderService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
     private colorService: ColorService,
@@ -76,7 +85,7 @@ export class NewGridComponent {
   public lastRightClick: Joint | Link | Force | String = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
 
-  public lastLeftClick: Joint | Link | Force | String = '';
+  public lastLeftClick: Joint | Link | Force | String | SynthesisPose = '';
   lastLeftClickType: string = 'Nothing';
 
   //TODO: These states should be a one stateMachine that is a service
@@ -101,7 +110,13 @@ export class NewGridComponent {
   public delta: number = 6;
   private startX!: number;
   private startY!: number;
+  private isMouseDown: boolean = false;
   mouseLocation: Coord = new Coord(0, 0);
+  lastMouseLocation: Coord = new Coord(0, 0);
+  private synthesisClickMode: SynthesisClickMode = SynthesisClickMode.NORMAL;
+  private synthesisRotateStart: number = 0;
+
+  public sConstants = new SynthesisConstants();
   mouseLocationRaw: Coord = new Coord(0, 0);
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
@@ -207,12 +222,21 @@ export class NewGridComponent {
     //This is for debug purposes, do not make anything else static!
   }
 
+  // whether to show the synthesis poses
+  showSynthesis(): boolean {
+    return this.tabService.getCurrentTab() === TabID.SYNTHESIZE;
+  }
+
   enableGridAnimationForThisAction() {
     this.svgGridElement.setAttribute('class', 'animated');
     //Disable after 0.5 seconds
     setTimeout(() => {
       this.svgGridElement.removeAttribute('class');
     }, 300);
+  }
+
+  static getLastLeftClickType(): string {
+    return this.instance.lastLeftClick.constructor.name;
   }
 
   updateContextMenuItems() {
@@ -286,7 +310,9 @@ export class NewGridComponent {
       case 'RevJoint':
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
         let jointIsGround = (this.lastRightClick as RealJoint).ground;
-        let canBeWeldedOrUnwelded = (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded();
+        let canBeWeldedOrUnwelded =
+          (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded() &&
+          this.settings.isWeldedJointsEnabled.value;
         let canTogglePath =
           !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
 
@@ -385,7 +411,20 @@ export class NewGridComponent {
     this.updateContextMenuItems();
   }
 
-  setLastLeftClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
+  get mode(): typeof SynthesisClickMode {
+    return SynthesisClickMode;
+  }
+
+  setSynthesisClickMode(mode: SynthesisClickMode) {
+    console.log('Setting synthesis click mode to ' + mode);
+    this.synthesisClickMode = mode;
+    let pose = this.lastLeftClick as SynthesisPose;
+    this.synthesisRotateStart =
+      pose.thetaRadians -
+      Math.atan2(this.mouseLocation.y - pose.position.y, this.mouseLocation.x - pose.position.x);
+  }
+
+  setLastLeftClick(clickedObj: Joint | Link | String | Force | SynthesisPose, event?: MouseEvent) {
     this.lastLeftClick = clickedObj;
     // console.warn('Last Left Click: ');
     // console.error(clickedObj.constructor.name);
@@ -406,6 +445,9 @@ export class NewGridComponent {
         break;
       case 'String':
         this.lastLeftClickType = 'Grid';
+        break;
+      case 'SynthesisPose':
+        this.lastLeftClickType = 'SynthesisPose';
         break;
       default:
         this.lastLeftClickType = 'Unknown';
@@ -490,10 +532,35 @@ export class NewGridComponent {
   }
 
   mouseMove($event: MouseEvent) {
-    this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
     const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.lastMouseLocation = this.mouseLocation;
+    this.originInScreen = this.svgGrid.SVGtoScreen(new Coord(0, 0));
     this.mouseLocationRaw = new Coord($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
+
+    let deltaMouseX = this.mouseLocation.x - this.lastMouseLocation.x;
+    let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
+
+    if (this.isMouseDown && this.lastLeftClickType === 'SynthesisPose') {
+      if (this.synthesisClickMode === SynthesisClickMode.ROTATE) {
+        let pose = this.lastLeftClick as SynthesisPose;
+        let rotate =
+          Math.atan2(
+            this.mouseLocation.y - pose.position.y,
+            this.mouseLocation.x - pose.position.x
+          ) + this.synthesisRotateStart;
+        if (!isNaN(rotate)) {
+          this.gridUtils.setPoseTheta(pose, rotate);
+        }
+      } else {
+        this.gridUtils.dragPose(
+          this.activeObjService.selectedPose,
+          deltaMouseX,
+          deltaMouseY,
+          this.synthesisClickMode
+        );
+      }
+    }
 
     switch (this.gridStates) {
       case gridStates.createForce:
@@ -516,6 +583,10 @@ export class NewGridComponent {
         }
         if (this.mechanismSrv.mechanismTimeStep !== 0) {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
+          return;
+        }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
           return;
         }
 
@@ -563,6 +634,10 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+          return;
+        }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
         //So that the panel values update continously
@@ -577,6 +652,12 @@ export class NewGridComponent {
           this.sendNotification('Stop animation (or reset to 0 position) to edit');
           return;
         }
+        if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+          this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+          return;
+        }
+
+        //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
         const fake_link = document.getElementById(this.activeObjService.selectedLink.id) as unknown;
         const link_svg = fake_link as SVGElement;
         const geo = fake_link as SVGGeometryElement;
@@ -618,6 +699,12 @@ export class NewGridComponent {
   }
 
   onContextMenu($event: MouseEvent) {
+    if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
+      this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+      this.cMenuItems = [];
+      return;
+    }
+
     if (AnimationBarComponent.animate == true) {
       this.sendNotification('Cannot open context menu while animating. Stop animation to edit');
       this.cMenuItems = [];
@@ -640,6 +727,8 @@ export class NewGridComponent {
   mouseUp($event: MouseEvent) {
     //This is the mouseUp that is called no matter what is clicked on
     // TODO check for condition when a state was not waiting. If it was not waiting, then update the mechanism
+    this.isMouseDown = false;
+    this.synthesisClickMode = SynthesisClickMode.NORMAL;
     this.gridStates = gridStates.waiting;
     this.jointStates = jointStates.waiting;
     this.linkStates = linkStates.waiting;
@@ -663,12 +752,16 @@ export class NewGridComponent {
     // $event.preventDefault();
     // $event.stopPropagation();
     // this.disappearContext();
+    this.isMouseDown = true;
     this.startX = $event.pageX;
     this.startY = $event.pageY;
     // console.log(this.startX, this.startY);
     let joint1: RevJoint;
     let joint2: RevJoint;
     let link: RealLink;
+
+    const mousePosInSvg = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
+    this.mouseLocation = mousePosInSvg;
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
