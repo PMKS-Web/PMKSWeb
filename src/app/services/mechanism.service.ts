@@ -838,6 +838,10 @@ export class MechanismService {
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
+    this.activeObjService.selectedLink.forces.forEach(f => {
+      const forceIndex = this.forces.findIndex(force => force.id === f.id);
+      this.forces.splice(forceIndex, 1);
+    });
     this.links.splice(linkIndex, 1);
     this.updateMechanism();
     this.onMechUpdateState.next(3);
@@ -1376,8 +1380,12 @@ export class MechanismService {
       startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
       startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
     }
+    let maxNumber = 1;
+    if (this.forces.length !== 0) {
+      maxNumber = Math.max(...this.forces.map(f => parseInt(f.id.replace(/\D/g, '')))) + 1;
+    }
     const force = new Force(
-      'F' + (this.forces.length + 1).toString(),
+      'F' + maxNumber.toString(),
       this.activeObjService.selectedLink,
       startCoord,
       endCoord
