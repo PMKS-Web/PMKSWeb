@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { UrlGenerationService } from './url-generation.service';
 import { UrlProcessorService } from './url-processor.service';
 
@@ -20,7 +20,7 @@ export class SaveHistoryService {
 
   constructor(
     private urlGenerationService: UrlGenerationService,
-    private urlProcessorService: UrlProcessorService
+    private injector: Injector,
   ) { }
 
   /*
@@ -32,6 +32,8 @@ export class SaveHistoryService {
     * Update index to point to the new last state.
   */
   save() {
+
+    console.log("SAVE");
 
     // if the current state is not the last state in the history,
     // delete all states after the current state
@@ -57,8 +59,12 @@ export class SaveHistoryService {
   }
 
   private setMechanismToState(index: number) {
+
+
+    const urlProcessorService = this.injector.get(UrlProcessorService);
+
     this.index = index;
-    this.urlProcessorService.updateFromURL(this.history[this.index], false, false);
+    urlProcessorService.updateFromURL(this.history[this.index], false, false);
     console.log("update to state " + this.index + ": " + this.history[this.index])
   }
 

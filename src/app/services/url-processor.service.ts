@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { stringToBoolean, stringToFloat, stringToShape } from '../model/utils';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Bound, Link, Piston, RealLink } from '../model/link';
@@ -16,7 +16,7 @@ import { ActiveObjService } from './active-obj.service';
 })
 export class UrlProcessorService {
   constructor(
-    private mechanismSrv: MechanismService,
+    private injector: Injector,
     private settingsSrv: SettingsService,
     private svgGrid: SvgGridService,
     private activeObj: ActiveObjService
@@ -26,10 +26,11 @@ export class UrlProcessorService {
     const url = this.getURLContent();
 
     // update the mechanism from the url
-    this.updateFromURL(url);
+    this.updateFromURL(url, true, true, true);
 
     // initial save
-    //this.mechanismSrv.save();
+    // this causes a circular dependency
+    // this.mechanismSrv.save();
 
   }
 
@@ -43,8 +44,11 @@ export class UrlProcessorService {
   }
 
   // Decode the url and update mechanism
-  updateFromURL(url: string | null, resetSvgScale: boolean = true, updateSettings: boolean = true) {
+  updateFromURL(url: string | null, resetSvgScale: boolean = true, updateSettings: boolean = true, save: boolean = false) {
     
+
+    const mechanismSrv = this.injector.get(MechanismService);
+
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
     
@@ -52,19 +56,19 @@ export class UrlProcessorService {
     if (url !== null) {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(this.mechanismSrv, decoder, this.settingsSrv, this.activeObj);
+      const builder = new MechanismBuilder(mechanismSrv, decoder, this.settingsSrv, this.activeObj);
       builder.build(updateSettings);
 
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    this.mechanismSrv.updateMechanism();
+    mechanismSrv.updateMechanism(save);
 
     // animate the mechanism
-    if (this.mechanismSrv.mechanismTimeStep > 0) {
+    if (mechanismSrv.mechanismTimeStep > 0) {
       setTimeout(() => {
-        this.mechanismSrv.animate(this.mechanismSrv.mechanismTimeStep, false);
+        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
       }, 0);
     }
 
