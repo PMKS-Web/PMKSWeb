@@ -24,4 +24,5 @@ export enum BoolSetting {
     IS_SHOW_MINOR_GRID,
     IS_SHOW_ID,
     IS_SHOW_COM,
+    IS_FORCES,
 }

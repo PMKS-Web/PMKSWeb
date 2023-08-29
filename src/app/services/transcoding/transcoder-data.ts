@@ -7,6 +7,15 @@
 export enum JOINT_TYPE {PRISMATIC, REVOLUTE};
 export enum LINK_TYPE {REAL, PISTON};
 
+export enum ACTIVE_TYPE {JOINT = "J", LINK = "L", FORCE = "F", NOTHING = "N"};
+
+export class ActiveObjData {
+    constructor(
+        public type: ACTIVE_TYPE,
+        public id: string,
+    ) {}
+}
+
 export class JointData {
     constructor(
         public type: JOINT_TYPE,

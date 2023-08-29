@@ -47,6 +47,8 @@ export class SettingsPanelComponent {
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentObjectScaleSetting = SettingsService.objectScale;
 
+    console.log("start length", this.currentLengthUnit);
+
     this.settingsForm.patchValue({
       speed: this.currentSpeedSetting.toString(),
       objectScale: this.currentObjectScaleSetting.toString(),
@@ -158,9 +160,14 @@ export class SettingsPanelComponent {
       // ToolbarComponent.unit = this.getUnitStr(this.settingsService.lengthUnit.value);
       // NewGridComponent.sendNotification('Updated Global Units!');
     });
-    this.settingsForm.controls['lengthunit'].valueChanges.subscribe(() => {
-      this.settingsService.lengthUnit.next(this.currentLengthUnit);
-      this.mechanismSrv.updateMechanism();
+    this.settingsForm.controls['lengthunit'].valueChanges.subscribe((val) => {
+      let length: LengthUnit;
+      if (val === "0") length = LengthUnit.INCH;
+      else if (val === "1") length = LengthUnit.CM;
+      else length = LengthUnit.METER;
+      console.log(length);
+      this.settingsService.lengthUnit.next(length);
+      this.mechanismSrv.updateMechanism()
     });
     this.settingsForm.controls['showMajorGrid'].valueChanges.subscribe((val) => {
       this.settingsService.isShowMajorGrid.next(Boolean(val));

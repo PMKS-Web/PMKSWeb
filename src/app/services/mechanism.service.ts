@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Link, Piston, RealLink } from '../model/link';
 import { Force } from '../model/force';
@@ -29,6 +29,7 @@ import { SettingsService } from './settings.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { UrlProcessorService } from './url-processor.service';
+import { SaveHistoryService } from './save-history.service';
 import { NumberUnitParserService } from './number-unit-parser.service';
 import { PositionSolver } from '../model/mechanism/position-solver';
 import { ColorService } from './color.service';
@@ -62,6 +63,7 @@ export class MechanismService {
   constructor(
     public gridUtils: GridUtilsService,
     public activeObjService: ActiveObjService,
+    private injector: Injector,
     private settingsService: SettingsService,
     private nup: NumberUnitParserService
   ) {}
@@ -93,7 +95,12 @@ export class MechanismService {
     return this.forces;
   }
 
-  updateMechanism() {
+  isAnimating(): boolean {
+    return this.mechanismTimeStep > 0 || this.settingsService.animating.getValue();
+  }
+
+  updateMechanism(save: boolean = false) {
+    console.log('update mechanism', save);
     // console.log(this.mechanisms[0]);
     //There are multiple mechanisms since there was a plan to support multiple mechanisms
     //You can treat this as a single mechanism for now at index 0
@@ -145,6 +152,15 @@ export class MechanismService {
       }
     });
     this.activeObjService.fakeUpdateSelectedObj();
+
+    if (save) {
+      this.save();
+    }
+  }
+
+  save() {
+    const saveHistoryService = this.injector.get(SaveHistoryService);
+    saveHistoryService.save()
   }
 
   updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
@@ -297,7 +313,7 @@ export class MechanismService {
     } else if (joint.isWelded) {
       this.unweldSelectedJoint();
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   private createNewCompoundLink(linksToWeld: RealLink[]): RealLink {
@@ -714,7 +730,7 @@ export class MechanismService {
       (f) => f.id === this.activeObjService.selectedForce.id
     );
     this.forces.splice(forceIndex, 1);
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   changeForceDirection() {
@@ -746,7 +762,7 @@ export class MechanismService {
       this.activeObjService.selectedForce.stroke = 'black';
       this.activeObjService.selectedForce.fill = 'black';
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   addJointAtCOM() {
@@ -799,7 +815,7 @@ export class MechanismService {
     this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     this.joints.push(newJoint);
     this.onMechUpdateState.next(3);
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   deleteLink() {
@@ -849,7 +865,7 @@ export class MechanismService {
       this.forces.splice(forceIndex, 1);
     });
     this.links.splice(linkIndex, 1);
-    this.updateMechanism();
+    this.updateMechanism(true);
     this.onMechUpdateState.next(3);
   }
 
@@ -897,7 +913,7 @@ export class MechanismService {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
       this.activeObjService.selectedJoint.input = false;
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
   }
 
   adjustInput() {
@@ -986,7 +1002,7 @@ export class MechanismService {
 
       this.activeObjService.selectedJoint.ground = false;
     }
-    this.updateMechanism();
+    this.updateMechanism(true);
     console.log(this.joints);
     console.log(this.links);
   }

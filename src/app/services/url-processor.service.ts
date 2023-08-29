@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { stringToBoolean, stringToFloat, stringToShape } from '../model/utils';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Bound, Link, Piston, RealLink } from '../model/link';
@@ -9,47 +9,29 @@ import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
 import { SvgGridService } from './svg-grid.service';
+import { ActiveObjService } from './active-obj.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UrlProcessorService {
   constructor(
-    mechanismSrv: MechanismService,
-    settingsSrv: SettingsService,
-    private svgGrid: SvgGridService
+    private injector: Injector,
+    private settingsSrv: SettingsService,
+    private svgGrid: SvgGridService,
+    private activeObj: ActiveObjService
   ) {
-    // the transcoder is responsible for decoding the url into a mechanism
-    const decoder = new StringTranscoder();
 
     // the content part of the url (the part after the ?)
     const url = this.getURLContent();
 
-    // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
-    if (url !== null) {
-      console.log('decoded url: ' + url);
-      decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(mechanismSrv, decoder, settingsSrv);
-      builder.build();
+    // update the mechanism from the url
+    this.updateFromURL(url, true, true, true);
 
-      //Now set the URL back to the original URL without the query string.
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    // initial save
+    // this causes a circular dependency
+    // this.mechanismSrv.save();
 
-    mechanismSrv.updateMechanism();
-
-    // animate the mechanism
-    if (mechanismSrv.mechanismTimeStep > 0) {
-      setTimeout(() => {
-        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
-      }, 0);
-    }
-
-    //After the mechanism is built, scale the mechanism to fit the screen
-    //Do this after a 1 sec timeout to allow the mechanism to be built first.
-    setTimeout(() => {
-      this.svgGrid.scaleToFitLinkage();
-    }, 1000);
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
@@ -60,4 +42,44 @@ export class UrlProcessorService {
     if (index === -1) return null;
     return fullURL.substring(fullURL.indexOf('?') + 1);
   }
+
+  // Decode the url and update mechanism
+  updateFromURL(url: string | null, resetSvgScale: boolean = true, updateSettings: boolean = true, save: boolean = false) {
+    
+
+    const mechanismSrv = this.injector.get(MechanismService);
+
+    // the transcoder is responsible for decoding the url into a mechanism
+    const decoder = new StringTranscoder();
+    
+    // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
+    if (url !== null) {
+      console.log('decoded url: ' + url);
+      decoder.decodeURL(url as string);
+      const builder = new MechanismBuilder(mechanismSrv, decoder, this.settingsSrv, this.activeObj);
+      builder.build(updateSettings);
+
+      //Now set the URL back to the original URL without the query string.
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    mechanismSrv.updateMechanism(save);
+
+    // animate the mechanism
+    if (mechanismSrv.mechanismTimeStep > 0) {
+      setTimeout(() => {
+        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
+      }, 0);
+    }
+
+    if (resetSvgScale) {
+      //After the mechanism is built, scale the mechanism to fit the screen
+      //Do this after a 1 sec timeout to allow the mechanism to be built first.
+      setTimeout(() => {
+        this.svgGrid.scaleToFitLinkage();
+      }, 1000);
+    }
+    
+  }
+
 }

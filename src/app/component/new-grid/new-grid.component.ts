@@ -37,6 +37,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TouchscreenWarningComponent } from '../MODALS/touchscreen-warning/touchscreen-warning.component';
 import * as util from 'util';
 import { Line } from '../../model/line';
+import { SaveHistoryService } from 'src/app/services/save-history.service';
 import { SynthesisBuilderService } from 'src/app/services/synthesis/synthesis-builder.service';
 import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 import { SynthesisPose } from 'src/app/services/synthesis/synthesis-util';
@@ -73,6 +74,7 @@ export class NewGridComponent {
     public synthesisBuilder: SynthesisBuilderService,
     private snackBar: MatSnackBar,
     public dialog: MatDialog,
+    public saveHistoryService: SaveHistoryService,
     private colorService: ColorService,
     public nup: NumberUnitParserService
   ) {
@@ -93,6 +95,9 @@ export class NewGridComponent {
   private jointStates: jointStates = jointStates.waiting;
   private linkStates: linkStates = linkStates.waiting;
   private forceStates: forceStates = forceStates.waiting;
+
+  private mouseWasDragged: boolean = false;
+  private modifyMechanismWhileDrag: boolean = false;
 
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
@@ -538,6 +543,7 @@ export class NewGridComponent {
     this.mouseLocationRaw = new Coord($event.clientX, $event.clientY);
     this.mouseLocation = mousePosInSvg;
 
+    this.mouseWasDragged = true;
     let deltaMouseX = this.mouseLocation.x - this.lastMouseLocation.x;
     let deltaMouseY = this.mouseLocation.y - this.lastMouseLocation.y;
 
@@ -603,6 +609,7 @@ export class NewGridComponent {
           mousePosInSvg
         );
         this.mechanismSrv.updateMechanism();
+        this.modifyMechanismWhileDrag = true;
         //So that the panel values update continously
         this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
         if (this.mechanismSrv.mechanisms[0].joints[0].length !== 0) {
@@ -642,6 +649,7 @@ export class NewGridComponent {
         this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
+        this.modifyMechanismWhileDrag = true;
         break;
       case forceStates.draggingStart:
         if (AnimationBarComponent.animate) {
@@ -694,6 +702,7 @@ export class NewGridComponent {
         }
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
+        this.modifyMechanismWhileDrag = true;
         break;
     }
   }
@@ -741,6 +750,16 @@ export class NewGridComponent {
     }
     this.mechanismSrv.showPathHolder = false;
     // this.activeObjService.updateSelectedObj(thing);
+
+    console.log(this.jointStates);
+
+    // create a save if, while dragging, mechanism was updated
+    if (this.mouseWasDragged && this.modifyMechanismWhileDrag) {
+      this.mechanismSrv.save()
+    }
+
+    this.mouseWasDragged = false;
+    this.modifyMechanismWhileDrag = false;
   }
 
   mouseDown($event: MouseEvent) {
@@ -800,7 +819,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint1, joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -821,7 +840,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint2]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.jointStates = jointStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -876,7 +895,7 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.activeObjService.selectedLink.d =
                   this.activeObjService.selectedLink.getPathString();
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -888,7 +907,7 @@ export class NewGridComponent {
                   new Coord($event.clientX, $event.clientY)
                 );
                 this.mechanismSrv.createForce(startCoord, endCoord);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.forceStates = forceStates.waiting;
                 this.forceTempHolderSVG.style.display = 'none';
@@ -921,7 +940,7 @@ export class NewGridComponent {
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToJoints([joint1]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 // PositionSolver.setUpSolvingForces(link.forces); // needed to determine force location when dragging a joint
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
@@ -963,7 +982,7 @@ export class NewGridComponent {
                 this.activeObjService.prevSelectedJoint.links.push(link);
                 joint2.links.push(link);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.jointStates = jointStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
@@ -1001,7 +1020,7 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.id.concat(joint1.id);
                 this.mechanismSrv.mergeToJoints([joint1]);
                 this.mechanismSrv.mergeToLinks([link]);
-                this.mechanismSrv.updateMechanism();
+                this.mechanismSrv.updateMechanism(true);
                 this.gridStates = gridStates.waiting;
                 this.linkStates = linkStates.waiting;
                 this.jointTempHolderSVG.style.display = 'none';
