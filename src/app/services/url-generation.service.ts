@@ -174,6 +174,8 @@ export class UrlGenerationService {
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
+    
+    encoder.addBoolSetting(BoolSetting.IS_FORCES, this.settings.isForces.getValue());
 
     let type: ACTIVE_TYPE;
     let exists = true;

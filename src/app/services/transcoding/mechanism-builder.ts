@@ -219,7 +219,7 @@ export class MechanismBuilder {
         this.transcoder.getEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit)
       );
       this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
-      this.settings.isForces.next(this.transcoder.getBoolSetting(BoolSetting.IS_GRAVITY));
+      this.settings.isForces.next(this.transcoder.getBoolSetting(BoolSetting.IS_FORCES));
       this.settings.inputSpeed.next(this.transcoder.getIntSetting(IntSetting.INPUT_SPEED));
       this.settings.animating.next(this.transcoder.getBoolSetting(BoolSetting.ANIMATING));
       this.settings.isShowMajorGrid.next(
