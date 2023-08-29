@@ -148,16 +148,22 @@ export class MechanismService {
   }
 
   updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
+    //Scale the linkage based on teh units
     // For each joint, move the joint
     this.joints.forEach((joint) => {
-      this.gridUtils.dragJoint(
-        joint as RealJoint,
-        new Coord(
-          this.nup.convertLength(joint.x, fromUnits, toUnits),
-          this.nup.convertLength(joint.y, fromUnits, toUnits)
-        )
-      );
+      //If joint is of type Rev joint only, move the joint
+      //Prist joints are handled by drag joints already
+      if (joint instanceof RevJoint) {
+        this.gridUtils.dragJoint(
+          joint as RealJoint,
+          new Coord(
+            this.nup.convertLength(joint.x, fromUnits, toUnits),
+            this.nup.convertLength(joint.y, fromUnits, toUnits)
+          )
+        );
+      }
     });
+    this.updateMechanism();
     // this.settingsService.lengthUnit.subscribe((val) => {
     //For each jo
     // let unit = this.settingsService.lengthUnit.value;
@@ -838,8 +844,8 @@ export class MechanismService {
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
-    this.activeObjService.selectedLink.forces.forEach(f => {
-      const forceIndex = this.forces.findIndex(force => force.id === f.id);
+    this.activeObjService.selectedLink.forces.forEach((f) => {
+      const forceIndex = this.forces.findIndex((force) => force.id === f.id);
       this.forces.splice(forceIndex, 1);
     });
     this.links.splice(linkIndex, 1);
@@ -1382,7 +1388,7 @@ export class MechanismService {
     }
     let maxNumber = 1;
     if (this.forces.length !== 0) {
-      maxNumber = Math.max(...this.forces.map(f => parseInt(f.id.replace(/\D/g, '')))) + 1;
+      maxNumber = Math.max(...this.forces.map((f) => parseInt(f.id.replace(/\D/g, '')))) + 1;
     }
     const force = new Force(
       'F' + maxNumber.toString(),
