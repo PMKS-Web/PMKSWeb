@@ -55,6 +55,7 @@ import {
 } from 'src/app/services/transcoding/stored-settings';
 import { UrlGenerationService } from 'src/app/services/url-generation.service';
 import { SaveHistoryService } from 'src/app/services/save-history.service';
+import { SelectedTabService, TabID } from 'src/app/selected-tab.service';
 
 const parseCSV = require('papaparse');
 
@@ -107,7 +108,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private urlProcessorService: UrlProcessorService,
     private saveHistoryService: SaveHistoryService,
     public dialog: MatDialog,
-    public settingsService: SettingsService
+    public settingsService: SettingsService,
+    private selectedTab: SelectedTabService
   ) {
     ToolbarComponent.instance = this;
   }
@@ -269,6 +271,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     // disable undo if animating
     if (this.mechanismService.isAnimating()) return false;
 
+    // disable undo if on the synthesis tab
+    if (this.selectedTab.getCurrentTab() === TabID.SYNTHESIZE) return false;
+
     return this.saveHistoryService.canUndo();
   }
 
@@ -281,6 +286,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
     // disable redo if animating
     if (this.mechanismService.isAnimating()) return false;
+
+    // disable redo if on the synthesis tab
+    if (this.selectedTab.getCurrentTab() === TabID.SYNTHESIZE) return false;
 
     return this.saveHistoryService.canRedo();
   }
