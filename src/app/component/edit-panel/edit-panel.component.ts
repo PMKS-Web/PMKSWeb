@@ -563,7 +563,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             },
             { emitEvent: false }
           );
-          this.settingsService.globalUnit.next(this.lengthUnit + 30);
 
           this.disableAndEnableLinkFields();
           setTimeout(() => {
