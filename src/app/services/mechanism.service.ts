@@ -95,6 +95,10 @@ export class MechanismService {
     return this.forces;
   }
 
+  isAnimating(): boolean {
+    return this.mechanismTimeStep > 0 || this.settingsService.animating.getValue();
+  }
+
   updateMechanism(save: boolean = false) {
     console.log('update mechanism', save);
     // console.log(this.mechanisms[0]);

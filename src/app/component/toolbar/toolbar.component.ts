@@ -265,6 +265,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   canUndo(): boolean {
+
+    // disable undo if animating
+    if (this.mechanismService.isAnimating()) return false;
+
     return this.saveHistoryService.canUndo();
   }
 
@@ -274,6 +278,10 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   }
 
   canRedo(): boolean {
+
+    // disable redo if animating
+    if (this.mechanismService.isAnimating()) return false;
+
     return this.saveHistoryService.canRedo();
   }
 }
