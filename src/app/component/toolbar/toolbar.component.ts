@@ -583,7 +583,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     document.body.removeChild(toolman);
 
     NewGridComponent.sendNotification(
-      '[WARNING: Save, Open, and Copy features are under development. They will NOT reliably save your linkage! Do not close this tab if you want to come back to this.]  URL copied. If you make additional changes, copy the URL again.'
+      'Mechanism URL copied. If you make additional changes, copy the URL again.'
     );
   }
 
