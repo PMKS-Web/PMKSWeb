@@ -20,6 +20,10 @@ export class SynthesisBuilderService {
 
   public constants: SynthesisConstants;
 
+  // whether the mechanism has been modified since last synthesis
+  // if so, when switching back to edit mode, save state
+  public modifiedMechanism: boolean = false;
+
   _COR: COR;
   _length: number; // length of the end-effector link
   _selectedPose: number; // currently selected pose (1-3)

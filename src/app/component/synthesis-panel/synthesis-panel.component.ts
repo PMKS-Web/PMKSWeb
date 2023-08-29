@@ -312,6 +312,9 @@ export class SynthesisPanelComponent implements OnInit {
     this.mechanismSrv.mechanismTimeStep = 0;
     this.mechanismSrv.updateMechanism();
 
+    // update flag to indicate that mechanism has been modified since last synthesis
+    this.synthesisBuilder.modifiedMechanism = true;
+
     let posCoords = [
       pose1_coord1,
       pose1_coord2,
