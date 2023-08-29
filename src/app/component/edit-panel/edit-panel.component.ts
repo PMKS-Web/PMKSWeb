@@ -563,7 +563,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             },
             { emitEvent: false }
           );
-          this.settingsService.globalUnit.next(this.lengthUnit + 30);
 
           this.disableAndEnableLinkFields();
           setTimeout(() => {
@@ -713,6 +712,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   isWeldable(joint: RealJoint) {
     //If there are at least two links that share this joint, return true
+    if (!this.settingsService.isWeldedJointsEnabled.getValue()) return false;
     return joint.canBeWelded();
   }
 

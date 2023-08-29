@@ -18,6 +18,9 @@ export class SettingsService {
   isShowMajorGrid = new BehaviorSubject(true);
   isShowMinorGrid = new BehaviorSubject(true);
 
+  isWeldedJointsEnabled = new BehaviorSubject(false);
+  isEquationsEnabled = new BehaviorSubject(false);
+
   isShowID = new BehaviorSubject(false);
   isShowCOM = new BehaviorSubject(false);
   tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit

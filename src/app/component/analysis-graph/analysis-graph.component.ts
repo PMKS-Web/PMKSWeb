@@ -5,38 +5,33 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChange,
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import {
-  ChartComponent,
+  ApexAnnotations,
   ApexAxisChartSeries,
-  ApexChart,
-  ApexXAxis,
-  ApexYAxis,
   ApexDataLabels,
-  ApexGrid,
+  ApexFill,
+  ApexLegend,
+  ApexMarkers,
   ApexStroke,
   ApexTitleSubtitle,
-  ApexMarkers,
-  ApexFill,
   ApexTooltip,
-  ApexAnnotations,
-  ApexLegend,
+  ApexXAxis,
+  ApexYAxis,
+  ChartComponent,
 } from 'ng-apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { ForceSolver } from 'src/app/model/mechanism/force-solver';
-import { AngleUnit, crossProduct, LengthUnit, roundNumber } from '../../model/utils';
+import { AngleUnit, GlobalUnit, LengthUnit, roundNumber } from '../../model/utils';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
-import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { ActiveObjService } from '../../services/active-obj.service';
-import { NewGridComponent } from '../new-grid/new-grid.component';
 
 export type ChartOptions = {
   annotations: ApexAnnotations;
@@ -75,7 +70,7 @@ export type ChartOptions = {
           opacity: 1,
         })
       ),
-      transition('* => *', [animate('0.3s ease-in-out')]),
+      transition('* => *', [animate('0.1s ease-in-out')]),
     ]),
   ],
 })
@@ -234,23 +229,23 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     // this.ngOnDestroy();
     // this.ngOnInit();
     // this.ngAfterViewInit();
-    ForceSolver.resetVariables();
-    KinematicsSolver.resetVariables();
-    ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
-    ForceSolver.determineForceAnalysis(
-        this.mechanismService.joints,
-        this.mechanismService.links,
-        'static',
-        ToolbarComponent.gravity,
-        ToolbarComponent.unit
-    );
-
-    KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
-    KinematicsSolver.determineKinematics(
-        this.mechanismService.joints,
-        this.mechanismService.links,
-        ToolbarComponent.inputAngularVelocity
-    );
+    // ForceSolver.resetVariables();
+    // KinematicsSolver.resetVariables();
+    // ForceSolver.determineDesiredLoopLettersForce(this.mechanismService.mechanisms[0].requiredLoops);
+    // ForceSolver.determineForceAnalysis(
+    //     this.mechanismService.joints,
+    //     this.mechanismService.links,
+    //     'static',
+    //     this.settingsService.isGravity.value,
+    //     unitStr
+    // );
+    //
+    // KinematicsSolver.requiredLoops = this.mechanismService.mechanisms[0].requiredLoops;
+    // KinematicsSolver.determineKinematics(
+    //     this.mechanismService.joints,
+    //     this.mechanismService.links,
+    //     ToolbarComponent.inputAngularVelocity
+    // );
     this.updateChartData();
   }
 
@@ -272,7 +267,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   ngAfterViewInit(): void {
     //Delay this call by 1ms to make sure the chart is initialized
     setTimeout(() => {
-      this.chart.clearAnnotations();
+      // this.chart.clearAnnotations();
       if (this.numberOfSeries === 3) {
         this.seriesCheckboxForm.patchValue({
           x: false,
@@ -332,6 +327,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           this.noDataSelected = !data.z;
           break;
       }
+
+      this.showAnnotations(this.mechanismService.mechanismTimeStep);
     });
 
     this.settingsService.angleUnit.subscribe((t) => {
@@ -381,91 +378,100 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           break;
       }
     });
+
     this.mechPositionSub = this.mechanismService.onMechPositionChange.subscribe((timeIndex) => {
-      if (
-        this.seriesCheckboxForm.value.x ||
-        this.seriesCheckboxForm.value.y ||
-        this.seriesCheckboxForm.value.z
-      ) {
-        this.chart.clearAnnotations();
-        this.chart.addXaxisAnnotation(
-          {
-            x: timeIndex,
-            borderColor: '#313aa7',
-            label: {
-              text: 'T= ' + String((timeIndex / 62.5).toFixed(2)),
-              orientation: 'horizontal',
-              offsetY: -20,
-            },
-          },
-          false
-        );
-      }
-
-      const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
-      const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
-      const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
-
-      this.seriesCheckboxForm.value.x &&
-        xSeries &&
-        this.chart.addPointAnnotation(
-          {
-            x: timeIndex,
-            y: xSeries.data[timeIndex],
-            marker: {
-              strokeColor: '#313aa7',
-              shape: 'square',
-            },
-            label: {
-              borderColor: '#313aa7',
-              fillColor: '#000000',
-              orientation: 'horizontal',
-              text: String(xSeries.data[timeIndex]),
-            },
-          },
-          false
-        );
-
-      this.seriesCheckboxForm.value.y &&
-        ySeries &&
-        this.chart.addPointAnnotation(
-          {
-            x: timeIndex,
-            y: ySeries.data[timeIndex],
-            marker: {
-              strokeColor: '#f42a2a',
-              shape: 'square',
-            },
-            label: {
-              borderColor: '#f42a2a',
-              fillColor: '#000000',
-              orientation: 'horizontal',
-              text: String(ySeries.data[timeIndex]),
-            },
-          },
-          false
-        );
-
-      this.seriesCheckboxForm.value.z &&
-        zSeries &&
-        this.chart.addPointAnnotation(
-          {
-            x: timeIndex,
-            y: zSeries.data[timeIndex],
-            marker: {
-              strokeColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
-              shape: 'square',
-            },
-            label: {
-              borderColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
-              fillColor: '#000000',
-              orientation: 'horizontal',
-              text: String(zSeries.data[timeIndex]),
-            },
-          },
-          false
-        );
+      this.showAnnotations(timeIndex);
     });
+  }
+
+  private showAnnotations(timeIndex: number) {
+    if (timeIndex === 0) {
+      this.chart.clearAnnotations();
+      return;
+    }
+    if (
+      this.seriesCheckboxForm.value.x ||
+      this.seriesCheckboxForm.value.y ||
+      this.seriesCheckboxForm.value.z
+    ) {
+      this.chart.clearAnnotations();
+      this.chart.addXaxisAnnotation(
+        {
+          x: timeIndex,
+          borderColor: '#000000',
+          label: {
+            text: 'T= ' + String((timeIndex / 62.5).toFixed(2)),
+            orientation: 'horizontal',
+            offsetY: -20,
+          },
+        },
+        false
+      );
+    }
+
+    const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
+    const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
+    const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
+
+    this.seriesCheckboxForm.value.x &&
+      xSeries &&
+      this.chart.addPointAnnotation(
+        {
+          x: timeIndex,
+          y: xSeries.data[timeIndex],
+          marker: {
+            strokeColor: '#313aa7',
+            shape: 'square',
+          },
+          label: {
+            borderColor: '#313aa7',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(xSeries.data[timeIndex]),
+          },
+        },
+        false
+      );
+
+    this.seriesCheckboxForm.value.y &&
+      ySeries &&
+      this.chart.addPointAnnotation(
+        {
+          x: timeIndex,
+          y: ySeries.data[timeIndex],
+          marker: {
+            strokeColor: '#f42a2a',
+            shape: 'square',
+          },
+          label: {
+            borderColor: '#f42a2a',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(ySeries.data[timeIndex]),
+          },
+        },
+        false
+      );
+
+    this.seriesCheckboxForm.value.z &&
+      zSeries &&
+      this.chart.addPointAnnotation(
+        {
+          x: timeIndex,
+          y: zSeries.data[timeIndex],
+          marker: {
+            strokeColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+            shape: 'square',
+          },
+          label: {
+            borderColor: this.numberOfSeries !== 3 ? '#313aa7' : '#fdb50e',
+            fillColor: '#000000',
+            orientation: 'horizontal',
+            text: String(zSeries.data[timeIndex]),
+          },
+        },
+        false
+      );
   }
 
   ngOnDestroy(): void {
@@ -491,9 +497,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         return 'm';
       default:
         if (typeof unit === typeof LengthUnit) {
-          return 'broken';
+          return 'brokenLength';
         } else {
-          return 'broken';
+          return 'brokenAngle';
         }
     }
   }
@@ -510,16 +516,16 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     const seriesData = [];
     let posLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + ')';
     let velLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s)';
-    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s^2)';
+    let accLinUnit = '(' + this.getUnitStr(this.settingsService.lengthUnit.value) + '/s²)';
     const posAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + ')';
     // const posAngUnit = '(rad)';
     const velAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s)';
-    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s^2)';
-    if (ToolbarComponent.unit === 'm') {
-      posLinUnit = 'm';
-      velLinUnit = 'm/s';
-      accLinUnit = 'm/s^2';
-    }
+    const accAngUnit = '(' + this.getUnitStr(this.settingsService.angleUnit.value) + '/s²)';
+    // if (this.settingsService.globalUnit.value === GlobalUnit.METRIC) {
+    //   posLinUnit = '(m)';
+    //   velLinUnit = '(m/s)';
+    //   accLinUnit = '(m/s²)';
+    // }
     switch (analysis) {
       case 'force':
         switch (mechProp) {
@@ -711,6 +717,21 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     let y = 0;
     let z = 0;
     const categories: string[] = [];
+    let unitStr = 'cm';
+    switch (this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'cm';
+        break;
+    }
     this.mechanismService.mechanisms[0].joints.forEach((_, index) => {
       switch (mechProp) {
         case 'Input Torque':
@@ -727,8 +748,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].joints[index],
             this.mechanismService.mechanisms[0].links[index],
             analysisType,
-            ToolbarComponent.gravity,
-            ToolbarComponent.unit
+            this.settingsService.isForces.value,
+            unitStr
           );
           datum_X.push(roundNumber(ForceSolver.unknownVariableTorque, 3));
           break;
@@ -745,8 +766,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].joints[index],
             this.mechanismService.mechanisms[0].links[index],
             analysisType,
-            ToolbarComponent.gravity,
-            ToolbarComponent.unit
+            this.settingsService.isForces.value,
+            unitStr
           );
           x = ForceSolver.unknownVariableForcesMap.get(mechPart)![0];
           y = ForceSolver.unknownVariableForcesMap.get(mechPart)![1];

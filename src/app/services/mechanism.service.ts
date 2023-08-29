@@ -18,6 +18,7 @@ import {
   point_on_line_segment_closest_to_point,
   getDistance,
   distance_points,
+  GlobalUnit,
 } from '../model/utils';
 import { BehaviorSubject, connect, Subject } from 'rxjs';
 import { GridUtilsService } from './grid-utils.service';
@@ -67,6 +68,21 @@ export class MechanismService {
     private nup: NumberUnitParserService
   ) {}
 
+  // delete mechanism and reset
+  resetMechanism() {
+    this.joints = [];
+    this.links = [];
+    this.forces = [];
+    this.mechanismTimeStep = 0;
+    this.updateMechanism();
+    this.onMechPositionChange.next(3);
+  }
+
+  // whether there is a valid mechanism
+  exists(): boolean {
+    return this.joints.length > 0;
+  }
+
   getJoints() {
     return this.joints;
   }
@@ -86,9 +102,26 @@ export class MechanismService {
     //You can treat this as a single mechanism for now at index 0
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
-    let inputAngularVelocity = ToolbarComponent.inputAngularVelocity;
-    if (ToolbarComponent.clockwise) {
-      inputAngularVelocity = ToolbarComponent.inputAngularVelocity * -1;
+    let inputAngularVelocity = this.settingsService.inputSpeed.value;
+    if (this.settingsService.isInputCW.value) {
+      inputAngularVelocity = inputAngularVelocity * -1;
+    }
+    let unitStr = 'cm';
+    switch (this.settingsService.globalUnit.value) {
+      case GlobalUnit.ENGLISH:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.METRIC:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.NULL:
+        unitStr = 'cm';
+        break;
+      case GlobalUnit.SI:
+        unitStr = 'cm';
+        break;
+      default:
+        break;
     }
     this.mechanisms.push(
       //This creates a new mechanism with the current state of the joints, links, forces, and ics
@@ -98,8 +131,8 @@ export class MechanismService {
         this.links,
         this.forces,
         this.ics,
-        ToolbarComponent.gravity,
-        ToolbarComponent.unit,
+        this.settingsService.isForces.value,
+        unitStr,
         inputAngularVelocity
       )
     );
@@ -127,16 +160,22 @@ export class MechanismService {
   }
 
   updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
+    //Scale the linkage based on teh units
     // For each joint, move the joint
     this.joints.forEach((joint) => {
-      this.gridUtils.dragJoint(
-        joint as RealJoint,
-        new Coord(
-          this.nup.convertLength(joint.x, fromUnits, toUnits),
-          this.nup.convertLength(joint.y, fromUnits, toUnits)
-        )
-      );
+      //If joint is of type Rev joint only, move the joint
+      //Prist joints are handled by drag joints already
+      if (joint instanceof RevJoint) {
+        this.gridUtils.dragJoint(
+          joint as RealJoint,
+          new Coord(
+            this.nup.convertLength(joint.x, fromUnits, toUnits),
+            this.nup.convertLength(joint.y, fromUnits, toUnits)
+          )
+        );
+      }
     });
+    this.updateMechanism();
     // this.settingsService.lengthUnit.subscribe((val) => {
     //For each jo
     // let unit = this.settingsService.lengthUnit.value;
@@ -817,6 +856,10 @@ export class MechanismService {
         otherJoint.connectedJoints.splice(otherDesiredJointIndex, 1);
       }
     }
+    this.activeObjService.selectedLink.forces.forEach((f) => {
+      const forceIndex = this.forces.findIndex((force) => force.id === f.id);
+      this.forces.splice(forceIndex, 1);
+    });
     this.links.splice(linkIndex, 1);
     this.updateMechanism(true);
     this.onMechUpdateState.next(3);
@@ -910,14 +953,14 @@ export class MechanismService {
       const prismaticJointId = this.determineNextLetter();
       const inputJointIndex = this.findInputJointIndex();
       const connectedJoints: Joint[] = [this.activeObjService.selectedJoint];
-      this.joints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        if (j.ground) {
-          connectedJoints.push(j);
-        }
-      });
+      // this.joints.forEach((j) => {
+      //   if (!(j instanceof RealJoint)) {
+      //     return;
+      //   }
+      //   if (j.ground) {
+      //     connectedJoints.push(j);
+      //   }
+      // });
       const prisJoint = new PrisJoint(
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
@@ -1172,6 +1215,9 @@ export class MechanismService {
       if (!(l instanceof RealLink)) {
         return;
       }
+      if (l.subset.length === 0) {
+        return;
+      }
       let idSubs: string[] = [];
       l.subset.forEach(
         (s) => idSubs.push(s.id)
@@ -1352,8 +1398,12 @@ export class MechanismService {
       startCoord.x = this.activeObjService.selectedLink.joints[0].x + t * lineVector.x;
       startCoord.y = this.activeObjService.selectedLink.joints[0].y + t * lineVector.y;
     }
+    let maxNumber = 1;
+    if (this.forces.length !== 0) {
+      maxNumber = Math.max(...this.forces.map((f) => parseInt(f.id.replace(/\D/g, '')))) + 1;
+    }
     const force = new Force(
-      'F' + (this.forces.length + 1).toString(),
+      'F' + maxNumber.toString(),
       this.activeObjService.selectedLink,
       startCoord,
       endCoord

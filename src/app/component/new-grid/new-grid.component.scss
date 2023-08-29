@@ -30,6 +30,10 @@
     stroke: mat.get-color-from-palette($primary-palette, 500);
   }
 
+  #hibox {
+    opacity: 0;
+  }
+
   .animated {
     transition: transform 0.3s ease;
   }

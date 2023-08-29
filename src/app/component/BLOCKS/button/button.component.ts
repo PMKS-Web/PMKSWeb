@@ -11,6 +11,8 @@ export class ButtonComponent {
 
   @Input() icon: string | undefined;
   @Input() click!: () => void;
+  @Input() color: string = 'primary';
 
   @Input() customIcon: string | undefined;
+  @Input() disabled: boolean = false;
 }

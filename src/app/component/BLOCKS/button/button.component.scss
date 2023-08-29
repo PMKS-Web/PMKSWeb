@@ -25,18 +25,45 @@
       flex: 10 0 auto;
     }
 
-    border-color: mat.get-color-from-palette($primary-palette, 500) !important;
 
-    mat-icon {
-      svg {
-        path {
-          //fill: rgba(0, 0, 0, 0.6);
-          //fill: white;
-          //Indigo
+    //If not disabled
+    &:not([disabled]) {
+
+      &.warn > mat-icon > svg > path {
+        fill: #F44336;
+      }
+
+      border-color: #F44336;
+
+      &:not(.warn) {
+        border-color: mat.get-color-from-palette($primary-palette, 500) !important;
+
+        mat-icon > svg > path {
           fill: mat.get-color-from-palette($primary-palette, 500);
-          //fill: #F44336;
+        }
+
+      }
+
+
+    }
+
+
+    &:disabled {
+      //background-color: grey;
+      //cursor: not-allowed;
+      mat-icon {
+        svg {
+          path {
+            //fill: rgba(0, 0, 0, 0.6);
+            //fill: white;
+            //Indigo
+            fill: grey;
+            //fill: #F44336;
+          }
         }
       }
     }
+
+
   }
 }

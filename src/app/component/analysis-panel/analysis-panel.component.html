@@ -66,7 +66,7 @@
     [warning]='true'
     [expanded]='false'
     id='placeholderContainer'
-    *ngIf="this.activeSrv.objType == 'Grid' && this.mechanismService.oneValidMechanismExists()"
+    *ngIf="(this.activeSrv.objType == 'Grid' || this.activeSrv.objType == 'Nothing') && this.mechanismService.oneValidMechanismExists()"
   >
     <title-block alwaysShown icon='expand_more' description='Select a part of the linkage to analyze it.'>Analysis
       Help
@@ -257,8 +257,8 @@
     id='analysis-panel'
     *ngIf="validMechanisms() && this.activeSrv.objType == 'Link'"
   >
-    <title-block icon='expand_less'
-                 description='The input speed is set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
+    <title-block
+      description='The input speed is set to {{settingsService.inputSpeed.value.toFixed(2)}} RPM in
       the {{settingsService.isInputCW ? "clockwise" : "counter-clockwise"}} direction. This can be changed in the
     settings panel.'>
       Kinematic Analysis for Link {{this.activeSrv.selectedLink.name}}

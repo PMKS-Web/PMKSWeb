@@ -12,6 +12,8 @@ import { NumberUnitParserService } from '../../services/number-unit-parser.servi
 import { Coord } from '../../model/coord';
 import { MatDialog } from '@angular/material/dialog';
 import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
+import { EnableWeldedComponent } from '../MODALS/enable-welded/enable-welded.component';
+import { EnableEquationsComponent } from '../MODALS/enable-equations/enable-equations.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -70,6 +72,7 @@ export class SettingsPanelComponent {
       this.mechanismSrv.links.forEach((link: Link) => {
         (link as RealLink).reComputeDPath();
       });
+
       this.mechanismSrv.updateMechanism();
     });
 
@@ -78,8 +81,9 @@ export class SettingsPanelComponent {
 
   onChanges(): void {
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
-      this.rotateDirection = String(val) === '0' ? true : false;
+      this.rotateDirection = String(val) === '0';
       this.settingsService.isInputCW.next(this.rotateDirection);
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['speed'].invalid) {
@@ -88,6 +92,7 @@ export class SettingsPanelComponent {
         this.currentSpeedSetting = Number(val);
         this.settingsService.inputSpeed.next(this.currentSpeedSetting);
       }
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['objectScale'].invalid) {
@@ -96,10 +101,12 @@ export class SettingsPanelComponent {
         this.currentObjectScaleSetting = Number(val);
         SettingsService._objectScale.next(this.currentObjectScaleSetting);
       }
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angleUnit.next(this.currentAngleUnit);
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
@@ -145,6 +152,7 @@ export class SettingsPanelComponent {
 
       //Update graphs with new units
       this.mechanismSrv.onMechUpdateState.next(2);
+      // this.mechanismSrv.updateMechanism();
       // setTimeout(() => {
       //   this.mechanismSrv.onMechUpdateState.next(2);
       // });
@@ -159,12 +167,15 @@ export class SettingsPanelComponent {
       else length = LengthUnit.METER;
       console.log(length);
       this.settingsService.lengthUnit.next(length);
+      this.mechanismSrv.updateMechanism()
     });
     this.settingsForm.controls['showMajorGrid'].valueChanges.subscribe((val) => {
       this.settingsService.isShowMajorGrid.next(Boolean(val));
+      this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['showMinorGrid'].valueChanges.subscribe((val) => {
       this.settingsService.isShowMinorGrid.next(Boolean(val));
+      this.mechanismSrv.updateMechanism();
     });
     // this.settingsForm.controls['torqueunit'].valueChanges.subscribe(() => {
     //   this.settingsService.inputTorque.next(this.currentTorqueUnit);
@@ -173,6 +184,18 @@ export class SettingsPanelComponent {
 
   openEnableForceDialog(): void {
     this.dialog.open(EnableForcesComponent, {
+      autoFocus: false,
+    });
+  }
+
+  openEnableWeldedDialog(): void {
+    this.dialog.open(EnableWeldedComponent, {
+      autoFocus: false,
+    });
+  }
+
+  openEnablEquationsDialog(): void {
+    this.dialog.open(EnableEquationsComponent, {
       autoFocus: false,
     });
   }

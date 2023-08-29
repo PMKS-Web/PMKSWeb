@@ -46,11 +46,15 @@ import { NotReadyWarningComponent } from './component/not-ready-warning/not-read
 import { TemplatesComponent } from './component/MODALS/templates/templates.component';
 import { MechanismService } from './services/mechanism.service';
 import { GridUtilsService } from './services/grid-utils.service';
+import { SynthesisWarningComponent } from './component/MODALS/synthesis-warning/synthesis-warning.component';
+import { SvgArrowComponent } from './component/svg-arrow/svg-arrow.component';
 import { CollapsibleSubsecitonComponent } from './component/BLOCKS/collapsible-subseciton/collapsible-subseciton.component';
 import { DualButtonComponent } from './component/BLOCKS/dual-button/dual-button.component';
 import { ColorPickerComponent } from './component/BLOCKS/color-picker/color-picker.component';
 import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.component';
 import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-forces.component';
+import { EnableWeldedComponent } from './component/MODALS/enable-welded/enable-welded.component';
+import { EnableEquationsComponent } from './component/MODALS/enable-equations/enable-equations.component';
 
 @NgModule({
   declarations: [
@@ -83,11 +87,15 @@ import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-f
     EquationPanelComponent,
     NotReadyWarningComponent,
     TemplatesComponent,
+    SynthesisWarningComponent,
+    SvgArrowComponent,
     CollapsibleSubsecitonComponent,
     DualButtonComponent,
     ColorPickerComponent,
     TriButtonComponent,
     EnableForcesComponent,
+    EnableWeldedComponent,
+    EnableEquationsComponent,
   ],
   imports: [
     BrowserModule,

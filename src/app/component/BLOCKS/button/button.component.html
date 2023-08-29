@@ -7,7 +7,8 @@
   <!--    <div id='spacer'></div>-->
   <!--    Edit Name-->
   <!--  </button>-->
-  <button id='button-block' (click)='click()' mat-stroked-button color='primary'>
+  <button id='button-block' (click)='click()' mat-stroked-button [color]='this.color' [disabled]='this.disabled'
+          [class]='this.color'>
     <mat-icon *ngIf='icon && !customIcon'>{{ icon }}</mat-icon>
     <mat-icon *ngIf='!icon && customIcon' [svgIcon]='customIcon'>
     </mat-icon>

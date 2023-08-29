@@ -23,6 +23,10 @@
         height: 100%;
         flex-grow: 1;
 
+        .mat-button-toggle-label-content {
+          padding: 0;
+        }
+
         button {
           height: 100%;
 

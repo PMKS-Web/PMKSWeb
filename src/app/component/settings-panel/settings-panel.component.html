@@ -4,7 +4,7 @@
     <title-block> Settings</title-block>
     <collapsible-subseciton titleLabel='Basic Settings' [expanded]='true'>
       <radio-block
-        option1='English'
+        option1='English (in)'
         option2='Metric (cm)'
         option3='SI (m)'
         [formGroup]='this.settingsForm'
@@ -14,11 +14,12 @@
       >Global Units
       </radio-block>
       <radio-block
-        option1='Degree'
+        option1='Degree (&deg;)'
         option2='Radian'
         [formGroup]='this.settingsForm'
         _formControl='angleunit'
         tooltip='Select the units to be used for angles. This updates units for derived units as well (e.g. angular velocity, etc.)'
+        [disabled]='this.settingsService.animating.value'
       >Angle Units
       </radio-block
       >
@@ -28,21 +29,21 @@
         [formGroup]='this.settingsForm'
         _formControl='rotation'
         tooltip='Select the direction of rotation for the animation to start in. Note that positive angles are always counter-clockwise.'
+        [disabled]='this.settingsService.animating.value'
       >Input Direction
-      </radio-block
-      >
+      </radio-block>
 
       <input-block
         unit='deg/sec'
         type='number'
         [formGroup]='this.settingsForm'
         _formControl='speed'
-        tooltip='The speed that the animation will run at.'
+        tooltip='The speed that the animation will run at. (rpm - I think)'
       >Input Speed
       </input-block>
     </collapsible-subseciton>
 
-    <collapsible-subseciton titleLabel='Force Settings' [expanded]='true'>
+    <collapsible-subseciton titleLabel='Experimental Features'>
       <!--      <toggle-block-->
       <!--        [formGroup]='this.settingsForm'-->
       <!--        _formControl='gravity'-->
@@ -51,6 +52,16 @@
       <!--      </toggle-block>-->
       <button-block *ngIf='!settingsService.isForces.value' customIcon='com' [click]='openEnableForceDialog.bind(this)'>
         Enable Masses / Forces
+      </button-block>
+
+      <button-block *ngIf='!settingsService.isWeldedJointsEnabled.value' customIcon='weld_joint'
+                    [click]='openEnableWeldedDialog.bind(this)'>
+        Enable Welded Joints
+      </button-block>
+
+      <button-block *ngIf='!settingsService.isEquationsEnabled.value' icon='format_list_numbered'
+                    [click]='openEnablEquationsDialog.bind(this)'>
+        Enable Loop Equations
       </button-block>
 
       <ng-container *ngIf='settingsService.isForces.value'>

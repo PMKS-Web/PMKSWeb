@@ -84,9 +84,9 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
 
   animate: boolean = false;
 
-  static inputAngularVelocity: number = 10;
-  static clockwise: boolean = false;
-  static gravity: boolean = true; //Kohmei set this to true for testing, normally false
+  // static inputAngularVelocity: number = 10;
+  // static clockwise: boolean = false;
+  // static gravity: boolean = true; //Kohmei set this to true for testing, normally false
   private static fileButton: SVGElement;
   static analysisButton: SVGElement;
   static loopButton: SVGElement;
@@ -95,7 +95,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   static kinematicButton: SVGElement;
   private static settingsButton: SVGElement;
   private static helpButton: SVGElement;
-  static unit = 'cm';
+  // static unit = 'cm';
   // TODO: If possible, change this to static variable...
   url: any;
   static instance: ToolbarComponent;
@@ -107,7 +107,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     private urlProcessorService: UrlProcessorService,
     private saveHistoryService: SaveHistoryService,
     public dialog: MatDialog,
-    public settings: SettingsService
+    public settingsService: SettingsService
   ) {
     ToolbarComponent.instance = this;
   }
