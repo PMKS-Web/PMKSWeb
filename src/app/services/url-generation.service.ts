@@ -6,8 +6,9 @@ import { EnumSetting, BoolSetting, IntSetting, DecimalSetting } from './transcod
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { Force } from '../model/force';
 import { Joint, RevJoint, PrisJoint } from '../model/joint';
-import { JointData, JOINT_TYPE, LinkData, LINK_TYPE, ForceData } from './transcoding/transcoder-data';
+import { JointData, JOINT_TYPE, LinkData, LINK_TYPE, ForceData, ActiveObjData, ACTIVE_TYPE } from './transcoding/transcoder-data';
 import { SettingsService } from './settings.service';
+import { ActiveObjService } from './active-obj.service';
 
 /*
   * This service is responsible for generating the URL from the current mechanism.
@@ -22,7 +23,8 @@ export class UrlGenerationService {
 
   constructor(
     private mechanism: MechanismService,
-    private settings: SettingsService
+    private settings: SettingsService,
+    private activeObj: ActiveObjService,
   ) {}
 
 
@@ -172,6 +174,21 @@ export class UrlGenerationService {
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
+
+    let type: ACTIVE_TYPE;
+    let exists = true;
+    if (this.activeObj.objType === 'Joint') type = ACTIVE_TYPE.JOINT;
+    else if (this.activeObj.objType === 'Link') type = ACTIVE_TYPE.LINK;
+    else if (this.activeObj.objType === 'Force') type = ACTIVE_TYPE.FORCE;
+    else {
+      type = ACTIVE_TYPE.NOTHING;
+      exists = false;
+    }
+
+    let id;
+    if (exists) id = this.activeObj.getSelectedObj().id;
+    else id = '_';
+    encoder.setActiveObj(new ActiveObjData(type, id));
 
     let urlRaw = encoder.encodeURL();
 

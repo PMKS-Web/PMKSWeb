@@ -4,10 +4,11 @@ import { Link, Piston, RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { Coord } from 'src/app/model/coord';
 import { GenericTranscoder } from './transcoder-interface';
-import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transcoder-data';
+import { ACTIVE_TYPE, ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transcoder-data';
 import { SettingsService } from '../settings.service';
 import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
+import { ActiveObjService } from '../active-obj.service';
 
 /*
  * MechanismBuilder is a class that takes in a decoder and mechanism service and
@@ -20,7 +21,8 @@ export class MechanismBuilder {
   constructor(
     mechanism: MechanismService,
     transcoder: GenericTranscoder,
-    private settings: SettingsService
+    private settings: SettingsService,
+    private activeObj: ActiveObjService
   ) {
     this.mechanism = mechanism;
     this.transcoder = transcoder;
@@ -195,6 +197,16 @@ export class MechanismBuilder {
     this.mechanism.forces = forces;
 
     this.addAdjacentLinksForJoints();
+
+    // set active object
+    let activeObjData = this.transcoder.getActiveObj();
+    let activeObj: any;
+    if (activeObjData.type === ACTIVE_TYPE.JOINT) activeObj = this.getJointByID(joints, activeObjData.id)!;
+    else if (activeObjData.type === ACTIVE_TYPE.LINK) activeObj = this.getLinkByID(links, activeObjData.id)!;
+    else if (activeObjData.type === ACTIVE_TYPE.FORCE) activeObj = this.getLinkByID(links, activeObjData.id)!;
+    else activeObj = null;
+
+    this.activeObj.updateSelectedObj(activeObj);
 
     if (updateSettings) {
       // Configure mechanism global flags

@@ -2,7 +2,7 @@ import { BaseNConverter } from "./base64-converter";
 import { Checksum } from "./checksum";
 import { FlagPacker } from "./flag-packer";
 import { StringDisassembler } from "./string-disassembler";
-import { ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
+import { ACTIVE_TYPE, ActiveObjData, ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from "./transcoder-data";
 import { GenericTranscoder } from "./transcoder-interface";
 
 /*
@@ -254,7 +254,11 @@ export class StringTranscoder extends GenericTranscoder {
             forceString += this.encodeForce(this.forces[i]) + ".";
         }
 
-        let fullString = boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString;
+        // Encode active object. first char is type, rest is id
+        let activeObj = this.getActiveObj();
+        let activeObjString = activeObj.type.toString() + activeObj.id;
+
+        let fullString = boolString + "." + decimalString + "." + intString + "." + enumString + "." + jointString + "." + linkString + "." + forceString + "." + activeObjString;
 
         // add checksum character in the end
         let checksum = new Checksum();
@@ -339,10 +343,24 @@ export class StringTranscoder extends GenericTranscoder {
         sd.nextCharacter(); // delete the . and move on to forces
 
         // Decode forces
-        while (!sd.isEmpty()) {
+        while (sd.pollNextCharacter() !== ".") {
             let force = sd.nextToken(".");
             this.addForce(this.decodeForce(force));
         }
+        sd.nextCharacter(); // delete the . and move on to active object
+
+        // Decode active object. Next char is type, rest is id
+        let activeType = sd.nextCharacter();
+        let activeID = sd.nextToken();
+        
+        let typeEnum;
+        if (activeType === "J") typeEnum = ACTIVE_TYPE.JOINT;
+        else if (activeType === "L") typeEnum = ACTIVE_TYPE.LINK;
+        else if (activeType === "F") typeEnum = ACTIVE_TYPE.FORCE;
+        else typeEnum = ACTIVE_TYPE.NOTHING;
+
+        this.setActiveObj(new ActiveObjData(typeEnum, activeID));
+
     }
 
 }

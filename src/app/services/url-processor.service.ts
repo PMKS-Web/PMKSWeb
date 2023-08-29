@@ -9,6 +9,7 @@ import { StringTranscoder } from './transcoding/string-transcoder';
 import { SettingsService } from './settings.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
 import { SvgGridService } from './svg-grid.service';
+import { ActiveObjService } from './active-obj.service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,6 +19,7 @@ export class UrlProcessorService {
     private mechanismSrv: MechanismService,
     private settingsSrv: SettingsService,
     private svgGrid: SvgGridService,
+    private activeObj: ActiveObjService
   ) {
 
     // the content part of the url (the part after the ?)
@@ -50,7 +52,7 @@ export class UrlProcessorService {
     if (url !== null) {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
-      const builder = new MechanismBuilder(this.mechanismSrv, decoder, this.settingsSrv);
+      const builder = new MechanismBuilder(this.mechanismSrv, decoder, this.settingsSrv, this.activeObj);
       builder.build(updateSettings);
 
       //Now set the URL back to the original URL without the query string.
