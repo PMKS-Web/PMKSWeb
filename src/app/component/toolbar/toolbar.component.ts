@@ -177,6 +177,7 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     const input = $event.target;
     if (input.files.length !== 1) {
       console.log('No file selected', input.files.length);
+      NewGridComponent.sendNotification('No file selected');
       return;
     }
     const reader = new FileReader();
@@ -184,8 +185,14 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     reader.onload = () => {
       const data = reader.result as string;
       console.log("open", data);
+      NewGridComponent.sendNotification('Loaded Mechanism from File');
 
       this.urlProcessorService.updateFromURL(data);
+
+      //TODO for Ansel - Clear the history
+
+      //Reset the input so that the same file can be uploaded again
+      input.value = '';
     }
 
     // actually read the file to call the onload callback above
