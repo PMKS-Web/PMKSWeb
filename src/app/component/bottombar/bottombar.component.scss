@@ -1,0 +1,44 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  #bottomBar {
+    //5 pixel high absolute posositon white bar in the bottom of the screen 100% width
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100vw;
+    height: 20px;
+    background-color: white;
+    //z-index: 100;
+
+    //Include elevation and font
+    @include mat.elevation(2);
+    @include mat.typography-level($typography-config, 'subtitle-2');
+    font-weight: 400;
+    color: #2c2c2c;
+
+    ul {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+
+      //Hide the list bullets
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      padding-left: 70px;
+      padding-right: 10px;
+    }
+  }
+}

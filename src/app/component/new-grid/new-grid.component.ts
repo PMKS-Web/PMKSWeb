@@ -755,7 +755,7 @@ export class NewGridComponent {
 
     // create a save if, while dragging, mechanism was updated
     if (this.mouseWasDragged && this.modifyMechanismWhileDrag) {
-      this.mechanismSrv.save()
+      this.mechanismSrv.save();
     }
 
     this.mouseWasDragged = false;
@@ -1473,18 +1473,5 @@ export class NewGridComponent {
         break;
     }
     return angle;
-  }
-
-  humanReadableString(value: GlobalUnit) {
-    switch (value) {
-      case GlobalUnit.SI:
-        return 'm';
-      case GlobalUnit.ENGLISH:
-        return 'in';
-      case GlobalUnit.METRIC:
-        return 'cm';
-      default:
-        return '';
-    }
   }
 }
