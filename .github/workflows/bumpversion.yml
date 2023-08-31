@@ -11,3 +11,4 @@ jobs:
       - name: Automated Version Bump
         uses: actions/checkout@v3
       - uses: phips28/gh-action-bump-version@v10.0.1
+
