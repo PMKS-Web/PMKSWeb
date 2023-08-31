@@ -48,7 +48,8 @@
             <mat-checkbox color='primary' checked formControlName='project'>Send a copy of the open project
             </mat-checkbox>
             <div style='padding: 10px 0 10px 10px; width: calc(100% - 20px);'>
-              <button-block icon='send' [click]='sendCommentEmail.bind(this)'>Send Message</button-block>
+              <button-block [disabled]='sendingEmail' icon='send' [click]='sendCommentEmail.bind(this)'>Send Message
+              </button-block>
             </div>
           </form>
         </panel-section>
