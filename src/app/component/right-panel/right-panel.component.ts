@@ -348,6 +348,12 @@ export class RightPanelComponent {
         browserInfo += this.getBrowserName();
         browserInfo += '\n Browser Version: ';
         browserInfo += this.detectBrowserVersion();
+        browserInfo += '\n OS: ';
+        browserInfo += window.navigator.platform;
+        browserInfo += '\n User Agent: ';
+        browserInfo += window.navigator.userAgent;
+        browserInfo += '\n App Version: ';
+        browserInfo += environment.appVersion;
       } else {
         browserInfo = 'User did not allow diagnostics';
       }
