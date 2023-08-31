@@ -1,6 +1,9 @@
 name: Bump Version
 run-name: Automated Version Bump by ${{ github.actor }}
-on: [ push ]
+on:
+  push:
+    branches:
+      - main
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
@@ -8,4 +11,3 @@ jobs:
       - name: Automated Version Bump
         uses: actions/checkout@v3
       - uses: phips28/gh-action-bump-version@v10.0.1
-
