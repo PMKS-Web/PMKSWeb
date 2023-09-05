@@ -87,7 +87,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         enabled: false,
       },
       toolbar: {
-        show: false,
+        show: false, //Change this
       },
     },
     dataLabels: {

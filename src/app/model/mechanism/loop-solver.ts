@@ -44,14 +44,14 @@ export class LoopSolver {
 
   // Searches through neighboring joints until ground joint is found
   private static findGround(
-      joint: Joint,
-      groundJoints: Joint[],
-      linkPath: string,
-      path: string,
-      allFoundLoops: string[],
-      requiredLoops: string[],
-      storeJointPath: boolean,
-      links: Link[]
+    joint: Joint,
+    groundJoints: Joint[],
+    linkPath: string,
+    path: string,
+    allFoundLoops: string[],
+    requiredLoops: string[],
+    storeJointPath: boolean,
+    links: Link[]
   ): [string[], string[]] {
     if (!(joint instanceof RealJoint)) {
       return [allFoundLoops, requiredLoops];

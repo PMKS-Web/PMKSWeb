@@ -15,6 +15,11 @@ Interactive Linkage Creation & Editing: Easily create and modify planar linkages
 - Designed for Education: PMKS+ is developed with a focus on educational use, making complex planar mechanism concepts more approachable and understandable.
 - Flexibility & Accessibility: As a web-based tool, PMKS+ can be accessed from anywhere, providing flexibility and convenience to its users.
 
+## Verification
+
+A Matlab Script (SixBarVerification.m) was used to verify the Analysis and the v,p,a obtained from this [Mechanism](https://app.pmksplus.com/?0P.SS.K,0.101.MA,A,0wS,0bg,0.GB,B,0gW,EE,0.GC,C,Oi,6k,0.GD,D,03m,_g,0.GE,E,1FO,1I_,0.GF,F,1-C,qM,0.KG,G,1oO,0ss,0..YRAB,AB,Fe,Fe,0oU,0Bk,c5cae9,A,B,,.YRBCD,BCD,Fe,Fe,07C,Rt,303e9f,B,C,D,,.YRDE,DE,Fe,Fe,bq,18q,0d125a,D,E,,.YREF,EF,Fe,Fe,1dI,13g,B2DFDB,E,F,,.YRFCG,FCG,Fe,Fe,1Om,1Q,26A69A,F,C,G,,...JGp)
+. The values were compared and a [test script](https://github.com/PMKS-Web/PMKSWeb/blob/2df36224968a0e489fa385f0aaca91c4875b0707/src/app/app.component.spec.ts) was created to continue verifying similar Mechanisims.
+
 ## Development Setup
 
 For development, we recommend using WebStorm, a powerful IDE ideal for JavaScript development. It is free for students and faculty members with a .edu email. You can download it [here](https://www.jetbrains.com/community/education).
@@ -141,6 +146,7 @@ PMKS+ is based on PMKS, developed by Prof. Matthew I. Campbell, Professor, Mecha
 
 ### Contributors
 
+- Jessica M. Rhodes (BS/MS RBE '25)
 - Ansel Chang (CS '25)
 - Jacob Adamski (CS' 24)
 - Kohmei Kadoya (BS/MS RBE '23)

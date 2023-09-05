@@ -4,6 +4,7 @@ import { Coord } from '../model/coord';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { forceStates, jointStates } from '../model/utils';
 import { SettingsService } from './settings.service';
+import * as Hammer from 'hammerjs';
 
 @Injectable({
   providedIn: 'root',
