@@ -13,10 +13,12 @@
       <div id='helpWrapper'>
         <panel-section>
           <title-block>Help</title-block>
-          <button-block icon='help_center' [click]='gotoHelpSite'>Tutorial Videos</button-block>
-          <button-block icon='info' [click]='sendNotReady'>Restart Tutorial</button-block>
-          <subtitle-block> PMKS+ is open source! Do you want to help us develop it?</subtitle-block>
-          <button-block customIcon='github' [click]='gotoGithub'>Github Repo</button-block>
+          <div style='padding: 10px 0 10px 10px; width: calc(100% - 20px);'>
+            <button-block icon='help_center' [click]='gotoHelpSite'>Tutorial Videos</button-block>
+            <!--           <button-block icon='info' [click]='sendNotReady'>Restart Tutorial</button-block> -->
+            <subtitle-block> PMKS+ is open source! Do you want to help us develop it?</subtitle-block>
+            <button-block customIcon='github' [click]='gotoGithub'>Github Repo</button-block>
+          </div>
         </panel-section>
         <panel-section>
           <title-block
@@ -41,10 +43,13 @@
                 Invalid email address
               </mat-error>
             </mat-form-field>
-            <mat-checkbox color='primary' checked formControlName='diagnostics'>Send browser and application data for
-              debugging
+            <mat-checkbox color='primary' checked formControlName='diagnostics'>Send browser and version data
             </mat-checkbox>
-            <button-block icon='send' [click]='sendCommentEmail.bind(this)'>Send Message</button-block>
+            <mat-checkbox color='primary' checked formControlName='project'>Send a copy of the open project
+            </mat-checkbox>
+            <div style='padding: 10px 0 10px 10px; width: calc(100% - 20px);'>
+              <button-block icon='send' [click]='sendCommentEmail.bind(this)'>Send Message</button-block>
+            </div>
           </form>
         </panel-section>
       </div>

@@ -1,4 +1,4 @@
-import { ForceData, JointData, LinkData } from "./transcoder-data";
+import { ACTIVE_TYPE, ActiveObjData, ForceData, JointData, LinkData } from "./transcoder-data";
 import {EnumSetting, DecimalSetting, IntSetting, BoolSetting} from "./stored-settings";
 
 /*
@@ -20,6 +20,8 @@ export abstract class GenericTranscoder {
     protected decimalData: number[] = [];
     protected intData: number[] = [];
     protected boolData: boolean[] = [];
+
+    protected activeObjData: ActiveObjData = new ActiveObjData(ACTIVE_TYPE.NOTHING, "");
 
     // Initialize data dictionaries based on settings enums
     constructor() {
@@ -82,6 +84,10 @@ export abstract class GenericTranscoder {
         const settingIndex = this.getEnumIndexByValue(BoolSetting, setting) as number;
         this.boolData[settingIndex] = value;
     }
+
+    setActiveObj(obj: ActiveObjData): void {
+        this.activeObjData = obj;
+    }
     
     abstract decodeURL(url: string): void;
 
@@ -124,5 +130,9 @@ export abstract class GenericTranscoder {
     getBoolSetting(setting: BoolSetting): boolean {
         const settingIndex = this.getEnumIndexByValue(BoolSetting, setting) as number;
         return this.boolData[settingIndex];
+    }
+
+    getActiveObj(): ActiveObjData {
+        return this.activeObjData;
     }
 }

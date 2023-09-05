@@ -9,11 +9,13 @@ export class cMenuItem {
     console.error('Not implemented');
   };
   public icon: string = 'none';
+  public disabled: boolean = false;
 
-  constructor(_label: string, _action: Function, _icon: string) {
+  constructor(_label: string, _action: Function, _icon: string, _disabled: boolean = false) {
     this.label = _label;
     this.action = _action;
     this.icon = _icon;
+    this.disabled = _disabled;
   }
 
   actionWrapper() {

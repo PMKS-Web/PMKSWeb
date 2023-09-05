@@ -1,4 +1,12 @@
-import { Component, ContentChildren, EventEmitter, Input, Output, QueryList } from '@angular/core';
+import {
+  AfterContentInit,
+  Component,
+  ContentChildren,
+  EventEmitter,
+  Input,
+  Output,
+  QueryList,
+} from '@angular/core';
 import { TitleBlock } from '../title/title.component';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 
@@ -20,15 +28,18 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
           opacity: 0,
         })
       ),
+      transition(':enter', []),
       transition('* => *', [animate('0.2s ease-in-out')]),
     ]),
   ],
   templateUrl: './panel-section-collapsible.component.html',
   styleUrls: ['./panel-section-collapsible.component.scss'],
 })
-export class PanelSectionCollapsibleComponent {
+export class PanelSectionCollapsibleComponent implements AfterContentInit {
   @Input() expanded: boolean = true;
   @Input() warning: boolean = false;
+
+  public isLoaded: boolean = false;
 
   @ContentChildren(TitleBlock) titleBlock?: QueryList<TitleBlock>;
 
@@ -37,6 +48,9 @@ export class PanelSectionCollapsibleComponent {
 
   ngAfterContentInit() {
     this.titleBlock?.first.nestedComponentChange.subscribe(() => this.toggleExpand());
+    setTimeout(() => {
+      this.isLoaded = true;
+    });
   }
 
   toggleExpand() {

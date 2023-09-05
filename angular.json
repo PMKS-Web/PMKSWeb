@@ -48,8 +48,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "3mb"
+                  "maximumWarning": "3mb",
+                  "maximumError": "5mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -107,9 +107,12 @@
             ],
             "styles": [
               "src/mytheme.scss",
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/intro.js/introjs.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/intro.js/intro.js"
+            ]
           }
         }
       }

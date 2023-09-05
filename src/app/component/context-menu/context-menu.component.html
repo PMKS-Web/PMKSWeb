@@ -1,6 +1,7 @@
 <div id='contextMenu' class='fade-in-out' cdkMenu>
   <div *ngFor='let menuItem of menuItems'>
-    <div id='menu-item' cdkMenuItem (cdkMenuItemTriggered)='menuItem.actionWrapper()'>
+    <div id='menu-item' cdkMenuItem (cdkMenuItemTriggered)='menuItem.actionWrapper()'
+         class='{{menuItem.disabled ? "disabledItem" : ""}}' [cdkMenuItemDisabled]='menuItem.disabled'>
       <mat-icon svgIcon='{{menuItem.icon}}'></mat-icon>
       <button>{{menuItem.label}}</button>
     </div>

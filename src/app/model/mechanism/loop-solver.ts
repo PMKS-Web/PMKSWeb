@@ -11,13 +11,13 @@ export class LoopSolver {
         return;
       }
       if (
-        j.input ||
-        j.connectedJoints.findIndex((jt) => {
-          if (!(jt instanceof RealJoint)) {
-            return;
-          }
-          jt.input;
-        }) !== -1
+          j.input ||
+          j.connectedJoints.findIndex((jt) => {
+            if (!(jt instanceof RealJoint)) {
+              return;
+            }
+            jt.input;
+          }) !== -1
       ) {
         groundJoints.unshift(j);
       } else {

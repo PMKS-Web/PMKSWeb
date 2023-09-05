@@ -1,6 +1,7 @@
 import { AppConstants } from './app-constants';
 import { Link, RealLink } from './link';
 import { Coord } from './coord';
+import { SettingsService } from '../services/settings.service';
 
 export class Joint extends Coord {
   private _id: string;
@@ -108,11 +109,7 @@ export class RealJoint extends Joint {
     this._input = value;
   }
 
-  canBeWelded() {
-    //Is is already welded - it can always be unwelded
-    if (this.isWelded) {
-      return true;
-    }
+  canBeWelded(): boolean {
     //If the joint is an input or ground, it cannot be welded
     //It also cannot be welded unless there are two or more links connected to it
     //also if this.connectedJoints contains a pris joint, this cannot be welded
@@ -126,6 +123,16 @@ export class RealJoint extends Joint {
     } else {
       return true;
     }
+  }
+
+  canBeUnwelded(): boolean {
+    //Is is already welded - it can always be unwelded
+    return this.isWelded;
+  }
+
+  canBeWeldedOrUnwelded() {
+    if (this.canBeWelded()) return true;
+    return this.canBeUnwelded();
   }
 }
 

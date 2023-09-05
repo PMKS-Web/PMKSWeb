@@ -25,8 +25,11 @@ import { environment } from '../../../environments/environment';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/browser';
 import { SettingsService } from '../../services/settings.service';
 import { Arc, Line } from '../../model/line';
-import { C } from '@angular/cdk/keycodes';
 import { Coord } from '../../model/coord';
+import { SvgGridService } from '../../services/svg-grid.service';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
+import introJs from 'intro.js';
+import { UrlGenerationService } from 'src/app/services/url-generation.service';
 
 @Component({
   selector: 'app-right-panel',
@@ -69,6 +72,7 @@ export class RightPanelComponent {
     email: ['', Validators.email],
     response: [false],
     diagnostics: [true],
+    project: [true],
   });
 
   matcher = new MyErrorStateMatcher();
@@ -83,6 +87,8 @@ export class RightPanelComponent {
     public activeObjService: ActiveObjService,
     public mechanismService: MechanismService,
     public settingsService: SettingsService,
+    public svgService: SvgGridService,
+    public urlGenerationService: UrlGenerationService,
     private fb: FormBuilder
   ) {}
 
@@ -181,6 +187,7 @@ export class RightPanelComponent {
   }
 
   runGeometryUnitTests() {
+    this.svgService.panZoomObject.zoomAtPoint(2, { x: 0, y: 0 });
     console.log('Running interseciton tests');
     let arc = new Arc(new Coord(0, 0), new Coord(0, 2), new Coord(0, 1));
     let arc2 = new Arc(new Coord(-1, 1), new Coord(1, 1), new Coord(0, 1));
@@ -269,8 +276,9 @@ export class RightPanelComponent {
   }
 
   sendNotReady() {
-    NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
-    logEvent(this.analytics, 'tutorial_not_ready');
+    introJs().start();
+    // NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
+    // logEvent(this.analytics, 'tutorial_not_ready');
   }
 
   getBrowserName() {
@@ -344,6 +352,11 @@ export class RightPanelComponent {
         browserInfo = 'User did not allow diagnostics';
       }
 
+      let projectURL: string = 'User did not leave a project URL';
+      if (this.commentForm.value.project) {
+        projectURL = this.urlGenerationService.generateFullUrl();
+      }
+
       const params = {
         to_email: 'gr-pmksplus@wpi.edu',
         message: this.commentForm.value.comment
@@ -353,6 +366,7 @@ export class RightPanelComponent {
           ? this.commentForm.value.email
           : 'User did not leave an email and does not want a response',
         diagnostic: browserInfo,
+        project: projectURL,
       };
 
       emailjs

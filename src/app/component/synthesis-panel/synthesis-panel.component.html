@@ -1,11 +1,84 @@
 <div id='synthesisWrapper'>
   <panel-section>
-    <title-block description='PMKS+ will create a 4-bar linkage based on 3 coupler poses you define.'>3 Position
+    <title-block description='Automatically create a 4-bar linkage based on 3 coupler poses.'>
+      3 Position
       Synthesis
     </title-block>
     <!--    <subtitle-block>PMKS+ will create a 4-bar linkage based on 3 poses.</subtitle-block>-->
     <!--    <input-block unit='cm'>Length</input-block>-->
-    <app-not-ready-warning></app-not-ready-warning>
+    <!--    <app-not-ready-warning></app-not-ready-warning>-->
+    <!-- <img src='assets/temp3pos.png'> -->
+
+    <collapsible-subseciton [expanded]='true' [hideHeader]='true'>
+
+      <subtitle-block>End-Effector Link (Coupler)</subtitle-block>
+      <input-block [formGroup]='synthesisPoseForm'
+                   _formControl='length'
+                   tooltip='The length of the end-effector link'>
+        Length
+      </input-block>
+      <radio-block
+        [formGroup]='synthesisPoseForm'
+        _formControl='cor'
+        option1='Back'
+        option2='Center'
+        option3='Front'
+        tooltip='The center of rotation of the end-effector link, and what the position coordinate represents'>
+        Fixed Reference
+      </radio-block>
+      <mat-divider></mat-divider>
+
+      <!-- Construct panel sections for each pose -->
+      <div *ngFor='let i of [1,2,3]'>
+
+        <!-- display header, with edit button on right if pose already has been created -->
+
+        <div>
+          <subtitle-block class='poseHeader'>
+            <p>Pose {{i}}</p>
+            <!-- <button-block class = "poseEdit" *ngIf="getCurrentPose() !== i && synthesisBuilder.isPoseDefined(i)"  icon="edit" (click)="setCurrentPose(i)">Edit</button-block> -->
+          </subtitle-block>
+        </div>
+
+        <!-- display editable pose configuration if pose is both created AND selected -->
+        <div class='poseData' *ngIf='synthesisBuilder.isPoseDefined(i)'>
+          <dual-input-block [formGroup]='synthesisPoseForm'
+                            formControl1='{{getFormIDPoseX(i)}}'
+                            formControl2='{{getFormIDPoseY(i)}}'
+                            tooltip='The position of the center of the end effector link'
+          >
+            Pose {{i}} Position
+          </dual-input-block>
+          <input-block [formGroup]='synthesisPoseForm'
+                       _formControl='{{getFormIDPoseTheta(i)}}'
+                       tooltip='The angle of the end effector link in degrees'
+          >
+            Pose {{i}} Angle
+          </input-block>
+        </div>
+
+        <!-- if pose has not yet been created and its the first undefined pose, show "create pose" button -->
+        <div class='poseCreate' *ngIf='synthesisBuilder.getFirstUndefinedPose() === i'>
+          <button-block icon='add' (click)='synthesisBuilder.createPose(i); this.svgGrid.updateObjectScale()'>Create
+            Pose
+          </button-block>
+        </div>
+
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!--      <button-block icon='add' [disabled]='!synthesisBuilder.isFullyDefined()' (click)='synthesisFunction()'>-->
+      <!--        Generate Linkage-->
+      <!--      </button-block>-->
+
+      <button-block [disabled]='synthesisBuilder.getAllPoses().length === 0'
+                    (click)='synthesisBuilder.deleteAllPoses()' customIcon='remove' color='warn'>
+        Remove All Poses
+      </button-block>
+    </collapsible-subseciton>
+
+
   </panel-section>
   <!--  <panel-section-collapsible [expanded]='true'>-->
   <!--    <subtitle-block buttonLabel='Edit Pose' icon='edit' alwaysShown>Pose 1</subtitle-block>-->

@@ -1,6 +1,11 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
 import { Link } from '../link';
-import { determineUnknownJointUsingTriangulation, euclideanDistance, roundNumber } from '../utils';
+import {
+  circleCircleIntersection, circleLineIntersection,
+  determineUnknownJointUsingTriangulation,
+  euclideanDistance,
+  roundNumber
+} from '../utils';
 import { Force } from '../force';
 import { Coord } from '../coord';
 import { core } from '@angular/compiler';
@@ -385,7 +390,7 @@ export class PositionSolver {
     const y = sols[desiredIndex][1];
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
-  }
+    }
 
   private static determineDesiredIndexTwoCircleIntersection(
     tempJ1: Joint,
@@ -412,6 +417,8 @@ export class PositionSolver {
     return intersection1Diff < intersection2Diff ? 0 : 1;
   }
 
+
+
   private static TwoCircleIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: Joint) {
     if (!this.jointMapPositions.has(j1.id)) {
       this.jointMapPositions.set(j1.id, [j1.x, j1.y]);
@@ -428,44 +435,7 @@ export class PositionSolver {
     }
     const r0 = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
     const r1 = this.jointDistMap.get(unknownJoint.id + ',' + j2.id)!;
-    let dx = x1 - x0;
-    let dy = y1 - y0;
-    const d = Math.sqrt(dx * dx + dy * dy);
-    // Circles too far apart
-    if (d > r0 + r1) {
-      return false;
-    }
-
-    // One circle completely inside the other
-    if (d < Math.abs(r0 - r1)) {
-      return false;
-    }
-
-    // const TOLERANCE = 0.001;
-    if (d <= 0.001) {
-      return false;
-    }
-    // if (d === 0) {
-    //   return false;
-    // }
-
-    dx /= d;
-    dy /= d;
-
-    const a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
-    const px = x0 + a * dx;
-    const py = y0 + a * dy;
-
-    const h = Math.sqrt(r0 * r0 - a * a);
-
-    const p1x = px + h * dy;
-    const p1y = py - h * dx;
-    const p2x = px - h * dy;
-    const p2y = py + h * dx;
-    return [
-      [p1x, p1y],
-      [p2x, p2y],
-    ];
+    return circleCircleIntersection(x0, y0, r0, x1, y1, r1);
   }
 
   // https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
@@ -589,7 +559,7 @@ export class PositionSolver {
     // const k = j1.y;
     const k = this.jointMapPositions.get(j1.id)![1];
     // m: slope
-    const radToDeg = 180 / Math.PI;
+    // const radToDeg = 180 / Math.PI;
     // TODO: Have map for determining m
     let m = this.m_Map.get(unknownJoint.id)!;
     // let m = Math.tan(unknownJoint.angle);
@@ -605,16 +575,7 @@ export class PositionSolver {
     // const n = this.n_Map.get(unknownJoint.id);
     // const n = unknownJoint.yInitial - m * unknownJoint.xInitial;
     const n = this.b_Map.get(unknownJoint.id)!;
-    // const n = unknownJoint.y;
-    // const n = j2.y;
-    // get a, b, c values
-    const a = 1 + Math.pow(m, 2);
-    const b = -h * 2 + m * (n - k) * 2;
-    const c = Math.pow(h, 2) + Math.pow(n - k, 2) - Math.pow(r, 2);
-
-    // get discriminant
-    const d = Math.pow(b, 2) - 4 * a * c;
-    return [a, b, c, d];
+    return circleLineIntersection(r, h, k, m, n);
   }
 
   // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html

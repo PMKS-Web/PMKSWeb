@@ -1,0 +1,65 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  // Get the color config from the theme.
+  $color-config: mat.get-color-config($theme);
+  // Get the primary color palette from the color-config.
+  $primary-palette: map.get($color-config, 'primary');
+  $accent-palette: map.get($color-config, 'accent');
+  $typography-config: mat.get-typography-config($theme);
+  $background: map.get($theme, background);
+  $foreground: map.get($theme, foreground);
+
+  .collapsibleSubsection {
+
+    .panel-header {
+
+      padding: 0 15px;
+      border-style: none;
+      height: 30px;
+
+      width: 100%;
+      //border-color: mat.get-color-from-palette($primary-palette, 500);
+      //Hide left and right borders
+      //border-left: 0;
+      //border-right: 0;
+      background-color: mat.get-color-from-palette($primary-palette, 50);
+      //border-width: 1px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      @include mat.typography-level($typography-config, 'subtitle-2');
+      color: mat.get-color-from-palette($primary-palette, 500);
+      cursor: pointer;
+
+      //On hover, change background color
+      &:hover {
+        background-color: mat.get-color-from-palette($primary-palette, 100);
+      }
+
+      mat-icon {
+        transition: transform 0.15s ease-in-out;
+
+        &.rotate180 {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .panel-content {
+      padding: 10px 15px;
+      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s ease-in-out;
+
+      &.hidden {
+        transform: scaleY(0);
+        height: 0;
+      }
+    }
+
+  }
+
+}
