@@ -67,6 +67,8 @@ import { UrlGenerationService } from 'src/app/services/url-generation.service';
 export class RightPanelComponent {
   private analytics: Analytics = inject(Analytics);
 
+  public sendingEmail: boolean = false;
+
   commentForm = this.fb.group({
     comment: ['', Validators.required],
     email: ['', Validators.email],
@@ -323,8 +325,10 @@ export class RightPanelComponent {
   }
 
   async sendCommentEmail() {
+    this.sendingEmail = true;
     if (this.commentForm.invalid) {
       NewGridComponent.sendNotification('Please fill out the form correctly.');
+      this.sendingEmail = false;
       return;
     } else {
       let emailJSKey = '';
@@ -338,6 +342,7 @@ export class RightPanelComponent {
         NewGridComponent.sendNotification(
           'It looks like you are in a development environment. If this is not the case, please try again later or contact us directly at: gr-pmksplus@wpi.edu'
         );
+        this.sendingEmail = false;
         return;
       }
       emailjs.init(emailJSKey);
@@ -348,6 +353,12 @@ export class RightPanelComponent {
         browserInfo += this.getBrowserName();
         browserInfo += '\n Browser Version: ';
         browserInfo += this.detectBrowserVersion();
+        browserInfo += '\n OS: ';
+        browserInfo += window.navigator.platform;
+        browserInfo += '\n User Agent: ';
+        browserInfo += window.navigator.userAgent;
+        browserInfo += '\n App Version: ';
+        browserInfo += environment.appVersion;
       } else {
         browserInfo = 'User did not allow diagnostics';
       }
@@ -373,6 +384,7 @@ export class RightPanelComponent {
         .send('service_pg2k647', 'template_kfwdx5c', params)
         .then(() => {
           NewGridComponent.sendNotification('Message sent. Thank you for your feedback!');
+          this.sendingEmail = false;
           this.commentForm.reset();
         })
         .catch((error: any) => {
@@ -380,6 +392,7 @@ export class RightPanelComponent {
           NewGridComponent.sendNotification(
             'Message failed to send. Please try again later or contact us directly at: gr-pmksplus@wpi.edu'
           );
+          this.sendingEmail = false;
         });
     }
   }

@@ -30,6 +30,7 @@
 @use 'src/app/component/MODALS/templates/templates.component.scss' as templates;
 @use 'src/app/component/not-ready-warning/not-ready-warning.component.scss' as not-ready-warning;
 @use 'src/app/component/MODALS/enable-equations/enable-equations.component.scss' as enable-equations;
+@use 'src/app/component/bottombar/bottombar.component.scss' as bottombar;
 
 @include mat.core();
 @include mat.strong-focus-indicators();
@@ -89,6 +90,7 @@ $my-theme: mat.define-light-theme(
 @include equation-panel.css($my-theme);
 @include not-ready-warning.css($my-theme);
 @include enable-equations.css($my-theme);
+@include bottombar.css($my-theme);
 
 @include blocks-common.css($my-theme);
 @include panel-section.css($my-theme);

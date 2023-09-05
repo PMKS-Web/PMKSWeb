@@ -19,7 +19,7 @@
   #barContainer {
     //Fix to the bottom left, make the it cover the entire width of the screen but give it a height of 50px. Use flex to center animation bar in the middle botttom.
     position: absolute;
-    bottom: 0;
+    bottom: 20px;
     left: 0;
     width: 100%;
     gap: 10px;
@@ -77,7 +77,7 @@
       #timeInputWrapper {
         display: flex;
         font-size: 20px;
-        font-weight: 200;
+        font-weight: 400;
         align-items: baseline;
         // @include mat.typography-level($typography-config, 'headline-6');
         #tLabel {
@@ -90,7 +90,7 @@
 
       #animationBar-input {
         font-size: 20px;
-        font-weight: 200;
+        font-weight: 400;
         width: 40px;
         border: 0;
         outline: none;
@@ -105,6 +105,7 @@
           border-bottom: 2px solid mat.get-color-from-palette($primary-palette, 500);
           //no more roudned corners in for the bottom
           border-radius: var(--border-radius) var(--border-radius) 0 0;
+          margin-bottom: -2px;
         }
       }
 

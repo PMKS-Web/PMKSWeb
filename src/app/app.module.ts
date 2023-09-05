@@ -55,6 +55,7 @@ import { TriButtonComponent } from './component/BLOCKS/tri-button/tri-button.com
 import { EnableForcesComponent } from './component/MODALS/enable-forces/enable-forces.component';
 import { EnableWeldedComponent } from './component/MODALS/enable-welded/enable-welded.component';
 import { EnableEquationsComponent } from './component/MODALS/enable-equations/enable-equations.component';
+import { BottombarComponent } from './component/bottombar/bottombar.component';
 
 @NgModule({
   declarations: [
@@ -96,6 +97,7 @@ import { EnableEquationsComponent } from './component/MODALS/enable-equations/en
     EnableForcesComponent,
     EnableWeldedComponent,
     EnableEquationsComponent,
+    BottombarComponent,
   ],
   imports: [
     BrowserModule,
