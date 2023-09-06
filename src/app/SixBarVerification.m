@@ -2,7 +2,7 @@ clear;
 close all;
 clc;
 
-    % Coordinates of Joints
+    % Coordinates of Joints (checking out github issue)
 Pos.A = [-3.74 -2.41 0];
 Pos.B = [-2.72 0.91 0];
 Pos.C = [1.58 0.43 0];
