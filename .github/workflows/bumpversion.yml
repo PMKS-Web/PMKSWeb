@@ -8,7 +8,10 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
+          fetch-depth: 0
       - name: Automated Version Bump
-        uses: actions/checkout@v3
-      - uses: phips28/gh-action-bump-version@v10.0.1
-
+        uses: phips28/gh-action-bump-version@v10.0.1
