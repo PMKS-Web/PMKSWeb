@@ -13,15 +13,15 @@ export class TemplatesComponent {
     switch (linkage) {
       case '4-Bar':
         content =
-          '0v.cc.K,0.101.Ma,a,0,0,0.Gb,b,fk,1Jz,0.Gc,c,2o7,1sD,0.Kd,d,3Qm,0,0..YRab,Crank,Fe,Fe,Kt,f_,c5cae9,a,b,,.YRbc,Coupler,Fe,Fe,1jw,1b5,303e9f,b,c,,.YRcd,Follower,Fe,Fe,36R,x6,c5cae9,c,d,,..z';
+          '0P.TY.K,0.101.MA,A,0mv,0VU,0.GB,B,0e_,E6,0.GC,C,l1,WW,0.KD,D,qD,0Pk,0..YRAB,AB,Fe,Fe,0ix,08i,c5cae9,A,B,,.YRBC,BC,Fe,Fe,32,NJ,303e9f,B,C,,.YRCD,CD,Fe,Fe,nd,3P,0d125a,C,D,,...JBq';
         break;
       case 'Watt_I':
         content =
-          '0P.cc.K,0.101.Ma,a,0,0,0.Gb,b,Sy,1Ih,0.Gc,c,1we,19J,0.Gd,d,17O,2HW,0.Ge,e,31l,3FF,0.Gf,f,417,1ya,0.Kg,g,3h4,Z,0..YRab,ab,Fe,Fe,EU,fM,c5cae9,a,b,,.YRbcd,bcd,Fe,Fe,1AK,1aW,303e9f,b,c,d,,.YRde,de,Fe,Fe,24Z,2mN,c5cae9,d,e,,.YRef,ef,Fe,Fe,3XR,2bv,303e9f,e,f,,.YRfcg,fcg,Fe,Fe,3Cy,129,c5cae9,f,c,g,,..l';
+          '0P.TY.K,0.101.MA,A,0Qh,0Kn,0.GB,B,0e1,9i,0.GC,C,bT,LF,0.GD,D,0G5,tZ,0.GE,E,V5,1_z,0.GF,F,1mM,1Gv,0.KG,G,1rt,0ey,0..YRAB,AB,Fe,Fe,0XM,05Z,c5cae9,A,B,,.YRBCD,BCD,Fe,Fe,06D,Sr,303e9f,B,C,D,,.YRDE,DE,Fe,Fe,7W,1RG,0d125a,D,E,,.YREF,EF,Fe,Fe,17j,1dx,B2DFDB,E,F,,.YRFCG,FCG,Fe,Fe,1PE,KQ,26A69A,F,C,G,,...JAp';
         break;
       case 'Watt_II':
         content =
-          '0P.v_.K,0.101.Ma,a,0,0,0.Gb,b,1Jq,1gO,0.Gc,c,0c1,1ab,0.Gd,d,02e_,1jj,0.Ke,e,03B8,0,0.Gf,f,3G9,1uU,0.Kg,g,3B8,0,0..YRabc,abc,Fe,Fe,FH,14-,c5cae9,a,b,c,,.YRcd,cd,Fe,Fe,01dV,1f9,303e9f,c,d,,.YRde,de,Fe,Fe,02w3,st,c5cae9,d,e,,.YRbf,bf,Fe,Fe,2H-,1nR,303e9f,b,f,,.YRfg,fg,Fe,Fe,3De,yF,c5cae9,f,g,,..j';
+          '0P.TY.K,0.101.MA,A,0Vf,0Vd,0.GB,B,0mZ,08A,0.GC,C,06Y,LC,0.GD,D,1MR,J2,0.KE,E,rw,0j2,0.GF,F,2ic,ID,0.KG,G,2lk,0Zt,0..YRAB,AB,Fe,Fe,0e6,0Ju,c5cae9,A,B,,.YRBC,BC,Fe,Fe,0RY,6X,303e9f,B,C,,.YRCDE,CDE,Fe,Fe,ic,01d,0d125a,C,D,E,,.YRDF,DF,Fe,Fe,21X,Id,B2DFDB,D,F,,.YRFG,FG,Fe,Fe,2kA,08r,26A69A,F,G,,...JBm';
         break;
       case 'Stephenson_I':
         content =
@@ -31,11 +31,11 @@ export class TemplatesComponent {
         break;
       case 'Stephenson_III':
         content =
-          '0P.cc.K,0.101.Ma,a,0,0,0.Gb,b,0Av,131,0.Kc,c,1Tm,0,0.Gd,d,1WW,14n,0.Ge,e,Bp,2ih,0.Gf,f,28g,3l2,0.Kg,g,2oa,2ih,0..YRab,ab,Fe,Fe,05T,XX,c5cae9,a,b,,.YRcd,cd,Fe,Fe,1V8,YP,c5cae9,c,d,,.YRdbe,dbe,Fe,Fe,WU,1cq,303e9f,d,b,e,,.YRef,ef,Fe,Fe,1AF,3Ds,c5cae9,e,f,,.YRfg,fg,Fe,Fe,2Td,3Ds,303e9f,f,g,,..g';
+          '0P.TY.K,0.101.MA,A,0YP,0ce,0.GB,B,0cQ,0FI,0.GC,C,lC,1-,0.KD,D,ow,0U1,0.GE,E,033,D-,0.GF,F,Dc,nj,0.KG,G,1M0,GJ,0..YRAB,AB,Fe,Fe,0aP,0Qz,c5cae9,A,B,,.YRBCE,BCE,Fe,Fe,1w,E,303e9f,B,C,E,,.YRCD,CD,Fe,Fe,n3,0E1,0d125a,C,D,,.YREF,EF,Fe,Fe,5H,Vs,B2DFDB,E,F,,.YRFG,FG,Fe,Fe,np,X0,26A69A,F,G,,...JBe';
         break;
       case 'Slider_Crank':
         content =
-          '0v.cc.K,0.101.Ga,a,0,ku,0.Gb,Slider,2Ce,NS,0.Md,d,0,0,0.Le,e,2Ce,NS,0..YRab,ab,Fe,Fe,16K,ZA,c5cae9,a,b,,.YRad,Crank,Fe,Fe,0,NS,303e9f,a,d,,.YPbe,be,Fe,0,0,0,,b,e,,..f';
+          '0P.TY.K,0.101.MA,A,0mA,0c,0.GB,B,0Yt,bK,0.GC,C,il,H-,0.LD,D,il,H-,0..YRAB,AB,Fe,Fe,0fW,IN,c5cae9,A,B,,.YRBC,BC,Fe,Fe,4y,Rf,303e9f,B,C,,.YPCD,CD,Fe,0,0,0,,C,D,,...JAe';
         break;
       case 'Force':
         content =
