@@ -104,7 +104,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       x: {
         // show: false,
         formatter: function (val) {
-          return 'T = ' + ((val - 1) / 62.5).toFixed(2) + 's';
+          return 'T=' + ((val - 1) / 62.5).toFixed(2) + 's';
         },
       },
       marker: {
@@ -148,7 +148,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       },
       tickAmount: 1,
       title: {
-        text: 'Time (seconds)',
+        text: 'Time, T (second)',
         offsetY: 55,
         offsetX: -10,
       },
@@ -537,7 +537,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
               mechProp,
               mechPart
             );
-            seriesData.push({ name: 'Z', type: 'line', data: datum[0] });
+            seriesData.push({ name: 'Nm', type: 'line', data: datum[0] });
             this.numberOfSeries = 1;
             break;
           case 'Joint Forces':
@@ -550,7 +550,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'N', type: 'line', data: datum[2] });
             this.numberOfSeries = 3;
             break;
         }
@@ -581,7 +581,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'Ω', type: 'line', data: datum[2] });
             this.numberOfSeries = 3;
             break;
           case 'Linear Joint Acc':
@@ -594,7 +594,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'α', type: 'line', data: datum[2] });
             this.numberOfSeries = 3;
             break;
           case "Linear Link's CoM Pos":
@@ -619,7 +619,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'Ω', type: 'line', data: datum[2] });
             this.numberOfSeries = 3;
             break;
           case "Linear Link's CoM Acc":
@@ -632,7 +632,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             );
             seriesData.push({ name: 'X', type: 'line', data: datum[0] });
             seriesData.push({ name: 'Y', type: 'line', data: datum[1] });
-            seriesData.push({ name: 'Z', type: 'line', data: datum[2] });
+            seriesData.push({ name: 'α', type: 'line', data: datum[2] });
             this.numberOfSeries = 3;
             break;
           case 'Angular Link Pos':
@@ -651,7 +651,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
                 );
               }
             }
-            seriesData.push({ name: 'Z', type: 'line', data: series });
+            seriesData.push({ name: 'θ', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
           case 'Angular Link Vel':
@@ -670,7 +670,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
                 );
               }
             }
-            seriesData.push({ name: 'Z', type: 'line', data: series });
+            seriesData.push({ name: 'Ω', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
           case 'Angular Link Acc':
@@ -689,7 +689,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
                 );
               }
             }
-            seriesData.push({ name: 'Z', type: 'line', data: series });
+            seriesData.push({ name: 'α', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
         }
