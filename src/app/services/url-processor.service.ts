@@ -26,8 +26,13 @@ export class UrlProcessorService {
     const url = this.getURLContent();
 
     // update the mechanism from the url
+    try {
     this.updateFromURL(url, true, true, true);
-
+    } catch(error){
+      console.log("unable to load from URL");
+            //Now set the URL back to the original URL without the query string.
+            window.history.replaceState({}, document.title, window.location.pathname);
+    }
     // initial save
     // this causes a circular dependency
     // this.mechanismSrv.save();
@@ -56,8 +61,11 @@ export class UrlProcessorService {
     if (url !== null) {
       console.log('decoded url: ' + url);
       decoder.decodeURL(url as string);
+      console.log("building mechanism");
       const builder = new MechanismBuilder(mechanismSrv, decoder, this.settingsSrv, this.activeObj);
       builder.build(updateSettings);
+  
+
 
       //Now set the URL back to the original URL without the query string.
       window.history.replaceState({}, document.title, window.location.pathname);

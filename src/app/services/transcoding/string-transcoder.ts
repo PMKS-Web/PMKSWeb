@@ -334,25 +334,27 @@ export class StringTranscoder extends GenericTranscoder {
             this.addJoint(this.decodeJoint(joint));
         }
         sd.nextCharacter(); // delete the . and move on to links
-
+        console.log("completed decoding joints");
         // Decode links
         while (sd.pollNextCharacter() !== ".") {
             let link = sd.nextToken(".");
             this.addLink(this.decodeLink(link));
         }
         sd.nextCharacter(); // delete the . and move on to forces
-
+        console.log("completed decoding links");
         // Decode forces
-        while (sd.pollNextCharacter() !== ".") {
+        //sd.pollNextCharacter() !== "" adds backwards compatibility to previous encoding scheme.
+        while (sd.pollNextCharacter() !== "." && sd.pollNextCharacter() !== "") {
             let force = sd.nextToken(".");
             this.addForce(this.decodeForce(force));
         }
+        console.log("completed decoding forces");
         sd.nextCharacter(); // delete the . and move on to active object
 
         // Decode active object. Next char is type, rest is id
         let activeType = sd.nextCharacter();
         let activeID = sd.nextToken();
-        
+        console.log("completed decoding active object");console.log("completed decoding forces");
         let typeEnum;
         if (activeType === "J") typeEnum = ACTIVE_TYPE.JOINT;
         else if (activeType === "L") typeEnum = ACTIVE_TYPE.LINK;
@@ -360,7 +362,7 @@ export class StringTranscoder extends GenericTranscoder {
         else typeEnum = ACTIVE_TYPE.NOTHING;
 
         this.setActiveObj(new ActiveObjData(typeEnum, activeID));
-
+        console.log("completed decoding");
     }
 
 }
