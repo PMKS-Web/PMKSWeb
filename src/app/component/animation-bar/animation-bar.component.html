@@ -1,5 +1,6 @@
 <!--https://stackoverflow.com/questions/33193512/css-center-element-on-x-and-y-->
 <div id='barContainer'>
+  <div id='animationBar'>Degrees of Freedom: {{this.mechanismService.mechanisms[0].dof}}</div>
   <div id='animationBar'>
     <button id='speedButton'
             [disabled]='invalidMechanism()'
