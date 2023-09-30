@@ -148,7 +148,7 @@ PMKS+ is based on PMKS, developed by Prof. Matthew I. Campbell, Professor, Mecha
 
 - Jessica M. Rhodes (BS/MS RBE '25)
 - Ansel Chang (CS '25)
-- Jacob Adamski (CS' 24)
+- Jacob Adamsky (CS' 24)
 - Kohmei Kadoya (BS/MS RBE '23)
 - Alex Galvan (BS ME/RBE ’21)
 - Haofan Zhang (BS/MS CS ’20)
