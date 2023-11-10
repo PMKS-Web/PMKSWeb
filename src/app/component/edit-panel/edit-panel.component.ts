@@ -194,7 +194,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           this.settingsService.lengthUnit.getValue()
         );
         if (!success) {
-          this.jointForm.patchValue({ xPos: this.activeSrv.selectedJoint.x.toFixed(3).toString() });
+          this.jointForm.patchValue({ xPos: this.activeSrv.selectedJoint.x.toFixed(4).toString() });
         } else {
           this.activeSrv.selectedJoint.x = value;
           this.gridUtils.dragJoint(
@@ -220,7 +220,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           this.settingsService.lengthUnit.getValue()
         );
         if (!success) {
-          this.jointForm.patchValue({ yPos: this.activeSrv.selectedJoint.y.toFixed(3).toString() });
+          this.jointForm.patchValue({ yPos: this.activeSrv.selectedJoint.y.toFixed(4).toString() });
         } else {
           this.activeSrv.selectedJoint.y = value;
           this.gridUtils.dragJoint(
@@ -343,7 +343,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         );
         if (!success) {
           this.linkForm.patchValue({
-            length: this.activeSrv.selectedLink.length.toFixed(3).toString(),
+            length: this.activeSrv.selectedLink.length.toFixed(4).toString(),
           });
         } else {
           this.activeSrv.selectedLink.length = value;
@@ -406,7 +406,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         );
         if (!success) {
           this.forceForm.patchValue({
-            magnitude: this.activeSrv.selectedForce.mag.toFixed(3).toString(),
+            magnitude: this.activeSrv.selectedForce.mag.toFixed(4).toString(),
           });
         } else {
           this.activeSrv.selectedForce.mag = value;
@@ -433,7 +433,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         );
         if (!success) {
           this.forceForm.patchValue({
-            angle: this.activeSrv.selectedForce.angleRad.toFixed(3).toString(),
+            angle: this.activeSrv.selectedForce.angleRad.toFixed(4).toString(),
           });
         } else {
           //Always convert to Radian since Force.angle is in Radian
@@ -463,7 +463,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         );
         if (!success) {
           this.forceForm.patchValue({
-            xComp: this.activeSrv.selectedForce.xComp.toFixed(3).toString(),
+            xComp: this.activeSrv.selectedForce.xComp.toFixed(4).toString(),
           });
         } else {
           this.activeSrv.selectedForce.xComp = value;
@@ -487,7 +487,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         );
         if (!success) {
           this.forceForm.patchValue({
-            yComp: this.activeSrv.selectedForce.yComp.toFixed(3).toString(),
+            yComp: this.activeSrv.selectedForce.yComp.toFixed(4).toString(),
           });
         } else {
           this.activeSrv.selectedForce.yComp = value;
