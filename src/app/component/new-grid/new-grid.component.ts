@@ -145,7 +145,7 @@ export class NewGridComponent {
           .setOptions({
             steps: [
               {
-                title: '👋 Welcome',
+                title: 'Welcome!',
                 intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
               },
               {
@@ -165,13 +165,10 @@ export class NewGridComponent {
                 element: document.querySelector('#helpButton') as HTMLElement,
                 intro: 'If you get stuck at any point, click here for help.',
               },
-              {
-                element: document.querySelector('#templatesButton') as HTMLElement,
-                title: "🙌 That's it!",
-                intro: 'Get started by opening an example linkage!',
-              },
             ],
             dontShowAgain: true,
+            showProgress: true,
+            disableInteraction: true,
           })
           .start();
       });
