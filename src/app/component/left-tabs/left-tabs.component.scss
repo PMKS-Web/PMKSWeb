@@ -19,10 +19,9 @@
     width: 100%;
     margin-left: -5px;
     margin-top: 0px;
-    height: 53px;
-    position: absolute;
+    height: 33.33vh;
     z-index: -1;
-
+    position: absolute;
     //compute border to be inside the container
     box-sizing: border-box;
     border-left: 5px solid mat.get-color-from-palette($primary-palette, 500);
@@ -44,9 +43,14 @@
   //}
 
   .leftButton {
-    mat-icon {
-      transform: scale(1.5);
-    }
+    flex-grow: 1;
+    flex-shrink: 0;
+    justify-content: center;
+    writing-mode: sideways-lr;
+    --mat-mdc-button-persistent-border-radius: 4;
+    //--mat-mdc-button-ripple-color: ;
+    font-size: 30px;
+    border-color: black;
   }
 
   .panel {

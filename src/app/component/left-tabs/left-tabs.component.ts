@@ -25,19 +25,19 @@ import { MechanismService } from 'src/app/services/mechanism.service';
       state(
         '1',
         style({
-          top: '0px',
+          top: '0vh',
         })
       ),
       state(
         '2',
         style({
-          top: '53px', //Be careful, there are multiple places to change this value
+          top: '33.33vh', //Be careful, there are multiple places to change this value
         })
       ),
       state(
         '3',
         style({
-          top: '106px', //Be careful, there are multiple places to change this value
+          top: '66.67vh', //Be careful, there are multiple places to change this value
         })
       ),
 

@@ -1,16 +1,16 @@
 <div>
   <div class='tabContainer'>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.SYNTHESIZE)' matTooltip='Synthesize' matTooltipShowDelay='0'
+    <button mat-button class='leftButton' (click)='tabClicked(TabID.SYNTHESIZE)' matTooltip='Synthesize' matTooltipShowDelay='0'
             matTooltipPosition='right'>
-      <mat-icon svgIcon='synthesis'></mat-icon>
+      Synthesize
     </button>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.EDIT)' matTooltip='Edit' matTooltipShowDelay='0'
+    <button mat-button class='leftButton' (click)='tabClicked(TabID.EDIT)' matTooltip='Edit' matTooltipShowDelay='0'
             matTooltipPosition='right'>
-      <mat-icon svgIcon='edit_outline'></mat-icon>
+      Edit
     </button>
-    <button mat-icon-button class='leftButton' (click)='tabClicked(TabID.ANALYZE)' matTooltip='Analyze' matTooltipShowDelay='0'
+    <button mat-button class='leftButton' (click)='tabClicked(TabID.ANALYZE)' matTooltip='Analyze' matTooltipShowDelay='0'
             matTooltipPosition='right'>
-      <mat-icon>query_stats</mat-icon>
+      Analyze
     </button>
     <div [@activeTab]=this.getTabNum().toString() class='activeTabPill'>
     </div>
