@@ -6,7 +6,7 @@ import { SettingsService } from '../services/settings.service';
 export class Joint extends Coord {
   private _id: string;
   private _name: string = '';
-  private _showHighlight: boolean = false;
+  private _showHighlight: boolean = false; //?
 
   constructor(id: string, x: number, y: number) {
     super(x, y);
