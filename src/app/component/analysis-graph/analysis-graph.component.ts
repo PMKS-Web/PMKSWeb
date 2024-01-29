@@ -556,7 +556,9 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', fileName + '.csv');
+    //Also get the link or joint name
+    const linkName = this.mechPart;
+    link.setAttribute('download', linkName + '_' + fileName + '.csv');
     document.body.appendChild(link); // Required for FF
     link.click();
   }
