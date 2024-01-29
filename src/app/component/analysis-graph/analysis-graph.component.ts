@@ -87,9 +87,20 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         enabled: false,
       },
       toolbar: {
-        show: true, //Change this
-        offsetX: -30,
-        offsetY: -3,
+        show: false, //Change this
+        // offsetX: -30,
+        // offsetY: -3,
+        // export: {
+        //   csv: {
+        //     filename: 'Mechanism Analysis',
+        //     columnDelimiter: ',',
+        //     headerCategory: 'Time (seconds)',
+        //     headerValue: 'Value',
+        //     dateFormatter(timestamp: number) {
+        //       return 'T = ' + ((timestamp - 1) / 62.5).toFixed(2) + 's';
+        //     },
+        //   },
+        // },
       },
     },
     dataLabels: {
@@ -505,6 +516,49 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
           return 'brokenAngle';
         }
     }
+  }
+
+  downloadCSV() {
+    //Create the new csv file
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    //Get the data from the chart
+    const xSeries = this.chartOptions.series?.find((s) => s.name === 'X');
+    const ySeries = this.chartOptions.series?.find((s) => s.name === 'Y');
+    const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
+    //Get the time step, at least one of the series should have data so get the length of that
+    const timeSteps = xSeries?.data.length || ySeries?.data.length || zSeries?.data.length;
+    const fileName = this.chartOptions.yaxis?.title?.text || 'Z';
+
+    //There are three options, x and y, x, y, and z, or just z
+    //If there is no x or y, then there is only z
+    if (!xSeries && !ySeries) {
+      csvContent += 'Time (seconds),Time (steps),' + fileName + '\n';
+      for (let i = 0; i < timeSteps!; i++) {
+        const timeInSecs = i / 62.5;
+        csvContent += timeInSecs + ',' + i + ',' + zSeries?.data[i] + '\n';
+      }
+      //If there is no z, then there is only x and y
+    } else if (!zSeries) {
+      csvContent += 'Time (seconds),Time (steps),X,Y\n';
+      for (let i = 0; i < timeSteps!; i++) {
+        const timeInSecs = i / 62.5;
+        csvContent += timeInSecs + ',' + i + ',' + xSeries?.data[i] + ',' + ySeries?.data[i] + '\n';
+      }
+    } else {
+      csvContent += 'Time (seconds),Time (steps),Magnitude, X-comp,Y-comp\n';
+      for (let i = 0; i < timeSteps!; i++) {
+        const timeInSecs = i / 62.5;
+        csvContent += timeInSecs + ',' + i + ',' + zSeries?.data[i] + ',' + xSeries?.data[i] + ',' + ySeries?.data[i] + '\n';
+      }
+    }
+
+    //Create the download link
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', fileName + '.csv');
+    document.body.appendChild(link); // Required for FF
+    link.click();
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {

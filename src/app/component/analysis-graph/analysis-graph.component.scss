@@ -60,4 +60,11 @@
     min-height: 0 !important;
     height: 225px !important;
   }
+
+  #csvDownload {
+    width: 100%;
+    border-color: mat.get-color-from-palette($primary-palette, 500) !important;
+    margin-top: -20px;
+    margin-bottom: 10px;
+  }
 }
