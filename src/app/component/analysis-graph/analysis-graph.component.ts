@@ -528,6 +528,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     //Get the time step, at least one of the series should have data so get the length of that
     const timeSteps = xSeries?.data.length || ySeries?.data.length || zSeries?.data.length;
     const fileName = this.chartOptions.yaxis?.title?.text || 'Z';
+    //Get the unit of the y axis, take the last split of the title
+    const YAxisUnit = fileName.split(' ').pop();
 
     //There are three options, x and y, x, y, and z, or just z
     //If there is no x or y, then there is only z
@@ -539,13 +541,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       }
       //If there is no z, then there is only x and y
     } else if (!zSeries) {
-      csvContent += 'Time (seconds),Time (steps),X,Y\n';
+      csvContent += 'Time (seconds),Time (steps),X ' + YAxisUnit + ',Y ' + YAxisUnit + '\n';
       for (let i = 0; i < timeSteps!; i++) {
         const timeInSecs = i / 62.5;
         csvContent += timeInSecs + ',' + i + ',' + xSeries?.data[i] + ',' + ySeries?.data[i] + '\n';
       }
     } else {
-      csvContent += 'Time (seconds),Time (steps),Magnitude, X-comp,Y-comp\n';
+      csvContent += 'Time (seconds),Time (steps),' + fileName + ', X-comp,Y-comp\n';
       for (let i = 0; i < timeSteps!; i++) {
         const timeInSecs = i / 62.5;
         csvContent += timeInSecs + ',' + i + ',' + zSeries?.data[i] + ',' + xSeries?.data[i] + ',' + ySeries?.data[i] + '\n';
