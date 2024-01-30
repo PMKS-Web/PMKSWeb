@@ -529,7 +529,13 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     const timeSteps = xSeries?.data.length || ySeries?.data.length || zSeries?.data.length;
     const fileName = this.chartOptions.yaxis?.title?.text || 'Z';
     //Get the unit of the y axis, take the last split of the title
-    const YAxisUnit = fileName.split(' ').pop();
+    let YAxisUnit = fileName.split(' ').pop();
+
+    //Acceleration (cm/s²) get's displayed as Acceleration (cm/sÂ²) in the csv file
+    //This is a hacky fix
+    if (YAxisUnit === 'sÂ²') {
+      YAxisUnit = 's²';
+    }
 
     //There are three options, x and y, x, y, and z, or just z
     //If there is no x or y, then there is only z
