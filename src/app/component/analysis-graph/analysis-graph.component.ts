@@ -536,6 +536,10 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     if (YAxisUnit === 'sÂ²') {
       YAxisUnit = 's²';
     }
+    // This is a quick fix to remove the A
+    if (YAxisUnit?.includes('Â')) {
+      YAxisUnit = YAxisUnit?.replace('Â', '');
+    }
 
     //There are three options, x and y, x, y, and z, or just z
     //If there is no x or y, then there is only z
