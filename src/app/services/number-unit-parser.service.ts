@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { LengthUnit, AngleUnit, ForceUnit } from '../model/utils';
+import { AngleUnit, ForceUnit, LengthUnit, RotationUnit } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -7,7 +7,7 @@ import { LengthUnit, AngleUnit, ForceUnit } from '../model/utils';
 export class NumberUnitParserService {
   constructor() {}
 
-  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit): string {
+  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit | RotationUnit): string {
     switch (units) {
       case LengthUnit.CM:
         return value.toFixed(2) + ' cm';
@@ -23,6 +23,12 @@ export class NumberUnitParserService {
         return value.toFixed(2) + ' lbf';
       case ForceUnit.NEWTON:
         return value.toFixed(2) + ' N';
+      case RotationUnit.RPM:
+        return value.toFixed(2) + ' rpm';
+      case RotationUnit.RPS:
+        return value.toFixed(2) + ' rev/s';
+      case RotationUnit.DPS:
+        return value.toFixed(2) + ' deg/s';
     }
     return 'Error in formatValueAndUnit()';
   }
