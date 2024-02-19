@@ -21,7 +21,7 @@ export enum AngleUnit {
   NULL = 12,
 }
 
-export enum RotationUnit {
+export enum AngVelUnit {
   RPM = 15, // revolutions per minute
   DPS = 16, // degrees per second
   RPS = 17, // Radians per second

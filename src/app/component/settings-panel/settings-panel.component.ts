@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
-import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit, RotationUnit } from 'src/app/model/utils';
+import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit, AngVelUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
@@ -35,7 +35,7 @@ export class SettingsPanelComponent {
   currentAngleUnit!: AngleUnit;
   // currentTorqueUnit!: TorqueUnit;
   currentGlobalUnit!: GlobalUnit;
-  currentRotationalUnit!: RotationUnit;
+  currentAngVelUnit!: AngVelUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   currentObjectScaleSetting!: number;
@@ -44,7 +44,7 @@ export class SettingsPanelComponent {
     this.currentLengthUnit = this.settingsService.lengthUnit.value;
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
-    this.currentRotationalUnit = this.settingsService.rotationalUnit.value;
+    this.currentAngVelUnit = this.settingsService.angVelUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentObjectScaleSetting = SettingsService.objectScale;
@@ -70,7 +70,7 @@ export class SettingsPanelComponent {
         { emitEvent: false },
       );
       this.settingsForm.patchValue(
-        { speed: this.nup.formatValueAndUnit(20, this.settingsService.rotationalUnit.getValue()) }
+        { speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) }
       );
 
       //Werid place to put this but
@@ -92,10 +92,17 @@ export class SettingsPanelComponent {
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['speed'].invalid) {
-        this.settingsForm.patchValue({ speed: this.nup.formatValueAndUnit(Number(val), this.settingsService.rotationalUnit.getValue()),
-        });
+        const [success, value] = this.nup.parseAngVelString(val!, this.settingsService.angVelUnit.getValue());
+        const str = this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue());
+        this.settingsForm.patchValue(
+          { speed: str},
+          {emitEvent: false });
+        this.settingsService.inputSpeed.next(value);
+        // this.settingsForm.patchValue({ speed: this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue()) });
       } else {
         this.currentSpeedSetting = Number(val);
+        this.settingsForm.patchValue({ speed:this.currentSpeedSetting.toString() });
+        // this.settingsForm.patchValue({ speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) });
         this.settingsService.inputSpeed.next(this.currentSpeedSetting);
       }
       this.mechanismSrv.updateMechanism();
@@ -219,7 +226,7 @@ export class SettingsPanelComponent {
     }
   }
 
-  numRegex = '^-?[0-9]+(\\.[0-9]{0,10})?\\s*[a-zA-Z]*$';
+  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
   settingsForm = this.fb.group(
     {
       speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],

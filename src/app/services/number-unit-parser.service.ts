@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AngleUnit, ForceUnit, LengthUnit, RotationUnit } from '../model/utils';
+import { AngleUnit, AngVelUnit, ForceUnit, LengthUnit } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -7,7 +7,7 @@ import { AngleUnit, ForceUnit, LengthUnit, RotationUnit } from '../model/utils';
 export class NumberUnitParserService {
   constructor() {}
 
-  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit | RotationUnit): string {
+  public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit | AngVelUnit): string {
     switch (units) {
       case LengthUnit.CM:
         return value.toFixed(2) + ' cm';
@@ -23,11 +23,11 @@ export class NumberUnitParserService {
         return value.toFixed(2) + ' lbf';
       case ForceUnit.NEWTON:
         return value.toFixed(2) + ' N';
-      case RotationUnit.RPM:
+      case AngVelUnit.RPM:
         return value.toFixed(2) + ' rpm';
-      case RotationUnit.RPS:
+      case AngVelUnit.RPS:
         return value.toFixed(2) + ' rev/s';
-      case RotationUnit.DPS:
+      case AngVelUnit.DPS:
         return value.toFixed(2) + ' deg/s';
     }
     return 'Error in formatValueAndUnit()';
@@ -113,6 +113,36 @@ export class NumberUnitParserService {
       default:
         return LengthUnit.NULL;
     }
+  }
+
+  public parseAngVelString(input: string, desiredUnits: AngVelUnit): [boolean, number] {
+    let [value, unit] = this.preProcessInput(input);
+
+    if (isNaN(value)) return [false, 0]; //If the value is not a number, return fail
+    if (unit.length == 0) return [true, value]; //No units means imply that we have the desired units
+
+    let givenUnits: AngVelUnit;
+
+    switch (unit) {
+      case 'rad/s':
+      case 'rps':
+        givenUnits = AngVelUnit.RPS;
+        break;
+      case 'rpm':
+      case 'rev/min':
+        givenUnits = AngVelUnit.RPM;
+        break;
+      case 'degree/second':
+      case 'degree/s':
+      case 'dps':
+        givenUnits = AngVelUnit.DPS;
+        break;
+      default:
+        return [false, value];
+    }
+    if (givenUnits == desiredUnits) return [true, value];
+    value = this.convertAngVel(value, givenUnits, desiredUnits);
+    return [true, value];
   }
 
   public parseLengthString(input: string, desiredUnits: LengthUnit): [boolean, number] {
@@ -233,6 +263,43 @@ export class NumberUnitParserService {
         AngleUnit[givenUnits] +
         ' and ' +
         AngleUnit[desiredUnits]
+    );
+    return value;
+  }
+
+  private convertAngVel(value: number, givenUnits: AngVelUnit, desiredUnits: AngVelUnit) {
+    if (givenUnits == desiredUnits) return value;
+    switch (givenUnits) {
+      case AngVelUnit.DPS:
+        switch (desiredUnits) {
+          case AngVelUnit.RPM:
+            return (value / 360) * 60;
+          case AngVelUnit.RPS:
+            return value * (Math.PI / 180);
+        }
+        break;
+      case AngVelUnit.RPM:
+        switch (desiredUnits) {
+          case AngVelUnit.DPS:
+            return (value * 360) / 60;
+          case AngVelUnit.RPS:
+            return value * (2 * Math.PI) / 60;
+        }
+        break;
+      case AngVelUnit.RPS:
+        switch (desiredUnits) {
+          case AngVelUnit.RPM:
+            return value * (60 / ( 2 * Math.PI));
+          case AngVelUnit.DPS:
+            return value * (180 / Math.PI);
+        }
+        break;
+    }
+    console.error(
+      'Error in NumberUnitParserService.convertAngVel(): No valid conversion found between ' +
+      AngVelUnit[givenUnits] +
+      ' and ' +
+      AngVelUnit[desiredUnits]
     );
     return value;
   }
