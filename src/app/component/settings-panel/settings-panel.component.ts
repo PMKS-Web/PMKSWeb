@@ -14,6 +14,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
 import { EnableWeldedComponent } from '../MODALS/enable-welded/enable-welded.component';
 import { EnableEquationsComponent } from '../MODALS/enable-equations/enable-equations.component';
+import { getChartByID } from 'apexcharts';
+import { AnalysisGraphComponent } from '../analysis-graph/analysis-graph.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -91,21 +93,25 @@ export class SettingsPanelComponent {
       this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
-      if (this.settingsForm.controls['speed'].invalid) {
-        const [success, value] = this.nup.parseAngVelString(val!, this.settingsService.angVelUnit.getValue());
-        const str = this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue());
-        this.settingsForm.patchValue(
-          { speed: str},
-          {emitEvent: false });
-        this.settingsService.inputSpeed.next(value);
-        // this.settingsForm.patchValue({ speed: this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue()) });
-      } else {
-        this.currentSpeedSetting = Number(val);
-        this.settingsForm.patchValue({ speed:this.currentSpeedSetting.toString() });
-        // this.settingsForm.patchValue({ speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) });
-        this.settingsService.inputSpeed.next(this.currentSpeedSetting);
-      }
+        const [success, value] = this.nup.parseAngVelString(
+          val!,
+          this.settingsService.angVelUnit.getValue()
+        );
+        if (!success) {
+          this.settingsForm.patchValue(
+            { speed: this.currentSpeedSetting.toString() },
+          { emitEvent: false },
+            );
+        } else {
+          this.currentSpeedSetting = value;
+          this.settingsService.inputSpeed.next(value);
+          this.settingsForm.patchValue(
+            {speed: this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue())},
+          { emitEvent: false },
+          );
+        }
       this.mechanismSrv.updateMechanism();
+        this.mechanismSrv.onMechUpdateState.next(2);
     });
     this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['objectScale'].invalid) {
@@ -120,6 +126,7 @@ export class SettingsPanelComponent {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angleUnit.next(this.currentAngleUnit);
       this.mechanismSrv.updateMechanism();
+      // if (AnalysisGraphComponent.)
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
@@ -229,7 +236,7 @@ export class SettingsPanelComponent {
   numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
   settingsForm = this.fb.group(
     {
-      speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      speed: ['', [Validators.required]],
       objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
       rotation: ['', { updateOn: 'change' }],
       lengthunit: ['', { updateOn: 'change' }],
