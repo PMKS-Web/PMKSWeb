@@ -93,6 +93,9 @@ export class SettingsPanelComponent {
       this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
+      if (val?.includes('-')) {
+        this.sendNotification("Input Speed is a magnitude. Change cw or ccw from Input Direction");
+      }
         const [success, value] = this.nup.parseAngVelString(
           val!,
           this.settingsService.angVelUnit.getValue()
@@ -251,6 +254,10 @@ export class SettingsPanelComponent {
 
   sendComingSoon(): void {
     NewGridComponent.sendNotification('This feature is coming soon!');
+  }
+
+  sendNotification(message: string): void {
+    NewGridComponent.sendNotification(message);
   }
 
   updateObjectScale() {
