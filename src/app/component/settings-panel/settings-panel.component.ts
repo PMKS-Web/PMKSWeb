@@ -99,7 +99,7 @@ export class SettingsPanelComponent {
         );
         if (!success) {
           this.settingsForm.patchValue(
-            { speed: this.currentSpeedSetting.toString() },
+            { speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) },
           { emitEvent: false },
             );
         } else {
