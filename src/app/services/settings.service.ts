@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LengthUnit, AngleUnit, GlobalUnit, ForceUnit, AngVelUnit } from '../model/utils';
+import { LengthUnit, AngleUnit, GlobalUnit, ForceUnit, AngVelUnit, AngAccUnit } from '../model/utils';
 
 @Injectable({
   providedIn: 'root',
@@ -10,6 +10,7 @@ export class SettingsService {
   angleUnit = new BehaviorSubject(AngleUnit.DEGREE);
   forceUnit = new BehaviorSubject(ForceUnit.NEWTON);
   angVelUnit = new BehaviorSubject(AngVelUnit.RPM);
+  angAccUnit = new BehaviorSubject(AngAccUnit.RPS_square);
   // inputTorque = new BehaviorSubject(TorqueUnit.CM_N);
   globalUnit = new BehaviorSubject(GlobalUnit.METRIC);
   isInputCW = new BehaviorSubject(true);

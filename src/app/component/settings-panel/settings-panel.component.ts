@@ -1,21 +1,17 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
-import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit, AngVelUnit } from 'src/app/model/utils';
+import { AngAccUnit, AngleUnit, AngVelUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
-import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { Coord } from '../../model/coord';
 import { MatDialog } from '@angular/material/dialog';
 import { EnableForcesComponent } from '../MODALS/enable-forces/enable-forces.component';
 import { EnableWeldedComponent } from '../MODALS/enable-welded/enable-welded.component';
 import { EnableEquationsComponent } from '../MODALS/enable-equations/enable-equations.component';
-import { getChartByID } from 'apexcharts';
-import { AnalysisGraphComponent } from '../analysis-graph/analysis-graph.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -38,6 +34,7 @@ export class SettingsPanelComponent {
   // currentTorqueUnit!: TorqueUnit;
   currentGlobalUnit!: GlobalUnit;
   currentAngVelUnit!: AngVelUnit;
+  currentAngAccUnit!: AngAccUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   currentObjectScaleSetting!: number;
@@ -47,6 +44,7 @@ export class SettingsPanelComponent {
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
     this.currentAngVelUnit = this.settingsService.angVelUnit.value;
+    this.currentAngAccUnit = this.settingsService.angAccUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentObjectScaleSetting = SettingsService.objectScale;
@@ -85,6 +83,22 @@ export class SettingsPanelComponent {
 
     this.onChanges();
   }
+
+  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
+  settingsForm = this.fb.group(
+    {
+      speed: ['', [Validators.required]],
+      objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      rotation: ['', { updateOn: 'change' }],
+      lengthunit: ['', { updateOn: 'change' }],
+      angleunit: ['', { updateOn: 'change' }],
+      torqueunit: ['', { updateOn: 'change' }],
+      globalunit: ['', { updateOn: 'change' }],
+      showMinorGrid: [true, { updateOn: 'change' }],
+      showMajorGrid: [true, { updateOn: 'change' }],
+    },
+    { updateOn: 'blur' }
+  );
 
   onChanges(): void {
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
@@ -128,8 +142,19 @@ export class SettingsPanelComponent {
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angleUnit.next(this.currentAngleUnit);
+      if (this.settingsService.angVelUnit.value === AngVelUnit.DPS) {
+        this.currentAngleUnit = AngleUnit.DEGREE;
+        this.currentAngVelUnit = AngVelUnit.DPS;
+        this.currentAngAccUnit = AngAccUnit.DPS_square;
+      } else {
+        this.currentAngleUnit = AngleUnit.RADIAN;
+        this.currentAngVelUnit = AngVelUnit.RPS;
+        this.currentAngAccUnit = AngAccUnit.RPS_square;
+      }
+
       this.mechanismSrv.updateMechanism();
-      // if (AnalysisGraphComponent.)
+
+      this.mechanismSrv.onMechUpdateState.next(2);
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
@@ -235,22 +260,6 @@ export class SettingsPanelComponent {
         return 'cm';
     }
   }
-
-  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
-  settingsForm = this.fb.group(
-    {
-      speed: ['', [Validators.required]],
-      objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      rotation: ['', { updateOn: 'change' }],
-      lengthunit: ['', { updateOn: 'change' }],
-      angleunit: ['', { updateOn: 'change' }],
-      torqueunit: ['', { updateOn: 'change' }],
-      globalunit: ['', { updateOn: 'change' }],
-      showMinorGrid: [true, { updateOn: 'change' }],
-      showMajorGrid: [true, { updateOn: 'change' }],
-    },
-    { updateOn: 'blur' }
-  );
 
   sendComingSoon(): void {
     NewGridComponent.sendNotification('This feature is coming soon!');
