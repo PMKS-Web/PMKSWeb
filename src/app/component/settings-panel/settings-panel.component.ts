@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
 import { SettingsService } from 'src/app/services/settings.service';
-import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit } from 'src/app/model/utils';
+import { AngAccUnit, AngleUnit, AngVelUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { Link, RealLink } from '../../model/link';
 import { SvgGridService } from '../../services/svg-grid.service';
-import { AnimationBarComponent } from '../animation-bar/animation-bar.component';
-import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { Coord } from '../../model/coord';
 import { MatDialog } from '@angular/material/dialog';
@@ -35,6 +33,8 @@ export class SettingsPanelComponent {
   currentAngleUnit!: AngleUnit;
   // currentTorqueUnit!: TorqueUnit;
   currentGlobalUnit!: GlobalUnit;
+  currentAngVelUnit!: AngVelUnit;
+  currentAngAccUnit!: AngAccUnit;
   rotateDirection!: boolean;
   currentSpeedSetting!: number;
   currentObjectScaleSetting!: number;
@@ -43,6 +43,8 @@ export class SettingsPanelComponent {
     this.currentLengthUnit = this.settingsService.lengthUnit.value;
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
+    this.currentAngVelUnit = this.settingsService.angVelUnit.value;
+    this.currentAngAccUnit = this.settingsService.angAccUnit.value;
     this.rotateDirection = this.settingsService.isInputCW.value;
     this.currentSpeedSetting = this.settingsService.inputSpeed.value;
     this.currentObjectScaleSetting = SettingsService.objectScale;
@@ -65,7 +67,10 @@ export class SettingsPanelComponent {
       this.currentObjectScaleSetting = val;
       this.settingsForm.patchValue(
         { objectScale: this.currentObjectScaleSetting.toString() },
-        { emitEvent: false }
+        { emitEvent: false },
+      );
+      this.settingsForm.patchValue(
+        { speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) }
       );
 
       //Werid place to put this but
@@ -79,6 +84,22 @@ export class SettingsPanelComponent {
     this.onChanges();
   }
 
+  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
+  settingsForm = this.fb.group(
+    {
+      speed: ['', [Validators.required]],
+      objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
+      rotation: ['', { updateOn: 'change' }],
+      lengthunit: ['', { updateOn: 'change' }],
+      angleunit: ['', { updateOn: 'change' }],
+      torqueunit: ['', { updateOn: 'change' }],
+      globalunit: ['', { updateOn: 'change' }],
+      showMinorGrid: [true, { updateOn: 'change' }],
+      showMajorGrid: [true, { updateOn: 'change' }],
+    },
+    { updateOn: 'blur' }
+  );
+
   onChanges(): void {
     this.settingsForm.controls['rotation'].valueChanges.subscribe((val) => {
       this.rotateDirection = String(val) === '0';
@@ -86,13 +107,28 @@ export class SettingsPanelComponent {
       this.mechanismSrv.updateMechanism();
     });
     this.settingsForm.controls['speed'].valueChanges.subscribe((val) => {
-      if (this.settingsForm.controls['speed'].invalid) {
-        this.settingsForm.patchValue({ speed: this.currentSpeedSetting.toString() });
-      } else {
-        this.currentSpeedSetting = Number(val);
-        this.settingsService.inputSpeed.next(this.currentSpeedSetting);
+      if (val?.includes('-')) {
+        this.sendNotification("Input Speed is a magnitude. Change cw or ccw from Input Direction");
       }
+        const [success, value] = this.nup.parseAngVelString(
+          val!,
+          this.settingsService.angVelUnit.getValue()
+        );
+        if (!success) {
+          this.settingsForm.patchValue(
+            { speed: this.nup.formatValueAndUnit(this.currentSpeedSetting, this.settingsService.angVelUnit.getValue()) },
+          { emitEvent: false },
+            );
+        } else {
+          this.currentSpeedSetting = value;
+          this.settingsService.inputSpeed.next(value);
+          this.settingsForm.patchValue(
+            {speed: this.nup.formatValueAndUnit(value, this.settingsService.angVelUnit.getValue())},
+          { emitEvent: false },
+          );
+        }
       this.mechanismSrv.updateMechanism();
+        this.mechanismSrv.onMechUpdateState.next(2);
     });
     this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
       if (this.settingsForm.controls['objectScale'].invalid) {
@@ -106,7 +142,19 @@ export class SettingsPanelComponent {
     this.settingsForm.controls['angleunit'].valueChanges.subscribe((val) => {
       this.currentAngleUnit = ParseAngleUnit(String(val));
       this.settingsService.angleUnit.next(this.currentAngleUnit);
+      if (this.settingsService.angVelUnit.value === AngVelUnit.DPS) {
+        this.currentAngleUnit = AngleUnit.DEGREE;
+        this.currentAngVelUnit = AngVelUnit.DPS;
+        this.currentAngAccUnit = AngAccUnit.DPS_square;
+      } else {
+        this.currentAngleUnit = AngleUnit.RADIAN;
+        this.currentAngVelUnit = AngVelUnit.RPS;
+        this.currentAngAccUnit = AngAccUnit.RPS_square;
+      }
+
       this.mechanismSrv.updateMechanism();
+
+      this.mechanismSrv.onMechUpdateState.next(2);
     });
     this.settingsForm.controls['globalunit'].valueChanges.subscribe((val) => {
       this.currentGlobalUnit = ParseGlobalUnit(val);
@@ -213,24 +261,12 @@ export class SettingsPanelComponent {
     }
   }
 
-  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
-  settingsForm = this.fb.group(
-    {
-      speed: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],
-      rotation: ['', { updateOn: 'change' }],
-      lengthunit: ['', { updateOn: 'change' }],
-      angleunit: ['', { updateOn: 'change' }],
-      torqueunit: ['', { updateOn: 'change' }],
-      globalunit: ['', { updateOn: 'change' }],
-      showMinorGrid: [true, { updateOn: 'change' }],
-      showMajorGrid: [true, { updateOn: 'change' }],
-    },
-    { updateOn: 'blur' }
-  );
-
   sendComingSoon(): void {
     NewGridComponent.sendNotification('This feature is coming soon!');
+  }
+
+  sendNotification(message: string): void {
+    NewGridComponent.sendNotification(message);
   }
 
   updateObjectScale() {

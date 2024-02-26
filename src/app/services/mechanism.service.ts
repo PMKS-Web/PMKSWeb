@@ -164,7 +164,7 @@ export class MechanismService {
   }
 
   updateLinkageUnits(fromUnits: LengthUnit, toUnits: LengthUnit) {
-    //Scale the linkage based on teh units
+    //Scale the linkage based on the units
     // For each joint, move the joint
     this.joints.forEach((joint) => {
       //If joint is of type Rev joint only, move the joint
@@ -179,7 +179,7 @@ export class MechanismService {
         );
       }
     });
-    this.updateMechanism();
+    // this.updateMechanism();
     // this.settingsService.lengthUnit.subscribe((val) => {
     //For each jo
     // let unit = this.settingsService.lengthUnit.value;

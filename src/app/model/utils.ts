@@ -21,6 +21,17 @@ export enum AngleUnit {
   NULL = 12,
 }
 
+export enum AngVelUnit {
+  RPM = 15, // revolutions per minute
+  DPS = 16, // degrees per second
+  RPS = 17, // Radians per second
+}
+
+export enum AngAccUnit {
+  RPS_square = 18, // rad per second square (rad/s^2)
+  DPS_square = 19, // degrees per second square (deg/s^2)
+}
+
 export enum ForceUnit {
   LBF = 20,
   NEWTON = 21,
