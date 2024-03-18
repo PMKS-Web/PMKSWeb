@@ -145,7 +145,7 @@ export class NewGridComponent {
           .setOptions({
             steps: [
               {
-                title: '👋 Welcome',
+                title: 'Welcome!',
                 intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
               },
               {
@@ -165,13 +165,10 @@ export class NewGridComponent {
                 element: document.querySelector('#helpButton') as HTMLElement,
                 intro: 'If you get stuck at any point, click here for help.',
               },
-              {
-                element: document.querySelector('#templatesButton') as HTMLElement,
-                title: "🙌 That's it!",
-                intro: 'Get started by opening an example linkage!',
-              },
             ],
             dontShowAgain: true,
+            showProgress: true,
+            disableInteraction: true,
           })
           .start();
       });
@@ -250,13 +247,6 @@ export class NewGridComponent {
     // console.log(this.lastRightClick.constructor.name);
     switch (this.lastRightClick.constructor.name) {
       case 'Force':
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         //Switch force direction, switch force local, delete Force
         this.cMenuItems.push(
           new cMenuItem(
@@ -272,21 +262,21 @@ export class NewGridComponent {
             'switch_force_dir'
           )
         );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Force',
+            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         break;
       case 'RealLink':
-        //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
+        //Attach Link, Attach Tracer Point, Attach Joint, Delete Link
         //Don't give options if a fillet it selected and not a primary link
         let weldedLinkFilletSelected =
           (this.lastRightClick as RealLink).isWelded &&
           (this.lastRightClick as RealLink).lastSelectedSublink == null;
 
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Link',
-            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
         this.cMenuItems.push(
           new cMenuItem(
             'Attach Link',
@@ -311,6 +301,13 @@ export class NewGridComponent {
             weldedLinkFilletSelected || !this.settings.isForces.value
           )
         );
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Link',
+            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         break;
       case 'RevJoint':
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
@@ -320,14 +317,6 @@ export class NewGridComponent {
           this.settings.isWeldedJointsEnabled.value;
         let canTogglePath =
           !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
-
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
 
         this.cMenuItems.push(
           new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
@@ -392,6 +381,14 @@ export class NewGridComponent {
         //     !canTogglePath
         //   )
         // ); //Rev Joint - Not Ground and at least one valid mechanism exists
+        
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Delete Joint',
+            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
+            'remove'
+          )
+        );
         break;
 
       case 'String': //This means grid

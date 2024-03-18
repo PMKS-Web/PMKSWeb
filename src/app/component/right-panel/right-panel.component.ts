@@ -109,6 +109,11 @@ export class RightPanelComponent {
     // console.warn(this.isOpen);
   }
 
+  static closeOpenTab() {
+    if(this.isOpen)
+      this.isOpen = false;
+  }
+
   getOpenTab() {
     return RightPanelComponent.openTab;
   }
@@ -277,10 +282,8 @@ export class RightPanelComponent {
     logEvent(this.analytics, 'goto_github');
   }
 
-  sendNotReady() {
-    introJs().start();
-    // NewGridComponent.sendNotification('Sorry, the tutorial is not ready yet.');
-    // logEvent(this.analytics, 'tutorial_not_ready');
+  resetTutorial() {
+    introJs().setDontShowAgain(false);
   }
 
   getBrowserName() {

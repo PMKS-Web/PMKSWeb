@@ -121,7 +121,7 @@
                             (closed)="sectionExpanded['JDistToJ'] = false">
       <div *ngFor='let joint of listOfOtherJoints; let i=index'>
         <!-- The repeated alias template -->
-        <dual-input-block label1='D' label2='⊾' tooltip='TODO' [formGroup]='jointForm' formSubGroup='otherJoints'
+        <dual-input-block label1='⤢' label2='⊾' tooltip='TODO' [formGroup]='jointForm' formSubGroup='otherJoints'
                           [formControl1]='(i*2).toString()' [formControl2]='(i*2+1).toString()'
                           (field1Entry)='setShowLinkLengthOverlay($event)'
                           (field2Entry)='setShowLinkAngleOverlay($event)'
@@ -138,7 +138,7 @@
                             (opened)="sectionExpanded['LBasic'] = true"
                             (closed)="sectionExpanded['LBasic'] = false">
       <dual-input-block
-        label1='L'
+        label1='⤢'
         label2='⊾'
         formControl1='length'
         formControl2='angle'

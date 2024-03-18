@@ -10,19 +10,19 @@ export class NumberUnitParserService {
   public formatValueAndUnit(value: number, units: LengthUnit | AngleUnit | ForceUnit): string {
     switch (units) {
       case LengthUnit.CM:
-        return value.toFixed(2) + ' cm';
+        return value.toFixed(4) + ' cm';
       case LengthUnit.METER:
-        return value.toFixed(2) + ' m';
+        return value.toFixed(4) + ' m';
       case LengthUnit.INCH:
-        return value.toFixed(2) + ' in';
+        return value.toFixed(4) + ' in';
       case AngleUnit.DEGREE:
         return value.toFixed(0) + ' deg';
       case AngleUnit.RADIAN:
-        return value.toFixed(2) + ' rad';
+        return value.toFixed(4) + ' rad';
       case ForceUnit.LBF:
-        return value.toFixed(2) + ' lbf';
+        return value.toFixed(4) + ' lbf';
       case ForceUnit.NEWTON:
-        return value.toFixed(2) + ' N';
+        return value.toFixed(4) + ' N';
     }
     return 'Error in formatValueAndUnit()';
   }
