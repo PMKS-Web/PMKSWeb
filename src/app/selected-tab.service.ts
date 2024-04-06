@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MechanismService } from './services/mechanism.service';
 import { SynthesisBuilderService } from './services/synthesis/synthesis-builder.service';
+import { ActiveObjService } from 'src/app/services/active-obj.service';
 
 export enum TabID {
   SYNTHESIZE,
@@ -18,7 +19,11 @@ export class SelectedTabService {
   private _tabNum: BehaviorSubject<TabID>;
   private _tabVisible: BehaviorSubject<boolean>;
 
-  constructor(private synthesis: SynthesisBuilderService, private mechanism: MechanismService) {
+  constructor(
+    private synthesis: SynthesisBuilderService,
+    private mechanism: MechanismService,
+    private activeObjService: ActiveObjService
+  ) {
     this._tabNum = new BehaviorSubject<TabID>(TabID.EDIT);
     this._tabVisible = new BehaviorSubject<boolean>(true);
   }
@@ -27,6 +32,11 @@ export class SelectedTabService {
 
     let previousTab = this.getCurrentTab();
     let isDifferentTab = previousTab !== tabID;
+
+    // when switching from synthesis to edit/analyze tab, clear selected synthesis pose, if it exists
+    if (previousTab === TabID.SYNTHESIZE && this.activeObjService.getSelectedObjType() === "SynthesisPose") {
+      this.activeObjService.updateSelectedObj(null);
+    }
 
     this._tabNum.next(tabID);
     this._tabVisible.next(true);

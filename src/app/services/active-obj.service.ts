@@ -5,11 +5,13 @@ import { RealLink } from '../model/link';
 import { Coord } from '../model/coord';
 import { SynthesisPose } from './synthesis/synthesis-util';
 
+export type ActiveObjType = "Nothing" | "Joint" | "Force" | "Link" | "Grid" | "SynthesisPose";
+
 @Injectable({
   providedIn: 'root',
 })
 export class ActiveObjService {
-  objType: string = 'Nothing';
+  objType: ActiveObjType = 'Nothing';
   selectedJoint!: RealJoint;
   prevSelectedJoint!: RealJoint;
   selectedForce!: Force;
@@ -33,6 +35,10 @@ export class ActiveObjService {
       default:
         throw new Error('No object selected');
     }
+  }
+
+  getSelectedObjType(): ActiveObjType {
+    return this.objType;
   }
 
   fakeUpdateSelectedObj() {
