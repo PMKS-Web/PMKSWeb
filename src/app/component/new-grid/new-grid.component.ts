@@ -108,6 +108,7 @@ export class NewGridComponent {
   // 0-N => Joint length and angle shown for joint N (in list from edit panel)
   public showLinkLengthOverlay: number = -2;
   public showLinkAngleOverlay: number = -2;
+  public exampleBoolean: boolean = true;
 
   static instance: NewGridComponent;
   private lastNotificationTime: number = Date.now();
