@@ -1,6 +1,5 @@
 // A class to represent an X and Y coordinate
 
-import { RealLink } from './link';
 import { SettingsService } from '../services/settings.service';
 
 export class Coord {

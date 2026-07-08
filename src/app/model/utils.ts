@@ -8,31 +8,8 @@ import { NewGridComponent } from '../component/new-grid/new-grid.component';
 export class Utils {}
 
 // radToDeg
-export enum LengthUnit {
-  INCH = 0,
-  CM = 1,
-  METER = 2,
-  NULL = 3,
-}
-
-export enum AngleUnit {
-  DEGREE = 10,
-  RADIAN = 11,
-  NULL = 12,
-}
-
-export enum ForceUnit {
-  LBF = 20,
-  NEWTON = 21,
-  NULL = 22,
-}
-
-export enum GlobalUnit {
-  ENGLISH = 30,
-  METRIC = 31,
-  SI = 32,
-  NULL = 33,
-}
+export * from './unit-enums';
+import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from './unit-enums';
 
 // The possible states the program could be in.
 export enum gridStates {
@@ -1151,13 +1128,19 @@ export function circleCircleIntersection(
   let dx = x1 - x0;
   let dy = y1 - y0;
   const d = Math.sqrt(dx * dx + dy * dy);
+  // Tangent circles arise whenever the solved-for joint is collinear with the
+  // two joints it is solved from (e.g. a tracer point on a straight link).
+  // Joint positions are rounded every timestep, which can push such circles
+  // just out of contact, so only reject configurations separated by more than
+  // rounding noise.
+  const tangentTolerance = 0.001 * Math.max(1, d);
   // Circles too far apart
-  if (d > r0 + r1) {
+  if (d > r0 + r1 + tangentTolerance) {
     return false;
   }
 
   // One circle completely inside the other
-  if (d < Math.abs(r0 - r1)) {
+  if (d < Math.abs(r0 - r1) - tangentTolerance) {
     return false;
   }
 
@@ -1176,7 +1159,9 @@ export function circleCircleIntersection(
   const px = x0 + a * dx;
   const py = y0 + a * dy;
 
-  const h = Math.sqrt(r0 * r0 - a * a);
+  // Clamped for the tangent case, where rounding noise can make r0^2 - a^2
+  // slightly negative and the square root NaN.
+  const h = Math.sqrt(Math.max(0, r0 * r0 - a * a));
 
   const p1x = px + h * dy;
   const p1y = py - h * dx;

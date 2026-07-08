@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LengthUnit, AngleUnit, GlobalUnit, ForceUnit } from '../model/utils';
+import { LengthUnit, AngleUnit, GlobalUnit, ForceUnit } from '../model/unit-enums';
 
 @Injectable({
   providedIn: 'root',

@@ -163,6 +163,11 @@ export class PositionSolver {
         );
         this.m_Map.set(cur_joint.id, Math.tan(sliderJoint.angle_rad));
         this.b_Map.set(cur_joint.id, cur_joint.y - this.m_Map.get(cur_joint.id)! * cur_joint.x);
+        // Like the revolute branch below, the solved slider joint becomes a
+        // known joint and its other neighbors still need solve orders --
+        // otherwise a tracer point on the slider's link can never resolve.
+        knownJointArray.push(cur_joint.id);
+        orderNum = this.detJointOrder(joints, links, cur_joint, orderNum, knownJointArray);
       } else {
         const known_joint = this.findKnownJoint(cur_joint, prevJoint, knownJointArray);
         if (known_joint === undefined) {
