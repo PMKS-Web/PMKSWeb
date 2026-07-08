@@ -118,6 +118,9 @@ describe('SixbarService', () => {
   //   unit
   // );
 
+  // Other spec files may have run the solver on a different mechanism in the
+  // same worker; its static caches must not leak into this one.
+  KinematicsSolver.resetVariables();
   KinematicsSolver.requiredLoops = mechanisms[0].requiredLoops;
   KinematicsSolver.determineKinematics(mechanisms[0].joints[0], mechanisms[0].links[0], 10);
 
