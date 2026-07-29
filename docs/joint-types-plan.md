@@ -1,0 +1,638 @@
+# Joint types: floating sliders, prismatic joints, and cylinders
+
+Plan of record for extending PMKS+ from "revolute joints plus one grounded slider" to the
+joint set needed for the standard 2D kinematics curriculum.
+
+Branch: `floating-sliders`.
+
+---
+
+## 1. Scope
+
+### In
+
+| Joint | Grounded | Floating | Driven |
+| --- | --- | --- | --- |
+| Pin (R) | have | have | grounded: have · floating: **new** |
+| Slot (RP) | have | **new** | grounded: have · floating: **new** |
+| Slide (P) | **new** | **new** | **new** (this is the cylinder) |
+
+### Explicitly out
+
+- **Gear (G) joints.** A gear is irreducibly a 2-DOF relation between two named links with no
+  block-body decomposition available. Excluding it is what lets us keep the point-centric model
+  (see §2.2).
+- **Driving the R half of an RP.** Kinematically it is a reparameterisation of driving the P half
+   — same configurations, different time mapping — and a rotary actuator on a linear carriage is
+  rare. Excluding it means every joint type has exactly one drivable DOF, so **"driven" stays a
+  plain boolean** with no "which DOF?" follow-up control.
+- **Stroke limits.** See §2.6.
+- **Multiple simultaneous inputs.** Still one input, still `dof === 1`
+  ([`mechanism.ts:97-98`](../src/app/model/mechanism/mechanism.ts)). See §6 — the error message
+  matters more than it used to.
+
+---
+
+## 2. Locked decisions
+
+### 2.1 The joint model is a 2×2, not a 3-way type
+
+`isWelded` is already a boolean on `RealJoint`
+([`joint.ts:55`](../src/app/model/joint.ts)). Keep it that way — weldedness is a property of the
+*joint*, and any link attached there inherits it. Combined with "does this joint have a slider",
+that gives:
+
+|  | Not welded | Welded |
+| --- | --- | --- |
+| **No slider** | Pin (R) | rigid joint → compound link |
+| **Slider** | Slot (RP) | Slide (P) |
+
+This is a property of the **assembly**, not of one serialized joint — `isPrismatic` lives on the
+`PrisJoint` and `isWelded` on the coincident `RevJoint`. See §2.10 before implementing anything
+that reads or writes it.
+
+Consequences:
+
+- The panel has **two toggles** (Slider, Weld), not a three-way Type control plus a Weld button.
+- Unweld at a Slide gives a **Slot**, not a pin. Each control changes exactly one axis.
+- The `+` glyph is the same mark in both welded cells because it is the same flag.
+- **Cost:** no compound rider on a Slot (two links rigidly joined to each other but both free to
+  rotate in the slot). None of the scoped mechanisms need it. Recoverable later by promoting the
+  weld flag to a per-link-pair set.
+
+### 2.2 Keep the zero-length-block decomposition
+
+A slider stays `PrisJoint` + zero-length `SliderBlock` link + `RevJoint`
+([`mechanism.service.ts:1033-1050`](../src/app/services/mechanism.service.ts)). This already gives
+the invariant that a full joint-between-two-links refactor would buy: every joint relates exactly
+two bodies, and "which pair slides" can never be ambiguous because the block mediates.
+
+### 2.3 Carrier recording: Option A
+
+The `PrisJoint` gets a **`carrier` reference**. It does *not* become a member of the carrier's
+`joints` array.
+
+```
+Option A (chosen)                    Option B (rejected)
+Link3.joints = [B, C]                Link3.joints = [B, C, P]
+P.links      = [block]               P.links      = [block, Link3]
+P.carrier    = Link3   ← new field   P.slidesOnLink = true  ← new flag
+```
+
+Why: a link's hull comes from `this.joints.map(...)`
+([`link.ts:317`](../src/app/model/link.ts)) and its reference angle from `joints[0]`/`joints[1]`
+([`link.ts:275-276`](../src/app/model/link.ts)). `P` slides, so under Option B every consumer of a
+link's joint list must skip it — and `.joints` has **284 usages across 20 files**, including all
+five solvers.
+
+Option A's URL cost is three appended tokens (carrier id, slot joint A, slot joint B — see §2.4).
+`encodeJoint` emits `flags + id, name, x, y, angle`
+([`string-transcoder.ts:49-63`](../src/app/services/transcoding/string-transcoder.ts)); old URLs
+have five tokens and the disassembler returns `""` for the missing ones, which decodes as
+**grounded**. See §2.4a for why that default is safe.
+
+### 2.4 A floating slot is defined by two joints of its carrier — no offset angle
+
+**There is no offset angle.** A floating slot is the line through two ordinary joints of the
+carrier link:
+
+```
+PrisJoint (floating) = { carrier: Link, slotJointA: Joint, slotJointB: Joint }
+PrisJoint (grounded) = { ground: true, angle_rad: world angle }   ← unchanged
+```
+
+Why no offset is needed: every mechanism in scope has its slot collinear with two of the carrier's
+joints — Whitworth (pivot → far pin), Geneva (centre → rim), oscillating cylinder (pivot → piston
+pin), hydraulic cylinder (pin → pin), Oldham (one joint pair per slot). The offset only existed
+because an earlier draft measured the slot against a link's *global* axis, which is derived from
+`joints[0]`/`joints[1]` ([`link.ts:275-276`](../src/app/model/link.ts)) and therefore unstable
+across edits and URL round-trips. Two named joints remove the offset **and** the instability.
+
+What this buys:
+
+- **Multiple slots per link.** Each `PrisJoint` names its own joint pair, so a link with many
+  joints can host many slots.
+- **Both solver primitives get simpler.** Forward: the line is through two known points — no
+  `tan`, no derived link angle. Inverse (§2.5a): with A known and B unknown, B lies on ray A→P at
+  distance |AB|; the α term disappears entirely.
+- **The reference-angle risk is gone**, and with it the "convert the number to preserve the
+  geometry" dance on every carrier change.
+
+What it costs: a slot that is not collinear with any two of the carrier's joints — laterally
+offset, or angled across a plate. Recoverable by adding joints to define it; those joints are
+legitimately part of the link's geometry.
+
+**Store the carrier anyway.** Two joints can be shared by several links at a ternary joint, so the
+carrier is what disambiguates and what everything validates against.
+
+**Asymmetry to keep straight:** the two slot-defining joints **are** ordinary members of
+`carrier.joints` and do shape the link. The `PrisJoint` is still **not** a member (§2.3), because
+it slides.
+
+### 2.4a "Grounded" and "floating with no carrier" must not be confusable
+
+If an absent carrier token simply meant "grounded", a broken or half-edited floating slider would
+decode as a *working grounded* one — silently changing the mechanism instead of failing. The two
+states are distinguished by making the second one **impossible**:
+
+1. A `PrisJoint` is either grounded (`angle_rad`, no carrier) or floating (carrier + two slot
+   joints, all resolving). There is no third state, and the model never persists one.
+2. The UI cannot produce one. A floating slot is born from the drop-on-link gesture, which supplies
+   the carrier and the joint pair. Un-grounding an existing slider requires choosing them in the
+   same action.
+3. Lifecycle rules (§2.8a) reground or remove a slider whose carrier — or either slot joint — is
+   deleted or absorbed, so an orphan never survives an edit.
+4. Decode validates: carrier resolves, both slot joints resolve, both belong to the carrier, and
+   they are distinct. A partial or inconsistent set is a **decode error surfaced to the user**, not
+   a silent downgrade to grounded.
+
+With those in place, "no tokens" unambiguously means a pre-feature URL, i.e. grounded.
+
+### 2.5 No "Slot on" dropdown
+
+The carrier is chosen at creation by dropping the joint onto a specific link, and the slot is
+drawn as a hole in that link. The panel shows **`Slot on: Link 3` read-only**. Changing a carrier
+is delete-and-recreate.
+
+### 2.6 Slot length is an output, never an input
+
+Compute it from the solved travel range plus padding. Nobody may type it.
+
+Stroke limits are out of v1. For a *driven* slider a limit is structurally identical to a rocker
+toggle and would reuse `findFullMovementPos`'s reversal path — cheap. For a *passive* slider it is
+an inequality constraint in a solver that has none, plus a new "mechanism jams" state to animate,
+graph, and explain. Keeping slot length = computed travel means the drawing can never contradict
+the solver.
+
+### 2.7 The cylinder is a skin, not a state
+
+A piston is **Slide / floating / driven**. Draw the cylinder skin when carrier and rider each carry
+exactly one other joint, on opposite sides of the block, collinear with the slot — that is the
+two-pin strut case and nothing else produces it. (Under §2.4 the slot is always collinear with two
+of the carrier's joints, so the old "offset is 0°" clause is subsumed.) Provide a manual override;
+auto-switching a glyph is startling the first time.
+
+The override makes the skin **tri-state** (`auto` / `cylinder` / `slotted`), which is state, not
+just rendering. Decision: it is a **view preference, not mechanism state** — it does not serialize
+into the URL and does not enter the undo stack. A shared link always opens in `auto`. If that turns
+out to be wrong, it becomes a fourth joint flag, not an ad-hoc side channel.
+
+Selecting any member of the assembly (barrel, rod, or the Slide joint) overlays the slot axis and
+stroke ghosts **additively** — same size, same position, nothing moves. The revealed block is
+draggable. Rule is "collapsed skins expand on selection", so future skins inherit it.
+
+### 2.8 Visual grammar
+
+Five composable primitives, not twelve hand-drawn glyphs: hatch, block, channel, marker, arrow.
+
+**Link colours are randomly generated per link and carry no meaning.** Nothing in the grammar may
+depend on which colour a link has. Carrier and rider are distinguished *structurally*: the slot is
+a hole in the carrier, the block sits in the hole, the rider attaches at the marker.
+
+- circle marker = rotation allowed · `+` marker = welded/rigid
+- hatching = the other body is ground; a link body in its place = the other body is a moving link
+- **Slot**: block is a fixed dark neutral — it is its own body (`SliderBlock`) and belongs to no
+  link, so it must not borrow a link colour
+- **Slide**: block is a **darkened derivative of the rider's colour** — same hue, forced low
+  lightness. That preserves "same colour family ⇒ same body" without depending on *which* colour
+  the rider got, and it guarantees the block is dark enough for the next rule.
+- arrow = the driven freedom; curved for rotation, straight for translation; **always white**.
+  This is why both block treatments are forced dark: a white arrow on a randomly-coloured light
+  block would be invisible.
+- the selection ring stays purely interaction state (`getJointCSSClass`,
+  [`mechanism.service.ts:1353-1373`](../src/app/services/mechanism.service.ts)) — never overloaded
+  with joint type
+
+Rendering rules that follow: the break in a grounded slot's rail must track the rod's actual
+direction; hatching never rotates, carrier bars always do.
+
+### 2.9 An actuator is an ordered record, not a boolean
+
+An input prescribes a *relative* freedom between **two bodies**. `input: boolean` on a joint cannot
+name them. It survives today only because a grounded crank has an obvious answer, and the solvers
+guess: `kinematic-solver` reaches for the input joint's first link
+([`kinematic-solver.ts:141-160`](../src/app/model/mechanism/kinematic-solver.ts)) and `force-solver`
+for the first incident real body ([`force-solver.ts:269-280`](../src/app/model/mechanism/force-solver.ts)).
+Both are **already wrong** for a grounded input joint carrying more than one link. A driven floating
+pin makes that latent bug unavoidable.
+
+Model an actuator as an ordered record:
+
+```
+{ joint, referenceBody, drivenBody, kind: 'angle' | 'length', initialPhase }
+```
+
+**v1 restriction:** a driven joint must have **exactly two incident bodies**. The panel refuses
+Driven otherwise and says why. That keeps the record derivable rather than hand-authored — but the
+ordering must be canonical and must survive a URL round-trip, since `joint.links` order *is* the
+serialization order. Assert that in Phase 0's template test.
+
+Reportedly MotionGen's engine represents an actuator with three ordered joints rather than a joint
+flag, for the same reason — noted from review, not verified against the paper text.
+
+### 2.10 The slot assembly, and where each flag lives
+
+The 2×2 of §2.1 is a property of an **assembly**, not of one serialized joint. A single
+user-visible "slot joint" is three objects:
+
+```
+carrier ──── P   (PrisJoint: isPrismatic; carrier + slotJointA/B, or ground + angle_rad)
+              │
+         SliderBlock   (zero-length Link — NOT a RealLink)
+              │
+             R   (RevJoint: isWelded)  ──── rider
+```
+
+- `isPrismatic` lives on the **PrisJoint**; `isWelded` lives on the **RevJoint**. They are separate
+  records in the URL. The 2×2 is *derived from the pair*, and nothing in the model enforces that
+  pairing today.
+- `SliderBlock extends Link`, not `RealLink` — and `weldJointTopology` filters
+  `link instanceof RealLink` ([`mechanism.service.ts:1418`](../src/app/services/mechanism.service.ts)).
+  A block therefore **cannot** enter a compound through the generic weld path. See Phase 3.
+
+Invariants to assert on every rebuild:
+
+1. A `PrisJoint` has exactly one `SliderBlock` in `links`; that block has exactly two joints — the
+   `PrisJoint` and one `RevJoint`.
+2. The two are coincident at every timestep.
+3. A `PrisJoint` is **exactly one of**: grounded (`ground`, `angle_rad`, no carrier) or floating
+   (carrier + `slotJointA` + `slotJointB`, all resolving). Never neither, never both (§2.4a).
+4. When floating: both slot joints exist, are members of `carrier.joints`, have distinct ids, and
+   are **not coincident in space** — two coincident joints leave the slot line undefined, which a
+   Phase 1.2 snap that stops short of merging could produce.
+5. `PrisJoint.carrier` is never a link the paired `RevJoint` belongs to — no link sliding on itself.
+6. The `PrisJoint` is **not** a member of `carrier.joints`; the two slot joints **are** (§2.4).
+7. Weld state at the `RevJoint` and presence of the `PrisJoint` are independent; all four
+   combinations are legal and round-trip.
+
+---
+
+## 3. Phases
+
+Each phase is a PR. Gates are hard — do not start the next phase with a red gate.
+
+### Phase 0 — Groundwork (no user-visible change)
+
+| # | Task | Files |
+| --- | --- | --- |
+| 0.1 | Rename `Piston` → `SliderBlock` | [`link.ts:753`](../src/app/model/link.ts) + ~30 `instanceof` sites |
+| 0.2 | Template URL regression test | `template-linkages.ts`, new spec |
+| 0.3 | Rewrite `circleLineIntersection` in parametric form | [`utils.ts:1178`](../src/app/model/utils.ts), [`position-solver.ts:521-658`](../src/app/model/mechanism/position-solver.ts) |
+
+**0.1 first**, before anything else — `Piston` currently means "slider block" and we are about to
+add a feature users call a piston that is a different thing.
+
+**0.2** locks the compatibility surface before anything moves. Decode all five entries in
+`TEMPLATE_LINKAGES`, assert topology and solved positions. `Slider_Crank` is the one that matters:
+its payload encodes joints `C` and `D` at identical coordinates with link `YPCD` between them —
+the coincident RevJoint/PrisJoint pair. `TEMPLATE_LINKAGES` is already imported by
+`analysis-graph`, `analysis-panel`, and `force-solver.fixture` specs, so the hook exists.
+
+**0.3** replaces `y = mx + n` with point + unit vector. A *fixed* slot only hits `m → ∞` if the
+user types 90°; a slot on a rotating carrier crosses vertical twice per revolution. This deletes
+the `Number.MAX_VALUE` clamp ([`position-solver.ts:645-647`](../src/app/model/mechanism/position-solver.ts))
+and the separate NaN branch ([`:543-571`](../src/app/model/mechanism/position-solver.ts)).
+
+> **Gate 0:** all existing specs green; `Slider_Crank` template decodes and solves bit-identically
+> to `main`; new slider-crank cases at 89.9° and exactly 90° match closed form.
+
+### Phase 1 — Drag foundation
+
+Independent of joint types, and a prerequisite for Phase 4's slot drags. This is where the drag
+logic currently living only in the author's head gets written down.
+
+| # | Task | Notes |
+| --- | --- | --- |
+| 1.1 | Extract the drag state machine out of `new-grid.component.ts` | `jointStates`/`linkStates` are scattered across ~12 sites ([`new-grid.component.ts`](../src/app/component/new-grid/new-grid.component.ts)) |
+| 1.2 | Joint-onto-joint drag to snap/merge | new — no snap logic exists today |
+| 1.3 | Whole-link drag | `linkStates.dragging` and `.resizing` are declared ([`utils.ts:30-35`](../src/app/model/utils.ts)) but **never used**; only `creating`/`waiting` appear |
+| 1.4 | Save-on-release discipline | one `updateMechanism(true)` per gesture, not per pointer-move — undo is a stack of URL strings |
+
+`dragJoint` is currently unconstrained free-drag
+([`grid-utils.service.ts:120-128`](../src/app/services/grid-utils.service.ts)) and already keeps
+the PrisJoint glued to the RevJoint ([`:132-137`](../src/app/services/grid-utils.service.ts)).
+Phase 4 inverts that: the block becomes the constrained thing and the pin follows.
+
+**Drop-target arbitration.** 1.2 and Phase 4.3 both add drop targets. Joint snap must win when a
+joint and a link body are both in range, with a visible indicator of which you're about to get.
+
+> **Gate 1:** dragging a joint onto another merges them and round-trips through the URL; dragging
+> a link moves all its joints and leaves the mechanism solvable; each gesture is exactly one undo
+> entry.
+
+### Phase 2 — Floating Slot: model and solvers
+
+| # | Task | Files |
+| --- | --- | --- |
+| 2.1 | `PrisJoint`: `carrier` + `slotJointA/B`; allow `ground = false`; grounded keeps `angle_rad`; three URL tokens + validation (§2.4a) | `joint.ts`, `mechanism-builder.ts`, `string-transcoder.ts`, `transcoder-data.ts` |
+| 2.2 | `Ground` toggle stops destroying sliders; carrier reassignment converts the angle | [`mechanism.service.ts:939-976`](../src/app/services/mechanism.service.ts) |
+| 2.3 | DOF: a prismatic ground must clear `groundNotFound` | [`mechanism.ts:274-301`](../src/app/model/mechanism/mechanism.ts) |
+| 2.4 | Fix global single-slider lookups | [`mechanism.service.ts:956`](../src/app/services/mechanism.service.ts), [`force-solver.ts:278`](../src/app/model/mechanism/force-solver.ts) |
+| 2.5 | **Inverse slot primitive**: solve the carrier's pose from a known block point, then place all its joints | new multi-target step kind |
+| 2.6 | Forward slot primitive: recompute the slot line per timestep | [`position-solver.ts:175-176, 218-222`](../src/app/model/mechanism/position-solver.ts) |
+| 2.7 | `detJointOrder`: defer-and-retry, multi-target steps | [`position-solver.ts:135-271`](../src/app/model/mechanism/position-solver.ts) |
+| 2.8 | Carrier lifecycle and topology — see 2.8a | many |
+| 2.9 | Kinematic solver: add the carrier's ω×r term | [`kinematic-solver.ts:186-202, 269-270`](../src/app/model/mechanism/kinematic-solver.ts) |
+| 2.10 | Force solver: rotate the reaction direction, drop the `.ground` guard, add carrier-side incidence | [`force-solver.ts:476-486, 551`](../src/app/model/mechanism/force-solver.ts) |
+| 2.11 | IC solver: prismatic IC is at infinity ⊥ to a direction that now rotates | [`ic-solver.ts:107-112`](../src/app/model/mechanism/ic-solver.ts) |
+
+#### 2.5a The inverse direction is the primary case, not an edge case
+
+An earlier draft of this plan assumed the forward direction — carrier pose known, find the rider's
+pin on the slot — and treated the inverse as rare. **That was wrong.** Work the solve order for the
+classic floating-slot mechanisms:
+
+- **Whitworth / inverted slider-crank / oscillating cylinder.** Crank is driven, so the crank pin
+  (and therefore the block) is located first. The *slotted lever's* pose is the unknown, determined
+  by its ground pivot plus the requirement that its slot passes through the block.
+- **Scotch yoke.** Same shape — crank pin known, yoke position unknown.
+- **Geneva.** Driver pin known, Geneva wheel pose unknown.
+
+All three are the inverse direction. Driving the crank is the natural input, and the slot lives on
+the output — so for floating slots, **inverse is the common case and forward is the rare one**
+(forward needs the carrier fully determined before the rider, e.g. a four-bar with a slotted
+coupler).
+
+The primitive: the slot is the line through `slotJointA` and `slotJointB` (§2.4). If one of them —
+call it `A` — is already known and a point `P` on the slot is known, then `L`'s pose follows from
+`atan2(P − A)`, and every other joint of `L` places by rigid transform. That solves **a set of
+joints at once**, which is why multi-target steps (§2.7a item 1) are a Phase 2 requirement rather
+than future-proofing.
+
+Because the slot is two named joints rather than an anchor plus an offset, there is no α term and
+no derived link angle in either primitive.
+
+The general case — neither slot joint known, or no solved joint on `L` — does not reduce. Those
+hand to the §2.7a strategy, which in v1 reports unsolvable.
+
+**2.7 is the structural one.** `detJointOrder` is a single-pass DFS that emits a
+`circleLineIntersectionPoints` step as soon as it sees a `PrisJoint` neighbour — safe today
+because a grounded slot is known before the walk starts. It now has to choose between the forward
+and inverse primitives based on what is already known, and may reach either before its
+prerequisites. Wrap the walk in repeat-until-no-progress. That also gives a real error path for
+non-dyadic mechanisms instead of today's silent no-motion.
+
+#### 2.7a The "no progress" exit is a seam, not a dead end
+
+MotionGen's current engine (Lyu, Purwar & Liao, *A Unified Real-Time Motion Generation Algorithm
+for Approximate Position Analysis of Planar N-Bar Mechanisms*, J. Mech. Des. 146(6):063302, 2024)
+keeps a fast dyadic decomposition and falls back to an optimisation-based solve when decomposition
+doesn't apply. That is the natural evolution of this loop: **when a pass makes no progress, the
+remaining unsolved joints are a simultaneous system**, not a failure.
+
+We are **not building the fallback in v1.** We are only shaping 2.6 so it can be added later
+without redesigning the ordering:
+
+1. **Steps target a set of joints, not one.** The step record carries a target *set*, and the
+   switch in `determinePositionAnalysis`
+   ([`position-solver.ts:295-334`](../src/app/model/mechanism/position-solver.ts)) gets a case
+   that can write several positions at once. If v1 hardcodes one-joint-per-step, adding a block
+   solver later means changing the step representation — exactly the retrofit we're avoiding.
+2. **`known` holds link poses as well as joint positions**, even though v1 only ever adds joints
+   to it. This is also what a reverse-direction primitive would need (§7.1).
+3. **Write the constraint residual for every closed-form step as a small pure function**, and use
+   it as a v1 test assertion: assert that the closed-form answer satisfies its own constraint to
+   tolerance. The fallback needs a residual library; this way it exists before it's needed and
+   earns its keep as tests in the meantime.
+4. The exit calls a **strategy**. v1 ships exactly one: report unsolvable, naming the joints it
+   could not order.
+
+If the fallback does land, it is Newton–Raphson (or Levenberg–Marquardt for damping near
+singularities) over the unsolved joint coordinates, with equations of the form
+`(xᵢ−xⱼ)² + (yᵢ−yⱼ)² − Lᵢⱼ² = 0` for rigid links and `(P − A) × û = 0` for slots, **seeded from
+the previous timestep**. The seed is what selects the assembly branch — the same job
+`solutionNearestCurrent` and `concentricSolution` already do for the closed-form path
+([`position-solver.ts:421-490`](../src/app/model/mechanism/position-solver.ts)) — so branch
+tracking is inherited rather than reinvented. Non-convergence at a timestep means the mechanism
+cannot assemble there, which is the existing toggle semantic that `findFullMovementPos` already
+answers by reversing.
+
+**Hard constraint if it ever lands:** a numerical solve is approximate, and the regression suite
+verifies against exact MATLAB values. Any fallback must be gated so that dyadically decomposable
+mechanisms still take the closed-form path bit-identically. The fallback is for mechanisms that
+have no answer today — never a replacement for ones that do.
+
+#### 2.8a Carrier lifecycle and topology
+
+Option A (§2.3) stores the carrier outside both `carrier.joints` and `PrisJoint.links`, so every
+consumer that walks those structures is blind to it. Each of the following is a task, not a
+consequence to discover later:
+
+| Consumer | Problem | Fix |
+| --- | --- | --- |
+| `cloneJointAt` / per-timestep copies | copies `input`, `ground`, `angle_rad` only ([`mechanism.ts:116-128`](../src/app/model/mechanism/mechanism.ts)); the carrier pointer would still reference the *editable* link | rebind the carrier to the per-timestep copy by id — the same class of bug the code already documents at [`kinematic-solver.ts:180-185`](../src/app/model/mechanism/kinematic-solver.ts) |
+| `LoopSolver` | traverses `connectedJoints` only ([`loop-solver.ts:5-43`](../src/app/model/mechanism/loop-solver.ts)) | slot relationships must appear in loop enumeration or kinematic loops are wrong |
+| `incidentBodies` | built from `joint.links` + `body.joints` membership ([`force-solver.ts:551-560`](../src/app/model/mechanism/force-solver.ts)) | dropping the `.ground` guard is **not sufficient** — the carrier-side reaction is omitted entirely |
+| link deletion | carrier reference dangles | reground or remove dependent sliders |
+| **slot joint deletion** | either `slotJointA` or `slotJointB` may be deleted or merged away by the Phase 1.2 snap | reground or remove the slider; a slot cannot survive losing a defining joint |
+| weld / compound | carrier may be absorbed into a compound `RealLink` | remap the carrier to the compound and re-check that both slot joints are still members |
+| URL decode | carrier or slot joint ids may be absent, unknown, duplicated, or not members of the carrier | resolve and **validate** per §2.4a — a partial or inconsistent set is a surfaced decode error, never a silent downgrade to grounded |
+
+The appended tokens are syntactically backward-compatible. **Semantic validity is not "by
+construction"** and needs its own tests — see §4.2.
+
+**2.8 and 2.9 will produce plausible-looking wrong numbers rather than errors.** In a teaching
+tool that is the worst failure mode available. Do not defer them past this phase.
+
+> **Gate 2:** inverted slider-crank and Whitworth (both **inverse** direction) and the slotted-coupler
+> four-bar (**forward** direction) match closed form for position, velocity, and acceleration; force
+> and IC cases match; carrier lifecycle regressions pass; `Slider_Crank` template still bit-identical.
+
+### Phase 3 — Slide (pure prismatic)
+
+Slide is an **assembly-level** state (§2.10), and the generic weld path cannot express it: a
+`SliderBlock` is not a `RealLink`, so `weldJointTopology` filters it out
+([`mechanism.service.ts:1418`](../src/app/services/mechanism.service.ts)). Lifting the `canBeWelded`
+exclusion alone therefore does nothing useful — it neither admits the block to a compound nor
+prevents the rider from rotating.
+
+| # | Task |
+| --- | --- |
+| 3.1 | Lift the `PrisJoint` exclusion in `canBeWelded` ([`joint.ts:119-128`](../src/app/model/joint.ts)) |
+| 3.2 | **Assembly-level weld/unweld**: a dedicated path that rigidly binds rider ↔ block, separate from `weldJointTopology`'s compound-`RealLink` logic |
+| 3.3 | DOF: a welded slot assembly contributes one fewer freedom than an unwelded one |
+| 3.4 | `cloneJointAt` / per-timestep copies carry the weld across the assembly, not just the `RevJoint` |
+| 3.5 | Serialization: assert the `isPrismatic`/`isWelded` pair round-trips as an assembly, including all four 2×2 cells |
+| 3.6 | Solvers: a welded rider has no relative rotation at the block |
+| 3.7 | Guard: Weld/Unweld buttons in the panel act on the assembly when a slider is present, on the compound otherwise — never ambiguously |
+
+Slide still needs **no new type bit**: `isPrismatic` + `isWelded` are both already in `JointData`
+([`transcoder-data.ts:19-32`](../src/app/services/transcoding/transcoder-data.ts)). But that is a
+statement about *encoding*, not about behaviour — the assembly invariants of §2.10 are what make the
+pair meaningful, and they must be asserted rather than assumed.
+
+> **Gate 3:** Scotch yoke matches `x = r cos θ`, `ẋ = −rω sin θ`, `ẍ = −rω² cos θ`; all four 2×2
+> cells round-trip; assembly invariants hold after weld, unweld, clone, and carrier deletion.
+
+### Phase 4 — UI
+
+| # | Task |
+| --- | --- |
+| 4.1 | Panel: Slider + Weld toggles; read-only `Slot on: Link 3 (joints B–C)`; the angle field appears **only for grounded** sliders, labelled "from +x axis" |
+| 4.2 | Canvas: the twelve glyphs, composed from the five primitives |
+| 4.3 | Creation gesture: drop a joint onto a link between two of its joints → slot on that link, defined by that pair. **Pair resolution:** unambiguous on a binary link; on a link with *n* joints there are up to *n*(*n*−1)/2 candidate pairs, so pick the segment whose line the drop point is nearest and show which pair is about to be chosen before release |
+| 4.4 | Slot drag: block along the slot sets s₀ — **that is the only slot-specific drag** |
+
+Today the panel **disables Ground whenever Slider is on**
+([`edit-panel.component.ts:215-217`](../src/app/component/edit-panel/edit-panel.component.ts)) and
+`toggleSlider` always produces a grounded slider
+([`mechanism.service.ts:1021, 1038`](../src/app/services/mechanism.service.ts)). Both go away.
+
+Stash the slot angle and carrier on the RevJoint when a slider is removed, so toggling back
+restores them. Today they are destroyed.
+
+**§2.4 deletes work here.** With the slot defined by two of the carrier's joints, there is no
+rotate-the-slot handle and no snapping — you change a floating slot's direction by dragging its
+defining joints, which is ordinary joint dragging from Phase 1. The angle field disappears for
+floating sliders entirely, and with it the "which reference frame is this number in?" labelling
+problem.
+
+**One drag changes one quantity.** Block-drag moves s₀ and nothing else.
+
+> **Gate 4:** every cell of the 2×2 reachable in ≤2 clicks from every other; each control change
+> alters exactly one visual mark; all twelve states round-trip through the URL.
+
+### Phase 5 — Driven prismatic and the cylinder
+
+| # | Task |
+| --- | --- |
+| 5.1 | Driven floating Slide: prescribe s(t) |
+| 5.2 | **Linear speed units and persistence** — `inputSpeed` is documented "Always RPM" ([`settings.service.ts:22-23`](../src/app/services/settings.service.ts)) and every rebuild converts via `× π/30` ([`mechanism.service.ts:144`](../src/app/services/mechanism.service.ts)). A linear input needs its own unit family, its own default, and its own URL setting. |
+| 5.3 | **Sample Δt and cycle termination** — the timeline assumes one-degree crank samples (`STEPS_PER_REVOLUTION = 360`, [`mechanism.ts:305-320`](../src/app/model/mechanism/mechanism.ts)) and prismatic stepping is a hardcoded `0.1` length increment ([`position-solver.ts:372`](../src/app/model/mechanism/position-solver.ts)). A linear input has no revolution to close on; its cycle ends at a reversal, so only the return-to-start tolerance applies. |
+| 5.4 | Velocity scaling and playback period follow from 5.2/5.3 — audit every place that assumes angular input |
+| 5.5 | Direction terminology: CW/CCW → extend/retract, including `isInputCW` ([`settings.service.ts:21`](../src/app/services/settings.service.ts)) and the analysis-panel text |
+| 5.6 | Cylinder skin + detection rule (§2.7) |
+| 5.7 | Reveal-on-select overlay; decide whether it persists during playback |
+| 5.8 | Link panel shows length at t = 0, not a constant, for variable-length links |
+
+**The constraint is the easy part of this phase.** It reduces to `|P₁P₂| = s(t)`, a
+per-timestep entry in `jointDistMap` feeding the existing circle-circle dyad
+([`position-solver.ts:501-518`](../src/app/model/mechanism/position-solver.ts)) — no slot line, no
+ordering problem. The work is 5.2–5.5: the entire timing and units stack currently assumes an
+angular input, and none of it is parameterised.
+
+Decide which entry point is canonical: the joint panel's Driven toggle, or the link panel's
+"driven length". Two ways to reach one piece of state is fine; two sources of truth is not.
+
+> **Gate 5:** cylinder-driven boom matches the law-of-cosines solution; a linear input completes a
+> cycle, reverses correctly, and its speed round-trips through the URL in its own units.
+
+### Phase 6 — Driven floating Pin
+
+Two problems, not one.
+
+**Ordering.** `determineJointOrder` locates the input joint and walks outward from it
+([`position-solver.ts:82-125`](../src/app/model/mechanism/position-solver.ts)), assuming its
+position is known. A floating input joint's position is not. Needs the Phase 2.7 defer-and-retry
+machinery, which is why this comes last.
+
+**Actuator identity.** Driving a floating pin means prescribing the relative angle between two
+moving bodies, which the `input` boolean cannot express (§2.9). This phase is where the ordered
+actuator record actually gets exercised; the v1 two-body restriction must already be enforced by
+the panel before this lands.
+
+> **Gate 6:** a standard four-bar **driven at its coupler–rocker pin** instead of at the crank
+> reproduces the same coupler curve as the crank-driven version, with velocities rescaled by the
+> joint-angle relationship.
+
+An earlier draft proposed a "geared-five-bar-style" gate. That was incoherent: gears are out of
+scope (§1), and an ungeared five-bar is DOF 2, which the engine rejects. The four-bar driven at a
+floating joint is DOF 1, uses no out-of-scope features, and has an exact reference — the same
+mechanism solved the ordinary way.
+
+---
+
+## 4. Test ladder
+
+### 4.1 Mechanism cases
+
+| # | Mechanism | Direction | Isolates | Verification |
+| --- | --- | --- | --- | --- |
+| 1 | Offset slider-crank, slot at 90° and 89.9° | grounded | parametric-line rewrite | closed form |
+| 2 | Inverted slider-crank (oscillating cylinder) | **inverse** | floating Slot | closed form: `s = √(r² + d² − 2rd·cos θ₂)` |
+| 3 | Scotch yoke | **inverse** | floating Slot **+** grounded Slide | closed form: pure sinusoid |
+| 4 | Whitworth quick-return | **inverse** | full-rotation branch | published time ratio |
+| 5 | Four-bar with a slotted coupler driving a grounded lever | **forward** | the forward primitive, which nothing else covers | four-bar closed form, then circle ∩ known line |
+| 6 | Elliptical trammel | grounded ×2 | two grounded slides at once | traces an exact ellipse |
+| 7 | Cylinder-driven boom | driven | driven floating Slide + linear timing | law of cosines |
+| 8 | Four-bar driven at its coupler–rocker pin | — | driven floating Pin, actuator record | same coupler curve as the crank-driven four-bar |
+| 9 | #2 with a load | — | force reaction direction **and** carrier-side incidence | MATLAB free-body; assert reactions are equal and opposite across the slot |
+| 10 | #2 instant centres | — | IC solver | textbook IC locations |
+
+Case 5 exists because 2, 3, and 4 are all the inverse direction (§2.5a) and would leave the forward
+primitive untested.
+
+### 4.2 Model and lifecycle regressions
+
+These are not mechanisms; they are the failure modes that Option A and the slot assembly introduce.
+
+| Regression | Asserts |
+| --- | --- |
+| Carrier and slot-joint URL resolution | valid ids resolve to the right link and joints after decode |
+| Invalid / dangling / duplicated / self-referential ids | surfaced as a decode error; **never** a silent downgrade to grounded (§2.4a) |
+| Slot joints not members of the carrier | rejected at decode |
+| Missing carrier tokens (pre-existing URL) | decodes as grounded, geometry unchanged |
+| Per-timestep cloning | carrier **and both slot joint** references point at the *copies*, not the editable objects |
+| Carrier link deleted | dependent sliders are regrounded or removed; no dangling reference |
+| Either slot joint deleted or merged by snap | same — a slot cannot outlive a defining joint |
+| Carrier link welded into a compound | carrier remaps; both slot joints still members |
+| Two slots on one link | independent joint pairs on the same carrier both solve |
+| All four 2×2 cells | round-trip through the URL and rebuild identically |
+| Driven joint with 3+ incident bodies | refused by the panel with a reason (§2.9) |
+| Assembly invariants (§2.10, items 1–5) | hold after every structural edit |
+
+### 4.3 Method notes
+
+- For 1, 3, 5, 6, and 8 assert against the analytic formula rather than sampled MATLAB output —
+  stronger, and no reference data to drift.
+- Given the known defects in the existing MATLAB data, generate new references by an independent
+  route wherever a closed form exists rather than trusting a single script.
+- Follow the shape of `app.component.spec.ts` / `SixBarVerification.m`: sample position, velocity,
+  and acceleration at N input angles.
+
+---
+
+## 5. Risks
+
+| Risk | Mitigation |
+| --- | --- |
+| `angle_rad` reinterpretation silently changes existing shared URLs | Grounded sliders keep reading the old way (carrier = ground, where the definitions coincide). Gate 0 locks this. |
+| The generic weld path silently cannot express Slide | `SliderBlock` is not a `RealLink` and is filtered out ([`mechanism.service.ts:1418`](../src/app/services/mechanism.service.ts)). Phase 3 builds an assembly-level path instead of extending the compound path. |
+| Force and IC solvers ship wrong-but-plausible numbers | Gates 2 and 4 include force and IC cases; no phase completes on motion alone |
+| Carrier pointer survives into the per-timestep copies unrebound | Phase 2.8a; the codebase already documents this exact bug class at [`kinematic-solver.ts:180-185`](../src/app/model/mechanism/kinematic-solver.ts) |
+| ~~Carrier reference angle unstable across edits or URL round-trips~~ | **Eliminated by §2.4** — the slot is two named joints, so nothing is measured against a derived link angle |
+| A floating slot silently degrades to grounded on decode | §2.4a — the intermediate state is made impossible and decode validates rather than defaults |
+| A slot outlives one of its defining joints (deletion, or a Phase 1.2 snap merge) | §2.8a lifecycle rules plus the §4.2 regressions |
+| Actuator body pair is ambiguous at a joint with 3+ links | §2.9 — pre-existing latent bug, made unavoidable by driven floating pins. v1 restricts to two incident bodies. |
+| Phase 5 is scoped as "the constraint" and the timing stack is missed | 5.2–5.5 are the phase; the constraint is the small part |
+| Twelve glyphs get hand-coded in `new-grid` | §2.8 — five composable primitives, or the combinatorics move from the panel into the renderer |
+| Users build multi-cylinder booms and get nothing | §6 |
+
+---
+
+## 6. Known limitation to communicate
+
+An excavator boom is three cylinders — three DOF. Scope is one input and `dof === 1`. The failure
+must say *"this mechanism has N degrees of freedom — remove a driven joint or add a constraint"*,
+not silently fail to animate. This is the single most likely source of user disappointment once
+cylinders exist.
+
+---
+
+## 7. Open questions
+
+1. ~~**Grounded pin riding a moving slot**~~ — **resolved.** This is not an edge case; it is the
+   same inverse direction that Whitworth, the oscillating cylinder, the Scotch yoke, and Geneva all
+   need. §2.5a promotes the inverse primitive into Phase 2 as first-class work. The retry loop
+   itself has **no direction** — it only reorders; what is directional is the step catalogue, which
+   is why "run it both ways" was never a thing that could be switched on. Cases the closed-form
+   inverse primitive cannot reduce still hand to the §2.7a strategy.
+2. **General inverse cases.** The primitive in §2.5a assumes the slot's anchor is a known joint of
+   the carrier. Offset slots, and carriers with no solved joint, do not reduce. Decide whether v1
+   refuses them explicitly in the panel or lets them reach the "unsolvable" strategy.
+3. **Two links riding one block** — drawn as a normal multi-joint link over the block. Confirm the
+   assembly weld semantics of §2.10 give the intended result.
+4. **Reveal-on-select during playback** — keep or suppress (5.7).
+5. **Canonical entry point for driven cylinder length** — joint panel or link panel (§Phase 5).
+6. **Naming.** "Slider" currently means RP to existing users. If the panel keeps two toggles
+   (Slider, Weld) the word survives unchanged — confirm that reads correctly for Slide.

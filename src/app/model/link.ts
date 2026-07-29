@@ -6,11 +6,7 @@ import { degToRad, determineSlope, getAngle, getDistance, radToDeg } from './uti
 import hull from 'hull.js';
 import { SettingsService } from '../services/settings.service';
 import { Arc, Line } from './line';
-import {
-  buildCompoundPath,
-  transformRigidCoord,
-  transformRigidPath,
-} from './compound-link-path';
+import { buildCompoundPath, transformRigidCoord, transformRigidPath } from './compound-link-path';
 
 export enum Shape {
   line = 'line',
@@ -203,13 +199,7 @@ export class RealLink extends Link {
   private copyVisualGeometryFrom(source: RealLink): void {
     const [sourceStart, sourceEnd] = source.joints;
     const [targetStart, targetEnd] = this.joints;
-    this._d = transformRigidPath(
-      source.d,
-      sourceStart,
-      sourceEnd,
-      targetStart,
-      targetEnd
-    );
+    this._d = transformRigidPath(source.d, sourceStart, sourceEnd, targetStart, targetEnd);
     this.externalLines = this.transformVisualLines(
       source.externalLines,
       sourceStart,
@@ -278,9 +268,7 @@ export class RealLink extends Link {
   }
 
   getCompoundPathString(): string {
-    const linkSubset = this.subset.filter(
-      (link): link is RealLink => link instanceof RealLink
-    );
+    const linkSubset = this.subset.filter((link): link is RealLink => link instanceof RealLink);
     linkSubset.forEach((link) => link.reComputeDPath());
     const geometry = buildCompoundPath(
       linkSubset.map((link) => link.d),
@@ -750,7 +738,16 @@ export class RealLink extends Link {
   }
 }
 
-export class Piston extends Link {
+/**
+ * The body a slider rides on: a zero-length link joining a PrisJoint to the
+ * coincident RevJoint that the sliding link pins to. It is a real body so it can
+ * carry mass and take reaction forces, but it has no extent of its own.
+ *
+ * Named for the block, not the actuator — a hydraulic piston is a different
+ * concept built from a prismatic joint, and reusing the word for both would make
+ * the codebase ambiguous.
+ */
+export class SliderBlock extends Link {
   constructor(id: string, joints: Joint[], mass?: number) {
     super(id, joints, mass);
   }

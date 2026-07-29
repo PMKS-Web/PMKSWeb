@@ -1,5 +1,5 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
-import { Link, Piston, RealLink, Shape } from '../link';
+import { Link, SliderBlock, RealLink, Shape } from '../link';
 import { Force } from '../force';
 // import {LoopSolver} from "./loop-solver";
 import { PositionSolver } from './position-solver';
@@ -62,11 +62,11 @@ export class Mechanism {
           this.restoreLinkSubsetState(l.subset, realLink.subset);
           this._links[0].push(realLink);
           break;
-        case Piston:
-          if (!(l instanceof Piston)) {
+        case SliderBlock:
+          if (!(l instanceof SliderBlock)) {
             return;
           }
-          const piston = new Piston(l.id, linkJoints, l.mass);
+          const piston = new SliderBlock(l.id, linkJoints, l.mass);
           piston.name = l.name;
           this._links[0].push(piston);
           break;
@@ -183,8 +183,8 @@ export class Mechanism {
         link.fill = source.fill;
         return [link];
       }
-      if (source instanceof Piston) {
-        const piston = new Piston(source.id, joints, source.mass);
+      if (source instanceof SliderBlock) {
+        const piston = new SliderBlock(source.id, joints, source.mass);
         piston.name = source.name;
         return [piston];
       }
@@ -425,15 +425,15 @@ export class Mechanism {
               this.restoreLinkSubsetState(l.subset, pushLink.subset);
               this._links[currentTimeStamp + 1].push(pushLink);
               break;
-            case Piston:
-              if (!(l instanceof Piston)) {
+            case SliderBlock:
+              if (!(l instanceof SliderBlock)) {
                 return;
               }
               // connectedJointIndices = connectedJointMapIndices.get(l.id)!;
               // connectedJointIndices.forEach((ji: number) => {
               //   connectedJoints.push(this._joints[currentTimeStamp + 1][ji]);
               // });
-              const newLink = new Piston(l.id, connectedJoints, l.mass);
+              const newLink = new SliderBlock(l.id, connectedJoints, l.mass);
               newLink.name = l.name;
               this._links[currentTimeStamp + 1].push(newLink);
               break;
@@ -774,7 +774,7 @@ export class Mechanism {
         });
         forceTitleRow.push(' ');
         this.links[0].forEach((l) => {
-          if (l instanceof Piston) {
+          if (l instanceof SliderBlock) {
             return;
           }
           forceTitleRow.push('Link ' + l.id + ' CoM x ' + posUnit);
@@ -786,7 +786,7 @@ export class Mechanism {
         });
         forceTitleRow.push(' ');
         this.links[0].forEach((l) => {
-          if (l instanceof Piston) {
+          if (l instanceof SliderBlock) {
             return;
           }
           // forceTitleRow.push('Link ' + l.id + ' angPos ' + angAccUnit);
@@ -884,7 +884,7 @@ export class Mechanism {
     });
     kinematicTitleRow.push(' ');
     this.links[0].forEach((l) => {
-      if (l instanceof Piston) {
+      if (l instanceof SliderBlock) {
         return;
       }
       // if (l instanceof ImagLink) {
@@ -899,7 +899,7 @@ export class Mechanism {
     });
     kinematicTitleRow.push(' ');
     this.links[0].forEach((l) => {
-      if (l instanceof Piston) {
+      if (l instanceof SliderBlock) {
         return;
       }
       // if (l instanceof ImagLink) {
@@ -1099,7 +1099,7 @@ export class Mechanism {
           });
           force_row.push(' ');
           this.links[index].forEach((l) => {
-            if (l instanceof Piston) {
+            if (l instanceof SliderBlock) {
               return;
             }
             force_row.push(
@@ -1143,7 +1143,7 @@ export class Mechanism {
           });
           force_row.push(' ');
           this.links[index].forEach((l) => {
-            if (l instanceof Piston) {
+            if (l instanceof SliderBlock) {
               return;
             }
             force_row.push(roundNumber(KinematicsSolver.linkAngPosMap.get(l.id)!, 4).toString());
@@ -1251,7 +1251,7 @@ export class Mechanism {
       });
       row.push(' ');
       this.links[0].forEach((l) => {
-        if (l instanceof Piston) {
+        if (l instanceof SliderBlock) {
           return;
         }
         // if (l instanceof ImagLink) {
@@ -1284,7 +1284,7 @@ export class Mechanism {
       });
       row.push(' ');
       this.links[0].forEach((l) => {
-        if (l instanceof Piston) {
+        if (l instanceof SliderBlock) {
           return;
         }
         // if (l instanceof ImagLink) {

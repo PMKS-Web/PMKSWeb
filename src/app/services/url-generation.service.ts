@@ -1,32 +1,42 @@
 import { Injectable } from '@angular/core';
 import { MechanismService } from './mechanism.service';
-import { Link, Piston, RealLink } from '../model/link';
+import { Link, SliderBlock, RealLink } from '../model/link';
 import { LengthUnit, AngleUnit, ForceUnit, GlobalUnit } from '../model/utils';
-import { EnumSetting, BoolSetting, IntSetting, DecimalSetting } from './transcoding/stored-settings';
+import {
+  EnumSetting,
+  BoolSetting,
+  IntSetting,
+  DecimalSetting,
+} from './transcoding/stored-settings';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { Force } from '../model/force';
 import { Joint, RevJoint, PrisJoint } from '../model/joint';
-import { JointData, JOINT_TYPE, LinkData, LINK_TYPE, ForceData, ActiveObjData, ACTIVE_TYPE } from './transcoding/transcoder-data';
+import {
+  JointData,
+  JOINT_TYPE,
+  LinkData,
+  LINK_TYPE,
+  ForceData,
+  ActiveObjData,
+  ACTIVE_TYPE,
+} from './transcoding/transcoder-data';
 import { SettingsService } from './settings.service';
 import { ActiveObjService } from './active-obj.service';
 
 /*
-  * This service is responsible for generating the URL from the current mechanism.
-  * It is not responsible for decoding the URL.
-*/
+ * This service is responsible for generating the URL from the current mechanism.
+ * It is not responsible for decoding the URL.
+ */
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UrlGenerationService {
-
-
   constructor(
     private mechanism: MechanismService,
     private settings: SettingsService,
-    private activeObj: ActiveObjService,
+    private activeObj: ActiveObjService
   ) {}
-
 
   _addJointToEncoder(encoder: StringTranscoder, joint: Joint) {
     if (joint instanceof RevJoint) {
@@ -79,7 +89,7 @@ export class UrlGenerationService {
           link.subset.map((subset) => subset.id)
         )
       );
-    } else if (link instanceof Piston) {
+    } else if (link instanceof SliderBlock) {
       encoder.addLink(
         new LinkData(
           isRoot,
@@ -163,11 +173,7 @@ export class UrlGenerationService {
       ForceUnit,
       normalizedGlobal === GlobalUnit.ENGLISH ? ForceUnit.LBF : ForceUnit.NEWTON
     );
-    encoder.addEnumSetting(
-      EnumSetting.GLOBAL_UNIT,
-      GlobalUnit,
-      normalizedGlobal
-    );
+    encoder.addEnumSetting(EnumSetting.GLOBAL_UNIT, GlobalUnit, normalizedGlobal);
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
     //encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
@@ -184,7 +190,7 @@ export class UrlGenerationService {
     encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
-    
+
     // Keep this legacy bit enabled so existing URL field positions remain compatible.
     encoder.addBoolSetting(BoolSetting.IS_FORCES, true);
 
@@ -227,5 +233,4 @@ export class UrlGenerationService {
     const dataURL = encodeURI(dataURLString);
     return dataURL;
   }
-
 }

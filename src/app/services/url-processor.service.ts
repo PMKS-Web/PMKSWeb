@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { stringToBoolean, stringToFloat, stringToShape } from '../model/utils';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
-import { Bound, Link, Piston, RealLink } from '../model/link';
+import { Bound, Link, SliderBlock, RealLink } from '../model/link';
 import { Coord } from '../model/coord';
 import { Force } from '../model/force';
 import { MechanismService } from './mechanism.service';
@@ -23,7 +23,6 @@ export class UrlProcessorService {
     private activeObj: ActiveObjService,
     private snackBar: MatSnackBar
   ) {
-
     // the content part of the url (the part after the ?)
     const url = this.getURLContent();
 
@@ -33,7 +32,6 @@ export class UrlProcessorService {
     // initial save
     // this causes a circular dependency
     // this.mechanismSrv.save();
-
   }
 
   // From the full url string, extract the substring after the '?'. If does not exist, return null
@@ -46,14 +44,17 @@ export class UrlProcessorService {
   }
 
   // Decode the url and update mechanism
-  updateFromURL(url: string | null, resetSvgScale: boolean = true, updateSettings: boolean = true, save: boolean = false) {
-    
-
+  updateFromURL(
+    url: string | null,
+    resetSvgScale: boolean = true,
+    updateSettings: boolean = true,
+    save: boolean = false
+  ) {
     const mechanismSrv = this.injector.get(MechanismService);
 
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
-    
+
     // if the url exists, decode it and build the mechanism. Otherwise, skip to updating mechanism directly
     if (url !== null) {
       try {
@@ -97,7 +98,5 @@ export class UrlProcessorService {
         this.svgGrid.scaleToFitLinkage();
       }, 1000);
     }
-    
   }
-
 }

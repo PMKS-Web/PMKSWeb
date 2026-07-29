@@ -1,16 +1,12 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
-import { Link, Piston, RealLink } from '../link';
+import { Link, SliderBlock, RealLink } from '../link';
 import { KinematicsSolver } from './kinematic-solver';
 import { siUnitFactors, SiUnitFactors } from '../unit-conversions';
 
 export type ForceAnalysisMode = 'static' | 'dynamic';
 
 export type ForceAnalysisStatus =
-  | 'ok'
-  | 'singular'
-  | 'unsupported-topology'
-  | 'missing-kinematics'
-  | 'invalid-properties';
+  'ok' | 'singular' | 'unsupported-topology' | 'missing-kinematics' | 'invalid-properties';
 
 export type ForceVector = [number, number];
 
@@ -231,7 +227,8 @@ export class ForceSolver {
     kinematics?: FrameKinematics
   ): ForceAnalysisFrame {
     const bodies = links.filter(
-      (link): link is RealLink | Piston => link instanceof RealLink || link instanceof Piston
+      (link): link is RealLink | SliderBlock =>
+        link instanceof RealLink || link instanceof SliderBlock
     );
     const units = this.unitFactors(unit);
     const empty = (
@@ -275,7 +272,7 @@ export class ForceSolver {
     if (inputJoint) {
       const incident = incidentByJoint.get(inputJoint.id) ?? [];
       if (inputJoint instanceof PrisJoint) {
-        inputBody = incident.find((body) => body instanceof Piston);
+        inputBody = incident.find((body) => body instanceof SliderBlock);
         inputKind = inputBody ? 'force' : undefined;
         inputDirection = [Math.cos(inputJoint.angle_rad), Math.sin(inputJoint.angle_rad)];
       } else {
@@ -474,7 +471,7 @@ export class ForceSolver {
       if (incident.length === 0) continue;
 
       if (candidate instanceof PrisJoint && candidate.ground) {
-        const piston = incident.find((body) => body instanceof Piston);
+        const piston = incident.find((body) => body instanceof SliderBlock);
         if (piston) {
           reactions.push({
             joint: candidate,
@@ -527,7 +524,8 @@ export class ForceSolver {
   /** Joint <-> root-body pairing that both analysis panels enumerate rows from. */
   static buildReactionIndex(joints: Joint[], links: Link[]): ForceReactionIndex {
     const bodies = links.filter(
-      (link): link is RealLink | Piston => link instanceof RealLink || link instanceof Piston
+      (link): link is RealLink | SliderBlock =>
+        link instanceof RealLink || link instanceof SliderBlock
     );
     const linksByJoint = new Map<string, string[]>();
     const jointsByLink = new Map<string, string[]>();
@@ -583,8 +581,7 @@ export class ForceSolver {
     kinematics?: FrameKinematics
   ): kinematics is FrameKinematics {
     if (!kinematics) return false;
-    const vectorFinite = (value?: ForceVector): boolean =>
-      !!value && value.every(Number.isFinite);
+    const vectorFinite = (value?: ForceVector): boolean => !!value && value.every(Number.isFinite);
     return bodies.every((body) => {
       if (body instanceof RealLink) {
         return (
@@ -620,7 +617,7 @@ export class ForceSolver {
           link.id,
           Number.isFinite(angular) ? angular! : fallback?.linkAngularAccelerations.get(link.id)!
         );
-      } else if (link instanceof Piston) {
+      } else if (link instanceof SliderBlock) {
         const movingJoint = link.joints.find((joint) => !(joint instanceof PrisJoint));
         const acceleration = movingJoint
           ? KinematicsSolver.jointAccMap.get(movingJoint.id)
@@ -662,7 +659,7 @@ export class ForceSolver {
       const positions = Array.from({ length: frameCount }, (_, index): ForceVector => {
         const body = bodyAt(index);
         if (body instanceof RealLink) return [body.CoM.x, body.CoM.y];
-        if (body instanceof Piston) {
+        if (body instanceof SliderBlock) {
           const moving = body.joints.find((joint) => !(joint instanceof PrisJoint));
           return [moving?.x ?? 0, moving?.y ?? 0];
         }
@@ -697,7 +694,7 @@ export class ForceSolver {
             id,
             this.secondDerivative(angles, times, index)
           );
-        } else if (body instanceof Piston) {
+        } else if (body instanceof SliderBlock) {
           frames[index].pistonAccelerations.set(id, [ax, ay]);
         }
       }
@@ -807,7 +804,10 @@ export class ForceSolver {
         0
       );
       residualNorm = Math.max(residualNorm, Math.abs(calculated - b[row]));
-      matrixNorm = Math.max(matrixNorm, A[row].reduce((sum, value) => sum + Math.abs(value), 0));
+      matrixNorm = Math.max(
+        matrixNorm,
+        A[row].reduce((sum, value) => sum + Math.abs(value), 0)
+      );
       rhsNorm = Math.max(rhsNorm, Math.abs(b[row]));
       solutionNorm = Math.max(solutionNorm, Math.abs(values[row]));
     }

@@ -3,7 +3,7 @@
 import { Joint, PrisJoint, RevJoint } from '../../app/model/joint';
 import { Coord } from '../../app/model/coord';
 import { Force } from '../../app/model/force';
-import { Link, Piston, RealLink } from '../../app/model/link';
+import { Link, SliderBlock, RealLink } from '../../app/model/link';
 import { Mechanism } from '../../app/model/mechanism/mechanism';
 import { ColorService } from '../../app/services/color.service';
 import { SettingsService } from '../../app/services/settings.service';
@@ -83,14 +83,7 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
     const linkJoints = [...spec.joints].map((id) => jointById.get(id)!);
     const com = spec.com ? new Coord(spec.com[0], spec.com[1]) : undefined;
     const subset = spec.subset?.map(buildFixtureLink);
-    const link = new RealLink(
-      spec.joints,
-      linkJoints,
-      spec.mass ?? 1,
-      spec.moi ?? 1,
-      com,
-      subset
-    );
+    const link = new RealLink(spec.joints, linkJoints, spec.mass ?? 1, spec.moi ?? 1, com, subset);
     link.fill = spec.fill ?? ColorService.instance.getNextLinkColor();
     restoreFixtureLinkState(spec, link);
     return link;
@@ -116,7 +109,7 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
     prisJoint.angle_rad = fixture.slider.angleRad ?? 0;
     prisJoint.connectedJoints.push(revJoint);
     revJoint.connectedJoints.push(prisJoint);
-    const piston = new Piston(
+    const piston = new SliderBlock(
       revJoint.id + prisJoint.id,
       [revJoint, prisJoint],
       fixture.slider.pistonMass

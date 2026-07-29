@@ -1,10 +1,17 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from 'src/app/model/joint';
 import { MechanismService } from '../mechanism.service';
-import { Link, Piston, RealLink } from 'src/app/model/link';
+import { Link, SliderBlock, RealLink } from 'src/app/model/link';
 import { Force } from 'src/app/model/force';
 import { Coord } from 'src/app/model/coord';
 import { GenericTranscoder } from './transcoder-interface';
-import { ACTIVE_TYPE, ForceData, JOINT_TYPE, JointData, LINK_TYPE, LinkData } from './transcoder-data';
+import {
+  ACTIVE_TYPE,
+  ForceData,
+  JOINT_TYPE,
+  JointData,
+  LINK_TYPE,
+  LinkData,
+} from './transcoder-data';
 import { SettingsService } from '../settings.service';
 import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
@@ -73,8 +80,8 @@ export class MechanismBuilder {
   // The link starts off with no forces, to be added as forces are created
   private buildLink(linkData: LinkData, joints: Joint[]): Link {
     // For each joint id of the link, find the associated joint object
-    let jointsOnLink: Joint[] = linkData.jointIDs.map(
-      (jointID) => this.getJointByID(joints, jointID)!
+    let jointsOnLink: Joint[] = linkData.jointIDs.map((jointID) =>
+      this.getJointByID(joints, jointID)!
     );
 
     // For each revolute joint on the link, link it to every other joint
@@ -91,7 +98,7 @@ export class MechanismBuilder {
       link = new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
       link.fill = linkData.color;
     } else {
-      link = new Piston(linkData.id, jointsOnLink, linkData.mass);
+      link = new SliderBlock(linkData.id, jointsOnLink, linkData.mass);
     }
 
     // for all joints in link, connect to link
@@ -218,7 +225,8 @@ export class MechanismBuilder {
     // set active object
     let activeObjData = this.transcoder.getActiveObj();
     let activeObj: any;
-    if (activeObjData.type === ACTIVE_TYPE.JOINT) activeObj = this.getJointByID(joints, activeObjData.id)!;
+    if (activeObjData.type === ACTIVE_TYPE.JOINT)
+      activeObj = this.getJointByID(joints, activeObjData.id)!;
     else if (activeObjData.type === ACTIVE_TYPE.LINK)
       activeObj = links.find(
         (link) =>
@@ -249,7 +257,9 @@ export class MechanismBuilder {
       const normalizedForce =
         normalizedGlobal === GlobalUnit.ENGLISH ? ForceUnit.LBF : ForceUnit.NEWTON;
       this.settings.lengthUnit.next(decodedLength);
-      this.settings.angleUnit.next(this.transcoder.getEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit));
+      this.settings.angleUnit.next(
+        this.transcoder.getEnumSetting(EnumSetting.ANGLE_UNIT, AngleUnit)
+      );
       this.settings.forceUnit.next(normalizedForce);
       this.settings.globalUnit.next(normalizedGlobal);
       this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
@@ -264,7 +274,6 @@ export class MechanismBuilder {
       this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
       this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
       SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
-    
     }
 
     this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);

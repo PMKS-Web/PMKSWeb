@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
-import { Link, Piston, RealLink } from '../model/link';
+import { Link, SliderBlock, RealLink } from '../model/link';
 import { Force } from '../model/force';
 import { Mechanism } from '../model/mechanism/mechanism';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
@@ -266,7 +266,7 @@ export class MechanismService {
   }
 
   getLinkProp(l: Link, propType: string) {
-    if (l instanceof Piston) {
+    if (l instanceof SliderBlock) {
       return;
     }
     const link = l as RealLink;
@@ -731,7 +731,7 @@ export class MechanismService {
         }
       }
 
-      if (l instanceof Piston) {
+      if (l instanceof SliderBlock) {
         //Special case, remove the other joint on a pistion
         l.joints.forEach((j) => {
           if (j.id !== this.activeObjService.selectedJoint.id) {
@@ -953,7 +953,7 @@ export class MechanismService {
         );
         j.connectedJoints.splice(removeIndex, 1);
       });
-      const piston = this.links.find((l) => l instanceof Piston)!;
+      const piston = this.links.find((l) => l instanceof SliderBlock)!;
       piston.joints.forEach((j) => {
         if (!(j instanceof RealJoint)) {
           return;
@@ -1040,7 +1040,7 @@ export class MechanismService {
         connectedJoints
       );
       this.activeObjService.selectedJoint.connectedJoints.push(prisJoint);
-      const piston = new Piston(this.activeObjService.selectedJoint.id + prisJoint.id, [
+      const piston = new SliderBlock(this.activeObjService.selectedJoint.id + prisJoint.id, [
         this.activeObjService.selectedJoint,
         prisJoint,
       ]);
@@ -1050,7 +1050,9 @@ export class MechanismService {
       this.links.push(piston);
     } else {
       // delete Prismatic Joint
-      const piston = this.activeObjService.selectedJoint.links.find((l) => l instanceof Piston)!;
+      const piston = this.activeObjService.selectedJoint.links.find(
+        (l) => l instanceof SliderBlock
+      )!;
       const pistonIndex = this.links.findIndex((l) => l.id === piston.id);
       const prismaticJointID = piston.joints.find((j) => j instanceof PrisJoint)!.id;
       this.activeObjService.selectedJoint.connectedJoints =

@@ -1,5 +1,5 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
-import { Piston, Link, RealLink } from '../link';
+import { SliderBlock, Link, RealLink } from '../link';
 import { matLinearSystem } from '../utils';
 import { InstantCenter } from '../instant-center';
 
@@ -164,7 +164,7 @@ export class KinematicsSolver {
         this.linkAngVelMap.set(links[this.inputLinkIndex].id, initialAngularVelocity);
         this.linkAngAccMap.set(links[this.inputLinkIndex].id, 0);
         break;
-      case Piston:
+      case SliderBlock:
         if (!this.realJointIndexMap.has(links[this.inputLinkIndex].id)) {
           const inputLink = links[this.inputLinkIndex];
           if (!(inputLink instanceof RealLink)) {
@@ -207,7 +207,7 @@ export class KinematicsSolver {
     }
 
     links.forEach((l) => {
-      if (l instanceof Piston) {
+      if (l instanceof SliderBlock) {
         return;
       }
       const angle = Math.atan2(l.joints[1].y - l.joints[0].y, l.joints[1].x - l.joints[0].x);
@@ -256,7 +256,7 @@ export class KinematicsSolver {
                 this.unknownLinkIndexMap.set(link.id, this.unknownLinkIndexMap.size);
               }
               break;
-            case Piston:
+            case SliderBlock:
               if (!this.realJointIndexMap.has(link.id)) {
                 const connectedJoint = link.joints.find((j) => j instanceof RealJoint)!;
                 // Match by id: the per-timestep joint arrays hold copies, so
@@ -357,7 +357,7 @@ export class KinematicsSolver {
     this.requiredLoops.forEach((loop) => {
       for (let i = 1; i < loop.length - 1; i++) {
         // cannot find velocity of a joint on an imaginary link
-        if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof Piston) {
+        if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof SliderBlock) {
           continue;
         }
         const desiredLink = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
@@ -427,7 +427,7 @@ export class KinematicsSolver {
               unknownLinksOrJoints.push(link);
             }
             break;
-          case Piston:
+          case SliderBlock:
             const desiredJoint = simJoints[this.realJointIndexMap.get(link.id)!];
             if (this.unknownLinkIndexMap.has(desiredJoint.id)) {
               unknownLinksOrJoints.push(desiredJoint);
@@ -488,7 +488,7 @@ export class KinematicsSolver {
                     0,
                   ]);
                   break;
-                case Piston:
+                case SliderBlock:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // // slider crank x, y
                   // if (!(realJoint instanceof PrisJoint)) {
@@ -513,7 +513,7 @@ export class KinematicsSolver {
                   arr = this.crossProduct(1, [leftXDist, leftYDist, 0]);
                   colIndex = this.unknownLinkIndexMap.get(link.id)!;
                   break;
-                case Piston:
+                case SliderBlock:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // if (!(realJoint instanceof PrisJoint)) {
                   //   return;
@@ -552,7 +552,7 @@ export class KinematicsSolver {
                   ]);
                   sol = this.addTwoArrays(transAccel, angularAccel);
                   break;
-                case Piston:
+                case SliderBlock:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // if (!(realJoint instanceof PrisJoint)) {
                   //   return;
@@ -586,7 +586,7 @@ export class KinematicsSolver {
                   this.B_matrix_AngAcc[rowIndex + 1][0] += transAccel[1];
                   colIndex = this.unknownLinkIndexMap.get(link.id)!;
                   break;
-                case Piston:
+                case SliderBlock:
                   const realJoint = simJoints[this.realJointIndexMap.get(link.id)!];
                   // if (!(realJoint instanceof PrisJoint)) {
                   //   return;

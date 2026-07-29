@@ -2,7 +2,7 @@ import '../model/joint';
 import { Injector } from '@angular/core';
 import { Coord } from '../model/coord';
 import { Force } from '../model/force';
-import { Piston, RealLink } from '../model/link';
+import { SliderBlock, RealLink } from '../model/link';
 import { PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { LengthUnit } from '../model/unit-enums';
 import { ActiveObjService } from './active-obj.service';
@@ -169,7 +169,7 @@ describe('MechanismService welded links and force ownership', () => {
   it('preserves piston connectivity when rebuilding after a weld', () => {
     const harness = createChain();
     const slider = new PrisJoint('P', 2, 0, false, true);
-    const piston = new Piston('CP', [harness.joints[2], slider]);
+    const piston = new SliderBlock('CP', [harness.joints[2], slider]);
     harness.joints[2].links.push(piston);
     harness.joints[2].connectedJoints.push(slider);
     slider.links.push(piston);
@@ -210,10 +210,7 @@ describe('MechanismService welded links and force ownership', () => {
 
     expect(harness.joints[1].x).toBeCloseTo(0.01 / 0.0254, 12);
     expect(link.mass).toBeCloseTo(0.002 / 0.45359237, 12);
-    expect(link.massMoI).toBeCloseTo(
-      0.0003 / (0.45359237 * 0.0254 * 0.0254),
-      12
-    );
+    expect(link.massMoI).toBeCloseTo(0.0003 / (0.45359237 * 0.0254 * 0.0254), 12);
     // Force converts N -> lbf as the exact reciprocal of NEWTONS_PER_LBF.
     expect(force.mag).toBeCloseTo(10 / 4.4482216152605, 12);
     expect(harness.saveCount()).toBe(2);

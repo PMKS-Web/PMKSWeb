@@ -12,7 +12,7 @@ import {
   getDistance,
   point_on_line_segment_closest_to_point,
 } from '../model/utils';
-import { Link, Piston, RealLink } from '../model/link';
+import { Link, SliderBlock, RealLink } from '../model/link';
 import { MechanismService } from './mechanism.service';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
 import { Mechanism } from '../model/mechanism/mechanism';
@@ -32,7 +32,10 @@ import { ColorService } from './color.service';
   providedIn: 'root',
 })
 export class GridUtilsService {
-  constructor(private synthesisBuilder: SynthesisBuilderService, public svgGrid: SvgGridService) {}
+  constructor(
+    private synthesisBuilder: SynthesisBuilderService,
+    public svgGrid: SvgGridService
+  ) {}
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -106,7 +109,7 @@ export class GridUtilsService {
     switch (link.constructor) {
       case RealLink:
         return 'R';
-      case Piston:
+      case SliderBlock:
         return 'P';
       default:
         return '?';
@@ -129,7 +132,7 @@ export class GridUtilsService {
     switch (selectedJoint.constructor) {
       case RevJoint:
         selectedJoint.links.forEach((l) => {
-          if (l instanceof Piston) {
+          if (l instanceof SliderBlock) {
             //If the joint is a slider, then the joint is the second joint in the link must follow the first joint
             const jointIndex = l.joints.findIndex((jt) => jt.id !== selectedJoint.id);
             l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);

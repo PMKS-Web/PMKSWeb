@@ -1,7 +1,7 @@
 import { Coord } from '../coord';
 import { Force } from '../force';
 import { PrisJoint, RevJoint } from '../joint';
-import { Piston, RealLink } from '../link';
+import { SliderBlock, RealLink } from '../link';
 import { ColorService } from '../../services/color.service';
 import { SettingsService } from '../../services/settings.service';
 import { buildMechanism } from '../../../test-utils/verification/fixture';
@@ -78,13 +78,7 @@ function expectOk(frame: ForceAnalysisFrame): void {
 describe('ForceSolver physical model', () => {
   it('balances one open rigid body under gravity and an applied load', () => {
     const model = singleBody('m');
-    const result = ForceSolver.analyzeFrame(
-      model.joints,
-      model.links,
-      'static',
-      true,
-      'm'
-    );
+    const result = ForceSolver.analyzeFrame(model.joints, model.links, 'static', true, 'm');
     expectOk(result);
     expect(result.jointReactions.get('A')![0]).toBeCloseTo(0, 10);
     expect(result.jointReactions.get('A')![1]).toBeCloseTo(29.6133, 4);
@@ -121,22 +115,13 @@ describe('ForceSolver physical model', () => {
       true,
       'm'
     );
-    const weldedResult = ForceSolver.analyzeFrame(
-      welded.joints,
-      welded.links,
-      'static',
-      true,
-      'm'
-    );
+    const weldedResult = ForceSolver.analyzeFrame(welded.joints, welded.links, 'static', true, 'm');
     expectOk(unsplitResult);
     expectOk(weldedResult);
     expect(weldedResult.jointReactions.get('A')).toEqual(
       expect.arrayContaining(unsplitResult.jointReactions.get('A')!)
     );
-    expect(weldedResult.inputEffort!.valueSI).toBeCloseTo(
-      unsplitResult.inputEffort!.valueSI,
-      12
-    );
+    expect(weldedResult.inputEffort!.valueSI).toBeCloseTo(unsplitResult.inputEffort!.valueSI, 12);
   });
 
   it('adds centripetal inertia dynamically and scales it with speed squared', () => {
@@ -150,10 +135,7 @@ describe('ForceSolver physical model', () => {
     expectOk(fast);
     expect(slow.jointReactions.get('A')![0]).toBeCloseTo(-2, 5);
     expect(fast.jointReactions.get('A')![0]).toBeCloseTo(-8, 5);
-    expect(fast.jointReactions.get('A')![0] / slow.jointReactions.get('A')![0]).toBeCloseTo(
-      4,
-      5
-    );
+    expect(fast.jointReactions.get('A')![0] / slow.jointReactions.get('A')![0]).toBeCloseTo(4, 5);
   });
 
   it('makes zero-speed dynamic equilibrium identical to static equilibrium', () => {
@@ -171,10 +153,7 @@ describe('ForceSolver physical model', () => {
       staticFrame.jointReactions.get('A')![1],
       10
     );
-    expect(dynamicFrame.inputEffort!.valueSI).toBeCloseTo(
-      staticFrame.inputEffort!.valueSI,
-      10
-    );
+    expect(dynamicFrame.inputEffort!.valueSI).toBeCloseTo(staticFrame.inputEffort!.valueSI, 10);
   });
 
   it('balances binary and three-body pin reactions by root-link side', () => {
@@ -190,15 +169,7 @@ describe('ForceSolver physical model', () => {
     b.links = [bj];
     c.links = [cj];
     j.links = [aj, bj, cj];
-    const load = new Force(
-      'F1',
-      cj,
-      new Coord(0.5, 1),
-      new Coord(0.5, 0),
-      false,
-      true,
-      10
-    );
+    const load = new Force('F1', cj, new Coord(0.5, 1), new Coord(0.5, 0), false, true, 10);
     cj.forces = [load];
 
     const result = ForceSolver.analyzeFrame([a, b, c, j], [aj, bj, cj], 'static', false, 'm');
@@ -222,7 +193,7 @@ describe('ForceSolver physical model', () => {
     d.angle_rad = 0;
     const ab = new RealLink('AB', [a, b], 1, 1);
     const bc = new RealLink('BC', [b, c], 1, 1);
-    const piston = new Piston('CD', [c, d], 1);
+    const piston = new SliderBlock('CD', [c, d], 1);
     a.links = [ab];
     b.links = [ab, bc];
     c.links = [bc, piston];
@@ -309,9 +280,10 @@ describe('ForceSolver physical model', () => {
       (frame, index) => frame.status === 'ok' && baseResult.frames[index]?.status === 'ok'
     );
     expect(comparableIndex).toBeGreaterThanOrEqual(0);
-    expect(
-      extensionResult.frames[comparableIndex].inputEffort!.valueSI
-    ).not.toBeCloseTo(baseResult.frames[comparableIndex].inputEffort!.valueSI, 6);
+    expect(extensionResult.frames[comparableIndex].inputEffort!.valueSI).not.toBeCloseTo(
+      baseResult.frames[comparableIndex].inputEffort!.valueSI,
+      6
+    );
   });
 });
 

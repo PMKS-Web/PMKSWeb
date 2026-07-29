@@ -11,7 +11,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
-import { Bound, Link, Piston, RealLink } from '../../model/link';
+import { Bound, Link, SliderBlock, RealLink } from '../../model/link';
 import { Force } from '../../model/force';
 import { Mechanism } from '../../model/mechanism/mechanism';
 import {
@@ -262,5 +262,4 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
     //Used to change the color of the topbar when not running prod
     return isDevMode();
   }
-
 }

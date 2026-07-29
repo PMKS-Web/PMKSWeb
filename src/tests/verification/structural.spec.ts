@@ -2,7 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { PrisJoint, RevJoint } from '../../app/model/joint';
-import { Piston, RealLink } from '../../app/model/link';
+import { SliderBlock, RealLink } from '../../app/model/link';
 import { Link } from '../../app/model/link';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
 import { ForceSolver } from '../../app/model/mechanism/force-solver';
@@ -114,7 +114,7 @@ describe('mechanism structure', () => {
       const pris = slider.joints[t].find((joint) => joint.id === 'D');
       expect(pris, `t=${t} prismatic joint`).toBeInstanceOf(PrisJoint);
       expect((pris as PrisJoint).angle_rad).toBe(0);
-      expect(slider.links[t].find((link) => link instanceof Piston)?.mass).toBe(1.31788);
+      expect(slider.links[t].find((link) => link instanceof SliderBlock)?.mass).toBe(1.31788);
     }
   });
 
@@ -323,7 +323,7 @@ describe('URL transcoder round-trip', () => {
             []
           )
         );
-      } else if (link instanceof Piston) {
+      } else if (link instanceof SliderBlock) {
         encoder.addLink(
           new LinkData(
             true,

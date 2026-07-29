@@ -7,7 +7,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Force } from '../../model/force';
-import { Piston, Link, RealLink, Shape } from '../../model/link';
+import { SliderBlock, Link, RealLink, Shape } from '../../model/link';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
 import { Coord } from '../../model/coord';
 import { roundNumber } from '../../model/utils';
@@ -234,7 +234,7 @@ export class LinkageTableComponent implements OnInit {
     switch (link.constructor) {
       case RealLink:
         return 'R';
-      case Piston:
+      case SliderBlock:
         return 'P';
     }
     return '?';
