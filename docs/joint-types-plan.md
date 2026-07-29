@@ -505,6 +505,12 @@ problem.
 | 5.7 | Reveal-on-select overlay; decide whether it persists during playback |
 | 5.8 | Link panel shows length at t = 0, not a constant, for variable-length links |
 
+**`incrementPrisInput` has no test coverage at all today.** Mutation-testing during Phase 0 showed
+that perturbing it changes nothing in any spec: no built-in template drives the slider, so
+([`position-solver.ts:372-381`](../src/app/model/mechanism/position-solver.ts)) is dead code in
+the suite. Anything this phase changes there is unguarded until a driven-prismatic case exists —
+write that case first, not last.
+
 **The constraint is the easy part of this phase.** It reduces to `|P₁P₂| = s(t)`, a
 per-timestep entry in `jointDistMap` feeding the existing circle-circle dyad
 ([`position-solver.ts:501-518`](../src/app/model/mechanism/position-solver.ts)) — no slot line, no
