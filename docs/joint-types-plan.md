@@ -271,13 +271,30 @@ Invariants to assert on every rebuild:
 
 Each phase is a PR. Gates are hard — do not start the next phase with a red gate.
 
-### Phase 0 — Groundwork (no user-visible change)
+### Phase 0 — Groundwork (no user-visible change) — **DONE** (PR #223)
 
-| # | Task | Files |
-| --- | --- | --- |
-| 0.1 | Rename `Piston` → `SliderBlock` | [`link.ts:753`](../src/app/model/link.ts) + ~30 `instanceof` sites |
-| 0.2 | Template URL regression test | `template-linkages.ts`, new spec |
-| 0.3 | Rewrite `circleLineIntersection` in parametric form | [`utils.ts:1178`](../src/app/model/utils.ts), [`position-solver.ts:521-658`](../src/app/model/mechanism/position-solver.ts) |
+| # | Task | Files | Status |
+| --- | --- | --- | --- |
+| 0.1 | Rename `Piston` → `SliderBlock` | [`link.ts`](../src/app/model/link.ts) + 15 files | done |
+| 0.2 | Template URL regression test | [`template-url.spec.ts`](../src/tests/verification/template-url.spec.ts), [`template-baseline.ts`](../src/tests/verification/template-baseline.ts) | done |
+| 0.3 | Rewrite `circleLineIntersection` in parametric form | [`utils.ts`](../src/app/model/utils.ts), [`position-solver.ts`](../src/app/model/mechanism/position-solver.ts), [`slider-guide-angle.spec.ts`](../src/tests/verification/slider-guide-angle.spec.ts) | done |
+
+**0.3 turned out to be a correctness fix, not just a robustness one.** The clamp treated any
+`|m| > 1000` as `Number.MAX_VALUE` and switched to a constant-`x` branch. `tan(89.95°) = 1146`, so a
+guide a twentieth of a degree off vertical was solved as *exactly* vertical — the slider drifted
+0.0044 off its true position with `x` pinned to its starting value for the whole cycle. Any
+mechanism a user built on a steep guide has been quietly wrong.
+
+Guide angles are asserted against the closed form (§4.3), not sampled data: 0°, 30°, 60°, 89.95°,
+exactly 90°, 120°. MATLAB cases covering the same angles exist and pass their full pipeline in
+`KohmeiK/PMKS_Verification#1`; wiring them in as an independent cross-check is follow-up work and
+needs an upstream-provenance decision first, since PMKSWeb currently pins a `PMKS-Web/` commit.
+
+Two things left in place deliberately:
+
+- The circle-line branch index is still chosen once and held, which is not safe through a tangency
+  — the same failure `solutionNearestCurrent` fixes for circle-circle. Commented in place; Phase 2.
+- `incrementPrisInput` still has no coverage (see Phase 5).
 
 **0.1 first**, before anything else — `Piston` currently means "slider block" and we are about to
 add a feature users call a piston that is a different thing.
@@ -293,8 +310,8 @@ user types 90°; a slot on a rotating carrier crosses vertical twice per revolut
 the `Number.MAX_VALUE` clamp ([`position-solver.ts:645-647`](../src/app/model/mechanism/position-solver.ts))
 and the separate NaN branch ([`:543-571`](../src/app/model/mechanism/position-solver.ts)).
 
-> **Gate 0:** all existing specs green; `Slider_Crank` template decodes and solves bit-identically
-> to `main`; new slider-crank cases at 89.9° and exactly 90° match closed form.
+> **Gate 0 — met.** 263 specs green (was 215); `Slider_Crank` template decodes and solves
+> bit-identically; guide-angle cases match closed form at every tested angle; production build clean.
 
 ### Phase 1 — Drag foundation
 
