@@ -58,7 +58,6 @@
             "styles": ["src/mytheme.scss", "src/styles.scss"],
             "scripts": [
               "node_modules/apexcharts/dist/apexcharts.min.js",
-              "node_modules/hull.js/dist/hull.js"
             ],
             "browser": "src/main.ts",
             "stylePreprocessorOptions": {

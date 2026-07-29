@@ -3,7 +3,7 @@ import { Coord } from './coord';
 import { AppConstants } from './app-constants';
 import { Force } from './force';
 import { degToRad, determineSlope, getAngle, getDistance, radToDeg } from './utils';
-import hull from 'hull.js/dist/hull.js';
+import hull from 'hull.js';
 import { SettingsService } from '../services/settings.service';
 import { Arc, Line } from './line';
 import {
@@ -307,7 +307,7 @@ export class RealLink extends Link {
 
     //Convert joints to simple x, y array
     const points = allJoints.map((j) => [j.x, j.y]);
-    return hull(points, Infinity);
+    return hull(points, Infinity) as number[][];
   }
 
   // whether (x,y) is inside the hull. To calculate this, create a new
@@ -316,7 +316,7 @@ export class RealLink extends Link {
   isPointInsideHull(x: number, y: number): boolean {
     let points = this.joints.map((j) => [j.x, j.y]);
     points.push([x, y]);
-    const hullPoints = hull(points, Infinity);
+    const hullPoints = hull(points, Infinity) as number[][];
 
     let hullContainsPoint = false;
     hullPoints.forEach((point: any) => {
@@ -336,7 +336,7 @@ export class RealLink extends Link {
 
     //Convert joints to simple x, y array
     const points = allJoints.map((j) => [j.x, j.y]);
-    const hullPoints = hull(points, Infinity); //Hull points find the convex hull (largest fence)
+    const hullPoints = hull(points, Infinity) as number[][]; //Hull points find the convex hull (largest fence)
 
     //Match resuling x,y points to joints
     let desiredJointsIDs: string = '';
