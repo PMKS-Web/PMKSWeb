@@ -34,8 +34,10 @@ export class PositionSolver {
   private static desiredAnalysisJointMap = new Map<string, string>();
   private static jointDistMap = new Map<string, number>();
   private static initialJointPosMap = new Map<string, [number, number]>();
-  private static m_Map = new Map<string, number>();
-  private static b_Map = new Map<string, number>();
+  /** A point on each sliding joint's slot line. */
+  private static slotPointMap = new Map<string, [number, number]>();
+  /** Unit direction of each sliding joint's slot line. */
+  private static slotDirectionMap = new Map<string, [number, number]>();
   static forcePositionMap = new Map<string, Coord>();
   static forceMagnitudeMap = new Map<string, number>();
 
@@ -53,8 +55,8 @@ export class PositionSolver {
     this.desiredAnalysisJointMap = new Map<string, string>();
     this.jointDistMap = new Map<string, number>();
     this.initialJointPosMap = new Map<string, [number, number]>();
-    this.m_Map = new Map<string, number>();
-    this.b_Map = new Map<string, number>();
+    this.slotPointMap = new Map<string, [number, number]>();
+    this.slotDirectionMap = new Map<string, [number, number]>();
   }
 
   static determineJointOrder(joints: Joint[], links: Link[]) {
@@ -172,8 +174,7 @@ export class PositionSolver {
           cur_joint.id + ',' + prevJoint.id,
           euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y)
         );
-        this.m_Map.set(cur_joint.id, Math.tan(sliderJoint.angle_rad));
-        this.b_Map.set(cur_joint.id, cur_joint.y - this.m_Map.get(cur_joint.id)! * cur_joint.x);
+        this.setSlot(cur_joint.id, cur_joint.x, cur_joint.y, sliderJoint.angle_rad);
         // Like the revolute branch below, the solved slider joint becomes a
         // known joint and its other neighbors still need solve orders --
         // otherwise a tracer point on the slider's link can never resolve.
@@ -215,11 +216,7 @@ export class PositionSolver {
               tracer_joint.id + ',' + tracer_joint.id,
               euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y)
             );
-            this.m_Map.set(tracer_joint.id, Math.tan(tracer_joint.angle_rad));
-            this.b_Map.set(
-              tracer_joint.id,
-              tracer_joint.y - this.m_Map.get(tracer_joint.id)! * tracer_joint.x
-            );
+            this.setSlot(tracer_joint.id, tracer_joint.x, tracer_joint.y, tracer_joint.angle_rad);
             return;
           }
           const desired_link = links.find((l) => {
@@ -517,144 +514,57 @@ export class PositionSolver {
     return circleCircleIntersection(x0, y0, r0, x1, y1, r1);
   }
 
-  // https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
+  /**
+   * Place a joint that rides a slot: it sits where the slot line meets a circle
+   * of the connecting link's length about an already-solved joint.
+   *
+   * Both roots are on the slot and both satisfy the link length, so they are
+   * the linkage's two assembly modes. The branch is chosen once, by whichever
+   * root the joint started nearest, and then held.
+   */
   private static circleLineIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: Joint) {
+    const solutions = this.slotSolutions(j1, unknownJoint);
+    if (!solutions) {
+      return false;
+    }
+
     if (!this.desiredIndexWithinPosAnalysisMap.has(unknownJoint.id)) {
+      const initial = this.initialJointPosMap.get(unknownJoint.id)!;
+      const distanceToInitial = (point: [number, number]) =>
+        Math.hypot(point[0] - initial[0], point[1] - initial[1]);
       this.desiredIndexWithinPosAnalysisMap.set(
         unknownJoint.id,
-        this.determineDesiredIndexCircleLineIntersection(j1, j2, unknownJoint)
+        distanceToInitial(solutions[0]) <= distanceToInitial(solutions[1]) ? 0 : 1
       );
     }
-    const desiredIndex = this.desiredIndexWithinPosAnalysisMap.get(unknownJoint.id);
-    const [a, b, c, d] = this.circleLineIntersectionMethod(j1, j2, unknownJoint);
-    let x,
-      y,
-      r,
-      curr_known_x,
-      curr_unknown_y,
-      curr_unknown_x,
-      a_temp,
-      b_temp,
-      c_temp,
-      curr_known_y,
-      d_temp,
-      y_1,
-      y_2: number;
-    if (isNaN(d) || !isFinite(d)) {
-      r = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
-      curr_known_x = this.jointMapPositions.get(j1.id)![0];
-      // const curr_unknown_x = this.jointMapPositions.get(unknownJoint.id)[0];
-      curr_unknown_x = unknownJoint.x;
-      curr_known_y = this.jointMapPositions.get(j1.id)![1];
-      curr_unknown_y = unknownJoint.y;
-      // const curr_unknown_y = this.jointMapPositions.get(unknownJoint.id)[1];
-      a_temp = 1;
-      b_temp = -2 * curr_known_y;
-      c_temp =
-        Math.pow(curr_known_y, 2) + Math.pow(curr_known_x - curr_unknown_x, 2) - Math.pow(r, 2);
-      d_temp = Math.pow(b_temp, 2) - 4 * a_temp * c_temp;
-      // utilize quadratic formula to solve for both y values
-      if (d_temp < 0) {
-        return false;
-      }
-      y_1 = (-b_temp + Math.sqrt(Math.pow(b_temp, 2) - 4 * a_temp * c_temp)) / (2 * a_temp);
-      y_2 = (-b_temp - Math.sqrt(Math.pow(b_temp, 2) - 4 * a_temp * c_temp)) / (2 * a_temp);
 
-      // y_1 = Math.abs((-b_temp + Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp));
-      // y_2 = Math.abs((-b_temp - Math.sqrt(Math.pow(b_temp, 2) - (4 * a_temp * c_temp))) / (2 * a_temp));
-      // determine which y is closer and use this y value
-      if (Math.abs(curr_unknown_y - y_1) <= Math.abs(curr_unknown_y - y_2)) {
-        y = y_1;
-      } else {
-        y = y_2;
-      }
-      x = curr_unknown_x;
-    } else {
-      if (d >= 0) {
-        const sign = desiredIndex === 0 ? 1 : -1;
-        x = (-b + sign * Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
-        const vertical_line = (90 * Math.PI) / 180;
-        const horizontal_line = (180 * Math.PI) / 180;
-        // TODO: Have map for determining m
-        // const m = Math.tan(unknownJoint.angle);
-        const m = this.m_Map.get(unknownJoint.id)!;
-        // TODO: have map for determining b_intersection
-        const b_intersect = this.b_Map.get(unknownJoint.id)!;
-        // const b_intersect = unknownJoint.yInitial - m * unknownJoint.xInitial;
-        y = m * x + b_intersect;
-      } else {
-        return false;
-      }
-    }
-    // const y = Math.tan(unknownJoint.angle) * unknownJoint.x + unknownJoint.y;
+    // TODO (Phase 2): a held index is not safe through a tangency, where the two
+    // roots merge and trade places -- the same failure solutionNearestCurrent
+    // fixes for the circle-circle case. Preserved as-is here so this rewrite
+    // changes only the line representation.
+    const [x, y] = solutions[this.desiredIndexWithinPosAnalysisMap.get(unknownJoint.id)!];
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     this.jointMapPositions.set(j2.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
   }
 
-  private static determineDesiredIndexCircleLineIntersection(
-    j1: Joint,
-    j2: Joint,
-    unknownJoint: Joint
-  ) {
-    const [a, b, c, _] = this.circleLineIntersectionMethod(j1, j2, unknownJoint);
-    // const x_1 = Math.abs((-b + Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
-    // const x_2 = Math.abs((-b - Math.sqrt(Math.pow(b, 2) - (4 * a * c))) / (2 * a));
-    const x_1 = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
-    const x_2 = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a);
-    // TODO: have map for determining m
-    const m = this.m_Map.get(unknownJoint.id)!;
-    // const m = Math.sin(unknownJoint.angle) / Math.cos(unknownJoint.angle);
-    // TODO: have map for determining b_intersect
-    const b_intersect = this.b_Map.get(unknownJoint.id)!;
-    // const b_intersect = unknownJoint.yInitial - m * unknownJoint.xInitial;
-    const y_1 = m * x_1 + b_intersect;
-    const y_2 = m * x_2 + b_intersect;
-    const intersection1Diff = Math.sqrt(
-      Math.pow(x_1 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) +
-        Math.pow(y_1 - this.initialJointPosMap.get(unknownJoint.id)![1], 2)
-    );
-    const intersection2Diff = Math.sqrt(
-      Math.pow(x_2 - this.initialJointPosMap.get(unknownJoint.id)![0], 2) +
-        Math.pow(y_2 - this.initialJointPosMap.get(unknownJoint.id)![1], 2)
-    );
-    return intersection1Diff < intersection2Diff ? 0 : 1;
+  /** Intersections of the joint's slot line with the circle centred on `j1`. */
+  private static slotSolutions(j1: Joint, unknownJoint: Joint): [number, number][] | undefined {
+    const radius = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
+    const [centreX, centreY] = this.jointMapPositions.get(j1.id)!;
+    const [pointX, pointY] = this.slotPointMap.get(unknownJoint.id)!;
+    const [dirX, dirY] = this.slotDirectionMap.get(unknownJoint.id)!;
+    return circleLineIntersection(radius, centreX, centreY, pointX, pointY, dirX, dirY);
   }
 
-  private static circleLineIntersectionMethod(j1: Joint, j2: Joint, unknownJoint: Joint) {
-    // circle: (x - h)^2 + (y - k)^2 = r^2
-    // line: y = m * x + n
-    // r: circle radius
-    // const unknown_joint_x = this.jointMapPositions.get(unknownJoint.id)[0];
-    // const unknown_joint_y = this.jointMapPositions.get(unknownJoint.id)[1];
-    // const j1_x = this.jointMapPositions.get(j1.id)[0];
-    // const j1_y = this.jointMapPositions.get(j1.id)[1];
-    // const r = Math.sqrt(Math.pow(unknown_joint_x - j1_x, 2) + Math.pow(unknown_joint_y - j1_y, 2));
-    const r = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
-    // h: x value of circle centre
-    // const h = j1.x;
-    const h = this.jointMapPositions.get(j1.id)![0];
-    // k: y value of circle centre
-    // const k = j1.y;
-    const k = this.jointMapPositions.get(j1.id)![1];
-    // m: slope
-    // const radToDeg = 180 / Math.PI;
-    // TODO: Have map for determining m
-    let m = this.m_Map.get(unknownJoint.id)!;
-    // let m = Math.tan(unknownJoint.angle);
-    if (m > 1000 || m < -1000) {
-      m = Number.MAX_VALUE;
-    }
-    // const m = (Math.round(unknownJoint.angle * radToDeg) % 90  === 0 && Math.round(unknownJoint.angle * radToDeg) % 180 !== 0) ?
-    //   99999999999 : Math.tan(unknownJoint.angle);
-    // const m = Math.tan(unknownJoint.angle);
-    // n: y-intercept
-    // const n = unknown_joint_y - m * unknown_joint_x;
-    // TODO: Have map for determining n
-    // const n = this.n_Map.get(unknownJoint.id);
-    // const n = unknownJoint.yInitial - m * unknownJoint.xInitial;
-    const n = this.b_Map.get(unknownJoint.id)!;
-    return circleLineIntersection(r, h, k, m, n);
+  /**
+   * Record the slot a joint slides along: a point it passes through and a unit
+   * direction. Stored as a direction rather than a slope so that vertical and
+   * near-vertical guides need no special case.
+   */
+  private static setSlot(jointID: string, throughX: number, throughY: number, angleRad: number) {
+    this.slotPointMap.set(jointID, [throughX, throughY]);
+    this.slotDirectionMap.set(jointID, [Math.cos(angleRad), Math.sin(angleRad)]);
   }
 
   // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html

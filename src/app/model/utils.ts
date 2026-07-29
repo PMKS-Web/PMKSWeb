@@ -1175,23 +1175,46 @@ export function circleCircleIntersection(
 }
 
 // https://cscheng.info/2016/06/09/calculate-circle-line-intersection-with-javascript-and-p5js.html
-export function circleLineIntersection(r: number, h: number, k: number, m: number, n: number) {
-  // circle: (x - h)^2 + (y - k)^2 = r^2
-  // line: y = m * x + n
-  // r: circle radius
-  // h: x value of circle centre
-  // k: y value of circle centre
-  // m: slope
-  // n: y-intercept
+/**
+ * Where a circle meets a line, with the line given as a point and a direction
+ * rather than a slope.
+ *
+ * Slope-intercept (`y = m*x + n`) cannot represent a vertical line at all, and
+ * degrades well before it: `m = tan(angle)` grows without bound near vertical,
+ * so a guide a fraction of a degree off vertical produces a slope large enough
+ * to swamp the other terms. The parametric form has no special direction -- a
+ * vertical line is as ordinary as any other.
+ *
+ * `pointX`/`pointY` is any point the line passes through; `dirX`/`dirY` must be
+ * a unit vector, which makes the quadratic's leading coefficient exactly 1.
+ * Returns both intersection points, or `undefined` when the line misses the
+ * circle. A tangent line returns the same point twice.
+ */
+export function circleLineIntersection(
+  r: number,
+  h: number,
+  k: number,
+  pointX: number,
+  pointY: number,
+  dirX: number,
+  dirY: number
+): [number, number][] | undefined {
+  // Substituting `P + t*u` into `(x - h)^2 + (y - k)^2 = r^2` gives
+  // `t^2 + 2(d.u)t + (|d|^2 - r^2) = 0`, where `d = P - centre`.
+  const dx = pointX - h;
+  const dy = pointY - k;
+  const b = 2 * (dx * dirX + dy * dirY);
+  const c = dx * dx + dy * dy - r * r;
 
-  // get a, b, c values
-  const a = 1 + Math.pow(m, 2);
-  const b = -h * 2 + m * (n - k) * 2;
-  const c = Math.pow(h, 2) + Math.pow(n - k, 2) - Math.pow(r, 2);
+  const discriminant = b * b - 4 * c;
+  if (discriminant < 0 || !Number.isFinite(discriminant)) {
+    return undefined;
+  }
 
-  // get discriminant
-  const d = Math.pow(b, 2) - 4 * a * c;
-  return [a, b, c, d];
+  const root = Math.sqrt(discriminant);
+  return [(-b + root) / 2, (-b - root) / 2].map(
+    (t) => [pointX + t * dirX, pointY + t * dirY] as [number, number]
+  );
 }
 
 // https://dirask.com/posts/JavaScript-calculate-intersection-point-of-two-lines-for-given-4-points-VjvnAj
