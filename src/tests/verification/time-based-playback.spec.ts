@@ -7,6 +7,7 @@ import { MechanismService } from '../../app/services/mechanism.service';
 import { NumberUnitParserService } from '../../app/services/number-unit-parser.service';
 import { SettingsService } from '../../app/services/settings.service';
 import { SvgGridService } from '../../app/services/svg-grid.service';
+import { DragStateService } from '../../app/services/drag-state.service';
 import { SynthesisBuilderService } from '../../app/services/synthesis/synthesis-builder.service';
 import { MechanismBuilder } from '../../app/services/transcoding/mechanism-builder';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
@@ -18,13 +19,17 @@ function createLoadedService(payload: string = TEMPLATE_LINKAGES['4-Bar']) {
   if (!ColorService.instance) new ColorService();
   const settings = new SettingsService();
   const parser = new NumberUnitParserService();
+  // GridUtilsService resolves MechanismService at call time, so it has to be
+  // handed an injector that reads the binding below rather than a finished one.
+  let service!: MechanismService;
   const grid = new GridUtilsService(
     new SynthesisBuilderService(parser, settings),
-    new SvgGridService(settings)
+    new SvgGridService(settings, new DragStateService()),
+    { get: () => service } as unknown as Injector
   );
   const active = new ActiveObjService();
   const injector = { get: () => ({ save: () => {} }) } as unknown as Injector;
-  const service = new MechanismService(grid, active, injector, settings, parser);
+  service = new MechanismService(grid, active, injector, settings, parser);
 
   const decoder = new StringTranscoder();
   decoder.decodeURL(payload);

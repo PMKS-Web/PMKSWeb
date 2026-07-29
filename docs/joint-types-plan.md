@@ -318,24 +318,83 @@ and the separate NaN branch ([`:543-571`](../src/app/model/mechanism/position-so
 Independent of joint types, and a prerequisite for Phase 4's slot drags. This is where the drag
 logic currently living only in the author's head gets written down.
 
-| # | Task | Notes |
-| --- | --- | --- |
-| 1.1 | Extract the drag state machine out of `new-grid.component.ts` | `jointStates`/`linkStates` are scattered across ~12 sites ([`new-grid.component.ts`](../src/app/component/new-grid/new-grid.component.ts)) |
-| 1.2 | Joint-onto-joint drag to snap/merge | new — no snap logic exists today |
-| 1.3 | Whole-link drag | `linkStates.dragging` and `.resizing` are declared ([`utils.ts:30-35`](../src/app/model/utils.ts)) but **never used**; only `creating`/`waiting` appear |
-| 1.4 | Save-on-release discipline | one `updateMechanism(true)` per gesture, not per pointer-move — undo is a stack of URL strings |
+| # | Task | Files | Status |
+| --- | --- | --- | --- |
+| 1.1 | Extract the drag state machine out of `new-grid.component.ts` | [`drag-state.service.ts`](../src/app/services/drag-state.service.ts) | done |
+| 1.2 | Joint-onto-joint drag to snap/merge | [`drop-target.ts`](../src/app/model/drop-target.ts), `MechanismService.mergeJoints` | done |
+| 1.3 | Whole-link drag | `GridUtilsService.dragLink` | done |
+| 1.4 | Save-on-release discipline | `DragStateService.release` | done |
 
-`dragJoint` is currently unconstrained free-drag
-([`grid-utils.service.ts:120-128`](../src/app/services/grid-utils.service.ts)) and already keeps
-the PrisJoint glued to the RevJoint ([`:132-137`](../src/app/services/grid-utils.service.ts)).
-Phase 4 inverts that: the block becomes the constrained thing and the pin follows.
+**1.1** moved the four interaction enums off the component and behind named transitions. The
+component held `gridStates`/`jointStates`/`linkStates`/`forceStates` as private fields assigned from
+roughly a dozen sites, so a gesture that forgot one of them left the canvas in a state no single
+field described. The enums themselves stay in `utils.ts`; only their ownership moved.
+
+Two things fell out of the extraction rather than being planned:
+
+- The three-way "can I edit right now?" guard was duplicated at three call sites, and none of them
+  covered Analyze mode. Analyze already refused the edit context menu, so it *presented* as
+  read-only while dragging went straight through. Whole-link drag would have widened that hole, so
+  the guard now covers every drag.
+- `GridUtilsService` reached the mechanism through `NewGridComponent.instance.mechanismSrv`. It now
+  resolves `MechanismService` through `Injector` at call time — the cycle-breaking pattern the rest
+  of the codebase already uses — which removes one static channel and is what makes `dragLink`
+  testable without a DOM.
+
+**1.2** splits into a pure refusal/nearest-target module and a topology merge on MechanismService.
+The refusal reasons are returned rather than a bare boolean because a joint that silently declines
+to snap reads as a broken drag. Five cases are refused: the same joint, two joints on one link
+(which would collapse it), a prismatic joint, a joint carrying a slider (Phase 2 owns slot
+topology), and a welded joint (Phase 3 owns weld semantics).
+
+A sixth refusal was not in the plan. Links A–B and A–C, with B dropped onto C, leave *two* rigid
+bars spanning the same pair of points — a weld written as an accident, and a redundant constraint
+for every solver downstream. Neither the shares-a-link rule nor anything else caught it.
+
+The merge itself reuses `rebuildJointGraph`, so it only has to rewrite `link.joints`, the link id,
+and the `fixedLocations` entries; connectivity is re-derived. Ground and input transfer to the
+survivor, because dropping either would quietly change what the mechanism is.
+
+**1.3** treats a link drag as a rigid translation rather than as "drag each joint in turn". That
+distinction is visible: the body's own centre of mass and forces translate exactly, so a
+hand-placed CoM survives, while only the *neighbouring* links are deformed and recomputed.
+
+`dragJoint` is unconstrained free-drag and already keeps the PrisJoint glued to the RevJoint;
+`dragLink` maintains the same invariant. Phase 4 inverts it: the block becomes the constrained
+thing and the pin follows.
 
 **Drop-target arbitration.** 1.2 and Phase 4.3 both add drop targets. Joint snap must win when a
-joint and a link body are both in range, with a visible indicator of which you're about to get.
+joint and a link body are both in range, with a visible indicator of which you're about to get. The
+joint half is in; the precedence obligation is recorded at `resolveJointDropTarget` for Phase 4.3.
 
-> **Gate 1:** dragging a joint onto another merges them and round-trips through the URL; dragging
-> a link moves all its joints and leaves the mechanism solvable; each gesture is exactly one undo
-> entry.
+`linkStates.resizing` is still declared and still unused — link resizing is not a Phase 1 gesture.
+
+#### What only the browser caught
+
+The unit suite was green and the link drag was still broken on screen. `SvgGridService.handleBeforePan`
+suppressed panning by *enumerating* the drag states — joint dragging, both force endpoints, synthesis
+poses — so a link drag panned the canvas underneath itself. The content moved with the cursor, the
+pointer barely moved in SVG coordinates, and the link translated by about a twentieth of a unit for a
+sixty-pixel drag. Every unit test passed because none of them involve a viewport.
+
+The fix is the reason 1.1 was worth doing: `handleBeforePan` now asks `DragStateService.isDragging`
+instead of listing states, so it is right for gestures that do not exist yet. That also removed two
+more reads of the `NewGridComponent.debugGet*State()` statics.
+
+Anchoring fell out of the same investigation. A link drag accumulates offsets, so every pointer-move
+held back by the click threshold was lost motion and the body trailed the cursor by however long the
+hold lasted. It now measures from where the body was last placed, which makes the suppressed
+distance catch up on the first applied move — matching what joint dragging already did by virtue of
+positioning absolutely.
+
+Both behaviours are covered by [`e2e/phase1-drag.mjs`](../e2e/phase1-drag.mjs), which asserts in
+model coordinates rather than on screenshots and exits non-zero on any failure.
+
+> **Gate 1 — met.** 310 specs green (was 263); dragging a joint onto another merges them and the
+> result round-trips through the URL; dragging a link moves all its joints and leaves the mechanism
+> valid at DOF 1; every gesture is exactly one undo entry, and a click that only selects is zero.
+> Production build clean. Each new assertion was mutation-checked, and all 18 browser checks in
+> `e2e/phase1-drag.mjs` pass.
 
 ### Phase 2 — Floating Slot: model and solvers
 

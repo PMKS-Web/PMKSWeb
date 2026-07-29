@@ -12,12 +12,17 @@ import { MechanismService } from './mechanism.service';
 import { NumberUnitParserService } from './number-unit-parser.service';
 import { SettingsService } from './settings.service';
 import { SvgGridService } from './svg-grid.service';
+import { DragStateService } from './drag-state.service';
+import { UrlGenerationService } from './url-generation.service';
+import { MechanismBuilder } from './transcoding/mechanism-builder';
+import { StringTranscoder } from './transcoding/string-transcoder';
 import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
 
 interface Harness {
   service: MechanismService;
   active: ActiveObjService;
   settings: SettingsService;
+  grid: GridUtilsService;
   saveCount: () => number;
 }
 
@@ -25,18 +30,19 @@ function createHarness(): Harness {
   if (!ColorService.instance) new ColorService();
   const settings = new SettingsService();
   const parser = new NumberUnitParserService();
-  const svg = new SvgGridService(settings);
+  const svg = new SvgGridService(settings, new DragStateService());
   const synthesis = new SynthesisBuilderService(parser, settings);
-  const grid = new GridUtilsService(synthesis, svg);
+  // GridUtilsService resolves MechanismService at call time, so it has to be
+  // handed an injector that reads the binding below rather than a finished one.
+  let service!: MechanismService;
+  const grid = new GridUtilsService(synthesis, svg, {
+    get: () => service,
+  } as unknown as Injector);
   const active = new ActiveObjService();
   let saves = 0;
   const injector = { get: () => ({ save: () => saves++ }) } as unknown as Injector;
-  return {
-    service: new MechanismService(grid, active, injector, settings, parser),
-    active,
-    settings,
-    saveCount: () => saves,
-  };
+  service = new MechanismService(grid, active, injector, settings, parser);
+  return { service, active, settings, grid, saveCount: () => saves };
 }
 
 function createChain(jointCount = 3) {
@@ -258,5 +264,144 @@ describe('MechanismService welded links and force ownership', () => {
     harness.settings.isInputCW.next(true);
     harness.service.updateMechanism();
     expect(harness.service.mechanisms[0].inputAngularVelocities[0]).toBeCloseTo(-2 * Math.PI, 12);
+  });
+});
+
+/**
+ * An open chain A-B-C plus a short stub D-E parked next to C. Dragging E onto C
+ * is the gesture that closes it into a four-bar, which is the shape Gate 1 asks
+ * a merge to produce.
+ */
+function createOpenFourBar() {
+  const harness = createHarness();
+  const a = new RevJoint('A', 0, 0, true, true);
+  const b = new RevJoint('B', 1, 2);
+  const c = new RevJoint('C', 4, 2);
+  const d = new RevJoint('D', 5, 0, false, true);
+  const e = new RevJoint('E', 4.05, 2.05);
+
+  const wire = (id: string, joints: RevJoint[]) => {
+    const link = new RealLink(id, joints);
+    joints.forEach((joint) => {
+      joint.links.push(link);
+      joints
+        .filter((other) => other !== joint)
+        .forEach((other) => joint.connectedJoints.push(other));
+    });
+    return link;
+  };
+
+  const links = [wire('AB', [a, b]), wire('BC', [b, c]), wire('DE', [d, e])];
+  harness.service.joints = [a, b, c, d, e];
+  harness.service.links = links;
+  harness.service.updateMechanism();
+  return { ...harness, a, b, c, d, e };
+}
+
+describe('MechanismService joint merging', () => {
+  it('closes an open chain into a solvable four-bar', () => {
+    const scene = createOpenFourBar();
+
+    expect(scene.service.mergeJoints(scene.e, scene.c)).toBeUndefined();
+
+    expect(scene.service.joints.map((joint) => joint.id)).toEqual(['A', 'B', 'C', 'D']);
+    expect(scene.service.links.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'CD']);
+    expect(scene.service.mechanisms[0].isMechanismValid()).toBe(true);
+    expect(scene.service.mechanisms[0].dof).toBe(1);
+  });
+
+  it('rebuilds the joint graph so the survivor carries the merged connections', () => {
+    const scene = createOpenFourBar();
+
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    expect(scene.c.links.map((link) => link.id).sort()).toEqual(['BC', 'CD']);
+    expect(scene.c.connectedJoints.map((joint) => joint.id).sort()).toEqual(['B', 'D']);
+    expect(scene.d.connectedJoints.map((joint) => joint.id)).toEqual(['C']);
+    expect(
+      scene.service.joints.some((joint) =>
+        (joint as RealJoint).connectedJoints.some((candidate) => candidate.id === 'E')
+      )
+    ).toBe(false);
+  });
+
+  // Ground and input are things the user set deliberately. Dropping either on
+  // the floor would quietly change what the mechanism is.
+  it('carries ground and input onto the survivor', () => {
+    const scene = createOpenFourBar();
+    scene.e.ground = true;
+
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    expect(scene.c.ground).toBe(true);
+    expect(scene.c.input).toBe(false);
+  });
+
+  it('renames the link and its fixed-location entries to the surviving joint', () => {
+    const scene = createOpenFourBar();
+    const de = scene.service.links.find((link) => link.id === 'DE')!;
+    de.fixedLocation.fixedPoint = 'E';
+
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    expect(de.id).toBe('CD');
+    expect(de.fixedLocations.map((location) => location.id).sort()).toEqual(['C', 'D', 'com']);
+    expect(de.fixedLocation.fixedPoint).toBe('C');
+  });
+
+  it('refuses an illegal merge and leaves the mechanism untouched', () => {
+    const scene = createOpenFourBar();
+
+    expect(scene.service.mergeJoints(scene.b, scene.c)).toBe('shares-a-link');
+
+    expect(scene.service.joints.map((joint) => joint.id)).toEqual(['A', 'B', 'C', 'D', 'E']);
+    expect(scene.service.links.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'DE']);
+  });
+
+  // The merge is the tail of a drag, and the gesture owns the single undo entry
+  // it earns. Saving here as well would push two states for one drop.
+  it('does not save on its own', () => {
+    const scene = createOpenFourBar();
+
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    expect(scene.saveCount()).toBe(0);
+  });
+
+  it('moves the selection to the surviving joint', () => {
+    const scene = createOpenFourBar();
+    scene.active.updateSelectedObj(scene.e);
+
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    expect(scene.active.selectedJoint).toBe(scene.c);
+  });
+
+  it('round-trips the merged mechanism through the URL', () => {
+    const scene = createOpenFourBar();
+    scene.service.mergeJoints(scene.e, scene.c);
+
+    const encoded = new UrlGenerationService(
+      scene.service,
+      scene.settings,
+      scene.active
+    ).generateUrlQuery();
+    const decoder = new StringTranscoder();
+    decoder.decodeURL(encoded);
+    const restored = {
+      joints: [],
+      links: [],
+      forces: [],
+      mechanismTimeStep: 0,
+    } as unknown as MechanismService;
+    new MechanismBuilder(restored, decoder, new SettingsService(), new ActiveObjService()).build(
+      true
+    );
+
+    expect(restored.joints.map((joint) => joint.id)).toEqual(['A', 'B', 'C', 'D']);
+    expect(restored.links.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'CD']);
+    expect(restored.joints.map((joint) => [joint.x, joint.y])).toEqual(
+      scene.service.joints.map((joint) => [joint.x, joint.y])
+    );
   });
 });

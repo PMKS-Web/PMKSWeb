@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import {
   gridStates,
@@ -20,12 +20,10 @@ import { Coord } from '../model/coord';
 import { PositionSolver } from '../model/mechanism/position-solver';
 import { Force } from '../model/force';
 import { Arc, Line } from '../model/line';
-import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SynthesisPose } from './synthesis/synthesis-util';
 import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
 import { SynthesisClickMode } from './synthesis/synthesis-constants';
 import { SvgGridService } from './svg-grid.service';
-import { link } from 'fs';
 import { ColorService } from './color.service';
 
 @Injectable({
@@ -34,8 +32,18 @@ import { ColorService } from './color.service';
 export class GridUtilsService {
   constructor(
     private synthesisBuilder: SynthesisBuilderService,
-    public svgGrid: SvgGridService
+    public svgGrid: SvgGridService,
+    private injector: Injector
   ) {}
+
+  /**
+   * MechanismService injects this service, so it can only be resolved at call
+   * time — the same cycle-breaking the codebase already uses in MechanismService
+   * and UrlProcessorService.
+   */
+  private get mechanismSrv(): MechanismService {
+    return this.injector.get(MechanismService);
+  }
 
   //Return a boolean, is this link a ground link?
   getGround(joint: Joint) {
@@ -216,8 +224,78 @@ export class GridUtilsService {
         });
         break;
     }
-    NewGridComponent.instance.mechanismSrv.updateMechanism(false);
+    this.mechanismSrv.updateMechanism(false);
     return selectedJoint;
+  }
+
+  /**
+   * Translate a whole link, and everything rigidly attached to it, by (dx, dy).
+   *
+   * A link drag is a rigid translation, which is a stronger statement than "drag
+   * each of its joints in turn": the link's own centre of mass and forces move
+   * with the body exactly, rather than being re-derived from the new joint
+   * positions. Only the *neighbouring* links genuinely change shape, so those
+   * are the ones that get recomputed.
+   */
+  dragLink(selectedLink: Link, dx: number, dy: number) {
+    if (dx === 0 && dy === 0) {
+      return selectedLink;
+    }
+
+    const movedJointIDs = new Set<string>();
+    const moveJoint = (joint: Joint) => {
+      if (movedJointIDs.has(joint.id)) return;
+      movedJointIDs.add(joint.id);
+      joint.x = roundNumber(joint.x + dx, 6);
+      joint.y = roundNumber(joint.y + dy, 6);
+    };
+
+    selectedLink.joints.forEach((joint) => {
+      moveJoint(joint);
+      if (!(joint instanceof RealJoint)) return;
+      // A slider's block joint is coincident with its pin by construction, so it
+      // has to travel with it — the same invariant dragJoint maintains.
+      joint.links.forEach((link) => {
+        if (link instanceof SliderBlock) link.joints.forEach(moveJoint);
+      });
+    });
+
+    this.translateLinkBody(selectedLink, dx, dy);
+    if (selectedLink instanceof RealLink) {
+      selectedLink.subset.forEach((sub) => this.translateLinkBody(sub, dx, dy));
+    }
+
+    // Any other link holding one of the moved joints has been deformed, not
+    // translated: its own shape and centre of mass follow from where its joints
+    // now are. Its forces are anchored in world coordinates and stay put.
+    this.mechanismSrv.links.forEach((link) => {
+      if (link === selectedLink || !(link instanceof RealLink)) return;
+      if (!link.joints.some((joint) => movedJointIDs.has(joint.id))) return;
+      link.CoM = RealLink.determineCenterOfMass(link.joints);
+      link.updateCoMDs();
+      link.updateLengthAndAngle();
+      link.subset.forEach((sub) => {
+        const subLink = sub as RealLink;
+        subLink.CoM = RealLink.determineCenterOfMass(subLink.joints);
+        subLink.updateCoMDs();
+        subLink.updateLengthAndAngle();
+      });
+      PositionSolver.setUpInitialJointLocations(link.joints);
+    });
+
+    this.mechanismSrv.updateMechanism(false);
+    return selectedLink;
+  }
+
+  private translateLinkBody(link: Link, dx: number, dy: number) {
+    link.forces.forEach((force) =>
+      force.moveForceTo(force.startCoord.x + dx, force.startCoord.y + dy)
+    );
+    if (!(link instanceof RealLink)) return;
+    link.CoM = new Coord(link.CoM.x + dx, link.CoM.y + dy);
+    link.updateCoMDs();
+    link.updateLengthAndAngle();
+    PositionSolver.setUpInitialJointLocations(link.joints);
   }
 
   findJointIDIndex(id: string, joints: Joint[]) {

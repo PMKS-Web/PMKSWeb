@@ -10,6 +10,7 @@ import { ActiveObjService } from './services/active-obj.service';
 import { SettingsService } from './services/settings.service';
 import { NumberUnitParserService } from './services/number-unit-parser.service';
 import { SvgGridService } from './services/svg-grid.service';
+import { DragStateService } from './services/drag-state.service';
 import { SynthesisBuilderService } from './services/synthesis/synthesis-builder.service';
 import { ColorService } from './services/color.service';
 import { KinematicsSolver } from './model/mechanism/kinematic-solver';
@@ -27,15 +28,23 @@ describe('SixbarService', () => {
   new ColorService();
   const settingsService: SettingsService = new SettingsService();
   const nup: NumberUnitParserService = new NumberUnitParserService();
-  const svgGridService: SvgGridService = new SvgGridService(settingsService);
+  const svgGridService: SvgGridService = new SvgGridService(
+    settingsService,
+    new DragStateService()
+  );
   const synthesisBuilder: SynthesisBuilderService = new SynthesisBuilderService(
     nup,
     settingsService
   );
-  const gridUtilService: GridUtilsService = new GridUtilsService(synthesisBuilder, svgGridService);
+  // GridUtilsService resolves MechanismService at call time, so it has to be
+  // handed an injector that reads the binding below rather than a finished one.
+  let mechanismSrv!: MechanismService;
+  const gridUtilService: GridUtilsService = new GridUtilsService(synthesisBuilder, svgGridService, {
+    get: () => mechanismSrv,
+  } as unknown as Injector);
   const activeObjService: ActiveObjService = new ActiveObjService();
   // The injector is only consulted when saving undo history, which these solver tests never do.
-  const mechanismSrv: MechanismService = new MechanismService(
+  mechanismSrv = new MechanismService(
     gridUtilService,
     activeObjService,
     Injector.create({ providers: [] }),

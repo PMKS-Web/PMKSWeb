@@ -33,6 +33,7 @@ import { PositionSolver } from '../model/mechanism/position-solver';
 import { ColorService } from './color.service';
 import { siUnitFactorsForLength } from '../model/unit-conversions';
 import { transformRigidCoord, transformRigidPath } from '../model/compound-link-path';
+import { MergeRefusal, refuseJointMerge } from '../model/drop-target';
 
 /** Blend two angles along the shorter arc, so a wrap past pi does not spin. */
 function blendAngle(from: number, to: number, blend: number): number {
@@ -485,6 +486,69 @@ export class MechanismService {
     PositionSolver.setUpSolvingForces(this.forces);
     this.updateMechanism(save);
     this.onMechUpdateState.next(3);
+  }
+
+  /**
+   * Fold `source` into `target`: every link that used `source` now uses
+   * `target`, and `source` stops existing. This is the release half of a
+   * joint-onto-joint drag.
+   *
+   * Returns the refusal reason when the merge is illegal, so the caller can say
+   * which rule it hit — a joint that silently declines to merge reads as a
+   * broken drag rather than as a rule.
+   */
+  mergeJoints(source: RealJoint, target: RealJoint): MergeRefusal | undefined {
+    const refusal = refuseJointMerge(source, target);
+    if (refusal) {
+      return refusal;
+    }
+
+    // Ground and input are things the user set deliberately. A merge that
+    // dropped one would quietly change what the mechanism is, so the survivor
+    // inherits both.
+    target.ground = target.ground || source.ground;
+    target.input = target.input || source.input;
+
+    this.links.forEach((link) => this.replaceJointInLink(link, source, target));
+    this.joints = this.joints.filter((joint) => joint.id !== source.id);
+
+    if (this.activeObjService.selectedJoint?.id === source.id) {
+      this.activeObjService.updateSelectedObj(target);
+    }
+
+    // No save here: a merge is the tail of a drag gesture, and the gesture owns
+    // the single undo entry it earns (see DragStateService.release).
+    this.finishStructuralEdit(false);
+    return undefined;
+  }
+
+  private replaceJointInLink(link: Link, source: RealJoint, target: RealJoint): void {
+    if (link instanceof RealLink) {
+      link.subset.forEach((sub) => this.replaceJointInLink(sub, source, target));
+    }
+    const index = link.joints.findIndex((joint) => joint.id === source.id);
+    if (index === -1) {
+      return;
+    }
+
+    link.joints[index] = target;
+    // Link ids are the sorted concatenation of their joint letters, which is
+    // what createNewCompoundLinkFromSubset builds and what the URL codec reads.
+    link.id = link.joints
+      .map((joint) => joint.id)
+      .sort()
+      .join('');
+    link.fixedLocations = link.fixedLocations.map((location) =>
+      location.id === source.id ? { id: target.id, label: target.id } : location
+    );
+    if (link.fixedLocation.fixedPoint === source.id) {
+      link.fixedLocation.fixedPoint = target.id;
+    }
+
+    if (link instanceof RealLink) {
+      link.CoM = RealLink.determineCenterOfMass(link.joints);
+      link.reComputeDPath();
+    }
   }
 
   deleteJoint() {

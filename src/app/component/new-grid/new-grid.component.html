@@ -388,6 +388,16 @@
         }
       </ng-container>
     }
+    <!-- Where the joint being dragged will land if it is released now -->
+    @if (snapTargetJoint) {
+      <circle
+        class="snapTarget"
+        [attr.r]="0.4 * settings.objectScale"
+        [attr.cx]="snapTargetJoint.x"
+        [attr.cy]="snapTargetJoint.y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+      ></circle>
+    }
     @for (joint of mechanismSrv.getJoints(); track joint) {
       <svg
         [attr.x]="joint.x"

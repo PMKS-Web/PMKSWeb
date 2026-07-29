@@ -4,8 +4,8 @@ import { Injectable } from '@angular/core';
 import svgPanZoom from 'svg-pan-zoom';
 import { Coord } from '../model/coord';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
-import { forceStates, jointStates } from '../model/utils';
 import { SettingsService } from './settings.service';
+import { DragStateService } from './drag-state.service';
 import Hammer from 'hammerjs';
 
 @Injectable({
@@ -31,7 +31,10 @@ export class SvgGridService {
   private MAX_ZOOM: number = 3300;
   private MIN_ZOOM: number = 0.04;
 
-  constructor(private settingsService: SettingsService) {}
+  constructor(
+    private settingsService: SettingsService,
+    private dragState: DragStateService
+  ) {}
 
   setNewElement(root: HTMLElement) {
     var eventsHandler;
@@ -173,12 +176,12 @@ export class SvgGridService {
       return oldPan;
     }
 
-    if (
-      NewGridComponent.debugGetJointState() == jointStates.dragging ||
-      NewGridComponent.debugGetForceState() == forceStates.draggingStart ||
-      NewGridComponent.debugGetForceState() == forceStates.draggingEnd ||
-      NewGridComponent.getLastLeftClickType() === 'SynthesisPose'
-    ) {
+    // Any drag in flight owns the pointer. Asking the state machine rather than
+    // enumerating the drag states is what keeps this correct as gestures are
+    // added: link dragging panned the canvas underneath itself for exactly as
+    // long as this list did not mention it, which made the drag look inert
+    // because the content moved with the cursor.
+    if (this.dragState.isDragging || NewGridComponent.getLastLeftClickType() === 'SynthesisPose') {
       return oldPan;
     }
     return newPan;

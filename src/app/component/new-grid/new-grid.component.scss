@@ -120,4 +120,13 @@
   .forceSelectedLine {
     stroke: mat.m2-get-color-from-palette($accent-palette, 500);
   }
+
+  // Ring around the joint a dragged joint is about to merge into. Dashed and
+  // unfilled so it reads as a target rather than as another joint.
+  .snapTarget {
+    fill: none;
+    stroke: mat.m2-get-color-from-palette($accent-palette, 500);
+    stroke-dasharray: 4 3;
+    pointer-events: none;
+  }
 }
