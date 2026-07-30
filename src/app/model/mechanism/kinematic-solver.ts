@@ -1,7 +1,22 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
 import { SliderBlock, Link, RealLink } from '../link';
 import { matLinearSystem } from '../utils';
-import { Loop } from './loop-solver';
+import { Loop, LoopEdge } from './loop-solver';
+
+/** A slot edge's geometry in the frame being solved. */
+interface SlotFrame {
+  slider: PrisJoint;
+  carrier: Link;
+  anchor: Joint;
+  /** Unit vector along the slot. */
+  u: [number, number];
+  /** Unit vector normal to it, which is the direction the slot's rotation moves. */
+  uPerp: [number, number];
+  /** Travel from the anchor, signed along the slot. */
+  s: number;
+  /** +1 when the chain runs anchor to slider, -1 the other way. */
+  sign: number;
+}
 
 export class KinematicsSolver {
   static jointIndexMap = new Map<string, number>();
@@ -32,6 +47,9 @@ export class KinematicsSolver {
   private static groundJointIndexMap = new Map<string, number>();
   static realJointIndexMap = new Map<string, number>();
   static desiredAngleMap = new Map<string, number>();
+  /** Travel rate along each floating slot, relative to its carrier. */
+  static slideRateMap = new Map<string, number>();
+  static slideAccelMap = new Map<string, number>();
   private static inputJointIndex: number | undefined;
   static inputLinkIndex: number;
 
@@ -57,6 +75,8 @@ export class KinematicsSolver {
     this.groundJointIndexMap = new Map<string, number>();
     this.realJointIndexMap = new Map<string, number>();
     this.desiredAngleMap = new Map<string, number>();
+    this.slideRateMap = new Map<string, number>();
+    this.slideAccelMap = new Map<string, number>();
     this.inputLinkIndex = -1;
 
     this.A_matrix_AngVel = [];
@@ -83,6 +103,103 @@ export class KinematicsSolver {
     this.determineAng(simJoints, simLinks, 'Velocity');
     this.determineAng(simJoints, simLinks, 'Acceleration');
     this.determineLin(simJoints, simLinks);
+  }
+
+  /**
+   * Everything a slot edge needs, read from the frame being solved.
+   *
+   * `slotAngle` re-measures from the slot's defining joints on every call, and
+   * `rebindSlot` has already pointed this copy's slider at this copy's carrier,
+   * so nothing here can leak timestep 0's geometry.
+   */
+  private static slotFrame(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'slot' }>
+  ): SlotFrame | undefined {
+    const slider = simJoints.find((joint) => joint.id === edge.sliderId);
+    if (!(slider instanceof PrisJoint) || !slider.carrier || !slider.slotJointA) {
+      return undefined;
+    }
+    const anchor = slider.slotJointA;
+    const theta = slider.slotAngle;
+    const u: [number, number] = [Math.cos(theta), Math.sin(theta)];
+    const uPerp: [number, number] = [-Math.sin(theta), Math.cos(theta)];
+    return {
+      slider,
+      carrier: slider.carrier,
+      anchor,
+      u,
+      uPerp,
+      s: (slider.x - anchor.x) * u[0] + (slider.y - anchor.y) * u[1],
+      sign: edge.fromId === slider.id ? -1 : 1,
+    };
+  }
+
+  /**
+   * A sliding point does not merely slide — it is carried by the link it slides
+   * in. The solved rate is relative to the carrier, so the absolute motion adds
+   * the carrier's own motion at that point: `s·ω` across the slot for velocity,
+   * and for acceleration the Coriolis and centripetal terms as well.
+   *
+   * A grounded guide has `ω = α = 0`, so every added term vanishes and the
+   * sliding point keeps exactly the motion the slide rate gives it.
+   */
+  private static applySlotCarriage(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'slot' }>
+  ): void {
+    const frame = this.slotFrame(simJoints, edge);
+    if (!frame) {
+      return;
+    }
+    const { slider, carrier, anchor, u, uPerp, s } = frame;
+    const omega = this.linkAngVelMap.get(carrier.id) ?? 0;
+    const alpha = this.linkAngAccMap.get(carrier.id) ?? 0;
+    const rate = this.slideRateMap.get(slider.id) ?? 0;
+    const accel = this.slideAccelMap.get(slider.id) ?? 0;
+    const anchorVel = this.jointVelMap.get(anchor.id) ?? [0, 0];
+    const anchorAcc = this.jointAccMap.get(anchor.id) ?? [0, 0];
+
+    this.jointVelMap.set(slider.id, [
+      anchorVel[0] + rate * u[0] + s * omega * uPerp[0],
+      anchorVel[1] + rate * u[1] + s * omega * uPerp[1],
+    ]);
+    this.jointAccMap.set(slider.id, [
+      anchorAcc[0] +
+        accel * u[0] +
+        2 * rate * omega * uPerp[0] +
+        s * alpha * uPerp[0] -
+        s * omega * omega * u[0],
+      anchorAcc[1] +
+        accel * u[1] +
+        2 * rate * omega * uPerp[1] +
+        s * alpha * uPerp[1] -
+        s * omega * omega * u[1],
+    ]);
+  }
+
+  /**
+   * A floating slot's block holds its pin and its sliding joint on top of each
+   * other, so they share a velocity and an acceleration exactly.
+   *
+   * The edge's own direction says which end the walk has already settled: both
+   * directions occur, since the loop may reach the block from the crank (the
+   * inverse case) or from the slot (the forward one). Asking which end already
+   * has a value would not work — the maps are only cleared once per mechanism,
+   * not per timestep, so after the first frame both ends always have one.
+   */
+  private static copyCoincidentMotion(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'link' }>
+  ): void {
+    const velocity = this.jointVelMap.get(edge.fromId);
+    const acceleration = this.jointAccMap.get(edge.fromId);
+    if (velocity) {
+      this.jointVelMap.set(edge.toId, [velocity[0], velocity[1]]);
+    }
+    if (acceleration) {
+      this.jointAccMap.set(edge.toId, [acceleration[0], acceleration[1]]);
+    }
   }
 
   private static determineLooplessKinematics(
@@ -232,10 +349,14 @@ export class KinematicsSolver {
     if (this.unknownLinkIndexMap.size === 0) {
       this.requiredLoops.forEach((loop) => {
         for (const edge of loop.edges) {
-          if (edge.kind !== 'link') {
+          if (edge.kind === 'slot') {
+            this.registerSlotUnknowns(joints, edge);
             continue;
           }
           const link = links[this.linkIndexMap.get(edge.linkId)!];
+          if (this.isFloatingBlock(link)) {
+            continue;
+          }
           switch (link.constructor) {
             case RealLink:
               if (!(link instanceof RealLink)) {
@@ -303,6 +424,40 @@ export class KinematicsSolver {
     this.B_matrix_AngAcc = [];
   }
 
+  /**
+   * A slot crossing carries two unknowns, not one: how fast the block travels
+   * along the slot, and how fast the slot itself is turning. The carrier is
+   * reached only through this crossing in mechanisms like the inverted
+   * slider-crank — it appears in no link edge of the loop — so its angular
+   * velocity has to be claimed here or it never gets a column.
+   *
+   * Registration order is load-bearing: `determineArrays` rebuilds the same
+   * list every timestep and the two must agree, because a column index from
+   * this map indexes into that list.
+   */
+  private static registerSlotUnknowns(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'slot' }>
+  ): void {
+    const frame = this.slotFrame(simJoints, edge);
+    if (!frame) {
+      return;
+    }
+    const carrierId = frame.carrier.id;
+    if (!this.linkContainsInputMap.has(carrierId)) {
+      this.linkContainsInputMap.set(
+        carrierId,
+        frame.carrier.joints.some((joint) => joint instanceof RealJoint && joint.input)
+      );
+    }
+    if (!this.unknownLinkIndexMap.has(carrierId) && !this.linkContainsInputMap.get(carrierId)) {
+      this.unknownLinkIndexMap.set(carrierId, this.unknownLinkIndexMap.size);
+    }
+    if (!this.unknownLinkIndexMap.has(frame.slider.id)) {
+      this.unknownLinkIndexMap.set(frame.slider.id, this.unknownLinkIndexMap.size);
+    }
+  }
+
   private static determineAng(simJoints: Joint[], simLinks: Link[], analysisType: string) {
     // 1st, determine arrays from loops and put that within their respective arrays
     const unknownLinks = this.determineArrays(simJoints, simLinks, analysisType);
@@ -328,6 +483,15 @@ export class KinematicsSolver {
             break;
           case 'Acceleration':
             this.linkAngAccMap.set(linkOrJoint.id, X[i][0]);
+        }
+      } else if (linkOrJoint instanceof PrisJoint && linkOrJoint.isFloating) {
+        // The solved value is travel relative to the carrier, so it is banked
+        // rather than written straight out as a velocity. applySlotCarriage
+        // turns it into absolute motion once the carrier's is known.
+        if (analysisType === 'Velocity') {
+          this.slideRateMap.set(linkOrJoint.id, X[i][0]);
+        } else {
+          this.slideAccelMap.set(linkOrJoint.id, X[i][0]);
         }
       } else {
         // Joint
@@ -359,11 +523,22 @@ export class KinematicsSolver {
     const desired_links_used: Array<string> = [];
     this.requiredLoops.forEach((loop) => {
       for (const edge of loop.edges) {
+        if (edge.kind === 'slot') {
+          // Both in loop order, because each depends on what came before: the
+          // carrier is reached only across the slot, and the sliding point's
+          // own motion is measured from the anchor the walk has just passed.
+          this.spreadCarrierMotion(simJoints, edge, desired_links_used);
+          this.applySlotCarriage(simJoints, edge);
+          continue;
+        }
         // cannot find velocity of a joint on an imaginary link
         if (edge.kind !== 'link') {
           continue;
         }
         if (simLinks[this.linkIndexMap.get(edge.linkId)!] instanceof SliderBlock) {
+          if (this.isFloatingBlock(simLinks[this.linkIndexMap.get(edge.linkId)!])) {
+            this.copyCoincidentMotion(simJoints, edge);
+          }
           continue;
         }
         const desiredLink = simLinks[this.linkIndexMap.get(edge.linkId)!];
@@ -413,6 +588,121 @@ export class KinematicsSolver {
     // determine the velocity and acceleration of tracer joints
   }
 
+  /**
+   * Whether a block belongs to a floating slot rather than a grounded guide.
+   *
+   * For a grounded guide the block edge *is* the sliding pair, and its rate is
+   * the unknown. For a floating slot the sliding is the slot edge, and the
+   * block is a zero-length rigid coincidence between the pin and the sliding
+   * joint — the two are held on top of each other at every timestep. Its edge
+   * vector is therefore zero and it contributes nothing; treating it as a
+   * second sliding pair invents an unknown the loop has no equation for, and
+   * the whole system goes singular.
+   */
+  private static isFloatingBlock(link: Link): boolean {
+    return (
+      link instanceof SliderBlock &&
+      link.joints.some((joint) => joint instanceof PrisJoint && joint.isFloating)
+    );
+  }
+
+  /** Carry the carrier's solved rotation out to its own joints and centre of mass. */
+  private static spreadCarrierMotion(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'slot' }>,
+    linksAlreadyDone: string[]
+  ): void {
+    const frame = this.slotFrame(simJoints, edge);
+    if (!frame || !(frame.carrier instanceof RealLink)) {
+      return;
+    }
+    const anchor = frame.anchor;
+    for (const member of frame.carrier.joints) {
+      if (member.id === anchor.id) {
+        continue;
+      }
+      this.determineVelAndAccel(
+        frame.carrier.id,
+        anchor.id,
+        member.x - anchor.x,
+        member.y - anchor.y,
+        member.id,
+        'joint'
+      );
+    }
+    if (linksAlreadyDone.includes(frame.carrier.id)) {
+      return;
+    }
+    this.linkCoMMap.set(frame.carrier.id, [frame.carrier.CoM.x, frame.carrier.CoM.y]);
+    this.determineVelAndAccel(
+      frame.carrier.id,
+      anchor.id,
+      frame.carrier.CoM.x - anchor.x,
+      frame.carrier.CoM.y - anchor.y,
+      frame.carrier.id,
+      'link'
+    );
+    linksAlreadyDone.push(frame.carrier.id);
+  }
+
+  /**
+   * The slot's contribution to one loop-closure equation.
+   *
+   * The chain crosses the slot as the vector `σ·s·û`, so differentiating gives
+   *   velocity      σ·( ṡ·û + s·ω·û⊥ )
+   *   acceleration  σ·( s̈·û + 2·ṡ·ω·û⊥ + s·α·û⊥ − s·ω²·û )
+   * where ω and α belong to the carrier. The grounded case is this with
+   * ω = α = 0, which is why the old code could get away with just `ṡ·û`.
+   *
+   * Unknowns go to A with the coefficient above; anything already known moves
+   * to B, which flips its sign — the same convention the link branches use.
+   */
+  private static addSlotTerms(
+    simJoints: Joint[],
+    edge: Extract<LoopEdge, { kind: 'slot' }>,
+    loop: Loop,
+    analysisType: string
+  ): void {
+    const frame = this.slotFrame(simJoints, edge);
+    if (!frame) {
+      return;
+    }
+    const rowIndex = 2 * this.loopIndexMap.get(loop.id)!;
+    const slideColumn = this.unknownLinkIndexMap.get(frame.slider.id);
+    const carrierColumn = this.unknownLinkIndexMap.get(frame.carrier.id);
+    const omega = this.linkAngVelMap.get(frame.carrier.id) ?? 0;
+    const velocity = analysisType === 'Velocity';
+    const A = velocity ? this.A_matrix_AngVel : this.A_matrix_AngAcc;
+    const B = velocity ? this.B_matrix_AngVel : this.B_matrix_AngAcc;
+
+    if (slideColumn !== undefined) {
+      A[rowIndex][slideColumn] += frame.sign * frame.u[0];
+      A[rowIndex + 1][slideColumn] += frame.sign * frame.u[1];
+    }
+
+    // Turning of the slot: ω for the velocity pass, α for acceleration.
+    const turnCoefficient = frame.sign * frame.s;
+    if (carrierColumn !== undefined) {
+      A[rowIndex][carrierColumn] += turnCoefficient * frame.uPerp[0];
+      A[rowIndex + 1][carrierColumn] += turnCoefficient * frame.uPerp[1];
+    } else {
+      const known = velocity ? omega : (this.linkAngAccMap.get(frame.carrier.id) ?? 0);
+      B[rowIndex][0] -= turnCoefficient * known * frame.uPerp[0];
+      B[rowIndex + 1][0] -= turnCoefficient * known * frame.uPerp[1];
+    }
+
+    if (!velocity) {
+      // Coriolis and centripetal, both settled by the velocity pass.
+      const rate = this.slideRateMap.get(frame.slider.id) ?? 0;
+      const carriedX =
+        2 * rate * omega * frame.uPerp[0] - frame.s * omega * omega * frame.u[0];
+      const carriedY =
+        2 * rate * omega * frame.uPerp[1] - frame.s * omega * omega * frame.u[1];
+      B[rowIndex][0] -= frame.sign * carriedX;
+      B[rowIndex + 1][0] -= frame.sign * carriedY;
+    }
+  }
+
   // determine AX = B
   private static determineArrays(
     simJoints: Joint[],
@@ -423,10 +713,26 @@ export class KinematicsSolver {
     // first, determine variable locations (X)
     this.requiredLoops.forEach((loop) => {
       for (const edge of loop.edges) {
-        if (edge.kind !== 'link') {
+        if (edge.kind === 'slot') {
+          // Same order as registerSlotUnknowns: carrier first, then slide rate.
+          const frame = this.slotFrame(simJoints, edge);
+          if (!frame) {
+            continue;
+          }
+          for (const unknown of [frame.carrier, frame.slider]) {
+            if (
+              this.unknownLinkIndexMap.has(unknown.id) &&
+              unknownLinksOrJoints.findIndex((l) => l.id === unknown.id) === -1
+            ) {
+              unknownLinksOrJoints.push(unknown);
+            }
+          }
           continue;
         }
         const link = simLinks[this.linkIndexMap.get(edge.linkId)!];
+        if (this.isFloatingBlock(link)) {
+          continue;
+        }
         switch (link.constructor) {
           case RealLink:
             if (
@@ -471,10 +777,14 @@ export class KinematicsSolver {
     // second, set up the known and unknown matrix (A and B)
     this.requiredLoops.forEach((loop) => {
       for (const edge of loop.edges) {
-        if (edge.kind !== 'link') {
+        if (edge.kind === 'slot') {
+          this.addSlotTerms(simJoints, edge, loop, analysisType);
           continue;
         }
         const link = this.getLink(simLinks, edge.linkId);
+        if (this.isFloatingBlock(link)) {
+          continue;
+        }
         const firstJoint = this.getJoint(simJoints, edge.fromId);
         const secondJoint = this.getJoint(simJoints, edge.toId);
         // right side of the equation (B)

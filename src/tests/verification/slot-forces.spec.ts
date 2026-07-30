@@ -111,25 +111,3 @@ describe('forces through a moving slot', () => {
     }
   });
 });
-
-describe('velocity and acceleration through a moving slot', () => {
-  it('reports nothing rather than reporting zeros', () => {
-    // Not yet modelled (docs/joint-types-plan.md 2.9): loop enumeration cannot
-    // see a slot edge, so the kinematic solver leaves every joint unset. The
-    // two ways of shipping that would both be worse than an empty table -- a
-    // crash on the missing entries, or a flat velocity graph under a mechanism
-    // that is plainly moving.
-    const { mechanism } = buildMechanism(LOADED_INVERTED_SLIDER_CRANK);
-
-    expect(() => mechanism.kinematicLoopAnalysis()).not.toThrow();
-    expect(mechanism.kinematicLoopAnalysis()).toEqual([]);
-  });
-
-  it('still solves positions for the same mechanism', () => {
-    // The guard is scoped to the loop-derived analysis; motion is unaffected.
-    const { mechanism } = buildMechanism(LOADED_INVERTED_SLIDER_CRANK);
-
-    expect(mechanism.isMechanismValid()).toBe(true);
-    expect(mechanism.joints.length).toBeGreaterThanOrEqual(360);
-  });
-});

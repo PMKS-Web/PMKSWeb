@@ -1,4 +1,4 @@
-import { Joint, RealJoint } from '../joint';
+import { Joint, PrisJoint, RealJoint } from '../joint';
 import { Link } from '../link';
 
 /**
@@ -47,6 +47,12 @@ interface PathStep {
   viaSliderId?: string;
 }
 
+/** A joint the walk may step to, and how it would get there. */
+interface Neighbour {
+  joint: RealJoint;
+  viaSliderId?: string;
+}
+
 export class LoopSolver {
   /**
    * Every loop that runs from one ground joint to another.
@@ -59,6 +65,7 @@ export class LoopSolver {
    */
   static determineLoops(joints: Joint[], links: Link[]): Loop[] {
     const loops: Loop[] = [];
+    const slotNeighbours = this.slotAdjacency(joints);
     const groundJoints: Joint[] = [];
     joints.forEach((j) => {
       if (!(j instanceof RealJoint) || !j.ground) {
@@ -78,19 +85,98 @@ export class LoopSolver {
       if (!(desiredGround instanceof RealJoint)) {
         continue;
       }
-      desiredGround.connectedJoints.forEach((cj) => {
+      this.neighboursOf(desiredGround, slotNeighbours).forEach((next) => {
         this.findGround(
-          cj,
+          next.joint,
           groundJoints,
-          [cj.id],
-          [{ jointId: desiredGround.id }, { jointId: cj.id }],
+          [next.joint.id],
+          [
+            { jointId: desiredGround.id },
+            { jointId: next.joint.id, viaSliderId: next.viaSliderId },
+          ],
           loops,
           desiredGround.input,
-          links
+          links,
+          slotNeighbours
         );
       });
     }
-    return loops;
+    return this.deduplicate(loops);
+  }
+
+  /**
+   * Where a sliding joint may be crossed to reach the link it slides in.
+   *
+   * The carrier stays out of `PrisJoint.links` and `connectedJoints` — the
+   * position solver depends on it being absent, and putting it there was the
+   * option this design rejected. So the adjacency lives here instead, built
+   * fresh for each walk.
+   *
+   * A slider is joined to exactly one of its carrier's joints, the same anchor
+   * the equations measure travel from. One sliding pair is one constraint;
+   * offering every carrier joint would let a single slot appear as two
+   * different loop closures, and since the carrier is rigid the walk can still
+   * reach its other joints by ordinary link steps.
+   */
+  private static slotAdjacency(joints: Joint[]): Map<string, Neighbour[]> {
+    const adjacency = new Map<string, Neighbour[]>();
+    const add = (fromId: string, joint: RealJoint, viaSliderId: string) => {
+      const existing = adjacency.get(fromId) ?? [];
+      existing.push({ joint, viaSliderId });
+      adjacency.set(fromId, existing);
+    };
+    for (const joint of joints) {
+      if (!(joint instanceof PrisJoint) || !joint.isFloating || !joint.isSlotWellFormed) {
+        continue;
+      }
+      const anchor = joint.slotJointA;
+      if (!(anchor instanceof RealJoint)) {
+        continue;
+      }
+      add(joint.id, anchor, joint.id);
+      add(anchor.id, joint, joint.id);
+    }
+    return adjacency;
+  }
+
+  private static neighboursOf(
+    joint: RealJoint,
+    slotNeighbours: Map<string, Neighbour[]>
+  ): Neighbour[] {
+    const linked = joint.connectedJoints
+      .filter((candidate): candidate is RealJoint => candidate instanceof RealJoint)
+      .map((candidate) => ({ joint: candidate }) as Neighbour);
+    return [...linked, ...(slotNeighbours.get(joint.id) ?? [])];
+  }
+
+  /**
+   * Drop loops that describe a circuit another loop already describes.
+   *
+   * Two walks that traverse the same set of bodies and sliding pairs are the
+   * same constraint written two ways; keeping both would over-determine the
+   * velocity system, which sizes its matrix from the loop count.
+   */
+  private static deduplicate(loops: Loop[]): Loop[] {
+    const bySignature = new Map<string, Loop>();
+    for (const loop of loops) {
+      const signature = loop.edges
+        .map((edge) => (edge.kind === 'slot' ? edge.sliderId : edge.linkId))
+        .sort()
+        .join(',');
+      const existing = bySignature.get(signature);
+      if (!existing || loop.id < existing.id) {
+        bySignature.set(signature, loop);
+      }
+    }
+    return loops.filter(
+      (loop) =>
+        bySignature.get(
+          loop.edges
+            .map((edge) => (edge.kind === 'slot' ? edge.sliderId : edge.linkId))
+            .sort()
+            .join(',')
+        ) === loop
+    );
   }
 
   /** Walk outward until another ground joint is reached. */
@@ -101,23 +187,23 @@ export class LoopSolver {
     path: PathStep[],
     loops: Loop[],
     storeJointPath: boolean,
-    links: Link[]
+    links: Link[],
+    slotNeighbours: Map<string, Neighbour[]>
   ): void {
     if (!(joint instanceof RealJoint)) {
       return;
     }
-    for (const j of joint.connectedJoints) {
-      if (!(j instanceof RealJoint)) {
-        continue;
-      }
+    for (const next of this.neighboursOf(joint, slotNeighbours)) {
+      const j = next.joint;
       if (visited.includes(j.id)) {
         continue;
       }
+      const step: PathStep = { jointId: j.id, viaSliderId: next.viaSliderId };
       if (j.ground) {
         if (groundJoints.indexOf(j) === -1 || !storeJointPath) {
           continue;
         }
-        const edges = this.edgesAlong([...path, { jointId: j.id }], links);
+        const edges = this.edgesAlong([...path, step], links);
         if (edges) {
           loops.push({ id: loopId(edges), edges });
         }
@@ -126,10 +212,11 @@ export class LoopSolver {
           j,
           groundJoints,
           [...visited, j.id],
-          [...path, { jointId: j.id }],
+          [...path, step],
           loops,
           storeJointPath,
-          links
+          links,
+          slotNeighbours
         );
       }
     }

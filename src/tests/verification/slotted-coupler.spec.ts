@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { rigidLinkResidual, slotResidual } from '../../app/model/mechanism/constraint-residuals';
+import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
 import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
 
 // Test-ladder case 5 (docs/joint-types-plan.md §4.1): a four-bar whose coupler
@@ -159,6 +160,81 @@ describe('four-bar with a slotted coupler (forward slot direction)', () => {
       );
 
       expect(Math.hypot(nearest[0] - f.x, nearest[1] - f.y), `rider t=${t}`).toBeLessThan(0.002);
+    }
+  });
+});
+
+describe('velocity through a slot whose carrier is solved first', () => {
+  /** Solve one timestep's kinematics and hand back the solver's maps. */
+  function solveAt(timestep: number) {
+    const { mechanism } = buildMechanism(SLOTTED_COUPLER);
+    KinematicsSolver.resetVariables();
+    KinematicsSolver.requiredLoops = mechanism.requiredLoops;
+    for (let t = 0; t <= timestep; t++) {
+      KinematicsSolver.determineKinematics(
+        mechanism.joints[t],
+        mechanism.links[t],
+        mechanism.inputAngularVelocities[t]
+      );
+    }
+    return { joints: mechanism.joints[timestep] };
+  }
+
+  it('closes a loop through the slot as well as around the four-bar', () => {
+    const { mechanism } = buildMechanism(SLOTTED_COUPLER);
+
+    const ids = mechanism.requiredLoops.map((loop) => loop.id);
+    expect(ids).toContain('A-B-C-D');
+    expect(ids).toContain('A-B~P~P-F-E');
+  });
+
+  it('keeps the rider on a circle about its own pivot', () => {
+    // E is ground and |EF| is rigid, so F's velocity can only be perpendicular
+    // to EF. Any component along it would be the lever changing length.
+    for (const timestep of [0, 40, 90, 140, 200, 260, 320]) {
+      const { joints } = solveAt(timestep);
+      const e = at(joints, 'E');
+      const f = at(joints, 'F');
+      const velocity = KinematicsSolver.jointVelMap.get('F')!;
+      const along =
+        (velocity[0] * (f.x - e.x) + velocity[1] * (f.y - e.y)) / Math.hypot(f.x - e.x, f.y - e.y);
+
+      expect(along, `t=${timestep}`).toBeCloseTo(0, 6);
+      // Looser than the perpendicularity check above on purpose: this one
+      // compares against LEVER, and the solved lever length carries the
+      // position solver's own four-decimal rounding.
+      expect(Math.hypot(velocity[0], velocity[1]), `speed t=${timestep}`).toBeCloseTo(
+        Math.abs(KinematicsSolver.linkAngVelMap.get('EF')!) * LEVER,
+        4
+      );
+    }
+  });
+
+  it('lets the rider move only along the slot, relative to the coupler', () => {
+    // The slot constraint in velocity form: subtract the motion of the coupler
+    // point the rider is sitting on, and what is left must lie along the slot.
+    // This is the forward-direction counterpart of the position residual above.
+    for (const timestep of [0, 40, 90, 140, 200, 260, 320]) {
+      const { joints } = solveAt(timestep);
+      const b = at(joints, 'B');
+      const c = at(joints, 'C');
+      const f = at(joints, 'F');
+      const couplerOmega = KinematicsSolver.linkAngVelMap.get('BC')!;
+      const riderVelocity = KinematicsSolver.jointVelMap.get('F')!;
+      const pinVelocity = KinematicsSolver.jointVelMap.get('B')!;
+
+      // Velocity of the coupler's own point currently under the rider.
+      const carried = [
+        pinVelocity[0] - couplerOmega * (f.y - b.y),
+        pinVelocity[1] + couplerOmega * (f.x - b.x),
+      ];
+      const length = Math.hypot(c.x - b.x, c.y - b.y);
+      const across =
+        ((riderVelocity[0] - carried[0]) * -(c.y - b.y) +
+          (riderVelocity[1] - carried[1]) * (c.x - b.x)) /
+        length;
+
+      expect(across, `t=${timestep}`).toBeCloseTo(0, 6);
     }
   });
 });
