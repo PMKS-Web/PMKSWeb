@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "format": "npx prettier --write .",
+    "format:check": "npx prettier --check ."
   },
   "private": true,
   "dependencies": {
