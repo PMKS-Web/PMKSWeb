@@ -120,6 +120,11 @@ export class Mechanism {
     if (source instanceof PrisJoint) {
       const prisJoint = new PrisJoint(source.id, x, y, source.input, source.ground);
       prisJoint.angle_rad = source.angle_rad;
+      // Points at the editable objects for now; wireJointGraph rebinds it to
+      // this timestep's copies once they exist.
+      if (source.carrier && source.slotJointA && source.slotJointB) {
+        prisJoint.slideOn(source.carrier, source.slotJointA, source.slotJointB);
+      }
       copy = prisJoint;
     } else if (source instanceof RevJoint) {
       copy = new RevJoint(source.id, x, y, source.input, source.ground);
@@ -154,6 +159,13 @@ export class Mechanism {
       joint.connectedJoints = source.connectedJoints
         .map((connected) => joints.find((candidate) => candidate.id === connected.id))
         .filter((connected): connected is Joint => connected !== undefined);
+      // A slot's carrier and defining joints live outside links/connectedJoints
+      // (§2.3 Option A), so nothing above reaches them. Left unrebound they
+      // would keep pointing at the editable mechanism and every timestep would
+      // measure the same, un-moving slot.
+      if (joint instanceof PrisJoint) {
+        joint.rebindSlot(links, joints);
+      }
     }
   }
 

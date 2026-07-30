@@ -142,6 +142,28 @@ export class MechanismBuilder {
     return force;
   }
 
+  /**
+   * Point each floating slot at the objects this build just made.
+   *
+   * The transcoder has already refused any URL whose slot tokens do not resolve
+   * (§2.4a), so a lookup that fails here means the two are out of step rather
+   * than that the URL was bad — worth failing loudly instead of quietly
+   * producing a slider that has forgotten what it slides on.
+   */
+  private resolveSlots(joints: Joint[], links: Link[]): void {
+    this.transcoder.getJoints().forEach((jointData) => {
+      if (jointData.carrierID === '') return;
+      const joint = this.getJointByID(joints, jointData.id);
+      const carrier = this.getLinkByID(links, jointData.carrierID);
+      const slotJointA = this.getJointByID(joints, jointData.slotJointAID);
+      const slotJointB = this.getJointByID(joints, jointData.slotJointBID);
+      if (!(joint instanceof PrisJoint) || !carrier || !slotJointA || !slotJointB) {
+        throw new Error('Slot references could not be resolved while building the mechanism');
+      }
+      joint.slideOn(carrier, slotJointA, slotJointB);
+    });
+  }
+
   // For each joint, add links that are adjacent to the joint
   public addSubsetLinks(linkDatas: LinkData[], links: Link[]): void {
     linkDatas.forEach((linkData, index) => {
@@ -203,6 +225,10 @@ export class MechanismBuilder {
     // Build Links from LinkData, and linking them to their joints
     let linkDatas: LinkData[] = this.transcoder.getLinks();
     let links: Link[] = linkDatas.map((linkData) => this.buildLink(linkData, joints));
+
+    // Bind floating slots before subset links are filtered away: a carrier
+    // that has been welded into a compound is still a link here.
+    this.resolveSlots(joints, links);
 
     // Add subset links to each link
     this.addSubsetLinks(linkDatas, links);

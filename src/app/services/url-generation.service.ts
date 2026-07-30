@@ -66,7 +66,10 @@ export class UrlGenerationService {
           joint.input,
           joint.isWelded,
           joint.angle_rad,
-          joint.showCurve
+          joint.showCurve,
+          joint.carrier?.id ?? '',
+          joint.slotJointA?.id ?? '',
+          joint.slotJointB?.id ?? ''
         )
       );
     }

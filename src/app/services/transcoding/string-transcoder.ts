@@ -50,6 +50,10 @@ export class StringTranscoder extends GenericTranscoder {
     [x] = number
     [y] = number
     [angleRadians] = number
+    A floating slot appends three more tokens:
+    ...,[carrierID],[slotJointAID],[slotJointBID]
+    They are written only when the slot is floating, so grounded sliders and
+    every pre-existing URL keep exactly the five tokens they had.
     This should on average be 18 characters per joint
     */
   private encodeJoint(joint: JointData): string {
@@ -65,8 +69,24 @@ export class StringTranscoder extends GenericTranscoder {
     let yString = this.encodeDecimalNumber(joint.y);
     let angleString = this.encodeDecimalNumber(joint.angleRadians);
 
+    let slotString =
+      joint.carrierID === ''
+        ? ''
+        : ',' + joint.carrierID + ',' + joint.slotJointAID + ',' + joint.slotJointBID;
+
     return (
-      '' + flags + joint.id + ',' + joint.name + ',' + xString + ',' + yString + ',' + angleString
+      '' +
+      flags +
+      joint.id +
+      ',' +
+      joint.name +
+      ',' +
+      xString +
+      ',' +
+      yString +
+      ',' +
+      angleString +
+      slotString
     );
   }
 
@@ -86,6 +106,11 @@ export class StringTranscoder extends GenericTranscoder {
     let y = sd.nextDecimalNumber();
     let angle = sd.nextDecimalNumber();
 
+    // Absent on a pre-feature URL, where nextToken answers "" past the end.
+    let carrierID = sd.nextToken();
+    let slotJointAID = sd.nextToken();
+    let slotJointBID = sd.nextToken();
+
     return new JointData(
       jointType,
       id,
@@ -96,7 +121,10 @@ export class StringTranscoder extends GenericTranscoder {
       isInput,
       isWelded,
       angle,
-      showCurve
+      showCurve,
+      carrierID,
+      slotJointAID,
+      slotJointBID
     );
   }
 
@@ -470,6 +498,7 @@ export class StringTranscoder extends GenericTranscoder {
         throw new Error('URL contains an invalid joint');
       }
     });
+    this.validateDecodedSlots(jointIDs);
     this.links.forEach((link) => {
       if (
         !link.id ||
@@ -480,6 +509,7 @@ export class StringTranscoder extends GenericTranscoder {
         throw new Error('URL contains an invalid link');
       }
     });
+    this.validateDecodedSlotCarriers();
     this.forces.forEach((force) => {
       if (
         !force.id ||
@@ -490,6 +520,59 @@ export class StringTranscoder extends GenericTranscoder {
         force.magnitude < 0
       ) {
         throw new Error('URL contains an invalid force');
+      }
+    });
+  }
+
+  /*
+    A floating slot is all three tokens or none of them (§2.4a). Anything in
+    between is reported rather than repaired: repairing it would mean picking
+    between "this was meant to be grounded" and "this was meant to slide on a
+    link we can no longer name", and guessing wrong silently hands the user a
+    different mechanism than the one they shared.
+    */
+  private validateDecodedSlots(jointIDs: Set<string>): void {
+    this.joints.forEach((joint) => {
+      const tokens = [joint.carrierID, joint.slotJointAID, joint.slotJointBID];
+      const present = tokens.filter((token) => token !== '').length;
+      if (present === 0) return;
+      if (present !== 3) {
+        throw new Error('URL contains a slot missing its carrier or slot joints');
+      }
+      if (joint.type !== JOINT_TYPE.PRISMATIC) {
+        throw new Error('URL gives a slot carrier to a joint that does not slide');
+      }
+      if (joint.isGrounded) {
+        throw new Error('URL contains a slot that is both grounded and carried');
+      }
+      if (joint.slotJointAID === joint.slotJointBID) {
+        throw new Error('URL contains a slot defined by one joint twice');
+      }
+      if (joint.slotJointAID === joint.id || joint.slotJointBID === joint.id) {
+        throw new Error('URL contains a slot defined by the sliding joint itself');
+      }
+      if (!jointIDs.has(joint.slotJointAID) || !jointIDs.has(joint.slotJointBID)) {
+        throw new Error('URL contains a slot whose defining joints are missing');
+      }
+    });
+  }
+
+  /* Both slot joints must be members of the carrier, and the slider must not. */
+  private validateDecodedSlotCarriers(): void {
+    this.joints.forEach((joint) => {
+      if (joint.carrierID === '') return;
+      const carrier = this.links.find((link) => link.id === joint.carrierID);
+      if (!carrier) {
+        throw new Error('URL contains a slot whose carrier link is missing');
+      }
+      if (
+        !carrier.jointIDs.includes(joint.slotJointAID) ||
+        !carrier.jointIDs.includes(joint.slotJointBID)
+      ) {
+        throw new Error('URL contains a slot whose joints are not on its carrier');
+      }
+      if (carrier.jointIDs.includes(joint.id)) {
+        throw new Error('URL contains a slot that is a member of its own carrier');
       }
     });
   }

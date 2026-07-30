@@ -38,7 +38,13 @@ export class JointData {
     public isInput: boolean,
     public isWelded: boolean,
     public angleRadians: number,
-    public showCurve: boolean
+    public showCurve: boolean,
+    // A floating slot carries all three or none of these (§2.4a). They are
+    // absent on every URL written before floating slots existed, which is
+    // what makes "no tokens" mean "grounded" unambiguously.
+    public carrierID: string = '',
+    public slotJointAID: string = '',
+    public slotJointBID: string = ''
   ) {}
 }
 

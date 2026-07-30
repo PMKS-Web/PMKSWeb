@@ -23,6 +23,18 @@ function decode(payload: string): StringTranscoder {
   return transcoder;
 }
 
+/**
+ * The joints, links, forces and selection — everything but the global-settings
+ * prefix and the trailing checksum.
+ *
+ * The prefix is excluded on purpose: all five templates predate GLOBAL_UNIT and
+ * carry three enums, so re-encoding legitimately writes a fourth and shifts the
+ * checksum with it. Nothing after that point is allowed to move.
+ */
+function mechanismSection(payload: string): string {
+  return payload.slice(0, -1).split('.').slice(4).join('.');
+}
+
 describe('built-in template URLs', () => {
   for (const templateID of BUILT_IN_TEMPLATE_IDS) {
     const baseline = TEMPLATE_BASELINES[templateID];
@@ -52,6 +64,15 @@ describe('built-in template URLs', () => {
             subsetLinkIDs: link.subsetLinkIDs,
           }))
         ).toEqual(baseline.links);
+      });
+
+      it('re-encodes its joints, links and forces byte-identically', () => {
+        // Stronger than the structural round trip below, which compares decoded
+        // data and so cannot see a record that gained or lost empty tokens.
+        // Every template URL is a string users have already shared.
+        expect(mechanismSection(decode(TEMPLATE_LINKAGES[templateID]).encodeURL())).toBe(
+          mechanismSection(TEMPLATE_LINKAGES[templateID])
+        );
       });
 
       it('survives a decode/encode/decode round trip unchanged', () => {
