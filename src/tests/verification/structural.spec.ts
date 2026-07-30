@@ -8,6 +8,7 @@ import { StringTranscoder } from '../../app/services/transcoding/string-transcod
 import { ForceSolver } from '../../app/model/mechanism/force-solver';
 import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
 import { PositionSolver } from '../../app/model/mechanism/position-solver';
+import { Loop } from '../../app/model/mechanism/loop-solver';
 import { circleCircleIntersection } from '../../app/model/utils';
 import {
   ForceData,
@@ -38,16 +39,21 @@ const FIXTURES = [
   ['Watt I', wattIFixture()],
 ] as const;
 
-/** Real-link ids covered by pairs of consecutive loop letters. */
-function linkIdsCoveredByLoops(loops: string[], links: Link[]): Set<string> {
+/**
+ * Link ids the loops traverse.
+ *
+ * Read straight off the edges. The letter-string format could only infer this
+ * by searching for a link whose id contained both of two adjacent characters,
+ * which was a guess that happened to be right for single-letter joint ids.
+ */
+function linkIdsCoveredByLoops(loops: Loop[], links: Link[]): Set<string> {
   const covered = new Set<string>();
   loops.forEach((loop) => {
-    for (let i = 1; i < loop.length - 1; i++) {
-      const link = links.find((l) => l.id.includes(loop[i]) && l.id.includes(loop[i - 1]));
-      if (link !== undefined) {
-        covered.add(link.id);
+    loop.edges.forEach((edge) => {
+      if (edge.kind === 'link') {
+        covered.add(edge.linkId);
       }
-    }
+    });
   });
   return covered;
 }

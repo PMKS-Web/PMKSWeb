@@ -1,132 +1,173 @@
-import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
+import { Joint, RealJoint } from '../joint';
 import { Link } from '../link';
 
+/**
+ * One step of a kinematic loop.
+ *
+ * Everything is an id. Loops are enumerated once from timestep 0 but consumed
+ * against per-timestep deep copies, so an edge holding `Joint`/`Link` objects
+ * would read timestep 0's geometry forever while claiming to solve timestep 27.
+ * The codebase has been bitten by exactly that twice already — see the comment
+ * in `kinematic-solver.ts` about identity `indexOf` against copied joints, and
+ * `PrisJoint.rebindSlot`, which exists solely to re-resolve slot references by
+ * id on each copy.
+ */
+export type LoopEdge =
+  | { kind: 'link'; fromId: string; toId: string; linkId: string }
+  | { kind: 'slot'; fromId: string; toId: string; sliderId: string };
+
+export interface Loop {
+  /** Deterministic signature, used as the Map key everywhere. */
+  id: string;
+  edges: LoopEdge[];
+}
+
+/**
+ * A loop's signature: the first joint, then each step.
+ *
+ * The separators keep multi-character joint ids unambiguous, which the old
+ * letter-string format could not do — it keyed link lookups by concatenating
+ * two joint ids and so could not tell `AB`+`C` from `A`+`BC`.
+ */
+export function loopId(edges: LoopEdge[]): string {
+  if (edges.length === 0) {
+    return '';
+  }
+  return edges.reduce(
+    (signature, edge) =>
+      signature + (edge.kind === 'slot' ? `~${edge.sliderId}~${edge.toId}` : `-${edge.toId}`),
+    edges[0].fromId
+  );
+}
+
+/** How the walk reached a joint: through a link, or across a slot. */
+interface PathStep {
+  jointId: string;
+  /** Set when this step crossed a sliding pair rather than a link. */
+  viaSliderId?: string;
+}
+
 export class LoopSolver {
-  static determineLoops(joints: Joint[], links: Link[]): [string[], string[]] {
-    let allLoops: string[] = [];
-    let requiredLoops: string[] = [];
+  /**
+   * Every loop that runs from one ground joint to another.
+   *
+   * Loops are **open chains**: the returned edges stop at the second ground
+   * joint. The closing ground-to-ground step is not represented, because no
+   * `Link` joins two ground joints and no consumer ever asked for one — the old
+   * letter format appended the starting letter back on and then every walk
+   * stopped one short of it.
+   */
+  static determineLoops(joints: Joint[], links: Link[]): Loop[] {
+    const loops: Loop[] = [];
     const groundJoints: Joint[] = [];
     joints.forEach((j) => {
       if (!(j instanceof RealJoint) || !j.ground) {
         return;
       }
-      if (
-        j.input ||
-        j.connectedJoints.findIndex((jt) => {
-          if (!(jt instanceof RealJoint)) {
-            return;
-          }
-          jt.input;
-        }) !== -1
-      ) {
+      // Ground joints carrying the input are walked first, so the loops that
+      // define the input's own chain come out ahead of the rest.
+      if (j.input) {
         groundJoints.unshift(j);
       } else {
         groundJoints.push(j);
       }
     });
-    if (groundJoints.length <= 2) {
-      // TODO: just have the binary link be the loop and return something
-    }
-    // find loops from one ground joint to another ground joint
+
     while (groundJoints.length >= 2) {
       const desiredGround = groundJoints.shift()!;
       if (!(desiredGround instanceof RealJoint)) {
         continue;
       }
       desiredGround.connectedJoints.forEach((cj) => {
-        const [validLoops, requiredSubLoops] = this.findGround(
+        this.findGround(
           cj,
           groundJoints,
-          cj.id,
-          desiredGround.id + cj.id,
-          [],
-          [],
+          [cj.id],
+          [{ jointId: desiredGround.id }, { jointId: cj.id }],
+          loops,
           desiredGround.input,
           links
         );
-        allLoops = allLoops.concat(validLoops);
-        requiredLoops = requiredLoops.concat(requiredSubLoops);
       });
     }
-    return [allLoops, requiredLoops];
+    return loops;
   }
 
-  // Searches through neighboring joints until ground joint is found
+  /** Walk outward until another ground joint is reached. */
   private static findGround(
     joint: Joint,
     groundJoints: Joint[],
-    linkPath: string,
-    path: string,
-    allFoundLoops: string[],
-    requiredLoops: string[],
+    visited: string[],
+    path: PathStep[],
+    loops: Loop[],
     storeJointPath: boolean,
     links: Link[]
-  ): [string[], string[]] {
+  ): void {
     if (!(joint instanceof RealJoint)) {
-      return [allFoundLoops, requiredLoops];
+      return;
     }
-    joint.connectedJoints.forEach((j) => {
+    for (const j of joint.connectedJoints) {
       if (!(j instanceof RealJoint)) {
-        return;
+        continue;
       }
-      if (linkPath.includes(j.id)) {
-        return;
+      if (visited.includes(j.id)) {
+        continue;
       }
       if (j.ground) {
-        if (groundJoints.indexOf(j) === -1) {
-          return;
+        if (groundJoints.indexOf(j) === -1 || !storeJointPath) {
+          continue;
         }
-        if (storeJointPath) {
-          // const currentPathLoop = requiredLoops.find((loop) => loop[loop.length - 2] === j.id);
-          path = path + j.id;
-          let requiredLoop = true;
-          const traveledLinks = [];
-          for (let letterIndex = 1; letterIndex < path.length; letterIndex++) {
-            if (!requiredLoop) {
-              continue;
-            }
-            const curLink = links.find(
-              (l) =>
-                l.joints.findIndex((j) => j.id === path[letterIndex - 1]) !== -1 &&
-                l.joints.findIndex((j) => j.id === path[letterIndex]) !== -1
-            );
-            if (curLink === undefined) {
-              requiredLoop = false;
-              continue;
-            }
-            if (traveledLinks.findIndex((l_id) => l_id === curLink.id) !== -1) {
-              requiredLoop = false;
-            } else {
-              traveledLinks.push(curLink.id);
-            }
-          }
-          if (requiredLoop) {
-            requiredLoops.push(path + path[0]);
-            // requiredLoops.push(path + j.id + path[0]);
-          }
-          // MAKE SURE THAT PATH HAS NOT TRAVELED TO THE SAME LINK
-          // if (currentPathLoop === undefined) {
-          //   requiredLoops.push(path + j.id + path[0]);
-          // } else if (currentPathLoop.length > path.length + 2) {
-          //   requiredLoops.splice(requiredLoops.indexOf(currentPathLoop), 1);
-          //   requiredLoops.push(path + j.id + path[0]);
-          // }
+        const edges = this.edgesAlong([...path, { jointId: j.id }], links);
+        if (edges) {
+          loops.push({ id: loopId(edges), edges });
         }
-        // allFoundLoops.push(path + j.id + path[0]);
-        allFoundLoops.push(path + path[0]);
       } else {
-        [allFoundLoops, requiredLoops] = this.findGround(
+        this.findGround(
           j,
           groundJoints,
-          linkPath + j.id,
-          path + j.id,
-          allFoundLoops,
-          requiredLoops,
+          [...visited, j.id],
+          [...path, { jointId: j.id }],
+          loops,
           storeJointPath,
           links
         );
       }
-    });
-    return [allFoundLoops, requiredLoops];
+    }
+  }
+
+  /**
+   * Turn a walked path into edges, or reject it.
+   *
+   * A path is a *required* loop only if every step is a real connection and no
+   * connection is used twice: a loop that re-traverses one body is implied by
+   * shorter loops rather than independent of them.
+   */
+  private static edgesAlong(path: PathStep[], links: Link[]): LoopEdge[] | undefined {
+    const edges: LoopEdge[] = [];
+    const traveled: string[] = [];
+    for (let index = 1; index < path.length; index++) {
+      const step = path[index];
+      const fromId = path[index - 1].jointId;
+      // A slot counts in the traveled bookkeeping exactly as a link does.
+      const connectionId = step.viaSliderId ?? this.linkBetween(fromId, step.jointId, links)?.id;
+      if (connectionId === undefined || traveled.includes(connectionId)) {
+        return undefined;
+      }
+      traveled.push(connectionId);
+      edges.push(
+        step.viaSliderId
+          ? { kind: 'slot', fromId, toId: step.jointId, sliderId: step.viaSliderId }
+          : { kind: 'link', fromId, toId: step.jointId, linkId: connectionId }
+      );
+    }
+    return edges;
+  }
+
+  private static linkBetween(fromId: string, toId: string, links: Link[]): Link | undefined {
+    return links.find(
+      (link) =>
+        link.joints.some((joint) => joint.id === fromId) &&
+        link.joints.some((joint) => joint.id === toId)
+    );
   }
 }

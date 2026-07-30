@@ -41,7 +41,22 @@ describe('four-bar with an over-closed coupler', () => {
 
   it('reduces to the single four-bar loop through the merged coupler', () => {
     const { mechanism } = buildMechanismFixture(OVER_CLOSED_COUPLER_MECHANISM);
-    expect(mechanism.requiredLoops).toEqual(['HDCJH']);
+    expect(mechanism.requiredLoops.map((loop) => loop.id)).toEqual(['H-D-C-J']);
+  });
+
+  it('names a link for every step of that loop', () => {
+    // The redundant pin means two links span C-D; the loop must commit to one
+    // of them rather than leaving the step ambiguous, which the old letter
+    // format could not express.
+    const { mechanism } = buildMechanismFixture(OVER_CLOSED_COUPLER_MECHANISM);
+    const [loop] = mechanism.requiredLoops;
+
+    expect(loop.edges.map((edge) => [edge.fromId, edge.toId])).toEqual([
+      ['H', 'D'],
+      ['D', 'C'],
+      ['C', 'J'],
+    ]);
+    expect(loop.edges.every((edge) => edge.kind === 'link' && edge.linkId.length > 0)).toBe(true);
   });
 
   it('holds every link rigid and both grounds fixed for the whole motion', () => {

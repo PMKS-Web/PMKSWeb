@@ -1,7 +1,21 @@
-# Velocity and acceleration through a floating slot — design options
+# Velocity and acceleration through a floating slot — implementation plan
 
-Phase 2 tasks 2.9 and 2.11 (`docs/joint-types-plan.md`). Positions and static forces are done and
-verified; this is what stands between here and Gate 2. Written for a decision before implementation.
+Phase 2 task 2.9 (`docs/joint-types-plan.md`; task 2.11 is de-scoped — §6). Positions and static
+forces are done and verified; this is what stands between here and Gate 2.
+
+**Status: Option B — typed loop edges — is chosen.** This revision turns the options draft into an
+implementation spec and folds in a pre-implementation review of the draft against the code. Three
+findings changed the plan materially:
+
+- Edges are **id-based, not object-based** (§2.2) — the draft's object-carrying sketch would have
+  pinned every loop to timestep 0's geometry.
+- Loops are **open chains**; the draft's implied ground-closing edge does not exist in the model
+  and is never consumed today (§2.4).
+- **The IC solver is dead code** — no callers, no tests. Task 2.11 has been de-scoped from
+  Phase 2 entirely, and Gate 2 no longer includes an IC case (§6). This shrinks step 1.
+
+The rejected options are kept for the record in §9. Line numbers cite the tree at the time of
+writing; re-grep before relying on them.
 
 ---
 
@@ -12,12 +26,16 @@ Three separate problems wear one label. They need different fixes and carry very
 ### 1.1 Enumeration — the loop is never found
 
 `LoopSolver.determineLoops` walks `connectedJoints`
-([`loop-solver.ts:59`](../src/app/model/mechanism/loop-solver.ts)). Option A (§2.3) deliberately
-keeps a slot's carrier out of both `PrisJoint.links` and `connectedJoints`, so the edge that closes
-an inverted slider-crank — crank pin → block → carrier → ground — does not exist in the graph being
-walked. **Result: zero loops**, and `determineKinematics` takes the `requiredLoops.length === 0`
-branch into `determineLooplessKinematics`, which is written for "a welded root rotating about its
-input" and leaves most joints unset.
+([`loop-solver.ts:59`](../src/app/model/mechanism/loop-solver.ts)). The Phase 2 position work
+(§2.3 of the plan) deliberately keeps a slot's carrier out of both `PrisJoint.links` and
+`connectedJoints`, so the edge that closes an inverted slider-crank — crank pin → block → carrier →
+ground — does not exist in the graph being walked. **Result: zero loops**, and
+`determineKinematics` takes the `requiredLoops.length === 0` branch
+([`kinematic-solver.ts:78`](../src/app/model/mechanism/kinematic-solver.ts)) into
+`determineLooplessKinematics`, which is written for "a welded root rotating about its input" and
+leaves most joints unset. (`Mechanism.kinematicLoopAnalysis` guards this with `hasFloatingSlot()`
+at [`mechanism.ts:1206`](../src/app/model/mechanism/mechanism.ts) and returns an empty analysis —
+no crash, no fabricated zeros. That guard stays until §7 lands.)
 
 ### 1.2 Representation — a loop edge must be a link
 
@@ -29,8 +47,15 @@ const link = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];   // kinem
 ```
 
 A slot edge has no link between the block and the carrier — that is the entire point of a sliding
-pair. The format also cannot express *which* connection is meant when two joints are related by both
-a link and a slot, and it silently assumes joint ids are one character.
+pair. The format cannot express *which* connection is meant when two joints are related by both a
+link and a slot, and it silently assumes joint ids are one character.
+
+One correction to the draft's framing: the strings already smuggle a *second* edge kind. A
+grounded-slider pair resolves to a `SliderBlock` pseudo-link, and both walk sites discriminate with
+`switch (link.constructor)` ([`kinematic-solver.ts:236`](../src/app/model/mechanism/kinematic-solver.ts)
+and [`:421`](../src/app/model/mechanism/kinematic-solver.ts)). Typed edges do not introduce a
+discriminated union into this code — they surface the one that is currently hidden in a
+constructor switch.
 
 ### 1.3 The equation — one missing term, and Coriolis
 
@@ -43,113 +68,302 @@ acceleration:  α₂ × r_AB − ω₂²·r_AB  =  s̈·û  +  2·ṡ·ω₄·û
                                                  └─ Coriolis ─┘
 ```
 
-The `SliderBlock` branch
-([`kinematic-solver.ts:430-435`](../src/app/model/mechanism/kinematic-solver.ts)) emits only `ṡ·û`,
-treating the slide rate as the unknown. **That is exactly right for a grounded guide, where the
-carrier is ground and `ω₄ = 0`.** For a floating slot the remaining terms are missing, and the
-Coriolis term is precisely what makes a Whitworth's quick-return ratio come out right.
+The `SliderBlock` branch emits only `ṡ·û`, treating the slide rate as the unknown. **That is
+exactly right for a grounded guide, where the carrier is ground and `ω₄ = 0`.** For a floating slot
+the remaining terms are missing, and the Coriolis term is precisely what makes a Whitworth's
+quick-return ratio come out right. Where each quantity comes from at solve time is specified in §3.
 
-> **Correction to what I said earlier:** I described 2.9 as more than "add the carrier's ω×r term."
-> For the *equation* the plan was accurate — it is that term plus Coriolis, and it lands in the
-> existing matrix as extra coefficients in the carrier's already-present ω column. The extra work
-> is 1.1 and 1.2, not the physics.
+### Three facts that make this cheaper than it looks
 
-### Two facts that make this cheaper than it looks
-
-- **`requiredLoops` has only two consumers left**: `KinematicsSolver` and `IcSolver`.
-  `ForceSolver.determineDesiredLoopLettersForce` is already a documented no-op adapter
+- **`requiredLoops` has exactly one live consumer: `KinematicsSolver`.** The draft said two; the
+  review found `IcSolver` is unreachable code (§6). `ForceSolver.determineDesiredLoopLettersForce`
+  is already a documented no-op adapter
   ([`force-solver.ts:161`](../src/app/model/mechanism/force-solver.ts)) — a previous phase moved
-  force analysis off loops entirely. Changing the loop representation is a two-file blast radius.
+  force analysis off loops entirely.
 - **A topology-independent finite-difference kinematics fallback already ships**, used by dynamic
   force analysis when the loop solver throws
   ([`force-solver.ts:652`](../src/app/model/mechanism/force-solver.ts)).
+- One caution against over-claiming: the *type* `requiredLoops: string[]` flows through about seven
+  files, not two. All of the extra touches are mechanical; §5 enumerates every one so none is
+  discovered mid-refactor.
 
 ---
 
-## 2. Options for enumeration and representation (1.1 + 1.2)
+## 2. The representation
 
-### Option A — supplementary slot edges, keep the letter strings
-
-Hand `LoopSolver` a list of slot edges (block pin ↔ each carrier joint) to traverse alongside
-`connectedJoints`, and give every consumer a `slotEdgeMap` lookup to try when `linkIndexMap` misses.
-
-| | |
-| --- | --- |
-| **Effort** | Smallest — no signature changes |
-| **Risk to existing numbers** | Low; grounded mechanisms never hit the new lookup |
-| **Cost** | Two parallel lookup paths at every `loop[i]` site in both solvers. Does not fix the link-vs-slot ambiguity or the single-character assumption — it adds a second way to be ambiguous |
-
-### Option B — loops as typed edges
-
-`determineLoops` returns `LoopEdge[][]` instead of `string[]`:
+### 2.1 The types
 
 ```ts
-type LoopEdge =
-  | { kind: 'link'; from: Joint; to: Joint; link: Link }
-  | { kind: 'slot'; from: Joint; to: Joint; slider: PrisJoint; carrier: Link };
+/** Topology only. Everything is an id; geometry is resolved per timestep (§2.2). */
+export type LoopEdge =
+  | { kind: 'link'; fromId: string; toId: string; linkId: string }
+  | { kind: 'slot'; fromId: string; toId: string; sliderId: string };
+
+export interface Loop {
+  /** Deterministic signature — the Map key everywhere (§2.6). */
+  id: string;
+  edges: LoopEdge[];
+}
 ```
 
-| | |
-| --- | --- |
-| **Effort** | Largest — every `loop[i]` site in both solvers (~25 sites) |
-| **Risk to existing numbers** | Real but bounded. The MATLAB-verified suite (sixbar, Watt I, Stephenson III, teaching lab) pins exact values, so a regression surfaces immediately rather than silently |
-| **Payoff** | Ambiguity gone; the slot edge carries its own slider and carrier, so the equation reads `slotAngle` and `ω_carrier` directly instead of re-deriving them; single-character joint ids stop being load-bearing |
+`fromId`/`toId` are joint ids in traversal order. `linkId` names the connecting link — a `RealLink`
+or a `SliderBlock` (§2.5). For a slot edge, one endpoint is the `PrisJoint` and the other is a
+joint on the carrier; the walk can cross in either direction, which is why `sliderId` is an
+explicit field rather than a rule like "`fromId` is always the slider".
 
-### Option C — finite-difference velocity and acceleration for slot mechanisms only
+A conventional loop and a floating-slot loop:
 
-Skip loops entirely when a floating slot is present. Differentiate the verified position sequence,
-reusing the existing fallback.
+```ts
+// four-bar "ABCDA" becomes (note: open chain, §2.4)
+[ { kind: 'link', fromId: 'A', toId: 'B', linkId: 'AB' },
+  { kind: 'link', fromId: 'B', toId: 'C', linkId: 'BC' },
+  { kind: 'link', fromId: 'C', toId: 'D', linkId: 'CD' } ]
 
-| | |
-| --- | --- |
-| **Effort** | Smallest by far — the machinery exists |
-| **Risk to existing numbers** | None. Gated on `hasFloatingSlot()`; every current mechanism keeps its closed-form path bit-identically, which the plan's §2.7a hard constraint requires |
-| **Cost** | Approximate. Velocity is O(Δt²) accurate on 1° steps; **acceleration is a second difference and materially noisier**. Cannot be asserted against closed form at the tolerance the rest of the suite uses, so Gate 2's "match closed form for acceleration" would have to be restated as a tolerance |
+// inverted slider-crank: crank AB, pin B, block BP, slider P riding carrier CD
+[ { kind: 'link', fromId: 'A', toId: 'B', linkId: 'AB' },
+  { kind: 'link', fromId: 'B', toId: 'P', linkId: 'BP' },   // the SliderBlock
+  { kind: 'slot', fromId: 'P', toId: 'C', sliderId: 'P' } ]
+```
+
+### 2.2 Ids, not object references
+
+Loops are discovered once, from timestep 0
+([`mechanism.ts:107`](../src/app/model/mechanism/mechanism.ts)), but consumed at **every** timestep
+against per-timestep deep copies of the joints and links. An edge that stores `Joint`/`Link`
+objects (the draft's sketch) reads timestep 0's geometry forever while claiming to solve timestep
+27. The codebase has already been bitten by exactly this, twice:
+
+- the comment at [`kinematic-solver.ts:262`](../src/app/model/mechanism/kinematic-solver.ts):
+  "the per-timestep joint arrays hold copies, so an identity indexOf against the link's original
+  joints finds nothing";
+- `PrisJoint.rebindSlot` ([`joint.ts:268`](../src/app/model/joint.ts)) exists solely to re-resolve
+  a slot's carrier and defining joints *by id* on each copy.
+
+So edges carry ids, and each solve resolves them against the frame it was handed. The existing
+`jointIndexMap`/`linkIndexMap` machinery already is id-keyed resolution; it survives, re-keyed per
+§2.6.
+
+### 2.3 The `PrisJoint` is authoritative for slot geometry
+
+The slot edge carries `sliderId` and nothing else — no `carrierId`, no slot-joint ids. All of that
+already lives on the `PrisJoint` (`slideOn`, [`joint.ts:214`](../src/app/model/joint.ts)) and is
+maintained across per-timestep copies by `rebindSlot`. Duplicating it on the edge creates a second
+source of truth with no consumer that needs it. At solve time, from the current frame's `PrisJoint`:
+
+- `û = (cos θ, sin θ)` with `θ = prisJoint.slotAngle` — the getter re-measures from the defining
+  joints on every call ([`joint.ts:238`](../src/app/model/joint.ts)), so it is per-timestep for free;
+- the carrier is `prisJoint.carrier` — its id selects the ω/α column (§3);
+- `s` is measured from `prisJoint.slotJointA` (§3).
+
+Kinematics only runs after positions solved, and the position solver already refuses ill-formed
+slots upstream, so no additional `isSlotWellFormed` guard is needed here.
+
+### 2.4 Loops are open chains — there is no closing ground edge
+
+Every consumer iterates `for (let i = 1; i < loop.length - 1; i++)`
+([`kinematic-solver.ts:419`](../src/app/model/mechanism/kinematic-solver.ts), likewise `:221`,
+`:234`, `:358`, `:464`). For `"ABCDA"` the pairs consumed are AB, BC, CD — the ground-to-ground
+closure DA is **never looked up**, and no `Link` object joins two ground joints, so a closing edge
+could not resolve even if emitted. The typed loop is therefore the open chain in §2.1:
+`edges[i - 1]` replaces letter pair `(i-1, i)`, nothing replaces the closure. Do not invent a
+`linkId: 'ground'`, and do not add a `kind: 'ground'` — represent exactly what the math consumes.
+
+### 2.5 `SliderBlock` edges in step 1
+
+To keep step 1 byte-identical, a grounded-slider pair becomes
+`{ kind: 'link', linkId: <sliderBlockId> }` and the existing `switch (link.constructor)` branches
+survive untouched. Folding grounded slots into `kind: 'slot'` with `ω_carrier = 0` is a real
+simplification, but it is a *behavioural* unification and belongs after verification, as optional
+cleanup (§8) — never inside the representation swap.
+
+### 2.6 Loop identity
+
+Today the loop string is its own identity: `loopIndexMap` is keyed by the literal string
+([`kinematic-solver.ts:456`](../src/app/model/mechanism/kinematic-solver.ts)) and link lookups by
+two-letter concatenation — the single-character assumption. `LoopEdge[]` is not value-comparable,
+so `Loop.id` is built once at enumeration and used for every Map key, for dedup (§7.2), and for
+debug output. Format: the first edge's `fromId`, then per edge `-${toId}` for a link and
+`~${sliderId}~${toId}` for a slot. The four-bar above is `"A-B-C-D"`; the inverted slider-crank is
+`"A-B-P~P~C"`. The separators make multi-character joint ids safe. At consumption sites,
+`linkIndexMap` no longer needs pair-concatenation keys at all — edges carry `linkId` directly, so
+key those maps by `linkId` alone.
 
 ---
 
-## 3. Recommendation
+## 3. The equations, term by term
 
-**Option B, and I would not do C except as a stopgap.**
+Velocity pass, per slot edge, with the current frame resolved per §2.3:
 
-The reasoning is that C's weakness lands exactly where this project is a teaching tool. Acceleration
-is the quantity students are usually asked to reason about, a second difference of a 1°-sampled
-sequence is visibly noisy, and the plan is explicit that a numerical path must never replace one
-that has an exact answer. C also cannot serve §2.7a's eventual optimisation fallback, whereas B's
-typed edges are the same structure that fallback would need.
+- `û⊥ = (−sin θ, cos θ)`;
+- `s = (p_P − p_A) · û` where `p_P` is the slider's position and `p_A` is `slotJointA`'s;
+- unknowns: `ṡ` joins exactly as the grounded branch's slide rate does today, coefficient `û`;
+  `ω₄` (carrier) is **already an unknown column** because the carrier's own link edges appear in
+  the loop — the slot edge adds coefficient `s·û⊥` into that existing column. No new unknowns, no
+  new matrix machinery.
 
-A is cheapest to write and the worst to live with: it doubles the lookup logic in the two solvers
-that are hardest to read, in order to preserve a string format whose only remaining consumers are
-those same two solvers.
+Acceleration pass: `determineAng` runs `'Velocity'` before `'Acceleration'`
+([`kinematic-solver.ts:83`](../src/app/model/mechanism/kinematic-solver.ts)), so by the time the
+acceleration system is assembled, `ṡ` and `ω₄` are solved numbers. The Coriolis term `2·ṡ·ω₄·û⊥`
+and the centripetal term `−s·ω₄²·û` are therefore **known** and go to the B side; `s̈` and `α₄`
+remain unknown with the same coefficient shapes as the velocity pass.
 
-Sequenced so nothing is ever half-correct:
-
-1. **B first, with no slot support** — convert `LoopSolver`, `KinematicsSolver` and `IcSolver` to
-   typed edges, changing no behaviour. The existing verified suite must stay green and byte-identical;
-   that is the whole safety net for this step.
-2. **Slot edges into enumeration**, still with no equation change. Loops now form; velocities will be
-   wrong. Nothing ships from this commit on its own.
-3. **The `s·ω·û⊥` and Coriolis terms**, landed together with step 2 in a single reviewable change, so
-   there is never a state where loops close and the numbers are quietly wrong.
-4. **Verification**: inverted slider-crank and Scotch yoke against analytic ṡ and s̈, Whitworth
-   against its published time ratio, then the IC case.
-5. **2.11** — the prismatic IC is hardcoded `(∞, ∞)` behind a pre-existing
-   `// TODO: should be infinity, infinity` ([`ic-solver.ts:116`](../src/app/model/mechanism/ic-solver.ts)).
-   The slot direction now reaches `FixedInstantCenter` correctly via `slotAngle`, but there is no
-   test for it on grounded slots either, so this is partly pre-existing debt.
-
-Until step 3 lands, `kinematicLoopAnalysis` returns an empty analysis for a floating slot — no
-crash, no fabricated zeros.
+Sanity anchor: a grounded slot has `ω₄ = α₄ = 0` and every new term vanishes, leaving `ṡ·û` /
+`s̈·û` — today's branch, exactly.
 
 ---
 
-## 4. What I need from you
+## 4. Sequence overview
 
-Only the choice above. No reference data is needed: velocity and acceleration for cases 2 and 3 are
-analytic (differentiate the position closed form already verified in
-`inverted-slider-crank.spec.ts`), which §4.3 prefers over sampled MATLAB anyway, and Whitworth has a
-published time ratio.
+1. **Representation swap, no behaviour change** (§5). The verified suite must stay green and
+   byte-identical.
+2. + 3. **Slot enumeration and the new equation terms, landed together in one reviewable change**
+   (§7), so there is never a state where loops close and the numbers are quietly wrong.
+4. **Verification** (§8).
 
-One question that is genuinely yours, and is **Phase 4, not this**: §7 open question 2 — whether a
-slot the closed-form inverse primitive cannot reduce should be refused in the panel with a reason,
-or allowed through to the "unsolvable" strategy. The engine reports it either way today.
+The IC solver is de-scoped and absent from this list (§6). Until §7 lands, the `hasFloatingSlot()`
+guard at [`mechanism.ts:1206`](../src/app/model/mechanism/mechanism.ts) keeps returning an empty
+analysis for floating slots; the guard is removed in the same change as the equations and their
+tests, never earlier.
+
+---
+
+## 5. Step 1 — the swap, file by file
+
+The producer:
+
+- [`loop-solver.ts`](../src/app/model/mechanism/loop-solver.ts) — the single-character assumption
+  lives here too: `findGround` accumulates `path` by string concatenation and tests membership with
+  `linkPath.includes(j.id)` (`:72`). Rebuild the walk to accumulate `LoopEdge[]` (id arrays for the
+  visited-set, not substring tests). The required-loop filter (`:84-102`) keeps identical
+  semantics — an adjacent pair with no link, or a link revisited, demotes the loop. Note it for
+  §7.3: it is the seam slot edges plug into. Prune the commented-out alternate implementations
+  (`:80`, `:105-113`) instead of translating them.
+- **Delete `allLoops`.** `LoopSolver` computes it and `Mechanism` stores it
+  ([`mechanism.ts:30`](../src/app/model/mechanism/mechanism.ts), `:107`, `:601`, `:650-655`) but it
+  has **zero consumers**. Remove the second return value entirely rather than converting dead
+  output. (Re-grep at HEAD before deleting.)
+
+The one live consumer:
+
+- [`kinematic-solver.ts`](../src/app/model/mechanism/kinematic-solver.ts) — field `:27`; the
+  loopless check `:78` (`requiredLoops.length === 0`, unchanged in meaning); the index-map building
+  walks `:219` and `:233`; the `determineLin` walk `:357`; the `determineArrays` walk `:418`;
+  `loopIndexMap` keying `:456-458` → `Loop.id`; the matrix-assembly walk `:463` and the `getLink`
+  pair-key helper `:465`; delete the commented-out signature at `:616-620`.
+
+Mechanical type-only touches (this is the "seven files" from §1):
+
+- [`mechanism.ts`](../src/app/model/mechanism/mechanism.ts) — `_requiredLoops` field `:29`, reset
+  `:602`, accessors `:642-648`, pass-throughs `:1002`, `:1005`, `:1210`.
+- [`force-solver.ts`](../src/app/model/mechanism/force-solver.ts) — `MechanismFrames.requiredLoops`
+  `:66`, the no-op adapter's parameter `:161`, the fallback-path assignment `:181`.
+- [`analysis-graph.component.ts:860`](../src/app/component/analysis-graph/analysis-graph.component.ts).
+- [`test-utils/verification/solve.ts`](../src/test-utils/verification/solve.ts) — `:57`, `:88`, `:90`.
+- [`ic-solver.ts`](../src/app/model/mechanism/ic-solver.ts) — **untouched.** It is self-contained
+  and uncalled (§6), so it keeps compiling against `string[]`.
+
+Acceptance for step 1: the whole suite green, and the verified numbers byte-identical — the MATLAB
+sixbar in `app.component.spec.ts`, Watt I, Stephenson III, the teaching-lab pair, and the grounded
+slider specs (`teaching-lab-slider-crank`, `slider-crank-tracer`, `slider-guide-angle`), which pin
+the `ω_carrier = 0` path. Preserve loop order and edge order exactly as the string order today:
+matrix row and column ordering must not move, or "byte-identical" becomes "within tolerance" and
+the safety net is gone.
+
+---
+
+## 6. The IC solver is dead code — task 2.11 de-scoped
+
+Evidence, checked during review:
+
+- Nothing imports `ic-solver.ts`. The only references in `src/` are a commented-out import and a
+  commented-out call ([`mechanism.ts:7`](../src/app/model/mechanism/mechanism.ts), `:547`).
+- `MechanismService.ics` ([`mechanism.service.ts:57`](../src/app/services/mechanism.service.ts)) is
+  initialized empty and never filled.
+- No spec file exercises `IcSolver`.
+
+Task 2.11 was scoped assuming a live consumer; there isn't one — the instant-center feature was
+never wired into the app. **Decision: 2.11 is de-scoped from Phase 2, and the IC case is removed
+from Gate 2** (`joint-types-plan.md` records the same). Consequences for this plan:
+
+- `ic-solver.ts` is **untouched by every step here**. It is self-contained and uncalled, so it
+  keeps compiling against `string[]`; converting it "changing no behaviour" would have been hollow
+  anyway — there is no behaviour to preserve and no test to keep green.
+- The engine-side prerequisite an IC feature would someday need — a per-timestep-correct
+  `slotAngle` — is delivered by this plan regardless.
+- If the feature is ever revived, that is its own project: characterization tests first (four-bar
+  IC positions are analytic), re-wire the call in `mechanism.ts`, then modernize — noting its loop
+  walk is a triple-joint sliding window
+  ([`ic-solver.ts:58-89`](../src/app/model/mechanism/ic-solver.ts)), not pairwise, and the
+  `(∞, ∞)` TODO at `:116` belongs to that effort.
+
+---
+
+## 7. Steps 2 + 3 — enumeration and equations, one change
+
+### 7.1 Where slot adjacency comes from
+
+Do **not** put the carrier into `PrisJoint.links` or `connectedJoints`. That shape is deliberate
+(see the comment above `hasFloatingSlot`,
+[`mechanism.ts:1191`](../src/app/model/mechanism/mechanism.ts)); the position solver depends on it,
+and mutating it was the rejected Option A move. Instead, `LoopSolver` builds an internal
+supplemental adjacency before walking: for each `PrisJoint` with `isFloating && isSlotWellFormed`,
+the carrier's joints are offered as neighbours of the slider (and the slider as a neighbour of
+each of them). Crossing that adjacency emits a `slot` edge.
+
+### 7.2 One edge per crossing, and canonicalization
+
+The slot's defining joints only fix its line — the walk must not turn one sliding pair into two
+constraints (`P→C` *and* `P→D` in the same loop), which would fabricate loops. One crossing, one
+edge, `toId` = whichever carrier joint the walk actually continues through.
+
+Because the walk can enter the carrier through either slot joint (or any other carrier joint),
+several superficially different paths describe the same circuit. Dedup rule: two loops are
+duplicates iff their traversed-connection multisets — all `linkId`s plus all `sliderId`s — are
+equal; keep the lexicographically smallest `Loop.id`. Deterministic, and independent of traversal
+order.
+
+### 7.3 The required-loop filter
+
+The filter at [`loop-solver.ts:84-102`](../src/app/model/mechanism/loop-solver.ts) currently
+demotes any adjacent pair that has no link — which is precisely what a slot edge is. Update it so a
+slot edge is a legitimate loop member, and count `sliderId` in the traveled-connection bookkeeping
+exactly like a link id (a loop reusing the same slot twice is not required, same as a link).
+
+### 7.4 The equations land in the same PR
+
+The §3 coefficients, the removal of the `hasFloatingSlot()` guard in `kinematicLoopAnalysis`, and
+the §8 tests ship together. Between step 1 and this change, floating slots keep returning an empty
+analysis; no intermediate state ships.
+
+---
+
+## 8. Step 4 — verification
+
+- **Inverted slider-crank and Scotch yoke** against analytic `ṡ` and `s̈`, obtained by
+  differentiating the position closed form already pinned in
+  [`inverted-slider-crank.spec.ts`](../src/tests/verification/inverted-slider-crank.spec.ts) —
+  §4.3 of the plan prefers analytic references over sampled MATLAB, and none is needed here.
+- **Whitworth quick-return** against its published time ratio — the ratio is wrong if and only if
+  the Coriolis/carry terms are wrong, which makes it the end-to-end check.
+- **Grounded regression**: the existing slider specs stay byte-identical; nothing about a grounded
+  mechanism's path may change.
+- Optional cleanup once green: unify grounded slots into `slot` edges with `ω_carrier = 0` and
+  delete the `SliderBlock` constructor-switch branches (§2.5) — only with the suite as the net.
+
+---
+
+## 9. Decision record — options considered
+
+| Option | Summary | Outcome |
+| --- | --- | --- |
+| A — supplementary slot-edge lookups beside the strings | Cheapest to write | **Rejected.** Doubles the lookup logic in the hardest-to-read solver to preserve a format whose only live consumer is that same solver, and adds a second way to be ambiguous |
+| B — typed edges | This document | **Chosen** |
+| C — finite-difference velocity/acceleration for slot mechanisms | Machinery already ships | **Rejected** as a deliverable: acceleration from a second difference of 1° samples is visibly noisy, and acceleration is the quantity students analyze; the plan forbids a numerical path replacing an exact one (§2.7a). Acceptable only as a temporary demo stopgap, and useful later as a cross-check harness |
+
+---
+
+## 10. Deferred
+
+§7 open question 2 of the plan — whether a slot the closed-form inverse primitive cannot reduce is
+refused in the panel with a reason, or allowed through to the "unsolvable" strategy — is Phase 4,
+not this. The engine reports it either way today. This document adds no new open questions.

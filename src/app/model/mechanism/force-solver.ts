@@ -1,6 +1,7 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
 import { Link, SliderBlock, RealLink } from '../link';
 import { KinematicsSolver } from './kinematic-solver';
+import { Loop } from './loop-solver';
 import { siUnitFactors, SiUnitFactors } from '../unit-conversions';
 
 export type ForceAnalysisMode = 'static' | 'dynamic';
@@ -63,7 +64,7 @@ interface MechanismFrames {
   links: Link[][];
   timeNum: number[];
   inputAngularVelocities: number[];
-  requiredLoops: string[];
+  requiredLoops: Loop[];
   gravity: boolean;
   unit: string;
 }
@@ -158,7 +159,7 @@ export class ForceSolver {
   }
 
   /** Loop-derived setup is no longer required; keep this as a harmless adapter. */
-  static determineDesiredLoopLettersForce(_requiredLoops: string[]): void {
+  static determineDesiredLoopLettersForce(_requiredLoops: Loop[]): void {
     this.desiredLoopLetters = [];
   }
 

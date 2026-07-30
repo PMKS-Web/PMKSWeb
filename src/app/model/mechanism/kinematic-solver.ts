@@ -1,7 +1,7 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
 import { SliderBlock, Link, RealLink } from '../link';
 import { matLinearSystem } from '../utils';
-import { InstantCenter } from '../instant-center';
+import { Loop } from './loop-solver';
 
 export class KinematicsSolver {
   static jointIndexMap = new Map<string, number>();
@@ -24,7 +24,7 @@ export class KinematicsSolver {
   static LinVelLinkEq = new Map<string, [string, string]>();
   static LinAccJointEq = new Map<string, [string, string]>();
   static LinAccLinkEq = new Map<string, [string, string]>();
-  static requiredLoops: string[];
+  static requiredLoops: Loop[];
 
   static loopIndexMap = new Map<string, number>();
   private static linkContainsInputMap = new Map<string, boolean>();
@@ -218,11 +218,11 @@ export class KinematicsSolver {
     if (this.linkIndexMap.size === 0) {
       this.requiredLoops.forEach((loop) => {
         // initialize the jointIndexMap and linkIndexMap
-        for (let i = 1; i < loop.length - 1; i++) {
-          if (!this.linkIndexMap.has(loop[i] + loop[i - 1])) {
-            this.setLinkIndexMap(loop[i], loop[i - 1], links);
+        loop.edges.forEach((edge) => {
+          if (edge.kind === 'link' && !this.linkIndexMap.has(edge.linkId)) {
+            this.setLinkIndexMap(edge.linkId, links);
           }
-        }
+        });
       });
     }
     joints.forEach((joint) => {
@@ -231,8 +231,11 @@ export class KinematicsSolver {
 
     if (this.unknownLinkIndexMap.size === 0) {
       this.requiredLoops.forEach((loop) => {
-        for (let i = 1; i < loop.length - 1; i++) {
-          const link = links[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
+        for (const edge of loop.edges) {
+          if (edge.kind !== 'link') {
+            continue;
+          }
+          const link = links[this.linkIndexMap.get(edge.linkId)!];
           switch (link.constructor) {
             case RealLink:
               if (!(link instanceof RealLink)) {
@@ -355,16 +358,19 @@ export class KinematicsSolver {
     // this.setUpLinkAndJointIndexMap(simJoints, simLinks, requiredLoops);
     const desired_links_used: Array<string> = [];
     this.requiredLoops.forEach((loop) => {
-      for (let i = 1; i < loop.length - 1; i++) {
+      for (const edge of loop.edges) {
         // cannot find velocity of a joint on an imaginary link
-        if (simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!] instanceof SliderBlock) {
+        if (edge.kind !== 'link') {
           continue;
         }
-        const desiredLink = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
+        if (simLinks[this.linkIndexMap.get(edge.linkId)!] instanceof SliderBlock) {
+          continue;
+        }
+        const desiredLink = simLinks[this.linkIndexMap.get(edge.linkId)!];
         if (!(desiredLink instanceof RealLink)) {
           return;
         }
-        const firstJoint = simJoints[this.jointIndexMap.get(loop[i - 1])!];
+        const firstJoint = simJoints[this.jointIndexMap.get(edge.fromId)!];
         // determine the velocity/accel of each link's joint that is not the first joint
         for (let index = 0; index < desiredLink.id.length; index++) {
           const joint_id = desiredLink.id[index];
@@ -416,8 +422,11 @@ export class KinematicsSolver {
     const unknownLinksOrJoints: Array<any> = [];
     // first, determine variable locations (X)
     this.requiredLoops.forEach((loop) => {
-      for (let i = 1; i < loop.length - 1; i++) {
-        const link = simLinks[this.linkIndexMap.get(loop[i] + loop[i - 1])!];
+      for (const edge of loop.edges) {
+        if (edge.kind !== 'link') {
+          continue;
+        }
+        const link = simLinks[this.linkIndexMap.get(edge.linkId)!];
         switch (link.constructor) {
           case RealLink:
             if (
@@ -453,18 +462,21 @@ export class KinematicsSolver {
       }
     }
 
-    if (!this.loopIndexMap.has(this.requiredLoops[0])) {
-      this.requiredLoops.forEach((loop) => {
-        this.loopIndexMap.set(loop, this.requiredLoops.indexOf(loop));
+    if (!this.loopIndexMap.has(this.requiredLoops[0].id)) {
+      this.requiredLoops.forEach((loop, index) => {
+        this.loopIndexMap.set(loop.id, index);
       });
     }
 
     // second, set up the known and unknown matrix (A and B)
     this.requiredLoops.forEach((loop) => {
-      for (let i = 1; i < loop.length - 1; i++) {
-        const link = this.getLink(simLinks, loop[i] + loop[i - 1]);
-        const firstJoint = this.getJoint(simJoints, loop[i - 1]);
-        const secondJoint = this.getJoint(simJoints, loop[i]);
+      for (const edge of loop.edges) {
+        if (edge.kind !== 'link') {
+          continue;
+        }
+        const link = this.getLink(simLinks, edge.linkId);
+        const firstJoint = this.getJoint(simJoints, edge.fromId);
+        const secondJoint = this.getJoint(simJoints, edge.toId);
         // right side of the equation (B)
         const rightXDist = firstJoint.x - secondJoint.x;
         const rightYDist = firstJoint.y - secondJoint.y;
@@ -502,7 +514,7 @@ export class KinematicsSolver {
                   return;
               }
               // insert value within B matrix
-              const rowIndex = 2 * this.loopIndexMap.get(loop)!;
+              const rowIndex = 2 * this.loopIndexMap.get(loop.id)!;
               this.B_matrix_AngVel[rowIndex][0] += arr[0];
               this.B_matrix_AngVel[rowIndex + 1][0] += arr[1];
             } else {
@@ -528,7 +540,7 @@ export class KinematicsSolver {
               }
 
               // insert value within A matrix
-              const rowIndex = 2 * this.loopIndexMap.get(loop)!;
+              const rowIndex = 2 * this.loopIndexMap.get(loop.id)!;
               this.A_matrix_AngVel[rowIndex][colIndex] += arr[0];
               this.A_matrix_AngVel[rowIndex + 1][colIndex] += arr[1];
             }
@@ -536,7 +548,7 @@ export class KinematicsSolver {
           case 'Acceleration':
             if (link === simLinks[this.inputLinkIndex]) {
               // input link
-              const rowIndex = 2 * this.loopIndexMap.get(loop)!;
+              const rowIndex = 2 * this.loopIndexMap.get(loop.id)!;
               switch (link.constructor) {
                 case RealLink:
                   arr = this.crossProduct(this.linkAngVelMap.get(link.id)!, [
@@ -567,7 +579,7 @@ export class KinematicsSolver {
               this.B_matrix_AngAcc[rowIndex][0] += sol[0];
               this.B_matrix_AngAcc[rowIndex + 1][0] += sol[1];
             } else {
-              const rowIndex = 2 * this.loopIndexMap.get(loop)!;
+              const rowIndex = 2 * this.loopIndexMap.get(loop.id)!;
               let colIndex: number;
               switch (link.constructor) {
                 case RealLink:
@@ -609,21 +621,10 @@ export class KinematicsSolver {
     return unknownLinksOrJoints;
   }
 
-  static determineVelocitiesInstantCenters(
-    simJoints: Joint[],
-    simLinks: Link[],
-    simICS: InstantCenter[],
-    requiredLoops: string[],
-    initialAngularVelocity: number
-  ) {
-    this.kinematicsInitializer(simJoints, simLinks, initialAngularVelocity);
-    // this.kinematicsInitializer(simJoints, simLinks, requiredLoops, initialAngularVelocity);
-  }
-
-  private static setLinkIndexMap(joint_id1: string, joint_id2: string, simLinks: Link[]) {
+  private static setLinkIndexMap(linkId: string, simLinks: Link[]) {
     this.linkIndexMap.set(
-      joint_id1 + joint_id2,
-      simLinks.findIndex((l) => l.id.includes(joint_id1) && l.id.includes(joint_id2))
+      linkId,
+      simLinks.findIndex((l) => l.id === linkId)
     );
   }
 

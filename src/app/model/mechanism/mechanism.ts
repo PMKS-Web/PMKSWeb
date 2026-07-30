@@ -6,7 +6,7 @@ import { Force } from '../force';
 import { PositionSolver } from './position-solver';
 // import {IcSolver} from "./ic-solver";
 import { InstantCenter } from '../instant-center';
-import { LoopSolver } from './loop-solver';
+import { Loop, LoopSolver } from './loop-solver';
 import { Coord } from '../coord';
 import { KinematicsSolver } from './kinematic-solver';
 import { ForceAnalysisMode, ForceAnalysisSeries, ForceSolver } from './force-solver';
@@ -26,8 +26,7 @@ export class Mechanism {
   private _unit: string;
   private _dof: number;
   private _inputAngularVelocities: number[] = [];
-  private _requiredLoops: string[] = [];
-  private _allLoops: string[] = [];
+  private _requiredLoops: Loop[] = [];
   private mechanismValid = true;
 
   constructor(
@@ -104,10 +103,7 @@ export class Mechanism {
         return j.input;
       }) !== -1
     ) {
-      [this._allLoops, this._requiredLoops] = LoopSolver.determineLoops(
-        this._joints[0],
-        this._links[0]
-      );
+      this._requiredLoops = LoopSolver.determineLoops(this._joints[0], this._links[0]);
       this.findFullMovementPos(inputAngVel);
     } else {
       this.setMechanismInvalid();
@@ -598,7 +594,6 @@ export class Mechanism {
     this.joints = [[]];
     this.links = [[]];
     this.forces = [[]];
-    this.allLoops = [];
     this.requiredLoops = [];
     this.mechanismValid = false;
   }
@@ -639,20 +634,12 @@ export class Mechanism {
     this._unit = value;
   }
 
-  get requiredLoops(): string[] {
+  get requiredLoops(): Loop[] {
     return this._requiredLoops;
   }
 
-  set requiredLoops(value: string[]) {
+  set requiredLoops(value: Loop[]) {
     this._requiredLoops = value;
-  }
-
-  get allLoops(): string[] {
-    return this._allLoops;
-  }
-
-  set allLoops(value: string[]) {
-    this._allLoops = value;
   }
 
   get joints(): Joint[][] {
