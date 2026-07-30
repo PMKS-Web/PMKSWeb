@@ -237,4 +237,43 @@ describe('velocity through a slot whose carrier is solved first', () => {
       expect(across, `t=${timestep}`).toBeCloseTo(0, 6);
     }
   });
+
+  it('accelerates along the slot only once Coriolis is accounted for', () => {
+    // The acceleration form of the same constraint. Relative to the coupler the
+    // rider may only accelerate along the slot -- but the frame it is measured
+    // in is rotating, so 2*omega x (sdot*u) has to come out before what is left
+    // is allowed to lie along the slot. Without that term this is off by
+    // exactly the Coriolis acceleration.
+    for (const timestep of [0, 40, 90, 140, 200, 260, 320]) {
+      const { joints } = solveAt(timestep);
+      const b = at(joints, 'B');
+      const c = at(joints, 'C');
+      const f = at(joints, 'F');
+      const omega = KinematicsSolver.linkAngVelMap.get('BC')!;
+      const alpha = KinematicsSolver.linkAngAccMap.get('BC')!;
+      const rate = KinematicsSolver.slideRateMap.get('P')!;
+      const riderAcc = KinematicsSolver.jointAccMap.get('F')!;
+      const pinAcc = KinematicsSolver.jointAccMap.get('B')!;
+
+      const rx = f.x - b.x;
+      const ry = f.y - b.y;
+      // Acceleration of the coupler's own point under the rider.
+      const carried = [
+        pinAcc[0] - alpha * ry - omega * omega * rx,
+        pinAcc[1] + alpha * rx - omega * omega * ry,
+      ];
+      const length = Math.hypot(c.x - b.x, c.y - b.y);
+      const ux = (c.x - b.x) / length;
+      const uy = (c.y - b.y) / length;
+      const coriolis = [-2 * omega * rate * uy, 2 * omega * rate * ux];
+      const across =
+        (riderAcc[0] - carried[0] - coriolis[0]) * -uy +
+        (riderAcc[1] - carried[1] - coriolis[1]) * ux;
+
+      // Second derivatives amplify the position solver's four-decimal rounding,
+      // so this sits a decade looser than the velocity form above. The Coriolis
+      // term it is testing for is of order 0.1 here, not 1e-5.
+      expect(across, `t=${timestep}`).toBeCloseTo(0, 4);
+    }
+  });
 });

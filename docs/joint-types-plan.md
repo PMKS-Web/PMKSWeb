@@ -550,33 +550,32 @@ coordinates rather than on screenshots and exits non-zero on any failure.
 | 2.10 | Force solver: rotate the reaction direction, drop the `.ground` guard, add carrier-side incidence | [`force-solver.ts:476-486, 551`](../src/app/model/mechanism/force-solver.ts) |
 | 2.11 | ~~IC solver: prismatic IC is at infinity ⊥ to a direction that now rotates~~ **De-scoped** — the IC solver is dead code (see status below) | [`ic-solver.ts:107-112`](../src/app/model/mechanism/ic-solver.ts) |
 
-**Status.** 2.1–2.8 and 2.10 are done. 2.9 is not, and **Gate 2 is not met.** 2.11 is de-scoped.
+**Status: 2.1–2.10 done, 2.11 de-scoped, Gate 2 met.**
 
-Done and verified: the model and its three URL tokens with §2.4a decode validation; mobility for
-grounded guides; the inverse and forward position primitives, both matched against closed form
-(inverted slider-crank, and a four-bar with a slotted coupler); defer-and-retry ordering with a
-named-joints exit; the §2.8a lifecycle rules; and static forces, including carrier-side incidence
-and equal-and-opposite reactions across the slot.
+Verified: the model and its three URL tokens with §2.4a decode validation; mobility for grounded
+guides; the inverse and forward position primitives; defer-and-retry ordering with a named-joints
+exit; the §2.8a lifecycle rules; static forces including carrier-side incidence and
+equal-and-opposite reactions across the slot; and velocity and acceleration through a moving slot,
+carrying the carrier's own rotation and the Coriolis term, matched against closed form in both
+directions.
 
-Not done, and why it is parked rather than half-built:
+Kinematic loops are now lists of typed edges rather than strings of joint letters, which is what
+let a slot appear in a loop at all — see
+[`floating-slot-kinematics-design.md`](floating-slot-kinematics-design.md).
 
-- **2.9 (velocity and acceleration).** `LoopSolver` walks `connectedJoints`, and Option A puts the
-  carrier in neither that nor `links`, so a loop closing through a slot is never found and the
-  kinematic solver leaves every joint unset. Teaching the loop walk about slot edges without also
-  adding the ω×r term would turn today's failure into wrong numbers, which is the trade this plan
-  says never to make. `kinematicLoopAnalysis` therefore returns an empty analysis for a mechanism
-  with a floating slot — no crash, no fabricated zeros — until both land together.
-- **2.11 (instant centres): de-scoped, not parked.** Pre-implementation review for 2.9 found the
-  IC solver is dead code: nothing imports `ic-solver.ts` (the only references are a commented-out
-  import and call at [`mechanism.ts:7`](../src/app/model/mechanism/mechanism.ts) and `:547`),
-  `MechanismService.ics` is initialized empty and never filled, and no spec exercises it. The
-  instant-center feature was never wired into the app, so there is nothing for a floating slot to
-  break. 2.11 and verification case 10 are removed from Gate 2; if the feature is ever revived,
-  that is its own project, starting with characterization tests
-  (`docs/floating-slot-kinematics-design.md` §6). The `slotAngle` seam it would need is delivered
-  by 2.9 regardless.
-- **Gate 2 remainder:** Whitworth (case 4), the Scotch yoke (case 3), and velocity and
-  acceleration for any of them.
+**2.11 (instant centres): de-scoped, not parked.** Pre-implementation review for 2.9 found the IC
+solver is dead code: nothing imports `ic-solver.ts` (the only references are a commented-out import
+and call at [`mechanism.ts:7`](../src/app/model/mechanism/mechanism.ts) and `:547`),
+`MechanismService.ics` is initialized empty and never filled, and no spec exercises it. The
+instant-center feature was never wired into the app, so there is nothing for a floating slot to
+break. 2.11 and verification case 10 are removed from Gate 2; if the feature is ever revived, that
+is its own project, starting with characterization tests
+(`docs/floating-slot-kinematics-design.md` §6). The `slotAngle` seam it would need is delivered by
+2.9 regardless.
+
+**The Scotch yoke (case 3) belongs to Phase 3, not here.** §4.1 lists it as isolating floating Slot
+**plus grounded Slide**, and Slide is Phase 3: without the assembly-level weld there is nothing to
+stop the yoke rotating about its guide, so the mechanism is DOF 2 and cannot be built yet.
 
 #### 2.5a The inverse direction is the primary case, not an edge case
 
@@ -680,6 +679,16 @@ tool that is the worst failure mode available. Do not defer them past this phase
 > four-bar (**forward** direction) match closed form for position, velocity, and acceleration; the
 > force case matches; carrier lifecycle regressions pass; `Slider_Crank` template still bit-identical.
 > (The IC case was removed when 2.11 was de-scoped — the IC solver is dead code.)
+>
+> **Gate 2 — met.** 425 specs green (was 346 at the end of Phase 1). The inverted slider-crank
+> matches closed form for travel, travel acceleration, lever angular velocity and lever angular
+> acceleration; Whitworth proportions hold the same forms on the rotating branch and turn the lever
+> exactly once per crank revolution; the slotted-coupler four-bar holds the slot constraint in
+> position, velocity and acceleration form, the last only once Coriolis is accounted for. Reactions
+> are equal and opposite across the slot and normal to it. Every §4.2 lifecycle regression passes,
+> and all five template URLs re-encode their joints, links and forces byte-identically. Each new
+> assertion was mutation-checked: dropping the carrier term fails six of seven kinematic
+> assertions, and dropping Coriolis alone fails exactly the one named for it.
 
 ### Phase 3 — Slide (pure prismatic)
 

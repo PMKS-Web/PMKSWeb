@@ -3,7 +3,14 @@
 Phase 2 task 2.9 (`docs/joint-types-plan.md`; task 2.11 is de-scoped — §6). Positions and static
 forces are done and verified; this is what stands between here and Gate 2.
 
-**Status: Option B — typed loop edges — is chosen.** This revision turns the options draft into an
+**Status: implemented.** Option B — typed loop edges — was chosen and is shipped; Gate 2 is met.
+What follows is the plan as written before implementation, kept as the record. Two things went
+differently in practice and are noted in place: §7.2's dedup rule needed a single canonical slot
+anchor as well (the multiset rule alone does not collapse the two ways into a carrier), and §3's
+"ω₄ is already an unknown column" does not hold for the inverted slider-crank, where the carrier is
+reached only across the slot and its column has to be claimed by the slot edge itself.
+
+**Option B — typed loop edges — is chosen.** This revision turns the options draft into an
 implementation spec and folds in a pre-implementation review of the draft against the code. Three
 findings changed the plan materially:
 

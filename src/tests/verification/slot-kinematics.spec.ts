@@ -24,12 +24,15 @@ import { buildMechanism, MechanismFixture } from '../../test-utils/verification/
 const CRANK = 1;
 const OFFSET = 3;
 const LEVER = 5;
+/** Whitworth proportions: crank longer than the ground offset, so the lever spins. */
+const WHITWORTH_CRANK = 3;
+const WHITWORTH_OFFSET = 1;
 const INPUT_SPEED = 1;
 const START_ANGLE = Math.PI / 2;
 
-function invertedSliderCrank(offset: number): MechanismFixture {
-  const bx = CRANK * Math.cos(START_ANGLE);
-  const by = CRANK * Math.sin(START_ANGLE);
+function invertedSliderCrank(offset: number, crank: number = CRANK): MechanismFixture {
+  const bx = crank * Math.cos(START_ANGLE);
+  const by = crank * Math.sin(START_ANGLE);
   const span = Math.hypot(bx - offset, by);
   return {
     joints: [
@@ -78,8 +81,8 @@ function sample(fixture: MechanismFixture): Sample[] {
   return samples;
 }
 
-const span = (theta: number, offset: number) =>
-  Math.sqrt(CRANK * CRANK + offset * offset - 2 * CRANK * offset * Math.cos(theta));
+const span = (theta: number, offset: number, crank: number = CRANK) =>
+  Math.sqrt(crank * crank + offset * offset - 2 * crank * offset * Math.cos(theta));
 
 describe('velocity through a moving slot', () => {
   it('finds the loop that closes across the slot', () => {
@@ -192,5 +195,47 @@ describe('quick-return ratio', () => {
     const ratio = Math.max(forward, backward) / Math.min(forward, backward);
 
     expect(ratio).toBeCloseTo(expectedRatio, 1);
+  });
+});
+
+describe('Whitworth proportions, where the lever rotates instead of rocking', () => {
+  // Test-ladder case 4. With the crank longer than the ground offset the block
+  // never reaches the lever's pivot, so (r - d cos t) keeps its sign and the
+  // lever turns continuously. This is the branch a rocking geometry cannot
+  // reach, and the same closed forms have to hold across it.
+  const samples = () => sample(invertedSliderCrank(WHITWORTH_OFFSET, WHITWORTH_CRANK));
+
+  it('turns the lever continuously rather than reversing it', () => {
+    const swept = samples().map((entry) => entry.leverAngVel);
+
+    expect(swept.every((value) => value > 0) || swept.every((value) => value < 0)).toBe(true);
+  });
+
+  it('still matches the closed form on that branch', () => {
+    samples().forEach(({ theta, leverAngVel, slideRate }, index) => {
+      const s = span(theta, WHITWORTH_OFFSET, WHITWORTH_CRANK);
+      expect(leverAngVel, `lever t=${index}`).toBeCloseTo(
+        (INPUT_SPEED * WHITWORTH_CRANK * (WHITWORTH_CRANK - WHITWORTH_OFFSET * Math.cos(theta))) /
+          (s * s),
+        3
+      );
+      expect(slideRate, `travel t=${index}`).toBeCloseTo(
+        (INPUT_SPEED * WHITWORTH_CRANK * WHITWORTH_OFFSET * Math.sin(theta)) / s,
+        3
+      );
+    });
+  });
+
+  it('turns the lever exactly once per crank revolution', () => {
+    // Integrating the solved lever rate over one crank turn must come back to
+    // a full circle -- the defining property of the rotating branch, and a
+    // check on the rate that does not go through the closed form at all.
+    const entries = samples();
+    const step = (2 * Math.PI) / (entries.length - 1);
+    const swept = entries
+      .slice(0, -1)
+      .reduce((total, entry) => total + Math.abs(entry.leverAngVel) * step, 0);
+
+    expect(swept / INPUT_SPEED).toBeCloseTo(2 * Math.PI, 1);
   });
 });
