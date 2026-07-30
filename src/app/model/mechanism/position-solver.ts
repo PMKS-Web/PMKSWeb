@@ -19,6 +19,33 @@ import { core } from '@angular/compiler';
  */
 const CONCENTRIC_TOLERANCE = 0.001;
 
+/** How short a slot ray may get before its direction stops meaning anything. */
+const DEGENERATE_SLOT_TOLERANCE = 1e-9;
+
+/**
+ * A slot is either fixed in the world or cut along the line joining two joints
+ * of the link that carries it.
+ */
+type SlotLine =
+  | { kind: 'fixed'; point: [number, number]; direction: [number, number] }
+  | { kind: 'through'; startId: string; endId: string };
+
+/**
+ * Placing a carrier link from a point known to lie in its slot (§2.5a).
+ *
+ * The crank is driven in every mechanism of this shape, so the block is located
+ * first and the slotted link's pose is what follows — which is why this solves a
+ * set of joints rather than one.
+ */
+interface InverseSlotStep {
+  /** Slot joint whose position is already known; the ray starts here. */
+  anchorId: string;
+  /** The sliding joint, known to lie on the slot: the ray passes through it. */
+  blockId: string;
+  /** Every joint of the carrier this step places. */
+  targets: string[];
+}
+
 export class PositionSolver {
   static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
   static jointMapPositions = new Map<string, Array<number>>();
@@ -28,16 +55,31 @@ export class PositionSolver {
   static desiredJointGroundIndexMap = new Map<string, number>();
   static unknownJointsIndicesMap = new Map<string, number[]>();
   static desiredLinkIndexMap = new Map<string, number>();
-  static jointNumOrderSolverMap = new Map<number, string>();
+  /**
+   * The solve order. A step positions a *set* of joints: the inverse slot
+   * primitive settles a whole link's pose at once, and a later optimisation
+   * fallback (§2.7a) would settle a whole simultaneous system at once.
+   */
+  static jointNumOrderSolverMap = new Map<number, string[]>();
+  /** Steps actually emitted, which is no longer the same as the joint count. */
+  static stepCount = 0;
+  /** Joints no primitive could order; empty means the walk completed. */
+  static unsolvableJoints: string[] = [];
+  private static inverseSlotMap = new Map<string, InverseSlotStep>();
   private static internalTriangleValuesMap = new Map<string, number[]>();
   private static desiredConnectedJointIndicesMap = new Map<string, number[]>();
   private static desiredAnalysisJointMap = new Map<string, string>();
   private static jointDistMap = new Map<string, number>();
   private static initialJointPosMap = new Map<string, [number, number]>();
-  /** A point on each sliding joint's slot line. */
-  private static slotPointMap = new Map<string, [number, number]>();
-  /** Unit direction of each sliding joint's slot line. */
-  private static slotDirectionMap = new Map<string, [number, number]>();
+  /**
+   * How to find each sliding joint's slot line.
+   *
+   * A guide fixed in the world is a point and a direction, settled once. A slot
+   * cut into a moving link is not: it is the line through two of that link's
+   * joints (§2.4), and it points somewhere different at every timestep, so what
+   * gets stored is the pair of joints rather than an answer.
+   */
+  private static slotLineMap = new Map<string, SlotLine>();
   static forcePositionMap = new Map<string, Coord>();
   static forceMagnitudeMap = new Map<string, number>();
 
@@ -50,13 +92,15 @@ export class PositionSolver {
     this.unknownJointsIndicesMap = new Map<string, number[]>();
     this.desiredLinkIndexMap = new Map<string, number>();
     this.internalTriangleValuesMap = new Map<string, number[]>();
-    this.jointNumOrderSolverMap = new Map<number, string>();
+    this.jointNumOrderSolverMap = new Map<number, string[]>();
     this.desiredConnectedJointIndicesMap = new Map<string, number[]>();
     this.desiredAnalysisJointMap = new Map<string, string>();
     this.jointDistMap = new Map<string, number>();
     this.initialJointPosMap = new Map<string, [number, number]>();
-    this.slotPointMap = new Map<string, [number, number]>();
-    this.slotDirectionMap = new Map<string, [number, number]>();
+    this.slotLineMap = new Map<string, SlotLine>();
+    this.inverseSlotMap = new Map<string, InverseSlotStep>();
+    this.stepCount = 0;
+    this.unsolvableJoints = [];
   }
 
   static determineJointOrder(joints: Joint[], links: Link[]) {
@@ -79,6 +123,11 @@ export class PositionSolver {
         return;
       }
       knownJointsIds.push(j.id);
+      // Ground joints are known but no step ever writes them, so seed their
+      // positions here. Steps that read a reference position straight out of
+      // the map -- rather than falling back to the joint object -- otherwise
+      // find nothing there and report the mechanism unsolvable.
+      this.jointMapPositions.set(j.id, [j.x, j.y]);
     });
     // 2nd: determine joints that neighbor the input joint
     const inputJointIndex = joints.findIndex((j) => {
@@ -103,7 +152,7 @@ export class PositionSolver {
       //   return;
       // }
       // store the solved number
-      this.jointNumOrderSolverMap.set(orderNum++, j.id);
+      this.jointNumOrderSolverMap.set(orderNum++, [j.id]);
       // store desired joints as input joint and current_joint
       // const currentJointIndex = simJoints.findIndex(jt => jt.id === current_joint.id);
       this.desiredConnectedJointIndicesMap.set(j.id, [inputJointIndex]);
@@ -131,6 +180,196 @@ export class PositionSolver {
       }
       orderNum = this.detJointOrder(joints, links, j, orderNum, knownJointsIds);
     });
+
+    orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
+    this.stepCount = orderNum - 1;
+    this.unsolvableJoints = joints
+      .filter(
+        (j) => j instanceof RealJoint && !j.ground && !knownJointsIds.includes(j.id)
+      )
+      .map((j) => j.id);
+  }
+
+  /**
+   * Keep sweeping the joints the walk above could not place, until a sweep
+   * achieves nothing.
+   *
+   * The walk is a single pass, so it can only order a joint whose references
+   * happen to be known by the time it arrives. That was safe while the only
+   * slots were grounded ones, whose position is known before the walk starts.
+   * A slot on a moving link is not: the carrier may be reached before the block
+   * that locates it, or the other way round, and which of those happens depends
+   * on the order the joints were drawn in.
+   *
+   * When a sweep places nothing and joints remain, they are a simultaneous
+   * system rather than a mistake (§2.7a). v1 names them and stops.
+   */
+  private static orderDeferredJoints(
+    joints: Joint[],
+    links: Link[],
+    orderNum: number,
+    known: string[]
+  ): number {
+    let progress = true;
+    while (progress) {
+      progress = false;
+      const pending = joints.filter(
+        (j): j is RealJoint => j instanceof RealJoint && !known.includes(j.id)
+      );
+      for (const joint of pending) {
+        const advanced =
+          this.orderCoincidentBlock(joints, joint, orderNum, known) ??
+          this.orderCarrierFromBlock(joints, links, joint, orderNum, known) ??
+          this.orderRiderOnMovingSlot(joints, links, joint, orderNum, known);
+        if (advanced !== undefined) {
+          orderNum = advanced;
+          progress = true;
+        }
+      }
+    }
+    return orderNum;
+  }
+
+  /** The other joint of a sliding joint's block (§2.10 item 1). */
+  private static blockPartner(joint: PrisJoint): RealJoint | undefined {
+    for (const link of joint.links) {
+      const partner = link.joints.find((candidate) => candidate.id !== joint.id);
+      if (partner instanceof RealJoint) {
+        return partner;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * A sliding joint sits exactly on the pin it carries (§2.10 item 2), so once
+   * the pin is placed there is nothing left to solve.
+   */
+  private static orderCoincidentBlock(
+    joints: Joint[],
+    joint: RealJoint,
+    orderNum: number,
+    known: string[]
+  ): number | undefined {
+    if (!(joint instanceof PrisJoint)) {
+      return undefined;
+    }
+    const partner = this.blockPartner(joint);
+    if (!partner || !known.includes(partner.id)) {
+      return undefined;
+    }
+    this.desiredConnectedJointIndicesMap.set(joint.id, [
+      joints.findIndex((j) => j.id === partner.id),
+    ]);
+    this.desiredAnalysisJointMap.set(joint.id, 'slotBlockFollowsPin');
+    this.jointNumOrderSolverMap.set(orderNum, [joint.id]);
+    this.setSlot(joint.id, joint, joint.x, joint.y);
+    known.push(joint.id);
+    return orderNum + 1;
+  }
+
+  /**
+   * The inverse primitive (§2.5a): place a carrier from a point known to lie in
+   * its slot.
+   *
+   * This is the common direction, not the exotic one — Whitworth, the
+   * oscillating cylinder, the Scotch yoke and Geneva all drive the crank, which
+   * locates the block first and leaves the slotted link's pose as the unknown.
+   */
+  private static orderCarrierFromBlock(
+    joints: Joint[],
+    links: Link[],
+    joint: RealJoint,
+    orderNum: number,
+    known: string[]
+  ): number | undefined {
+    for (const candidate of joints) {
+      if (!(candidate instanceof PrisJoint) || !candidate.isFloating) continue;
+      if (!known.includes(candidate.id)) continue;
+      const carrier = candidate.carrier;
+      const slotA = candidate.slotJointA;
+      const slotB = candidate.slotJointB;
+      if (!carrier || !slotA || !slotB) continue;
+      if (!carrier.joints.some((member) => member.id === joint.id)) continue;
+
+      // Exactly one slot joint known: with neither, there is no ray to swing
+      // the link about; with both, the carrier is already placed and this is
+      // the forward direction instead.
+      const anchor = known.includes(slotA.id) ? slotA : known.includes(slotB.id) ? slotB : undefined;
+      if (!anchor || (known.includes(slotA.id) && known.includes(slotB.id))) continue;
+
+      const targets = carrier.joints
+        .filter((member) => !known.includes(member.id))
+        .map((member) => member.id);
+      if (targets.length === 0) continue;
+
+      this.inverseSlotMap.set(targets[0], {
+        anchorId: anchor.id,
+        blockId: candidate.id,
+        targets,
+      });
+      this.desiredAnalysisJointMap.set(targets[0], 'inverseSlot');
+      this.jointNumOrderSolverMap.set(orderNum, targets);
+      targets.forEach((id) => known.push(id));
+      let next = orderNum + 1;
+      // Everything hanging off the carrier can now be walked normally.
+      for (const id of targets) {
+        const placed = joints.find((j) => j.id === id);
+        if (placed instanceof RealJoint) {
+          next = this.detJointOrder(joints, links, placed, next, known);
+        }
+      }
+      return next;
+    }
+    return undefined;
+  }
+
+  /**
+   * The forward primitive (§2.6): a rider on a slot whose carrier is already
+   * placed. Identical to the grounded case except that the line is measured
+   * again at every timestep instead of once.
+   */
+  private static orderRiderOnMovingSlot(
+    joints: Joint[],
+    links: Link[],
+    joint: RealJoint,
+    orderNum: number,
+    known: string[]
+  ): number | undefined {
+    const slider = joint.connectedJoints.find(
+      (candidate): candidate is PrisJoint =>
+        candidate instanceof PrisJoint && candidate.isFloating
+    );
+    if (!slider || known.includes(joint.id)) {
+      return undefined;
+    }
+    const slotA = slider.slotJointA;
+    const slotB = slider.slotJointB;
+    if (!slotA || !slotB || !known.includes(slotA.id) || !known.includes(slotB.id)) {
+      return undefined;
+    }
+    // The rider still needs one known neighbour to fix its distance along the
+    // slot; the slot alone leaves it free to slide.
+    const reference = joint.connectedJoints.find(
+      (candidate) => candidate.id !== slider.id && known.includes(candidate.id)
+    );
+    if (!reference) {
+      return undefined;
+    }
+
+    this.desiredConnectedJointIndicesMap.set(joint.id, [
+      joints.findIndex((j) => j.id === reference.id),
+      joints.findIndex((j) => j.id === slider.id),
+    ]);
+    this.desiredAnalysisJointMap.set(joint.id, 'circleLineIntersectionPoints');
+    this.jointNumOrderSolverMap.set(orderNum, [joint.id]);
+    this.jointDistMap.set(
+      joint.id + ',' + reference.id,
+      euclideanDistance(joint.x, joint.y, reference.x, reference.y)
+    );
+    this.setSlot(joint.id, slider, joint.x, joint.y);
+    known.push(joint.id, slider.id);
+    return this.detJointOrder(joints, links, joint, orderNum + 1, known);
   }
 
   // TODO: Change the names from simJoints, simLinks to just joints and links
@@ -163,18 +402,33 @@ export class PositionSolver {
         if (sliderJoint === undefined) {
           return;
         }
+        // A grounded guide is known before the walk begins, so it can always be
+        // used here. A slot on a moving link cannot: emitting the step now
+        // would run it before the carrier has been placed, and it would read
+        // the carrier's position from the previous timestep — wrong, and
+        // wrong in a way that still produces a picture. Defer to the retry
+        // sweep, which emits it once the carrier is actually known.
+        if (
+          sliderJoint.isFloating &&
+          !(
+            knownJointArray.includes(sliderJoint.slotJointA?.id ?? '') &&
+            knownJointArray.includes(sliderJoint.slotJointB?.id ?? '')
+          )
+        ) {
+          return;
+        }
         const sliderJointIndex = joints.findIndex((j) => j.id === sliderJoint.id);
         this.desiredConnectedJointIndicesMap.set(cur_joint.id, [
           prev_joint_index,
           sliderJointIndex,
         ]);
         this.desiredAnalysisJointMap.set(cur_joint.id, 'circleLineIntersectionPoints');
-        this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
+        this.jointNumOrderSolverMap.set(orderNum++, [cur_joint.id]);
         this.jointDistMap.set(
           cur_joint.id + ',' + prevJoint.id,
           euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y)
         );
-        this.setSlot(cur_joint.id, cur_joint.x, cur_joint.y, sliderJoint.slotAngle);
+        this.setSlot(cur_joint.id, sliderJoint, cur_joint.x, cur_joint.y);
         // Like the revolute branch below, the solved slider joint becomes a
         // known joint and its other neighbors still need solve orders --
         // otherwise a tracer point on the slider's link can never resolve.
@@ -192,7 +446,7 @@ export class PositionSolver {
           known_joint_index,
         ]);
         this.desiredAnalysisJointMap.set(cur_joint.id, 'twoCircleIntersectionPoints');
-        this.jointNumOrderSolverMap.set(orderNum++, cur_joint.id);
+        this.jointNumOrderSolverMap.set(orderNum++, [cur_joint.id]);
         this.jointDistMap.set(
           cur_joint.id + ',' + prevJoint.id,
           euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y)
@@ -211,12 +465,12 @@ export class PositionSolver {
           if (tracer_joint instanceof PrisJoint) {
             this.desiredConnectedJointIndicesMap.set(tracer_joint.id, [cur_joint_index]);
             this.desiredAnalysisJointMap.set(tracer_joint.id, 'circleLineIntersectionPoints');
-            this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
+            this.jointNumOrderSolverMap.set(orderNum++, [tracer_joint.id]);
             this.jointDistMap.set(
               tracer_joint.id + ',' + tracer_joint.id,
               euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y)
             );
-            this.setSlot(tracer_joint.id, tracer_joint.x, tracer_joint.y, tracer_joint.slotAngle);
+            this.setSlot(tracer_joint.id, tracer_joint, tracer_joint.x, tracer_joint.y);
             return;
           }
           const desired_link = links.find((l) => {
@@ -243,7 +497,7 @@ export class PositionSolver {
             cur_joint_index,
           ]);
           this.desiredAnalysisJointMap.set(tracer_joint.id, 'determineTracerJoint');
-          this.jointNumOrderSolverMap.set(orderNum++, tracer_joint.id);
+          this.jointNumOrderSolverMap.set(orderNum++, [tracer_joint.id]);
           knownJointArray.push(tracer_joint.id);
           desiredTracerJoints.push(tracer_joint);
           this.jointDistMap.set(
@@ -279,12 +533,18 @@ export class PositionSolver {
     joints: Joint[],
     links: Link[],
     forces: Force[],
-    max_counter: number,
     angVelDir: boolean
   ): boolean {
+    // Joints the ordering pass could not reach make the whole mechanism
+    // unsolvable; running the steps it did emit would move part of the linkage
+    // and leave the rest behind.
+    if (this.unsolvableJoints.length > 0) {
+      return false;
+    }
     let counter = 1;
-    while (counter <= max_counter) {
-      const joint_id = this.jointNumOrderSolverMap.get(counter)!;
+    while (counter <= this.stepCount) {
+      const step_targets = this.jointNumOrderSolverMap.get(counter)!;
+      const joint_id = step_targets[0];
       const joint = joints.find((j) => j.id === joint_id)!;
       const connected_joint_indices = this.desiredConnectedJointIndicesMap.get(joint_id)!;
       const desired_analysis = this.desiredAnalysisJointMap.get(joint_id)!;
@@ -311,6 +571,12 @@ export class PositionSolver {
             joints[connected_joint_indices[1]],
             joint
           );
+          break;
+        case 'slotBlockFollowsPin':
+          possible = this.slotBlockFollowsPin(joints[connected_joint_indices[0]], joint);
+          break;
+        case 'inverseSlot':
+          possible = this.inverseSlot(joints, step_targets);
           break;
         case 'determineTracerJoint':
           this.twoCircleIntersectionPoints(
@@ -548,23 +814,143 @@ export class PositionSolver {
     return true;
   }
 
+  /** A sliding joint takes the position of the pin it carries (§2.10 item 2). */
+  private static slotBlockFollowsPin(pin: Joint, slidingJoint: Joint): boolean {
+    const position = this.jointMapPositions.get(pin.id);
+    if (!position) {
+      return false;
+    }
+    this.jointMapPositions.set(slidingJoint.id, [position[0], position[1]]);
+    return true;
+  }
+
+  /**
+   * Swing a carrier link about one of its slot joints until the slot passes
+   * through the block again, then carry every one of its joints along.
+   *
+   * The rotation is measured against where the block sat at t = 0 rather than
+   * against the other slot joint. Both describe the same line, but the ray from
+   * the anchor to the block is the one that cannot flip: measuring against the
+   * far joint leaves the sign undetermined whenever the block sits on the
+   * anchor's other side, which would turn the link over.
+   */
+  private static inverseSlot(joints: Joint[], targets: string[]): boolean {
+    const step = this.inverseSlotMap.get(targets[0]);
+    if (!step) {
+      return false;
+    }
+    const anchorNow = this.jointMapPositions.get(step.anchorId);
+    const blockNow = this.jointMapPositions.get(step.blockId);
+    const anchorStart = this.initialJointPosMap.get(step.anchorId);
+    const blockStart = this.initialJointPosMap.get(step.blockId);
+    if (!anchorNow || !blockNow || !anchorStart || !blockStart) {
+      return false;
+    }
+
+    const nowX = blockNow[0] - anchorNow[0];
+    const nowY = blockNow[1] - anchorNow[1];
+    const startX = blockStart[0] - anchorStart[0];
+    const startY = blockStart[1] - anchorStart[1];
+    // The block passing through the anchor leaves the slot's direction
+    // genuinely undefined, not merely imprecise. Reporting "no solution" hands
+    // it to the same reversal path a rocker's toggle takes.
+    if (
+      Math.hypot(nowX, nowY) <= DEGENERATE_SLOT_TOLERANCE ||
+      Math.hypot(startX, startY) <= DEGENERATE_SLOT_TOLERANCE
+    ) {
+      return false;
+    }
+
+    const rotation = Math.atan2(nowY, nowX) - Math.atan2(startY, startX);
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    for (const id of step.targets) {
+      const start = this.initialJointPosMap.get(id);
+      if (!start) {
+        return false;
+      }
+      const relativeX = start[0] - anchorStart[0];
+      const relativeY = start[1] - anchorStart[1];
+      this.recordJointPosition(
+        id,
+        anchorNow[0] + relativeX * cos - relativeY * sin,
+        anchorNow[1] + relativeX * sin + relativeY * cos
+      );
+    }
+    return true;
+  }
+
   /** Intersections of the joint's slot line with the circle centred on `j1`. */
   private static slotSolutions(j1: Joint, unknownJoint: Joint): [number, number][] | undefined {
+    const line = this.resolveSlotLine(unknownJoint.id);
+    if (!line) {
+      return undefined;
+    }
     const radius = this.jointDistMap.get(unknownJoint.id + ',' + j1.id)!;
     const [centreX, centreY] = this.jointMapPositions.get(j1.id)!;
-    const [pointX, pointY] = this.slotPointMap.get(unknownJoint.id)!;
-    const [dirX, dirY] = this.slotDirectionMap.get(unknownJoint.id)!;
+    const [[pointX, pointY], [dirX, dirY]] = line;
     return circleLineIntersection(radius, centreX, centreY, pointX, pointY, dirX, dirY);
   }
 
   /**
-   * Record the slot a joint slides along: a point it passes through and a unit
-   * direction. Stored as a direction rather than a slope so that vertical and
-   * near-vertical guides need no special case.
+   * Where the slot is right now: a point on it and a unit direction.
+   *
+   * A world-fixed guide answers from what was recorded. A slot cut into a link
+   * has to be measured again from that link's current pose, which is the whole
+   * difference between a grounded slot and a floating one.
    */
-  private static setSlot(jointID: string, throughX: number, throughY: number, angleRad: number) {
-    this.slotPointMap.set(jointID, [throughX, throughY]);
-    this.slotDirectionMap.set(jointID, [Math.cos(angleRad), Math.sin(angleRad)]);
+  private static resolveSlotLine(
+    jointID: string
+  ): [[number, number], [number, number]] | undefined {
+    const line = this.slotLineMap.get(jointID);
+    if (!line) {
+      return undefined;
+    }
+    if (line.kind === 'fixed') {
+      return [line.point, line.direction];
+    }
+    const start = this.jointMapPositions.get(line.startId);
+    const end = this.jointMapPositions.get(line.endId);
+    if (!start || !end) {
+      return undefined;
+    }
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+    const length = Math.hypot(dx, dy);
+    // Two slot joints on top of each other leave the line undefined rather than
+    // merely inaccurate, so there is nothing to return.
+    if (length <= DEGENERATE_SLOT_TOLERANCE) {
+      return undefined;
+    }
+    return [
+      [start[0], start[1]],
+      [dx / length, dy / length],
+    ];
+  }
+
+  /**
+   * Record the slot a joint slides along. Stored as a direction rather than a
+   * slope so that vertical and near-vertical guides need no special case.
+   */
+  private static setSlot(
+    jointID: string,
+    joint: PrisJoint,
+    throughX: number,
+    throughY: number
+  ) {
+    if (joint.isFloating && joint.slotJointA && joint.slotJointB) {
+      this.slotLineMap.set(jointID, {
+        kind: 'through',
+        startId: joint.slotJointA.id,
+        endId: joint.slotJointB.id,
+      });
+      return;
+    }
+    this.slotLineMap.set(jointID, {
+      kind: 'fixed',
+      point: [throughX, throughY],
+      direction: [Math.cos(joint.slotAngle), Math.sin(joint.slotAngle)],
+    });
   }
 
   // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html

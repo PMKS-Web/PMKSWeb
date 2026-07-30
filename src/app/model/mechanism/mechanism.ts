@@ -347,7 +347,6 @@ export class Mechanism {
     let inputAngVelDirection = inputAngVel > 0;
     let currentTimeStamp = 0;
     const TOLERANCE = 0.008;
-    let max_counter = 0;
     let curTimeNum = 0;
     // PositionSolver.incrementRevInput steps the crank by exactly one degree, so a
     // fully rotating revolute input closes its cycle after exactly this many samples.
@@ -366,15 +365,6 @@ export class Mechanism {
     // static-equivalent dynamic results can still be plotted and exported.
     let timeNumIncrement =
       angularSpeed > Number.EPSILON ? Math.PI / 180 / angularSpeed : Math.PI / 180;
-    this.joints[0].forEach((j) => {
-      if (!(j instanceof RealJoint)) {
-        return;
-      }
-      if (!j.ground) {
-        max_counter++;
-      }
-    });
-
     PositionSolver.resetStaticVariables();
     PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
     PositionSolver.setUpSolvingForces(this.forces[0]);
@@ -390,7 +380,7 @@ export class Mechanism {
       connectedJointMapIndices.set(l.id, numArray);
     });
 
-    const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1);
+    const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1)?.[0];
     const desiredJointIndex = this.joints[0].findIndex((j) => j.id === desiredJointID);
     if (desiredJointIndex === -1) {
       return;
@@ -412,7 +402,6 @@ export class Mechanism {
         this._joints[currentTimeStamp],
         this._links[currentTimeStamp],
         this._forces[currentTimeStamp],
-        max_counter,
         inputAngVelDirection
       );
       if (possible) {

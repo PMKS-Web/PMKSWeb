@@ -236,8 +236,8 @@ describe('focused solver regressions', () => {
   it('orders the slider before its tracer through both toggle positions', () => {
     const { mechanism } = buildMechanism(sliderCrankTracerFixture());
     const solveOrder = [...PositionSolver.jointNumOrderSolverMap.entries()];
-    const sliderOrder = solveOrder.find(([, jointId]) => jointId === 'C')?.[0];
-    const tracerOrder = solveOrder.find(([, jointId]) => jointId === 'D')?.[0];
+    const sliderOrder = solveOrder.find(([, jointIds]) => jointIds.includes('C'))?.[0];
+    const tracerOrder = solveOrder.find(([, jointIds]) => jointIds.includes('D'))?.[0];
     expect(sliderOrder).toBeDefined();
     expect(tracerOrder).toBeDefined();
     expect(tracerOrder!).toBeGreaterThan(sliderOrder!);
