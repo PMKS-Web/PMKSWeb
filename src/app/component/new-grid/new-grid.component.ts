@@ -1232,7 +1232,10 @@ export class NewGridComponent {
   }
 
   static sendNotification(text: string, rateLimitMS?: number) {
-    NewGridComponent.instance.sendNotification(text, rateLimitMS);
+    // Services reach the snackbar through here, and they are also exercised in
+    // tests with no component standing. A missing canvas means nobody is
+    // looking, not that the caller did something wrong.
+    NewGridComponent.instance?.sendNotification(text, rateLimitMS);
   }
 
   sendNotification(text: string, rateLimitMS?: number) {

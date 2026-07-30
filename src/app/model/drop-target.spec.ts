@@ -224,12 +224,19 @@ describe('resolving a joint drop target', () => {
 // The canvas needs the joint the user is *aiming* at, legal or not, so that a
 // refused target can be marked red and explained instead of going dark.
 describe('resolving the joint a drag is aimed at', () => {
-  /** A dragged joint plus one legal target and one refused target, side by side. */
+  /**
+   * A dragged joint plus one legal target and one refused target, side by side.
+   * The refusal is over-constraint rather than sharing a link, because a joint
+   * on the dragged joint's own link is skipped outright — see the specs below.
+   */
   function scene() {
     const dragged = new RevJoint('A', 0, 0);
+    const anchor = new RevJoint('X', -5, 0);
     const refused = new RevJoint('B', 10, 0);
     const legal = new RevJoint('C', 10.5, 0);
-    connect('AB', [dragged, refused]);
+    connect('AX', [dragged, anchor]);
+    // Merging A into B would leave a second bar spanning X and B.
+    connect('XB', [anchor, refused]);
     connect('CG', [legal, new RevJoint('G', 10.5, 5)]);
     return { dragged, refused, legal, joints: [dragged, refused, legal] };
   }
@@ -248,7 +255,7 @@ describe('resolving the joint a drag is aimed at', () => {
 
     expect(resolveDropCandidate(dragged, 10, 0, joints, 1)).toEqual({
       joint: refused,
-      refusal: 'shares-a-link',
+      refusal: 'over-constrained',
     });
   });
 
@@ -271,6 +278,26 @@ describe('resolving the joint a drag is aimed at', () => {
     const { dragged, joints } = scene();
 
     expect(resolveDropCandidate(dragged, 5, 0, joints, 1)).toBeUndefined();
+  });
+
+  // Dragging one end of a bar onto the other is self-explanatory — the drawing
+  // already shows the bar — so it is not a target at all rather than a red one.
+  it('ignores the other end of the link being dragged', () => {
+    const dragged = new RevJoint('A', 0, 0);
+    const partner = new RevJoint('B', 3, 0);
+    connect('AB', [dragged, partner]);
+
+    expect(resolveDropCandidate(dragged, 3, 0, [dragged, partner], 5)).toBeUndefined();
+  });
+
+  it('lets a legal joint further out win over a skipped same-link one', () => {
+    const dragged = new RevJoint('A', 0, 0);
+    const partner = new RevJoint('B', 3, 0);
+    const legal = new RevJoint('C', 3.4, 0);
+    connect('AB', [dragged, partner]);
+    connect('CD', [legal, new RevJoint('D', 3.4, 5)]);
+
+    expect(resolveDropCandidate(dragged, 3, 0, [dragged, partner, legal], 5)?.joint).toBe(legal);
   });
 
   // The dragged joint is always at distance zero from the cursor, so reporting

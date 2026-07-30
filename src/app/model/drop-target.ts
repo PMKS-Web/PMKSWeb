@@ -146,10 +146,16 @@ export function resolveDropCandidate(
     // The joint under the cursor is the one being dragged; pointing at itself is
     // not a near miss worth reporting.
     if (candidate.id === source.id) return;
+    const refusal = refuseJointMerge(source, candidate);
+    // Nor is the other end of the link you are holding. Marking that in red
+    // would be explaining something the drawing already says — the two have a
+    // bar between them — so it is not a target at all, and a legal joint
+    // further out can still win.
+    if (refusal === 'shares-a-link') return;
     const distance = Math.hypot(candidate.x - x, candidate.y - y);
     if (distance < bestDistance) {
       bestDistance = distance;
-      best = { joint: candidate, refusal: refuseJointMerge(source, candidate) };
+      best = { joint: candidate, refusal };
     }
   });
 

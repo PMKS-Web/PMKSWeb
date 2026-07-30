@@ -556,3 +556,50 @@ describe('MechanismService merging onto sliders and welds', () => {
     expect(harness.service.links.map((link) => link.id).sort()).toEqual(['BCG', 'BF']);
   });
 });
+
+describe('MechanismService declining a weld that pins a pair twice', () => {
+  /** A triangle: bars A-B, B-C and A-C. Welding at B closes A and C twice. */
+  function triangle() {
+    const harness = createHarness();
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 4, 0);
+    const c = new RevJoint('C', 2, 3);
+    const wire = (id: string, joints: RevJoint[]) => {
+      const link = new RealLink(id, joints);
+      joints.forEach((joint) => {
+        joint.links.push(link);
+        joints.filter((o) => o !== joint).forEach((o) => joint.connectedJoints.push(o));
+      });
+      return link;
+    };
+    harness.service.joints = [a, b, c];
+    harness.service.links = [wire('AB', [a, b]), wire('BC', [b, c]), wire('AC', [a, c])];
+    return { ...harness, a, b, c };
+  }
+
+  // Welding B fuses AB and BC into ABC, which then holds A and C — the pair the
+  // existing AC bar already holds. The linkage still moves; its forces have no
+  // unique solution.
+  it('leaves the mechanism untouched and records no undo entry', () => {
+    const scene = triangle();
+
+    scene.service.weldJoint(scene.b);
+
+    expect(scene.b.isWelded).toBe(false);
+    expect(scene.service.links.map((link) => link.id).sort()).toEqual(['AB', 'AC', 'BC']);
+    expect(scene.saveCount()).toBe(0);
+  });
+
+  it('still welds where no pair would be pinned twice', () => {
+    const scene = triangle();
+    scene.service.links = scene.service.links.filter((link) => link.id !== 'AC');
+    scene.a.links = scene.a.links.filter((link) => link.id !== 'AC');
+    scene.c.links = scene.c.links.filter((link) => link.id !== 'AC');
+
+    scene.service.weldJoint(scene.b);
+
+    expect(scene.b.isWelded).toBe(true);
+    expect(scene.service.links.map((link) => link.id)).toEqual(['ABC']);
+    expect(scene.saveCount()).toBe(1);
+  });
+});

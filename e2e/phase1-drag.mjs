@@ -375,20 +375,13 @@ await safe('a bare cursor never pans the canvas', async () => {
   const box = await page.locator('#canvas').boundingBox();
   const start = { x: box.x + box.width * 0.5, y: box.y + box.height * 0.5 };
 
-  // Pan for real first, so a viewport that never moves at all cannot pass.
+  // A companion check that a button-held drag still pans was dropped: real
+  // panning is driven by Hammer's panBy, which is a separate path from the
+  // svg-pan-zoom state this guard clears, so no over-firing of the guard can
+  // make that assertion fail. Verified by mutation — it passed with the button
+  // test removed from the guard entirely.
   await page.mouse.move(start.x, start.y);
   await page.waitForTimeout(150);
-  const parked = await viewport();
-  await page.mouse.down();
-  await page.mouse.move(start.x + 90, start.y + 60);
-  await page.waitForTimeout(200);
-  const dragged = await viewport();
-  await page.mouse.up();
-  await page.waitForTimeout(200);
-  record('holding the button still pans the canvas', !!parked && parked !== dragged, {
-    parked,
-    dragged,
-  });
 
   // Strand the library mid-gesture, then move having released nothing.
   await page.evaluate(
@@ -661,6 +654,83 @@ await safe('holding Alt suppresses snapping entirely', async () => {
   record('the drop merged nothing', after.length === before.length, {
     after: after.map((j) => j.id),
   });
+});
+
+// --- Dragging one end of a bar onto the other ----------------------------
+// Self-explanatory from the drawing, so it gets no mark at all rather than a
+// red one: not a target, not a refusal, nothing to explain.
+await safe('the other end of your own link is not a target', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const b = before.find((j) => j.id === 'B');
+  const c = before.find((j) => j.id === 'C');
+
+  const release = await dragBy(
+    page,
+    { x: b.screenX, y: b.screenY },
+    { x: c.screenX, y: c.screenY },
+    { holdBeforeRelease: 350 }
+  );
+  const rings = await page.evaluate(() => ({
+    amber: document.querySelectorAll('#jointHolder .snapTarget').length,
+    red: document.querySelectorAll('#jointHolder .snapRefused').length,
+  }));
+  await shot(page, 'same-link-no-ring.png');
+  await release();
+  const note = await notificationText(page);
+  const after = await jointState(page);
+
+  record('no red ring for the far end of the same link', rings.red === 0, rings);
+  record('no amber ring either', rings.amber === 0, rings);
+  record('the drop says nothing', note === '', { note });
+  record('nothing merged', after.length === before.length, {
+    after: after.map((j) => j.id),
+  });
+});
+
+// --- Welding into a statically indeterminate assembly ---------------------
+// The Weld button stays live so the rule is discoverable by pressing it, but
+// the edit is declined: the linkage would still move, and would only reveal
+// itself as a mistake later in an analysis panel that can do nothing but
+// apologise.
+await safe('welding a pair that is already pinned is declined and explained', async () => {
+  await loadFourBar(page);
+  // Close the four-bar into a triangle first: merge A into D, leaving links
+  // BD, BC and CD, so B and C are held by BC while a weld at D would fuse BD
+  // and CD into a body holding B and C as well.
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+  const release = await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: d.screenX, y: d.screenY }
+  );
+  await release();
+  const closed = await linkIDs(page);
+  record('the triangle was formed', closed.length === 3, { links: closed });
+
+  const withB = await jointState(page);
+  const c = withB.find((j) => j.id === 'C');
+  await page.mouse.click(c.screenX, c.screenY);
+  await page.waitForTimeout(500);
+
+  const weld = page.locator('button', { hasText: 'Weld' }).first();
+  const enabled = await weld.isEnabled().catch(() => null);
+  record('the Weld button is still clickable', enabled === true, { enabled });
+
+  if (enabled) {
+    await weld.click();
+    await page.waitForTimeout(700);
+    const note = await notificationText(page);
+    const after = await linkIDs(page);
+    await shot(page, 'weld-declined.png');
+    record('the links are unchanged', JSON.stringify(after) === JSON.stringify(closed), {
+      before: closed,
+      after,
+    });
+    record('a snackbar explains why', /pinn?ed .* twice|no unique solution/i.test(note), { note });
+  }
 });
 
 await flushReport();

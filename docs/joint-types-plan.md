@@ -368,6 +368,20 @@ flagged welded with a stray link beside it. `canBeWelded` declines a grounded, d
 slider-carrying joint, so a merge that grounds the survivor takes the weld away — reported, not
 silent.
 
+**The same rule guards the Weld button.** Welding fuses the links meeting at a joint into one
+compound, and that compound can end up holding a pair of joints some other link already holds. The
+kinematics survive — `groupRigidBodies` merges them and the mobility comes out right (§ below) —
+but the statics do not: a redundant pin carries a share of the load that rigid-body equilibrium
+cannot determine, and the force solver has no unique answer. The button stays live so the rule is
+discoverable by pressing it, and the edit is declined with a snackbar naming the pair.
+
+Declined by prediction rather than applied and reverted: by the time a compound exists it has
+absorbed forces and rewritten link ids, so undoing it is a far larger surface than foreseeing it.
+The prediction only needs the compound's joint set, which is the union of the links at that joint.
+
+Both this and the drag refusal read [`rigid-bodies.ts`](../src/app/model/rigid-bodies.ts), so
+"what counts as one rigid body" has exactly one definition and cannot drift between them.
+
 **Over-constraint is the one refusal that was not in the plan, and the first version of it was too
 narrow.** It tested for an exact duplicate: links A–B and A–C, with B dropped on C, leave two bars
 spanning the same pair. That misses the case one step out — a bar B–C landing on a *ternary* link
@@ -392,11 +406,17 @@ is about to happen *before* the drop rather than after it.
 | --- | --- |
 | legal target in range | solid amber ring on the target, and the dragged joint **jumps onto it** rather than trailing the cursor |
 | refused target in range | red ring on that joint, no capture |
+| the other end of the link being dragged | **nothing at all** — see below |
 | release over a refused target | the dragged joint shakes in place, and a snackbar names the rule |
 | a merge that lands | the survivor pops, and **nothing is said** — a gesture that did what it looked like needs no receipt |
 
 Holding **Alt** suppresses both rings and the capture, for placing a joint on top of another without
 merging them.
+
+A joint on the dragged joint's own link is not a target and gets no mark. Red would be explaining
+something the drawing already says — there is a bar between the two — and a rule the user never
+tried to break should not be announced. It is skipped rather than refused, so a legal joint slightly
+further out can still win the drop.
 
 Capture carries the most: locking the dragged joint to the target's exact position is what makes the
 drop predictable, and it is why the ring radius equals the snap radius rather than being drawn as a

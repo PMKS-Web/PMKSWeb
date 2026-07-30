@@ -1,5 +1,6 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
 import { Link, SliderBlock, RealLink, Shape } from '../link';
+import { groupRigidBodies } from '../rigid-bodies';
 import { Force } from '../force';
 // import {LoopSolver} from "./loop-solver";
 import { PositionSolver } from './position-solver';
@@ -264,27 +265,7 @@ export class Mechanism {
    * removes the paradox.
    */
   private determineRigidBodies(): Map<string, string> {
-    const parent = new Map<string, string>();
-    const links = this.links[0];
-    links.forEach((l) => parent.set(l.id, l.id));
-    const find = (id: string): string => {
-      let root = id;
-      while (parent.get(root) !== root) {
-        root = parent.get(root)!;
-      }
-      return root;
-    };
-    for (let i = 0; i < links.length; i++) {
-      for (let j = i + 1; j < links.length; j++) {
-        const shared = links[i].joints.filter((joint) =>
-          links[j].joints.some((other) => other.id === joint.id)
-        ).length;
-        if (shared >= 2) {
-          parent.set(find(links[i].id), find(links[j].id));
-        }
-      }
-    }
-    return new Map(links.map((l) => [l.id, find(l.id)]));
+    return groupRigidBodies(this.links[0]);
   }
 
   /**
