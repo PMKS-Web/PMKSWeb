@@ -1,4 +1,6 @@
-const { chromium } = await import((process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs');
+const { chromium } = await import(
+  (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
+);
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -7,7 +9,8 @@ await fs.mkdir(screenshotDir, { recursive: true });
 
 const baseUrl = process.env.PMKS_URL || 'http://127.0.0.1:4200/';
 const runPrefix = process.env.RUN_PREFIX || 'focused';
-const chromePath = process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const chromePath =
+  process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const mechanisms = {
   fourBar:
@@ -27,24 +30,35 @@ function issue(title, details = {}) {
 }
 
 async function launch(label) {
-  const context = await chromium.launchPersistentContext(`/tmp/pmks-focused-${label}-${Date.now()}`, {
-    executablePath: chromePath,
-    headless: !process.env.PMKS_HEADED,
-    viewport: { width: 1440, height: 1000 },
-    deviceScaleFactor: 1,
-    acceptDownloads: true,
-    args: ['--no-first-run', '--no-default-browser-check', '--disable-crash-reporter'],
-  });
-  const page = context.pages()[0] || await context.newPage();
+  const context = await chromium.launchPersistentContext(
+    `/tmp/pmks-focused-${label}-${Date.now()}`,
+    {
+      executablePath: chromePath,
+      headless: !process.env.PMKS_HEADED,
+      viewport: { width: 1440, height: 1000 },
+      deviceScaleFactor: 1,
+      acceptDownloads: true,
+      args: ['--no-first-run', '--no-default-browser-check', '--disable-crash-reporter'],
+    }
+  );
+  const page = context.pages()[0] || (await context.newPage());
   page.setDefaultTimeout(8000);
   page.on('console', (msg) => {
     const text = msg.text();
     events.push({ action: 'console', label, type: msg.type(), text });
-    if (['error', 'warning'].includes(msg.type()) && !/Angular is running in development mode|favicon|google-analytics/i.test(text)) {
-      issue(`Console ${msg.type()}: ${text.slice(0, 180)}`, { severity: msg.type() === 'error' ? 'medium' : 'low', label });
+    if (
+      ['error', 'warning'].includes(msg.type()) &&
+      !/Angular is running in development mode|favicon|google-analytics/i.test(text)
+    ) {
+      issue(`Console ${msg.type()}: ${text.slice(0, 180)}`, {
+        severity: msg.type() === 'error' ? 'medium' : 'low',
+        label,
+      });
     }
   });
-  page.on('pageerror', (error) => issue('Uncaught page error', { severity: 'high', label, error: error.stack || error.message }));
+  page.on('pageerror', (error) =>
+    issue('Uncaught page error', { severity: 'high', label, error: error.stack || error.message })
+  );
   return { context, page };
 }
 
@@ -54,8 +68,18 @@ async function shot(page, name) {
 }
 
 async function dismissIntro(page) {
-  if (await page.locator('.introjs-tooltip, .introjs-overlay').first().isVisible().catch(() => false)) {
-    await page.locator('.introjs-skipbutton').first().click({ force: true }).catch(async () => page.keyboard.press('Escape'));
+  if (
+    await page
+      .locator('.introjs-tooltip, .introjs-overlay')
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
+    await page
+      .locator('.introjs-skipbutton')
+      .first()
+      .click({ force: true })
+      .catch(async () => page.keyboard.press('Escape'));
     await page.waitForTimeout(350);
   }
 }
@@ -74,11 +98,15 @@ async function openAnalyze(page) {
 }
 
 async function menuItems(page) {
-  return await page.locator('#contextMenu #menu-item').evaluateAll((els) => els.filter((el) => {
-    const r = el.getBoundingClientRect();
-    const s = getComputedStyle(el);
-    return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
-  }).map((el) => el.innerText.trim()));
+  return await page.locator('#contextMenu #menu-item').evaluateAll((els) =>
+    els
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        const s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none';
+      })
+      .map((el) => el.innerText.trim())
+  );
 }
 
 async function snap(page, label) {
@@ -89,22 +117,44 @@ async function snap(page, label) {
     };
     const rect = (el) => {
       const r = el.getBoundingClientRect();
-      return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      return {
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+      };
     };
     return {
       label: snapshotLabel,
       url: location.href,
       text: document.body.innerText.slice(0, 2000),
-      links: [...document.querySelectorAll('#linkHolder path')].filter(visible).map((el) => ({ id: el.id, rect: rect(el), cls: el.getAttribute('class') || '' })),
-      joints: [...document.querySelectorAll('#jointHolder svg')].filter(visible).map((el) => ({ rect: rect(el) })),
-      forces: [...document.querySelectorAll('#forcesHolder')].filter(visible).map((el) => ({ rect: rect(el), text: el.outerHTML.slice(0, 250) })),
+      links: [...document.querySelectorAll('#linkHolder path')]
+        .filter(visible)
+        .map((el) => ({ id: el.id, rect: rect(el), cls: el.getAttribute('class') || '' })),
+      joints: [...document.querySelectorAll('#jointHolder svg')]
+        .filter(visible)
+        .map((el) => ({ rect: rect(el) })),
+      forces: [...document.querySelectorAll('#forcesHolder')]
+        .filter(visible)
+        .map((el) => ({ rect: rect(el), text: el.outerHTML.slice(0, 250) })),
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
     };
   }, label);
   snapshots.push(s);
-  if (/NaN/.test(s.text)) issue('Visible NaN in UI', { severity: 'medium', label, excerpt: s.text.match(/.{0,30}NaN.{0,60}/)?.[0] });
-  if (s.scrollWidth > s.clientWidth + 2) issue('Horizontal overflow', { severity: s.clientWidth < 600 ? 'high' : 'medium', label, scrollWidth: s.scrollWidth, clientWidth: s.clientWidth });
+  if (/NaN/.test(s.text))
+    issue('Visible NaN in UI', {
+      severity: 'medium',
+      label,
+      excerpt: s.text.match(/.{0,30}NaN.{0,60}/)?.[0],
+    });
+  if (s.scrollWidth > s.clientWidth + 2)
+    issue('Horizontal overflow', {
+      severity: s.clientWidth < 600 ? 'high' : 'medium',
+      label,
+      scrollWidth: s.scrollWidth,
+      clientWidth: s.clientWidth,
+    });
   return s;
 }
 
@@ -115,10 +165,16 @@ async function runCase(name, fn) {
     await fn(page, context);
     events.push({ action: 'case-ok', name });
   } catch (error) {
-    issue(`Case failed: ${name}`, { severity: 'high', error: error?.stack || error?.message || String(error) });
+    issue(`Case failed: ${name}`, {
+      severity: 'high',
+      error: error?.stack || error?.message || String(error),
+    });
     events.push({ action: 'case-failed', name });
   } finally {
-    await fs.writeFile(path.join(screenshotDir, `${runPrefix}-workflow-report.json`), JSON.stringify({ baseUrl, issues, events, snapshots }, null, 2));
+    await fs.writeFile(
+      path.join(screenshotDir, `${runPrefix}-workflow-report.json`),
+      JSON.stringify({ baseUrl, issues, events, snapshots }, null, 2)
+    );
     await context.close().catch(() => {});
   }
 }
@@ -139,7 +195,10 @@ await runCase('link-context', async (page) => {
   const items = await menuItems(page);
   events.push({ action: 'element-right-click', target: 'first link path', items });
   if (!items.includes('Delete Link') || !items.includes('Attach Link')) {
-    issue('Right-clicking a visible link path did not show link context menu', { severity: 'high', items });
+    issue('Right-clicking a visible link path did not show link context menu', {
+      severity: 'high',
+      items,
+    });
   }
   await shot(page, 'link-context-menu.png');
 });
@@ -160,7 +219,8 @@ await runCase('force-load-context-drag', async (page) => {
   const items = await menuItems(page);
   events.push({ action: 'element-right-click', target: 'force group', items });
   for (const expected of ['Delete Force', 'Make Force Local', 'Switch Force Direction']) {
-    if (!items.includes(expected)) issue(`Force context menu missing ${expected}`, { severity: 'medium', items });
+    if (!items.includes(expected))
+      issue(`Force context menu missing ${expected}`, { severity: 'medium', items });
   }
   await page.keyboard.press('Escape');
   const box = await force.boundingBox();
@@ -174,14 +234,19 @@ await runCase('force-load-context-drag', async (page) => {
 });
 
 await runCase('pan-zoom-slider', async (page) => {
-  await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, {
+    waitUntil: 'networkidle',
+    timeout: 60000,
+  });
   await dismissIntro(page);
   await page.waitForTimeout(700);
   await shot(page, 'panzoom-loaded.png');
   const canvas = await page.locator('#canvas').boundingBox();
   await page.mouse.move(canvas.x + canvas.width * 0.7, canvas.y + canvas.height * 0.45);
   await page.mouse.down();
-  await page.mouse.move(canvas.x + canvas.width * 0.78, canvas.y + canvas.height * 0.55, { steps: 12 });
+  await page.mouse.move(canvas.x + canvas.width * 0.78, canvas.y + canvas.height * 0.55, {
+    steps: 12,
+  });
   await page.mouse.up();
   await page.mouse.wheel(0, -500);
   await page.waitForTimeout(500);
@@ -200,7 +265,12 @@ await runCase('pan-zoom-slider', async (page) => {
   await page.waitForTimeout(400);
   const afterValue = await slider.inputValue().catch(() => null);
   events.push({ action: 'slider-drag', beforeValue, afterValue });
-  if (beforeValue === afterValue) issue('Animation slider drag did not change slider value', { severity: 'medium', beforeValue, afterValue });
+  if (beforeValue === afterValue)
+    issue('Animation slider drag did not change slider value', {
+      severity: 'medium',
+      beforeValue,
+      afterValue,
+    });
   await page.locator('.playbackControls .playButton').click();
   await page.waitForTimeout(1000);
   await shot(page, 'panzoom-slider-after.png');
@@ -228,17 +298,35 @@ await runCase('template-new-tab', async (page, context) => {
   await dismissIntro(newPage);
   await shot(newPage, 'template-new-tab.png');
   const s = await snap(newPage, 'template new tab');
-  if (!s.links.length) issue('Template new tab has no visible links', { severity: 'high', url: newPage.url() });
+  if (!s.links.length)
+    issue('Template new tab has no visible links', { severity: 'high', url: newPage.url() });
 });
 
 await runCase('mobile-layout', async (page) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, {
+    waitUntil: 'networkidle',
+    timeout: 60000,
+  });
   await dismissIntro(page);
   await page.waitForTimeout(800);
   await shot(page, 'mobile-slidercrank.png');
   await snap(page, 'mobile slider crank');
 });
 
-await fs.writeFile(path.join(screenshotDir, `${runPrefix}-workflow-report.json`), JSON.stringify({ baseUrl, issues, events, snapshots }, null, 2));
-console.log(JSON.stringify({ baseUrl, issueCount: issues.length, issues, screenshots: (await fs.readdir(screenshotDir)).filter((f) => f.startsWith(`${runPrefix}-`)) }, null, 2));
+await fs.writeFile(
+  path.join(screenshotDir, `${runPrefix}-workflow-report.json`),
+  JSON.stringify({ baseUrl, issues, events, snapshots }, null, 2)
+);
+console.log(
+  JSON.stringify(
+    {
+      baseUrl,
+      issueCount: issues.length,
+      issues,
+      screenshots: (await fs.readdir(screenshotDir)).filter((f) => f.startsWith(`${runPrefix}-`)),
+    },
+    null,
+    2
+  )
+);

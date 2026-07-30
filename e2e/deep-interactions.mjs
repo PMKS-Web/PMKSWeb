@@ -1,4 +1,6 @@
-const { chromium } = await import((process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs');
+const { chromium } = await import(
+  (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
+);
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -7,7 +9,8 @@ await fs.mkdir(screenshotDir, { recursive: true });
 
 const baseUrl = process.env.PMKS_URL || 'http://127.0.0.1:4200/';
 const runPrefix = process.env.RUN_PREFIX || 'deep';
-const chromePath = process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const chromePath =
+  process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const userDataDir = `/tmp/pmks-deep-profile-${Date.now()}`;
 
 const mechanisms = {
@@ -40,8 +43,18 @@ async function shot(page, name) {
 }
 
 async function dismissIntro(page) {
-  if (await page.locator('.introjs-tooltip, .introjs-overlay').first().isVisible().catch(() => false)) {
-    await page.locator('.introjs-skipbutton').first().click({ force: true }).catch(async () => page.keyboard.press('Escape'));
+  if (
+    await page
+      .locator('.introjs-tooltip, .introjs-overlay')
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
+    await page
+      .locator('.introjs-skipbutton')
+      .first()
+      .click({ force: true })
+      .catch(async () => page.keyboard.press('Escape'));
     await page.waitForTimeout(350);
     events.push({ action: 'dismiss-intro' });
   }
@@ -57,7 +70,12 @@ async function snapshot(page, label) {
     };
     const rectOf = (el) => {
       const r = el.getBoundingClientRect();
-      return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+      return {
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+      };
     };
     return {
       label: name,
@@ -66,21 +84,51 @@ async function snapshot(page, label) {
       dof: (text.match(/Degrees of Freedom:\s*([^\n]+)/i) || [])[1],
       bodyScrollWidth: document.documentElement.scrollWidth,
       bodyClientWidth: document.documentElement.clientWidth,
-      contextMenuItems: [...document.querySelectorAll('#contextMenu #menu-item')].filter(visible).map((el) => el.innerText.trim()),
-      selectedPanelTitle: [...document.querySelectorAll('h1,h2,h3,.title,.label')].filter(visible).map((el) => el.textContent?.trim()).filter(Boolean).slice(0, 20),
-      links: [...document.querySelectorAll('#linkHolder path')].filter(visible).map((el) => ({ id: el.id, cls: String(el.getAttribute('class') || ''), rect: rectOf(el) })).slice(0, 30),
-      joints: [...document.querySelectorAll('#jointHolder svg')].filter(visible).map((el) => ({ rect: rectOf(el), html: el.outerHTML.slice(0, 160) })).slice(0, 30),
-      forces: [...document.querySelectorAll('#forcesHolder')].filter(visible).map((el) => ({ rect: rectOf(el), id: el.querySelector('[id]')?.id || '' })).slice(0, 10),
-      tooltips: [...document.querySelectorAll('.mat-mdc-tooltip, .mdc-tooltip, [role="tooltip"]')].filter(visible).map((el) => el.textContent?.trim()),
-      modals: [...document.querySelectorAll('.mat-mdc-dialog-container')].filter(visible).map((el) => el.innerText.slice(0, 500)),
+      contextMenuItems: [...document.querySelectorAll('#contextMenu #menu-item')]
+        .filter(visible)
+        .map((el) => el.innerText.trim()),
+      selectedPanelTitle: [...document.querySelectorAll('h1,h2,h3,.title,.label')]
+        .filter(visible)
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean)
+        .slice(0, 20),
+      links: [...document.querySelectorAll('#linkHolder path')]
+        .filter(visible)
+        .map((el) => ({ id: el.id, cls: String(el.getAttribute('class') || ''), rect: rectOf(el) }))
+        .slice(0, 30),
+      joints: [...document.querySelectorAll('#jointHolder svg')]
+        .filter(visible)
+        .map((el) => ({ rect: rectOf(el), html: el.outerHTML.slice(0, 160) }))
+        .slice(0, 30),
+      forces: [...document.querySelectorAll('#forcesHolder')]
+        .filter(visible)
+        .map((el) => ({ rect: rectOf(el), id: el.querySelector('[id]')?.id || '' }))
+        .slice(0, 10),
+      tooltips: [...document.querySelectorAll('.mat-mdc-tooltip, .mdc-tooltip, [role="tooltip"]')]
+        .filter(visible)
+        .map((el) => el.textContent?.trim()),
+      modals: [...document.querySelectorAll('.mat-mdc-dialog-container')]
+        .filter(visible)
+        .map((el) => el.innerText.slice(0, 500)),
     };
   }, label);
 }
 
 async function checkCommon(page, label) {
   const s = await snapshot(page, label);
-  if (/NaN/.test(s.text)) issue('Visible NaN in UI', { severity: 'medium', label, excerpt: s.text.match(/.{0,30}NaN.{0,60}/)?.[0] });
-  if (s.bodyScrollWidth > s.bodyClientWidth + 2) issue('Horizontal overflow', { severity: s.bodyClientWidth < 600 ? 'high' : 'medium', label, scrollWidth: s.bodyScrollWidth, clientWidth: s.bodyClientWidth });
+  if (/NaN/.test(s.text))
+    issue('Visible NaN in UI', {
+      severity: 'medium',
+      label,
+      excerpt: s.text.match(/.{0,30}NaN.{0,60}/)?.[0],
+    });
+  if (s.bodyScrollWidth > s.bodyClientWidth + 2)
+    issue('Horizontal overflow', {
+      severity: s.bodyClientWidth < 600 ? 'high' : 'medium',
+      label,
+      scrollWidth: s.bodyScrollWidth,
+      clientWidth: s.bodyClientWidth,
+    });
   return s;
 }
 
@@ -92,14 +140,20 @@ async function safe(name, fn) {
     await flushReport();
     return result;
   } catch (error) {
-    issue(`Step failed: ${name}`, { severity: 'high', error: error?.stack || error?.message || String(error) });
+    issue(`Step failed: ${name}`, {
+      severity: 'high',
+      error: error?.stack || error?.message || String(error),
+    });
     events.push({ action: 'step-failed', name });
     await flushReport().catch(() => {});
   }
 }
 
 async function flushReport() {
-  await fs.writeFile(path.join(screenshotDir, `${runPrefix}-workflow-report.json`), JSON.stringify({ baseUrl, userDataDir, issues, events, snapshots }, null, 2));
+  await fs.writeFile(
+    path.join(screenshotDir, `${runPrefix}-workflow-report.json`),
+    JSON.stringify({ baseUrl, userDataDir, issues, events, snapshots }, null, 2)
+  );
 }
 
 async function canvasBox(page) {
@@ -111,10 +165,14 @@ async function canvasBox(page) {
 async function rightClickAt(page, x, y, label) {
   await page.mouse.click(x, y, { button: 'right' });
   await page.waitForTimeout(350);
-  const items = await page.locator('#contextMenu #menu-item').evaluateAll((els) => els.filter((el) => {
-    const r = el.getBoundingClientRect();
-    return r.width && r.height;
-  }).map((el) => el.innerText.trim()));
+  const items = await page.locator('#contextMenu #menu-item').evaluateAll((els) =>
+    els
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width && r.height;
+      })
+      .map((el) => el.innerText.trim())
+  );
   events.push({ action: 'right-click', label, x: Math.round(x), y: Math.round(y), items });
   return items;
 }
@@ -151,20 +209,30 @@ const context = await chromium.launchPersistentContext(userDataDir, {
   args: ['--no-first-run', '--no-default-browser-check', '--disable-crash-reporter'],
 });
 
-const page = context.pages()[0] || await context.newPage();
+const page = context.pages()[0] || (await context.newPage());
 page.setDefaultTimeout(8000);
 
 page.on('console', (msg) => {
   const text = msg.text();
   events.push({ action: 'console', type: msg.type(), text });
-  if (['error', 'warning'].includes(msg.type()) && !/Angular is running in development mode|favicon|google-analytics/i.test(text)) {
-    issue(`Console ${msg.type()}: ${text.slice(0, 180)}`, { severity: msg.type() === 'error' ? 'medium' : 'low' });
+  if (
+    ['error', 'warning'].includes(msg.type()) &&
+    !/Angular is running in development mode|favicon|google-analytics/i.test(text)
+  ) {
+    issue(`Console ${msg.type()}: ${text.slice(0, 180)}`, {
+      severity: msg.type() === 'error' ? 'medium' : 'low',
+    });
   }
 });
-page.on('pageerror', (error) => issue('Uncaught page error', { severity: 'high', error: error.stack || error.message }));
+page.on('pageerror', (error) =>
+  issue('Uncaught page error', { severity: 'high', error: error.stack || error.message })
+);
 page.on('requestfailed', (request) => {
   if (!/google-analytics|google\.com\/g\/collect/.test(request.url())) {
-    issue(`Request failed: ${request.url()}`, { severity: 'medium', failure: request.failure()?.errorText });
+    issue(`Request failed: ${request.url()}`, {
+      severity: 'medium',
+      failure: request.failure()?.errorText,
+    });
   }
 });
 
@@ -175,7 +243,8 @@ await safe('empty grid right-click creates link', async () => {
   const x1 = box.x + box.width * 0.45;
   const y1 = box.y + box.height * 0.48;
   const items = await rightClickAt(page, x1, y1, 'empty grid');
-  if (!items.includes('Add Link')) issue('Grid context menu missing Add Link', { severity: 'high', items });
+  if (!items.includes('Add Link'))
+    issue('Grid context menu missing Add Link', { severity: 'high', items });
   await page.locator('#contextMenu #menu-item', { hasText: 'Add Link' }).click();
   await page.waitForTimeout(300);
   await page.mouse.move(x1 + 170, y1 + 70);
@@ -185,7 +254,12 @@ await safe('empty grid right-click creates link', async () => {
   await page.waitForTimeout(800);
   const s = await checkCommon(page, 'after grid add link');
   snapshots.push(s);
-  if (s.links.length < 1 || s.joints.length < 2) issue('Add Link did not create a visible link with two joints', { severity: 'high', links: s.links.length, joints: s.joints.length });
+  if (s.links.length < 1 || s.joints.length < 2)
+    issue('Add Link did not create a visible link with two joints', {
+      severity: 'high',
+      links: s.links.length,
+      joints: s.joints.length,
+    });
   await shot(page, 'grid-add-link-created.png');
 });
 
@@ -198,7 +272,8 @@ await safe('joint right-click, hover tooltip, drag joint', async () => {
   snapshots.push(hover);
   const items = await rightClickAt(page, before.x, before.y, 'created joint');
   for (const expected of ['Delete Joint', 'Attach Link', 'Add Ground', 'Add Slider']) {
-    if (!items.includes(expected)) issue(`Joint context menu missing ${expected}`, { severity: 'medium', items });
+    if (!items.includes(expected))
+      issue(`Joint context menu missing ${expected}`, { severity: 'medium', items });
   }
   await page.keyboard.press('Escape');
   await page.mouse.move(before.x, before.y);
@@ -210,7 +285,8 @@ await safe('joint right-click, hover tooltip, drag joint', async () => {
   await page.waitForTimeout(700);
   const after = await firstJointCenter(page, 1);
   events.push({ action: 'drag-joint', before, after });
-  if (Math.abs(after.x - before.x) < 20 && Math.abs(after.y - before.y) < 20) issue('Joint drag did not visibly move selected joint', { severity: 'high', before, after });
+  if (Math.abs(after.x - before.x) < 20 && Math.abs(after.y - before.y) < 20)
+    issue('Joint drag did not visibly move selected joint', { severity: 'high', before, after });
   await shot(page, 'joint-drag-after.png');
 });
 
@@ -218,14 +294,18 @@ await safe('load and stress built-in mechanism types', async () => {
   for (const [name, query] of Object.entries(mechanisms)) {
     const s = await loadMechanism(page, name, query);
     snapshots.push(s);
-    if (!s.links.length || !s.joints.length) issue(`Mechanism ${name} loaded with no visible links/joints`, { severity: 'high' });
+    if (!s.links.length || !s.joints.length)
+      issue(`Mechanism ${name} loaded with no visible links/joints`, { severity: 'high' });
     const link = await firstLinkCenter(page).catch(() => null);
-    const joint = await firstJointCenter(page, Math.min(2, Math.max(0, s.joints.length - 1))).catch(() => null);
+    const joint = await firstJointCenter(page, Math.min(2, Math.max(0, s.joints.length - 1))).catch(
+      () => null
+    );
     if (link) {
       await page.mouse.move(link.x, link.y);
       await page.waitForTimeout(300);
       const linkItems = await rightClickAt(page, link.x, link.y, `${name} link ${link.id}`);
-      if (!linkItems.includes('Delete Link') || !linkItems.includes('Attach Link')) issue(`Link context menu incomplete for ${name}`, { severity: 'medium', items: linkItems });
+      if (!linkItems.includes('Delete Link') || !linkItems.includes('Attach Link'))
+        issue(`Link context menu incomplete for ${name}`, { severity: 'medium', items: linkItems });
       await page.keyboard.press('Escape');
     }
     if (joint) {
@@ -252,7 +332,8 @@ await safe('force mechanism force context and force drag', async () => {
   const y = f.rect.y + f.rect.h / 2;
   const items = await rightClickAt(page, x, y, 'force');
   for (const expected of ['Delete Force', 'Make Force Local', 'Switch Force Direction']) {
-    if (!items.includes(expected)) issue(`Force context menu missing ${expected}`, { severity: 'medium', items });
+    if (!items.includes(expected))
+      issue(`Force context menu missing ${expected}`, { severity: 'medium', items });
   }
   await page.keyboard.press('Escape');
   await page.mouse.move(x, y);
@@ -275,8 +356,14 @@ await safe('pan, wheel zoom, buttons, and animation slider', async () => {
   await page.mouse.wheel(0, -450);
   await page.waitForTimeout(500);
   await shot(page, 'pan-wheel-zoom.png');
-  await page.locator('button:has-text("zoom_in")').click().catch(() => {});
-  await page.locator('button:has-text("zoom_out")').click().catch(() => {});
+  await page
+    .locator('button:has-text("zoom_in")')
+    .click()
+    .catch(() => {});
+  await page
+    .locator('button:has-text("zoom_out")')
+    .click()
+    .catch(() => {});
   const slider = page.locator('#slider');
   if (await slider.isVisible().catch(() => false)) {
     const r = await slider.boundingBox();
@@ -287,7 +374,10 @@ await safe('pan, wheel zoom, buttons, and animation slider', async () => {
   } else {
     issue('Animation slider not visible', { severity: 'medium' });
   }
-  await page.locator('button:has-text("play_arrow")').click().catch(() => issue('Play button click failed', { severity: 'medium' }));
+  await page
+    .locator('button:has-text("play_arrow")')
+    .click()
+    .catch(() => issue('Play button click failed', { severity: 'medium' }));
   await page.waitForTimeout(900);
   await shot(page, 'animation-slider-after.png');
   const after = await checkCommon(page, 'after pan zoom animation');
@@ -315,7 +405,11 @@ await safe('template hover and new-tab behavior', async () => {
     await shot(newPage, 'template-new-tab-loaded.png');
     const s = await checkCommon(newPage, 'template new tab');
     snapshots.push(s);
-    if (!s.links.length) issue('Template new tab loaded without visible mechanism links', { severity: 'high', url: newPage.url() });
+    if (!s.links.length)
+      issue('Template new tab loaded without visible mechanism links', {
+        severity: 'high',
+        url: newPage.url(),
+      });
   }
 });
 
@@ -329,4 +423,16 @@ await safe('mobile deep layout', async () => {
 await flushReport();
 await context.close().catch(() => {});
 
-console.log(JSON.stringify({ baseUrl, userDataDir, issueCount: issues.length, issues, screenshots: (await fs.readdir(screenshotDir)).filter((f) => f.startsWith(`${runPrefix}-`)) }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      baseUrl,
+      userDataDir,
+      issueCount: issues.length,
+      issues,
+      screenshots: (await fs.readdir(screenshotDir)).filter((f) => f.startsWith(`${runPrefix}-`)),
+    },
+    null,
+    2
+  )
+);

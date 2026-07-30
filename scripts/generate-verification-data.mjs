@@ -14,10 +14,7 @@ import { fileURLToPath } from 'node:url';
 const SOURCE_REPOSITORY = 'https://github.com/PMKS-Web/PMKS_Verification';
 const SOURCE_COMMIT = '932951a5316b16bfa41b937b04592c974143c4bb';
 const V1_ROOT = path.join('reference-data', 'v1');
-const TRUSTED_KINEMATICS = new Set([
-  'matlab-pmks-fork',
-  'matlab-pmks-fork-motiongen',
-]);
+const TRUSTED_KINEMATICS = new Set(['matlab-pmks-fork', 'matlab-pmks-fork-motiongen']);
 const TRUSTED_DYNAMICS = 'newton-euler-consistency';
 const ALLOWED_TRUST = new Set([
   ...TRUSTED_KINEMATICS,
@@ -133,10 +130,7 @@ function readCsv(rel, columns) {
   if (rel.includes('CSVOutput') || rel.includes(`${path.sep}legacy${path.sep}`)) {
     throw new Error(`Legacy verification path rejected: ${rel}`);
   }
-  const lines = fs
-    .readFileSync(path.join(repo, rel), 'utf8')
-    .trim()
-    .split(/\r?\n/);
+  const lines = fs.readFileSync(path.join(repo, rel), 'utf8').trim().split(/\r?\n/);
   const header = lines.shift()?.split(',') ?? [];
   if (header.length !== columns.length || header.some((value, index) => value !== columns[index])) {
     throw new Error(`${rel}: expected columns ${columns.join(',')}, received ${header.join(',')}`);
@@ -235,12 +229,7 @@ function readLinkSeries(caseRoot, ids, samples) {
   const angularAcceleration = {};
   for (const id of ids) {
     const rel = path.join(caseRoot, 'matlab', 'links', `${id}.csv`);
-    const rows = readCsv(rel, [
-      'sample_id',
-      'theta_delta_rad',
-      'omega_rad_s',
-      'alpha_rad_s2',
-    ]);
+    const rows = readCsv(rel, ['sample_id', 'theta_delta_rad', 'omega_rad_s', 'alpha_rad_s2']);
     assertSampleIds(rows, samples, rel);
     angularVelocity[id] = rows.map((row, index) =>
       finiteNumber(row.omega_rad_s, `${rel}:${index + 2}:omega_rad_s`)
@@ -263,13 +252,7 @@ function readDynamics(caseRoot, scenario, jointIds, samples) {
       finiteNumber(row.fy, `${rel}:${index + 2}:fy`),
     ]);
   }
-  const torqueRel = path.join(
-    caseRoot,
-    'matlab',
-    'dynamics',
-    scenario,
-    'input_torque.csv'
-  );
+  const torqueRel = path.join(caseRoot, 'matlab', 'dynamics', scenario, 'input_torque.csv');
   const torqueRows = readCsv(torqueRel, ['sample_id', 'torque_nm']);
   assertSampleIds(torqueRows, samples, torqueRel);
   return {

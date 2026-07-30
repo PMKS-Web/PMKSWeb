@@ -1,14 +1,18 @@
-const { chromium } = await import((process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs');
+const { chromium } = await import(
+  (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
+);
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const screenshotDir = path.resolve('artifacts/screenshots');
 await fs.mkdir(screenshotDir, { recursive: true });
 
-const chromePath = process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const chromePath =
+  process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const userDataDir = `/tmp/pmks-playwright-profile-${Date.now()}`;
 const baseUrl = process.env.PMKS_URL || 'http://127.0.0.1:4200/';
-const verificationQuery = '0P.SS.K,0.101.MA,A,0wS,0bg,0.GB,B,0gW,EE,0.GC,C,Oi,6k,0.GD,D,03m,_g,0.GE,E,1FO,1I_,0.GF,F,1-C,qM,0.KG,G,1oO,0ss,0..YRAB,AB,Fe,Fe,0oU,0Bk,c5cae9,A,B,,.YRBCD,BCD,Fe,Fe,07C,Rt,303e9f,B,C,D,,.YRDE,DE,Fe,Fe,bq,18q,0d125a,D,E,,.YREF,EF,Fe,Fe,1dI,13g,B2DFDB,E,F,,.YRFCG,FCG,Fe,Fe,1Om,1Q,26A69A,F,C,G,,...JGp';
+const verificationQuery =
+  '0P.SS.K,0.101.MA,A,0wS,0bg,0.GB,B,0gW,EE,0.GC,C,Oi,6k,0.GD,D,03m,_g,0.GE,E,1FO,1I_,0.GF,F,1-C,qM,0.KG,G,1oO,0ss,0..YRAB,AB,Fe,Fe,0oU,0Bk,c5cae9,A,B,,.YRBCD,BCD,Fe,Fe,07C,Rt,303e9f,B,C,D,,.YRDE,DE,Fe,Fe,bq,18q,0d125a,D,E,,.YREF,EF,Fe,Fe,1dI,13g,B2DFDB,E,F,,.YRFCG,FCG,Fe,Fe,1Om,1Q,26A69A,F,C,G,,...JGp';
 const runPrefix = process.env.RUN_PREFIX || 'tour';
 const issues = [];
 const events = [];
@@ -28,7 +32,12 @@ async function appSnapshot(page, label) {
     const visible = (el) => {
       const rect = el.getBoundingClientRect();
       const style = getComputedStyle(el);
-      return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+      return (
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.visibility !== 'hidden' &&
+        style.display !== 'none'
+      );
     };
     return {
       label: snapshotLabel,
@@ -48,7 +57,12 @@ async function appSnapshot(page, label) {
           className: String(el.className).slice(0, 180),
           rect: (() => {
             const r = el.getBoundingClientRect();
-            return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+            return {
+              x: Math.round(r.x),
+              y: Math.round(r.y),
+              w: Math.round(r.width),
+              h: Math.round(r.height),
+            };
           })(),
         })),
       inputs: [...document.querySelectorAll('input, textarea, select')]
@@ -66,7 +80,17 @@ async function appSnapshot(page, label) {
         })),
       svgs: [...document.querySelectorAll('svg')].slice(0, 30).map((el, i) => {
         const r = el.getBoundingClientRect();
-        return { i, id: el.id, className: String(el.className).slice(0, 120), rect: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } };
+        return {
+          i,
+          id: el.id,
+          className: String(el.className).slice(0, 120),
+          rect: {
+            x: Math.round(r.x),
+            y: Math.round(r.y),
+            w: Math.round(r.width),
+            h: Math.round(r.height),
+          },
+        };
       }),
     };
   }, label);
@@ -91,7 +115,9 @@ async function clickFirst(page, candidates, label) {
 async function dismissIntro(page) {
   const intro = page.locator('.introjs-tooltip, .introjs-overlay').first();
   if (await intro.isVisible().catch(() => false)) {
-    const closeButton = page.locator('.introjs-skipbutton, .introjs-tooltipbuttons [role=button]').first();
+    const closeButton = page
+      .locator('.introjs-skipbutton, .introjs-tooltipbuttons [role=button]')
+      .first();
     if (await closeButton.isVisible().catch(() => false)) {
       await closeButton.click({ force: true });
     } else {
@@ -113,22 +139,29 @@ async function clickByText(page, re, label) {
 }
 
 async function clickToolbar(page, labelText) {
-  return await clickFirst(page, [
-    `button:has-text("${labelText}")`,
-    `[role=button]:has-text("${labelText}")`,
-    `text="${labelText}"`,
-  ], labelText);
+  return await clickFirst(
+    page,
+    [
+      `button:has-text("${labelText}")`,
+      `[role=button]:has-text("${labelText}")`,
+      `text="${labelText}"`,
+    ],
+    labelText
+  );
 }
 
 async function checkLayout(page, label) {
-  const state = await page.evaluate((snapshotLabel) => ({
-    label: snapshotLabel,
-    text: document.body.innerText,
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-    innerWidth,
-    visibleModal: !!document.querySelector('.mat-mdc-dialog-container, .introjs-tooltip'),
-  }), label);
+  const state = await page.evaluate(
+    (snapshotLabel) => ({
+      label: snapshotLabel,
+      text: document.body.innerText,
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+      innerWidth,
+      visibleModal: !!document.querySelector('.mat-mdc-dialog-container, .introjs-tooltip'),
+    }),
+    label
+  );
   if (/Degrees of Freedom:\s*NaN/i.test(state.text)) {
     recordIssue('Degrees of Freedom displays NaN', { severity: 'medium', label });
   }
@@ -165,20 +198,30 @@ const context = await chromium.launchPersistentContext(userDataDir, {
   args: ['--no-first-run', '--no-default-browser-check', '--disable-crash-reporter'],
 });
 
-const page = context.pages()[0] || await context.newPage();
+const page = context.pages()[0] || (await context.newPage());
 page.setDefaultTimeout(8000);
 
 page.on('console', (msg) => {
   const text = msg.text();
   events.push({ action: 'console', type: msg.type(), text });
-  if (['error', 'warning'].includes(msg.type()) && !/favicon|Angular is running in development mode/i.test(text)) {
-    recordIssue(`Console ${msg.type()}: ${text.slice(0, 180)}`, { severity: msg.type() === 'error' ? 'medium' : 'low' });
+  if (
+    ['error', 'warning'].includes(msg.type()) &&
+    !/favicon|Angular is running in development mode/i.test(text)
+  ) {
+    recordIssue(`Console ${msg.type()}: ${text.slice(0, 180)}`, {
+      severity: msg.type() === 'error' ? 'medium' : 'low',
+    });
   }
 });
-page.on('pageerror', (error) => recordIssue('Uncaught page error', { severity: 'high', error: error.stack || error.message }));
+page.on('pageerror', (error) =>
+  recordIssue('Uncaught page error', { severity: 'high', error: error.stack || error.message })
+);
 page.on('requestfailed', (request) => {
   const failure = request.failure();
-  recordIssue(`Request failed: ${request.url()}`, { severity: 'medium', failure: failure?.errorText });
+  recordIssue(`Request failed: ${request.url()}`, {
+    severity: 'medium',
+    failure: failure?.errorText,
+  });
 });
 
 await safeStep('initial load', async () => {
@@ -198,16 +241,30 @@ await safeStep('open templates/library', async () => {
   await page.waitForTimeout(700);
   await shot(page, '02-template-or-library.png');
   snapshots.push(await appSnapshot(page, 'template/library'));
-  const firstTemplateOpen = page.locator('.mat-mdc-dialog-container button:has-text("Open")').first();
+  const firstTemplateOpen = page
+    .locator('.mat-mdc-dialog-container button:has-text("Open")')
+    .first();
   if (await firstTemplateOpen.isVisible().catch(() => false)) {
     await firstTemplateOpen.click();
-    events.push({ action: 'click', label: 'open first template', selector: '.mat-mdc-dialog-container button:has-text("Open")' });
+    events.push({
+      action: 'click',
+      label: 'open first template',
+      selector: '.mat-mdc-dialog-container button:has-text("Open")',
+    });
   } else {
-    recordIssue('Template library opened but no template Open button was visible', { severity: 'high' });
+    recordIssue('Template library opened but no template Open button was visible', {
+      severity: 'high',
+    });
   }
   await page.waitForTimeout(1000);
   await shot(page, '02b-template-opened.png');
-  if (await page.locator('.mat-mdc-dialog-container').first().isVisible().catch(() => false)) {
+  if (
+    await page
+      .locator('.mat-mdc-dialog-container')
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
     recordIssue('Template Open did not dismiss the Linkage Library modal', { severity: 'high' });
   }
   await checkLayout(page, 'template opened');
@@ -277,11 +334,11 @@ await safeStep('canvas interaction', async () => {
 });
 
 await safeStep('animation controls', async () => {
-  await clickFirst(page, [
-    'button:has-text("play_arrow")',
-    'button:has-text("pause")',
-    'button >> text=play_arrow',
-  ], 'play/pause');
+  await clickFirst(
+    page,
+    ['button:has-text("play_arrow")', 'button:has-text("pause")', 'button >> text=play_arrow'],
+    'play/pause'
+  );
   await page.waitForTimeout(1100);
   await shot(page, '07-animation-controls.png');
   snapshots.push(await appSnapshot(page, 'animation'));
@@ -297,8 +354,20 @@ await safeStep('mobile viewport smoke', async () => {
 
 await fs.writeFile(
   path.resolve(`artifacts/screenshots/${runPrefix}-workflow-report.json`),
-  JSON.stringify({ baseUrl, userDataDir, issues, events, snapshots }, null, 2),
+  JSON.stringify({ baseUrl, userDataDir, issues, events, snapshots }, null, 2)
 );
 
 await context.close();
-console.log(JSON.stringify({ baseUrl, userDataDir, issueCount: issues.length, issues, screenshots: await fs.readdir(screenshotDir) }, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      baseUrl,
+      userDataDir,
+      issueCount: issues.length,
+      issues,
+      screenshots: await fs.readdir(screenshotDir),
+    },
+    null,
+    2
+  )
+);

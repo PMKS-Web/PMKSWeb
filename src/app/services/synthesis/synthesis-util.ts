@@ -181,5 +181,9 @@ export class SynthesisPose {
 
 // cached graphics data for a pose to be displayed as an SVG
 export class PoseGraphicsData {
-  constructor(public pose: SynthesisPose, public pointA: Coord, public pointB: Coord) {}
+  constructor(
+    public pose: SynthesisPose,
+    public pointA: Coord,
+    public pointB: Coord
+  ) {}
 }

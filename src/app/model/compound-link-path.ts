@@ -14,10 +14,7 @@ const ARC_STEP = Math.PI / 24;
 const CORNER_THRESHOLD = Math.PI / 12;
 const EPSILON = 1e-9;
 
-export function buildCompoundPath(
-  leafPaths: string[],
-  filletRadius: number
-): CompoundPathGeometry {
+export function buildCompoundPath(leafPaths: string[], filletRadius: number): CompoundPathGeometry {
   try {
     const polygons = leafPaths.map((path) => [flattenPath(path)] as Polygon);
     if (polygons.length === 0) return { path: '', rings: [] };
@@ -211,9 +208,7 @@ function flattenArc(
   const halfY = (start[1] - end[1]) / 2;
   const transformedX = cos * halfX + sin * halfY;
   const transformedY = -sin * halfX + cos * halfY;
-  const scale = Math.sqrt(
-    transformedX ** 2 / radiusX ** 2 + transformedY ** 2 / radiusY ** 2
-  );
+  const scale = Math.sqrt(transformedX ** 2 / radiusX ** 2 + transformedY ** 2 / radiusY ** 2);
   if (scale > 1) {
     radiusX *= scale;
     radiusY *= scale;
@@ -225,8 +220,7 @@ function flattenArc(
       radiusX ** 2 * transformedY ** 2 -
       radiusY ** 2 * transformedX ** 2
   );
-  const denominator =
-    radiusX ** 2 * transformedY ** 2 + radiusY ** 2 * transformedX ** 2;
+  const denominator = radiusX ** 2 * transformedY ** 2 + radiusY ** 2 * transformedX ** 2;
   const direction = largeArc === sweep ? -1 : 1;
   const coefficient = direction * Math.sqrt(numerator / Math.max(denominator, EPSILON));
   const centerXPrime = coefficient * ((radiusX * transformedY) / radiusY);
@@ -274,11 +268,7 @@ function roundedRingPath(ring: Ring, filletRadius: number): string {
     const tangent =
       Math.abs(turn) < CORNER_THRESHOLD
         ? 0
-        : Math.min(
-            filletRadius * Math.tan(Math.abs(turn) / 2),
-            previousLength / 2,
-            nextLength / 2
-          );
+        : Math.min(filletRadius * Math.tan(Math.abs(turn) / 2), previousLength / 2, nextLength / 2);
     return {
       point,
       before: [point[0] - incoming[0] * tangent, point[1] - incoming[1] * tangent] as [

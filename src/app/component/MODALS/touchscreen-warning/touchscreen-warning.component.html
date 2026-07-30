@@ -1,4 +1,4 @@
-<div class='modal'>
+<div class="modal">
   <h1 mat-dialog-title>It looks like you are on a phone or tablet 📱</h1>
   <div mat-dialog-content>
     <ul>
@@ -6,12 +6,15 @@
       <li>❌ You cannot access the right click context menu to create new links.</li>
       <li>✨ All other features should work as expected.</li>
     </ul>
-    <p>️Better touchscreen support is being worked on. If you notice any issues or have ideas, please submit a bug
-      report
-      from the help panel on the top right!</p>
+    <p>
+      ️Better touchscreen support is being worked on. If you notice any issues or have ideas, please
+      submit a bug report from the help panel on the top right!
+    </p>
   </div>
-  <div mat-dialog-actions align='end'>
-    <button mat-button (click)='onDismissClick()'>Don't show again</button>
-    <button mat-raised-button cdkFocusInitial (click)='onNoClick()' color='primary'>Continue</button>
+  <div mat-dialog-actions align="end">
+    <button mat-button (click)="onDismissClick()">Don't show again</button>
+    <button mat-raised-button cdkFocusInitial (click)="onNoClick()" color="primary">
+      Continue
+    </button>
   </div>
 </div>

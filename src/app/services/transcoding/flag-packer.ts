@@ -1,4 +1,4 @@
-import { BaseNConverter } from "./base64-converter";
+import { BaseNConverter } from './base64-converter';
 
 /**
  * The FlagPacker class provides static utility methods for encoding and decoding
@@ -19,13 +19,12 @@ import { BaseNConverter } from "./base64-converter";
  * console.log("Unpacked flags:", unpackedFlags); // Output: [true, false, true, false, true]
  */
 export class FlagPacker {
-
   /**
    * Calculates the length of the encoded string for the given number of flags.
    * Takes into account the number of possible encoded characters (BaseNConverter.N).
    * For base64 encoding, each character can represent 6 bits of information.
    *
-  **/
+   **/
   static getEncodedLength(numFlags: number): number {
     return Math.ceil(numFlags / Math.log2(BaseNConverter.N));
   }

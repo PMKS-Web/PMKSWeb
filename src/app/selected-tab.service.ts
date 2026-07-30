@@ -9,14 +9,13 @@ import { SettingsService } from './services/settings.service';
 export enum TabID {
   SYNTHESIZE,
   EDIT,
-  ANALYZE
+  ANALYZE,
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SelectedTabService {
-
   private _tabNum: BehaviorSubject<TabID>;
   private _tabVisible: BehaviorSubject<boolean>;
 
@@ -31,12 +30,14 @@ export class SelectedTabService {
   }
 
   public setTab(tabID: TabID) {
-
     let previousTab = this.getCurrentTab();
     let isDifferentTab = previousTab !== tabID;
 
     // when switching from synthesis to edit/analyze tab, clear selected synthesis pose, if it exists
-    if (previousTab === TabID.SYNTHESIZE && this.activeObjService.getSelectedObjType() === "SynthesisPose") {
+    if (
+      previousTab === TabID.SYNTHESIZE &&
+      this.activeObjService.getSelectedObjType() === 'SynthesisPose'
+    ) {
       this.activeObjService.updateSelectedObj(null);
     }
 
@@ -44,7 +45,6 @@ export class SelectedTabService {
     this._tabVisible.next(true);
 
     if (isDifferentTab) this.onNewTab(previousTab);
-
   }
 
   public showTab() {
@@ -64,7 +64,6 @@ export class SelectedTabService {
   }
 
   private onNewTab(previousTab: TabID) {
-
     // Replaces the old stop button: leaving Analyze is what rewinds the
     // mechanism, so the other modes always act on the pose at time 0.
     if (previousTab === TabID.ANALYZE) {
@@ -73,18 +72,13 @@ export class SelectedTabService {
     }
 
     if (this.getCurrentTab() === TabID.SYNTHESIZE) {
-
       // reset flag
       this.synthesis.modifiedMechanism = false;
-    }
-    else if (previousTab === TabID.SYNTHESIZE && this.getCurrentTab() === TabID.EDIT) {
-
+    } else if (previousTab === TabID.SYNTHESIZE && this.getCurrentTab() === TabID.EDIT) {
       // save mechanism state if modified in synthesis tab
       this.mechanism.save();
       // reset flag
       this.synthesis.modifiedMechanism = false;
     }
-
   }
-
 }

@@ -56,9 +56,7 @@
             "tsConfig": "tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": ["src/mytheme.scss", "src/styles.scss"],
-            "scripts": [
-              "node_modules/apexcharts/dist/apexcharts.min.js",
-            ],
+            "scripts": ["node_modules/apexcharts/dist/apexcharts.min.js"],
             "browser": "src/main.ts",
             "stylePreprocessorOptions": {
               "includePaths": ["."]

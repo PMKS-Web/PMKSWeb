@@ -30,14 +30,14 @@ function expectStableCompoundPath(link: RealLink): void {
   expect(link.initialExternalLines.length).toBe(link.externalLines.length);
   expect(link.CoM).toEqual(centerBefore);
 
-  const compoundMinX = Math.min(...link.joints.map((joint) => joint.x)) -
-    SettingsService.objectScale / 2;
-  const compoundMaxX = Math.max(...link.joints.map((joint) => joint.x)) +
-    SettingsService.objectScale / 2;
-  const compoundMinY = Math.min(...link.joints.map((joint) => joint.y)) -
-    SettingsService.objectScale / 2;
-  const compoundMaxY = Math.max(...link.joints.map((joint) => joint.y)) +
-    SettingsService.objectScale / 2;
+  const compoundMinX =
+    Math.min(...link.joints.map((joint) => joint.x)) - SettingsService.objectScale / 2;
+  const compoundMaxX =
+    Math.max(...link.joints.map((joint) => joint.x)) + SettingsService.objectScale / 2;
+  const compoundMinY =
+    Math.min(...link.joints.map((joint) => joint.y)) - SettingsService.objectScale / 2;
+  const compoundMaxY =
+    Math.max(...link.joints.map((joint) => joint.y)) + SettingsService.objectScale / 2;
   for (const line of link.externalLines) {
     expectFiniteCoord(line.startPosition.x);
     expectFiniteCoord(line.startPosition.y);
@@ -57,14 +57,10 @@ function expectStableCompoundPath(link: RealLink): void {
     expect(leaf.d).toMatch(/^M /);
     expect(leaf.d).toMatch(/Z\s*$/);
     expect(leaf.d).not.toMatch(/NaN|Infinity/);
-    const minX = Math.min(...leaf.joints.map((joint) => joint.x)) -
-      SettingsService.objectScale / 2;
-    const maxX = Math.max(...leaf.joints.map((joint) => joint.x)) +
-      SettingsService.objectScale / 2;
-    const minY = Math.min(...leaf.joints.map((joint) => joint.y)) -
-      SettingsService.objectScale / 2;
-    const maxY = Math.max(...leaf.joints.map((joint) => joint.y)) +
-      SettingsService.objectScale / 2;
+    const minX = Math.min(...leaf.joints.map((joint) => joint.x)) - SettingsService.objectScale / 2;
+    const maxX = Math.max(...leaf.joints.map((joint) => joint.x)) + SettingsService.objectScale / 2;
+    const minY = Math.min(...leaf.joints.map((joint) => joint.y)) - SettingsService.objectScale / 2;
+    const maxY = Math.max(...leaf.joints.map((joint) => joint.y)) + SettingsService.objectScale / 2;
     for (const line of [...leaf.externalLines, ...leaf.initialExternalLines]) {
       expectFiniteCoord(line.startPosition.x);
       expectFiniteCoord(line.startPosition.y);
@@ -89,12 +85,14 @@ function expectStableCompoundPath(link: RealLink): void {
   ]);
   link.reComputeDPath();
   expect(link.d).toBe(firstPath);
-  expect(link.externalLines.map((line) => [
-    line.startPosition.x,
-    line.startPosition.y,
-    line.endPosition.x,
-    line.endPosition.y,
-  ])).toEqual(rootLineSnapshot);
+  expect(
+    link.externalLines.map((line) => [
+      line.startPosition.x,
+      line.startPosition.y,
+      line.endPosition.x,
+      line.endPosition.y,
+    ])
+  ).toEqual(rootLineSnapshot);
   expect(link.CoM).toEqual(centerBefore);
 }
 

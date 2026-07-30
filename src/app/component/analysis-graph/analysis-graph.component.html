@@ -1,63 +1,79 @@
 @if (analysisDiagnostic) {
   <div class="analysis-diagnostic" role="status">{{ analysisDiagnostic }}</div>
 } @else {
-@if (numberOfSeries === 3) {
-  <div id="graph-checkbox-list-three" [formGroup]="seriesCheckboxForm">
-    <mat-checkbox class="series-z" formControlName="z" (change)="applySeriesVisibility()"
-      >Magnitude</mat-checkbox
-    >
-    <mat-checkbox class="series-x" formControlName="x" color="primary" (change)="applySeriesVisibility()"
-      >X-Comp</mat-checkbox
-    >
-    <mat-checkbox class="series-y" formControlName="y" color="warn" (change)="applySeriesVisibility()"
-      >Y-Comp</mat-checkbox
-    >
+  @if (numberOfSeries === 3) {
+    <div id="graph-checkbox-list-three" [formGroup]="seriesCheckboxForm">
+      <mat-checkbox class="series-z" formControlName="z" (change)="applySeriesVisibility()"
+        >Magnitude</mat-checkbox
+      >
+      <mat-checkbox
+        class="series-x"
+        formControlName="x"
+        color="primary"
+        (change)="applySeriesVisibility()"
+        >X-Comp</mat-checkbox
+      >
+      <mat-checkbox
+        class="series-y"
+        formControlName="y"
+        color="warn"
+        (change)="applySeriesVisibility()"
+        >Y-Comp</mat-checkbox
+      >
+    </div>
+  }
+  @if (numberOfSeries === 2) {
+    <div id="graph-checkbox-list-two" [formGroup]="seriesCheckboxForm">
+      <mat-checkbox
+        class="series-x"
+        formControlName="x"
+        color="primary"
+        (change)="applySeriesVisibility()"
+        >X-Comp</mat-checkbox
+      >
+      <mat-checkbox
+        class="series-y"
+        formControlName="y"
+        color="warn"
+        (change)="applySeriesVisibility()"
+        >Y-Comp</mat-checkbox
+      >
+    </div>
+  }
+  <div
+    [@showHide]="noDataSelected ? 'graphHidden' : 'graphShown'"
+    [class.compact-single-series]="compactSingleSeries"
+    id="graphHide"
+  >
+    Please select at least one data series.
   </div>
-}
-@if (numberOfSeries === 2) {
-  <div id="graph-checkbox-list-two" [formGroup]="seriesCheckboxForm">
-    <mat-checkbox class="series-x" formControlName="x" color="primary" (change)="applySeriesVisibility()"
-      >X-Comp</mat-checkbox
-    >
-    <mat-checkbox class="series-y" formControlName="y" color="warn" (change)="applySeriesVisibility()"
-      >Y-Comp</mat-checkbox
-    >
+  <div
+    [@showHide]="loading ? 'graphHidden' : 'graphShown'"
+    [class.compact-single-series]="compactSingleSeries"
+    id="graphHide"
+  >
+    Graph unavailable while dragging.
   </div>
-}
-<div
-  [@showHide]="noDataSelected ? 'graphHidden' : 'graphShown'"
-  [class.compact-single-series]="compactSingleSeries"
-  id="graphHide"
->
-  Please select at least one data series.
-</div>
-<div
-  [@showHide]="loading ? 'graphHidden' : 'graphShown'"
-  [class.compact-single-series]="compactSingleSeries"
-  id="graphHide"
->
-  Graph unavailable while dragging.
-</div>
-<app-analysis-apex-chart
-  #chart
-  [class.compact-single-series]="compactSingleSeries"
-  [series]="displayedSeries"
-  [annotations]="chartOptions.annotations!"
-  [chart]="chartOptions.chart"
-  [colors]="displayedColors"
-  [yaxis]="chartOptions.yaxis!"
-  [dataLabels]="chartOptions.dataLabels!"
-  [markers]="chartOptions.markers!"
-  [stroke]="chartOptions.stroke!"
-  [grid]="chartOptions.grid"
-  [xaxis]="chartOptions.xaxis!"
-  [tooltip]="chartOptions.tooltip!"
-  [legend]="chartOptions.legend!"
->
-</app-analysis-apex-chart>
+  <app-analysis-apex-chart
+    #chart
+    [class.compact-single-series]="compactSingleSeries"
+    [series]="displayedSeries"
+    [annotations]="chartOptions.annotations!"
+    [chart]="chartOptions.chart"
+    [colors]="displayedColors"
+    [yaxis]="chartOptions.yaxis!"
+    [dataLabels]="chartOptions.dataLabels!"
+    [markers]="chartOptions.markers!"
+    [stroke]="chartOptions.stroke!"
+    [grid]="chartOptions.grid"
+    [xaxis]="chartOptions.xaxis!"
+    [tooltip]="chartOptions.tooltip!"
+    [legend]="chartOptions.legend!"
+  >
+  </app-analysis-apex-chart>
 
-<button id="csvDownload" (click)="downloadCSV()" mat-stroked-button color="primary">
-  <mat-icon>download</mat-icon>
-  Download Data (CSV)
-</button>
+  <button id="csvDownload" (click)="downloadCSV()" mat-stroked-button color="primary">
+    <mat-icon>download</mat-icon>
+    Download Data (CSV)
+  </button>
 }

@@ -11,13 +11,13 @@ export class LoopSolver {
         return;
       }
       if (
-          j.input ||
-          j.connectedJoints.findIndex((jt) => {
-            if (!(jt instanceof RealJoint)) {
-              return;
-            }
-            jt.input;
-          }) !== -1
+        j.input ||
+        j.connectedJoints.findIndex((jt) => {
+          if (!(jt instanceof RealJoint)) {
+            return;
+          }
+          jt.input;
+        }) !== -1
       ) {
         groundJoints.unshift(j);
       } else {
@@ -34,7 +34,16 @@ export class LoopSolver {
         continue;
       }
       desiredGround.connectedJoints.forEach((cj) => {
-        const [validLoops, requiredSubLoops] = this.findGround(cj, groundJoints, cj.id, desiredGround.id + cj.id, [], [], desiredGround.input, links);
+        const [validLoops, requiredSubLoops] = this.findGround(
+          cj,
+          groundJoints,
+          cj.id,
+          desiredGround.id + cj.id,
+          [],
+          [],
+          desiredGround.input,
+          links
+        );
         allLoops = allLoops.concat(validLoops);
         requiredLoops = requiredLoops.concat(requiredSubLoops);
       });
@@ -72,17 +81,20 @@ export class LoopSolver {
           path = path + j.id;
           let requiredLoop = true;
           const traveledLinks = [];
-          for (let letterIndex = 1; letterIndex < path.length; letterIndex++)
-          {
+          for (let letterIndex = 1; letterIndex < path.length; letterIndex++) {
             if (!requiredLoop) {
               continue;
             }
-            const curLink = links.find(l => l.joints.findIndex(j => j.id === path[letterIndex - 1]) !== -1 && l.joints.findIndex(j => j.id === path[letterIndex]) !== -1);
+            const curLink = links.find(
+              (l) =>
+                l.joints.findIndex((j) => j.id === path[letterIndex - 1]) !== -1 &&
+                l.joints.findIndex((j) => j.id === path[letterIndex]) !== -1
+            );
             if (curLink === undefined) {
               requiredLoop = false;
-              continue
+              continue;
             }
-            if (traveledLinks.findIndex(l_id => l_id === curLink.id) !== -1) {
+            if (traveledLinks.findIndex((l_id) => l_id === curLink.id) !== -1) {
               requiredLoop = false;
             } else {
               traveledLinks.push(curLink.id);
@@ -103,7 +115,16 @@ export class LoopSolver {
         // allFoundLoops.push(path + j.id + path[0]);
         allFoundLoops.push(path + path[0]);
       } else {
-        [allFoundLoops, requiredLoops] = this.findGround(j, groundJoints, linkPath + j.id, path + j.id, allFoundLoops, requiredLoops, storeJointPath, links);
+        [allFoundLoops, requiredLoops] = this.findGround(
+          j,
+          groundJoints,
+          linkPath + j.id,
+          path + j.id,
+          allFoundLoops,
+          requiredLoops,
+          storeJointPath,
+          links
+        );
       }
     });
     return [allFoundLoops, requiredLoops];

@@ -1,63 +1,74 @@
 /*
-    * This file contains the data structures used by the transcoder.
-    * These data structures are used to store the data in a format that is
-    * easy to encode and decode.
-*/
+ * This file contains the data structures used by the transcoder.
+ * These data structures are used to store the data in a format that is
+ * easy to encode and decode.
+ */
 
-export enum JOINT_TYPE {PRISMATIC, REVOLUTE};
-export enum LINK_TYPE {REAL, PISTON};
+export enum JOINT_TYPE {
+  PRISMATIC,
+  REVOLUTE,
+}
+export enum LINK_TYPE {
+  REAL,
+  PISTON,
+}
 
-export enum ACTIVE_TYPE {JOINT = "J", LINK = "L", FORCE = "F", NOTHING = "N"};
+export enum ACTIVE_TYPE {
+  JOINT = 'J',
+  LINK = 'L',
+  FORCE = 'F',
+  NOTHING = 'N',
+}
 
 export class ActiveObjData {
-    constructor(
-        public type: ACTIVE_TYPE,
-        public id: string,
-    ) {}
+  constructor(
+    public type: ACTIVE_TYPE,
+    public id: string
+  ) {}
 }
 
 export class JointData {
-    constructor(
-        public type: JOINT_TYPE,
-        public id: string,
-        public name: string,
-        public x: number,
-        public y: number,
-        public isGrounded: boolean,
-        public isInput: boolean,
-        public isWelded: boolean,
-        public angleRadians: number,
-        public showCurve: boolean,
-    ) {}
+  constructor(
+    public type: JOINT_TYPE,
+    public id: string,
+    public name: string,
+    public x: number,
+    public y: number,
+    public isGrounded: boolean,
+    public isInput: boolean,
+    public isWelded: boolean,
+    public angleRadians: number,
+    public showCurve: boolean
+  ) {}
 }
 
 export class LinkData {
-    constructor(
-        public isRoot: boolean,
-        public type: LINK_TYPE,
-        public id: string,
-        public name: string,
-        public mass: number,
-        public massMoI: number = 0,
-        public xCoM: number = 0,
-        public yCoM: number = 0,
-        public color: string = "",
-        public jointIDs: string[] = [],
-        public subsetLinkIDs: string[] = [],
-    ) {}
+  constructor(
+    public isRoot: boolean,
+    public type: LINK_TYPE,
+    public id: string,
+    public name: string,
+    public mass: number,
+    public massMoI: number = 0,
+    public xCoM: number = 0,
+    public yCoM: number = 0,
+    public color: string = '',
+    public jointIDs: string[] = [],
+    public subsetLinkIDs: string[] = []
+  ) {}
 }
 
 export class ForceData {
-    constructor(
-        public id: string,
-        public linkID: string,
-        public name: string,
-        public startX: number,
-        public startY: number,
-        public endX: number,
-        public endY: number,
-        public isLocal: boolean,
-        public isFacingOut: boolean,
-        public magnitude: number
-    ) {}
+  constructor(
+    public id: string,
+    public linkID: string,
+    public name: string,
+    public startX: number,
+    public startY: number,
+    public endX: number,
+    public endY: number,
+    public isLocal: boolean,
+    public isFacingOut: boolean,
+    public magnitude: number
+  ) {}
 }

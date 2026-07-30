@@ -1257,9 +1257,8 @@ export function has_mouse_pointer() {
 
 // Whether HTML5's local storage is available
 export function local_storage_available() {
-  return typeof(Storage) !== "undefined";
+  return typeof Storage !== 'undefined';
 }
-
 
 // https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
 export function isLeft(a: Coord, b: Coord, c: Coord) {
@@ -1268,14 +1267,21 @@ export function isLeft(a: Coord, b: Coord, c: Coord) {
 
 // Vector projection algorithm
 // Given (x, y), find the closest point on the line SEGMENT between (x1, y1) and (x2, y2)
-export function point_on_line_segment_closest_to_point(x: number, y: number, x1: number, y1: number, x2: number, y2: number): [number, number] {
+export function point_on_line_segment_closest_to_point(
+  x: number,
+  y: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+): [number, number] {
   let ax = x - x1;
   let ay = y - y1;
   let bx = x2 - x1;
   let by = y2 - y1;
 
   let scalar = (ax * bx + ay * by) / (bx * bx + by * by);
-  
+
   // scalar is a parametric value between 0 and 1, must bound between 0 and 1
   // to get the closest point on the line SEGMENT, not line
   if (scalar < 0) {
@@ -1293,8 +1299,8 @@ export function distance_points(x1: number, y1: number, x2: number, y2: number):
 }
 
 //hfz
-var bezier3Type = "bezier3";
-var lineType = "line";
+var bezier3Type = 'bezier3';
+var lineType = 'line';
 
 var mathAbs = Math.abs;
 var mathAsin = Math.asin;
@@ -1362,10 +1368,9 @@ export function y(p: any) {
 // Unpack an SVG path string into different curves and lines
 //
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
-export function splitSegments(polygon: any)
-{
-  if (typeof polygon !== "string") {
-    throw new Error("Polygon should be a path string");
+export function splitSegments(polygon: any) {
+  if (typeof polygon !== 'string') {
+    throw new Error('Polygon should be a path string');
   }
 
   let start: any;
@@ -1386,35 +1391,34 @@ export function splitSegments(polygon: any)
     return n;
   }
 
-  function readNumber()
-  {
+  function readNumber() {
     stripWhitespace();
 
     var start = 0;
     var end = 0;
-    if (polygon[start] === ",") {
+    if (polygon[start] === ',') {
       start++;
       end++;
     }
 
-    if (polygon[start] === "-" || polygon[start] === ".") {
+    if (polygon[start] === '-' || polygon[start] === '.') {
       end++;
     }
 
     end = readCharSeq(end);
-    if (polygon[end] === "." && polygon[start] !== ".") {
+    if (polygon[end] === '.' && polygon[start] !== '.') {
       end++;
       end = readCharSeq(end);
     }
 
     var s = polygon.substring(start, end);
-    if (s !== "") {
+    if (s !== '') {
       var num = toFloat(s);
       polygon = polygon.substring(end);
-      if (polygon.length && polygon[0].toLowerCase() === "e") {
+      if (polygon.length && polygon[0].toLowerCase() === 'e') {
         var f = 1;
         var expEnd = 0;
-        if (polygon.length > 1 && polygon[1] === "-") {
+        if (polygon.length > 1 && polygon[1] === '-') {
           f = -1;
           expEnd = readCharSeq(2);
         } else {
@@ -1428,7 +1432,7 @@ export function splitSegments(polygon: any)
       }
       return num;
     } else {
-      throw new Error("Expected number: " + polygon);
+      throw new Error('Expected number: ' + polygon);
     }
   }
 
@@ -1476,13 +1480,17 @@ export function splitSegments(polygon: any)
   }
 
   function calculateCubicControlPoints(coords: any) {
-    return [coords[0], [
-      x(coords[0]) + 2.0 / 3.0 * (x(coords[1]) - x(coords[0])),
-      y(coords[0]) + 2.0 / 3.0 * (y(coords[1]) - y(coords[0])),
-    ], [
-      x(coords[2]) + 2.0 / 3.0 * (x(coords[1]) - x(coords[2])),
-      y(coords[2]) + 2.0 / 3.0 * (y(coords[1]) - y(coords[2])),
-    ], coords[2],
+    return [
+      coords[0],
+      [
+        x(coords[0]) + (2.0 / 3.0) * (x(coords[1]) - x(coords[0])),
+        y(coords[0]) + (2.0 / 3.0) * (y(coords[1]) - y(coords[0])),
+      ],
+      [
+        x(coords[2]) + (2.0 / 3.0) * (x(coords[1]) - x(coords[2])),
+        y(coords[2]) + (2.0 / 3.0) * (y(coords[1]) - y(coords[2])),
+      ],
+      coords[2],
     ];
   }
 
@@ -1508,7 +1516,7 @@ export function splitSegments(polygon: any)
       var c2 = coordAdd(numbers.slice(5, 7), relative);
       var args = [position].concat(numbers.slice(0, 5)).concat([c2]);
       // @ts-ignore
-      var curve = arcToCurve.apply( args);
+      var curve = arcToCurve.apply(args);
       for (var i = 0; i < curve.length; i++) {
         pushType(bezier3Type, curve[i]);
       }
@@ -1517,7 +1525,7 @@ export function splitSegments(polygon: any)
 
   function readSegment() {
     stripWhitespace();
-    if (polygon === "") {
+    if (polygon === '') {
       return;
     }
 
@@ -1528,7 +1536,7 @@ export function splitSegments(polygon: any)
     var origin = [0, 0];
 
     switch (operator) {
-      case "M":
+      case 'M':
         readCoords(1, function (c: any, i: any) {
           if (i === 0) {
             position = c[0];
@@ -1540,7 +1548,7 @@ export function splitSegments(polygon: any)
           }
         });
         break;
-      case "m":
+      case 'm':
         readCoords(1, function (c: any, i: any) {
           if (i === 0) {
             if (!position) {
@@ -1558,13 +1566,13 @@ export function splitSegments(polygon: any)
           }
         });
         break;
-      case "C":
+      case 'C':
         readCoords(3, pushType(bezier3Type, null));
         break;
-      case "c":
+      case 'c':
         readCoords(3, pushType(bezier3Type, true));
         break;
-      case "Q":
+      case 'Q':
         readCoords(2, function (coords: any) {
           coords.unshift(position);
           coords = calculateCubicControlPoints(coords);
@@ -1572,64 +1580,68 @@ export function splitSegments(polygon: any)
           pushType(bezier3Type, coords);
         });
         break;
-      case "q":
+      case 'q':
         readCoords(2, function (coords: any) {
-          coords = coords.map(function (c: any) { return coordAdd(c, position); });
+          coords = coords.map(function (c: any) {
+            return coordAdd(c, position);
+          });
           coords.unshift(position);
           coords = calculateCubicControlPoints(coords);
           coords.shift();
           pushType(bezier3Type, coords);
         });
         break;
-      case "S":
+      case 'S':
         readCoords(2, function (coords: any) {
           var controlPoint = calculateBezierControlPoint();
           coords.unshift(controlPoint);
           pushType(bezier3Type, coords);
         });
         break;
-      case "s":
+      case 's':
         readCoords(2, function (coords: any) {
           var controlPoint = calculateBezierControlPoint();
-          coords = coords.map(function (c: any) { return coordAdd(c, position); });
+          coords = coords.map(function (c: any) {
+            return coordAdd(c, position);
+          });
           coords.unshift(controlPoint);
           pushType(bezier3Type, coords);
         });
         break;
-      case "A":
+      case 'A':
         handleArcSegment(origin);
         break;
-      case "a":
+      case 'a':
         handleArcSegment(position);
         break;
-      case "L":
+      case 'L':
         readCoords(1, pushType(lineType, null));
         break;
-      case "l":
+      case 'l':
         readCoords(1, function (c: any) {
           pushLine([[x(c[0]) + x(position), y(c[0]) + y(position)]]);
         });
         break;
-      case "H":
+      case 'H':
         pushType(lineType, [[readNumber(), y(position)]]);
         break;
-      case "h":
+      case 'h':
         pushType(lineType, true)([[readNumber(), 0]]);
         break;
-      case "V":
+      case 'V':
         pushType(lineType, [[x(position), readNumber()]]);
         break;
-      case "v":
+      case 'v':
         pushType(lineType, true)([[0, readNumber()]]);
         break;
-      case "Z":
-      case "z":
+      case 'Z':
+      case 'z':
         if (!coordEqual(position, start)) {
-          pushType(lineType,[start]);
+          pushType(lineType, [start]);
         }
         break;
       default:
-        throw new Error("Unknown operator: " + operator + " for polygon '" + input + "'");
+        throw new Error('Unknown operator: ' + operator + " for polygon '" + input + "'");
     }
   }
 
@@ -1657,7 +1669,7 @@ export function getIntersections(zero: any, point: any, shape: any) {
     case lineType:
       return intersectLineLine(coords[0], coords[1], zero, point);
     default:
-      throw new Error("Unsupported shape type: " + shape.type);
+      throw new Error('Unsupported shape type: ' + shape.type);
   } // jscs:ignore validateIndentation
   // ^ (jscs bug)
 }
@@ -1728,7 +1740,7 @@ export function cubeRoots(p4: any, p3: any, p2: any, p1: any) {
   var a = (3 * c1 - c2 * c2) / 3;
   var b = (2 * c2 * c2 * c2 - 9 * c1 * c2 + 27 * c0) / 27;
   var offset = c2 / 3;
-  var discrim = b * b / 4 + a * a * a / 27;
+  var discrim = (b * b) / 4 + (a * a * a) / 27;
   var halfB = b / 2;
 
   /* This should be here, but there's a typo in the original code (disrim =
@@ -1815,12 +1827,7 @@ export function intersectBezier3Line(p1: any, p2: any, p3: any, p4: any, a1: any
 
   // ?Rotate each cubic coefficient using line for new coordinate system?
   // Find roots of rotated cubic
-  var roots = cubeRoots(
-      coordDot(n, c3),
-      coordDot(n, c2),
-      coordDot(n, c1),
-      coordDot(n, c0) + cl
-  );
+  var roots = cubeRoots(coordDot(n, c3), coordDot(n, c2), coordDot(n, c1), coordDot(n, c0) + cl);
 
   // Any roots in closed interval [0,1] are intersections on Bezier, but
   // might not be on the line segment.
@@ -1870,12 +1877,7 @@ export function intersectLineLine(a1: any, a2: any, b1: any, b2: any) {
     var ub = ub_t / u_b;
 
     if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) {
-      return [
-        [
-          x(a1) + ua * (x(a2) - x(a1)),
-          y(a1) + ua * (y(a2) - y(a1)),
-        ]
-      ];
+      return [[x(a1) + ua * (x(a2) - x(a1)), y(a1) + ua * (y(a2) - y(a1))]];
     }
   }
 
@@ -1895,14 +1897,20 @@ export function toFloat(v: any) {
 }
 
 // @ts-ignore
-export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: any, sweep: any, cp2: any, recurse: any) {
+export function arcToCurve(
+  cp1: any,
+  rx: any,
+  ry: any,
+  angle: any,
+  large_arc: any,
+  sweep: any,
+  cp2: any,
+  recurse: any
+) {
   function rotate(cx: any, cy: any, r: any) {
     var cos = mathCos(r);
     var sin = mathSin(r);
-    return [
-      cx * cos - cy * sin,
-      cx * sin + cy * cos,
-    ];
+    return [cx * cos - cy * sin, cx * sin + cy * cos];
   }
 
   var x1 = x(cp1);
@@ -1910,7 +1918,7 @@ export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: an
   var x2 = x(cp2);
   var y2 = y(cp2);
 
-  var rad = mathPi / 180 * (+angle || 0);
+  var rad = (mathPi / 180) * (+angle || 0);
   var f1 = 0;
   var f2 = 0;
   var cx;
@@ -1937,11 +1945,14 @@ export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: an
     var rx2 = rx * rx;
     var ry2 = ry * ry;
 
-    var k = (large_arc === sweep ? -1 : 1)
-        * mathSqrt(mathAbs((rx2 * ry2 - rx2 * py * py - ry2 * px * px) / (rx2 * py * py + ry2 * px * px)));
+    var k =
+      (large_arc === sweep ? -1 : 1) *
+      mathSqrt(
+        mathAbs((rx2 * ry2 - rx2 * py * py - ry2 * px * px) / (rx2 * py * py + ry2 * px * px))
+      );
 
-    cx = k * rx * py / ry + (x1 + x2) / 2;
-    cy = k * -ry * px / rx + (y1 + y2) / 2;
+    cx = (k * rx * py) / ry + (x1 + x2) / 2;
+    cy = (k * -ry * px) / rx + (y1 + y2) / 2;
     f1 = mathAsin(Number(((y1 - cy) / ry).toFixed(9)));
     f2 = mathAsin(Number(((y2 - cy) / ry).toFixed(9)));
 
@@ -1968,12 +1979,12 @@ export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: an
   }
 
   var df = f2 - f1;
-  if (mathAbs(df) > mathPi * 120 / 180) {
+  if (mathAbs(df) > (mathPi * 120) / 180) {
     var f2old = f2;
     var x2old = x2;
     var y2old = y2;
 
-    f2 = f1 + mathPi * 120 / 180 * (sweep && f2 > f1 ? 1 : -1);
+    f2 = f1 + ((mathPi * 120) / 180) * (sweep && f2 > f1 ? 1 : -1);
     x2 = cx + rx * mathCos(f2);
     y2 = cy + ry * mathSin(f2);
     res = arcToCurve([x2, y2], rx, ry, angle, 0, sweep, [x2old, y2old], [f2, f2old, cx, cy]);
@@ -1986,8 +1997,8 @@ export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: an
   var c2 = mathCos(f2);
   var s2 = mathSin(f2);
   var t = mathTan(df / 4);
-  var hx = 4 / 3 * rx * t;
-  var hy = 4 / 3 * ry * t;
+  var hx = (4 / 3) * rx * t;
+  var hy = (4 / 3) * ry * t;
   var m1 = [x1, y1];
   var m2 = [x1 + hx * s1, y1 - hy * c1];
   var m3 = [x2 + hx * s2, y2 - hy * c2];
@@ -2016,7 +2027,7 @@ export function arcToCurve(cp1: any, rx: any, ry: any, angle: any, large_arc: an
   if (recurse) {
     return splitCurves([m2, m3, m4].concat(res));
   } else {
-    res = [m2, m3, m4].concat(res).join().split(",");
+    res = [m2, m3, m4].concat(res).join().split(',');
     var newres = [];
     for (var i = 0, ii = res.length; i < ii; i++) {
       newres[i] = i % 2 ? rotate(res[i - 1], res[i], rad)[1] : rotate(res[i], res[i + 1], rad)[0];

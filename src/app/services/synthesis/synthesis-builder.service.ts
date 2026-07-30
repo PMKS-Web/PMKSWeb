@@ -30,7 +30,10 @@ export class SynthesisBuilderService {
 
   poses: { [key: number]: SynthesisPose }; // a dictionary of poses, but including each pose is optional
 
-  constructor(private nup: NumberUnitParserService, private settings: SettingsService) {
+  constructor(
+    private nup: NumberUnitParserService,
+    private settings: SettingsService
+  ) {
     this.valueChanges = new Subject<any>();
     this.constants = new SynthesisConstants();
 

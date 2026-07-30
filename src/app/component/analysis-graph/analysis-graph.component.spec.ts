@@ -17,10 +17,7 @@ import { NumberUnitParserService } from '../../services/number-unit-parser.servi
 import { ActiveObjService } from '../../services/active-obj.service';
 import { MechanismService } from '../../services/mechanism.service';
 import { SettingsService } from '../../services/settings.service';
-import {
-  BUILT_IN_TEMPLATE_IDS,
-  TEMPLATE_LINKAGES,
-} from '../MODALS/templates/template-linkages';
+import { BUILT_IN_TEMPLATE_IDS, TEMPLATE_LINKAGES } from '../MODALS/templates/template-linkages';
 import {
   buildMechanismFixture,
   COMPLEX_WELDED_MECHANISM,
@@ -131,9 +128,11 @@ describe('AnalysisGraphComponent production fixtures', () => {
         (candidate): candidate is RealLink =>
           candidate instanceof RealLink && candidate.subset.length > 0
       );
-      const link = compound ?? mechanism.links[0].find(
-        (candidate): candidate is RealLink => candidate instanceof RealLink
-      )!;
+      const link =
+        compound ??
+        mechanism.links[0].find(
+          (candidate): candidate is RealLink => candidate instanceof RealLink
+        )!;
 
       for (const [property, expectedSeries] of KINEMATIC_GRAPHS) {
         const part = property.startsWith('Linear Joint') ? joint.id : link.id;
@@ -224,11 +223,13 @@ describe('AnalysisGraphComponent production fixtures', () => {
       (joint): joint is RealJoint => joint instanceof RealJoint && joint.input
     )!;
     component.determineChart('force', 'static', 'Input Effort', input.id);
-    const staticValues = (component.chartOptions.series![0].data as unknown as Array<{ y: number }>)
-      .map((point) => point.y);
+    const staticValues = (
+      component.chartOptions.series![0].data as unknown as Array<{ y: number }>
+    ).map((point) => point.y);
     component.determineChart('force', 'dynamic', 'Input Effort', input.id);
-    const dynamicValues = (component.chartOptions.series![0].data as unknown as Array<{ y: number }>)
-      .map((point) => point.y);
+    const dynamicValues = (
+      component.chartOptions.series![0].data as unknown as Array<{ y: number }>
+    ).map((point) => point.y);
 
     expect(dynamicValues.some((value, index) => value !== staticValues[index])).toBe(true);
   });

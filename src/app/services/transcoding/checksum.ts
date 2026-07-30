@@ -6,17 +6,16 @@ verification of the integrity of a string.
 */
 
 export class Checksum {
+  // the only characters allowed in the checksum
+  static readonly CHECKSUM_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
-    // the only characters allowed in the checksum
-    static readonly CHECKSUM_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  generateChecksum(length: number): string {
+    let i = length % Checksum.CHECKSUM_CHARS.length;
+    return Checksum.CHECKSUM_CHARS[i];
+  }
 
-    generateChecksum(length: number): string {
-        let i = length % Checksum.CHECKSUM_CHARS.length;
-        return Checksum.CHECKSUM_CHARS[i];
-    }
-
-    verifyChecksum(length: number, checksum: string): boolean {
-        let i = length % Checksum.CHECKSUM_CHARS.length;
-        return Checksum.CHECKSUM_CHARS[i] === checksum;
-    }
+  verifyChecksum(length: number, checksum: string): boolean {
+    let i = length % Checksum.CHECKSUM_CHARS.length;
+    return Checksum.CHECKSUM_CHARS[i] === checksum;
+  }
 }

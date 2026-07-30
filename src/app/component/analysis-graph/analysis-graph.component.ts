@@ -123,11 +123,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       curve: 'straight',
       width: 2,
     },
-    colors: [
-      ANALYSIS_SERIES_COLORS.X,
-      ANALYSIS_SERIES_COLORS.Y,
-      ANALYSIS_SERIES_COLORS.Z,
-    ],
+    colors: [ANALYSIS_SERIES_COLORS.X, ANALYSIS_SERIES_COLORS.Y, ANALYSIS_SERIES_COLORS.Z],
     tooltip: {
       // followCursor: false,
       // theme: 'dark',
@@ -357,9 +353,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.displayedSeries = (this.chartOptions.series ?? []).filter((series) =>
       selectedNames.has(series.name ?? '')
     );
-    this.displayedColors = this.displayedSeries.map((series) =>
-      this.colorForSeries(series.name)
-    );
+    this.displayedColors = this.displayedSeries.map((series) => this.colorForSeries(series.name));
     this.noDataSelected = this.displayedSeries.length === 0;
     if (this.chart) this.showAnnotations(this.mechanismService.mechanismTimeStep);
   }
@@ -377,8 +371,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       this.chart.clearAnnotations();
       return;
     }
-    const timeSeconds =
-      this.mechanismService.mechanisms[0]?.timeNum[timeIndex] ?? timeIndex;
+    const timeSeconds = this.mechanismService.mechanisms[0]?.timeNum[timeIndex] ?? timeIndex;
     if (
       this.seriesCheckboxForm.value.x ||
       this.seriesCheckboxForm.value.y ||
@@ -404,20 +397,10 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     const zSeries = this.chartOptions.series?.find((s) => s.name === 'Z');
 
     if (this.seriesCheckboxForm.value.x && xSeries) {
-      this.addPointAnnotation(
-        xSeries,
-        timeIndex,
-        timeSeconds,
-        ANALYSIS_SERIES_COLORS.X
-      );
+      this.addPointAnnotation(xSeries, timeIndex, timeSeconds, ANALYSIS_SERIES_COLORS.X);
     }
     if (this.seriesCheckboxForm.value.y && ySeries) {
-      this.addPointAnnotation(
-        ySeries,
-        timeIndex,
-        timeSeconds,
-        ANALYSIS_SERIES_COLORS.Y
-      );
+      this.addPointAnnotation(ySeries, timeIndex, timeSeconds, ANALYSIS_SERIES_COLORS.Y);
     }
     if (this.seriesCheckboxForm.value.z && zSeries) {
       this.addPointAnnotation(zSeries, timeIndex, timeSeconds, this.colorForSeries('Z'));

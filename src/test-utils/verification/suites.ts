@@ -69,9 +69,7 @@ export function registerKinematicsSuite(
       upstreamRepository: 'https://github.com/DesignEngrLab/PMKS',
       upstreamCommit: '2a0a6fca957dd19844567702af663f607dc15dfe',
     });
-    expect(['matlab-pmks-fork', 'matlab-pmks-fork-motiongen']).toContain(
-      dataset.trust.kinematics
-    );
+    expect(['matlab-pmks-fork', 'matlab-pmks-fork-motiongen']).toContain(dataset.trust.kinematics);
     expect(dataset.trust.kinematics).not.toBe('matlab-pmks');
     expect(dataset.trust.kinematics).not.toBe('matlab-pmks-motiongen');
     expect(dataset.samples.every((sample) => sample.eligibility === 'eligible')).toBe(true);

@@ -99,12 +99,7 @@ export class AnalysisApexChartComponent implements OnChanges, AfterViewInit, OnD
     animate?: boolean,
     updateSyncedCharts?: boolean
   ): Promise<unknown> | undefined {
-    return this.chartInstance?.updateOptions(
-      options,
-      redrawPaths,
-      animate,
-      updateSyncedCharts
-    );
+    return this.chartInstance?.updateOptions(options, redrawPaths, animate, updateSyncedCharts);
   }
 
   clearAnnotations(): void {

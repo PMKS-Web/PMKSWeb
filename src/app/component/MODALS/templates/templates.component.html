@@ -1,47 +1,46 @@
-<div class='dialog_root' id='templates'>
-  <div class='dialog-header'>
+<div class="dialog_root" id="templates">
+  <div class="dialog-header">
     <h1>Linkage Library (Example Linkages)</h1>
     <button mat-icon-button mat-dialog-close>
       <mat-icon>close</mat-icon>
     </button>
   </div>
 
-  <div mat-dialog-content id='remove_top_padding'>
-    <div class='linkage-grid'>
-
-      <panel-section (click)='openLinkage("4-Bar")'>
+  <div mat-dialog-content id="remove_top_padding">
+    <div class="linkage-grid">
+      <panel-section (click)="openLinkage('4-Bar')">
         <title-block>Four Bar Linkage</title-block>
-        <img src='assets/gifs/fourbar.gif' alt='Fourbar Image' />
-        <img class='static' src='assets/gifs/fourbag.jpg' alt='Fourbar Image' />
-        <button mat-flat-button color='primary'>Open</button>
+        <img src="assets/gifs/fourbar.gif" alt="Fourbar Image" />
+        <img class="static" src="assets/gifs/fourbag.jpg" alt="Fourbar Image" />
+        <button mat-flat-button color="primary">Open</button>
       </panel-section>
 
-      <panel-section (click)='openLinkage("Watt_I")'>
+      <panel-section (click)="openLinkage('Watt_I')">
         <title-block>Watt's Linkage</title-block>
-        <img src='assets/gifs/watt.gif' alt='Watt I Linkage' />
-        <img class='static' src='assets/gifs/watt.jpg' alt='Watt I Linkage' />
-        <button mat-flat-button color='primary'>Open</button>
+        <img src="assets/gifs/watt.gif" alt="Watt I Linkage" />
+        <img class="static" src="assets/gifs/watt.jpg" alt="Watt I Linkage" />
+        <button mat-flat-button color="primary">Open</button>
       </panel-section>
 
-      <panel-section (click)='openLinkage("Watt_II")'>
+      <panel-section (click)="openLinkage('Watt_II')">
         <title-block>Watt's Linkage II Linkage</title-block>
-        <img src='assets/gifs/watt2.gif' alt='Watt II Linkage' />
-        <img class='static' src='assets/gifs/watt2.jpg' alt='Watt II Linkage' />
-        <button mat-flat-button color='primary'>Open</button>
+        <img src="assets/gifs/watt2.gif" alt="Watt II Linkage" />
+        <img class="static" src="assets/gifs/watt2.jpg" alt="Watt II Linkage" />
+        <button mat-flat-button color="primary">Open</button>
       </panel-section>
 
-      <panel-section (click)='openLinkage("Stephenson_III")'>
+      <panel-section (click)="openLinkage('Stephenson_III')">
         <title-block>Stephenson III Linkage</title-block>
-        <img src='assets/gifs/steph3.gif' alt='Stephenson III Linkage' />
-        <img class='static' src='assets/gifs/steph3.jpg' alt='Stephenson III Linkage' />
-        <button mat-flat-button color='primary'>Open</button>
+        <img src="assets/gifs/steph3.gif" alt="Stephenson III Linkage" />
+        <img class="static" src="assets/gifs/steph3.jpg" alt="Stephenson III Linkage" />
+        <button mat-flat-button color="primary">Open</button>
       </panel-section>
 
-      <panel-section (click)='openLinkage("Slider_Crank")'>
+      <panel-section (click)="openLinkage('Slider_Crank')">
         <title-block>Slider Crank</title-block>
-        <img src='assets/gifs/slider.gif' alt='Slider Crank Linkage' />
-        <img class='static' src='assets/gifs/slider.jpg' alt='Slider Crank Linkage' />
-        <button mat-flat-button color='primary'>Open</button>
+        <img src="assets/gifs/slider.gif" alt="Slider Crank Linkage" />
+        <img class="static" src="assets/gifs/slider.jpg" alt="Slider Crank Linkage" />
+        <button mat-flat-button color="primary">Open</button>
       </panel-section>
 
       <!--      <panel-section (click)='openLinkage("Force")'>-->
@@ -49,25 +48,22 @@
       <!--        <img src='assets/gifs/fourbar.gif' alt='Fourbar Image' />-->
       <!--        <button mat-flat-button color='primary'>Open</button>-->
       <!--      </panel-section>-->
-
     </div>
   </div>
-
 </div>
 
 <!-- Shown when the grid already holds work: opening a template must not
      silently discard it. Replacing goes through the undo history, so it is
      recoverable either way. -->
 <ng-template #openChoiceDialog>
-  <div class='modal'>
+  <div class="modal">
     <h1 mat-dialog-title>There is already a linkage on the grid.</h1>
     <div mat-dialog-content>
       <p>
-        Open the template in a new tab, or replace the current linkage?
-        Replacing can be undone.
+        Open the template in a new tab, or replace the current linkage? Replacing can be undone.
       </p>
     </div>
-    <div mat-dialog-actions align='end'>
+    <div mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
       <button mat-button [mat-dialog-close]="'new-tab'">Open in a new tab</button>
       <button mat-button cdkFocusInitial [mat-dialog-close]="'replace'">Replace</button>

@@ -1,10 +1,4 @@
-import {
-  AngularVelocityUnit,
-  InertiaUnit,
-  LengthUnit,
-  MassUnit,
-  TimeUnit,
-} from './unit-enums';
+import { AngularVelocityUnit, InertiaUnit, LengthUnit, MassUnit, TimeUnit } from './unit-enums';
 
 /**
  * Single source of truth for physical unit conversions. Every field, solver,

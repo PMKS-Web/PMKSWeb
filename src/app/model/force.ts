@@ -175,10 +175,7 @@ export class Force {
   }
 
   private handleLength(): number {
-    return Math.hypot(
-      this.endCoord.x - this.startCoord.x,
-      this.endCoord.y - this.startCoord.y
-    );
+    return Math.hypot(this.endCoord.x - this.startCoord.x, this.endCoord.y - this.startCoord.y);
   }
 
   private alignHandleWithDirection() {

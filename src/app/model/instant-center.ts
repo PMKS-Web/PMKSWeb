@@ -45,7 +45,13 @@ export class InstantCenter {
 
 export class PrimaryInstantCenter extends InstantCenter {
   private _jointID: string;
-  constructor(x: number, y: number, id: string, connectedICS: Array<InstantCenter>, jointID: string) {
+  constructor(
+    x: number,
+    y: number,
+    id: string,
+    connectedICS: Array<InstantCenter>,
+    jointID: string
+  ) {
     super(x, y, id, connectedICS);
     this._jointID = jointID;
   }
@@ -61,7 +67,14 @@ export class PrimaryInstantCenter extends InstantCenter {
 
 export class FixedInstantCenter extends PrimaryInstantCenter {
   private _angle: number;
-  constructor(x: number, y: number, id: string, connectedICS: Array<InstantCenter>, jointID: string, angle: number = 0) {
+  constructor(
+    x: number,
+    y: number,
+    id: string,
+    connectedICS: Array<InstantCenter>,
+    jointID: string,
+    angle: number = 0
+  ) {
     super(x, y, id, connectedICS, jointID);
     this._angle = angle;
   }
@@ -76,7 +89,13 @@ export class FixedInstantCenter extends PrimaryInstantCenter {
 }
 
 export class PermanentInstantCenter extends PrimaryInstantCenter {
-  constructor(x: number, y: number, id: string, connectedICS: Array<InstantCenter>, jointID: string) {
+  constructor(
+    x: number,
+    y: number,
+    id: string,
+    connectedICS: Array<InstantCenter>,
+    jointID: string
+  ) {
     super(x, y, id, connectedICS, jointID);
   }
 }
@@ -84,7 +103,13 @@ export class PermanentInstantCenter extends PrimaryInstantCenter {
 // secondaryICs can only be neither fixed nor permanent instant centers
 export class SecondaryInstantCenter extends InstantCenter {
   private _desired_ICs: string[][];
-  constructor(x: number, y: number, id: string, connectedICS: Array<InstantCenter>, desiredICS: Array<Array<string>>) {
+  constructor(
+    x: number,
+    y: number,
+    id: string,
+    connectedICS: Array<InstantCenter>,
+    desiredICS: Array<Array<string>>
+  ) {
     super(x, y, id, connectedICS);
     this._desired_ICs = desiredICS;
   }

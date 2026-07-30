@@ -5,7 +5,7 @@ import { RealLink } from '../model/link';
 import { Coord } from '../model/coord';
 import { SynthesisPose } from './synthesis/synthesis-util';
 
-export type ActiveObjType = "Nothing" | "Joint" | "Force" | "Link" | "Grid" | "SynthesisPose";
+export type ActiveObjType = 'Nothing' | 'Joint' | 'Force' | 'Link' | 'Grid' | 'SynthesisPose';
 
 @Injectable({
   providedIn: 'root',
