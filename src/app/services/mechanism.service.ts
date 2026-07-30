@@ -484,9 +484,53 @@ export class MechanismService {
 
   private finishStructuralEdit(save: boolean = true): void {
     this.rebuildJointGraph();
+    this.reconcileSlots();
     PositionSolver.setUpSolvingForces(this.forces);
     this.updateMechanism(save);
     this.onMechUpdateState.next(3);
+  }
+
+  /**
+   * The root link that owns `link`, following welds. A carrier absorbed into a
+   * compound keeps existing as a member of that compound's subset, so the
+   * pointer stays valid while no longer naming a body any solver iterates.
+   */
+  private rootLinkOwning(link: Link): Link | undefined {
+    const contains = (candidate: Link): boolean =>
+      candidate.id === link.id ||
+      (candidate instanceof RealLink && candidate.subset.some(contains));
+    return this.links.find(contains);
+  }
+
+  /**
+   * Make sure no slot has outlived what defines it (§2.8a).
+   *
+   * A carrier can be deleted, welded into a compound, or lose one of the two
+   * joints that cut the slot -- to a deletion, or to a Phase 1.2 snap that
+   * merges it away. Option A stores all three outside `links` and
+   * `connectedJoints`, so nothing that rebuilds those structures notices. Left
+   * alone the slider keeps a pointer to a link that is no longer a body, and
+   * the next solve reads geometry from an object nothing else updates.
+   *
+   * A weld is recoverable: remap to the compound that swallowed the carrier.
+   * Anything else is not, so the slot returns to the direction it was last
+   * pointing and becomes an ordinary grounded guide. That keeps the slider the
+   * user drew, which removing it would not.
+   */
+  private reconcileSlots(): void {
+    this.joints.forEach((joint) => {
+      if (!(joint instanceof PrisJoint) || !joint.isFloating) return;
+      const carrier = joint.carrier!;
+      const slotJointA = joint.slotJointA!;
+      const slotJointB = joint.slotJointB!;
+      const root = this.rootLinkOwning(carrier);
+      if (root && root.id !== carrier.id) {
+        joint.slideOn(root, slotJointA, slotJointB);
+      }
+      if (!root || !joint.isSlotWellFormed) {
+        joint.groundAt(joint.slotAngle);
+      }
+    });
   }
 
   /**
@@ -1028,6 +1072,18 @@ export class MechanismService {
 
   toggleGround() {
     //Should be called toggleGround
+    if (
+      this.activeObjService.selectedJoint instanceof PrisJoint &&
+      this.activeObjService.selectedJoint.isFloating
+    ) {
+      // A floating slot already has somewhere to go: pin its current direction
+      // to the world and it becomes an ordinary guide, geometry unchanged. The
+      // journey back needs a carrier and a joint pair, which only the drop-on-
+      // link gesture supplies, so it waits for the UI phase.
+      this.activeObjService.selectedJoint.groundAt(this.activeObjService.selectedJoint.slotAngle);
+      this.finishStructuralEdit(true);
+      return;
+    }
     if (this.activeObjService.selectedJoint instanceof PrisJoint) {
       const revJoint = this.activeObjService.selectedJoint.connectedJoints.find(
         (j) => j instanceof RevJoint
