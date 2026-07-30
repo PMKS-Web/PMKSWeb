@@ -1045,7 +1045,15 @@ export class MechanismService {
         );
         j.connectedJoints.splice(removeIndex, 1);
       });
-      const piston = this.links.find((l) => l instanceof SliderBlock)!;
+      // The selected slider's own block, not simply the first one in the
+      // mechanism: with two slots on the canvas, un-grounding the second used
+      // to dismantle the first.
+      const piston = this.activeObjService.selectedJoint.links.find(
+        (l) => l instanceof SliderBlock
+      );
+      if (!piston) {
+        return;
+      }
       piston.joints.forEach((j) => {
         if (!(j instanceof RealJoint)) {
           return;

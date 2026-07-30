@@ -659,3 +659,54 @@ describe('MechanismService declining a weld that pins a pair twice', () => {
     expect(scene.saveCount()).toBe(1);
   });
 });
+
+describe('MechanismService un-grounding one slider among several', () => {
+  function twoSliders() {
+    const harness = createHarness();
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 4, 0);
+    const ab = new RealLink('AB', [a, b]);
+    [a, b].forEach((joint) => joint.links.push(ab));
+    a.connectedJoints.push(b);
+    b.connectedJoints.push(a);
+    harness.service.joints.push(a, b);
+    harness.service.links.push(ab);
+    const first = addSlider(harness.service, a, 'P');
+    const second = addSlider(harness.service, b, 'Q');
+    return { ...harness, a, b, first, second };
+  }
+
+  it('takes apart only the selected slider', () => {
+    // toggleGround used to reach for the first SliderBlock in the mechanism
+    // rather than the selected joint's own, so un-grounding the second slider
+    // dismantled the first one instead.
+    const s = twoSliders();
+    s.active.updateSelectedObj(s.second);
+
+    s.service.toggleGround();
+
+    expect(s.service.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'P']);
+    expect(s.service.links.map((link) => link.id).sort()).toEqual(['AB', 'AP']);
+  });
+
+  it('leaves the untouched slider fully connected', () => {
+    const s = twoSliders();
+    s.active.updateSelectedObj(s.second);
+
+    s.service.toggleGround();
+
+    expect(s.a.links.some((link) => link instanceof SliderBlock)).toBe(true);
+    expect(s.a.connectedJoints.some((joint) => joint.id === 'P')).toBe(true);
+    expect(s.first.links).toHaveLength(1);
+  });
+
+  it('grounds the pin the removed slider was riding', () => {
+    const s = twoSliders();
+    s.active.updateSelectedObj(s.second);
+
+    s.service.toggleGround();
+
+    expect(s.b.ground).toBe(true);
+    expect(s.b.links.some((link) => link instanceof SliderBlock)).toBe(false);
+  });
+});

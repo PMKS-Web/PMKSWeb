@@ -186,7 +186,7 @@ export class KinematicsSolver {
           const prisJoint = links[this.inputLinkIndex].joints.find(
             (jt) => jt instanceof PrisJoint
           ) as PrisJoint;
-          this.desiredAngleMap.set(links[this.inputLinkIndex].id, prisJoint.angle_rad);
+          this.desiredAngleMap.set(links[this.inputLinkIndex].id, prisJoint.slotAngle);
         }
         const inputLink = links[this.inputLinkIndex].id;
         if (inputLink === undefined) {
@@ -197,8 +197,8 @@ export class KinematicsSolver {
           return;
         }
         this.jointVelMap.set(realJoint.id, [
-          initialAngularVelocity * Math.cos(realJoint.angle_rad),
-          initialAngularVelocity * Math.sin(realJoint.angle_rad),
+          initialAngularVelocity * Math.cos(realJoint.slotAngle),
+          initialAngularVelocity * Math.sin(realJoint.slotAngle),
         ]);
         this.jointAccMap.set(realJoint.id, [0.0, 0.0]);
         break;
@@ -267,7 +267,7 @@ export class KinematicsSolver {
                   joints.findIndex((j) => j.id === connectedJoint.id)
                 );
                 const prisJoint = link.joints.find((jt) => jt instanceof PrisJoint) as PrisJoint;
-                this.desiredAngleMap.set(connectedJoint.id, prisJoint.angle_rad);
+                this.desiredAngleMap.set(connectedJoint.id, prisJoint.slotAngle);
               }
 
               const desiredJoint = joints[this.realJointIndexMap.get(link.id)!];
@@ -496,7 +496,7 @@ export class KinematicsSolver {
                   // }
                   const desiredAngle = this.desiredAngleMap.get(realJoint.id)!;
                   arr = [Math.cos(desiredAngle), Math.sin(desiredAngle), 0];
-                  // arr = [Math.cos(realJoint.angle_rad), Math.sin(realJoint.angle_rad), 0];
+                  // arr = [Math.cos(realJoint.slotAngle), Math.sin(realJoint.slotAngle), 0];
                   break;
                 default:
                   return;
@@ -520,7 +520,7 @@ export class KinematicsSolver {
                   // }
                   const desiredAngle = this.desiredAngleMap.get(realJoint.id)!;
                   arr = [-Math.cos(desiredAngle), -Math.sin(desiredAngle), 0];
-                  // arr = [-Math.cos(realJoint.angle_rad), -Math.sin(realJoint.angle_rad), 0];
+                  // arr = [-Math.cos(realJoint.slotAngle), -Math.sin(realJoint.slotAngle), 0];
                   colIndex = this.unknownLinkIndexMap.get(realJoint.id)!;
                   break;
                 default:

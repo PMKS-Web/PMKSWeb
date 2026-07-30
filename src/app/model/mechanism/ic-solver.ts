@@ -107,9 +107,9 @@ export class ICSolver {
             case PrisJoint:
               let desired_angle: number;
               if (joint1 instanceof PrisJoint) {
-                desired_angle = joint1.angle_rad;
+                desired_angle = joint1.slotAngle;
               } else if (joint3 instanceof PrisJoint) {
-                desired_angle = joint3.angle_rad;
+                desired_angle = joint3.slotAngle;
               } else {
                 return;
               }

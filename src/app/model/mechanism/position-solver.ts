@@ -73,7 +73,7 @@ export class PositionSolver {
         return;
       }
       if (j instanceof PrisJoint) {
-        this.sliderAngleMap.set(j.id, j.angle_rad);
+        this.sliderAngleMap.set(j.id, j.slotAngle);
       }
       if (!j.ground) {
         return;
@@ -174,7 +174,7 @@ export class PositionSolver {
           cur_joint.id + ',' + prevJoint.id,
           euclideanDistance(cur_joint.x, cur_joint.y, prevJoint.x, prevJoint.y)
         );
-        this.setSlot(cur_joint.id, cur_joint.x, cur_joint.y, sliderJoint.angle_rad);
+        this.setSlot(cur_joint.id, cur_joint.x, cur_joint.y, sliderJoint.slotAngle);
         // Like the revolute branch below, the solved slider joint becomes a
         // known joint and its other neighbors still need solve orders --
         // otherwise a tracer point on the slider's link can never resolve.
@@ -216,7 +216,7 @@ export class PositionSolver {
               tracer_joint.id + ',' + tracer_joint.id,
               euclideanDistance(tracer_joint.x, tracer_joint.y, cur_joint.x, cur_joint.y)
             );
-            this.setSlot(tracer_joint.id, tracer_joint.x, tracer_joint.y, tracer_joint.angle_rad);
+            this.setSlot(tracer_joint.id, tracer_joint.x, tracer_joint.y, tracer_joint.slotAngle);
             return;
           }
           const desired_link = links.find((l) => {

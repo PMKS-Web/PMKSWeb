@@ -320,7 +320,18 @@ export class Mechanism {
           if (!(j instanceof PrisJoint)) {
             return;
           }
+          // A prismatic pair costs one lower pair either way. What differs is
+          // the body on the far side of it: ground for a grounded slot, the
+          // carrier link for a floating one — and the carrier is already
+          // counted, since it is an ordinary link.
           J1 += bodiesAt(j);
+          // A guide fixed in the world anchors the mechanism just as a grounded
+          // pin does. Without this, a linkage held only by its slides — an
+          // elliptical trammel, say — has no ground body and reports NaN.
+          if (j.ground && groundNotFound) {
+            N++;
+            groundNotFound = false;
+          }
           break;
       }
     });

@@ -274,7 +274,9 @@ export class ForceSolver {
       if (inputJoint instanceof PrisJoint) {
         inputBody = incident.find((body) => body instanceof SliderBlock);
         inputKind = inputBody ? 'force' : undefined;
-        inputDirection = [Math.cos(inputJoint.angle_rad), Math.sin(inputJoint.angle_rad)];
+        // slotAngle, not angle_rad: a slot cut into a moving link points
+        // somewhere different at every timestep.
+        inputDirection = [Math.cos(inputJoint.slotAngle), Math.sin(inputJoint.slotAngle)];
       } else {
         inputBody = incident.find((body) => body instanceof RealLink);
         inputKind = inputBody ? 'torque' : undefined;
@@ -476,7 +478,8 @@ export class ForceSolver {
           reactions.push({
             joint: candidate,
             positiveBody: piston,
-            direction: [-Math.sin(candidate.angle_rad), Math.cos(candidate.angle_rad)],
+            // The reaction is normal to the slot, so it rotates with it.
+            direction: [-Math.sin(candidate.slotAngle), Math.cos(candidate.slotAngle)],
             column: reactions.length,
           });
         }

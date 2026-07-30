@@ -25,12 +25,27 @@ export interface MechanismFixture {
    */
   links: FixtureLink[];
   /** Grounds joint `at` into a slider along `angleRad` via a piston link. */
-  slider?: { at: string; prisId: string; angleRad?: number; pistonMass?: number };
+  slider?: SliderSpec;
+  /** Several slots at once — an elliptical trammel needs two. */
+  sliders?: SliderSpec[];
   /** Constant global force applied to a point that rides on `onLink`. */
   load?: { onLink: string; at: [number, number]; vector: [number, number] };
   /** Input speed in rad/s, using the v1 manifest's exact rpm*pi/30 conversion. */
   inputAngVel: number;
   gravity?: boolean;
+}
+
+export interface SliderSpec {
+  at: string;
+  prisId: string;
+  /** World angle of a grounded guide. Ignored when `on` is given. */
+  angleRad?: number;
+  pistonMass?: number;
+  /**
+   * Cuts the slot into a moving link instead of into the world: the line
+   * through carrier joints `a` and `b` (§2.4).
+   */
+  on?: { carrier: string; a: string; b: string };
 }
 
 export interface FixtureLink {
@@ -103,22 +118,29 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
     return link;
   });
 
-  if (fixture.slider) {
-    const revJoint = jointById.get(fixture.slider.at)!;
-    const prisJoint = new PrisJoint(fixture.slider.prisId, revJoint.x, revJoint.y, false, true);
-    prisJoint.angle_rad = fixture.slider.angleRad ?? 0;
+  const sliderSpecs = [...(fixture.slider ? [fixture.slider] : []), ...(fixture.sliders ?? [])];
+  sliderSpecs.forEach((spec) => {
+    const revJoint = jointById.get(spec.at)!;
+    // A floating slot is not grounded; that pair of states is exclusive (§2.4a).
+    const prisJoint = new PrisJoint(spec.prisId, revJoint.x, revJoint.y, false, !spec.on);
+    if (spec.on) {
+      const carrier = links.find((link) => link.id === spec.on!.carrier)!;
+      prisJoint.slideOn(carrier, jointById.get(spec.on.a)!, jointById.get(spec.on.b)!);
+    } else {
+      prisJoint.angle_rad = spec.angleRad ?? 0;
+    }
     prisJoint.connectedJoints.push(revJoint);
     revJoint.connectedJoints.push(prisJoint);
     const piston = new SliderBlock(
       revJoint.id + prisJoint.id,
       [revJoint, prisJoint],
-      fixture.slider.pistonMass
+      spec.pistonMass
     );
     prisJoint.links.push(piston);
     revJoint.links.push(piston);
     joints.push(prisJoint);
     links.push(piston);
-  }
+  });
 
   const forces: Force[] = [];
   if (fixture.load) {
