@@ -14,7 +14,9 @@ Requires Node ≥22.22 (or 24.x). The esbuild `application` builder is used; `ou
 - `npm run build` — production build to `dist/pmksweb`
 - `npm test -- --watch=false` — Vitest suite (jsdom) via `@angular/build:unit-test`; drop the flag for watch mode
 
-There is no lint target (`tslint.json` is vestigial). Formatting follows `.prettierrc`: 100-char width, single quotes, 2-space indent.
+There is no lint target (`tslint.json` is vestigial). Formatting follows `.prettierrc`: 100-char width, single quotes, 2-space indent. `npm run format:check` reports the state; `npm run format` fixes it.
+
+**About 50 files predate the config and do not satisfy it.** Running Prettier across one of them rewrites code you did not touch and buries your change — so format only the files you actually edited, and check first, because a file being unformatted is the normal case rather than the exception. Cleaning up the backlog belongs in its own PR. `.prettierignore` deliberately excludes Markdown (Prettier pads every table cell and rewrites `*emphasis*` as `_emphasis_`, so a one-line doc edit lands as hundreds of lines of realignment) and the generated `src/test-data/verification` tables.
 
 ## UI validation / computer use → GPT-5.5 via Codex CLI
 

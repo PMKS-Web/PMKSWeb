@@ -1,0 +1,16 @@
+# Build output and throwaway run artifacts.
+/dist
+/out-tsc
+/tmp
+/artifacts
+/coverage
+
+# Markdown is hand-wrapped prose with a lot of tables. Prettier pads every table
+# cell to the widest entry and rewrites *emphasis* as _emphasis_, so a one-line
+# edit to a doc lands as a few hundred lines of realignment and buries itself.
+*.md
+
+# Machine-generated reference tables. These are regenerated wholesale from the
+# MATLAB verification runs, so reformatting them is noise that would also make
+# the next regeneration look like a change.
+/src/test-data/verification
