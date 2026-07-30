@@ -197,8 +197,8 @@ await safe('joint dragged onto another shows a ring and merges', async () => {
     return { stroke: style.stroke, dash: style.strokeDasharray, fill: style.fill };
   });
   record(
-    'ring is dashed and unfilled, so it reads as a target',
-    !!ringStyle && ringStyle.dash !== 'none' && ringStyle.fill === 'none',
+    'ring is solid and unfilled, so it reads as a claim on the target',
+    !!ringStyle && ringStyle.dash === 'none' && ringStyle.fill === 'none',
     { ringStyle }
   );
 
@@ -357,11 +357,65 @@ await safe('Analyze mode refuses to drag a joint or a link', async () => {
   });
 });
 
-// A pan bug after a merge — the canvas following the pointer with no button
-// held — is deliberately NOT checked here. svg-pan-zoom ignores synthetic mouse
-// events entirely, and a CDP-driven release always hit-tests live so it never
-// goes missing the way a real one can. Both earlier attempts passed with the
-// fix removed, which makes them worse than no check at all.
+// --- 6. A bare cursor never pans the canvas -------------------------------
+// svg-pan-zoom enters a pan on mousedown and leaves it only on mouseup, so a
+// release it never sees leaves the canvas following the cursor with no button
+// held. The release that goes missing in the field is not reproducible through
+// CDP — Chrome re-aims a release whose target was deleted at the nearest
+// surviving ancestor, which still reaches the canvas — so the stuck state is
+// entered directly, by a synthetic mousedown on #canvas. That drives the
+// library exactly as a real press does, which is what makes this discriminate:
+// with the guard removed the assertion below fails.
+await safe('a bare cursor never pans the canvas', async () => {
+  await loadFourBar(page);
+  const viewport = () =>
+    page.evaluate(() =>
+      document.querySelector('#canvas > g[id^="viewport-"]')?.getAttribute('transform')
+    );
+  const box = await page.locator('#canvas').boundingBox();
+  const start = { x: box.x + box.width * 0.5, y: box.y + box.height * 0.5 };
+
+  // Pan for real first, so a viewport that never moves at all cannot pass.
+  await page.mouse.move(start.x, start.y);
+  await page.waitForTimeout(150);
+  const parked = await viewport();
+  await page.mouse.down();
+  await page.mouse.move(start.x + 90, start.y + 60);
+  await page.waitForTimeout(200);
+  const dragged = await viewport();
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  record('holding the button still pans the canvas', !!parked && parked !== dragged, {
+    parked,
+    dragged,
+  });
+
+  // Strand the library mid-gesture, then move having released nothing.
+  await page.evaluate(
+    (point) =>
+      document.querySelector('#canvas').dispatchEvent(
+        new MouseEvent('mousedown', {
+          bubbles: true,
+          button: 0,
+          clientX: point.x,
+          clientY: point.y,
+        })
+      ),
+    start
+  );
+  const stranded = await viewport();
+  for (let step = 1; step <= 6; step++) {
+    await page.mouse.move(start.x + step * 30, start.y + step * 20);
+    await page.waitForTimeout(30);
+  }
+  await page.waitForTimeout(200);
+  const roamed = await viewport();
+  await shot(page, 'bare-cursor-no-pan.png');
+  record('a move with no button held leaves the canvas alone', stranded === roamed, {
+    stranded,
+    roamed,
+  });
+});
 
 // --- 7. A merge that would over-constrain the linkage is refused ----------
 // A is on link AB and C is on BC, so folding A into C would leave a second bar
@@ -459,6 +513,153 @@ await safe('a joint can be dropped onto the pin of a slider', async () => {
   });
   record('the slot stayed coincident with the pin it rides', prismaticOnPin.length > 0, {
     joints: prismaticOnPin.length,
+  });
+});
+
+// --- 9. Capture, refusal and the animations that report them --------------
+// The snap treatment: amber ring plus capture on a legal target, red ring plus
+// a shake and an explanation on a refused one, and silence when a merge simply
+// works.
+async function ringInfo(page, selector) {
+  return await page.evaluate((sel) => {
+    const rings = [...document.querySelectorAll(`#jointHolder ${sel}`)];
+    if (rings.length === 0) return { count: 0 };
+    const style = getComputedStyle(rings[0]);
+    return {
+      count: rings.length,
+      stroke: style.stroke,
+      dash: style.strokeDasharray,
+      fill: style.fill,
+      cx: Number(rings[0].getAttribute('cx')),
+      cy: Number(rings[0].getAttribute('cy')),
+    };
+  }, selector);
+}
+
+async function effectCount(page, className) {
+  return await page.evaluate(
+    (name) => document.querySelectorAll(`#jointHolder g.${name}`).length,
+    className
+  );
+}
+
+await safe('a legal target captures the dragged joint under an amber ring', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+
+  // Deliberately short of D: what puts the joint on the target has to be the
+  // capture, not the cursor.
+  await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: d.screenX + 6, y: d.screenY + 6 },
+    { holdBeforeRelease: 350 }
+  );
+
+  const amber = await ringInfo(page, '.snapTarget');
+  const refused = await ringInfo(page, '.snapRefused');
+  const held = await jointState(page);
+  const heldA = held.find((j) => j.id === 'A');
+  await shot(page, 'capture-ring.png');
+
+  record(
+    'the capture ring is amber, solid and unfilled',
+    amber.count === 1 && amber.stroke === 'rgb(255, 193, 7)' && amber.fill === 'none',
+    { amber }
+  );
+  record(
+    'the capture ring sits on the target joint',
+    Math.abs(amber.cx - d.modelX) < 1e-6 && Math.abs(amber.cy - d.modelY) < 1e-6,
+    { ring: [amber.cx, amber.cy], target: [d.modelX, d.modelY] }
+  );
+  record('no refusal ring is drawn for a legal target', refused.count === 0, { refused });
+  record(
+    'the dragged joint jumped onto the target instead of following the cursor',
+    Math.abs(heldA.modelX - d.modelX) < 1e-6 && Math.abs(heldA.modelY - d.modelY) < 1e-6,
+    { dragged: [heldA.modelX, heldA.modelY], target: [d.modelX, d.modelY] }
+  );
+
+  await page.mouse.up();
+  await page.waitForTimeout(90);
+  const popping = await effectCount(page, 'jointPop');
+  await shot(page, 'merge-pop.png');
+  record('the surviving joint pops when the merge lands', popping === 1, { popping });
+
+  await page.waitForTimeout(600);
+  const note = await notificationText(page);
+  record('a merge that goes as expected says nothing', note === '', { note });
+  record('the pop is a one-shot', (await effectCount(page, 'jointPop')) === 0);
+});
+
+await safe('a refused target is ringed red, shakes on release, and explains itself', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const c = before.find((j) => j.id === 'C');
+
+  // A sits on AB and C on BC, so folding one into the other would leave two
+  // bars spanning B and C.
+  await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: c.screenX, y: c.screenY },
+    { holdBeforeRelease: 350 }
+  );
+
+  const red = await ringInfo(page, '.snapRefused');
+  const amber = await ringInfo(page, '.snapTarget');
+  await shot(page, 'refused-ring.png');
+
+  record('a red ring marks the joint that will not take the merge', red.count === 1, { red });
+  record('the red ring is red and unfilled', red.stroke === 'rgb(244, 67, 54)', { red });
+  record(
+    'the red ring sits on the refused joint',
+    Math.abs(red.cx - c.modelX) < 1e-6 && Math.abs(red.cy - c.modelY) < 1e-6,
+    { ring: [red.cx, red.cy], refused: [c.modelX, c.modelY] }
+  );
+  record('no amber capture ring is offered alongside it', amber.count === 0, { amber });
+
+  await page.mouse.up();
+  await page.waitForTimeout(90);
+  const shaking = await effectCount(page, 'jointShake');
+  await shot(page, 'refused-shake.png');
+  record('the dropped joint shakes', shaking === 1, { shaking });
+
+  await page.waitForTimeout(700);
+  const note = await notificationText(page);
+  record('the snackbar says why the merge was refused', /over-constrain/i.test(note), { note });
+  record('the shake is a one-shot', (await effectCount(page, 'jointShake')) === 0);
+  const after = await jointState(page);
+  record('nothing was merged', after.length === before.length, { after: after.map((j) => j.id) });
+});
+
+await safe('holding Alt suppresses snapping entirely', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+
+  await page.keyboard.down('Alt');
+  await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: d.screenX, y: d.screenY },
+    { holdBeforeRelease: 350 }
+  );
+  const amber = await ringInfo(page, '.snapTarget');
+  const red = await ringInfo(page, '.snapRefused');
+  await shot(page, 'alt-suppresses-snap.png');
+  await page.mouse.up();
+  await page.keyboard.up('Alt');
+  await page.waitForTimeout(600);
+  const after = await jointState(page);
+
+  record('no capture ring while Alt is held', amber.count === 0, { amber });
+  record('no refusal ring while Alt is held', red.count === 0, { red });
+  record('the drop merged nothing', after.length === before.length, {
+    after: after.map((j) => j.id),
   });
 });
 

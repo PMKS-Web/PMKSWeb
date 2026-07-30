@@ -5,6 +5,7 @@ import {
   MERGE_REFUSAL_MESSAGES,
   MergeRefusal,
   refuseJointMerge,
+  resolveDropCandidate,
   resolveJointDropTarget,
 } from './drop-target';
 
@@ -217,5 +218,73 @@ describe('resolving a joint drop target', () => {
     const prismatic = new PrisJoint('B', 3, 0, false, true);
 
     expect(resolveJointDropTarget(dragged, 3, 0, [dragged, prismatic], 5)).toBeUndefined();
+  });
+});
+
+// The canvas needs the joint the user is *aiming* at, legal or not, so that a
+// refused target can be marked red and explained instead of going dark.
+describe('resolving the joint a drag is aimed at', () => {
+  /** A dragged joint plus one legal target and one refused target, side by side. */
+  function scene() {
+    const dragged = new RevJoint('A', 0, 0);
+    const refused = new RevJoint('B', 10, 0);
+    const legal = new RevJoint('C', 10.5, 0);
+    connect('AB', [dragged, refused]);
+    connect('CG', [legal, new RevJoint('G', 10.5, 5)]);
+    return { dragged, refused, legal, joints: [dragged, refused, legal] };
+  }
+
+  it('reports a legal target with no refusal', () => {
+    const { dragged, legal, joints } = scene();
+
+    expect(resolveDropCandidate(dragged, 10.5, 0, joints, 1)).toEqual({
+      joint: legal,
+      refusal: undefined,
+    });
+  });
+
+  it('reports a refused target together with the reason it was refused', () => {
+    const { dragged, refused, joints } = scene();
+
+    expect(resolveDropCandidate(dragged, 10, 0, joints, 1)).toEqual({
+      joint: refused,
+      refusal: 'shares-a-link',
+    });
+  });
+
+  // Nearest wins outright: a refused joint under the cursor must not be stepped
+  // over in favour of a legal one further away, or the red ring would appear on
+  // a joint the user is not pointing at.
+  it('takes the nearest joint even when a legal one sits just behind it', () => {
+    const { dragged, refused, joints } = scene();
+
+    expect(resolveDropCandidate(dragged, 10.1, 0, joints, 1)?.joint).toBe(refused);
+  });
+
+  it('takes the nearer legal joint when that is the one under the cursor', () => {
+    const { dragged, legal, joints } = scene();
+
+    expect(resolveDropCandidate(dragged, 10.4, 0, joints, 1)?.joint).toBe(legal);
+  });
+
+  it('takes nothing when every joint is outside the radius', () => {
+    const { dragged, joints } = scene();
+
+    expect(resolveDropCandidate(dragged, 5, 0, joints, 1)).toBeUndefined();
+  });
+
+  // The dragged joint is always at distance zero from the cursor, so reporting
+  // it would pin a permanent ring to the thing being dragged.
+  it('never reports the joint being dragged', () => {
+    const dragged = new RevJoint('A', 0, 0);
+
+    expect(resolveDropCandidate(dragged, 0, 0, [dragged], 5)).toBeUndefined();
+  });
+
+  it('ignores the prismatic half of a slider, which is the slot rather than a pin', () => {
+    const dragged = new RevJoint('A', 0, 0);
+    const prismatic = new PrisJoint('B', 3, 0, false, true);
+
+    expect(resolveDropCandidate(dragged, 3, 0, [dragged, prismatic], 5)).toBeUndefined();
   });
 });

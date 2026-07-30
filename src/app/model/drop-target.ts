@@ -114,3 +114,44 @@ export function resolveJointDropTarget(
 
   return best;
 }
+
+/** The joint a drag is currently aimed at, and why it would refuse the merge. */
+export interface JointDropCandidate {
+  joint: RevJoint;
+  /** Absent when the merge is legal. */
+  refusal?: MergeRefusal;
+}
+
+/**
+ * The joint `source` is aiming at if the drag were released at (x, y),
+ * *including* one it is not allowed to merge with.
+ *
+ * Nearest wins outright, legal or not. A refused joint that silently declines to
+ * light up reads as a dead drop zone, so the canvas needs the near miss in order
+ * to mark it red and say why. `resolveJointDropTarget` remains the "may I merge"
+ * question; this one is "what am I pointing at".
+ */
+export function resolveDropCandidate(
+  source: Joint,
+  x: number,
+  y: number,
+  joints: Joint[],
+  radius: number
+): JointDropCandidate | undefined {
+  let best: JointDropCandidate | undefined;
+  let bestDistance = radius;
+
+  joints.forEach((candidate) => {
+    if (!(candidate instanceof RevJoint)) return;
+    // The joint under the cursor is the one being dragged; pointing at itself is
+    // not a near miss worth reporting.
+    if (candidate.id === source.id) return;
+    const distance = Math.hypot(candidate.x - x, candidate.y - y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = { joint: candidate, refusal: refuseJointMerge(source, candidate) };
+    }
+  });
+
+  return best;
+}

@@ -251,25 +251,60 @@ export class Mechanism {
   }
 
   /**
+   * Map every link to the rigid body it belongs to.
+   *
+   * Two links pinned to each other at two or more shared joints cannot move
+   * relative to each other — the second pin constrains nothing the first did
+   * not already, so it is redundant. Gruebler's equation has no way to know
+   * that and subtracts for it anyway, reporting a mobility one lower than the
+   * assembly actually has. Users hit this by drawing a coupler as two
+   * overlapping links (or by welding one across a pair of joints another link
+   * already spans): a perfectly ordinary four-bar then counts as DOF 0 and
+   * refuses to simulate. Collapsing such links into one body before counting
+   * removes the paradox.
+   */
+  private determineRigidBodies(): Map<string, string> {
+    const parent = new Map<string, string>();
+    const links = this.links[0];
+    links.forEach((l) => parent.set(l.id, l.id));
+    const find = (id: string): string => {
+      let root = id;
+      while (parent.get(root) !== root) {
+        root = parent.get(root)!;
+      }
+      return root;
+    };
+    for (let i = 0; i < links.length; i++) {
+      for (let j = i + 1; j < links.length; j++) {
+        const shared = links[i].joints.filter((joint) =>
+          links[j].joints.some((other) => other.id === joint.id)
+        ).length;
+        if (shared >= 2) {
+          parent.set(find(links[i].id), find(links[j].id));
+        }
+      }
+    }
+    return new Map(links.map((l) => [l.id, find(l.id)]));
+  }
+
+  /**
    * steps to determine DOF (Gruebler's Criteron with Exceptions):
    1.determine number of links + ground
-   1a. If mechanismn contains parallel linkage, remove from the number of links(N) and number of joints (J1)
+   1a. Links sharing two or more joints are one rigid body (see determineRigidBodies)
    2.determine number of ground joints
    3.determine number of slider joints
    */
   determineDegreesOfFreedom() {
-    let N = 0; // start with 1 to account for ground link
+    const rigidBody = this.determineRigidBodies();
+    // A joint's mobility cost is set by how many distinct bodies meet there, not
+    // how many links: pins between links of the same rigid body are redundant.
+    const bodiesAt = (joint: RealJoint) =>
+      new Set(joint.links.map((l) => rigidBody.get(l.id) ?? l.id)).size;
+
+    let N = new Set(rigidBody.values()).size;
     let J1 = 0;
     const J2 = 0;
     let groundNotFound = true;
-    this.links[0].forEach((l) => {
-      N++;
-      // TODO: Account for this case later
-      // if (this.determineParallelLinkage(l)) {
-      //   N -= l.joints.length - 2;
-      //   J1 -= (l.joints.length - 2) * 2;
-      // }
-    });
 
     this.joints[0].forEach((j) => {
       // TODO: Account for this instance later
@@ -279,20 +314,20 @@ export class Mechanism {
             return;
           }
           if (j.ground) {
-            J1 += j.links.length;
+            J1 += bodiesAt(j);
             if (groundNotFound) {
               N++;
               groundNotFound = false;
             }
           } else {
-            J1 += j.links.length - 1;
+            J1 += bodiesAt(j) - 1;
           }
           break;
         case PrisJoint:
           if (!(j instanceof PrisJoint)) {
             return;
           }
-          J1 += j.links.length;
+          J1 += bodiesAt(j);
           break;
       }
     });

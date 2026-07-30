@@ -27,8 +27,6 @@ export class SvgGridService {
   private cellSize: number = this.defualtCellSize;
 
   private panLockOut: boolean = false;
-  /** The svg svg-pan-zoom binds its own mouse listeners to. See endActivePan. */
-  private rootElement?: HTMLElement;
 
   private MAX_ZOOM: number = 3300;
   private MIN_ZOOM: number = 0.04;
@@ -41,7 +39,6 @@ export class SvgGridService {
   setNewElement(root: HTMLElement) {
     var eventsHandler;
     const dragState = this.dragState;
-    this.rootElement = root;
 
     eventsHandler = {
       haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
@@ -138,6 +135,7 @@ export class SvgGridService {
       onUpdatedCTM: this.handleUpdatedCTM.bind(this),
       customEventsHandler: eventsHandler,
     });
+    this.guardAgainstStuckPan(root);
     this.scaleToFitLinkage();
   }
 
@@ -187,23 +185,44 @@ export class SvgGridService {
   }
 
   /**
-   * Tell svg-pan-zoom the pointer is up, whether or not it saw the release.
+   * Stop svg-pan-zoom panning a canvas nobody is holding.
    *
-   * Its mouse listeners live on the root svg, and `mousedown` puts it into a
-   * "pan" state that only `mouseup` leaves. A gesture that removes the node
-   * under the pointer — merging one joint into another — can send that release
-   * to a detached element, which never reaches the root, so the library keeps
-   * panning on every later move with no button held. Whether the release lands
-   * depends on whether the node is gone yet, which is why the symptom came and
-   * went with how fast the pointer left the joint.
+   * Its mouse listeners live on the root svg: `mousedown` puts it into a "pan"
+   * state that only `mouseup` or `mouseleave` leaves, and every `mousemove`
+   * until then drags the viewport. A release that never reaches this element
+   * therefore leaves the canvas following the bare cursor. Chrome does re-aim a
+   * release whose target was deleted mid-gesture at the nearest surviving
+   * ancestor, so a joint merge alone does not lose one, but anything stacked
+   * over the canvas that swallows the release would.
    *
-   * `handleBeforePan` cannot be the fix: by then the pointer really is up, and
-   * a pan with the pointer up is also what `fit`, `centre` and zoom-to-fit do,
-   * so vetoing on that condition would break them. The gesture has to be ended
-   * at its source instead.
+   * Rather than chase the ways a release can go missing, hold the invariant it
+   * exists to protect: a move carrying no held button cannot belong to a pan.
+   * The button state on each move is the authority, so end the gesture at its
+   * source before the library gets to act on it.
+   *
+   * `handleBeforePan` cannot host this test: by then a pan with no button held
+   * is indistinguishable from `fit`, `center` and wheel zoom, which are all
+   * legitimate.
    */
-  endActivePan() {
-    this.rootElement?.dispatchEvent(new MouseEvent('mouseup', { bubbles: false }));
+  private guardAgainstStuckPan(root: HTMLElement) {
+    let gestureLive = false;
+    // The release is watched on the root rather than on the window, because the
+    // flag has to stay set for exactly the releases the library missed.
+    root.addEventListener('mousedown', () => (gestureLive = true), true);
+    root.addEventListener('mouseup', () => (gestureLive = false), true);
+    // On the window, so this runs before the library's listener whatever the
+    // move is aimed at: on the root itself the two would race by registration
+    // order, and the library registered first.
+    window.addEventListener(
+      'mousemove',
+      (event) => {
+        if (!gestureLive || event.buttons !== 0) return;
+        gestureLive = false;
+        // Non-bubbling, so only the listeners on the root see it.
+        root.dispatchEvent(new MouseEvent('mouseup', { bubbles: false }));
+      },
+      true
+    );
   }
 
   handleBeforePan(oldPan: any, newPan: any) {

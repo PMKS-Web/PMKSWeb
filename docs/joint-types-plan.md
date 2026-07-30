@@ -383,6 +383,31 @@ because dropping either would quietly change what the mechanism is. A slider car
 merge is repositioned onto its new pin, since a block and the pin it rides are coincident by
 construction.
 
+#### 1.2a The snap visual language
+
+Adopted from the user's design prototype (`Joint Snap A`), so the canvas says which of three things
+is about to happen *before* the drop rather than after it.
+
+| State | Mark |
+| --- | --- |
+| legal target in range | solid amber ring on the target, and the dragged joint **jumps onto it** rather than trailing the cursor |
+| refused target in range | red ring on that joint, no capture |
+| release over a refused target | the dragged joint shakes in place, and a snackbar names the rule |
+| a merge that lands | the survivor pops, and **nothing is said** — a gesture that did what it looked like needs no receipt |
+
+Holding **Alt** suppresses both rings and the capture, for placing a joint on top of another without
+merging them.
+
+Capture carries the most: locking the dragged joint to the target's exact position is what makes the
+drop predictable, and it is why the ring radius equals the snap radius rather than being drawn as a
+tight collar — the ring then shows the catch zone honestly.
+
+Two deliberate departures from the prototype. A refused drop does **not** return the joint to where
+it started: in the prototype the drag is abandoned, but here moving a joint is a legitimate edit in
+its own right, and reverting it would silently discard the user's move. And the shake is a
+percentage of the joint's own fill-box rather than the prototype's 7px, because a pixel offset
+inside the zoomed SVG grows with the canvas transform instead of holding its proportion.
+
 **1.3** treats a link drag as a rigid translation rather than as "drag each joint in turn". That
 distinction is visible: the body's own centre of mass and forces translate exactly, so a
 hand-placed CoM survives, while only the *neighbouring* links are deformed and recomputed.
@@ -415,15 +440,41 @@ hold lasted. It now measures from where the body was last placed, which makes th
 distance catch up on the first applied move — matching what joint dragging already did by virtue of
 positioning absolutely.
 
-A third case came from using the app rather than from either suite: after a merge, moving the mouse
-with no button held panned the canvas. A merge destroys the node the pointer went down on, and a
-gesture whose target disappears mid-drag can leave the pan library believing the press never ended.
-The rule now enforced in the Hammer handler is that the canvas may only pan while a pointer is
-genuinely down, with our own `pointerup` on the root svg — which always lands, because that element
-is never destroyed — as the authority. Programmatic pans from fit, centre, and zoom are untouched.
-**This one resisted reproduction under synthetic input**: neither Playwright's mouse nor hand-built
-`MouseEvent`s put Hammer into the stale state, so the fix asserts the invariant rather than closing
-a captured repro.
+A third case came from using the app rather than from either suite: with no button held, the canvas
+sometimes followed the cursor after a merge. It took three attempts, and the first two were wrong in
+ways worth recording, because both were confidently argued from evidence that had not been checked.
+
+- **Attempt one blamed Hammer** and guarded its `panstart panmove` handler. Hammer cannot cause this
+  at all: its `MouseInput.handler` turns any `mousemove` with `which !== 1` into `INPUT_END`, so a
+  buttonless move *ends* its gesture.
+- **Attempt two blamed the merge for destroying the node the pointer went down on**, leaving
+  svg-pan-zoom's `mousedown`-set `state === "pan"` with no `mouseup` to clear it. The DOM removal is
+  real — Angular's change detection drains in the microtask checkpoint between `pointerup` and
+  `mouseup` — but Chrome re-aims a release whose target was deleted mid-gesture at the nearest
+  *connected* ancestor. Traces show it landing on `g#jointHolder` and reaching the library.
+- Both attempts shipped browser checks that **passed with the fix removed**. The measurement was at
+  fault: svg-pan-zoom's viewport is `#canvas > g[id^="viewport-"]`, not `.svg-pan-zoom_viewport`,
+  and `ShadowViewport.setCTM` defers its DOM write to `requestAnimationFrame`, so reading the
+  transform inside the dispatch showed nothing either way. That produced the conclusion "synthetic
+  mouse events do not drive svg-pan-zoom", which is false, and everything reasoned from it was void.
+
+What is established: the runaway pan **is** svg-pan-zoom's `state === "pan"` outliving the release,
+confirmed by driving the library into that state and moving a real CDP mouse with no button held.
+What is **not** established is how the release goes missing in the field — 30 CDP scenarios across
+five drags and six release timings, with the guard disabled, produced zero ghost pans.
+
+So `guardAgainstStuckPan` holds the invariant rather than chasing the cause: **a `mousemove`
+carrying no held button cannot belong to a pan**, so it ends the gesture at the source. The release
+is watched on the root — a window-level listener would clear the flag for exactly the releases the
+library missed — and the move on the window, because on the root the two race by registration order
+at `AT_TARGET` and the library registered first, so one pan frame slips through. `handleBeforePan`
+cannot host the test: by then a buttonless pan is indistinguishable from `fit`, `center` and wheel
+zoom, all legitimate.
+
+Its regression check enters the stuck state synthetically, since the field trigger will not
+reproduce, and **it discriminates** — proven by commenting out the guard, polling the served bundle
+until the call was gone, and watching exactly that one check fail with the viewport moving
+`(965, 507) → (1145, 627)`.
 
 The rest is covered by [`e2e/phase1-drag.mjs`](../e2e/phase1-drag.mjs), which asserts in model
 coordinates rather than on screenshots and exits non-zero on any failure.
@@ -431,7 +482,7 @@ coordinates rather than on screenshots and exits non-zero on any failure.
 > **Gate 1 — met.** 310 specs green (was 263); dragging a joint onto another merges them and the
 > result round-trips through the URL; dragging a link moves all its joints and leaves the mechanism
 > valid at DOF 1; every gesture is exactly one undo entry, and a click that only selects is zero.
-> Production build clean. Each new assertion was mutation-checked, and all 29 browser checks in
+> Production build clean. Each new assertion was mutation-checked, and all 46 browser checks in
 > `e2e/phase1-drag.mjs` pass.
 
 ### Phase 2 — Floating Slot: model and solvers

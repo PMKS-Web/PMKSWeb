@@ -121,12 +121,62 @@
     stroke: mat.m2-get-color-from-palette($accent-palette, 500);
   }
 
-  // Ring around the joint a dragged joint is about to merge into. Dashed and
-  // unfilled so it reads as a target rather than as another joint.
+  // Ring around the joint a dragged joint has been captured by: solid accent,
+  // unfilled, so it reads as a claim on that joint rather than as another joint.
   .snapTarget {
     fill: none;
     stroke: mat.m2-get-color-from-palette($accent-palette, 500);
-    stroke-dasharray: 4 3;
+    opacity: 0.85;
     pointer-events: none;
+  }
+
+  // The same ring in red, for a joint in range that refuses the merge.
+  .snapRefused {
+    fill: none;
+    stroke: #f44336;
+    pointer-events: none;
+  }
+
+  // One-shot feedback on release. Both translate against the joint's own
+  // bounding box rather than in pixels, so the motion holds its proportions at
+  // every zoom level instead of growing with the canvas transform.
+  .jointShake {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: shakeX 0.38s ease;
+  }
+
+  .jointPop {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: popIn 0.35s ease;
+  }
+
+  @keyframes shakeX {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-12%);
+    }
+    40% {
+      transform: translateX(12%);
+    }
+    60% {
+      transform: translateX(-7%);
+    }
+    80% {
+      transform: translateX(7%);
+    }
+  }
+
+  @keyframes popIn {
+    0% {
+      transform: scale(1.12);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 }

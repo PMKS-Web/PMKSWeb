@@ -55,7 +55,11 @@ import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 import { DragStateService } from '../../services/drag-state.service';
-import { MERGE_REFUSAL_MESSAGES, resolveJointDropTarget } from '../../model/drop-target';
+import {
+  JointDropCandidate,
+  MERGE_REFUSAL_MESSAGES,
+  resolveDropCandidate,
+} from '../../model/drop-target';
 import introJs from 'intro.js';
 
 @Component({
@@ -106,6 +110,17 @@ export class NewGridComponent {
    * Read by the template to draw the snap indicator.
    */
   public snapTargetJoint?: RevJoint;
+
+  /**
+   * A joint in range that will not take the merge, kept with its reason so the
+   * release can say why. Drawn as a refusal marker rather than left blank: a
+   * target that just goes dark reads as the drag being broken.
+   */
+  public refusedTarget?: JointDropCandidate;
+
+  /** Joints playing one-shot drop feedback, by id. */
+  public shakingJointID?: string;
+  public poppingJointID?: string;
 
   /** Where the link being dragged was last placed, in SVG coordinates. */
   private linkDragAnchor: Coord = new Coord(0, 0);
@@ -604,16 +619,14 @@ export class NewGridComponent {
         if (!this.canEditNow() || !this.pastDragThreshold($event)) {
           return;
         }
+        this.updateDropCandidate(mousePosInSvg, $event.altKey);
+        // Captured: the joint sits exactly on the target instead of trailing the
+        // cursor, so what is on screen is what a release would produce.
         this.activeObjService.selectedJoint = this.gridUtils.dragJoint(
           this.activeObjService.selectedJoint,
-          mousePosInSvg
-        );
-        this.snapTargetJoint = resolveJointDropTarget(
-          this.activeObjService.selectedJoint,
-          mousePosInSvg.x,
-          mousePosInSvg.y,
-          this.mechanismSrv.joints,
-          this.snapRadius()
+          this.snapTargetJoint
+            ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
+            : mousePosInSvg
         );
         this.dragState.noteMechanismModified();
         //So that the panel values update continously
@@ -751,6 +764,56 @@ export class NewGridComponent {
     return this.settings.objectScale * 0.4;
   }
 
+  /**
+   * Mark the joint the drag is aimed at. Holding Alt suppresses snapping
+   * outright, which is the only way to park a joint on top of another without
+   * merging the two.
+   */
+  private updateDropCandidate(mousePos: Coord, altHeld: boolean): void {
+    this.setDropCandidate(
+      altHeld
+        ? undefined
+        : resolveDropCandidate(
+            this.activeObjService.selectedJoint,
+            mousePos.x,
+            mousePos.y,
+            this.mechanismSrv.joints,
+            this.snapRadius()
+          )
+    );
+  }
+
+  private setDropCandidate(candidate?: JointDropCandidate): void {
+    // Capture starts further out than the joint's own hitbox, so pointerover
+    // cannot be what lifts the target to its hovered fill.
+    if (this.snapTargetJoint && this.snapTargetJoint !== candidate?.joint) {
+      this.snapTargetJoint.showHighlight = false;
+    }
+    this.snapTargetJoint = candidate && !candidate.refusal ? candidate.joint : undefined;
+    this.refusedTarget = candidate?.refusal ? candidate : undefined;
+    if (this.snapTargetJoint) this.snapTargetJoint.showHighlight = true;
+  }
+
+  /** The one-shot feedback animation playing on `joint`, if any. */
+  jointEffectClass(joint: Joint): string {
+    if (joint.id === this.shakingJointID) return 'jointShake';
+    if (joint.id === this.poppingJointID) return 'jointPop';
+    return '';
+  }
+
+  /** Shake the dropped joint and say why it could not land where it was aimed. */
+  private refuseDrop(jointID: string, message: string): void {
+    this.sendNotification(message);
+    this.shakingJointID = jointID;
+    setTimeout(() => (this.shakingJointID = undefined), 420);
+  }
+
+  /** Pop the survivor of a merge, so the change is legible where it happened. */
+  private popJoint(jointID: string): void {
+    this.poppingJointID = jointID;
+    setTimeout(() => (this.poppingJointID = undefined), 400);
+  }
+
   private showPathWhileDragging(): void {
     if (this.mechanismSrv.mechanisms[0].joints[0].length === 0) return;
     if (this.mechanismSrv.mechanisms[0].dof !== 1) return;
@@ -802,11 +865,6 @@ export class NewGridComponent {
     const merged = this.completePendingJointMerge();
     const outcome = this.dragState.release();
 
-    // Close out svg-pan-zoom's own gesture. A merge removes the node the
-    // pointer went down on, and the release then never reaches the root svg
-    // its listeners live on, leaving it panning on every later move.
-    this.svgGrid.endActivePan();
-
     if (outcome.rebuild) {
       this.mechanismSrv.updateMechanism();
     }
@@ -829,29 +887,38 @@ export class NewGridComponent {
    */
   private completePendingJointMerge(): boolean {
     const target = this.snapTargetJoint;
-    this.snapTargetJoint = undefined;
-    if (this.dragState.joint !== jointStates.dragging || !target) {
+    const refused = this.refusedTarget;
+    this.setDropCandidate(undefined);
+    if (this.dragState.joint !== jointStates.dragging) {
       return false;
     }
 
     const source = this.activeObjService.selectedJoint;
+    if (refused?.refusal) {
+      this.refuseDrop(source.id, MERGE_REFUSAL_MESSAGES[refused.refusal]);
+      return false;
+    }
+    if (!target) {
+      return false;
+    }
+
     const wasWelded = source.isWelded || target.isWelded;
     const refusal = this.mechanismSrv.mergeJoints(source, target);
     if (refusal) {
-      this.sendNotification(MERGE_REFUSAL_MESSAGES[refusal]);
+      this.refuseDrop(source.id, MERGE_REFUSAL_MESSAGES[refusal]);
       return false;
     }
 
     // A merged-into-welded joint re-welds itself, but a grounded, driven, or
     // slider-carrying survivor cannot be welded at all. Losing the weld
-    // silently would leave the user with a linkage they did not ask for.
+    // silently would leave the user with a linkage they did not ask for. A
+    // merge that goes exactly as asked says nothing: the pop is the receipt.
     if (wasWelded && !target.isWelded) {
       this.sendNotification(
         `Merged joint ${source.id} into ${target.id}, but ${target.id} cannot be welded`
       );
-    } else {
-      this.sendNotification(`Merged joint ${source.id} into ${target.id}`);
     }
+    this.popJoint(target.id);
     return true;
   }
 
