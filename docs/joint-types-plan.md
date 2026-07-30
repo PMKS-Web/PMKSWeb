@@ -423,6 +423,12 @@ is about to happen *before* the drop rather than after it.
 | **Alt** held at any point, including at the release | no rings, no capture, no merge |
 | a merge that lands | the survivor pops, and **nothing is said** — a gesture that did what it looked like needs no receipt |
 
+While a capture is held the two joints sit on the same point, so their names overlap into a smudge.
+One label replaces both and names the merge — `B → D` — which is also the only place the canvas says
+*which of the two survives*. The arrow points the way the joint travelled, and is latched when the
+ring appears: recomputing it per frame would flip it as the cursor wandered across the target, and
+by then the joint has been parked on top of it anyway, so there is nothing left to read from.
+
 Holding **Alt** suppresses both rings and the capture, for placing a joint on top of another without
 merging them. The release reads Alt from the pointerup event rather than from the last cached
 target: pressing a modifier emits no pointermove, so a drag called off after the ring was acquired

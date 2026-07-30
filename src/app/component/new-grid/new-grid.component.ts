@@ -122,6 +122,9 @@ export class NewGridComponent {
   public shakingJointID?: string;
   public poppingJointID?: string;
 
+  /** Set when the joint being merged approached its target from the right. */
+  private mergeArrowReversed = false;
+
   /** Where the link being dragged was last placed, in SVG coordinates. */
   private linkDragAnchor: Coord = new Coord(0, 0);
 
@@ -789,9 +792,45 @@ export class NewGridComponent {
     if (this.snapTargetJoint && this.snapTargetJoint !== candidate?.joint) {
       this.snapTargetJoint.showHighlight = false;
     }
-    this.snapTargetJoint = candidate && !candidate.refusal ? candidate.joint : undefined;
+    const captured = candidate && !candidate.refusal ? candidate.joint : undefined;
+
+    // Which way the arrow points is latched the moment the ring appears, from
+    // the side the joint was still on. Recomputing it per frame would flip it
+    // back and forth as the cursor wanders across the target, and the joint has
+    // by then been parked on top of it anyway, so there is nothing left to read.
+    if (captured && captured !== this.snapTargetJoint) {
+      this.mergeArrowReversed = this.activeObjService.selectedJoint.x > captured.x;
+    }
+
+    this.snapTargetJoint = captured;
     this.refusedTarget = candidate?.refusal ? candidate : undefined;
     if (this.snapTargetJoint) this.snapTargetJoint.showHighlight = true;
+  }
+
+  /**
+   * `B → D` when this joint is the one a capture is about to merge into.
+   *
+   * A captured joint sits exactly on its target, so both names render at the
+   * same point and overlap into an unreadable smudge. Naming the merge in one
+   * label reads better than either name alone, and says which of the two
+   * survives — which is not otherwise visible anywhere.
+   */
+  mergeLabelFor(joint: Joint): string {
+    if (!this.snapTargetJoint || joint.id !== this.snapTargetJoint.id) return '';
+    const source = this.activeObjService.selectedJoint;
+    if (!source || source.id === joint.id) return '';
+    return this.mergeArrowReversed
+      ? `${joint.name} \u2190 ${source.name}`
+      : `${source.name} \u2192 ${joint.name}`;
+  }
+
+  /** Whether this joint is the one being dragged into another. */
+  isMergingAway(joint: Joint): boolean {
+    return (
+      !!this.snapTargetJoint &&
+      joint.id === this.activeObjService.selectedJoint?.id &&
+      joint.id !== this.snapTargetJoint.id
+    );
   }
 
   /** The one-shot feedback animation playing on `joint`, if any. */
@@ -1288,8 +1327,39 @@ export class NewGridComponent {
     return this.getFirstPosCoords(link).y;
   }
 
+  /**
+   * Re-answer "what would this drop do?" when Alt is pressed or let go.
+   *
+   * A modifier emits no pointer event, so without this the ring would sit there
+   * claiming a target that Alt has already called off, and the user would have
+   * to jiggle the mouse to find out whether the key registered. Alt also
+   * releases a captured joint back to the cursor, because suppressing the snap
+   * while leaving the joint parked on the target says the opposite.
+   */
+  @HostListener('window:keyup', ['$event'])
+  onAltReleased($event: KeyboardEvent) {
+    this.reconsiderDrop($event, false);
+  }
+
+  private reconsiderDrop($event: KeyboardEvent, held: boolean) {
+    if ($event.key !== 'Alt') return;
+    if (this.dragState.joint !== jointStates.dragging) return;
+
+    this.updateDropCandidate(this.mouseLocation, held);
+    const restingOn = this.snapTargetJoint ?? this.mouseLocation;
+    this.activeObjService.selectedJoint = this.gridUtils.dragJoint(
+      this.activeObjService.selectedJoint,
+      new Coord(restingOn.x, restingOn.y)
+    );
+    this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
+  }
+
+  // Angular keys host listeners by event name, so this component gets exactly
+  // one window:keydown. Anything that needs the key down hangs off here.
   @HostListener('window:keydown', ['$event'])
   onKeyPress($event: KeyboardEvent) {
+    this.reconsiderDrop($event, true);
+
     if (($event.ctrlKey || $event.metaKey) && $event.keyCode == 90) {
       //Ctrl + Z
       NewGridComponent.sendNotification(

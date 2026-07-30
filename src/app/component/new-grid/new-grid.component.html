@@ -810,10 +810,19 @@
         [attr.width]="10"
         style="overflow: visible; text-anchor: middle"
       >
-        @if (
-          (gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) ||
-          joint.showHighlight ||
-          (this.activeObjService.selectedJoint == joint && this.activeObjService.objType == 'Joint')
+        @if (mergeLabelFor(joint); as mergeLabel) {
+          <!-- While a joint is captured, the two names sit on the same point and
+               overlap into an unreadable smudge. One label naming the merge says
+               what is about to happen instead. -->
+          <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
+            {{ mergeLabel }}
+          </text>
+        } @else if (
+          !isMergingAway(joint) &&
+          ((gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) ||
+            joint.showHighlight ||
+            (this.activeObjService.selectedJoint == joint &&
+              this.activeObjService.objType == 'Joint'))
         ) {
           <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
             {{ joint.name }}

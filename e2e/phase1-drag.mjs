@@ -557,6 +557,25 @@ await safe('a legal target captures the dragged joint under an amber ring', asyn
   const heldA = held.find((j) => j.id === 'A');
   await shot(page, 'capture-ring.png');
 
+  // Both names land on the same point once captured, so one label naming the
+  // merge replaces them — and it is the only place the survivor is stated.
+  const labels = await page.evaluate(() =>
+    [...document.querySelectorAll('#canvas text')]
+      .map((el) => el.textContent.trim())
+      .filter(Boolean)
+  );
+  // A sits to the left of D, so the arrow reads in the direction of travel.
+  record(
+    'the capture is labelled with the merge, not two overlapping names',
+    labels.includes('A \u2192 D'),
+    {
+      merge: labels.filter((l) => /[\u2190\u2192]/.test(l)),
+    }
+  );
+  record('neither joint is still labelled on its own', !labels.includes('A'), {
+    labels: labels.filter((l) => l.length <= 2),
+  });
+
   record(
     'the capture ring is amber, solid and unfilled',
     amber.count === 1 && amber.stroke === 'rgb(255, 193, 7)' && amber.fill === 'none',
@@ -763,7 +782,16 @@ await safe('Alt pressed without moving still calls off the merge', async () => {
 
   // Down, and released, without the pointer moving at all in between.
   await page.keyboard.down('Alt');
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(250);
+  record('the ring clears the moment Alt goes down', (await snapRingCount(page)) === 0);
+
+  // And comes back on release of the key, still without moving.
+  await page.keyboard.up('Alt');
+  await page.waitForTimeout(250);
+  record('the ring returns when Alt is let go', (await snapRingCount(page)) === 1);
+
+  await page.keyboard.down('Alt');
+  await page.waitForTimeout(250);
   await page.mouse.up();
   await page.waitForTimeout(500);
   await page.keyboard.up('Alt');
@@ -772,6 +800,45 @@ await safe('Alt pressed without moving still calls off the merge', async () => {
   await shot(page, 'alt-on-release.png');
   record('nothing merged', after.length === before.length, { after: after.map((j) => j.id) });
   record('the ring is gone', (await snapRingCount(page)) === 0);
+});
+
+// --- The merge label points the way the joint travelled --------------------
+await safe('a joint arriving from the right reverses the arrow', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+  record('D really is to the right of A', d.screenX > a.screenX, {
+    a: a.screenX,
+    d: d.screenX,
+  });
+
+  // Same pair, dragged the other way.
+  await dragBy(page, { x: d.screenX, y: d.screenY }, { x: a.screenX, y: a.screenY });
+  await page.waitForTimeout(250);
+  const labels = await page.evaluate(() =>
+    [...document.querySelectorAll('#canvas text')]
+      .map((el) => el.textContent.trim())
+      .filter(Boolean)
+  );
+  await shot(page, 'merge-label-reversed.png');
+  record('the arrow points back the way it came', labels.includes('A \u2190 D'), {
+    merge: labels.filter((l) => /[\u2190\u2192]/.test(l)),
+  });
+
+  // Latched: wandering across the target must not flip it back and forth.
+  await page.mouse.move(a.screenX - 6, a.screenY);
+  await page.waitForTimeout(150);
+  const wandered = await page.evaluate(() =>
+    [...document.querySelectorAll('#canvas text')]
+      .map((el) => el.textContent.trim())
+      .filter(Boolean)
+  );
+  record('the direction holds while the cursor wanders', wandered.includes('A \u2190 D'), {
+    merge: wandered.filter((l) => /[\u2190\u2192]/.test(l)),
+  });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
 });
 
 await flushReport();
