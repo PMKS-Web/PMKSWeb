@@ -472,12 +472,20 @@ export class ForceSolver {
       incidentByJoint.set(candidate.id, incident);
       if (incident.length === 0) continue;
 
-      if (candidate instanceof PrisJoint && candidate.ground) {
+      if (candidate instanceof PrisJoint) {
         const piston = incident.find((body) => body instanceof SliderBlock);
-        if (piston) {
+        // A grounded slot pushes against the world, which needs no equation of
+        // its own. A floating one pushes against the carrier, and that reaction
+        // has to appear in the carrier's equilibrium as well or the slot
+        // transmits force out of nowhere.
+        const carrier = candidate.isFloating
+          ? bodies.find((body) => body.id === candidate.carrier?.id)
+          : undefined;
+        if (piston && (candidate.ground || carrier)) {
           reactions.push({
             joint: candidate,
             positiveBody: piston,
+            negativeBody: carrier,
             // The reaction is normal to the slot, so it rotates with it.
             direction: [-Math.sin(candidate.slotAngle), Math.cos(candidate.slotAngle)],
             column: reactions.length,
@@ -558,6 +566,13 @@ export class ForceSolver {
     bodies.forEach((body) => {
       if (body.joints.some((candidate) => candidate.id === joint.id)) add(body);
     });
+    // A slot's carrier is reachable through neither route: Option A keeps it out
+    // of the slider's `links` and keeps the slider out of the carrier's
+    // `joints`, so without this the body on the far side of the slot is simply
+    // missing from the joint's incidence.
+    if (joint instanceof PrisJoint && joint.isFloating) {
+      add(bodies.find((body) => body.id === joint.carrier?.id));
+    }
     return ordered;
   }
 

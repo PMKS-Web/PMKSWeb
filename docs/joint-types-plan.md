@@ -550,6 +550,27 @@ coordinates rather than on screenshots and exits non-zero on any failure.
 | 2.10 | Force solver: rotate the reaction direction, drop the `.ground` guard, add carrier-side incidence | [`force-solver.ts:476-486, 551`](../src/app/model/mechanism/force-solver.ts) |
 | 2.11 | IC solver: prismatic IC is at infinity ⊥ to a direction that now rotates | [`ic-solver.ts:107-112`](../src/app/model/mechanism/ic-solver.ts) |
 
+**Status.** 2.1–2.8 and 2.10 are done. 2.9 and 2.11 are not, and **Gate 2 is not met.**
+
+Done and verified: the model and its three URL tokens with §2.4a decode validation; mobility for
+grounded guides; the inverse and forward position primitives, both matched against closed form
+(inverted slider-crank, and a four-bar with a slotted coupler); defer-and-retry ordering with a
+named-joints exit; the §2.8a lifecycle rules; and static forces, including carrier-side incidence
+and equal-and-opposite reactions across the slot.
+
+Not done, and why it is parked rather than half-built:
+
+- **2.9 (velocity and acceleration).** `LoopSolver` walks `connectedJoints`, and Option A puts the
+  carrier in neither that nor `links`, so a loop closing through a slot is never found and the
+  kinematic solver leaves every joint unset. Teaching the loop walk about slot edges without also
+  adding the ω×r term would turn today's failure into wrong numbers, which is the trade this plan
+  says never to make. `kinematicLoopAnalysis` therefore returns an empty analysis for a mechanism
+  with a floating slot — no crash, no fabricated zeros — until both land together.
+- **2.11 (instant centres).** Untouched. `ic-solver` reads the slot direction through `slotAngle`
+  now, so it rotates, but the prismatic IC placement has had no case built for it.
+- **Gate 2 remainder:** Whitworth (case 4), the Scotch yoke (case 3), velocity and acceleration for
+  any of them, and the IC case (10).
+
 #### 2.5a The inverse direction is the primary case, not an edge case
 
 An earlier draft of this plan assumed the forward direction — carrier pose known, find the rider's

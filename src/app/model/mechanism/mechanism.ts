@@ -1185,8 +1185,27 @@ export class Mechanism {
     return forceAnalysis;
   }
 
+  /**
+   * Whether any slot in this mechanism is cut into a moving link.
+   *
+   * LoopSolver walks `connectedJoints`, and Option A puts a slot's carrier in
+   * neither that nor `links`, so a loop closing through a slot is invisible to
+   * it and no loop is found at all. Velocity and acceleration for these
+   * mechanisms are still to be built — see docs/joint-types-plan.md 2.9.
+   */
+  private hasFloatingSlot(): boolean {
+    return this.joints[0].some((joint) => joint instanceof PrisJoint && joint.isFloating);
+  }
+
   kinematicLoopAnalysis() {
     const kinematicAnalysis = Array<Array<string>>();
+    // Returning nothing is the point. With no loops the solver leaves every
+    // velocity and acceleration unset, and the rows below would either throw on
+    // the missing entries or, worse, report them as zero -- a mechanism visibly
+    // moving while its velocity graph reads flat.
+    if (this.hasFloatingSlot()) {
+      return kinematicAnalysis;
+    }
     KinematicsSolver.resetVariables();
     KinematicsSolver.requiredLoops = this.requiredLoops;
     this.joints.forEach((_, index) => {
