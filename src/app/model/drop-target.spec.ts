@@ -47,38 +47,40 @@ describe('joint merge rules', () => {
     connect('AB', [a, b]);
     connect('AC', [a, c]);
 
-    expect(refuseJointMerge(b, c)).toBe('duplicate-link');
+    expect(refuseJointMerge(b, c)).toBe('over-constrained');
   });
 
-  it('refuses a joint that carries a slider', () => {
-    const a = new RevJoint('A', 0, 0);
-    const b = new RevJoint('B', 1, 0);
-    const c = new RevJoint('C', 4, 0);
-    connect('AB', [a, b]);
-    const prismatic = new PrisJoint('D', b.x, b.y, false, true);
-    b.connectedJoints.push(prismatic);
-    prismatic.connectedJoints.push(b);
-    const block = new SliderBlock('BD', [b, prismatic]);
-    b.links.push(block);
-    prismatic.links.push(block);
+  // The same defect one step less obvious: B and C are already fixed relative
+  // to each other by the ternary body, so a bar between them adds nothing and
+  // over-constrains the pair. An exact-duplicate test misses this.
+  it('refuses a bar that would double a pair already held by a ternary link', () => {
+    const b = new RevJoint('B', -2.7, 0.9);
+    const c = new RevJoint('C', 2.9, 2.2);
+    const g = new RevJoint('G', 0.7, 0.8);
+    const f = new RevJoint('F', 1, 4);
+    connect('BCG', [b, c, g]);
+    connect('BF', [b, f]);
 
-    expect(refuseJointMerge(c, b)).toBe('carries-a-slider');
-    expect(refuseJointMerge(b, c)).toBe('carries-a-slider');
+    expect(refuseJointMerge(f, c)).toBe('over-constrained');
   });
 
-  it('refuses a prismatic joint outright', () => {
+  it('still allows a bar onto a ternary link when it doubles no pair', () => {
+    const b = new RevJoint('B', -2.7, 0.9);
+    const c = new RevJoint('C', 2.9, 2.2);
+    const g = new RevJoint('G', 0.7, 0.8);
+    const f = new RevJoint('F', 1, 4);
+    const h = new RevJoint('H', 4, 6);
+    connect('BCG', [b, c, g]);
+    connect('FH', [f, h]);
+
+    expect(refuseJointMerge(f, c)).toBeUndefined();
+  });
+
+  it('refuses a prismatic joint, which is the slot rather than the pin', () => {
     const a = new RevJoint('A', 0, 0);
     const prismatic = new PrisJoint('B', 1, 0, false, true);
 
     expect(refuseJointMerge(a, prismatic)).toBe('prismatic');
-  });
-
-  it('refuses a welded joint, whose weld a merge would have to reconcile', () => {
-    const a = new RevJoint('A', 0, 0);
-    const b = new RevJoint('B', 1, 0);
-    b.isWelded = true;
-
-    expect(refuseJointMerge(a, b)).toBe('welded');
   });
 
   it('refuses a joint merged into itself', () => {
@@ -92,12 +94,82 @@ describe('joint merge rules', () => {
       'same-joint',
       'shares-a-link',
       'prismatic',
-      'carries-a-slider',
-      'welded',
-      'duplicate-link',
+      'two-sliders',
+      'over-constrained',
       'not-a-real-joint',
     ];
     reasons.forEach((reason) => expect(MERGE_REFUSAL_MESSAGES[reason]).toBeTruthy());
+  });
+});
+
+describe('merging onto sliders and welds', () => {
+  /** Turn `joint` into a slider: a coincident PrisJoint joined by a block. */
+  function addSlider(joint: RevJoint, prisId: string) {
+    const prismatic = new PrisJoint(prisId, joint.x, joint.y, false, true);
+    joint.connectedJoints.push(prismatic);
+    prismatic.connectedJoints.push(joint);
+    const block = new SliderBlock(joint.id + prisId, [joint, prismatic]);
+    joint.links.push(block);
+    prismatic.links.push(block);
+    return prismatic;
+  }
+
+  // Dropping a pin onto a slider's pin is how a pin-in-slot gets built.
+  it('allows a pin to be dropped onto the revolute half of a slider', () => {
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 1, 0);
+    const c = new RevJoint('C', 4, 0);
+    connect('AB', [a, b]);
+    connect('CD', [c, new RevJoint('D', 6, 0)]);
+    addSlider(b, 'E');
+
+    expect(refuseJointMerge(c, b)).toBeUndefined();
+  });
+
+  it('allows a slider to be dropped onto a plain pin', () => {
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 1, 0);
+    const c = new RevJoint('C', 4, 0);
+    connect('AB', [a, b]);
+    connect('CD', [c, new RevJoint('D', 6, 0)]);
+    addSlider(b, 'E');
+
+    expect(refuseJointMerge(b, c)).toBeUndefined();
+  });
+
+  it('refuses two sliders, which is a different joint type rather than a merge', () => {
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 1, 0);
+    const c = new RevJoint('C', 4, 0);
+    connect('AB', [a, b]);
+    connect('CD', [c, new RevJoint('D', 6, 0)]);
+    addSlider(b, 'E');
+    addSlider(c, 'F');
+
+    expect(refuseJointMerge(b, c)).toBe('two-sliders');
+  });
+
+  it('allows a merge onto a welded joint, which the merge re-welds', () => {
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 1, 0);
+    const c = new RevJoint('C', 2, 1);
+    const x = new RevJoint('X', 5, 5);
+    connect('ABC', [a, b, c]);
+    connect('XY', [x, new RevJoint('Y', 7, 5)]);
+    b.isWelded = true;
+
+    expect(refuseJointMerge(x, b)).toBeUndefined();
+  });
+
+  it('offers a slider pin as a drop target', () => {
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 3, 0);
+    const c = new RevJoint('C', 9, 0);
+    connect('AB', [a, b]);
+    connect('CD', [c, new RevJoint('D', 12, 0)]);
+    addSlider(b, 'E');
+
+    expect(resolveJointDropTarget(c, 3, 0, [a, b, c], 1)).toBe(b);
   });
 });
 

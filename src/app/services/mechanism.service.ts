@@ -503,6 +503,15 @@ export class MechanismService {
       return refusal;
     }
 
+    // A weld is a joint flag plus a compound link built around it, so the two
+    // have to be taken apart before the topology moves and rebuilt afterwards.
+    // Going through the weld path rather than editing compounds by hand is what
+    // makes the result a real compound instead of a joint merely flagged welded
+    // with a stray link beside it.
+    const shouldWeld = source.isWelded || target.isWelded;
+    if (source.isWelded) this.unweldJointTopology(source);
+    if (target.isWelded) this.unweldJointTopology(target);
+
     // Ground and input are things the user set deliberately. A merge that
     // dropped one would quietly change what the mechanism is, so the survivor
     // inherits both.
@@ -512,9 +521,27 @@ export class MechanismService {
     this.links.forEach((link) => this.replaceJointInLink(link, source, target));
     this.joints = this.joints.filter((joint) => joint.id !== source.id);
 
+    // Only link membership has moved so far. Everything below reads joint.links
+    // or joint.connectedJoints, so connectivity has to be re-derived first.
+    this.rebuildJointGraph();
+
+    // A slider carried across by the merge has to sit on its new pin: the
+    // prismatic joint and the pin it rides are coincident by construction.
+    this.joints.forEach((joint) => {
+      if (!(joint instanceof PrisJoint)) return;
+      if (!joint.connectedJoints.some((connected) => connected.id === target.id)) return;
+      joint.x = target.x;
+      joint.y = target.y;
+    });
+
     if (this.activeObjService.selectedJoint?.id === source.id) {
       this.activeObjService.updateSelectedObj(target);
     }
+
+    // A refusal here is not silent: canBeWelded declines a grounded, driven, or
+    // slider-carrying joint, and the caller reports the survivor's actual weld
+    // state rather than assuming the weld took.
+    if (shouldWeld) this.weldJointTopology(target);
 
     // No save here: a merge is the tail of a drag gesture, and the gesture owns
     // the single undo entry it earns (see DragStateService.release).

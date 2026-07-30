@@ -343,17 +343,45 @@ Two things fell out of the extraction rather than being planned:
 
 **1.2** splits into a pure refusal/nearest-target module and a topology merge on MechanismService.
 The refusal reasons are returned rather than a bare boolean because a joint that silently declines
-to snap reads as a broken drag. Five cases are refused: the same joint, two joints on one link
-(which would collapse it), a prismatic joint, a joint carrying a slider (Phase 2 owns slot
-topology), and a welded joint (Phase 3 owns weld semantics).
+to snap reads as a broken drag.
 
-A sixth refusal was not in the plan. Links A–B and A–C, with B dropped onto C, leave *two* rigid
-bars spanning the same pair of points — a weld written as an accident, and a redundant constraint
-for every solver downstream. Neither the shares-a-link rule nor anything else caught it.
+What a merge is *allowed* to land on is the part that took two passes to get right.
+
+| Target | Result |
+| --- | --- |
+| a plain pin | a pin, with the arriving links added |
+| **the revolute half of a slider** | a pin-in-slot: two or more links riding one block |
+| **a welded joint** | the arriving link joins the compound — the survivor re-welds |
+| a slider, when the dragged joint also carries one | refused; two blocks on one pin is a different joint type |
+| the prismatic half of a slider | refused; the slot is not a pin |
+| two joints of one link | refused; the link would collapse to zero length |
+
+The slider and weld rows started out as refusals deferred to Phases 2 and 3. They are not deferrable:
+dropping a pin onto a slider's pin *is* how a pin-in-slot gets built, and it is the gesture the whole
+slot feature is heading towards. Both work on the existing decomposition with no new model —
+the block already carries any number of links at its revolute end.
+
+A weld is a joint flag plus a compound link built around it, so the merge unwelds both ends, moves
+the topology, and welds the survivor again through `weldJointTopology`. Going through the weld path
+rather than editing compounds by hand is what makes the result a real compound instead of a joint
+flagged welded with a stray link beside it. `canBeWelded` declines a grounded, driven, or
+slider-carrying joint, so a merge that grounds the survivor takes the weld away — reported, not
+silent.
+
+**Over-constraint is the one refusal that was not in the plan, and the first version of it was too
+narrow.** It tested for an exact duplicate: links A–B and A–C, with B dropped on C, leave two bars
+spanning the same pair. That misses the case one step out — a bar B–C landing on a *ternary* link
+B–C–G. B and C are already fixed relative to each other by the ternary body, so the bar adds no
+freedom and the solvers see a redundant constraint, but the joint sets are not equal so nothing
+fired. The test is now that the merged link and an existing link must not share **two** joints,
+which catches both: any pair shared by two bodies is a pair each one fixes on its own.
 
 The merge itself reuses `rebuildJointGraph`, so it only has to rewrite `link.joints`, the link id,
-and the `fixedLocations` entries; connectivity is re-derived. Ground and input transfer to the
-survivor, because dropping either would quietly change what the mechanism is.
+and the `fixedLocations` entries; connectivity is re-derived, and the weld and slider fixups run
+after that rebuild because both read `joint.links`. Ground and input transfer to the survivor,
+because dropping either would quietly change what the mechanism is. A slider carried across by the
+merge is repositioned onto its new pin, since a block and the pin it rides are coincident by
+construction.
 
 **1.3** treats a link drag as a rigid translation rather than as "drag each joint in turn". That
 distinction is visible: the body's own centre of mass and forces translate exactly, so a
@@ -387,13 +415,23 @@ hold lasted. It now measures from where the body was last placed, which makes th
 distance catch up on the first applied move — matching what joint dragging already did by virtue of
 positioning absolutely.
 
-Both behaviours are covered by [`e2e/phase1-drag.mjs`](../e2e/phase1-drag.mjs), which asserts in
-model coordinates rather than on screenshots and exits non-zero on any failure.
+A third case came from using the app rather than from either suite: after a merge, moving the mouse
+with no button held panned the canvas. A merge destroys the node the pointer went down on, and a
+gesture whose target disappears mid-drag can leave the pan library believing the press never ended.
+The rule now enforced in the Hammer handler is that the canvas may only pan while a pointer is
+genuinely down, with our own `pointerup` on the root svg — which always lands, because that element
+is never destroyed — as the authority. Programmatic pans from fit, centre, and zoom are untouched.
+**This one resisted reproduction under synthetic input**: neither Playwright's mouse nor hand-built
+`MouseEvent`s put Hammer into the stale state, so the fix asserts the invariant rather than closing
+a captured repro.
+
+The rest is covered by [`e2e/phase1-drag.mjs`](../e2e/phase1-drag.mjs), which asserts in model
+coordinates rather than on screenshots and exits non-zero on any failure.
 
 > **Gate 1 — met.** 310 specs green (was 263); dragging a joint onto another merges them and the
 > result round-trips through the URL; dragging a link moves all its joints and leaves the mechanism
 > valid at DOF 1; every gesture is exactly one undo entry, and a click that only selects is zero.
-> Production build clean. Each new assertion was mutation-checked, and all 18 browser checks in
+> Production build clean. Each new assertion was mutation-checked, and all 29 browser checks in
 > `e2e/phase1-drag.mjs` pass.
 
 ### Phase 2 — Floating Slot: model and solvers

@@ -1,23 +1,23 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
+import { Link } from './link';
 
 /** Why a candidate joint cannot receive the joint being dragged. */
 export type MergeRefusal =
   | 'same-joint'
   | 'shares-a-link'
   | 'prismatic'
-  | 'carries-a-slider'
-  | 'welded'
-  | 'duplicate-link'
+  | 'two-sliders'
+  | 'over-constrained'
   | 'not-a-real-joint';
 
 /** What to tell the user when a merge is refused. */
 export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
   'same-joint': 'A joint cannot be merged into itself',
   'shares-a-link': 'These joints are on the same link, so merging them would collapse it',
-  prismatic: 'Prismatic joints cannot be merged',
-  'carries-a-slider': 'Remove the slider before merging this joint',
-  welded: 'Unweld this joint before merging it',
-  'duplicate-link': 'Merging here would leave two links between the same pair of joints',
+  prismatic: 'Drop onto the pin of a slider, not onto its slot',
+  'two-sliders': 'Only one of these joints can carry a slider',
+  'over-constrained':
+    'Merging here would tie the same two joints together twice, over-constraining the linkage',
   'not-a-real-joint': 'This joint cannot be merged',
 };
 
@@ -30,18 +30,14 @@ export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
  */
 export function refuseJointMerge(source: Joint, target: Joint): MergeRefusal | undefined {
   if (source.id === target.id) return 'same-joint';
+  // The prismatic half of a slider is its slot, not a pin anything can attach
+  // to; the coincident RevJoint is the thing a link rides on.
   if (source instanceof PrisJoint || target instanceof PrisJoint) return 'prismatic';
   if (!(source instanceof RealJoint) || !(target instanceof RealJoint)) return 'not-a-real-joint';
 
-  // A slider is a RevJoint plus a coincident PrisJoint joined by a SliderBlock.
-  // Merging either end would have to decide what happens to the block and to
-  // the slot; the slot model does not exist yet, so refuse rather than guess.
-  // See docs/joint-types-plan.md, Phase 2.
-  if (carriesASlider(source) || carriesASlider(target)) return 'carries-a-slider';
-
-  // Welding is a property of the joint, and a merge would have to reconcile two
-  // of them. Phase 3 owns weld semantics across an assembly.
-  if (source.isWelded || target.isWelded) return 'welded';
+  // Dropping a pin onto a slider's pin is a pin-in-slot, which is the point.
+  // Two blocks on one pin is a different joint type, not a merge.
+  if (carriesASlider(source) && carriesASlider(target)) return 'two-sliders';
 
   // Two joints on one link collapsing to one point would leave that link a
   // zero-length body — degenerate for every solver downstream.
@@ -49,32 +45,39 @@ export function refuseJointMerge(source: Joint, target: Joint): MergeRefusal | u
     return 'shares-a-link';
   }
 
-  // Links A–B and A–C, with B dragged onto C, would become two separate rigid
-  // bars spanning the same pair of points. That is a weld expressed as an
-  // accident, and the solvers would see a redundant constraint.
-  const wouldDuplicate = source.links.some((link) => {
-    const merged = jointIDSet(link, source.id, target.id);
-    return target.links.some((other) => sameIDs(merged, jointIDSet(other)));
-  });
-  if (wouldDuplicate) return 'duplicate-link';
+  if (wouldOverConstrain(source, target)) return 'over-constrained';
 
   return undefined;
 }
 
-function jointIDSet(
-  link: { joints: Joint[] },
-  replace?: string,
-  replacement?: string
-): Set<string> {
-  return new Set(link.joints.map((joint) => (joint.id === replace ? replacement! : joint.id)));
-}
-
-function sameIDs(a: Set<string>, b: Set<string>): boolean {
-  return a.size === b.size && [...a].every((id) => b.has(id));
+/**
+ * Whether the merge would leave two distinct links rigidly holding the same
+ * pair of joints, so that one of them adds no freedom and the solvers see a
+ * redundant constraint.
+ *
+ * Sharing *two* joints is the test, not being an exact duplicate. A bar B–C
+ * alongside a ternary link B–C–G is the same defect as two bars B–C: B and C
+ * are already fixed relative to each other by the ternary body, so the bar
+ * over-constrains them. Only pairs are enough to catch it, because any pair
+ * shared by two bodies is a pair each one fixes on its own.
+ */
+function wouldOverConstrain(source: RealJoint, target: RealJoint): boolean {
+  return source.links.some((link) => {
+    const merged = jointIDSet(link, source.id, target.id);
+    return target.links.some((other) => sharedIDCount(merged, jointIDSet(other)) >= 2);
+  });
 }
 
 function carriesASlider(joint: RealJoint): boolean {
   return joint.connectedJoints.some((connected) => connected instanceof PrisJoint);
+}
+
+function jointIDSet(link: Link, replace?: string, replacement?: string): Set<string> {
+  return new Set(link.joints.map((joint) => (joint.id === replace ? replacement! : joint.id)));
+}
+
+function sharedIDCount(a: Set<string>, b: Set<string>): number {
+  return [...a].filter((id) => b.has(id)).length;
 }
 
 /**

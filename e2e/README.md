@@ -16,9 +16,10 @@ their source. Everything browser-driven lives here.
 - `full-tour.mjs` — broad tour: panels, templates, settings, share URL, help, mobile viewport
 - `deep-interactions.mjs` — deep grid interaction: add links, drag joints, right-click menus
 - `focused-interactions.mjs` — focused workflows (four-bar build, animation, analysis)
-- `phase1-drag.mjs` — drag gestures: joint snap ring and merge, whole-link drag, one undo entry
-  per gesture, click-without-nudge, Analyze mode refusing drags. Prints a PASS/FAIL check list and
-  exits non-zero on any failure, so it can gate a change.
+- `phase1-drag.mjs` — drag gestures: joint snap ring and merge, merging onto a slider's pin,
+  refusing an over-constraining merge, whole-link drag, one undo entry per gesture,
+  click-without-nudge, the canvas staying put after a merge, and Analyze mode refusing drags.
+  Prints a PASS/FAIL check list and exits non-zero on any failure, so it can gate a change.
 - `force-analysis-panels.mjs` — Force Analysis rows on the joint and link analysis panels, and the shared Force Analysis Type toggle
 - `left-nav-modes.mjs` — mode-scoped left nav rail: Edit/Analyze tool sections, the absorbed view controls, and the rewind-on-leaving-Analyze behavior
 - `template-open.mjs` — the template library: loads in place on an empty grid, and shows a new-tab / replace / cancel choice (with replace undoable) when the grid already holds work

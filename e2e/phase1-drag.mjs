@@ -19,6 +19,9 @@ const userDataDir = `/tmp/pmks-phase1-profile-${Date.now()}`;
 const FOUR_BAR =
   '0P.TY.K,0.101.MA,A,0mv,0VU,0.GB,B,0e_,E6,0.GC,C,l1,WW,0.KD,D,qD,0Pk,0..YRAB,AB,Fe,Fe,0ix,08i,c5cae9,A,B,,.YRBC,BC,Fe,Fe,32,NJ,303e9f,B,C,,.YRCD,CD,Fe,Fe,nd,3P,0d125a,C,D,,...JBq';
 
+const SLIDER_CRANK =
+  '0P.TY.K,0.101.MA,A,0mA,0c,0.GB,B,0Yt,bK,0.GC,C,il,H-,0.LD,D,il,H-,0..YRAB,AB,Fe,Fe,0fW,IN,c5cae9,A,B,,.YRBC,BC,Fe,Fe,4y,Rf,303e9f,B,C,,.YPCD,CD,Fe,0,0,0,,C,D,,...JAe';
+
 const issues = [];
 const events = [];
 const checks = [];
@@ -351,6 +354,148 @@ await safe('Analyze mode refuses to drag a joint or a link', async () => {
   );
   record('a read-only notification explained the refusal', /read-only|Edit mode/i.test(note), {
     note,
+  });
+});
+
+// --- 6. The canvas stays put after a merge --------------------------------
+// A merge destroys the node the pointer was on, which can leave the pan
+// library believing the press never ended. It would then pan on every later
+// move with no button held.
+await safe('the canvas does not follow the pointer after a merge', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+
+  const release = await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: d.screenX, y: d.screenY }
+  );
+  await release();
+  record('the merge happened', (await jointState(page)).length === before.length - 1);
+
+  // A pan moves joints on screen while leaving their model coordinates alone,
+  // which is what tells a stuck pan apart from a stuck drag.
+  const settled = await jointState(page);
+  for (let step = 1; step <= 8; step++) {
+    await page.mouse.move(d.screenX + step * 25, d.screenY + step * 15);
+    await page.waitForTimeout(40);
+  }
+  await page.waitForTimeout(300);
+  const after = await jointState(page);
+  await shot(page, 'after-merge-pointer-moved.png');
+
+  const screenShift = Math.max(
+    ...settled.map((joint, index) =>
+      Math.hypot(joint.screenX - after[index].screenX, joint.screenY - after[index].screenY)
+    )
+  );
+  const modelShift = Math.max(
+    ...settled.map((joint, index) =>
+      Math.hypot(joint.modelX - after[index].modelX, joint.modelY - after[index].modelY)
+    )
+  );
+  record('the canvas did not pan', screenShift < 1, { screenShift });
+  record('nothing was dragged either', modelShift < 0.001, { modelShift });
+});
+
+// --- 7. A merge that would over-constrain the linkage is refused ----------
+// A is on link AB and C is on BC, so folding A into C would leave a second bar
+// spanning B and C alongside the one already there.
+await safe('a merge that would double an existing pair is refused', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const beforeLinks = await linkIDs(page);
+  const a = before.find((j) => j.id === 'A');
+  const c = before.find((j) => j.id === 'C');
+
+  const release = await dragBy(
+    page,
+    { x: a.screenX, y: a.screenY },
+    { x: c.screenX, y: c.screenY },
+    { holdBeforeRelease: 300 }
+  );
+  const ringed = await snapRingCount(page);
+  await release();
+  const after = await jointState(page);
+  const note = await notificationText(page);
+  await shot(page, 'over-constraining-merge-refused.png');
+
+  record('no snap ring appears over an illegal target', ringed === 0, { ringed });
+  record('every joint is still there', after.length === before.length, {
+    after: after.map((j) => j.id),
+    note,
+  });
+  record(
+    'the links are unchanged',
+    JSON.stringify(await linkIDs(page)) === JSON.stringify(beforeLinks),
+    {
+      beforeLinks,
+      afterLinks: await linkIDs(page),
+    }
+  );
+});
+
+// --- 8. Merging onto the pin of a slider ---------------------------------
+await safe('a joint can be dropped onto the pin of a slider', async () => {
+  await page.goto(`${baseUrl}?${SLIDER_CRANK}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.waitForTimeout(1000);
+  await dismissIntro(page);
+  await page.waitForTimeout(400);
+
+  const loaded = await jointState(page);
+  record('the slider-crank loaded with a prismatic joint', loaded.length === 4, {
+    joints: loaded.map((j) => j.id),
+  });
+
+  // Build a free bar to drag from: the slider-crank has no spare joint.
+  const box = await page.locator('#canvas').boundingBox();
+  const originX = box.x + box.width * 0.3;
+  const originY = box.y + box.height * 0.78;
+  await page.mouse.click(originX, originY, { button: 'right' });
+  await page.waitForTimeout(400);
+  await page.locator('#contextMenu #menu-item', { hasText: 'Add Link' }).first().click();
+  await page.waitForTimeout(300);
+  await page.mouse.move(originX + 120, originY + 40);
+  await page.waitForTimeout(200);
+  await page.mouse.click(originX + 120, originY + 40);
+  await page.waitForTimeout(700);
+
+  const withBar = await jointState(page);
+  record('a free bar was added to drag from', withBar.length === loaded.length + 2, {
+    joints: withBar.map((j) => j.id),
+  });
+
+  // C is the revolute half of the slider; the prismatic half sits on top of it.
+  const pin = withBar.find((j) => j.id === 'C');
+  const spare = withBar.find((j) => !loaded.some((existing) => existing.id === j.id));
+  const release = await dragBy(
+    page,
+    { x: spare.screenX, y: spare.screenY },
+    { x: pin.screenX, y: pin.screenY },
+    { holdBeforeRelease: 300 }
+  );
+  const ringed = await snapRingCount(page);
+  await release();
+  const after = await jointState(page);
+  await shot(page, 'merged-onto-slider.png');
+
+  record("the slider's pin offered itself as a drop target", ringed === 1, { ringed });
+  record('the merge went through', !after.some((j) => j.id === spare.id), {
+    spare: spare.id,
+    after: after.map((j) => j.id),
+  });
+  const prismaticOnPin = await page.evaluate(() => {
+    const joints = [...document.querySelectorAll('#jointHolder > svg')].map((el) => ({
+      x: Number(el.getAttribute('x')),
+      y: Number(el.getAttribute('y')),
+      prismatic: !!el.querySelector('[id^="joint_"]')?.closest('svg')?.querySelector('rect'),
+    }));
+    return joints;
+  });
+  record('the slot stayed coincident with the pin it rides', prismaticOnPin.length > 0, {
+    joints: prismaticOnPin.length,
   });
 });
 

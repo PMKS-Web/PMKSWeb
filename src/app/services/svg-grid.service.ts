@@ -38,6 +38,7 @@ export class SvgGridService {
 
   setNewElement(root: HTMLElement) {
     var eventsHandler;
+    const dragState = this.dragState;
 
     eventsHandler = {
       haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
@@ -68,6 +69,18 @@ export class SvgGridService {
 
         // Handle pan
         this.hammer.on('panstart panmove', function (ev: any) {
+          // The canvas may only pan while a pointer is genuinely down. Hammer
+          // tracks that from events on the element it is bound to, and a
+          // gesture whose target is destroyed mid-drag — a joint merged into
+          // another, say — can leave it believing the press never ended, so it
+          // would pan on every later move with no button held. The pointerup on
+          // the root svg always lands, so the state machine is the authority.
+          if (!dragState.isPointerDown) {
+            pannedX = 0;
+            pannedY = 0;
+            return;
+          }
+
           // On pan start reset panned variables
           if (ev.type === 'panstart') {
             pannedX = 0;

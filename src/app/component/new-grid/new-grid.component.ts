@@ -830,12 +830,23 @@ export class NewGridComponent {
     }
 
     const source = this.activeObjService.selectedJoint;
+    const wasWelded = source.isWelded || target.isWelded;
     const refusal = this.mechanismSrv.mergeJoints(source, target);
     if (refusal) {
       this.sendNotification(MERGE_REFUSAL_MESSAGES[refusal]);
       return false;
     }
-    this.sendNotification(`Merged joint ${source.id} into ${target.id}`);
+
+    // A merged-into-welded joint re-welds itself, but a grounded, driven, or
+    // slider-carrying survivor cannot be welded at all. Losing the weld
+    // silently would leave the user with a linkage they did not ask for.
+    if (wasWelded && !target.isWelded) {
+      this.sendNotification(
+        `Merged joint ${source.id} into ${target.id}, but ${target.id} cannot be welded`
+      );
+    } else {
+      this.sendNotification(`Merged joint ${source.id} into ${target.id}`);
+    }
     return true;
   }
 

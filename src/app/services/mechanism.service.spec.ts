@@ -405,3 +405,154 @@ describe('MechanismService joint merging', () => {
     );
   });
 });
+
+/** Turn `joint` into a slider: a coincident PrisJoint joined by a block. */
+function addSlider(service: MechanismService, joint: RevJoint, prisId: string): PrisJoint {
+  const prismatic = new PrisJoint(prisId, joint.x, joint.y, false, true);
+  joint.connectedJoints.push(prismatic);
+  prismatic.connectedJoints.push(joint);
+  const block = new SliderBlock(joint.id + prisId, [joint, prismatic]);
+  joint.links.push(block);
+  prismatic.links.push(block);
+  service.joints.push(prismatic);
+  service.links.push(block);
+  return prismatic;
+}
+
+describe('MechanismService merging onto sliders and welds', () => {
+  function scene() {
+    const harness = createHarness();
+    const a = new RevJoint('A', 0, 0, true, true);
+    const b = new RevJoint('B', 2, 0);
+    const c = new RevJoint('C', 3, 2);
+    const x = new RevJoint('X', 6, 6);
+    const y = new RevJoint('Y', 8, 6);
+    // A second free bar whose near end is grounded, for the case where the
+    // survivor of a merge can no longer be welded.
+    const z = new RevJoint('Z', 10, 10, false, true);
+    const w = new RevJoint('W', 12, 10);
+    const wire = (id: string, joints: RevJoint[]) => {
+      const link = new RealLink(id, joints);
+      joints.forEach((joint) => {
+        joint.links.push(link);
+        joints.filter((o) => o !== joint).forEach((o) => joint.connectedJoints.push(o));
+      });
+      return link;
+    };
+    harness.service.joints = [a, b, c, x, y, z, w];
+    harness.service.links = [
+      wire('AB', [a, b]),
+      wire('BC', [b, c]),
+      wire('XY', [x, y]),
+      wire('ZW', [z, w]),
+    ];
+    return { ...harness, a, b, c, x, y, z, w };
+  }
+
+  // Dropping a pin onto a slider's pin is how a pin-in-slot gets built.
+  it('pins a dragged joint onto a slider without disturbing the block', () => {
+    const s = scene();
+    const prismatic = addSlider(s.service, s.c, 'P');
+
+    expect(s.service.mergeJoints(s.x, s.c)).toBeUndefined();
+
+    expect(s.service.joints.map((joint) => joint.id).sort()).toEqual([
+      'A',
+      'B',
+      'C',
+      'P',
+      'W',
+      'Y',
+      'Z',
+    ]);
+    expect(s.c.links.map((link) => link.id).sort()).toEqual(['BC', 'CP', 'CY']);
+    expect([prismatic.x, prismatic.y]).toEqual([s.c.x, s.c.y]);
+    expect(s.c.connectedJoints.some((joint) => joint instanceof PrisJoint)).toBe(true);
+  });
+
+  it('carries a slider across when the dragged joint is the one riding it', () => {
+    const s = scene();
+    const prismatic = addSlider(s.service, s.x, 'P');
+
+    expect(s.service.mergeJoints(s.x, s.c)).toBeUndefined();
+
+    expect(s.service.joints.map((joint) => joint.id).sort()).toEqual([
+      'A',
+      'B',
+      'C',
+      'P',
+      'W',
+      'Y',
+      'Z',
+    ]);
+    // The block followed its pin, so the slot now rides the survivor.
+    expect([prismatic.x, prismatic.y]).toEqual([s.c.x, s.c.y]);
+    expect(s.c.connectedJoints.some((joint) => joint.id === 'P')).toBe(true);
+    expect(s.c.links.some((link) => link instanceof SliderBlock)).toBe(true);
+  });
+
+  it('refuses to put two sliders on one pin', () => {
+    const s = scene();
+    addSlider(s.service, s.x, 'P');
+    addSlider(s.service, s.c, 'Q');
+
+    expect(s.service.mergeJoints(s.x, s.c)).toBe('two-sliders');
+    expect(s.service.joints.some((joint) => joint.id === 'X')).toBe(true);
+  });
+
+  // "Snap onto a welded joint" has to mean the arriving link joins the compound,
+  // not that the joint keeps a welded flag with a loose link beside it.
+  it('re-welds the survivor so the arriving link joins the compound', () => {
+    const s = scene();
+    s.service.weldJoint(s.b);
+    expect(s.service.links.map((link) => link.id).sort()).toEqual(['ABC', 'XY', 'ZW']);
+
+    expect(s.service.mergeJoints(s.x, s.b)).toBeUndefined();
+
+    expect(s.b.isWelded).toBe(true);
+    const compound = s.service.links.find(
+      (link) => (link as RealLink).subset.length > 0
+    ) as RealLink;
+    expect(compound.subset.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'BY']);
+    expect(compound.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'C', 'Y']);
+  });
+
+  // A weld cannot form on a grounded joint, so a merge that grounds the
+  // survivor takes the weld away. Losing it silently would leave the user with
+  // a different linkage than the one they dropped.
+  it('leaves the survivor unwelded when the merge makes it unweldable', () => {
+    const s = scene();
+    s.service.weldJoint(s.b);
+    expect(s.b.isWelded).toBe(true);
+
+    expect(s.service.mergeJoints(s.z, s.b)).toBeUndefined();
+
+    expect(s.b.ground).toBe(true);
+    expect(s.b.isWelded).toBe(false);
+    expect(s.service.links.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'BW', 'XY']);
+    expect(s.service.links.every((link) => (link as RealLink).subset.length === 0)).toBe(true);
+  });
+
+  // The defect the exact-duplicate test missed: B and C are already fixed
+  // relative to each other by the ternary body.
+  it('refuses a bar that would double a pair a ternary link already holds', () => {
+    const harness = createHarness();
+    const b = new RevJoint('B', -2.7, 0.9);
+    const c = new RevJoint('C', 2.9, 2.2);
+    const g = new RevJoint('G', 0.7, 0.8);
+    const f = new RevJoint('F', 1, 4);
+    const wire = (id: string, joints: RevJoint[]) => {
+      const link = new RealLink(id, joints);
+      joints.forEach((joint) => {
+        joint.links.push(link);
+        joints.filter((o) => o !== joint).forEach((o) => joint.connectedJoints.push(o));
+      });
+      return link;
+    };
+    harness.service.joints = [b, c, g, f];
+    harness.service.links = [wire('BCG', [b, c, g]), wire('BF', [b, f])];
+
+    expect(harness.service.mergeJoints(f, c)).toBe('over-constrained');
+    expect(harness.service.links.map((link) => link.id).sort()).toEqual(['BCG', 'BF']);
+  });
+});
