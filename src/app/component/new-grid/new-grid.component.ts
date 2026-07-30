@@ -802,6 +802,11 @@ export class NewGridComponent {
     const merged = this.completePendingJointMerge();
     const outcome = this.dragState.release();
 
+    // Close out svg-pan-zoom's own gesture. A merge removes the node the
+    // pointer went down on, and the release then never reaches the root svg
+    // its listeners live on, leaving it panning on every later move.
+    this.svgGrid.endActivePan();
+
     if (outcome.rebuild) {
       this.mechanismSrv.updateMechanism();
     }

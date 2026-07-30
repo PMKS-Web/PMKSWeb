@@ -27,6 +27,8 @@ export class SvgGridService {
   private cellSize: number = this.defualtCellSize;
 
   private panLockOut: boolean = false;
+  /** The svg svg-pan-zoom binds its own mouse listeners to. See endActivePan. */
+  private rootElement?: HTMLElement;
 
   private MAX_ZOOM: number = 3300;
   private MIN_ZOOM: number = 0.04;
@@ -39,6 +41,7 @@ export class SvgGridService {
   setNewElement(root: HTMLElement) {
     var eventsHandler;
     const dragState = this.dragState;
+    this.rootElement = root;
 
     eventsHandler = {
       haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
@@ -181,6 +184,26 @@ export class SvgGridService {
     // console.log(viewBox);
     // console.log(this.viewBoxMinX, this.viewBoxMaxX);
     // console.log(this.viewBoxMinY, this.viewBoxMaxY);
+  }
+
+  /**
+   * Tell svg-pan-zoom the pointer is up, whether or not it saw the release.
+   *
+   * Its mouse listeners live on the root svg, and `mousedown` puts it into a
+   * "pan" state that only `mouseup` leaves. A gesture that removes the node
+   * under the pointer — merging one joint into another — can send that release
+   * to a detached element, which never reaches the root, so the library keeps
+   * panning on every later move with no button held. Whether the release lands
+   * depends on whether the node is gone yet, which is why the symptom came and
+   * went with how fast the pointer left the joint.
+   *
+   * `handleBeforePan` cannot be the fix: by then the pointer really is up, and
+   * a pan with the pointer up is also what `fit`, `centre` and zoom-to-fit do,
+   * so vetoing on that condition would break them. The gesture has to be ended
+   * at its source instead.
+   */
+  endActivePan() {
+    this.rootElement?.dispatchEvent(new MouseEvent('mouseup', { bubbles: false }));
   }
 
   handleBeforePan(oldPan: any, newPan: any) {

@@ -357,48 +357,11 @@ await safe('Analyze mode refuses to drag a joint or a link', async () => {
   });
 });
 
-// --- 6. The canvas stays put after a merge --------------------------------
-// A merge destroys the node the pointer was on, which can leave the pan
-// library believing the press never ended. It would then pan on every later
-// move with no button held.
-await safe('the canvas does not follow the pointer after a merge', async () => {
-  await loadFourBar(page);
-  const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
-  const d = before.find((j) => j.id === 'D');
-
-  const release = await dragBy(
-    page,
-    { x: a.screenX, y: a.screenY },
-    { x: d.screenX, y: d.screenY }
-  );
-  await release();
-  record('the merge happened', (await jointState(page)).length === before.length - 1);
-
-  // A pan moves joints on screen while leaving their model coordinates alone,
-  // which is what tells a stuck pan apart from a stuck drag.
-  const settled = await jointState(page);
-  for (let step = 1; step <= 8; step++) {
-    await page.mouse.move(d.screenX + step * 25, d.screenY + step * 15);
-    await page.waitForTimeout(40);
-  }
-  await page.waitForTimeout(300);
-  const after = await jointState(page);
-  await shot(page, 'after-merge-pointer-moved.png');
-
-  const screenShift = Math.max(
-    ...settled.map((joint, index) =>
-      Math.hypot(joint.screenX - after[index].screenX, joint.screenY - after[index].screenY)
-    )
-  );
-  const modelShift = Math.max(
-    ...settled.map((joint, index) =>
-      Math.hypot(joint.modelX - after[index].modelX, joint.modelY - after[index].modelY)
-    )
-  );
-  record('the canvas did not pan', screenShift < 1, { screenShift });
-  record('nothing was dragged either', modelShift < 0.001, { modelShift });
-});
+// A pan bug after a merge — the canvas following the pointer with no button
+// held — is deliberately NOT checked here. svg-pan-zoom ignores synthetic mouse
+// events entirely, and a CDP-driven release always hit-tests live so it never
+// goes missing the way a real one can. Both earlier attempts passed with the
+// fix removed, which makes them worse than no check at all.
 
 // --- 7. A merge that would over-constrain the linkage is refused ----------
 // A is on link AB and C is on BC, so folding A into C would leave a second bar
