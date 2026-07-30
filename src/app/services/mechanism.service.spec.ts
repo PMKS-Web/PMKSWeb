@@ -17,6 +17,7 @@ import { UrlGenerationService } from './url-generation.service';
 import { MechanismBuilder } from './transcoding/mechanism-builder';
 import { StringTranscoder } from './transcoding/string-transcoder';
 import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
+import { NewGridComponent } from '../component/new-grid/new-grid.component';
 
 interface Harness {
   service: MechanismService;
@@ -578,16 +579,71 @@ describe('MechanismService declining a weld that pins a pair twice', () => {
   }
 
   // Welding B fuses AB and BC into ABC, which then holds A and C — the pair the
-  // existing AC bar already holds. The linkage still moves; its forces have no
-  // unique solution.
-  it('leaves the mechanism untouched and records no undo entry', () => {
+  // existing AC bar already holds. Clicking Weld is deliberate, so the edit goes
+  // through and the user is told; only a drag onto the same geometry is refused,
+  // because a drop is far more easily done by accident.
+  it('welds anyway, because pressing the button is a deliberate act', () => {
     const scene = triangle();
 
     scene.service.weldJoint(scene.b);
 
-    expect(scene.b.isWelded).toBe(false);
-    expect(scene.service.links.map((link) => link.id).sort()).toEqual(['AB', 'AC', 'BC']);
-    expect(scene.saveCount()).toBe(0);
+    expect(scene.b.isWelded).toBe(true);
+    expect(scene.service.links.map((link) => link.id)).toEqual(['AC', 'ABC']);
+    expect(scene.saveCount()).toBe(1);
+  });
+
+  it('names the pair it just pinned twice', () => {
+    const scene = triangle();
+    const notify = vi.spyOn(NewGridComponent, 'sendNotification').mockImplementation(() => {});
+
+    scene.service.weldJoint(scene.b);
+
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]).toMatch(/\bA and C\b/);
+    notify.mockRestore();
+  });
+
+  // A mechanism may legitimately arrive already holding a redundant pin — that
+  // is what makes those simulate — so an unrelated weld must not be blamed for
+  // it, or every later edit would warn about joints nowhere near the click.
+  it('says nothing about redundancy that was already there', () => {
+    const harness = createHarness();
+    const wire = (id: string, joints: RevJoint[]) => {
+      const link = new RealLink(id, joints);
+      joints.forEach((joint) => {
+        joint.links.push(link);
+        joints.filter((o) => o !== joint).forEach((o) => joint.connectedJoints.push(o));
+      });
+      return link;
+    };
+    // P and Q are held twice before anything is welded.
+    const [p, q, r] = [new RevJoint('P', 0, 0), new RevJoint('Q', 2, 0), new RevJoint('R', 1, 2)];
+    // An unrelated chain, where welding Y is perfectly ordinary.
+    const [x, y, z] = [new RevJoint('X', 9, 0), new RevJoint('Y', 11, 0), new RevJoint('Z', 13, 1)];
+    harness.service.joints = [p, q, r, x, y, z];
+    harness.service.links = [
+      wire('PQ', [p, q]),
+      wire('PQR', [p, q, r]),
+      wire('XY', [x, y]),
+      wire('YZ', [y, z]),
+    ];
+    const notify = vi.spyOn(NewGridComponent, 'sendNotification').mockImplementation(() => {});
+
+    harness.service.weldJoint(y);
+
+    expect(y.isWelded).toBe(true);
+    expect(notify).not.toHaveBeenCalled();
+    notify.mockRestore();
+  });
+
+  // The mechanism still has to move — that is the whole reason for allowing it.
+  it('leaves the welded result mobile', () => {
+    const scene = triangle();
+    scene.a.ground = true;
+    scene.service.weldJoint(scene.b);
+    scene.service.updateMechanism();
+
+    expect(scene.service.mechanisms[0].dof).toBeGreaterThanOrEqual(0);
   });
 
   it('still welds where no pair would be pinned twice', () => {

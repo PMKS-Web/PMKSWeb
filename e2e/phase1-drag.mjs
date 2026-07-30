@@ -689,11 +689,10 @@ await safe('the other end of your own link is not a target', async () => {
 });
 
 // --- Welding into a statically indeterminate assembly ---------------------
-// The Weld button stays live so the rule is discoverable by pressing it, but
-// the edit is declined: the linkage would still move, and would only reveal
-// itself as a mistake later in an analysis panel that can do nothing but
-// apologise.
-await safe('welding a pair that is already pinned is declined and explained', async () => {
+// Clicking Weld on a named joint is deliberate, so it goes through and warns.
+// Only a drag onto the same geometry is refused, because a drop is far more
+// easily done by accident. The kinematics stay valid either way.
+await safe('welding a pair that is already pinned goes through with a warning', async () => {
   await loadFourBar(page);
   // Close the four-bar into a triangle first: merge A into D, leaving links
   // BD, BC and CD, so B and C are held by BC while a weld at D would fuse BD
@@ -724,13 +723,55 @@ await safe('welding a pair that is already pinned is declined and explained', as
     await page.waitForTimeout(700);
     const note = await notificationText(page);
     const after = await linkIDs(page);
-    await shot(page, 'weld-declined.png');
-    record('the links are unchanged', JSON.stringify(after) === JSON.stringify(closed), {
+    await shot(page, 'weld-warned.png');
+    record('the weld went through', JSON.stringify(after) !== JSON.stringify(closed), {
       before: closed,
       after,
     });
-    record('a snackbar explains why', /pinn?ed .* twice|no unique solution/i.test(note), { note });
+    record('a snackbar warns about the redundant pin', /twice|no unique solution/i.test(note), {
+      note,
+    });
+    const dof = await page.evaluate(() => {
+      const match = document.body.innerText.match(/Degrees of Freedom:\s*(\S+)/i);
+      return match ? match[1] : null;
+    });
+    record('the welded result is still a mechanism', dof !== '0' && dof !== 'NaN', { dof });
   }
+});
+
+// --- Alt pressed after the ring is acquired -------------------------------
+// A modifier emits no pointermove, so the drop has to read Alt from the release
+// itself. Reading only the target cached by the last move merges a drag the
+// user had already called off.
+await safe('Alt pressed without moving still calls off the merge', async () => {
+  await loadFourBar(page);
+  const before = await jointState(page);
+  const a = before.find((j) => j.id === 'A');
+  const d = before.find((j) => j.id === 'D');
+
+  await page.mouse.move(a.screenX, a.screenY);
+  await page.mouse.down();
+  for (let step = 1; step <= 10; step++) {
+    await page.mouse.move(
+      a.screenX + ((d.screenX - a.screenX) * step) / 10,
+      a.screenY + ((d.screenY - a.screenY) * step) / 10
+    );
+    await page.waitForTimeout(20);
+  }
+  await page.waitForTimeout(250);
+  record('the ring was acquired first', (await snapRingCount(page)) === 1);
+
+  // Down, and released, without the pointer moving at all in between.
+  await page.keyboard.down('Alt');
+  await page.waitForTimeout(200);
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+  await page.keyboard.up('Alt');
+
+  const after = await jointState(page);
+  await shot(page, 'alt-on-release.png');
+  record('nothing merged', after.length === before.length, { after: after.map((j) => j.id) });
+  record('the ring is gone', (await snapRingCount(page)) === 0);
 });
 
 await flushReport();

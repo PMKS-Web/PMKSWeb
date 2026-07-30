@@ -26,6 +26,41 @@ import { SynthesisClickMode } from './synthesis/synthesis-constants';
 import { SvgGridService } from './svg-grid.service';
 import { ColorService } from './color.service';
 
+/**
+ * Map a point from one two-joint frame to another, letting the frame stretch.
+ *
+ * A neighbour of a link drag is deformed rather than moved: its reference
+ * joints change separation as well as direction. A rigid transform would hold
+ * the load's absolute distance from the first joint and slide it off the end of
+ * a shortened link, so the frame's scale has to come along too. That keeps the
+ * load at the same point *of the link*, which is the invariant dragJoint
+ * already preserves for a binary link.
+ */
+function pointThroughFrame(
+  point: { x: number; y: number },
+  fromStart: { x: number; y: number },
+  fromEnd: { x: number; y: number },
+  toStart: { x: number; y: number },
+  toEnd: { x: number; y: number }
+): [number, number] {
+  const fromX = fromEnd.x - fromStart.x;
+  const fromY = fromEnd.y - fromStart.y;
+  const fromLengthSquared = fromX * fromX + fromY * fromY;
+  if (fromLengthSquared === 0) {
+    return [point.x + (toStart.x - fromStart.x), point.y + (toStart.y - fromStart.y)];
+  }
+
+  // The point in the frame's own basis: `along` the joint axis and `across` it.
+  const relativeX = point.x - fromStart.x;
+  const relativeY = point.y - fromStart.y;
+  const along = (relativeX * fromX + relativeY * fromY) / fromLengthSquared;
+  const across = (relativeY * fromX - relativeX * fromY) / fromLengthSquared;
+
+  const toX = toEnd.x - toStart.x;
+  const toY = toEnd.y - toStart.y;
+  return [toStart.x + along * toX - across * toY, toStart.y + along * toY + across * toX];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -242,6 +277,16 @@ export class GridUtilsService {
       return selectedLink;
     }
 
+    // A neighbour's forces are placed relative to its own two reference joints,
+    // so where they end up depends on where those joints were before the move.
+    // Captured up front, because the move is about to overwrite them.
+    const neighbours = this.mechanismSrv.links
+      .filter((link): link is RealLink => link !== selectedLink && link instanceof RealLink)
+      .map((link) => ({
+        link,
+        from: link.joints.slice(0, 2).map((joint) => ({ x: joint.x, y: joint.y })),
+      }));
+
     const movedJointIDs = new Set<string>();
     const moveJoint = (joint: Joint) => {
       if (movedJointIDs.has(joint.id)) return;
@@ -266,11 +311,20 @@ export class GridUtilsService {
     }
 
     // Any other link holding one of the moved joints has been deformed, not
-    // translated: its own shape and centre of mass follow from where its joints
-    // now are. Its forces are anchored in world coordinates and stay put.
-    this.mechanismSrv.links.forEach((link) => {
-      if (link === selectedLink || !(link instanceof RealLink)) return;
+    // translated, so its shape and centre of mass follow from where its joints
+    // now are. Its forces do not: a load is fixed to the body it acts on, and
+    // leaving it at its old world position would silently move it to a
+    // different point of the link. Carry each one through the same change of
+    // reference frame the link's own geometry goes through.
+    neighbours.forEach(({ link, from }) => {
       if (!link.joints.some((joint) => movedJointIDs.has(joint.id))) return;
+      const [start, end] = link.joints;
+      if (from.length === 2 && start && end) {
+        link.forces.forEach((force) => {
+          const [x, y] = pointThroughFrame(force.startCoord, from[0], from[1], start, end);
+          force.moveForceTo(x, y);
+        });
+      }
       link.CoM = RealLink.determineCenterOfMass(link.joints);
       link.updateCoMDs();
       link.updateLengthAndAngle();

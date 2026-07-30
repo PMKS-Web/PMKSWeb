@@ -52,20 +52,24 @@ export function groupRigidBodies<T extends JointedBody>(bodies: T[]): Map<string
 }
 
 /**
- * The first pair of bodies holding the same two joints, if there is one.
+ * Every set of joints that two bodies both hold rigidly, keyed by the joint ids
+ * so the same redundancy is recognisable across an edit that renames bodies.
  *
- * The kinematics of such an assembly are fine — that is what groupRigidBodies
- * is for — but its statics are not. A redundant pin carries a share of the load
- * that rigid-body equilibrium alone cannot determine, so the force solver has
- * no unique answer to give. Callers use this to decline an edit that would
- * create the condition rather than let the user reach an analysis panel that
- * can only apologise.
+ * Callers compare the set before an edit with the set after it. Asking only
+ * "is anything redundant now?" would blame an edit for a condition the
+ * mechanism already had — and since a mechanism may legitimately arrive with
+ * one, that would make every later edit look like the culprit.
  */
-export function findRedundantlyPinnedPair<T extends JointedBody>(bodies: T[]): [T, T] | undefined {
+export function redundantlyHeldJointSets<T extends JointedBody>(bodies: T[]): Set<string> {
+  const held = new Set<string>();
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
-      if (sharedJointCount(bodies[i], bodies[j]) >= 2) return [bodies[i], bodies[j]];
+      const shared = bodies[i].joints
+        .filter((joint) => bodies[j].joints.some((other) => other.id === joint.id))
+        .map((joint) => joint.id)
+        .sort();
+      if (shared.length >= 2) held.add(shared.join('|'));
     }
   }
-  return undefined;
+  return held;
 }

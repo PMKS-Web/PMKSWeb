@@ -862,7 +862,7 @@ export class NewGridComponent {
 
     // Resolve the drop before releasing: the snap target is only meaningful
     // while the drag it belongs to is still in flight.
-    const merged = this.completePendingJointMerge();
+    const merged = this.completePendingJointMerge($event);
     const outcome = this.dragState.release();
 
     if (outcome.rebuild) {
@@ -885,7 +885,15 @@ export class NewGridComponent {
    * If a joint drag is ending over another joint, fold the two together.
    * Returns whether the mechanism changed structurally.
    */
-  private completePendingJointMerge(): boolean {
+  private completePendingJointMerge($event: MouseEvent): boolean {
+    // Alt is read from the release, not from the last pointermove. Pressing a
+    // modifier emits no move, so a target acquired before Alt went down would
+    // otherwise still merge on a release the user meant to be inert.
+    if ($event.altKey) {
+      this.snapTargetJoint = undefined;
+      this.refusedTarget = undefined;
+      return false;
+    }
     const target = this.snapTargetJoint;
     const refused = this.refusedTarget;
     this.setDropCandidate(undefined);

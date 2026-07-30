@@ -34,7 +34,7 @@ import { ColorService } from './color.service';
 import { siUnitFactorsForLength } from '../model/unit-conversions';
 import { transformRigidCoord, transformRigidPath } from '../model/compound-link-path';
 import { MergeRefusal, refuseJointMerge } from '../model/drop-target';
-import { findRedundantlyPinnedPair } from '../model/rigid-bodies';
+import { redundantlyHeldJointSets } from '../model/rigid-bodies';
 
 /** Blend two angles along the shorter arc, so a wrap past pi does not spin. */
 function blendAngle(from: number, to: number, blend: number): number {
@@ -542,9 +542,7 @@ export class MechanismService {
     // A refusal here is not silent: canBeWelded declines a grounded, driven, or
     // slider-carrying joint, and the caller reports the survivor's actual weld
     // state rather than assuming the weld took.
-    // Same rule as weldJoint: a weld that would pin a pair twice is declined,
-    // and the caller reports the survivor's actual weld state.
-    if (shouldWeld && !this.weldWouldPinTwice(target)) this.weldJointTopology(target);
+    if (shouldWeld) this.weldJointTopology(target);
 
     // No save here: a merge is the tail of a drag gesture, and the gesture owns
     // the single undo entry it earns (see DragStateService.release).
@@ -1509,31 +1507,35 @@ export class MechanismService {
   public weldJoint(joint: RealJoint = this.activeObjService.selectedJoint): void {
     if (!joint) return;
 
-    // The button stays live so the rule is discoverable by pressing it, but the
-    // edit is declined rather than applied: the weld would still move and still
-    // solve, and would only reveal itself as a mistake later, in an analysis
-    // panel that can do nothing but apologise.
-    const redundant = this.weldWouldPinTwice(joint);
-    if (redundant) {
-      NewGridComponent.sendNotification(
-        `Welding here would pin ${redundant[0]} and ${redundant[1]} together twice. ` +
-          'The linkage would still move, but its forces would have no unique solution.'
-      );
-      return;
-    }
+    // Clicking Weld on a named joint is a deliberate act, so this warns rather
+    // than refuses. The linkage still moves and still solves; only its forces
+    // lose a unique solution, and the analysis panel says so in its own right.
+    // A drag that lands on the same geometry is refused instead, because
+    // dropping a joint somewhere is far more easily done by accident.
+    const created = this.weldWouldPinTwice(joint);
 
     if (!this.weldJointTopology(joint)) return;
+    if (created) {
+      NewGridComponent.sendNotification(
+        `${created[0]} and ${created[1]} are now pinned together twice. The linkage still ` +
+          'moves, but its forces have no unique solution.'
+      );
+    }
     this.finishStructuralEdit(true);
   }
 
   /**
-   * The pair of joints a weld at this joint would end up holding twice, if any.
+   * The joints a weld at this joint would newly leave held twice, if any.
    *
-   * Asked before welding rather than after, because reverting a half-applied
-   * structural edit is a far larger surface than predicting one: the compound
-   * has already absorbed forces and rewritten link ids by the time it exists.
-   * The prediction only has to know the compound's joint set, which is the
-   * union of the links meeting at the joint.
+   * Compares the redundancies before the edit with the ones after it, rather
+   * than asking whether anything is redundant afterwards. A mechanism may
+   * legitimately already contain a redundant pin — this branch is what makes
+   * those simulate — and reporting the total would blame every later weld for a
+   * condition it did not cause, naming joints nowhere near the one clicked.
+   *
+   * Predicted rather than measured after the fact, because the compound has
+   * absorbed forces and rewritten link ids by the time it exists. The
+   * prediction needs only its joint set: the union of the links at that joint.
    */
   private weldWouldPinTwice(joint: RealJoint): [string, string] | undefined {
     const linksAtJoint = this.links.filter(
@@ -1549,10 +1551,13 @@ export class MechanismService {
     };
     const untouched = this.links.filter((link) => !linksAtJoint.includes(link as RealLink));
 
-    const clash = findRedundantlyPinnedPair([compound, ...untouched]);
-    if (!clash) return undefined;
-    const shared = clash[0].joints.filter((j) => clash[1].joints.some((o) => o.id === j.id));
-    return [shared[0].id, shared[1].id];
+    const before = redundantlyHeldJointSets(this.links);
+    const appeared = [...redundantlyHeldJointSets([compound, ...untouched])].find(
+      (held) => !before.has(held)
+    );
+    if (!appeared) return undefined;
+    const [first, second] = appeared.split('|');
+    return [first, second];
   }
 
   private weldJointTopology(joint: RealJoint): boolean {

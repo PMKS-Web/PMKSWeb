@@ -110,6 +110,39 @@ describe('GridUtilsService.dragLink', () => {
     expect([force.endCoord.x, force.endCoord.y]).toEqual([3.5, 3]);
   });
 
+  // A load is fixed to the body it acts on. Leaving it at its old world
+  // position while the link deforms under it would silently move it to a
+  // different point of the link, and the drag saves that as the real load.
+  it('carries a force on a neighbouring link with the link it is attached to', () => {
+    const scene = createFourBar();
+    // Halfway along AB, which runs from A(0,0) to B(0,2).
+    const force = new Force('F1', scene.ab, new Coord(0, 1), new Coord(1, 1), false, true, 10);
+    scene.ab.forces.push(force);
+    scene.service.forces.push(force);
+
+    scene.grid.dragLink(scene.bc, 0, 2);
+
+    // B moved to (0,4), so the midpoint of AB is now (0,2).
+    expect(force.startCoord.x).toBeCloseTo(0, 6);
+    expect(force.startCoord.y).toBeCloseTo(2, 6);
+  });
+
+  it('leaves a force alone on a link no joint of which moved', () => {
+    const scene = createFourBar();
+    const e = new RevJoint('E', 20, 20);
+    const f = new RevJoint('F', 22, 20);
+    const idle = wire('EF', [e, f]);
+    scene.service.joints.push(e, f);
+    scene.service.links.push(idle);
+    const force = new Force('F2', idle, new Coord(21, 20), new Coord(21, 21), false, true, 10);
+    idle.forces.push(force);
+    scene.service.forces.push(force);
+
+    scene.grid.dragLink(scene.bc, 1.5, -0.5);
+
+    expect([force.startCoord.x, force.startCoord.y]).toEqual([21, 20]);
+  });
+
   it('leaves the mechanism solvable after the drag', () => {
     const scene = createFourBar();
 

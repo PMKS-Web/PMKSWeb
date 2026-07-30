@@ -368,16 +368,28 @@ flagged welded with a stray link beside it. `canBeWelded` declines a grounded, d
 slider-carrying joint, so a merge that grounds the survivor takes the weld away — reported, not
 silent.
 
-**The same rule guards the Weld button.** Welding fuses the links meeting at a joint into one
-compound, and that compound can end up holding a pair of joints some other link already holds. The
-kinematics survive — `groupRigidBodies` merges them and the mobility comes out right (§ below) —
-but the statics do not: a redundant pin carries a share of the load that rigid-body equilibrium
-cannot determine, and the force solver has no unique answer. The button stays live so the rule is
-discoverable by pressing it, and the edit is declined with a snackbar naming the pair.
+**The Weld button reaches the same geometry, and warns instead of refusing.** Welding fuses the
+links meeting at a joint into one compound, and that compound can end up holding a pair of joints
+some other link already holds. The kinematics survive — `groupRigidBodies` merges them and the
+mobility comes out right (§ below) — but the statics do not: a redundant pin carries a share of the
+load rigid-body equilibrium cannot determine, and the force solver has no unique answer.
 
-Declined by prediction rather than applied and reverted: by the time a compound exists it has
-absorbed forces and rewritten link ids, so undoing it is a far larger surface than foreseeing it.
-The prediction only needs the compound's joint set, which is the union of the links at that joint.
+**Blocking and warning are split by how easily the gesture is made by accident.** Dropping a joint
+somewhere is a slip; clicking Weld on a named joint is a decision. So the drag is refused, with the
+red ring saying so before the drop commits, and the weld goes through with a snackbar. The force
+side already degrades honestly on its own (`unsupported-topology`), so the user is told twice and
+nothing is silently wrong.
+
+Refusing the weld as well was the first attempt, and it was wrong for a reason worth recording: it
+made a mechanism the app can *open* one the app cannot *author*. Unwelding the coupler of the
+linkage that prompted the mobility fix, then welding it back, was refused — a one-way door on a
+file the user had already built. A teaching tool that loads a linkage it will not let you draw is
+harder to explain than an indeterminate force panel.
+
+The warning names the pair the weld *creates*, comparing redundancies before and after rather than
+asking whether anything is redundant afterwards. Since a mechanism may legitimately arrive already
+holding one, the latter would blame every later weld for a condition it did not cause and name
+joints nowhere near the click.
 
 Both this and the drag refusal read [`rigid-bodies.ts`](../src/app/model/rigid-bodies.ts), so
 "what counts as one rigid body" has exactly one definition and cannot drift between them.
@@ -408,10 +420,13 @@ is about to happen *before* the drop rather than after it.
 | refused target in range | red ring on that joint, no capture |
 | the other end of the link being dragged | **nothing at all** — see below |
 | release over a refused target | the dragged joint shakes in place, and a snackbar names the rule |
+| **Alt** held at any point, including at the release | no rings, no capture, no merge |
 | a merge that lands | the survivor pops, and **nothing is said** — a gesture that did what it looked like needs no receipt |
 
 Holding **Alt** suppresses both rings and the capture, for placing a joint on top of another without
-merging them.
+merging them. The release reads Alt from the pointerup event rather than from the last cached
+target: pressing a modifier emits no pointermove, so a drag called off after the ring was acquired
+would otherwise still merge.
 
 A joint on the dragged joint's own link is not a target and gets no mark. Red would be explaining
 something the drawing already says — there is a bar between the two — and a rule the user never
@@ -431,6 +446,14 @@ inside the zoomed SVG grows with the canvas transform instead of holding its pro
 **1.3** treats a link drag as a rigid translation rather than as "drag each joint in turn". That
 distinction is visible: the body's own centre of mass and forces translate exactly, so a
 hand-placed CoM survives, while only the *neighbouring* links are deformed and recomputed.
+
+A neighbour's **forces** are recomputed too, and that is easy to get wrong twice over. A load is
+fixed to the body it acts on, so leaving it at its old world position silently slides it to a
+different point of the link — and the drag saves that as the real load. But the transform has to
+scale as well as rotate: a neighbour is *deformed*, its two reference joints changing separation,
+so the rigid transform used elsewhere for link geometry would hold the load's absolute distance
+from the joint and walk it off the end of a shortened link. `pointThroughFrame` scales with the
+frame, which is the invariant `dragJoint` already preserves for a binary link.
 
 `dragJoint` is unconstrained free-drag and already keeps the PrisJoint glued to the RevJoint;
 `dragLink` maintains the same invariant. Phase 4 inverts it: the block becomes the constrained
