@@ -1,7 +1,8 @@
 // joint.ts first: the model modules form an import cycle that only
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
-import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import { buildMechanism } from '../../test-utils/verification/fixture';
+import { loadedInvertedSliderCrankFixture } from '../../test-utils/verification/slot-fixtures';
 
 // Test-ladder case 9 (docs/joint-types-plan.md §4.1): the inverted slider-crank
 // carrying a load. Two things are under test, and only one of them is the
@@ -14,32 +15,7 @@ import { buildMechanism, MechanismFixture } from '../../test-utils/verification/
 // the block and on nothing in return, and the analysis came back all zeros
 // rather than reporting that it could not model the topology.
 
-const CRANK = 1;
-const OFFSET = 3;
-const LEVER = 5;
-const START_ANGLE = Math.PI / 2;
-const START = {
-  bx: CRANK * Math.cos(START_ANGLE),
-  by: CRANK * Math.sin(START_ANGLE),
-};
-const SPAN = Math.hypot(START.bx - OFFSET, START.by);
-const TIP: [number, number] = [
-  OFFSET + (LEVER * (START.bx - OFFSET)) / SPAN,
-  (LEVER * START.by) / SPAN,
-];
-
-const LOADED_INVERTED_SLIDER_CRANK: MechanismFixture = {
-  joints: [
-    { id: 'A', x: 0, y: 0, ground: true, input: true },
-    { id: 'B', x: START.bx, y: START.by },
-    { id: 'C', x: OFFSET, y: 0, ground: true },
-    { id: 'D', x: TIP[0], y: TIP[1] },
-  ],
-  links: [{ joints: 'AB' }, { joints: 'CD' }],
-  sliders: [{ at: 'B', prisId: 'P', on: { carrier: 'CD', a: 'C', b: 'D' } }],
-  load: { onLink: 'CD', at: TIP, vector: [0, -10] },
-  inputAngVel: 1,
-};
+const LOADED_INVERTED_SLIDER_CRANK = loadedInvertedSliderCrankFixture();
 
 describe('forces through a moving slot', () => {
   it('produces a determinate model rather than giving up', () => {

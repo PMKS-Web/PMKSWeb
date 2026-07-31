@@ -38,6 +38,14 @@ Tests are Vitest but written in Jasmine style (globals via `vitest/globals`). `t
 
 Unit specs stay co-located in `src/**/*.spec.ts`; browser-driven E2E tests are Playwright scripts in `e2e/*.mjs` (run by the GPT-5.5 subagent — see below), with outputs in gitignored `artifacts/`. Details in `e2e/README.md`.
 
+**Every verification mechanism is published as a URL.** A fixture is a TypeScript object and the app only speaks URLs, so a reviewer otherwise has to rebuild a linkage by hand to see what a failing test is about. `docs/fixture-urls.md` is generated from `src/test-utils/verification/fixture-gallery.ts`; `npm run fixture-urls` refreshes it, and a spec fails if it is stale, so adding a fixture without regenerating cannot slip through. Add new mechanisms to `FIXTURE_GALLERY` rather than inlining them in a spec.
+
+Regenerate against a PR's deploy preview when you want links a reviewer can click before merge — a mechanism using a feature that has not shipped yet will not decode on production:
+
+```bash
+PMKS_FIXTURE_BASE_URL=https://deploy-preview-NNN--pmksprod.netlify.app npm run fixture-urls
+```
+
 ## Deployment / branch rules
 
 **Never push directly to `main`** — commits to `main` auto-deploy to production (app.pmksplus.com). Work in branches/forks and open PRs. Every non-main branch auto-publishes to `https://[BRANCHNAME]--pmks.netlify.app`.

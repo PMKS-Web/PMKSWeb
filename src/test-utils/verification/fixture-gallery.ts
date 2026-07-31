@@ -1,0 +1,187 @@
+import { MechanismFixture, buildMechanism } from './fixture';
+import {
+  sliderCrankTracerFixture,
+  stephensonIiiEx2Fixture,
+  teachingLabFourBarFixture,
+  teachingLabSliderCrankFixture,
+  wattIFixture,
+} from './fixtures';
+import {
+  ellipticalTrammelFixture,
+  invertedSliderCrankFixture,
+  loadedInvertedSliderCrankFixture,
+  slottedCouplerFixture,
+  WHITWORTH_CRANK,
+  WHITWORTH_OFFSET,
+} from './slot-fixtures';
+import { MechanismService } from '../../app/services/mechanism.service';
+import { SettingsService } from '../../app/services/settings.service';
+import { ActiveObjService } from '../../app/services/active-obj.service';
+import { ColorService } from '../../app/services/color.service';
+import { UrlGenerationService } from '../../app/services/url-generation.service';
+
+/**
+ * Every mechanism the verification suite asserts on, as something a reviewer
+ * can open.
+ *
+ * A fixture is a TypeScript object; the app only speaks URLs. Encoding one into
+ * the other means anybody reviewing a solver change can load the exact linkage a
+ * failing test is about, instead of reading coordinates out of a spec file and
+ * rebuilding it by hand.
+ */
+/** The scale a freshly opened app uses; pinned so payloads do not drift. */
+const DEFAULT_OBJECT_SCALE = 1;
+
+export interface GalleryEntry {
+  name: string;
+  /** What this mechanism is for — one line, as it appears in the published table. */
+  purpose: string;
+  /** Where it is asserted, so the link and the assertions stay findable together. */
+  spec: string;
+  /** True when the mechanism uses a slot cut into a moving link. */
+  floatingSlot: boolean;
+  fixture: MechanismFixture;
+}
+
+export const FIXTURE_GALLERY: GalleryEntry[] = [
+  {
+    name: 'Inverted slider-crank',
+    purpose: 'Inverse slot direction: position, velocity and acceleration against closed form',
+    spec: 'inverted-slider-crank.spec.ts, slot-kinematics.spec.ts',
+    floatingSlot: true,
+    fixture: invertedSliderCrankFixture(),
+  },
+  {
+    name: 'Whitworth proportions',
+    purpose: 'Crank longer than the ground offset, so the lever turns instead of rocking',
+    spec: 'slot-kinematics.spec.ts',
+    floatingSlot: true,
+    fixture: invertedSliderCrankFixture(WHITWORTH_OFFSET, WHITWORTH_CRANK),
+  },
+  {
+    name: 'Inverted slider-crank with a load',
+    purpose: 'Reactions equal and opposite across the slot, and normal to it',
+    spec: 'slot-forces.spec.ts',
+    floatingSlot: true,
+    fixture: loadedInvertedSliderCrankFixture(),
+  },
+  {
+    name: 'Four-bar with a slotted coupler',
+    purpose: 'Forward slot direction: the only case where the carrier is solved first',
+    spec: 'slotted-coupler.spec.ts',
+    floatingSlot: true,
+    fixture: slottedCouplerFixture(),
+  },
+  {
+    name: 'Elliptical trammel',
+    purpose: 'Mobility for a linkage held only by its guides — no pin touches ground',
+    spec: 'slot-mobility.spec.ts',
+    floatingSlot: false,
+    fixture: ellipticalTrammelFixture(),
+  },
+  {
+    name: 'TeachingLab four-bar',
+    purpose: 'MATLAB-verified positions, velocities, accelerations and forces',
+    spec: 'teaching-lab-four-bar.spec.ts',
+    floatingSlot: false,
+    fixture: teachingLabFourBarFixture(),
+  },
+  {
+    name: 'TeachingLab slider-crank',
+    purpose: 'The grounded-guide path this phase had to leave byte-identical',
+    spec: 'teaching-lab-slider-crank.spec.ts',
+    floatingSlot: false,
+    fixture: teachingLabSliderCrankFixture(),
+  },
+  {
+    name: 'Slider-crank with a tracer',
+    purpose: 'A tracer point on the coupler of a grounded slider',
+    spec: 'slider-crank-tracer.spec.ts',
+    floatingSlot: false,
+    fixture: sliderCrankTracerFixture(),
+  },
+  {
+    name: 'Stephenson III',
+    purpose: 'Six-bar, MATLAB-verified',
+    spec: 'stephenson-iii-ex2.spec.ts',
+    floatingSlot: false,
+    fixture: stephensonIiiEx2Fixture(),
+  },
+  {
+    name: 'Watt I',
+    purpose: 'Six-bar, MATLAB-verified',
+    spec: 'watt-i.spec.ts',
+    floatingSlot: false,
+    fixture: wattIFixture(),
+  },
+];
+
+/**
+ * Encode a fixture into the query string the app decodes on load.
+ *
+ * Two pieces of global state are pinned first and put back afterwards: the link
+ * colour cursor, and the object scale. Both are process-wide, so without this a
+ * payload depends on what every earlier spec happened to do — the table would
+ * differ between a full suite run and a single-file one, and the drift check
+ * would fail for reasons with nothing to do with the mechanisms.
+ */
+export function fixturePayload(fixture: MechanismFixture): string {
+  const previousColors = ColorService.instance;
+  const previousScale = SettingsService.objectScale;
+  new ColorService();
+  SettingsService._objectScale.next(DEFAULT_OBJECT_SCALE);
+  try {
+    const built = buildMechanism(fixture);
+    return new UrlGenerationService(
+      {
+        joints: built.joints,
+        links: built.links,
+        forces: built.forces,
+        mechanismTimeStep: 0,
+      } as unknown as MechanismService,
+      new SettingsService(),
+      new ActiveObjService()
+    ).generateUrlQuery();
+  } finally {
+    ColorService.instance = previousColors;
+    SettingsService._objectScale.next(previousScale);
+  }
+}
+
+/**
+ * The published table.
+ *
+ * `baseUrl` is a parameter because a floating-slot payload only decodes on a
+ * build that has Phase 2 in it — pointed at a release that predates this work,
+ * those links fail validation rather than opening anything.
+ */
+export function galleryMarkdown(baseUrl: string): string {
+  const rows = FIXTURE_GALLERY.map((entry) => {
+    const link = `${baseUrl}/?${fixturePayload(entry.fixture)}`;
+    const slot = entry.floatingSlot ? 'yes' : '—';
+    return `| [${entry.name}](${link}) | ${entry.purpose} | ${slot} | \`${entry.spec}\` |`;
+  });
+  return [
+    '<!-- Generated by src/tests/verification/fixture-gallery.spec.ts. Run `npm run fixture-urls` to refresh. -->',
+    '',
+    '# Verification mechanisms, as links',
+    '',
+    'Every mechanism the verification suite asserts on, encoded into a URL so a',
+    'reviewer can open the exact linkage a test is about instead of rebuilding it',
+    'from coordinates in a spec file.',
+    '',
+    `Links point at \`${baseUrl}\`. **A mechanism marked "floating slot" only decodes on a`,
+    'build that includes Phase 2** — on an older release the three extra URL tokens',
+    'are refused rather than silently ignored, which is deliberate (§2.4a). For a',
+    'pull request, regenerate against its deploy preview:',
+    '',
+    '```bash',
+    'PMKS_FIXTURE_BASE_URL=https://deploy-preview-227--pmksprod.netlify.app npm run fixture-urls',
+    '```',
+    '',
+    '| Mechanism | What it is for | Floating slot | Asserted in |',
+    '| --- | --- | --- | --- |',
+    ...rows,
+    '',
+  ].join('\n');
+}

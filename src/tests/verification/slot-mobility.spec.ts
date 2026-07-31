@@ -2,6 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import { ellipticalTrammelFixture } from '../../test-utils/verification/slot-fixtures';
 
 // Mobility for mechanisms whose ground, or whose slot, is not an ordinary pin.
 // Gruebler counted over rigid bodies: M = 3(N-1) - 2*J1 - J2.
@@ -16,18 +17,9 @@ import { buildMechanism, MechanismFixture } from '../../test-utils/verification/
  * slides. Nothing here is pinned to ground, so it is the case that proves a
  * grounded guide anchors the mechanism.
  */
-const ELLIPTICAL_TRAMMEL: MechanismFixture = {
-  joints: [
-    { id: 'A', x: 1, y: 0 },
-    { id: 'B', x: 0, y: 1 },
-  ],
-  links: [{ joints: 'AB' }],
-  sliders: [
-    { at: 'A', prisId: 'C', angleRad: 0 },
-    { at: 'B', prisId: 'D', angleRad: Math.PI / 2 },
-  ],
-  inputAngVel: 1,
-};
+// The trammel is the shared fixture with its input removed: mobility is what
+// is under test here, and naming an input would send it to the position solver.
+const ELLIPTICAL_TRAMMEL: MechanismFixture = ellipticalTrammelFixture();
 
 /**
  * Inverted slider-crank: crank AB drives a block that slides in a slot cut

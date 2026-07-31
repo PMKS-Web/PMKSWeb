@@ -4,6 +4,14 @@ import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
 import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import {
+  CRANK,
+  INPUT_SPEED,
+  invertedSliderCrankFixture as invertedSliderCrank,
+  OFFSET,
+  WHITWORTH_CRANK,
+  WHITWORTH_OFFSET,
+} from '../../test-utils/verification/slot-fixtures';
 
 // Test-ladder cases 2 and 4 (docs/joint-types-plan.md §4.1) for velocity and
 // acceleration: the inverted slider-crank, and the quick-return ratio that only
@@ -20,32 +28,6 @@ import { buildMechanism, MechanismFixture } from '../../test-utils/verification/
 //
 // Every one of these is wrong if the s*w term is dropped from the loop
 // equation, and the acceleration pair is wrong if Coriolis is dropped.
-
-const CRANK = 1;
-const OFFSET = 3;
-const LEVER = 5;
-/** Whitworth proportions: crank longer than the ground offset, so the lever spins. */
-const WHITWORTH_CRANK = 3;
-const WHITWORTH_OFFSET = 1;
-const INPUT_SPEED = 1;
-const START_ANGLE = Math.PI / 2;
-
-function invertedSliderCrank(offset: number, crank: number = CRANK): MechanismFixture {
-  const bx = crank * Math.cos(START_ANGLE);
-  const by = crank * Math.sin(START_ANGLE);
-  const span = Math.hypot(bx - offset, by);
-  return {
-    joints: [
-      { id: 'A', x: 0, y: 0, ground: true, input: true },
-      { id: 'B', x: bx, y: by },
-      { id: 'C', x: offset, y: 0, ground: true },
-      { id: 'D', x: offset + (LEVER * (bx - offset)) / span, y: (LEVER * by) / span },
-    ],
-    links: [{ joints: 'AB' }, { joints: 'CD' }],
-    sliders: [{ at: 'B', prisId: 'P', on: { carrier: 'CD', a: 'C', b: 'D' } }],
-    inputAngVel: INPUT_SPEED,
-  };
-}
 
 interface Sample {
   theta: number;
@@ -237,5 +219,52 @@ describe('Whitworth proportions, where the lever rotates instead of rocking', ()
       .reduce((total, entry) => total + Math.abs(entry.leverAngVel) * step, 0);
 
     expect(swept / INPUT_SPEED).toBeCloseTo(2 * Math.PI, 1);
+  });
+});
+
+describe('either order of the two slot joints', () => {
+  // Which of a slot's defining joints becomes slotJointA is arbitrary -- the
+  // user picks an order in the UI and a URL may list them either way, and both
+  // orders pass decode validation. It describes the same line, so it must
+  // describe the same motion.
+  //
+  // It did not. Every solver path anchored at slotJointA, and propagation from
+  // there read an unset velocity whenever the anchor was the carrier's free end
+  // rather than its grounded pivot: analysis threw on the first timestep with a
+  // TypeError that escaped kinematicLoopAnalysis uncaught.
+  const swapped = (): MechanismFixture => ({
+    ...invertedSliderCrank(OFFSET),
+    sliders: [{ at: 'B', prisId: 'P', on: { carrier: 'CD', a: 'D', b: 'C' } }],
+  });
+
+  it('reaches the carrier from its free end without throwing', () => {
+    expect(() => sample(swapped())).not.toThrow();
+  });
+
+  it('closes the loop the other way round', () => {
+    const { mechanism } = buildMechanism(swapped());
+
+    // Anchored at D, the walk crosses the slot to D and then runs the lever to
+    // ground -- one edge longer than anchoring at C, and the same circuit.
+    expect(mechanism.requiredLoops.map((loop) => loop.id)).toEqual(['A-B-P~P~D-C']);
+  });
+
+  it('gives the same lever motion either way round', () => {
+    const forward = sample(invertedSliderCrank(OFFSET));
+    const reversed = sample(swapped());
+
+    expect(reversed).toHaveLength(forward.length);
+    forward.forEach((entry, index) => {
+      expect(reversed[index].leverAngVel, `omega t=${index}`).toBeCloseTo(entry.leverAngVel, 6);
+      expect(reversed[index].leverAngAcc, `alpha t=${index}`).toBeCloseTo(entry.leverAngAcc, 6);
+    });
+  });
+
+  it('still matches the closed form when anchored at the free end', () => {
+    sample(swapped()).forEach(({ theta, leverAngVel }, index) => {
+      const s = span(theta, OFFSET);
+      const expected = (INPUT_SPEED * CRANK * (CRANK - OFFSET * Math.cos(theta))) / (s * s);
+      expect(leverAngVel, `t=${index}`).toBeCloseTo(expected, 3);
+    });
   });
 });

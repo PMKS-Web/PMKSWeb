@@ -118,6 +118,21 @@ describe('a slot losing what defines it', () => {
     expect(s.slot.ground).toBe(true);
   });
 
+  it('regrounds when a defining joint is deleted outright', () => {
+    // Deleting a joint is the one route to a stranded slot that goes through
+    // neither mergeJoints nor deleteLink -- it used to end at updateMechanism,
+    // which reconciles nothing.
+    const s = slottedLever();
+    s.active.updateSelectedObj(s.d);
+
+    s.service.deleteJoint();
+
+    expect(s.service.joints.map((joint) => joint.id)).not.toContain('D');
+    expect(s.slot.isFloating).toBe(false);
+    expect(s.slot.ground).toBe(true);
+    expect(s.slot.carrier).toBeUndefined();
+  });
+
   it('does not leave a slider pointing at a link that is gone', () => {
     // The failure this exists to prevent: the pointer stays valid, so nothing
     // throws -- the slider just reads geometry from an object no longer in the

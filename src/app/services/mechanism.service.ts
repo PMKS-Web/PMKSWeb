@@ -956,7 +956,10 @@ export class MechanismService {
     // if (this.activeObjService.selectedLink !== undefined) {
     //   this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
     // }
-    this.updateMechanism();
+    // Through the shared path, so a slot whose defining joint was just deleted
+    // gets reconciled. Deleting a joint by itself is the one way to strand a
+    // slot that does not go through mergeJoints or deleteLink.
+    this.finishStructuralEdit(false);
     setTimeout(() => {
       this.onMechUpdateState.next(3);
     });

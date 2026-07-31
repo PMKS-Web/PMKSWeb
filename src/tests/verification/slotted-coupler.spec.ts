@@ -4,7 +4,17 @@ import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { rigidLinkResidual, slotResidual } from '../../app/model/mechanism/constraint-residuals';
 import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
-import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import { buildMechanism } from '../../test-utils/verification/fixture';
+import {
+  COUPLER,
+  CRANK,
+  GROUND,
+  RIDER_LEVER as LEVER,
+  ROCKER,
+  slottedCouplerFixture,
+} from '../../test-utils/verification/slot-fixtures';
+
+const SLOTTED_COUPLER = slottedCouplerFixture();
 
 // Test-ladder case 5 (docs/joint-types-plan.md §4.1): a four-bar whose coupler
 // carries a slot, driving a grounded lever that rides in it.
@@ -18,61 +28,6 @@ import { buildMechanism, MechanismFixture } from '../../test-utils/verification/
 // timestep. A grounded guide can be recorded once; a slot cut into a moving
 // coupler points somewhere different at every crank angle, and using a stale
 // line produces a picture that looks plausible and is wrong.
-
-const CRANK = 1;
-const COUPLER = 3;
-const ROCKER = 3;
-const GROUND = 4;
-/** Ground pivot of the lever whose pin rides in the coupler's slot. */
-const LEVER_PIVOT: [number, number] = [2, 0.5];
-const LEVER = 2;
-
-/** Coupler pin C at the starting crank angle: circle(B, coupler) ∩ circle(D, rocker). */
-const START_C: [number, number] = (() => {
-  const bx = CRANK;
-  const midX = (bx + GROUND) / 2;
-  const half = (GROUND - bx) / 2;
-  return [midX, Math.sqrt(COUPLER * COUPLER - half * half)];
-})();
-
-/**
- * The rider starts on the coupler line at exactly `LEVER` from its pivot,
- * because a slot must pass through the block and the lever must be its stated
- * length. Derived rather than typed: a linkage that does not start assembled
- * has no solution to check against.
- *
- * The pivot and lever length above are chosen so the lever's circle always
- * reaches the coupler line — the line's farthest approach to that pivot over a
- * full revolution is about 1.55, comfortably inside 2. A shorter lever loses
- * the intersection partway round and the mechanism reverses there instead of
- * completing a cycle.
- */
-const START_F: [number, number] = (() => {
-  const dx = START_C[0] - CRANK;
-  const dy = START_C[1];
-  const length = Math.hypot(dx, dy);
-  const ux = dx / length;
-  const uy = dy / length;
-  const toPivot = [LEVER_PIVOT[0] - CRANK, LEVER_PIVOT[1]];
-  const along = toPivot[0] * ux + toPivot[1] * uy;
-  const across = toPivot[0] * -uy + toPivot[1] * ux;
-  const half = Math.sqrt(LEVER * LEVER - across * across);
-  return [CRANK + (along + half) * ux, (along + half) * uy];
-})();
-
-const SLOTTED_COUPLER: MechanismFixture = {
-  joints: [
-    { id: 'A', x: 0, y: 0, ground: true, input: true },
-    { id: 'B', x: CRANK, y: 0 },
-    { id: 'C', x: START_C[0], y: START_C[1] },
-    { id: 'D', x: GROUND, y: 0, ground: true },
-    { id: 'E', x: LEVER_PIVOT[0], y: LEVER_PIVOT[1], ground: true },
-    { id: 'F', x: START_F[0], y: START_F[1] },
-  ],
-  links: [{ joints: 'AB' }, { joints: 'BC' }, { joints: 'CD' }, { joints: 'EF' }],
-  sliders: [{ at: 'F', prisId: 'P', on: { carrier: 'BC', a: 'B', b: 'C' } }],
-  inputAngVel: 1,
-};
 
 function at(joints: Joint[], id: string): Joint {
   return joints.find((joint) => joint.id === id)!;
@@ -274,6 +229,48 @@ describe('velocity through a slot whose carrier is solved first', () => {
       // so this sits a decade looser than the velocity form above. The Coriolis
       // term it is testing for is of order 0.1 here, not 1e-5.
       expect(across, `t=${timestep}`).toBeCloseTo(0, 4);
+    }
+  });
+});
+
+describe('the forward case with its slot joints declared the other way round', () => {
+  // The inverse case broke when the anchor was the carrier's free end. Here the
+  // carrier is the coupler and neither slot joint is grounded, so both orders
+  // have to work off a joint the four-bar settled first.
+  const swapped = slottedCouplerFixture();
+  swapped.sliders = [{ at: 'F', prisId: 'P', on: { carrier: 'BC', a: 'C', b: 'B' } }];
+
+  function solveSwappedAt(timestep: number) {
+    const { mechanism } = buildMechanism(swapped);
+    KinematicsSolver.resetVariables();
+    KinematicsSolver.requiredLoops = mechanism.requiredLoops;
+    for (let t = 0; t <= timestep; t++) {
+      KinematicsSolver.determineKinematics(
+        mechanism.joints[t],
+        mechanism.links[t],
+        mechanism.inputAngularVelocities[t]
+      );
+    }
+    return mechanism.joints[timestep];
+  }
+
+  it('solves without throwing', () => {
+    expect(() => solveSwappedAt(90)).not.toThrow();
+  });
+
+  it('keeps the rider on the slot from the other anchor too', () => {
+    for (const timestep of [0, 40, 90, 140, 200, 260, 320]) {
+      const joints = solveSwappedAt(timestep);
+      const b = at(joints, 'B');
+      const c = at(joints, 'C');
+      const f = at(joints, 'F');
+      expect(slotResidual(f.x, f.y, b.x, b.y, c.x, c.y), `t=${timestep}`).toBeCloseTo(0, 3);
+
+      const velocity = KinematicsSolver.jointVelMap.get('F')!;
+      const e = at(joints, 'E');
+      const along =
+        (velocity[0] * (f.x - e.x) + velocity[1] * (f.y - e.y)) / Math.hypot(f.x - e.x, f.y - e.y);
+      expect(along, `speed t=${timestep}`).toBeCloseTo(0, 6);
     }
   });
 });

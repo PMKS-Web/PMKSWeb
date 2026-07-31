@@ -153,12 +153,18 @@ export class KinematicsSolver {
       return;
     }
     const { slider, carrier, anchor, u, uPerp, s } = frame;
+    const anchorVel = this.jointVelMap.get(anchor.id);
+    const anchorAcc = this.jointAccMap.get(anchor.id);
+    // spreadCarrierMotion runs first and settles every carrier joint, so this
+    // only bites when the walk never reached the carrier at all. Writing zeros
+    // there would present a stationary slider as a solved one.
+    if (!anchorVel || !anchorAcc) {
+      return;
+    }
     const omega = this.linkAngVelMap.get(carrier.id) ?? 0;
     const alpha = this.linkAngAccMap.get(carrier.id) ?? 0;
     const rate = this.slideRateMap.get(slider.id) ?? 0;
     const accel = this.slideAccelMap.get(slider.id) ?? 0;
-    const anchorVel = this.jointVelMap.get(anchor.id) ?? [0, 0];
-    const anchorAcc = this.jointAccMap.get(anchor.id) ?? [0, 0];
 
     this.jointVelMap.set(slider.id, [
       anchorVel[0] + rate * u[0] + s * omega * uPerp[0],
@@ -606,7 +612,20 @@ export class KinematicsSolver {
     );
   }
 
-  /** Carry the carrier's solved rotation out to its own joints and centre of mass. */
+  /**
+   * Carry the carrier's solved rotation out to its own joints and centre of mass.
+   *
+   * Propagation starts from whichever carrier joint already has motion, not
+   * from the slot's anchor. Which of the two slot joints becomes `slotJointA`
+   * is arbitrary — the user picks an order in the UI, and a URL may list them
+   * either way — so the anchor is the carrier's grounded pivot in some
+   * mechanisms and its free end in others. Anchoring propagation there read an
+   * unset velocity and threw whenever the free end came first.
+   *
+   * By this point the matrix solve has settled the carrier's ω and α, so any
+   * member with known motion locates every other one; a grounded member always
+   * qualifies, having been seeded before the walk began.
+   */
   private static spreadCarrierMotion(
     simJoints: Joint[],
     edge: Extract<LoopEdge, { kind: 'slot' }>,
@@ -616,16 +635,19 @@ export class KinematicsSolver {
     if (!frame || !(frame.carrier instanceof RealLink)) {
       return;
     }
-    const anchor = frame.anchor;
+    const seed = this.knownCarrierSeed(frame);
+    if (!seed) {
+      return;
+    }
     for (const member of frame.carrier.joints) {
-      if (member.id === anchor.id) {
+      if (member.id === seed.id) {
         continue;
       }
       this.determineVelAndAccel(
         frame.carrier.id,
-        anchor.id,
-        member.x - anchor.x,
-        member.y - anchor.y,
+        seed.id,
+        member.x - seed.x,
+        member.y - seed.y,
         member.id,
         'joint'
       );
@@ -636,13 +658,22 @@ export class KinematicsSolver {
     this.linkCoMMap.set(frame.carrier.id, [frame.carrier.CoM.x, frame.carrier.CoM.y]);
     this.determineVelAndAccel(
       frame.carrier.id,
-      anchor.id,
-      frame.carrier.CoM.x - anchor.x,
-      frame.carrier.CoM.y - anchor.y,
+      seed.id,
+      frame.carrier.CoM.x - seed.x,
+      frame.carrier.CoM.y - seed.y,
       frame.carrier.id,
       'link'
     );
     linksAlreadyDone.push(frame.carrier.id);
+  }
+
+  /** A carrier joint whose motion is settled, preferring the slot's own anchor. */
+  private static knownCarrierSeed(frame: SlotFrame): Joint | undefined {
+    const settled = (id: string) => this.jointVelMap.has(id) && this.jointAccMap.has(id);
+    if (settled(frame.anchor.id)) {
+      return frame.anchor;
+    }
+    return frame.carrier.joints.find((member) => settled(member.id));
   }
 
   /**

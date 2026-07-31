@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "format": "npx prettier --write .",
-    "format:check": "npx prettier --check ."
+    "format:check": "npx prettier --check .",
+    "fixture-urls": "PMKS_WRITE_FIXTURE_URLS=1 ng test --watch=false --include=src/tests/verification/fixture-gallery.spec.ts"
   },
   "private": true,
   "dependencies": {
