@@ -115,6 +115,47 @@ export function slottedCouplerFixture(): MechanismFixture {
   };
 }
 
+// --- Slide (Phase 3) -------------------------------------------------------
+
+export const YOKE_CRANK = 1;
+/** How far below the crank pivot the yoke's horizontal guide runs. */
+export const GUIDE_DROP = 2;
+/** How far above the crank pivot the yoke's slot reaches. */
+export const SLOT_RISE = 1;
+
+/**
+ * Scotch yoke: crank AB drives a block riding in the yoke's vertical slot, and
+ * the yoke itself is welded to a block on a horizontal grounded guide.
+ *
+ * The weld at C is the whole mechanism. Without it the yoke could turn about its
+ * guide and the linkage is DOF 2; with it the yoke may only translate, its slot
+ * stays vertical, and the crank pin sliding in that slot drives `x = r cos θ`
+ * exactly — the closed form Gate 3 asserts.
+ *
+ * `swapSlotJoints` declares the slot as (D, C) instead of (C, D). Both describe
+ * the same line, and a solver that answers differently is reading the pair as
+ * ordered when it is not — the bug class review caught in Phase 2.
+ */
+export function scotchYokeFixture(swapSlotJoints: boolean = false): MechanismFixture {
+  const slot = swapSlotJoints ? { a: 'D', b: 'C' } : { a: 'C', b: 'D' };
+  return {
+    joints: [
+      { id: 'A', x: 0, y: 0, ground: true, input: true },
+      { id: 'B', x: YOKE_CRANK, y: 0 },
+      // C and D share the crank pin's x, so the slot passes through B at t = 0.
+      { id: 'C', x: YOKE_CRANK, y: -GUIDE_DROP },
+      { id: 'D', x: YOKE_CRANK, y: SLOT_RISE },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'CD' }],
+    sliders: [
+      { at: 'B', prisId: 'E', on: { carrier: 'CD', ...slot } },
+      { at: 'C', prisId: 'F', angleRad: 0 },
+    ],
+    welds: ['C'],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 // --- Mobility --------------------------------------------------------------
 
 /**

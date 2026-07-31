@@ -28,6 +28,11 @@ export interface MechanismFixture {
   slider?: SliderSpec;
   /** Several slots at once — an elliptical trammel needs two. */
   sliders?: SliderSpec[];
+  /**
+   * Joint ids to flag welded. On a slider's pin this makes a Slide (§2.1): the
+   * rider becomes rigid with the block instead of free to turn in it.
+   */
+  welds?: string[];
   /** Constant global force applied to a point that rides on `onLink`. */
   load?: { onLink: string; at: [number, number]; vector: [number, number] };
   /** Input speed in rad/s, using the v1 manifest's exact rpm*pi/30 conversion. */
@@ -140,6 +145,12 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
     revJoint.links.push(piston);
     joints.push(prisJoint);
     links.push(piston);
+  });
+
+  // After the sliders, so a welded pin already has its block: that pairing is
+  // what makes the flag mean "Slide" rather than "compound".
+  fixture.welds?.forEach((id) => {
+    jointById.get(id)!.isWelded = true;
   });
 
   const forces: Force[] = [];
