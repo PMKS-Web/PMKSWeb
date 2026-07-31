@@ -1,6 +1,7 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
 import { Link, SliderBlock, RealLink, Shape } from '../link';
 import { groupRigidBodies } from '../rigid-bodies';
+import { assemblyBodyIds, slideAssemblies } from '../slide-assembly';
 import { Force } from '../force';
 // import {LoopSolver} from "./loop-solver";
 import { PositionSolver } from './position-solver';
@@ -273,7 +274,13 @@ export class Mechanism {
    * removes the paradox.
    */
   private determineRigidBodies(): Map<string, string> {
-    return groupRigidBodies(this.links[0]);
+    // A Slide's rider and block share one joint, so the shared-joint rule above
+    // cannot see the weld that makes them one body. Left uncounted, the extra
+    // freedom is real to Gruebler and a Scotch yoke reports DOF 2.
+    return groupRigidBodies(
+      this.links[0],
+      slideAssemblies(this.joints[0]).map(assemblyBodyIds)
+    );
   }
 
   /**

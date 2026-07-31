@@ -27,8 +27,18 @@ export function sharedJointCount(a: JointedBody, b: JointedBody): number {
  * anyway, reporting a mobility one lower than the assembly has: an ordinary
  * four-bar whose coupler is drawn as two overlapping links then counts as DOF 0
  * and refuses to simulate.
+ *
+ * `extraMerges` names groups of body ids the caller already knows to be rigid
+ * for a reason no joint count can see. A Slide is the case: its rider and block
+ * share exactly one joint, and it is the *weld* there rather than a second pin
+ * that stops them turning. Passing it in rather than letting `Mechanism` merge
+ * afterwards keeps one definition of "one rigid body", which is the whole point
+ * of this module.
  */
-export function groupRigidBodies<T extends JointedBody>(bodies: T[]): Map<string, string> {
+export function groupRigidBodies<T extends JointedBody>(
+  bodies: T[],
+  extraMerges: string[][] = []
+): Map<string, string> {
   const parent = new Map<string, string>();
   bodies.forEach((body) => parent.set(body.id, body.id));
 
@@ -39,14 +49,25 @@ export function groupRigidBodies<T extends JointedBody>(bodies: T[]): Map<string
     }
     return root;
   };
+  const union = (left: string, right: string): void => {
+    parent.set(find(left), find(right));
+  };
 
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
       if (sharedJointCount(bodies[i], bodies[j]) >= 2) {
-        parent.set(find(bodies[i].id), find(bodies[j].id));
+        union(bodies[i].id, bodies[j].id);
       }
     }
   }
+
+  // Ids the caller names that are not bodies here are skipped rather than
+  // seeded: `find` walks the parent map, so inventing an entry for a body this
+  // count does not contain would put a group root on nothing.
+  extraMerges.forEach((group) => {
+    const present = group.filter((id) => parent.has(id));
+    present.slice(1).forEach((id) => union(present[0], id));
+  });
 
   return new Map(bodies.map((body) => [body.id, find(body.id)]));
 }
