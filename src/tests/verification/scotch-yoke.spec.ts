@@ -93,18 +93,22 @@ describe('a Scotch yoke', () => {
     }
   });
 
-  it('leaves the guide itself where it is', () => {
-    // F belongs to the block, so a step that translated "every joint of every
-    // assembly body" would carry the guide along with the thing riding it --
-    // walking it across the world a step per timestep while the linkage still
-    // looked assembled. Nothing about that surfaces as a NaN.
+  it('keeps the sliding joint on its pin and on its guide line', () => {
+    // Two things that pull opposite ways. The sliding joint is drawn at the
+    // block, so it has to stay on top of the pin it carries -- the block is
+    // zero-length by construction (§2.10 item 2), and leaving it behind
+    // stretches it a little further every timestep. But the *guide* is fixed in
+    // the world, so the joint may only ever move along it.
     const built = buildMechanism(scotchYokeFixture());
     const start = jointAt(built, 0, 'F');
 
     for (const step of SAMPLES) {
       const guide = jointAt(built, step, 'F');
-      expect(guide.x, `guide x at step ${step}`).toBeCloseTo(start.x, 6);
-      expect(guide.y, `guide y at step ${step}`).toBeCloseTo(start.y, 6);
+      const pin = jointAt(built, step, 'C');
+      expect(guide.x, `guide on its pin at step ${step}`).toBeCloseTo(pin.x, 6);
+      expect(guide.y, `guide on its pin at step ${step}`).toBeCloseTo(pin.y, 6);
+      // The guide runs horizontally, so any change in y is the joint leaving it.
+      expect(guide.y, `guide stays on its line at step ${step}`).toBeCloseTo(start.y, 6);
     }
   });
 

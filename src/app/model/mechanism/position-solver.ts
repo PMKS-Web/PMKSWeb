@@ -425,11 +425,19 @@ export class PositionSolver {
     // assembly is one rigid body, and translating half of it would tear it
     // apart against whatever placed the other half.
     //
-    // Grounded members are the exception, and the guide's own sliding joint is
-    // one — it is where the guide *is*, not something riding it. Carrying it
-    // along would walk the guide across the world a step per timestep, with the
-    // linkage still looking assembled the whole way.
-    const movable = members.filter((member) => !member.ground);
+    // A grounded *pin* is the exception, and it should never appear here — an
+    // assembly with one could not translate at all.
+    //
+    // A grounded sliding joint is not that. "Grounded" on a PrisJoint means its
+    // slot line is fixed in the world, not that the joint sits still: the line
+    // is recorded once in slotLineMap and read from there, while the joint
+    // itself is drawn at the block and has to stay on top of the pin it carries
+    // (§2.10 item 2). The existing grounded-slider path has always moved it, and
+    // leaving it behind here stretched the zero-length block a little further
+    // every timestep.
+    const movable = members.filter(
+      (member) => !member.ground || member instanceof PrisJoint
+    );
     const pending = movable.filter((member) => !known.includes(member.id));
     if (pending.length === 0) {
       return undefined;
@@ -477,7 +485,11 @@ export class PositionSolver {
     movable: RealJoint[],
     known: string[]
   ): Pick<SlideAssemblyStep, 'from'> | undefined {
-    const placed = movable.find((member) => known.includes(member.id));
+    // Grounded members are seeded as known before the walk starts, but seeded
+    // is not placed: the assembly's own sliding joint is "known" from the first
+    // moment and does not move until this very step moves it. Reading travel
+    // from one would report the assembly permanently at rest.
+    const placed = movable.find((member) => !member.ground && known.includes(member.id));
     if (placed) {
       return { from: { kind: 'member', memberId: placed.id } };
     }

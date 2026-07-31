@@ -313,13 +313,21 @@ chain after `orderCarrierFromBlock`:
   fixed guide direction `û` from `assembly.slider.slotAngle`; the assembly carries a floating slot
   whose block point `P` is already known; and because the assembly cannot rotate, the slot direction
   `v̂` is its t = 0 direction and is constant.
-- *Targets: the movable joints of the assembly, which is **not** every joint of every body in
-  `assemblyBodyIds(assembly)`.* The guide's own `PrisJoint` is a member of the block — `F` belongs to `CF` —
-  and it is grounded: it is where the guide is, not something that rides it. Translating it would
-  walk the guide across the world one step per timestep while the picture still looked plausible.
-  Define the set as the non-grounded `RealJoint`s of the bodies in `assemblyBodyIds(assembly)`, and pin it
-  with test 13. 3.3 merges the same bodies but asks a different question of them, so the two share
-  the body set and not the joint set.
+- *Targets: the movable joints of the assembly.* A grounded **pin** is excluded —
+  an assembly holding one could not translate at all. A grounded **sliding
+  joint** is not excluded, and the first draft of this spec had that backwards.
+  "Grounded" on a `PrisJoint` means its slot *line* is fixed in the world, not
+  that the joint sits still: the line is recorded once in `slotLineMap` and read
+  from there, while the joint itself is drawn at the block and has to stay on
+  top of the pin it carries (§2.10 item 2). `circleLineIntersectionPoints` has
+  always moved it for ordinary grounded sliders. Leaving it behind stretched the
+  zero-length block a little further every timestep — caught by the invariant
+  test, not by the closed form. Pinned by test 13.
+- *A grounded member is not a motion source.* Grounded joints are seeded as
+  known before the walk starts, so "already placed" has to mean placed by a
+  step. Reading travel from the assembly's own sliding joint — known from the
+  first moment, and not moved until this step moves it — reports the assembly
+  permanently at rest.
 - *Solve.* With `C₀` the assembly's reference joint at t = 0, the translation `t` satisfies
   `((P − C₀) − t·û) × v̂ = 0`, so `t = ((P − C₀) × v̂) / (û × v̂)`. Every assembly joint lands at
   `start + t·û`.
@@ -475,7 +483,7 @@ Phase 5 picks it up with the cylinder, where the driven-prismatic and units work
 | 10 | Scotch yoke statics | refused as `unsupported-topology` naming the joint; the same fixture **unwelded** still analyses normally |
 | 11 | Drag a joint onto a Slide's pin | the Slide survives the merge — flag set, block intact, `slideAssemblyAt` resolves, and `new-grid`'s "weld was dropped" notice does not fire |
 | 12 | Weld a joint holding two `RealLink`s and a block, **reached through a link edge** | the two fuse into a compound *and* bind to the block; `riders` collapses to one; DOF merges compound + block; round-trips; and `ω_rider = α_rider = 0` — the registration path 3.6b(2) covers |
-| 13 | Scotch yoke, guide joint `F` across the cycle | stays exactly where it started; only the movable assembly joints translate |
+| 13 | Scotch yoke, sliding joint `F` across the cycle | stays coincident with its pin *and* on its guide line — the two pull opposite ways |
 | 14 | A welded Slide's panel guards | `canBeWelded()` is `false` and `canBeUnwelded()` is `true` — never both |
 | 15 | A Slide whose flag outran its compound | reconcile **rebuilds** the compound rather than stripping the flag or leaving two riders; after any `finishStructuralEdit`, every resolved assembly has `riders.length === 1` |
 
