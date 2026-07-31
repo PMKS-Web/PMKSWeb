@@ -156,6 +156,39 @@ export function scotchYokeFixture(swapSlotJoints: boolean = false): MechanismFix
   };
 }
 
+/** How far off the slot line the tracer arm reaches. */
+export const TRACER_OFFSET = 2;
+
+/**
+ * The same yoke carrying a tracer point G that is **not** on its slot, and is
+ * declared before either slot joint.
+ *
+ * That combination is the whole point. Sliding the assembly means solving "the
+ * block lies on the slot", and the slot line has to be measured from a joint
+ * actually on it — from G it is a line parallel to the slot but two units to
+ * the side, and solving to *that* puts the yoke somewhere plausible and wrong.
+ * In the plain yoke the first movable member happens to be the slot's own
+ * anchor, so nothing there can tell the two apart.
+ */
+export function scotchYokeWithTracerFixture(): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: 0, y: 0, ground: true, input: true },
+      { id: 'B', x: YOKE_CRANK, y: 0 },
+      { id: 'G', x: YOKE_CRANK + TRACER_OFFSET, y: SLOT_RISE },
+      { id: 'C', x: YOKE_CRANK, y: -GUIDE_DROP },
+      { id: 'D', x: YOKE_CRANK, y: SLOT_RISE },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'CDG' }],
+    sliders: [
+      { at: 'B', prisId: 'E', on: { carrier: 'CDG', a: 'C', b: 'D' } },
+      { at: 'C', prisId: 'F', angleRad: 0 },
+    ],
+    welds: ['C'],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 // --- Mobility --------------------------------------------------------------
 
 /**

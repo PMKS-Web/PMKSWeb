@@ -6,6 +6,8 @@ import { buildMechanism, BuiltMechanism } from '../../test-utils/verification/fi
 import {
   GUIDE_DROP,
   scotchYokeFixture,
+  scotchYokeWithTracerFixture,
+  TRACER_OFFSET,
   YOKE_CRANK,
 } from '../../test-utils/verification/slot-fixtures';
 
@@ -103,6 +105,29 @@ describe('a Scotch yoke', () => {
       const guide = jointAt(built, step, 'F');
       expect(guide.x, `guide x at step ${step}`).toBeCloseTo(start.x, 6);
       expect(guide.y, `guide y at step ${step}`).toBeCloseTo(start.y, 6);
+    }
+  });
+
+  it('measures the slot from a joint on it, not from whichever member came first', () => {
+    // G is a tracer on the yoke, off the slot and declared ahead of both slot
+    // joints. Measuring from it gives a line parallel to the slot but two units
+    // to the side, and solving to that line moves the yoke somewhere plausible
+    // and wrong -- x would be off by exactly the tracer's offset. The plain
+    // yoke cannot catch this because its first member is the slot's own anchor.
+    const built = buildMechanism(scotchYokeWithTracerFixture());
+
+    expect(PositionSolver.unsolvableJoints).toEqual([]);
+    for (const step of SAMPLES) {
+      const theta = crankAngle(built, step);
+      expect(jointAt(built, step, 'C').x, `C at step ${step}`).toBeCloseTo(
+        YOKE_CRANK * Math.cos(theta),
+        3
+      );
+      // The tracer rides along rigidly, holding its offset from the slot.
+      expect(
+        jointAt(built, step, 'G').x - jointAt(built, step, 'D').x,
+        `tracer offset at step ${step}`
+      ).toBeCloseTo(TRACER_OFFSET, 3);
     }
   });
 
