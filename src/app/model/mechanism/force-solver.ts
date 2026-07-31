@@ -1,5 +1,6 @@
 import { Joint, PrisJoint, RealJoint } from '../joint';
 import { Link, SliderBlock, RealLink } from '../link';
+import { slideAssemblies } from '../slide-assembly';
 import { KinematicsSolver } from './kinematic-solver';
 import { Loop } from './loop-solver';
 import { siUnitFactors, SiUnitFactors } from '../unit-conversions';
@@ -249,6 +250,20 @@ export class ForceSolver {
     });
 
     if (bodies.length === 0) return empty('unsupported-topology');
+    // A welded slide assembly is refused by name rather than by arithmetic
+    // (docs/phase-3-slide-spec.md §3.8). The equation count catches it too --
+    // it comes out one unknown short, because a prismatic pair welded to a body
+    // with a moment equation transmits a couple the model has no column for --
+    // but a count that happens to be wrong is not a reason, and it would go
+    // quiet the moment some other change made the numbers balance.
+    const welded = slideAssemblies(joints);
+    if (welded.length > 0) {
+      return empty(
+        'unsupported-topology',
+        `Joint ${welded[0].weldJoint.id} welds ${welded[0].riders[0].id} rigidly to its slider. ` +
+          'A prismatic pair carrying a moment has no force solution here yet.'
+      );
+    }
     if (!this.propertiesAreValid(bodies, units)) return empty('invalid-properties');
     if (mode === 'dynamic' && !this.kinematicsAreComplete(bodies, kinematics)) {
       return empty('missing-kinematics');
