@@ -18,7 +18,20 @@ import { SynthesisBuilderService } from '../app/services/synthesis/synthesis-bui
  * a weld can happen at all, so two specs with two copies of it can disagree
  * about what they are testing while both stay green.
  */
-export function createMechanismHarness(): { service: MechanismService; active: ActiveObjService } {
+export interface MechanismHarness {
+  service: MechanismService;
+  active: ActiveObjService;
+  /**
+   * How many undo entries the service has asked for.
+   *
+   * "One gesture, one entry" is an invariant Phase 1 established, and it is
+   * also the only way to see the difference between an edit that was refused
+   * and one that happened and was then undone by a reconcile.
+   */
+  saveCount: () => number;
+}
+
+export function createMechanismHarness(): MechanismHarness {
   if (!ColorService.instance) new ColorService();
   const settings = new SettingsService();
   const parser = new NumberUnitParserService();
@@ -29,9 +42,16 @@ export function createMechanismHarness(): { service: MechanismService; active: A
     get: () => service,
   } as unknown as Injector);
   const active = new ActiveObjService();
-  const injector = { get: () => ({ save: () => {} }) } as unknown as Injector;
+  let saves = 0;
+  const injector = {
+    get: () => ({
+      save: () => {
+        saves += 1;
+      },
+    }),
+  } as unknown as Injector;
   service = new MechanismService(grid, active, injector, settings, parser);
-  return { service, active };
+  return { service, active, saveCount: () => saves };
 }
 
 /**

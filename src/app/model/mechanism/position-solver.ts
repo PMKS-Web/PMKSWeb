@@ -337,14 +337,20 @@ export class PositionSolver {
       const slotB = candidate.slotJointB;
       if (!carrier || !slotA || !slotB) continue;
       if (!carrier.joints.some((member) => member.id === joint.id)) continue;
-      // This primitive swings the carrier about an anchor. A carrier welded to
-      // a grounded guide cannot turn at all, so letting it fire here would
-      // rotate a body the weld forbids to rotate -- and it would win, because
-      // it is reached first. Leave those to orderSlideAssembly.
+      // This primitive swings the carrier about an anchor, and a welded carrier
+      // cannot turn relative to its block at all. Letting it fire here would
+      // rotate a body the weld forbids to rotate — and it would win, because it
+      // is reached first in the chain.
+      //
+      // Deliberately *every* assembly, not only the grounded ones. A Slide on a
+      // moving carrier is out of scope for Phase 3 (§4), and the point of
+      // leaving it out is that it reports unsolvable rather than animating
+      // wrongly. Skipping only grounded assemblies would drop the floating case
+      // straight into this primitive, which would happily swing it and draw a
+      // plausible picture of the wrong mechanism.
       if (
-        slideAssemblies(joints).some(
-          (assembly) =>
-            assembly.grounded && assemblyBodyIds(assembly).includes(carrier.id)
+        slideAssemblies(joints).some((assembly) =>
+          assemblyBodyIds(assembly).includes(carrier.id)
         )
       ) {
         continue;

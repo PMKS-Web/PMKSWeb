@@ -92,6 +92,44 @@ describe('welding a joint that carries a block', () => {
   });
 });
 
+describe('a pin the resolver refuses', () => {
+  it('is declined outright rather than welded and then quietly unwelded', () => {
+    // Two blocks on one pin is a different joint type -- the drag refuses it
+    // (§1.2), but a URL could carry one. Asking "does this have a block?"
+    // instead of asking the resolver sends it down the assembly path, which
+    // sets the flag, finds no compound, and leaves the reconcile to strip it
+    // again: no weld either way, but a structural edit and an undo entry for
+    // something that did not happen.
+    const s = sliderWithRider();
+    const second = new PrisJoint('Q', s.c.x, s.c.y, false, true);
+    second.angle_rad = Math.PI / 2;
+    s.service.joints.push(second);
+    s.service.links.push(new SliderBlock('CQ', [s.c, second], 1));
+    wireGraph(s.service);
+    s.active.updateSelectedObj(s.c);
+    const before = s.saveCount();
+
+    s.service.weldJoint();
+
+    expect(s.c.isWelded).toBe(false);
+    expect(slideAssemblyAt(s.c)).toBeUndefined();
+    // The flag ends up clear either way -- the reconcile would strip it. What
+    // separates "refused" from "done and then undone" is the undo entry.
+    expect(s.saveCount(), 'no undo entry for a refused weld').toBe(before);
+  });
+
+  it('still earns exactly one undo entry when the weld does take', () => {
+    const s = sliderWithRider();
+    s.active.updateSelectedObj(s.c);
+    const before = s.saveCount();
+
+    s.service.weldJoint();
+
+    expect(s.c.isWelded).toBe(true);
+    expect(s.saveCount() - before).toBe(1);
+  });
+});
+
 describe('a Slide made where two links meet the block', () => {
   /** A second rider CE at the same joint, so the weld has links to fuse. */
   function twoRiders() {
@@ -149,6 +187,21 @@ describe('a weld flag that has outrun its compound', () => {
     // Turning the Slider toggle off takes the block away, leaving a RevJoint
     // flagged welded with a single link and no compound.
     s.service.toggleSlider();
+
+    expect(s.service.joints.map((joint) => joint.id)).not.toContain('P');
+    expect(s.c.isWelded).toBe(false);
+  });
+
+  it('is stripped when the ground toggle takes the block instead', () => {
+    // toggleGround has its own slider-removal branch, and it ended at
+    // updateMechanism for the same reason toggleSlider did. Two doors into the
+    // same room, so both need the reconcile.
+    const s = sliderWithRider();
+    s.active.updateSelectedObj(s.c);
+    s.service.weldJoint();
+    s.active.updateSelectedObj(s.guide);
+
+    s.service.toggleGround();
 
     expect(s.service.joints.map((joint) => joint.id)).not.toContain('P');
     expect(s.c.isWelded).toBe(false);

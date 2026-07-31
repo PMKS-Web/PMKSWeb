@@ -1,7 +1,11 @@
 import '../../app/model/joint';
+import { RealJoint } from '../../app/model/joint';
 import { ForceSolver } from '../../app/model/mechanism/force-solver';
 import { buildMechanism } from '../../test-utils/verification/fixture';
-import { scotchYokeFixture } from '../../test-utils/verification/slot-fixtures';
+import {
+  loadedInvertedSliderCrankFixture,
+  scotchYokeFixture,
+} from '../../test-utils/verification/slot-fixtures';
 
 // Phase 3 does not solve statics for a welded assembly, and says so rather than
 // producing a number (docs/phase-3-slide-spec.md §3.8, §9).
@@ -33,14 +37,24 @@ describe('force analysis of a welded slide assembly', () => {
     expect(result.message).not.toContain('equations');
   });
 
-  it('still analyses the same mechanism once the weld is taken away', () => {
-    // The refusal has to be about the weld and nothing else. Without it this is
-    // an ordinary DOF 2 linkage, and the force solver treats it as it always
-    // did -- so whatever it answers here, it must not be the Slide refusal.
-    const unwelded = buildMechanism({ ...scotchYokeFixture(), welds: [] });
+  it('refuses because of the weld, and nothing else about the mechanism', () => {
+    // "Not the Slide message" is too weak a control: an unrelated refusal would
+    // satisfy it. This is an A/B on one fixture instead -- Phase 2's loaded
+    // inverted slider-crank, which has a working force solution -- with the
+    // flag as the only difference between the two calls.
+    //
+    // The unwelded Scotch yoke cannot serve as the control: without its weld it
+    // is a DOF 2 linkage and its statics are underconstrained for reasons that
+    // have nothing to do with Phase 3.
+    const built = buildMechanism(loadedInvertedSliderCrankFixture());
+    const before = ForceSolver.analyzeFrame(built.joints, built.links, 'static', true, 'm');
 
-    const result = ForceSolver.analyzeFrame(unwelded.joints, unwelded.links, 'static', false, 'm');
+    (built.joints.find((joint) => joint.id === 'B') as RealJoint).isWelded = true;
+    const after = ForceSolver.analyzeFrame(built.joints, built.links, 'static', true, 'm');
 
-    expect(result.message ?? '').not.toContain('welds');
+    expect(before.status, 'solves as a Slot').toBe('ok');
+    expect(before.jointReactions.size).toBeGreaterThan(0);
+    expect(after.status, 'refuses as a Slide').toBe('unsupported-topology');
+    expect(after.message).toContain('B');
   });
 });

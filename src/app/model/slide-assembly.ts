@@ -29,21 +29,24 @@ export interface SlideAssembly {
 }
 
 /**
- * Resolve the Slide at a joint, or `undefined` if there is not one.
+ * Whether welding this joint would make a Slide — the same structure test as
+ * `slideAssemblyAt`, without asking whether the weld has happened yet.
  *
- * `riders` may hold more than one link, and that is deliberate. A completed
- * weld fuses the RealLinks at the joint into a single compound, so the settled
- * value is always one — but the flag can outrun the compound mid-edit, because
- * `mergeJoints` takes a weld apart and rebuilds it around the survivor, and a
- * deletion that collapses a compound leaves the flag behind. Refusing here
- * would make the reconcile pass read "not a Slide" and destroy a weld the user
- * made; the reconcile repairs it instead, which is the rule `reconcileSlots`
- * already set for slots.
+ * The weld path needs this: it has to choose which kind of weld to make
+ * *before* setting the flag, and re-deriving "does this carry a block?" there
+ * would let a shape the resolver rejects — a pin with two blocks, say — take
+ * the assembly path and produce a weld nothing downstream recognises.
  */
-export function slideAssemblyAt(joint: Joint): SlideAssembly | undefined {
+export function isSlideCandidate(joint: Joint): boolean {
+  return resolveStructure(joint) !== undefined;
+}
+
+function resolveStructure(
+  joint: Joint
+): (Omit<SlideAssembly, 'weldJoint'> & { weldJoint: RealJoint }) | undefined {
   // The weld belongs to the pin, not the sliding joint. A PrisJoint carrying
   // the flag is a malformed record, not the same Slide seen from its far end.
-  if (!(joint instanceof RealJoint) || joint instanceof PrisJoint || !joint.isWelded) {
+  if (!(joint instanceof RealJoint) || joint instanceof PrisJoint) {
     return undefined;
   }
   const blocks = joint.links.filter((link): link is SliderBlock => link instanceof SliderBlock);
@@ -68,6 +71,25 @@ export function slideAssemblyAt(joint: Joint): SlideAssembly | undefined {
     return undefined;
   }
   return { weldJoint: joint, block, slider: sliders[0], riders, grounded: sliders[0].ground };
+}
+
+/**
+ * Resolve the Slide at a joint, or `undefined` if there is not one.
+ *
+ * `riders` may hold more than one link, and that is deliberate. A completed
+ * weld fuses the RealLinks at the joint into a single compound, so the settled
+ * value is always one — but the flag can outrun the compound mid-edit, because
+ * `mergeJoints` takes a weld apart and rebuilds it around the survivor, and a
+ * deletion that collapses a compound leaves the flag behind. Refusing here
+ * would make the reconcile pass read "not a Slide" and destroy a weld the user
+ * made; the reconcile repairs it instead, which is the rule `reconcileSlots`
+ * already set for slots.
+ */
+export function slideAssemblyAt(joint: Joint): SlideAssembly | undefined {
+  if (!(joint instanceof RealJoint) || !joint.isWelded) {
+    return undefined;
+  }
+  return resolveStructure(joint);
 }
 
 /** Every Slide in a mechanism. */

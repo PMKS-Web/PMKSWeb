@@ -5,6 +5,12 @@ import { PrisJoint, RealJoint } from '../../app/model/joint';
 import { RealLink, SliderBlock } from '../../app/model/link';
 import { slideAssemblyAt } from '../../app/model/slide-assembly';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
+import { UrlGenerationService } from '../../app/services/url-generation.service';
+import { ActiveObjService } from '../../app/services/active-obj.service';
+import { buildMechanismFixture } from '../fixtures/mechanism-fixtures';
+import { MechanismBuilder } from '../../app/services/transcoding/mechanism-builder';
+import { SettingsService } from '../../app/services/settings.service';
+import { createMechanismHarness } from '../../test-utils/mechanism-harness';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { fixturePayload } from '../../test-utils/verification/fixture-gallery';
 import {
@@ -17,6 +23,15 @@ import { teachingLabFourBarFixture } from '../../test-utils/verification/fixture
 // of one serialized joint: isPrismatic lives on the PrisJoint and isWelded on
 // the RevJoint, and nothing in the model enforces the pairing. So the pair has
 // to be asserted rather than assumed (§3.5).
+
+/**
+ * The joints, links, forces and selection — everything but the global-settings
+ * prefix and the trailing checksum, which move for reasons unrelated to the
+ * 2x2 (see template-url.spec.ts).
+ */
+function mechanismSection(payload: string): string {
+  return payload.slice(0, -1).split('.').slice(4).join('.');
+}
 
 /** A four-bar with one joint welded: the compound cell of the 2x2. */
 function compoundWeldFixture() {
@@ -47,15 +62,40 @@ describe('every cell of the 2x2', () => {
     }
   });
 
-  it('re-encodes byte-identically after a decode', () => {
-    // The pair is two independent records, so an encoder that dropped one would
-    // still produce a URL that decodes -- just to a different mechanism.
+  it('rebuilds into model objects and re-encodes byte-identically', () => {
+    // Through MechanismBuilder, not just the transcoder. Decoding and
+    // re-encoding the same transcoder barely leaves the codec: it would pass
+    // with the model side of the pairing entirely broken. What has to survive
+    // is the trip out to real Joint and Link objects and back.
     for (const cell of CELLS) {
       const first = fixturePayload(cell.fixture);
-      const decoder = new StringTranscoder();
-      decoder.decodeURL(first);
-      expect(decoder.encodeURL(), `${cell.name}`).toBe(first);
+      const rebuilt = buildMechanismFixture(first);
+
+      const reencoded = new UrlGenerationService(
+        rebuilt.service,
+        rebuilt.settings,
+        new ActiveObjService()
+      ).generateUrlQuery();
+      expect(mechanismSection(reencoded), `${cell.name}`).toBe(mechanismSection(first));
     }
+  });
+
+  it('rebuilds a Slide that the reconcile pass then leaves alone', () => {
+    // A rebuilt Slide has a weld flag and no compound, which is exactly the
+    // shape the strip rule looks for. It must recognise the assembly instead.
+    const { service, active } = createMechanismHarness();
+    const decoder = new StringTranscoder();
+    decoder.decodeURL(fixturePayload(scotchYokeFixture()));
+    new MechanismBuilder(service, decoder, new SettingsService(), active).build(true);
+    const welded = service.joints.find((joint) => joint.id === 'C') as RealJoint;
+
+    expect(welded.isWelded).toBe(true);
+    expect(slideAssemblyAt(welded)).toBeDefined();
+
+    service.finishStructuralEdit(false);
+
+    expect(welded.isWelded, 'survives a reconcile').toBe(true);
+    expect(slideAssemblyAt(welded)).toBeDefined();
   });
 });
 

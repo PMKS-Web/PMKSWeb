@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Link, SliderBlock, RealLink } from '../model/link';
-import { slideAssemblyAt } from '../model/slide-assembly';
+import { isSlideCandidate, slideAssemblyAt } from '../model/slide-assembly';
 import { Force } from '../model/force';
 import { Mechanism } from '../model/mechanism/mechanism';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
@@ -1189,7 +1189,10 @@ export class MechanismService {
       this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
       this.activeObjService.selectedJoint.input = false;
     }
-    this.updateMechanism(true);
+    // The grounding branch above deletes the block, which is the other way a
+    // Slide's pin can end up flagged with nothing behind it -- same reason
+    // toggleSlider needs this rather than updateMechanism.
+    this.finishStructuralEdit(true);
   }
 
   adjustInput() {
@@ -1697,8 +1700,11 @@ export class MechanismService {
     const realLinksAtJoint = this.links.filter(
       (link): link is RealLink => link instanceof RealLink && link.joints.includes(joint)
     );
-    const carriesBlock = joint.links.some((link) => link instanceof SliderBlock);
-    if (!carriesBlock) {
+    // The same structural test the resolver applies, rather than "has a block".
+    // A shape the resolver rejects -- two blocks on one pin, a block with a
+    // stray third joint -- would otherwise take the assembly path and produce a
+    // weld nothing downstream recognises, which the reconcile would then strip.
+    if (!isSlideCandidate(joint)) {
       return this.weldJointTopology(joint);
     }
 

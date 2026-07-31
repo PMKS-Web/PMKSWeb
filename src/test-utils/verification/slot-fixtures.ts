@@ -186,6 +186,42 @@ export function scotchYokeGuidedAtFarEndFixture(): MechanismFixture {
   };
 }
 
+/**
+ * Swinging-block engine: a Slide whose guide is cut into a *moving* link.
+ *
+ * Crank AB drives a rod BR whose far end is welded to a block sliding in the
+ * cylinder CD, and CD pivots on ground at C. DOF 1, and a perfectly ordinary
+ * mechanism — but Phase 3 does not solve it, because the rider's angle tracks a
+ * carrier that is itself unknown and the ordering deadlocks (spec §4). It
+ * exists here to prove the refusal is reported rather than drawn: swung as an
+ * ordinary Slot it would produce a plausible picture of the wrong linkage.
+ */
+export function swingingBlockFixture(): MechanismFixture {
+  const pivot: [number, number] = [0, -3];
+  const toPin = [YOKE_CRANK - pivot[0], -pivot[1]];
+  const reach = Math.hypot(toPin[0], toPin[1]);
+  const unit = [toPin[0] / reach, toPin[1] / reach];
+  const along = (distance: number): [number, number] => [
+    pivot[0] + unit[0] * distance,
+    pivot[1] + unit[1] * distance,
+  ];
+  const [dx, dy] = along(2);
+  const [rx, ry] = along(reach - 0.4);
+  return {
+    joints: [
+      { id: 'A', x: 0, y: 0, ground: true, input: true },
+      { id: 'B', x: YOKE_CRANK, y: 0 },
+      { id: 'C', x: pivot[0], y: pivot[1], ground: true },
+      { id: 'D', x: dx, y: dy },
+      { id: 'R', x: rx, y: ry },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'CD' }, { joints: 'BR' }],
+    sliders: [{ at: 'R', prisId: 'P', on: { carrier: 'CD', a: 'C', b: 'D' } }],
+    welds: ['R'],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 /** How far off the slot line the tracer arm reaches. */
 export const TRACER_OFFSET = 2;
 

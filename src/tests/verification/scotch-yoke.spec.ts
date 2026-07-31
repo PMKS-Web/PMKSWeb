@@ -7,6 +7,7 @@ import {
   GUIDE_DROP,
   scotchYokeFixture,
   scotchYokeWithTracerFixture,
+  swingingBlockFixture,
   TRACER_OFFSET,
   YOKE_CRANK,
 } from '../../test-utils/verification/slot-fixtures';
@@ -159,6 +160,24 @@ describe('a Scotch yoke', () => {
         expect(Number.isFinite(joint.y), `${joint.id} finite at step ${step}`).toBe(true);
       });
     });
+  });
+
+  it('names what it cannot place rather than drawing a Slide on a moving carrier', () => {
+    // A Slide whose guide is cut into a moving link is out of scope (spec §4):
+    // the rider's angle tracks a carrier that is itself unknown, so it resolves
+    // as a simultaneous two-unknown solve, which §2.7a hands to the "report
+    // unsolvable" strategy.
+    //
+    // Being out of scope is not the same as being harmless. The inverse slot
+    // primitive would happily swing this carrier as if it were an ordinary
+    // Slot, and the result animates -- a plausible picture of a different
+    // mechanism. So the guard that keeps it out covers every assembly, not just
+    // the grounded ones this phase can solve.
+    const built = buildMechanism(swingingBlockFixture());
+
+    expect(built.mechanism.dof, 'is a genuine one-DOF mechanism').toBe(1);
+    expect(PositionSolver.unsolvableJoints.length).toBeGreaterThan(0);
+    expect(built.mechanism.isMechanismValid()).toBe(false);
   });
 
   it('answers the same when the slot joints are declared the other way round', () => {
