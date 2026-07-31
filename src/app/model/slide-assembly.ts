@@ -114,8 +114,12 @@ export function slotOffset(
  * rather than a singular system.
  */
 export function hasFixedOrientation(link: Link, assemblies: SlideAssembly[]): boolean {
+  // Riders only, deliberately — not `assemblyBodyIds`. The block's orientation
+  // is fixed too, but the solver never gives a block an angular unknown: its
+  // column is how fast it *slides*. Skipping the block edge as "already known"
+  // therefore deletes the assembly's one real freedom and leaves the matrix a
+  // row short. Mobility wants the whole body set; this wants the turning half.
   return assemblies.some(
-    (assembly) =>
-      assembly.grounded && assemblyBodyIds(assembly).some((id) => id === link.id)
+    (assembly) => assembly.grounded && assembly.riders.some((rider) => rider.id === link.id)
   );
 }

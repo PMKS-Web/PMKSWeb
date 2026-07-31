@@ -156,6 +156,36 @@ export function scotchYokeFixture(swapSlotJoints: boolean = false): MechanismFix
   };
 }
 
+/**
+ * The same yoke with the guide moved to the far end of the slot, so the loop
+ * reaches the welded rider along an ordinary **link** edge rather than across
+ * the slot.
+ *
+ * Kinematically identical to the plain yoke — `x = r cos θ` either way — which
+ * is exactly what makes it a control. The loop shape is what differs: the plain
+ * yoke's walk steps from the slot straight onto the block, so the rider link
+ * never appears as an edge at all, and a solver that hands rotating unknowns out
+ * along link edges is never asked about it. Here it is.
+ */
+export function scotchYokeGuidedAtFarEndFixture(): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: 0, y: 0, ground: true, input: true },
+      { id: 'B', x: YOKE_CRANK, y: 0 },
+      // C anchors the slot at the free end; D carries the weld and the guide.
+      { id: 'C', x: YOKE_CRANK, y: SLOT_RISE },
+      { id: 'D', x: YOKE_CRANK, y: -GUIDE_DROP },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'CD' }],
+    sliders: [
+      { at: 'B', prisId: 'E', on: { carrier: 'CD', a: 'C', b: 'D' } },
+      { at: 'D', prisId: 'G', angleRad: 0 },
+    ],
+    welds: ['D'],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 /** How far off the slot line the tracer arm reaches. */
 export const TRACER_OFFSET = 2;
 

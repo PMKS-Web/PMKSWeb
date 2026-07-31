@@ -149,13 +149,19 @@ describe('resolving a slide assembly', () => {
 });
 
 describe('which links a weld holds at a fixed orientation', () => {
-  it('covers every body of a grounded assembly, not just the rider', () => {
+  it('names the rider but not its block', () => {
     const built = buildMechanism(scotchYokeFixture());
     const assemblies = slideAssemblies(built.joints);
     const linkNamed = (id: string) => built.links.find((link) => link.id === id)!;
 
     expect(hasFixedOrientation(linkNamed('CD'), assemblies)).toBe(true);
-    expect(hasFixedOrientation(linkNamed('CF'), assemblies)).toBe(true);
+    // The block CF is genuinely held at a fixed orientation too, and it is
+    // still part of the same rigid body for mobility. But the solver never
+    // gives a block an angular unknown -- its column is how fast it slides --
+    // so answering "true" here would delete the assembly's one real freedom and
+    // leave the velocity matrix a row short of its loops.
+    expect(hasFixedOrientation(linkNamed('CF'), assemblies)).toBe(false);
+    expect(assemblyBodyIds(assemblies[0]).sort()).toEqual(['CD', 'CF']);
     // The crank turns, and the Slot's block is free to turn in its slot.
     expect(hasFixedOrientation(linkNamed('AB'), assemblies)).toBe(false);
     expect(hasFixedOrientation(linkNamed('BE'), assemblies)).toBe(false);

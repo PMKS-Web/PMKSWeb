@@ -2,6 +2,7 @@ import { Joint, PrisJoint, RealJoint } from '../joint';
 import { SliderBlock, Link, RealLink } from '../link';
 import { matLinearSystem } from '../utils';
 import { Loop, LoopEdge } from './loop-solver';
+import { hasFixedOrientation, SlideAssembly, slideAssemblies } from '../slide-assembly';
 
 /** A slot edge's geometry in the frame being solved. */
 interface SlotFrame {
@@ -52,6 +53,15 @@ export class KinematicsSolver {
   static slideAccelMap = new Map<string, number>();
   private static inputJointIndex: number | undefined;
   static inputLinkIndex: number;
+  /**
+   * The Slides in the frame being solved, resolved once per call.
+   *
+   * Three separate places hand a body an angular unknown, and all three have to
+   * ask the same question of the same answer. Re-deriving "is this welded to a
+   * grounded guide?" at each of them is how one gets gated and the others do
+   * not — which does not show up as a singular matrix but as a wrong number.
+   */
+  private static slideAssemblyCache: SlideAssembly[] = [];
 
   static resetVariables() {
     // Also forget the cached input joint so the next call re-derives it (and
@@ -77,6 +87,7 @@ export class KinematicsSolver {
     this.desiredAngleMap = new Map<string, number>();
     this.slideRateMap = new Map<string, number>();
     this.slideAccelMap = new Map<string, number>();
+    this.slideAssemblyCache = [];
     this.inputLinkIndex = -1;
 
     this.A_matrix_AngVel = [];
@@ -338,6 +349,19 @@ export class KinematicsSolver {
       this.linkAngPosMap.set(l.id, angle * RadToDeg);
     });
 
+    // A welded rider cannot turn in its block, and a block in a guide fixed to
+    // the world cannot turn at all. So the assembly's rotation is not an
+    // unknown the loop has to solve — it is zero, and saying so is what leaves
+    // the system square.
+    this.slideAssemblyCache = slideAssemblies(joints);
+    links.forEach((link) => {
+      if (!hasFixedOrientation(link, this.slideAssemblyCache)) {
+        return;
+      }
+      this.linkAngVelMap.set(link.id, 0);
+      this.linkAngAccMap.set(link.id, 0);
+    });
+
     if (this.linkIndexMap.size === 0) {
       this.requiredLoops.forEach((loop) => {
         // initialize the jointIndexMap and linkIndexMap
@@ -360,7 +384,11 @@ export class KinematicsSolver {
             continue;
           }
           const link = links[this.linkIndexMap.get(edge.linkId)!];
-          if (this.isFloatingBlock(link)) {
+          // Registration path 2 of 3 (§3.6b). This is the one the Scotch yoke
+          // never reaches -- its yoke is met across the slot, not along a link
+          // edge -- so gating only path 1 would pass Gate 3 and still hand a
+          // spurious column to any welded rider that does sit on an edge.
+          if (this.isFloatingBlock(link) || hasFixedOrientation(link, this.slideAssemblyCache)) {
             continue;
           }
           switch (link.constructor) {
@@ -450,6 +478,15 @@ export class KinematicsSolver {
       return;
     }
     const carrierId = frame.carrier.id;
+    // Registration path 1 of 3 (§3.6b). A carrier welded to a grounded guide
+    // has a known rotation of zero, so claiming a column here would leave the
+    // loop one unknown short of an equation.
+    if (hasFixedOrientation(frame.carrier, this.slideAssemblyCache)) {
+      if (!this.unknownLinkIndexMap.has(frame.slider.id)) {
+        this.unknownLinkIndexMap.set(frame.slider.id, this.unknownLinkIndexMap.size);
+      }
+      return;
+    }
     if (!this.linkContainsInputMap.has(carrierId)) {
       this.linkContainsInputMap.set(
         carrierId,
@@ -761,7 +798,10 @@ export class KinematicsSolver {
           continue;
         }
         const link = simLinks[this.linkIndexMap.get(edge.linkId)!];
-        if (this.isFloatingBlock(link)) {
+        // Registration path 3 of 3 (§3.6b). This list sizes the matrix and its
+        // order indexes the columns, so it has to agree with paths 1 and 2
+        // exactly or a column index points at the wrong unknown.
+        if (this.isFloatingBlock(link) || hasFixedOrientation(link, this.slideAssemblyCache)) {
           continue;
         }
         switch (link.constructor) {
@@ -813,7 +853,9 @@ export class KinematicsSolver {
           continue;
         }
         const link = this.getLink(simLinks, edge.linkId);
-        if (this.isFloatingBlock(link)) {
+        // A body held at a fixed orientation contributes omega x r and
+        // alpha x r with both factors zero, so it adds nothing to either side.
+        if (this.isFloatingBlock(link) || hasFixedOrientation(link, this.slideAssemblyCache)) {
           continue;
         }
         const firstJoint = this.getJoint(simJoints, edge.fromId);
