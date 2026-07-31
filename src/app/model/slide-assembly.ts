@@ -88,6 +88,22 @@ export function assemblyBodyIds(assembly: SlideAssembly): string[] {
 }
 
 /**
+ * How far a point sits off the slot line — the constraint a Slide's pose has to
+ * satisfy, as a pure function of geometry (§2.7a item 3).
+ *
+ * The position step divides this by the guide-slot cross product to get how far
+ * to slide; a test asserts it vanishes at the answer. Both reading it from here
+ * is what stops the check from re-deriving the arithmetic it is checking.
+ */
+export function slotOffset(
+  point: { x: number; y: number },
+  reference: { x: number; y: number },
+  slot: [number, number]
+): number {
+  return (point.x - reference.x) * slot[1] - (point.y - reference.y) * slot[0];
+}
+
+/**
  * Whether a link's orientation is held fixed by a weld to a grounded guide.
  *
  * The kinematic solver has three separate places that hand a body an angular
