@@ -41,7 +41,9 @@ export interface SlideAssembly {
  * already set for slots.
  */
 export function slideAssemblyAt(joint: Joint): SlideAssembly | undefined {
-  if (!(joint instanceof RealJoint) || !joint.isWelded) {
+  // The weld belongs to the pin, not the sliding joint. A PrisJoint carrying
+  // the flag is a malformed record, not the same Slide seen from its far end.
+  if (!(joint instanceof RealJoint) || joint instanceof PrisJoint || !joint.isWelded) {
     return undefined;
   }
   const blocks = joint.links.filter((link): link is SliderBlock => link instanceof SliderBlock);
@@ -50,15 +52,22 @@ export function slideAssemblyAt(joint: Joint): SlideAssembly | undefined {
     return undefined;
   }
   const block = blocks[0];
-  const slider = block.joints.find((member): member is PrisJoint => member instanceof PrisJoint);
-  if (!slider || !block.joints.some((member) => member.id === joint.id)) {
+  // §2.10 item 1: the block joins exactly this joint to exactly one PrisJoint.
+  // Membership is by identity rather than id — within a single snapshot the
+  // graph holds the same objects, so a same-id impostor is exactly the
+  // malformed record this is here to reject.
+  if (block.joints.length !== 2 || !block.joints.includes(joint)) {
+    return undefined;
+  }
+  const sliders = block.joints.filter((member): member is PrisJoint => member instanceof PrisJoint);
+  if (sliders.length !== 1) {
     return undefined;
   }
   const riders = joint.links.filter((link): link is RealLink => link instanceof RealLink);
   if (riders.length === 0) {
     return undefined;
   }
-  return { weldJoint: joint, block, slider, riders, grounded: slider.ground };
+  return { weldJoint: joint, block, slider: sliders[0], riders, grounded: sliders[0].ground };
 }
 
 /** Every Slide in a mechanism. */

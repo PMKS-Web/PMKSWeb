@@ -74,6 +74,62 @@ describe('resolving a slide assembly', () => {
     expect(slideAssemblyAt(pin)).toBeUndefined();
   });
 
+  it('declines a block that does not join exactly two joints', () => {
+    // §2.10 item 1. A block with a third joint is not the zero-length
+    // coincidence the solvers assume, and picking two of the three arbitrarily
+    // would make the answer depend on declaration order.
+    const pin = new RevJoint('A', 0, 0);
+    const slider = new PrisJoint('P', 0, 0, false, true);
+    const stray = new RevJoint('S', 0, 0);
+    const rider = new RealLink('AB', [pin, new RevJoint('B', 1, 0)], 1, 1);
+    pin.links = [rider, new SliderBlock('APS', [pin, slider, stray], 1)];
+    pin.isWelded = true;
+
+    expect(slideAssemblyAt(pin)).toBeUndefined();
+  });
+
+  it('declines a block that holds a different joint of the same id', () => {
+    // Matching by id would accept this and then read `grounded` off a slider
+    // the joint is not actually on.
+    const pin = new RevJoint('A', 0, 0);
+    const impostor = new RevJoint('A', 5, 5);
+    const slider = new PrisJoint('P', 5, 5, false, true);
+    const rider = new RealLink('AB', [pin, new RevJoint('B', 1, 0)], 1, 1);
+    pin.links = [rider, new SliderBlock('AP', [impostor, slider], 1)];
+    pin.isWelded = true;
+
+    expect(slideAssemblyAt(pin)).toBeUndefined();
+  });
+
+  it('declines a block with no sliding joint at all', () => {
+    const pin = new RevJoint('A', 0, 0);
+    const rider = new RealLink('AB', [pin, new RevJoint('B', 1, 0)], 1, 1);
+    pin.links = [rider, new SliderBlock('AC', [pin, new RevJoint('C', 0, 0)], 1)];
+    pin.isWelded = true;
+
+    expect(slideAssemblyAt(pin)).toBeUndefined();
+  });
+
+  it('declines the sliding joint even when it carries the flag', () => {
+    // The weld belongs to the pin. Resolving from the far end would report the
+    // same assembly twice and double-count it in the mobility merge.
+    const built = buildMechanism(scotchYokeFixture());
+    const slider = built.joints.find((joint) => joint.id === 'F') as PrisJoint;
+    slider.isWelded = true;
+
+    expect(slideAssemblyAt(slider)).toBeUndefined();
+    expect(slideAssemblies(built.joints).map((a) => a.weldJoint.id)).toEqual(['C']);
+  });
+
+  it('declines a welded pin with a block but no rider link', () => {
+    const pin = new RevJoint('A', 0, 0);
+    const slider = new PrisJoint('P', 0, 0, false, true);
+    pin.links = [new SliderBlock('AP', [pin, slider], 1)];
+    pin.isWelded = true;
+
+    expect(slideAssemblyAt(pin)).toBeUndefined();
+  });
+
   it('resolves a rider that is not yet compounded, so a reconcile can repair it', () => {
     // Mid-edit the flag can outrun the compound: mergeJoints takes a weld apart
     // and rebuilds it. Refusing here would make the reconcile read "not a
