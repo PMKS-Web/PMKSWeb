@@ -1,38 +1,13 @@
 import '../model/joint';
-import { Injector } from '@angular/core';
 import { Coord } from '../model/coord';
 import { PrisJoint, RevJoint } from '../model/joint';
 import { RealLink, SliderBlock } from '../model/link';
-import { ActiveObjService } from './active-obj.service';
-import { ColorService } from './color.service';
-import { GridUtilsService } from './grid-utils.service';
-import { MechanismService } from './mechanism.service';
-import { NumberUnitParserService } from './number-unit-parser.service';
-import { SettingsService } from './settings.service';
-import { SvgGridService } from './svg-grid.service';
-import { DragStateService } from './drag-state.service';
-import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
+import { createMechanismHarness, wireGraph } from '../../test-utils/mechanism-harness';
 
 // Option A (docs/joint-types-plan.md §2.3) keeps a slot's carrier and its two
 // defining joints outside `links` and `connectedJoints`. Nothing that rebuilds
 // those structures can see them, so every way of destroying one is its own
 // regression — §4.2.
-
-function createHarness() {
-  if (!ColorService.instance) new ColorService();
-  const settings = new SettingsService();
-  const parser = new NumberUnitParserService();
-  const svg = new SvgGridService(settings, new DragStateService());
-  const synthesis = new SynthesisBuilderService(parser, settings);
-  let service!: MechanismService;
-  const grid = new GridUtilsService(synthesis, svg, {
-    get: () => service,
-  } as unknown as Injector);
-  const active = new ActiveObjService();
-  const injector = { get: () => ({ save: () => {} }) } as unknown as Injector;
-  service = new MechanismService(grid, active, injector, settings, parser);
-  return { service, active };
-}
 
 /**
  * Crank AB drives a block riding in a slot along the lever CD. The whole point
@@ -40,7 +15,7 @@ function createHarness() {
  * CD's joint list.
  */
 function slottedLever() {
-  const harness = createHarness();
+  const harness = createMechanismHarness();
   const a = new RevJoint('A', 0, 0, true, true);
   const b = new RevJoint('B', 0, 1);
   const c = new RevJoint('C', 3, 0, false, true);
@@ -56,31 +31,6 @@ function slottedLever() {
   harness.service.links.push(ab, cd, block);
   wireGraph(harness.service);
   return { ...harness, a, b, c, d, slot, ab, cd, block };
-}
-
-/**
- * Fill in `links` and `connectedJoints` from link membership.
- *
- * Not optional bookkeeping: canBeWelded reads `links.length`, so a joint left
- * unwired declines every weld — and a test that welds nothing passes for
- * reasons that have nothing to do with what it claims to check.
- */
-function wireGraph(service: MechanismService): void {
-  const real = service.joints.filter(
-    (joint) => joint instanceof RevJoint || joint instanceof PrisJoint
-  );
-  real.forEach((joint) => {
-    (joint as RevJoint).links = [];
-    (joint as RevJoint).connectedJoints = [];
-  });
-  service.links.forEach((link) => {
-    link.joints.forEach((joint) => {
-      (joint as RevJoint).links.push(link);
-      link.joints.forEach((other) => {
-        if (other.id !== joint.id) (joint as RevJoint).connectedJoints.push(other);
-      });
-    });
-  });
 }
 
 describe('a slot losing what defines it', () => {

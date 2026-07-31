@@ -112,20 +112,21 @@ export class RealJoint extends Joint {
     this._input = value;
   }
 
+  /**
+   * Whether a weld could be made here.
+   *
+   * A slider at this joint used to disqualify it. It no longer does: welding a
+   * joint that carries a block is how a Slide is made (§2.1), and the block is
+   * bound by the flag rather than by joining a compound.
+   *
+   * `isWelded` is part of the test because nothing else rules out welding an
+   * already-welded joint. An ordinary compound weld collapses the links here
+   * into one, so the length test happens to cover it; a Slide keeps two — the
+   * rider and its block — and without this the panel would offer Weld and
+   * Unweld at the same time.
+   */
   canBeWelded(): boolean {
-    //If the joint is an input or ground, it cannot be welded
-    //It also cannot be welded unless there are two or more links connected to it
-    //also if this.connectedJoints contains a pris joint, this cannot be welded
-    if (
-      this.input ||
-      this.ground ||
-      this.links.length < 2 ||
-      this.connectedJoints.some((joint) => joint instanceof PrisJoint)
-    ) {
-      return false;
-    } else {
-      return true;
-    }
+    return !this.input && !this.ground && !this.isWelded && this.links.length >= 2;
   }
 
   canBeUnwelded(): boolean {

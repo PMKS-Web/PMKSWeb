@@ -1,6 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Link, SliderBlock, RealLink } from '../model/link';
+import { slideAssemblyAt } from '../model/slide-assembly';
 import { Force } from '../model/force';
 import { Mechanism } from '../model/mechanism/mechanism';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
@@ -482,9 +483,19 @@ export class MechanismService {
     );
   }
 
-  private finishStructuralEdit(save: boolean = true): void {
+  /**
+   * The single point every structural edit passes through: re-derive the joint
+   * graph, then repair or retire anything the edit invalidated.
+   *
+   * Public because it is the seam, not an implementation detail — a caller that
+   * changes topology and does not come through here leaves the slot and weld
+   * reconcilers unrun, which is exactly how `toggleSlider` came to leave a
+   * Slide's RevJoint flagged with nothing behind it.
+   */
+  public finishStructuralEdit(save: boolean = true): void {
     this.rebuildJointGraph();
     this.reconcileSlots();
+    this.reconcileAssemblyWelds();
     PositionSolver.setUpSolvingForces(this.forces);
     this.updateMechanism(save);
     this.onMechUpdateState.next(3);
@@ -534,6 +545,47 @@ export class MechanismService {
   }
 
   /**
+   * Make sure no weld is left describing something that is not there.
+   *
+   * Repair before you strip, in that order, which is the rule `reconcileSlots`
+   * already set for slots. A weld says "everything here is rigid"; the compound
+   * link is only how that is normally *represented*, so a flag that has outrun
+   * its compound should be given one rather than thrown away. `mergeJoints`
+   * takes a weld apart and rebuilds it, and a deletion that collapses a
+   * compound leaves the flag behind, so both states are reachable from ordinary
+   * edits.
+   *
+   * Stripping is for what cannot be repaired: a joint flagged welded that has
+   * neither a slide assembly nor a compound has nothing left to be rigid about.
+   * Turning the Slider toggle off at a Slide is how that arises.
+   */
+  private reconcileAssemblyWelds(): void {
+    this.joints.forEach((joint) => {
+      if (!(joint instanceof RealJoint) || !joint.isWelded) return;
+      const assembly = slideAssemblyAt(joint);
+      if (assembly) {
+        // Several riders means the compound has not been built yet. Build it,
+        // rather than leaving the mechanism in a state every consumer of the
+        // resolver would have to tolerate.
+        //
+        // The flag comes off first because both guards on the weld path refuse
+        // an already-welded joint — they are there to stop a second weld, and
+        // this is the first one finishing rather than a second one starting.
+        if (assembly.riders.length > 1) {
+          joint.isWelded = false;
+          if (this.weldJointTopology(joint)) {
+            this.rebuildJointGraph();
+          } else {
+            joint.isWelded = true;
+          }
+        }
+        return;
+      }
+      if (!this.compoundAt(joint)) joint.isWelded = false;
+    });
+  }
+
+  /**
    * Fold `source` into `target`: every link that used `source` now uses
    * `target`, and `source` stops existing. This is the release half of a
    * joint-onto-joint drag.
@@ -554,8 +606,8 @@ export class MechanismService {
     // makes the result a real compound instead of a joint merely flagged welded
     // with a stray link beside it.
     const shouldWeld = source.isWelded || target.isWelded;
-    if (source.isWelded) this.unweldJointTopology(source);
-    if (target.isWelded) this.unweldJointTopology(target);
+    if (source.isWelded) this.unweldTopology(source);
+    if (target.isWelded) this.unweldTopology(target);
 
     // Ground and input are things the user set deliberately. A merge that
     // dropped one would quietly change what the mechanism is, so the survivor
@@ -586,7 +638,7 @@ export class MechanismService {
     // A refusal here is not silent: canBeWelded declines a grounded, driven, or
     // slider-carrying joint, and the caller reports the survivor's actual weld
     // state rather than assuming the weld took.
-    if (shouldWeld) this.weldJointTopology(target);
+    if (shouldWeld) this.weldTopology(target);
 
     // No save here: a merge is the tail of a drag gesture, and the gesture owns
     // the single undo entry it earns (see DragStateService.release).
@@ -1228,9 +1280,12 @@ export class MechanismService {
 
       this.activeObjService.selectedJoint.ground = false;
     }
-    this.updateMechanism(true);
-    console.log(this.joints);
-    console.log(this.links);
+    // Through finishStructuralEdit rather than straight to updateMechanism: it
+    // is what runs reconcileAssemblyWelds, and removing a slider from a Slide
+    // leaves the RevJoint behind still flagged welded. Phase 2 never hit this
+    // because removing a slider takes its PrisJoint with it, and reconcileSlots
+    // only walks the ones that survive.
+    this.finishStructuralEdit(true);
   }
 
   findInputJointIndex() {
@@ -1581,7 +1636,7 @@ export class MechanismService {
     // dropping a joint somewhere is far more easily done by accident.
     const created = this.weldWouldPinTwice(joint);
 
-    if (!this.weldJointTopology(joint)) return;
+    if (!this.weldTopology(joint)) return;
     if (created) {
       NewGridComponent.sendNotification(
         `${created[0]} and ${created[1]} are now pinned together twice. The linkage still ` +
@@ -1627,6 +1682,58 @@ export class MechanismService {
     return [first, second];
   }
 
+  /**
+   * Make a weld at this joint, whatever kind of weld it is.
+   *
+   * Pure topology — no rebuild, no save. Four callers need this and they do not
+   * all want the same wrapper: `weldJoint`, `unWeldJoint` and `unweldAll` earn
+   * an undo entry, while `mergeJoints` is the tail of a drag and the gesture
+   * owns the single entry it earns. Putting the choice inside the public
+   * actions instead would leave `mergeJoints` on the compound-only path, where
+   * whether a Slide survives a drag depends on what was dropped onto it.
+   */
+  private weldTopology(joint: RealJoint): boolean {
+    if (!joint.canBeWelded()) return false;
+    const realLinksAtJoint = this.links.filter(
+      (link): link is RealLink => link instanceof RealLink && link.joints.includes(joint)
+    );
+    const carriesBlock = joint.links.some((link) => link instanceof SliderBlock);
+    if (!carriesBlock) {
+      return this.weldJointTopology(joint);
+    }
+
+    // A Slide. Two or more RealLinks here fuse into a compound exactly as an
+    // ordinary weld does — every body at the joint becomes rigid, which is what
+    // the 2x2 means — and the block is bound by the flag either way, since it
+    // is not a RealLink and cannot enter a compound at all.
+    if (realLinksAtJoint.length >= 2) {
+      this.weldJointTopology(joint);
+    }
+    joint.isWelded = true;
+    return true;
+  }
+
+  /** Undo a weld at this joint, whatever kind of weld it is. Pure topology. */
+  private unweldTopology(joint: RealJoint): boolean {
+    if (!joint.isWelded) return false;
+    const compound = this.compoundAt(joint);
+    if (compound) {
+      return this.unweldJointTopology(joint);
+    }
+    // A Slide holds no compound, so there is nothing to take apart and
+    // unweldJointTopology would report failure after already clearing the flag
+    // -- leaving the weld dropped with no rebuild and no undo entry.
+    joint.isWelded = false;
+    return true;
+  }
+
+  private compoundAt(joint: RealJoint): RealLink | undefined {
+    return this.links.find(
+      (link): link is RealLink =>
+        link instanceof RealLink && link.subset.length > 0 && link.joints.includes(joint)
+    );
+  }
+
   private weldJointTopology(joint: RealJoint): boolean {
     const linksAtJoint = this.links.filter(
       (link): link is RealLink => link instanceof RealLink && link.joints.includes(joint)
@@ -1647,7 +1754,7 @@ export class MechanismService {
   }
 
   public unWeldJoint(joint: RealJoint): void {
-    if (!this.unweldJointTopology(joint)) return;
+    if (!this.unweldTopology(joint)) return;
     this.finishStructuralEdit(true);
   }
 
@@ -1664,7 +1771,7 @@ export class MechanismService {
       (joint): joint is RealJoint => joint instanceof RealJoint && joint.isWelded
     );
     weldedJoints.forEach((joint) => {
-      changed = this.unweldJointTopology(joint) || changed;
+      changed = this.unweldTopology(joint) || changed;
     });
     if (changed) this.finishStructuralEdit(true);
   }
