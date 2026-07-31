@@ -277,10 +277,7 @@ export class Mechanism {
     // A Slide's rider and block share one joint, so the shared-joint rule above
     // cannot see the weld that makes them one body. Left uncounted, the extra
     // freedom is real to Gruebler and a Scotch yoke reports DOF 2.
-    return groupRigidBodies(
-      this.links[0],
-      slideAssemblies(this.joints[0]).map(assemblyBodyIds)
-    );
+    return groupRigidBodies(this.links[0], slideAssemblies(this.joints[0]).map(assemblyBodyIds));
   }
 
   /**

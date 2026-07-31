@@ -68,7 +68,11 @@ describe('resolving a slide assembly', () => {
     const first = new PrisJoint('P', 0, 0, false, true);
     const second = new PrisJoint('Q', 0, 0, false, true);
     const rider = new RealLink('AB', [pin, new RevJoint('B', 1, 0)], 1, 1);
-    pin.links = [rider, new SliderBlock('AP', [pin, first], 1), new SliderBlock('AQ', [pin, second], 1)];
+    pin.links = [
+      rider,
+      new SliderBlock('AP', [pin, first], 1),
+      new SliderBlock('AQ', [pin, second], 1),
+    ];
     pin.isWelded = true;
 
     expect(slideAssemblyAt(pin)).toBeUndefined();
@@ -178,6 +182,11 @@ describe('which links a weld holds at a fixed orientation', () => {
 
     const assemblies = slideAssemblies(built.joints);
     expect(assemblies[0].grounded).toBe(false);
-    expect(hasFixedOrientation(built.links.find((l) => l.id === 'CD')!, assemblies)).toBe(false);
+    expect(
+      hasFixedOrientation(
+        built.links.find((l) => l.id === 'CD')!,
+        assemblies
+      )
+    ).toBe(false);
   });
 });

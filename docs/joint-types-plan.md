@@ -708,6 +708,27 @@ prevents the rider from rotating.
 | 3.6 | Solvers: a welded rider has no relative rotation at the block |
 | 3.7 | Guard: Weld/Unweld buttons in the panel act on the assembly when a slider is present, on the compound otherwise — never ambiguously |
 
+**Status: done, Gate 3 met.** Implementation spec and what it cost:
+[`phase-3-slide-spec.md`](phase-3-slide-spec.md).
+
+Three of the seven tasks turned out to be already satisfied — `isWelded` round-trips through the
+URL, `cloneJointAt` carries it to every timestep, and Phase 2's typed loop edges enumerate a Scotch
+yoke unchanged — so 3.4 and 3.5 became assertions. The one described as "a welded rider has no
+relative rotation at the block" was the substantive one, and it understated the work: the yoke's
+joints could not be *reached* by any existing ordering primitive, so Phase 3 adds one that slides a
+non-rotating assembly along its guide until its own slot meets the block riding in it.
+
+**Statics for a welded assembly is deliberately out.** A prismatic pair welded to a body with a
+moment equation transmits a couple, and `ForceAnalysisFrame` carries reactions as vectors — so the
+schema, the reaction index and the analysis panel all move with it. Phase 3 ships a refusal that
+names the joint and the cause rather than a number; the work is specified in
+[`phase-3-slide-spec.md`](phase-3-slide-spec.md) §9.
+
+**A Slide on a *moving* carrier is also out**, and for a sharper reason than it sounds: the rider's
+angle tracks a carrier that is itself unknown, so the ordering deadlocks and it resolves as a
+simultaneous two-unknown solve — exactly what §2.7a hands to the "report unsolvable" strategy. It
+belongs with the cylinder in Phase 5. Encoding round-trips regardless; only solving is deferred.
+
 Slide still needs **no new type bit**: `isPrismatic` + `isWelded` are both already in `JointData`
 ([`transcoder-data.ts:19-32`](../src/app/services/transcoding/transcoder-data.ts)). But that is a
 statement about *encoding*, not about behaviour — the assembly invariants of §2.10 are what make the
@@ -715,6 +736,21 @@ pair meaningful, and they must be asserted rather than assumed.
 
 > **Gate 3:** Scotch yoke matches `x = r cos θ`, `ẋ = −rω sin θ`, `ẍ = −rω² cos θ`; all four 2×2
 > cells round-trip; assembly invariants hold after weld, unweld, clone, and carrier deletion.
+>
+> **Gate 3 — met.** 485 specs green (was 435 at the end of Phase 2). The Scotch yoke holds all
+> three closed forms across a revolution, its yoke never rotates and never leaves its guide, and the
+> crank pin stays on the slot to the position solver's own rounding. All four 2×2 cells round-trip
+> and re-encode byte-identically. The assembly invariants hold after welding, unwelding, Unweld All,
+> a joint-onto-joint merge, per-timestep cloning at the last frame, and removing the slider.
+> Production build clean.
+>
+> Each new assertion was mutation-checked. Three are worth naming because they guard *plausible
+> pictures* rather than crashes: measuring the slot from a joint that is not on it moves the
+> assembly somewhere believable and wrong; gating one of the three angular-unknown registration
+> paths passes every Scotch-yoke assertion while leaving a welded rider a spurious column in any
+> other loop shape; and leaving the sliding joint behind stretches a zero-length block a little
+> further every timestep while the closed form sails through. Each has a fixture whose only job is
+> to tell those apart.
 
 ### Phase 4 — UI
 
