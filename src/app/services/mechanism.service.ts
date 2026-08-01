@@ -1186,6 +1186,43 @@ export class MechanismService {
     this.onMechUpdateState.next(3);
   }
 
+  /**
+   * Remember a slot on its pin before the block goes away, so turning Slider
+   * back on restores the guide the user had rather than building a new one.
+   */
+  private stashSlot(pin: RealJoint, block: Link): void {
+    const slider = block.joints.find((joint) => joint instanceof PrisJoint) as
+      PrisJoint | undefined;
+    if (!slider) return;
+    pin.slotStash = {
+      ground: slider.ground,
+      angleRad: slider.slotAngle,
+      carrierId: slider.carrier?.id,
+      slotJointAId: slider.slotJointA?.id,
+      slotJointBId: slider.slotJointB?.id,
+    };
+  }
+
+  /**
+   * Put a remembered slot back. A carrier that has been deleted or welded away
+   * in the meantime simply does not resolve, and the slider is left dangling --
+   * the same answer `reconcileSlots` gives, rather than a second policy.
+   */
+  private restoreStashedSlot(pin: RealJoint, slider: PrisJoint): void {
+    const stash = pin.slotStash;
+    if (!stash) return;
+    const carrier = stash.carrierId
+      ? this.links.find((link) => link.id === stash.carrierId)
+      : undefined;
+    const a = this.joints.find((joint) => joint.id === stash.slotJointAId);
+    const b = this.joints.find((joint) => joint.id === stash.slotJointBId);
+    if (carrier && a && b) {
+      slider.slideOn(carrier, a, b);
+    } else if (stash.ground) {
+      slider.groundAt(stash.angleRad);
+    }
+  }
+
   toggleSlider() {
     if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
@@ -1203,15 +1240,21 @@ export class MechanismService {
       //     connectedJoints.push(j);
       //   }
       // });
+      // Born dangling, not grounded. Slider and Ground are independent axes
+      // (§4.1), so switching one must not decide the other -- and a floating
+      // slot needs a carrier, which is geometry the drop gesture supplies and
+      // no toggle can invent. A slider with a stash gets its old slot back
+      // instead, which is what makes Slider off/on a round trip.
       const prisJoint = new PrisJoint(
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
         this.activeObjService.selectedJoint.y,
         selectedJointInput,
-        true,
+        false,
         [],
         connectedJoints
       );
+      this.restoreStashedSlot(this.activeObjService.selectedJoint, prisJoint);
       this.activeObjService.selectedJoint.connectedJoints.push(prisJoint);
       const piston = new SliderBlock(this.activeObjService.selectedJoint.id + prisJoint.id, [
         this.activeObjService.selectedJoint,
@@ -1226,6 +1269,7 @@ export class MechanismService {
       const piston = this.activeObjService.selectedJoint.links.find(
         (l) => l instanceof SliderBlock
       )!;
+      this.stashSlot(this.activeObjService.selectedJoint, piston);
       const pistonIndex = this.links.findIndex((l) => l.id === piston.id);
       const prismaticJointID = piston.joints.find((j) => j instanceof PrisJoint)!.id;
       this.activeObjService.selectedJoint.connectedJoints =

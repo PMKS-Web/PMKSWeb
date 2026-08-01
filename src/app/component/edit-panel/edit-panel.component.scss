@@ -56,3 +56,21 @@
     }
   }
 }
+
+// Read-only notes under the Slider toggle: what the slot is cut into, and what
+// its angle is measured from. Not controls -- the carrier comes from the drop
+// gesture, and changing it is delete-and-recreate.
+.slotNote {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+  background: #f0f1f5;
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 0 0 8px;
+  text-wrap: pretty;
+}
+
+.slotNote--warn {
+  background: #ffebee;
+  color: #b3261e;
+}

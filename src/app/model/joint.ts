@@ -54,6 +54,24 @@ export class RealJoint extends Joint {
   public showCurve: boolean;
   public isWelded: boolean = false;
 
+  /**
+   * What this joint's slot was, so turning Slider off and on again restores it
+   * rather than silently rebuilding a different one (§4.1).
+   *
+   * Ids rather than object references: the carrier or its joints may be gone by
+   * the time the slider comes back, and holding pointers to deleted bodies is
+   * the exact failure `reconcileSlots` exists to clean up. Deliberately not
+   * serialized -- it is a convenience within one editing session, not state a
+   * shared URL should carry.
+   */
+  public slotStash?: {
+    ground: boolean;
+    angleRad: number;
+    carrierId?: string;
+    slotJointAId?: string;
+    slotJointBId?: string;
+  };
+
   constructor(
     id: string,
     x: number,

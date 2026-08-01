@@ -49,8 +49,12 @@ describe('always-on force and weld UI', () => {
     const fixture: ComponentFixture<EditPanelComponent> =
       TestBed.createComponent(EditPanelComponent);
     fixture.detectChanges();
+    // One Weld toggle, not a Weld/Unweld button pair: welding is one axis of
+    // the 2x2 (§2.1), and two buttons cannot show which side of it the joint is
+    // currently on. Unwelding is the same control turned off.
     expect(fixture.nativeElement.textContent).toContain('Weld');
-    expect(fixture.nativeElement.textContent).toContain('Unweld');
+    expect(fixture.nativeElement.textContent).not.toContain('Unweld');
+    expect(fixture.nativeElement.querySelectorAll('mat-slide-toggle').length).toBeGreaterThan(2);
 
     active.objType = 'Link';
     active.selectedLink = bc;

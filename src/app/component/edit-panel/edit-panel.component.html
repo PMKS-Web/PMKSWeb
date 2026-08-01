@@ -76,32 +76,57 @@
         >
           Ground
         </toggle-block>
+        <!-- The angle belongs to a grounded guide alone: a floating slot's
+             direction is the line through two of its carrier's joints, so
+             there is no number to type and no frame to type it in. You change
+             it by dragging those joints. -->
         <toggle-block
-          [addInput]="true"
-          [disableInput]="!this.jointForm.controls['slider'].value"
+          [addInput]="isGroundedSlider"
+          [disableInput]="!isGroundedSlider"
           [formGroup]="jointForm"
           _formControl="slider"
           _formControlForInput="prisAngle"
-          tooltip="Make this joint a prismatic joint. Only one joint can be a slider at a time."
+          tooltip="Give this joint a sliding block. Off is a pin."
         >
           Slider
         </toggle-block>
-        <tri-button
-          [joint]="activeSrv.selectedJoint"
-          [btn1Disabled]="!isWeldable(activeSrv.selectedJoint)"
-          [btn1Action]="mechanismService.weldJoint.bind(mechanismService)"
-          [btn2Disabled]="!activeSrv.selectedJoint.isWelded"
-          [btn2Action]="mechanismService.unweldSelectedJoint.bind(mechanismService)"
-          [btn3Disabled]="!canToggleInput(activeSrv.selectedJoint)"
-          [btn3Action]="mechanismService.adjustInput.bind(mechanismService)"
-          [btn3Icon]="
-            gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'remove_input' : 'add_input'
-          "
-          [btn3Text]="
-            gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Make Input'
-          "
+        @if (isGroundedSlider) {
+          <div class="slotNote">Slot angle measured from the +x axis.</div>
+        }
+        <!-- Read-only: the carrier comes from the drop gesture, and changing it
+             is delete-and-recreate. It names the link and the joint pair so the
+             reader can find the geometry it describes. -->
+        @if (slotOnLabel) {
+          <div class="slotNote">Slot on: {{ slotOnLabel }}</div>
+        }
+        @if (isDanglingSlider) {
+          <div class="slotNote slotNote--warn">
+            This slider has nowhere to slide. Drag it onto a link to cut its slot, or ground it.
+          </div>
+        }
+        <toggle-block
+          [formGroup]="jointForm"
+          _formControl="weld"
+          tooltip="Fuse whatever meets at this joint into one rigid body."
         >
-        </tri-button>
+          Weld
+        </toggle-block>
+        <div class="row">
+          <button
+            mat-stroked-button
+            color="primary"
+            [disabled]="!canToggleInput(activeSrv.selectedJoint)"
+            class="{{ !canToggleInput(activeSrv.selectedJoint) ? 'buttonDisabled' : '' }}"
+            (click)="mechanismService.adjustInput()"
+          >
+            <mat-icon
+              [svgIcon]="
+                gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'remove_input' : 'add_input'
+              "
+            ></mat-icon>
+            {{ gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Make Input' }}
+          </button>
+        </div>
       </collapsible-subseciton>
       @if (gridUtils.isVisuallyInput(activeSrv.selectedJoint)) {
         <div class="inputSettings">

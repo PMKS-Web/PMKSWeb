@@ -142,6 +142,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       ground: [false, { updateOn: 'change' }],
       input: [false, { updateOn: 'change' }],
       slider: [false, { updateOn: 'change' }],
+      // Weld is a toggle rather than the Weld/Unweld button pair it replaces:
+      // it is one axis of the 2x2 (§2.1), and a pair of buttons cannot show
+      // which side of that axis the joint is currently on.
+      weld: [false, { updateOn: 'change' }],
       curve: [false, { updateOn: 'change' }],
       // Input Settings. The unit picker commits on change; the speed field commits
       // on blur like every other numeric field. Direction is a button, not a control.
@@ -204,25 +208,56 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     console.log('test');
   }
 
+  /**
+   * Ground is no longer disabled while Slider is on (§4.1).
+   *
+   * The two were coupled because toggleSlider only ever produced a grounded
+   * slider and toggleGround dismantled one. They are independent axes now, so
+   * coupling their controls would make a reachable cell of the 2x2 unreachable
+   * -- which is the gate condition this phase has to meet.
+   *
+   * The angle field belongs to a grounded guide alone: a floating slot's
+   * direction is the line through two of its carrier's joints, so there is no
+   * number to type and no frame to type it in.
+   */
   disableAndEnableJointFields(): void {
-    if (this.jointForm.get('slider')?.value === true) {
-      //This is such a werid bug, the only way to update the visual of the input to be enabled is to emit the event
-      //But emitting the event causes the update to be called, which calls this function, which causes an infinite loop
-      //So we have to only call the enable on change
-      if (this.jointForm.get('prisAngle')?.disabled) {
-        this.jointForm.get('prisAngle')?.enable({ emitEvent: true });
-      }
-      if (this.jointForm.get('ground')?.enabled) {
-        this.jointForm.get('ground')?.disable({ emitEvent: true });
-      }
-    } else {
-      if (this.jointForm.get('prisAngle')?.enabled) {
-        this.jointForm.get('prisAngle')?.disable({ emitEvent: true });
-      }
-      if (this.jointForm.get('ground')?.disabled) {
-        this.jointForm.get('ground')?.enable({ emitEvent: true });
-      }
+    const wantsAngle = this.isGroundedSlider;
+    //This is such a werid bug, the only way to update the visual of the input to be enabled is to emit the event
+    //But emitting the event causes the update to be called, which calls this function, which causes an infinite loop
+    //So we have to only call the enable on change
+    if (wantsAngle && this.jointForm.get('prisAngle')?.disabled) {
+      this.jointForm.get('prisAngle')?.enable({ emitEvent: true });
     }
+    if (!wantsAngle && this.jointForm.get('prisAngle')?.enabled) {
+      this.jointForm.get('prisAngle')?.disable({ emitEvent: true });
+    }
+    if (this.jointForm.get('ground')?.disabled) {
+      this.jointForm.get('ground')?.enable({ emitEvent: true });
+    }
+  }
+
+  /** The selected joint's slider, whichever end of the pair is selected. */
+  get selectedSlider(): PrisJoint | undefined {
+    const joint = this.activeSrv.selectedJoint;
+    if (joint instanceof PrisJoint) return joint;
+    const slider = this.gridUtils.getSliderJoint(joint);
+    return slider instanceof PrisJoint ? slider : undefined;
+  }
+
+  get isGroundedSlider(): boolean {
+    return this.selectedSlider?.ground === true;
+  }
+
+  /** A slot cut into a moving link names the link and the pair that defines it. */
+  get slotOnLabel(): string | undefined {
+    const slider = this.selectedSlider;
+    if (!slider?.isFloating || !slider.isSlotWellFormed) return undefined;
+    return `${slider.carrier!.id} (joints ${slider.slotJointA!.id}\u2013${slider.slotJointB!.id})`;
+  }
+
+  /** A slider with a block and nowhere to slide: invalid until it gets a carrier. */
+  get isDanglingSlider(): boolean {
+    return this.selectedSlider?.isDangling === true;
   }
 
   disableAndEnableLinkFields(): void {
@@ -430,6 +465,19 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         this.mechanismService.updateMechanism();
         this.mechanismService.onMechUpdateState.next(2);
         this.disableAndEnableJointFields();
+      })
+    );
+
+    this.onDestroySubscriptions.push(
+      this.jointForm.controls['weld'].valueChanges.subscribe((val) => {
+        if (this.hideEditPanel()) {
+          return;
+        }
+        // One axis, one control. Unwelding a Slide gives a Slot rather than a
+        // pin, because the block is the other axis and this toggle never
+        // touches it (§2.1).
+        if (val) this.mechanismService.weldJoint();
+        else this.mechanismService.unweldSelectedJoint();
       })
     );
 
@@ -720,6 +768,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
               ground: this.activeSrv.selectedJoint.ground,
               input: this.activeSrv.selectedJoint.input,
               slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
+              weld: this.activeSrv.selectedJoint.isWelded,
               curve: this.activeSrv.selectedJoint.showCurve,
             },
             { emitEvent: false }
