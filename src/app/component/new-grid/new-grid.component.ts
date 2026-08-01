@@ -645,7 +645,7 @@ export class NewGridComponent {
             ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
             : this.slotCandidate
               ? new Coord(this.slotCandidate.x, this.slotCandidate.y)
-              : mousePosInSvg
+              : this.alongItsSlot(this.activeObjService.selectedJoint, mousePosInSvg)
         );
         this.dragState.noteMechanismModified();
         //So that the panel values update continously
@@ -815,6 +815,38 @@ export class NewGridComponent {
             this.mechanismSrv.links.filter((link) => link instanceof RealLink),
             this.slotDropRadius()
           );
+  }
+
+  /**
+   * Where a block in a channel is allowed to go (§4.4).
+   *
+   * Dragging the block along its slot sets s₀ and changes nothing else, so the
+   * drag is projected onto the slot line and clamped to the span the channel
+   * actually occupies — the block cannot leave a hole it is inside of, and one
+   * drag stays one quantity.
+   *
+   * Only for a floating slot. A grounded guide's line is fixed in the world
+   * rather than cut into a body, so dragging its joint repositions the whole
+   * guide; constraining that would leave no way to move a guide at all.
+   */
+  private alongItsSlot(joint: Joint, wanted: Coord): Coord {
+    const slider = this.mechanismSrv.sliderFor(joint);
+    if (!slider?.isFloating || !slider.isSlotWellFormed) return wanted;
+
+    const a = slider.slotJointA!;
+    const b = slider.slotJointB!;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const length = Math.hypot(dx, dy);
+    if (length < 1e-9) return wanted;
+
+    const ux = dx / length;
+    const uy = dy / length;
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const half = slotHalfLength(0.15 * this.settings.objectScale, length);
+    const along = Math.max(-half, Math.min(half, (wanted.x - midX) * ux + (wanted.y - midY) * uy));
+    return new Coord(midX + along * ux, midY + along * uy);
   }
 
   /**

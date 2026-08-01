@@ -365,10 +365,18 @@
        why a random palette can never break the cue. Arrows sit above the plate
        so nothing can tint them: they are always white, and that is only safe
        because what is underneath is always black. -->
-  <g id="sliderHolder" style="transform: scaleY(-1); pointer-events: none">
+  <g id="sliderHolder" style="transform: scaleY(-1)">
     @for (mark of sliderMarkList; track mark.id) {
       <g [attr.transform]="sliderMarks.frame(mark)" [class]="'slider-mark'">
-        <g class="slider-block">
+        <!-- Grabbing the block starts a drag on its pin (§4.4). The block is a
+             far bigger target than the marker at its centre, and the two sit on
+             the same point, so it is the same grab with a better hitbox. -->
+        <g
+          class="slider-block"
+          cursor="move"
+          (pointerdown)="setLastLeftClick(mark.pin)"
+          (contextmenu)="setLastRightClick(mark.pin)"
+        >
           <path
             [attr.d]="mark.block"
             [attr.fill]="mark.dangling ? '#c5cae9' : '#000000'"
@@ -379,7 +387,12 @@
           />
         </g>
         @if (mark.plate) {
-          <g class="slider-plate" [attr.fill]="mark.plate.fill" fill-opacity="0.7">
+          <g
+            class="slider-plate"
+            pointer-events="none"
+            [attr.fill]="mark.plate.fill"
+            fill-opacity="0.7"
+          >
             @for (rider of mark.plate.riders; track $index) {
               <path [attr.d]="rider" />
             }
@@ -390,7 +403,7 @@
           </g>
         }
         @if (mark.driven) {
-          <g class="slider-arrows">
+          <g class="slider-arrows" pointer-events="none">
             @for (arrow of mark.arrows; track $index) {
               <line
                 [attr.x1]="arrow.line.x1"
@@ -412,7 +425,10 @@
          grounded pin keeps today's black arrow, which already reads on the
          white canvas. -->
     @for (pin of drivenFloatingPins; track pin.id) {
-      <g [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'">
+      <g
+        pointer-events="none"
+        [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'"
+      >
         <path [attr.d]="drivenPin.backing" fill="#000000" filter="url(#elevation-1)" />
         <path
           [attr.d]="drivenPin.arc"

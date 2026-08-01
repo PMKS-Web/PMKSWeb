@@ -1137,6 +1137,10 @@ export class MechanismService {
    * has to make the hop; the two are coincident by construction, which is what
    * makes either end a valid handle on the same object.
    */
+  sliderFor(joint: Joint | undefined): PrisJoint | undefined {
+    return this.sliderOf(joint);
+  }
+
   private sliderOf(joint: Joint | undefined): PrisJoint | undefined {
     if (joint instanceof PrisJoint) return joint;
     if (!(joint instanceof RealJoint)) return undefined;

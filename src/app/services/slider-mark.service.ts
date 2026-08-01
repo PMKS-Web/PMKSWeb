@@ -28,6 +28,12 @@ export interface WeldPlate {
 /** One slider assembly, ready to draw, in the slot's own frame. */
 export interface SliderMark {
   id: string;
+  /**
+   * The pin the block sits on. The block is a far bigger target than the joint
+   * marker at its centre, so the canvas lets a drag start on it and hands the
+   * gesture to the pin -- the two are coincident, so it is the same grab.
+   */
+  pin: Joint;
   x: number;
   y: number;
   /** Slot direction in degrees, already corrected for the canvas y-flip. */
@@ -122,6 +128,7 @@ export class SliderMarkService {
 
     return {
       id: slider.id,
+      pin,
       // The block is drawn at its pin: the two are coincident by construction,
       // and the sliding joint tracks the pin rather than the other way round.
       x: pin.x,

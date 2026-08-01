@@ -236,6 +236,41 @@ if (danglingJoint && carrier) {
   await page.screenshot({ path: `${OUT}/8-repaired.png` });
 }
 
+// ------------------------------------------------------- 4.4 the block drag
+console.log('\n4.4 — dragging the block along its slot');
+const blockBefore = await page.evaluate(() => {
+  const j = [...document.querySelectorAll('#jointHolder svg')].length;
+  const g = document.querySelector('#sliderHolder .slider-block');
+  const box = g.getBoundingClientRect();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2, joints: j };
+});
+
+// The slot runs along A-B, so push the block well past B and check it stops at
+// the end of the channel instead of following the cursor out of its own hole.
+const beyondB = await centreOf('#joint_B');
+const beforeDrag = await page.evaluate(
+  () => document.querySelector('#edit-panel input, input')?.value ?? null
+);
+const releaseBlock = await dragTo(blockBefore, { x: beyondB.x + 260, y: beyondB.y });
+await releaseBlock();
+
+const state44 = await sliderState();
+checkThat(
+  'the block is still in its channel after being dragged past the end',
+  state44.blocks === 1 && state44.channels === 1,
+  JSON.stringify(state44)
+);
+const inside = await page.evaluate(() => {
+  const block = document.querySelector('#sliderHolder .slider-block').getBoundingClientRect();
+  const carrier = document.querySelector('#ABH').getBoundingClientRect();
+  return (
+    block.x + block.width / 2 >= carrier.x - 2 &&
+    block.x + block.width / 2 <= carrier.x + carrier.width + 2
+  );
+});
+checkThat('and it clamped inside the carrier rather than following the cursor', inside);
+await page.screenshot({ path: `${OUT}/9-block-clamped.png` });
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);
