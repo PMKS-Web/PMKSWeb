@@ -33,6 +33,12 @@ export interface MechanismFixture {
    * rider becomes rigid with the block instead of free to turn in it.
    */
   welds?: string[];
+  /**
+   * Prismatic joint ids to leave dangling: a block with no carrier and no
+   * ground (§4.1). Applied last, so the slot is built and then taken away —
+   * which is how it actually arises, rather than a state assembled by hand.
+   */
+  detach?: string[];
   /** Constant global force applied to a point that rides on `onLink`. */
   load?: { onLink: string; at: [number, number]; vector: [number, number] };
   /** Input speed in rad/s, using the v1 manifest's exact rpm*pi/30 conversion. */
@@ -151,6 +157,13 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
   // what makes the flag mean "Slide" rather than "compound".
   fixture.welds?.forEach((id) => {
     jointById.get(id)!.isWelded = true;
+  });
+
+  // Found in `joints` rather than `jointById`: a slider's PrisJoint is created
+  // by the slider loop above, so it never enters the map the fixture's own
+  // joint list built.
+  fixture.detach?.forEach((id) => {
+    (joints.find((joint) => joint.id === id) as PrisJoint).detach();
   });
 
   const forces: Force[] = [];

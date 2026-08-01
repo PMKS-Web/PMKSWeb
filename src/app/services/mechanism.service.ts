@@ -524,9 +524,14 @@ export class MechanismService {
    * the next solve reads geometry from an object nothing else updates.
    *
    * A weld is recoverable: remap to the compound that swallowed the carrier.
-   * Anything else is not, so the slot returns to the direction it was last
-   * pointing and becomes an ordinary grounded guide. That keeps the slider the
-   * user drew, which removing it would not.
+   * Anything else is not, so the slider keeps its block and loses its
+   * direction — it dangles, and the canvas draws it red until a carrier arrives
+   * or the user grounds it.
+   *
+   * Phase 2 re-grounded it at its last angle instead, to keep the slider the
+   * user drew. That kept the object and quietly invented the one thing about it
+   * nobody had chosen: where it points. A slot's direction is geometry, and the
+   * honest answer to losing it is to say so rather than to pick one.
    */
   private reconcileSlots(): void {
     this.joints.forEach((joint) => {
@@ -539,7 +544,7 @@ export class MechanismService {
         joint.slideOn(root, slotJointA, slotJointB);
       }
       if (!root || !joint.isSlotWellFormed) {
-        joint.groundAt(joint.slotAngle);
+        joint.detach();
       }
     });
   }
@@ -1127,71 +1132,25 @@ export class MechanismService {
 
   toggleGround() {
     //Should be called toggleGround
-    if (
-      this.activeObjService.selectedJoint instanceof PrisJoint &&
-      this.activeObjService.selectedJoint.isFloating
-    ) {
-      // A floating slot already has somewhere to go: pin its current direction
-      // to the world and it becomes an ordinary guide, geometry unchanged. The
-      // journey back needs a carrier and a joint pair, which only the drop-on-
-      // link gesture supplies, so it waits for the UI phase.
-      this.activeObjService.selectedJoint.groundAt(this.activeObjService.selectedJoint.slotAngle);
+    if (this.activeObjService.selectedJoint instanceof PrisJoint) {
+      // Ground and Slider are independent controls (§4.1), so this only ever
+      // moves the slot's direction between "fixed in the world" and "not yet
+      // decided". It never adds or removes the slider itself.
+      //
+      // Grounding a floating slot pins the direction it is already pointing, so
+      // the geometry does not move. Un-grounding cannot invent a carrier -- one
+      // is geometry, not a boolean -- so the slot dangles, drawn red, until the
+      // drop-on-link gesture gives it one. The last angle stays on the joint,
+      // which is what lets grounding it again restore the guide it had rather
+      // than silently rebuilding one at zero.
+      const slider = this.activeObjService.selectedJoint;
+      if (slider.ground) slider.detach();
+      else slider.groundAt(slider.slotAngle);
       this.finishStructuralEdit(true);
       return;
     }
-    if (this.activeObjService.selectedJoint instanceof PrisJoint) {
-      const revJoint = this.activeObjService.selectedJoint.connectedJoints.find(
-        (j) => j instanceof RevJoint
-      )!;
-      if (!(revJoint instanceof RevJoint)) {
-        return;
-      }
-
-      this.activeObjService.selectedJoint.connectedJoints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        const removeIndex = j.connectedJoints.findIndex(
-          (jt) => jt.id === this.activeObjService.selectedJoint.id
-        );
-        j.connectedJoints.splice(removeIndex, 1);
-      });
-      // The selected slider's own block, not simply the first one in the
-      // mechanism: with two slots on the canvas, un-grounding the second used
-      // to dismantle the first.
-      const piston = this.activeObjService.selectedJoint.links.find(
-        (l) => l instanceof SliderBlock
-      );
-      if (!piston) {
-        return;
-      }
-      piston.joints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        const removeIndex = j.links.findIndex((l) => l.id === piston.id);
-        j.links.splice(removeIndex, 1);
-      });
-      const prismaticJointIndex = this.joints.findIndex(
-        (j) => j.id == this.activeObjService.selectedJoint.id
-      );
-      const pistonIndex = this.links.findIndex((l) => l.id === piston.id);
-      this.joints.splice(prismaticJointIndex, 1);
-      this.links.splice(pistonIndex, 1);
-
-      revJoint.ground = true;
-      // let joint = this.activeObjService.selectedJoint as RevJoint;
-      // // TODO: Be sure to remove connected joints and links that are ImagJoint and ImagLinks
-      // joint = new RevJoint(joint.id, joint.x, joint.y, joint.input, joint.ground, joint.links, joint.connectedJoints);
-      // const selectedJointIndex = this.findJointIDIndex(this.activeObjService.selectedJoint.id, this.joints);
-      // this.joints[selectedJointIndex] = joint;
-    } else {
-      this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
-      this.activeObjService.selectedJoint.input = false;
-    }
-    // The grounding branch above deletes the block, which is the other way a
-    // Slide's pin can end up flagged with nothing behind it -- same reason
-    // toggleSlider needs this rather than updateMechanism.
+    this.activeObjService.selectedJoint.ground = !this.activeObjService.selectedJoint.ground;
+    this.activeObjService.selectedJoint.input = false;
     this.finishStructuralEdit(true);
   }
 

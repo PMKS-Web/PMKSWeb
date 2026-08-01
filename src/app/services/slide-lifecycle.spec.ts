@@ -192,10 +192,12 @@ describe('a weld flag that has outrun its compound', () => {
     expect(s.c.isWelded).toBe(false);
   });
 
-  it('is stripped when the ground toggle takes the block instead', () => {
-    // toggleGround has its own slider-removal branch, and it ended at
-    // updateMechanism for the same reason toggleSlider did. Two doors into the
-    // same room, so both need the reconcile.
+  it('survives the ground toggle, which no longer takes the block', () => {
+    // toggleGround used to have its own slider-removal branch, so un-grounding
+    // a Slide destroyed the block and stranded the weld flag. Ground and Slider
+    // are independent controls now (§4.1): un-grounding takes the slot's
+    // direction away and nothing else, so the assembly is still an assembly --
+    // a dangling one -- and the weld still describes something real.
     const s = sliderWithRider();
     s.active.updateSelectedObj(s.c);
     s.service.weldJoint();
@@ -203,8 +205,10 @@ describe('a weld flag that has outrun its compound', () => {
 
     s.service.toggleGround();
 
-    expect(s.service.joints.map((joint) => joint.id)).not.toContain('P');
-    expect(s.c.isWelded).toBe(false);
+    expect(s.service.joints.map((joint) => joint.id)).toContain('P');
+    expect(s.guide.isDangling).toBe(true);
+    expect(s.c.isWelded, 'the weld still has an assembly behind it').toBe(true);
+    expect(slideAssemblyAt(s.c)).toBeDefined();
   });
 
   it('leaves a legitimate Slide alone', () => {

@@ -676,20 +676,24 @@ describe('MechanismService un-grounding one slider among several', () => {
     return { ...harness, a, b, first, second };
   }
 
-  it('takes apart only the selected slider', () => {
-    // toggleGround used to reach for the first SliderBlock in the mechanism
-    // rather than the selected joint's own, so un-grounding the second slider
-    // dismantled the first one instead.
+  it('keeps the slider it un-grounds, and leaves it dangling', () => {
+    // Ground and Slider are independent controls now (§4.1), so un-grounding
+    // takes the slot's direction away and nothing else. It used to dismantle
+    // the slider outright, which made "Ground off" a disguised "Slider off".
     const s = twoSliders();
     s.active.updateSelectedObj(s.second);
 
     s.service.toggleGround();
 
-    expect(s.service.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'P']);
-    expect(s.service.links.map((link) => link.id).sort()).toEqual(['AB', 'AP']);
+    expect(s.service.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'P', 'Q']);
+    expect(s.service.links.map((link) => link.id).sort()).toEqual(['AB', 'AP', 'BQ']);
+    expect(s.second.isDangling).toBe(true);
   });
 
-  it('leaves the untouched slider fully connected', () => {
+  it('leaves the untouched slider exactly as it was', () => {
+    // The bug this has always guarded: toggleGround reached for the first
+    // SliderBlock in the mechanism rather than the selected joint's own, so
+    // acting on the second slider changed the first one.
     const s = twoSliders();
     s.active.updateSelectedObj(s.second);
 
@@ -697,16 +701,19 @@ describe('MechanismService un-grounding one slider among several', () => {
 
     expect(s.a.links.some((link) => link instanceof SliderBlock)).toBe(true);
     expect(s.a.connectedJoints.some((joint) => joint.id === 'P')).toBe(true);
-    expect(s.first.links).toHaveLength(1);
+    expect(s.first.ground, 'the other slider keeps its ground').toBe(true);
+    expect(s.first.isDangling).toBe(false);
   });
 
-  it('grounds the pin the removed slider was riding', () => {
+  it('grounds it again on the direction it was pointing', () => {
     const s = twoSliders();
     s.active.updateSelectedObj(s.second);
+    const wasPointing = s.second.slotAngle;
 
     s.service.toggleGround();
+    s.service.toggleGround();
 
-    expect(s.b.ground).toBe(true);
-    expect(s.b.links.some((link) => link instanceof SliderBlock)).toBe(false);
+    expect(s.second.ground).toBe(true);
+    expect(s.second.slotAngle).toBeCloseTo(wasPointing, 9);
   });
 });

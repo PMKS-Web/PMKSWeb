@@ -94,8 +94,16 @@ export class Mechanism {
     this._dof = this.determineDegreesOfFreedom();
     this._inputAngularVelocities.push(inputAngVel);
     // no index found for input Joint
+    // A dangling slider has a block and no direction for it to slide along, so
+    // there is no constraint to solve and no honest number to report. Refusing
+    // here rather than downstream keeps every solver from having to guess what
+    // an absent slot line means (§4.1).
+    const dangling = this._joints[0].some(
+      (joint) => joint instanceof PrisJoint && joint.isDangling
+    );
     if (
       //If DOF is 1 and at least one joint is an input joint
+      !dangling &&
       this._dof === 1 &&
       this._joints[0].findIndex((j) => {
         if (!(j instanceof RealJoint)) {

@@ -201,14 +201,47 @@ export class PrisJoint extends RealJoint {
   }
 
   /**
-   * A slot is either grounded or floating, never both and never neither
-   * (§2.4a). The two setters below are the only way to move between those
-   * states, so a half-built slot — a carrier with one joint, or a carrier that
-   * still claims to be grounded — cannot be represented at all rather than
-   * being represented and then validated against.
+   * A slot is grounded, floating, or dangling — and the three setters below are
+   * the only way to move between them, so a half-built slot (a carrier with one
+   * joint, or a carrier that still claims to be grounded) cannot be represented
+   * at all rather than being represented and then validated against.
+   *
+   * Phase 2 allowed only the first two, on the grounds that a slot always has a
+   * direction. Phase 4 adds the third because the panel can now turn Slider on
+   * for a joint that has no carrier, and a carrier is geometry rather than a
+   * boolean — no toggle can invent one. Silently grounding it instead would put
+   * the slot somewhere the user did not choose and call it done.
    */
   get isFloating(): boolean {
     return this._carrier !== undefined;
+  }
+
+  /**
+   * A slider with a block but nothing for it to slide along. Legal to hold,
+   * never legal to solve: the mechanism is invalid until a carrier arrives or
+   * the slot is grounded, and the canvas says so in red.
+   */
+  get isDangling(): boolean {
+    return this._carrier === undefined && !this.ground;
+  }
+
+  /**
+   * Take the slot's direction away without taking the slider away.
+   *
+   * Deliberately explicit, and deliberately not reachable by clearing a field:
+   * the invariant that a slot is never accidentally half-built is what makes
+   * the other two states trustworthy.
+   */
+  detach(): void {
+    // Keep the direction as a memory rather than as a constraint. A floating
+    // slot's angle lives in its two joints, so letting them go without reading
+    // them first loses it -- and grounding the slider again would then land on
+    // zero, silently rebuilding a different guide than the one it had.
+    this._angle_rad = this.slotAngle;
+    this._carrier = undefined;
+    this._slotJointA = undefined;
+    this._slotJointB = undefined;
+    this.ground = false;
   }
 
   /** Bind the slot to a joint pair on a carrier link. */
