@@ -780,6 +780,31 @@ problem.
 > **Gate 4:** every cell of the 2×2 reachable in ≤2 clicks from every other; each control change
 > alters exactly one visual mark; all twelve states round-trip through the URL.
 
+**Phase 4 is done; Gate 4 is met.** Reachability and one-axis-per-control are asserted across all
+sixteen transitions of the 2×2 in `joint-type-2x2.spec.ts`; the round trip covers fourteen states in
+`mark-states-round-trip.spec.ts`. Two changes to what is written above, both settled with the user
+before implementation:
+
+- **The glyph count is 8 + 1, not 12.** The axes generate eight base marks — {slider} × {weld} ×
+  {ground, moving link} — and *driven* composites onto any of them in two forms rather than
+  multiplying the set. Twelve would have smuggled combinatorics back into the renderer, which is
+  the thing the five primitives exist to prevent.
+- **A slider can now dangle.** §2.4a held that a slot is grounded-xor-floating; a third state was
+  needed because the Slider toggle can be turned on for a joint with no carrier, and a carrier is
+  geometry rather than a boolean. It keeps its block, loses its direction, is drawn in the same red
+  the orphan-joint mark uses, and makes the mechanism invalid until a drag gives it a carrier.
+  `reconcileSlots` produces it too, where it used to silently re-ground a slot at its last angle —
+  reversing a Phase 2 decision, because inventing a direction nobody chose is worse than saying so.
+
+Deferred out of Phase 4, with reasons: **Make Input refusing at 3+ incident bodies** and **a
+redundant-weld warning** were both proposed in the design handoff. Neither is a UI question — the
+first restricts something that works today and could break shared URLs, the second needs a
+redundancy detector that does not exist. Both want their own spec.
+
+§2.7's cylinder skin shipped here rather than in Phase 5: it is a rendering question, and the
+fixture that exercises it is deliberately an invalid mechanism, since a Slide on a moving carrier is
+still out of the solver's scope until 5.1.
+
 ### Phase 5 — Driven prismatic and the cylinder
 
 | # | Task |
