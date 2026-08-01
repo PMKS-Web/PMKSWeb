@@ -1130,9 +1130,31 @@ export class MechanismService {
     this.finishStructuralEdit(true);
   }
 
+  /**
+   * The PrisJoint of whichever slider `joint` belongs to, from either end.
+   *
+   * The panel only ever selects the pin, so anything that acts on "the slider"
+   * has to make the hop; the two are coincident by construction, which is what
+   * makes either end a valid handle on the same object.
+   */
+  private sliderOf(joint: Joint | undefined): PrisJoint | undefined {
+    if (joint instanceof PrisJoint) return joint;
+    if (!(joint instanceof RealJoint)) return undefined;
+    return joint.links
+      .find((link): link is SliderBlock => link instanceof SliderBlock)
+      ?.joints.find((member): member is PrisJoint => member instanceof PrisJoint);
+  }
+
   toggleGround() {
     //Should be called toggleGround
-    if (this.activeObjService.selectedJoint instanceof PrisJoint) {
+    //
+    // Resolved from the selection rather than tested against it: the panel
+    // selects a slider by its pin, never by its PrisJoint, so an `instanceof`
+    // on the selected joint alone sends every panel click down the plain-joint
+    // branch and grounds the pin instead of the slot. `adjustInput` already
+    // resolves the pair this way.
+    const slider = this.sliderOf(this.activeObjService.selectedJoint);
+    if (slider) {
       // Ground and Slider are independent controls (§4.1), so this only ever
       // moves the slot's direction between "fixed in the world" and "not yet
       // decided". It never adds or removes the slider itself.
@@ -1143,7 +1165,6 @@ export class MechanismService {
       // drop-on-link gesture gives it one. The last angle stays on the joint,
       // which is what lets grounding it again restore the guide it had rather
       // than silently rebuilding one at zero.
-      const slider = this.activeObjService.selectedJoint;
       if (slider.ground) slider.detach();
       else slider.groundAt(slider.slotAngle);
       this.finishStructuralEdit(true);
@@ -1187,6 +1208,53 @@ export class MechanismService {
   }
 
   /**
+   * Cut a slot into a link, giving `pin` a block that rides it (§4.3).
+   *
+   * The release half of the drop-on-link gesture. A pin that already carries a
+   * block keeps it and just gains a carrier — which is how a dangling slider is
+   * repaired — and a plain pin grows one first, so the same drag reads the same
+   * way whichever state the joint was in.
+   *
+   * Rebuilds but does not save, the same contract `mergeJoints` follows: the
+   * release path saves exactly once for the whole gesture, so saving here too
+   * costs the user two presses of undo to take back one drag.
+   *
+   * Returns false when the joint cannot take a slot at all, so the caller can
+   * leave the drag looking refused rather than silently inert.
+   */
+  cutSlotOn(
+    pin: RealJoint,
+    slot: { carrier: Link; a: Joint; b: Joint; x: number; y: number }
+  ): boolean {
+    if (pin instanceof PrisJoint) return false;
+    // Two blocks on one pin is a different joint type, not a second slot.
+    const existing = pin.links.find((link): link is SliderBlock => link instanceof SliderBlock);
+    const slider = existing?.joints.find((joint): joint is PrisJoint => joint instanceof PrisJoint);
+
+    // The joint lands on the slot line, where the preview already put it.
+    pin.x = slot.x;
+    pin.y = slot.y;
+
+    if (slider) {
+      slider.x = slot.x;
+      slider.y = slot.y;
+      slider.slideOn(slot.carrier, slot.a, slot.b);
+    } else {
+      this.activeObjService.updateSelectedObj(pin);
+      this.sliderTopology();
+      const made = pin.links
+        .find((link): link is SliderBlock => link instanceof SliderBlock)
+        ?.joints.find((joint): joint is PrisJoint => joint instanceof PrisJoint);
+      if (!made) return false;
+      made.x = slot.x;
+      made.y = slot.y;
+      made.slideOn(slot.carrier, slot.a, slot.b);
+    }
+    this.finishStructuralEdit(false);
+    return true;
+  }
+
+  /**
    * Remember a slot on its pin before the block goes away, so turning Slider
    * back on restores the guide the user had rather than building a new one.
    */
@@ -1224,6 +1292,25 @@ export class MechanismService {
   }
 
   toggleSlider() {
+    this.sliderTopology();
+    // Through finishStructuralEdit rather than straight to updateMechanism: it
+    // is what runs reconcileAssemblyWelds, and removing a slider from a Slide
+    // leaves the RevJoint behind still flagged welded. Phase 2 never hit this
+    // because removing a slider takes its PrisJoint with it, and reconcileSlots
+    // only walks the ones that survive.
+    this.finishStructuralEdit(true);
+  }
+
+  /**
+   * Add or remove the selected joint's block, without rebuilding or saving.
+   *
+   * Split out so the drop-on-link gesture can grow a slider and bind its slot
+   * inside a single structural edit. Undo is a stack of URL strings and a drag
+   * has to leave exactly one entry, so a gesture that called toggleSlider and
+   * then finished again would cost the user two presses of undo to take back
+   * one drag.
+   */
+  private sliderTopology(): void {
     if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
       const selectedJointInput = this.activeObjService.selectedJoint.input;
@@ -1286,12 +1373,6 @@ export class MechanismService {
 
       this.activeObjService.selectedJoint.ground = false;
     }
-    // Through finishStructuralEdit rather than straight to updateMechanism: it
-    // is what runs reconcileAssemblyWelds, and removing a slider from a Slide
-    // leaves the RevJoint behind still flagged welded. Phase 2 never hit this
-    // because removing a slider takes its PrisJoint with it, and reconcileSlots
-    // only walks the ones that survive.
-    this.finishStructuralEdit(true);
   }
 
   findInputJointIndex() {

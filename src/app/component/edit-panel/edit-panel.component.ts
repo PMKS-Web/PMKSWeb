@@ -387,10 +387,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         if (this.hideEditPanel()) {
           return;
         }
-        // if (!this.activeSrv.selectedJoint) return;
-        this.activeSrv.selectedJoint.ground = val!;
-        // this.disableAndEnableFields();
-        this.mechanismService.updateMechanism();
+        // Through the service rather than straight onto the joint. A slider is
+        // selected by its pin, and the pin's own ground flag is not the slot's
+        // -- writing it here grounded the pin and left the guide floating, with
+        // no reconcile and no undo entry. toggleGround resolves the pair.
+        this.mechanismService.toggleGround();
         this.mechanismService.onMechUpdateState.next(2);
       })
     );
@@ -765,7 +766,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
                 ),
                 this.settingsService.angleUnit.getValue()
               ),
-              ground: this.activeSrv.selectedJoint.ground,
+              // A slider's ground lives on its PrisJoint, not on the pin the
+              // panel selected, so reading the pin shows every grounded guide
+              // as ungrounded.
+              ground: this.selectedSlider?.ground ?? this.activeSrv.selectedJoint.ground,
               input: this.activeSrv.selectedJoint.input,
               slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
               weld: this.activeSrv.selectedJoint.isWelded,

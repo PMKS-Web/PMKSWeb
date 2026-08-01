@@ -115,6 +115,81 @@ export function resolveJointDropTarget(
   return best;
 }
 
+/**
+ * A slot the drag would cut, if released on a link body (§4.3).
+ *
+ * `x` and `y` are the drop point projected onto the slot line: the dragged
+ * joint is pulled onto it while previewing, the same way joint-snap captures,
+ * so where it lands is never a surprise.
+ */
+export interface SlotDropCandidate {
+  carrier: Link;
+  a: Joint;
+  b: Joint;
+  x: number;
+  y: number;
+}
+
+/**
+ * The slot `source` would cut if the drag were released at (x, y).
+ *
+ * A link with n joints offers up to n(n-1)/2 candidate pairs, so the one whose
+ * segment the drop point is nearest wins — and the caller shows which before
+ * release, because on anything but a binary link the choice is not obvious from
+ * the cursor alone.
+ *
+ * The segment is used rather than the infinite line through the pair: a point
+ * out past the end of a bar is not between those two joints, and claiming that
+ * pair would cut a slot where the user is not pointing.
+ *
+ * A link the dragged joint already belongs to is never offered. It would be a
+ * joint sliding in its own body, and offering it only to refuse it would put a
+ * red preview on the one link the user is most likely to sweep across.
+ */
+export function resolveSlotDropTarget(
+  source: Joint,
+  x: number,
+  y: number,
+  links: Link[],
+  radius: number
+): SlotDropCandidate | undefined {
+  let best: SlotDropCandidate | undefined;
+  let bestDistance = radius;
+
+  for (const carrier of links) {
+    if (carrier.joints.some((joint) => joint.id === source.id)) continue;
+    const members = carrier.joints;
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        const near = closestPointOnSegment(x, y, members[i], members[j]);
+        if (near.distance < bestDistance) {
+          bestDistance = near.distance;
+          best = { carrier, a: members[i], b: members[j], x: near.x, y: near.y };
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
+function closestPointOnSegment(
+  x: number,
+  y: number,
+  a: Joint,
+  b: Joint
+): { x: number; y: number; distance: number } {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lengthSquared = dx * dx + dy * dy;
+  // Two coincident joints define no line, so no slot either.
+  if (lengthSquared < 1e-12) return { x: a.x, y: a.y, distance: Infinity };
+  const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / lengthSquared));
+  const px = a.x + t * dx;
+  const py = a.y + t * dy;
+  return { x: px, y: py, distance: Math.hypot(x - px, y - py) };
+}
+
 /** The joint a drag is currently aimed at, and why it would refuse the merge. */
 export interface JointDropCandidate {
   joint: RevJoint;

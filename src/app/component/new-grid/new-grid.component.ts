@@ -56,11 +56,20 @@ import { NumberUnitParserService } from '../../services/number-unit-parser.servi
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 import { DragStateService } from '../../services/drag-state.service';
 import { Channel, SliderMark, SliderMarkService } from '../../services/slider-mark.service';
-import { curvedArrowPath, pinBackingPath, plusPath } from '../../model/joint-marks';
+import {
+  curvedArrowPath,
+  MARK,
+  orientedCapsulePath,
+  pinBackingPath,
+  plusPath,
+  slotHalfLength,
+} from '../../model/joint-marks';
 import {
   JointDropCandidate,
   MERGE_REFUSAL_MESSAGES,
   resolveDropCandidate,
+  resolveSlotDropTarget,
+  SlotDropCandidate,
 } from '../../model/drop-target';
 import introJs from 'intro.js';
 
@@ -628,11 +637,15 @@ export class NewGridComponent {
         this.updateDropCandidate(mousePosInSvg, $event.altKey);
         // Captured: the joint sits exactly on the target instead of trailing the
         // cursor, so what is on screen is what a release would produce.
+        // A slot capture pulls the joint onto the slot line the same way, so a
+        // drop-on-link is as unsurprising as a drop-on-joint (§4.3).
         this.activeObjService.selectedJoint = this.gridUtils.dragJoint(
           this.activeObjService.selectedJoint,
           this.snapTargetJoint
             ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
-            : mousePosInSvg
+            : this.slotCandidate
+              ? new Coord(this.slotCandidate.x, this.slotCandidate.y)
+              : mousePosInSvg
         );
         this.dragState.noteMechanismModified();
         //So that the panel values update continously
@@ -776,18 +789,53 @@ export class NewGridComponent {
    * merging the two.
    */
   private updateDropCandidate(mousePos: Coord, altHeld: boolean): void {
-    this.setDropCandidate(
-      altHeld
+    const candidate = altHeld
+      ? undefined
+      : resolveDropCandidate(
+          this.activeObjService.selectedJoint,
+          mousePos.x,
+          mousePos.y,
+          this.mechanismSrv.joints,
+          this.snapRadius()
+        );
+    this.setDropCandidate(candidate);
+
+    // Joint snap wins outright when both are in range (§4.3). A joint is the
+    // more specific intent and the only one that can be aimed at precisely, so
+    // the slot preview only appears where no joint is claiming the drop -- which
+    // is also what makes the two distinguishable before release: you either see
+    // a ring on a joint, or a channel opening in a bar, never both.
+    this.slotCandidate =
+      altHeld || candidate
         ? undefined
-        : resolveDropCandidate(
+        : resolveSlotDropTarget(
             this.activeObjService.selectedJoint,
             mousePos.x,
             mousePos.y,
-            this.mechanismSrv.joints,
-            this.snapRadius()
-          )
-    );
+            this.mechanismSrv.links.filter((link) => link instanceof RealLink),
+            this.slotDropRadius()
+          );
   }
+
+  /**
+   * How close to a bar's centreline the cursor must get to cut a slot there.
+   *
+   * Half the bar's own width, so the drop has to be genuinely over the body
+   * rather than merely near it — a slot is a hole through the bar, and offering
+   * one while the cursor is off in open canvas reads as the bar grabbing at it.
+   */
+  private slotDropRadius(): number {
+    return MARK.barHalf * 0.15 * this.settings.objectScale;
+  }
+
+  /**
+   * The slot this drag would cut, previewed as the real thing.
+   *
+   * Not a stand-in: the previewed channel is pushed through the same path
+   * subtraction a committed slot uses, so the hover state is pixel-identical to
+   * the result and its legibility cannot depend on the carrier's random colour.
+   */
+  public slotCandidate?: SlotDropCandidate;
 
   private setDropCandidate(candidate?: JointDropCandidate): void {
     // Capture starts further out than the joint's own hitbox, so pointerover
@@ -934,11 +982,14 @@ export class NewGridComponent {
     if ($event.altKey) {
       this.snapTargetJoint = undefined;
       this.refusedTarget = undefined;
+      this.slotCandidate = undefined;
       return false;
     }
     const target = this.snapTargetJoint;
     const refused = this.refusedTarget;
+    const slot = this.slotCandidate;
     this.setDropCandidate(undefined);
+    this.slotCandidate = undefined;
     if (this.dragState.joint !== jointStates.dragging) {
       return false;
     }
@@ -949,6 +1000,12 @@ export class NewGridComponent {
       return false;
     }
     if (!target) {
+      // No joint claimed the drop, so a bar may have. Cutting the slot is the
+      // gesture's whole point (§4.3) and it earns the same receipt a merge does.
+      if (slot && this.mechanismSrv.cutSlotOn(source, slot)) {
+        this.popJoint(source.id);
+        return true;
+      }
       return false;
     }
 
@@ -1392,15 +1449,41 @@ export class NewGridComponent {
    * subpath, and a test that cannot tell them apart is not testing the channel.
    */
   channelCountOn(link: Link): number {
-    return this.channelList.filter((channel) => channel.carrierId === link.id).length;
+    return (
+      this.channelList.filter((channel) => channel.carrierId === link.id).length +
+      (this.slotCandidate?.carrier.id === link.id ? 1 : 0)
+    );
   }
 
   linkPathWithChannels(link: Link): string {
     const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
-    const channels = this.channelList.filter((channel) => channel.carrierId === link.id);
-    return channels.length === 0
-      ? outline
-      : `${outline} ${channels.map((channel) => channel.path).join(' ')}`;
+    const paths = this.channelList
+      .filter((channel) => channel.carrierId === link.id)
+      .map((channel) => channel.path);
+
+    // The slot being previewed goes through the same subtraction a committed
+    // one does, rather than being drawn as a stand-in on top. Two reasons: the
+    // hover state is then pixel-identical to the result, and a real hole has no
+    // legibility to lose against a link colour it cannot predict -- every
+    // stand-in considered (a white fill, an outline, an amber highlight) fell
+    // below contrast on part of the palette, because the palette is random.
+    const preview = this.previewChannelOn(link);
+    if (preview) paths.push(preview);
+
+    return paths.length === 0 ? outline : `${outline} ${paths.join(' ')}`;
+  }
+
+  private previewChannelOn(link: Link): string | undefined {
+    const slot = this.slotCandidate;
+    if (!slot || slot.carrier.id !== link.id) return undefined;
+    const r = 0.15 * this.settings.objectScale;
+    const separation = Math.hypot(slot.b.x - slot.a.x, slot.b.y - slot.a.y);
+    return orientedCapsulePath(
+      { x: (slot.a.x + slot.b.x) / 2, y: (slot.a.y + slot.b.y) / 2 },
+      Math.atan2(slot.b.y - slot.a.y, slot.b.x - slot.a.x),
+      slotHalfLength(r, separation),
+      MARK.channelHalfWidth * r
+    );
   }
 
   /**
