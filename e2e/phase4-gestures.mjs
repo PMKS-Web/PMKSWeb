@@ -326,6 +326,41 @@ checkThat(
 );
 await page.screenshot({ path: `${OUT}/11-refused-weld.png` });
 
+// ------------------------------------------- the stash across an undo/redo
+console.log('\nthe slot stash survives an undo and a redo');
+// Undo is a stack of URL strings, so every undo rebuilds the mechanism from
+// scratch and the joints that come back are new objects. A stash held on the
+// joint is destroyed by an undo and a redo that visibly changed nothing, and
+// turning Slider back on then dangles instead of restoring the slot.
+await load(FOUR_BAR);
+const startJoint = await centreOf('#joint_E');
+const startBar = await midpointOf('#joint_A', '#joint_B');
+await (
+  await dragTo(startJoint, startBar)
+)();
+checkThat('a slot to remember', (await sliderState()).channels === 1);
+
+await page.click('#joint_E');
+await page.waitForTimeout(300);
+await toggle('Slider');
+checkThat('slider off', (await sliderState()).blocks === 0);
+
+await page.click('text=Undo');
+await page.waitForTimeout(500);
+await page.click('text=Redo');
+await page.waitForTimeout(500);
+
+await page.click('#joint_E');
+await page.waitForTimeout(300);
+await toggle('Slider');
+const restored = await sliderState();
+checkThat(
+  'turning Slider back on restores the slot rather than dangling',
+  restored.blocks === 1 && restored.dangling === 0 && restored.channels === 1,
+  JSON.stringify(restored)
+);
+await page.screenshot({ path: `${OUT}/12-stash-across-undo.png` });
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);

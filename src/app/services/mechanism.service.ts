@@ -680,7 +680,35 @@ export class MechanismService {
     }
   }
 
+  /**
+   * What each joint's slot was, by joint id, so Slider off and on again restores
+   * it (§4.1).
+   *
+   * Keyed by id rather than held on the joint, because undo is a stack of URL
+   * strings: every undo rebuilds the mechanism from scratch and the objects that
+   * come back are new ones. A stash on the object would be destroyed by an undo
+   * and a redo that visibly changed nothing, so toggling Slider on afterwards
+   * would dangle instead of restoring what the panel promised to remember.
+   *
+   * Ids are reused after a deletion, so `deleteJoint` clears the entry -- a
+   * stale stash inheriting a letter would hand a new joint someone else's slot.
+   *
+   * Deliberately not serialized: a convenience within one editing session, not
+   * state a shared URL should carry.
+   */
+  private readonly slotStashes = new Map<
+    string,
+    {
+      ground: boolean;
+      angleRad: number;
+      carrierId?: string;
+      slotJointAId?: string;
+      slotJointBId?: string;
+    }
+  >();
+
   deleteJoint() {
+    this.slotStashes.delete(this.activeObjService.selectedJoint.id);
     const jointIndex = this.gridUtils.findJointIDIndex(
       this.activeObjService.selectedJoint.id,
       this.joints
@@ -1266,13 +1294,13 @@ export class MechanismService {
     const slider = block.joints.find((joint) => joint instanceof PrisJoint) as
       PrisJoint | undefined;
     if (!slider) return;
-    pin.slotStash = {
+    this.slotStashes.set(pin.id, {
       ground: slider.ground,
       angleRad: slider.slotAngle,
       carrierId: slider.carrier?.id,
       slotJointAId: slider.slotJointA?.id,
       slotJointBId: slider.slotJointB?.id,
-    };
+    });
   }
 
   /**
@@ -1281,7 +1309,7 @@ export class MechanismService {
    * the same answer `reconcileSlots` gives, rather than a second policy.
    */
   private restoreStashedSlot(pin: RealJoint, slider: PrisJoint): void {
-    const stash = pin.slotStash;
+    const stash = this.slotStashes.get(pin.id);
     if (!stash) return;
     const carrier = stash.carrierId
       ? this.links.find((link) => link.id === stash.carrierId)
