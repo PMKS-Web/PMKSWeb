@@ -1597,8 +1597,15 @@ export class NewGridComponent {
   private freshMarks(): { marks: SliderMark[]; channels: Channel[] } {
     const joints = this.mechanismSrv.getJoints();
     const r = 0.15 * this.settings.objectScale;
+    // A Slide's weld plate is painted in its rider's own colour, so recolouring
+    // a link changes a mark while moving nothing. Same failure as the grounded
+    // angle: the panel shows the new colour and the canvas keeps the old.
+    const paint = this.mechanismSrv
+      .getLinks()
+      .map((link) => `${link.id}:${(link as RealLink).fill}`)
+      .join(',');
     const key =
-      `${r}|` +
+      `${r}|${paint}|` +
       joints
         .map((joint) => {
           const real = joint as RealJoint;

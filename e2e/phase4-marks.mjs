@@ -130,6 +130,39 @@ for (const mechanism of MECHANISMS) {
   await page.screenshot({ path: `${OUT}/${mechanism.name}.png` });
 }
 
+// ------------------------------------------ the plate follows its rider's paint
+console.log('\nrecolouring a rider repaints its weld plate');
+// A Slide's plate is painted in the rider's own colour -- that is the whole
+// mechanism by which it reads as the same body. Recolouring a link changes a
+// mark while moving nothing, so a glyph cache keyed only on positions leaves
+// the plate showing a colour the link no longer has.
+await page.goto(BASE + MECHANISMS[0].query, { waitUntil: 'networkidle' });
+await page.waitForSelector('#sliderHolder', { state: 'attached', timeout: 15000 });
+await page.waitForTimeout(600);
+
+const plateFill = () => page.locator('#sliderHolder .slider-plate').first().getAttribute('fill');
+const wasFill = await plateFill();
+await page.evaluate(() => {
+  const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+  grid.mechanismSrv.getLinks().find((link) => link.id === 'CD').fill = '#00695C';
+  window.ng.applyChanges(grid);
+});
+await page.waitForTimeout(500);
+const nowFill = await plateFill();
+
+const repainted = wasFill !== nowFill && nowFill === '#00695C';
+results.push({
+  scenario: 'scotch-yoke',
+  label: 'the weld plate follows its rider\u2019s colour',
+  actual: `${wasFill} -> ${nowFill}`,
+  expected: `${wasFill} -> #00695C`,
+  ok: repainted,
+});
+console.log(
+  `  ${repainted ? 'PASS' : 'FAIL'}  the weld plate follows its rider's colour: ${wasFill} -> ${nowFill}`
+);
+await page.screenshot({ path: `${OUT}/recoloured-plate.png` });
+
 await browser.close();
 
 const failed = results.filter((result) => !result.ok);
