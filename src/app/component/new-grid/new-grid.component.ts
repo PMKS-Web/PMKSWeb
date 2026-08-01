@@ -56,7 +56,7 @@ import { NumberUnitParserService } from '../../services/number-unit-parser.servi
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 import { DragStateService } from '../../services/drag-state.service';
 import { Channel, SliderMark, SliderMarkService } from '../../services/slider-mark.service';
-import { plusPath } from '../../model/joint-marks';
+import { curvedArrowPath, pinBackingPath, plusPath } from '../../model/joint-marks';
 import {
   JointDropCandidate,
   MERGE_REFUSAL_MESSAGES,
@@ -1360,6 +1360,32 @@ export class NewGridComponent {
    * that bar happens to have. A bar carrying two slots simply gets two
    * subpaths.
    */
+  /**
+   * Pins that carry the drive but no block and no ground.
+   *
+   * Grounded pins already have the black input arrow, and a slider's drive
+   * shows as straight arrows on its block. This is the case with neither: the
+   * freedom is a rotation, so the overlay is the curved arrow, and it supplies
+   * its own dark backing because there is nothing underneath to guarantee the
+   * white will read.
+   */
+  get drivenFloatingPins(): Joint[] {
+    return this.mechanismSrv
+      .getJoints()
+      .filter(
+        (joint) =>
+          this.gridUtils.getInput(joint) &&
+          !this.gridUtils.getGround(joint) &&
+          this.gridUtils.typeOfJoint(joint) === 'R' &&
+          !this.gridUtils.isAttachedToSlider(joint)
+      );
+  }
+
+  get drivenPin(): { backing: string; arc: string; head: string } {
+    const r = 0.15 * this.settings.objectScale;
+    return { backing: pinBackingPath(r), ...curvedArrowPath(r) };
+  }
+
   /**
    * How many channels this carrier holds. Published on the element because a
    * cut channel is otherwise indistinguishable from a compound link's extra

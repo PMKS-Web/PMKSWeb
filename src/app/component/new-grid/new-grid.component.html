@@ -406,6 +406,23 @@
         }
       </g>
     }
+    <!-- A driven floating pin has no block to put a white arrow on, so the
+         overlay brings its own dark backing rather than switching the arrow to
+         a colour that would then depend on whatever is behind it. A driven
+         grounded pin keeps today's black arrow, which already reads on the
+         white canvas. -->
+    @for (pin of drivenFloatingPins; track pin.id) {
+      <g [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'">
+        <path [attr.d]="drivenPin.backing" fill="#000000" filter="url(#elevation-1)" />
+        <path
+          [attr.d]="drivenPin.arc"
+          fill="none"
+          stroke="#ffffff"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+        />
+        <path [attr.d]="drivenPin.head" fill="#ffffff" />
+      </g>
+    }
   </g>
   <g id="jointHolder" style="transform: scaleY(-1)">
     @for (joint of mechanismSrv.getJoints(); track joint) {
