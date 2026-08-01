@@ -48,9 +48,18 @@ export class UrlProcessorService {
     url: string | null,
     resetSvgScale: boolean = true,
     updateSettings: boolean = true,
-    save: boolean = false
+    save: boolean = false,
+    /**
+     * True when this is a step within one mechanism's own history rather than a
+     * different mechanism arriving. Undo and redo pass it; opening a project,
+     * loading a template and the initial URL decode do not.
+     */
+    continuingHistory: boolean = false
   ) {
     const mechanismSrv = this.injector.get(MechanismService);
+    // A different mechanism reuses the same joint letters and means something
+    // different by them, so nothing remembered per joint may carry across.
+    if (!continuingHistory) mechanismSrv.forgetSessionPreferences();
 
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();

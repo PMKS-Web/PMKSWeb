@@ -13,10 +13,11 @@
  * Stroke widths are the one thing not in R, and deliberately so. Every stroke in
  * the app — grid lines, axes, link outlines, the Phase 1 snap rings — goes
  * through `scaleWithZoom`, which divides by the zoom so a line keeps a constant
- * width on screen. A hairline that scaled with the geometry would disappear when
- * zoomed out and turn into a slab when zoomed in. The R rule is about the size
- * of things; how thick you draw their edges is a different question, and the app
- * already answered it.
+ * width on screen; a hairline that scaled with the geometry would disappear when
+ * zoomed out and turn into a slab when zoomed in. The R rule is about how big
+ * things are, and how thick you draw their edges is a question the app already
+ * answered. There are deliberately no stroke constants below, so nothing here
+ * implies a rule the drawing does not follow.
  */
 
 /** Every dimension of the mark system, in multiples of R. */
@@ -28,18 +29,15 @@ export const MARK = {
 
   /** Channel: a 2.3R window subtracted from the carrier, outlined in its colour. */
   channelHalfWidth: 1.15,
-  channelStroke: 0.16,
 
   /** Link bars, unchanged from today: 3.68R wide. */
   barHalf: 1.84,
 
   /** Grounded rails and their ground ticks. */
   railOffset: 1.975,
-  railStroke: 0.3,
   railHalfLengthMin: 9.6,
   tickLeg: 0.8,
   tickPitch: 1.3,
-  tickStroke: 0.24,
 
   /** The plate that welds a rider to its block — visual only. */
   fillet: 1.25,
@@ -51,7 +49,6 @@ export const MARK = {
   arrowTail: 1.4,
   arrowHeadBase: 2.6,
   arrowTip: 3.0,
-  arrowStroke: 0.3,
   arrowHeadLength: 0.74,
   arrowHeadHalf: 0.46,
 
@@ -62,10 +59,6 @@ export const MARK = {
   /** The welded marker, replacing the circle at 1.47R across. */
   plusArm: 0.22,
   plusExtent: 0.735,
-
-  /** Elevation, matching the joint circles already on the canvas. */
-  shadowOffset: 0.42,
-  shadowBlur: 0.21,
 } as const;
 
 /**

@@ -138,6 +138,14 @@ export class SliderMarkService {
   }
 
   /**
+   * Forget every override, for when a different mechanism is loaded in place.
+   * Joint letters are unique within a mechanism and meaningless across two.
+   */
+  clearPreferences(): void {
+    this.skinPreference.clear();
+  }
+
+  /**
    * The cylinders to draw collapsed.
    *
    * `revealedId` is the assembly the user has selected: on Auto it expands, so

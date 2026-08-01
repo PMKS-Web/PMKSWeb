@@ -374,16 +374,25 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         if (!this.activeSrv.selectedJoint) return;
         if (!this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint)) return;
         if (!success) {
-          this.jointForm.patchValue({
-            prisAngle: this.nup
-              .convertAngle(
-                (this.activeSrv.selectedJoint as PrisJoint).angle_rad,
-                AngleUnit.RADIAN,
-                this.settingsService.angleUnit.getValue()
-              )
-              .toFixed(0)
-              .toString(),
-          });
+          // Two things had to be true for this to recurse until the stack ran
+          // out, and both were: the angle was read off the *pin*, which has no
+          // angle_rad, so the field was restored to the string "NaN"; and the
+          // restore emitted, so the handler ran again on its own unparseable
+          // output. Neither is new -- both predate this branch -- but the angle
+          // field is a Phase 4 surface now, so they are fixed here.
+          this.jointForm.patchValue(
+            {
+              prisAngle: this.nup
+                .convertAngle(
+                  this.selectedSlider?.angle_rad ?? 0,
+                  AngleUnit.RADIAN,
+                  this.settingsService.angleUnit.getValue()
+                )
+                .toFixed(0)
+                .toString(),
+            },
+            { emitEvent: false }
+          );
         } else {
           (this.gridUtils.getSliderJoint(this.activeSrv.selectedJoint) as PrisJoint).angle_rad =
             this.nup.convertAngle(

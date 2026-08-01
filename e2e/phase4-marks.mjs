@@ -157,19 +157,23 @@ if (recolourable) {
 } else {
   console.log("  SKIP  the weld plate follows its rider's colour (needs a dev build)");
 }
-const nowFill = recolourable ? await plateFill() : '#00695C';
+const nowFill = recolourable ? await plateFill() : null;
 
-const repainted = wasFill !== nowFill && nowFill === '#00695C';
-results.push({
-  scenario: 'scotch-yoke',
-  label: 'the weld plate follows its rider\u2019s colour',
-  actual: `${wasFill} -> ${nowFill}`,
-  expected: `${wasFill} -> #00695C`,
-  ok: repainted,
-});
-console.log(
-  `  ${repainted ? 'PASS' : 'FAIL'}  the weld plate follows its rider's colour: ${wasFill} -> ${nowFill}`
-);
+// Recorded as skipped rather than passed when it could not be run: a check that
+// reports success without executing turns a production regression green.
+if (recolourable) {
+  const repainted = wasFill !== nowFill && nowFill === '#00695C';
+  results.push({
+    scenario: 'scotch-yoke',
+    label: 'the weld plate follows its rider\u2019s colour',
+    actual: `${wasFill} -> ${nowFill}`,
+    expected: `${wasFill} -> #00695C`,
+    ok: repainted,
+  });
+  console.log(
+    `  ${repainted ? 'PASS' : 'FAIL'}  the weld plate follows its rider's colour: ${wasFill} -> ${nowFill}`
+  );
+}
 await page.screenshot({ path: `${OUT}/recoloured-plate.png` });
 
 await browser.close();

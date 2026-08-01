@@ -23,9 +23,14 @@ describe('SaveHistoryService', () => {
     history.undo();
     history.redo();
 
+    // The trailing flag says "this is a step within one mechanism's history,
+    // not a different mechanism arriving". Per-joint memory -- the slot stash,
+    // the cylinder-skin preference -- is keyed by joint letter, so a fresh load
+    // has to forget it and an undo must not. Dropping the flag here would make
+    // undo clear the thing it exists to restore.
     expect(restores).toEqual([
-      ['metric-state', false, true, false],
-      ['english-state', false, true, false],
+      ['metric-state', false, true, false, true],
+      ['english-state', false, true, false, true],
     ]);
   });
 });

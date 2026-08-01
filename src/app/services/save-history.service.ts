@@ -63,7 +63,7 @@ export class SaveHistoryService {
     // Settings are part of the serialized mechanism state. Restoring only the
     // geometry leaves converted values paired with the wrong unit system and
     // makes unit changes impossible to undo safely.
-    urlProcessorService.updateFromURL(this.history[this.index], false, true, false);
+    urlProcessorService.updateFromURL(this.history[this.index], false, true, false, true);
     console.log('update to state ' + this.index + ': ' + this.history[this.index]);
   }
 

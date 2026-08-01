@@ -214,6 +214,11 @@ await page.screenshot({ path: `${OUT}/6-grounded.png` });
 await toggle('Ground');
 const dangling = await sliderState();
 checkThat(
+  'a dangling block is still black — the red is the highlight, not the fill',
+  (await page.locator('#sliderHolder .slider-block path').first().getAttribute('fill')) ===
+    '#000000'
+);
+checkThat(
   'un-grounding leaves it dangling and red, keeping the block',
   dangling.blocks === 1 && dangling.dangling === 1 && dangling.rails === 0,
   JSON.stringify(dangling)
@@ -360,6 +365,30 @@ checkThat(
   JSON.stringify(restored)
 );
 await page.screenshot({ path: `${OUT}/12-stash-across-undo.png` });
+
+// An unparseable angle must restore the field, not fight itself. Two bugs, both
+// older than this branch: the angle was read off the pin -- which has none -- so
+// the field was restored to the string "NaN", and the restore emitted, so the
+// handler ran again on its own unparseable output.
+console.log('\nan angle the parser refuses');
+await load(ELLIPTICAL);
+await page.click('#joint_A');
+await page.waitForTimeout(400);
+const badAngle = page
+  .locator('#toggle-block .row')
+  .filter({ hasText: 'Slider' })
+  .first()
+  .locator('input');
+await badAngle.fill('bogus');
+await badAngle.press('Enter');
+await page.waitForTimeout(900);
+const restoredAngle = await badAngle.inputValue();
+checkThat(
+  'a refused angle restores the one the slot actually has',
+  restoredAngle !== '' && !/nan/i.test(restoredAngle),
+  restoredAngle
+);
+await page.screenshot({ path: `${OUT}/13-bad-angle.png` });
 
 await browser.close();
 

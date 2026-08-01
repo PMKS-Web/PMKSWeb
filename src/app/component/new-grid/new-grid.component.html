@@ -378,10 +378,12 @@
             (pointerdown)="setLastLeftClick(mark.pin)"
             (contextmenu)="setLastRightClick(mark.pin)"
           >
+            <!-- The block stays #000 even when the slider has nowhere to slide:
+                 the red is a highlight around it, the way the orphan-joint mark
+                 works, not a different block. §2.8 rule 3 has no exceptions. -->
             <path
               [attr.d]="mark.block"
-              [attr.fill]="mark.dangling ? '#c5cae9' : '#000000'"
-              [attr.fill-opacity]="mark.dangling ? 0.7 : 1"
+              fill="#000000"
               [attr.stroke]="mark.dangling ? '#F44336' : null"
               [attr.stroke-width]="mark.dangling ? svgGrid.scaleWithZoom(3) : null"
               filter="url(#elevation-1)"
