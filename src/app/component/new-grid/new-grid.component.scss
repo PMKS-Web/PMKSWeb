@@ -180,3 +180,100 @@
     }
   }
 }
+
+// Phase 4 motion. Toggling Slider or Weld has to visibly change exactly one
+// mark, and each change has to read as one thing arriving rather than as a
+// redraw — so every transition here is scoped to the primitive that actually
+// changed, and none of them touches the mark underneath it.
+//
+// These are CSS animations on insert rather than transitions on a property,
+// because the marks come and go with the structure rather than changing value.
+// The per-frame redraw path stays stateless either way, which is what keeps the
+// glyphs cheap across ~360 timesteps.
+//
+// Every displacement is a scale or an opacity against the element's own box. A
+// px offset would grow with the canvas transform, which has already shipped one
+// animation bug here.
+.slider-mark {
+  .slider-block {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: blockIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  // The plate fades in over a block that never changes: a Slide's block is the
+  // same #000 as a Slot's, and the plate above it is the whole difference.
+  .slider-plate {
+    animation: plateIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  // Entrances slide out from under the marker; exits are quiet, so there is no
+  // matching outward animation to leave with.
+  .slider-arrows {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: arrowsIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+// The skin arriving or leaving is a change of drawing, not of mechanism, so it
+// crossfades rather than moving anything.
+.cylinder-mark {
+  animation: skinIn 0.15s ease-out;
+}
+
+@keyframes blockIn {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// To 1, not to 0.7: the plate carries its 0.7 as fill-opacity, and animating
+// group opacity to 0.7 as well would land it at 0.49 -- a paler plate than the
+// rider it is supposed to be the same body as.
+@keyframes plateIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes arrowsIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes skinIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// A refusal still has to be legible without motion, which is why the snackbar
+// carries the reason rather than the shake.
+@media (prefers-reduced-motion: reduce) {
+  .slider-mark .slider-block,
+  .slider-mark .slider-plate,
+  .slider-mark .slider-arrows,
+  .cylinder-mark,
+  .jointShake,
+  .jointPop {
+    animation: none;
+  }
+}

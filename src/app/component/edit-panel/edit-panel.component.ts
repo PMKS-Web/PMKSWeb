@@ -503,6 +503,14 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         // touches it (§2.1).
         if (val) this.mechanismService.weldJoint();
         else this.mechanismService.unweldSelectedJoint();
+
+        // A weld the model refuses -- a grounded joint, a driven one, a joint
+        // with nothing to fuse -- would otherwise leave the switch sitting on
+        // while the joint is not welded, which is a control lying about state.
+        const actual = this.activeSrv.selectedJoint?.isWelded ?? false;
+        if (actual !== val) {
+          this.jointForm.patchValue({ weld: actual }, { emitEvent: false });
+        }
       })
     );
 

@@ -271,6 +271,61 @@ const inside = await page.evaluate(() => {
 checkThat('and it clamped inside the carrier rather than following the cursor', inside);
 await page.screenshot({ path: `${OUT}/9-block-clamped.png` });
 
+// ------------------------------------------- state the panel must not lie about
+console.log('\nthe panel and the canvas agree');
+const ELLIPTICAL =
+  '?2P.Fe.K,0.1011.GA,A,Fe,0,0.GB,B,0,Fe,0.LC,C,Fe,0,0.LD,D,0,Fe,OZ..YRAB,AB,Fe,Fe,7q,7q,c5cae9,A,B,,.YPAC,AC,Fe,0,0,0,,A,C,,.YPBD,BD,Fe,0,0,0,,B,D,,...N_Q';
+
+// Editing a grounded guide's angle turns its whole mark while every coordinate
+// in the mechanism stays exactly where it was. If the glyph cache keys only on
+// positions, the panel reports the new angle and the canvas keeps the old one.
+await load(ELLIPTICAL);
+await page.click('#joint_A');
+await page.waitForTimeout(400);
+const markTransforms = () =>
+  page
+    .locator('#sliderHolder .slider-mark')
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('transform')));
+const beforeAngle = await markTransforms();
+const angleField = page
+  .locator('#toggle-block .row')
+  .filter({ hasText: 'Slider' })
+  .first()
+  .locator('input');
+await angleField.fill('45 deg');
+await angleField.press('Enter');
+await page.waitForTimeout(700);
+const afterAngle = await markTransforms();
+checkThat(
+  'editing a grounded slot angle redraws its mark',
+  JSON.stringify(beforeAngle) !== JSON.stringify(afterAngle),
+  `${beforeAngle[0]} -> ${afterAngle[0]}`
+);
+await page.screenshot({ path: `${OUT}/10-angle-edit.png` });
+
+// A weld the model refuses must not leave the switch on: a control showing a
+// state the mechanism is not in is worse than one that does nothing.
+await load(FOUR_BAR);
+await page.click('#joint_A');
+await page.waitForTimeout(400);
+const weldSwitch = page
+  .locator('#toggle-block .row')
+  .filter({ hasText: 'Weld' })
+  .first()
+  .locator('button[role="switch"], .mdc-switch')
+  .first();
+await weldSwitch.click();
+await page.waitForTimeout(600);
+checkThat(
+  'a refused weld leaves the switch off',
+  (await weldSwitch.getAttribute('aria-checked')) === 'false'
+);
+checkThat(
+  'and the joint keeps its circle rather than becoming a plus',
+  (await page.locator('#joint_A').evaluate((n) => n.tagName.toLowerCase())) === 'circle'
+);
+await page.screenshot({ path: `${OUT}/11-refused-weld.png` });
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);

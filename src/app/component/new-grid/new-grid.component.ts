@@ -1603,9 +1603,12 @@ export class NewGridComponent {
         .map((joint) => {
           const real = joint as RealJoint;
           const base = `${joint.id},${joint.x.toFixed(6)},${joint.y.toFixed(6)},${real.ground},${real.input},${real.isWelded}`;
-          // Rebinding a slot changes its channel without moving anything.
+          // Rebinding a slot changes its channel without moving anything, and a
+          // grounded guide's angle turns its whole mark while every coordinate
+          // in the mechanism stays exactly where it was -- so both have to be in
+          // here, or editing the angle field redraws nothing.
           return joint instanceof PrisJoint
-            ? `${base},${joint.carrier?.id},${joint.slotJointA?.id},${joint.slotJointB?.id}`
+            ? `${base},${joint.angle_rad},${joint.carrier?.id},${joint.slotJointA?.id},${joint.slotJointB?.id}`
             : base;
         })
         .join(';');
