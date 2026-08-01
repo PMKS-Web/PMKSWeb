@@ -9,6 +9,14 @@
  *
  * Pure geometry on purpose: the template calls these every animation frame
  * across ~360 timesteps, so they hold no state and allocate only their result.
+ *
+ * Stroke widths are the one thing not in R, and deliberately so. Every stroke in
+ * the app — grid lines, axes, link outlines, the Phase 1 snap rings — goes
+ * through `scaleWithZoom`, which divides by the zoom so a line keeps a constant
+ * width on screen. A hairline that scaled with the geometry would disappear when
+ * zoomed out and turn into a slab when zoomed in. The R rule is about the size
+ * of things; how thick you draw their edges is a different question, and the app
+ * already answered it.
  */
 
 /** Every dimension of the mark system, in multiples of R. */
