@@ -7,6 +7,7 @@ import {
   wattIFixture,
 } from './fixtures';
 import {
+  cylinderSkinFixture,
   ellipticalTrammelFixture,
   invertedSliderCrankFixture,
   loadedInvertedSliderCrankFixture,
@@ -49,6 +50,14 @@ export interface GalleryEntry {
 }
 
 export const FIXTURE_GALLERY: GalleryEntry[] = [
+  {
+    name: 'Hydraulic cylinder',
+    purpose: 'Cylinder skin (§2.7): a rod welded to a block sliding in a barrel, all on one line',
+    spec: 'cylinder.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: cylinderSkinFixture(),
+  },
   {
     name: 'Inverted slider-crank',
     purpose: 'Inverse slot direction: position, velocity and acceleration against closed form',

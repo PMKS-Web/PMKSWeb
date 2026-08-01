@@ -1,13 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Joint, PrisJoint, RealJoint } from '../model/joint';
 import { Link, RealLink, SliderBlock } from '../model/link';
+import { Cylinder, cylinders, SkinPreference } from '../model/cylinder';
 import {
+  barrelCollapsedPath,
   blockPath,
+  borePath,
+  cylinderArrowPaths,
+  cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
   railGeometry,
   riderCapsulePath,
   Segment,
+  rodBodyPath,
   slotHalfLength,
   straightArrowPaths,
 } from '../model/joint-marks';
@@ -59,6 +65,28 @@ export interface Channel {
   path: string;
 }
 
+/** One piston, drawn as the part rather than as a block in a channel (§2.7). */
+export interface CylinderMark {
+  id: string;
+  pin: Joint;
+  x: number;
+  y: number;
+  rotation: number;
+  /** The links whose ordinary drawing this skin stands in for. */
+  barrelId: string;
+  rodId: string;
+  /** The barrel's far joint, hidden while the skin is collapsed. */
+  hiddenJointId: string;
+  barrel: string;
+  barrelFill: string;
+  rod: string;
+  rodFill: string;
+  block: string;
+  marker: string;
+  driven: boolean;
+  arrows: { line: Segment; head: string }[];
+}
+
 /**
  * Turns the mechanism into the marks of §2.8.
  *
@@ -76,7 +104,7 @@ export class SliderMarkService {
    * negated angle compensates for the handedness the flip reverses -- so local
    * +x runs along the slot and local +y along its normal, in model space.
    */
-  frame(mark: SliderMark): string {
+  frame(mark: { x: number; y: number; rotation: number }): string {
     return `translate(${mark.x} ${mark.y}) rotate(${mark.rotation}) scale(1 -1)`;
   }
 
@@ -89,6 +117,71 @@ export class SliderMarkService {
       .filter((joint): joint is PrisJoint => joint instanceof PrisJoint)
       .map((slider) => this.markFor(slider, r, travel?.get(slider.id) ?? 0))
       .filter((mark): mark is SliderMark => mark !== undefined);
+  }
+
+  /**
+   * How the user asked each assembly to be drawn, by weld-joint id.
+   *
+   * A view preference, deliberately held here rather than on the joint: it does
+   * not serialize into the URL and does not enter the undo stack, so a shared
+   * link always opens on Auto and nobody can undo their way into a different
+   * picture of the same mechanism.
+   */
+  private readonly skinPreference = new Map<string, SkinPreference>();
+
+  preferenceFor(id: string): SkinPreference {
+    return this.skinPreference.get(id) ?? 'auto';
+  }
+
+  setPreference(id: string, preference: SkinPreference): void {
+    this.skinPreference.set(id, preference);
+  }
+
+  /**
+   * The cylinders to draw collapsed.
+   *
+   * `revealedId` is the assembly the user has selected: on Auto it expands, so
+   * the block can be aimed at and its travel read — neither of which is
+   * possible while it is moving, which is why playback suppresses the reveal
+   * and keeps the skin on.
+   */
+  cylinderMarks(joints: Joint[], r: number, revealedId?: string, playing = false): CylinderMark[] {
+    return cylinders(joints)
+      .filter((found) => {
+        const preference = this.preferenceFor(found.pin.id);
+        if (preference === 'slotted') return false;
+        if (preference === 'cylinder') return true;
+        return playing || found.pin.id !== revealedId;
+      })
+      .map((found) => this.cylinderMark(found, r));
+  }
+
+  private cylinderMark(found: Cylinder, r: number): CylinderMark {
+    const { pin, rodFar, barrelFar } = found;
+    const angle = Math.atan2(rodFar.y - pin.y, rodFar.x - pin.x);
+    const rodReach = Math.hypot(rodFar.x - pin.x, rodFar.y - pin.y);
+    const barrelReach = -Math.hypot(barrelFar.x - pin.x, barrelFar.y - pin.y);
+    const driven = found.slider.input || pin.input;
+    return {
+      id: pin.id,
+      pin,
+      x: pin.x,
+      y: pin.y,
+      // +x runs toward the rod, so the barrel is the negative side and the
+      // geometry reads the same whichever way round the slot was declared.
+      rotation: -toDegrees(angle),
+      barrelId: found.barrel.id,
+      rodId: found.rod.id,
+      hiddenJointId: barrelFar.id,
+      barrel: barrelCollapsedPath(r, barrelReach),
+      barrelFill: (found.barrel as RealLink).fill ?? '#000000',
+      rod: rodBodyPath(r, rodReach),
+      rodFill: found.rod.fill ?? '#000000',
+      block: blockPath(r),
+      marker: cylinderMarkerPath(r),
+      driven,
+      arrows: driven ? cylinderArrowPaths(r) : [],
+    };
   }
 
   channels(joints: Joint[], r: number): Channel[] {

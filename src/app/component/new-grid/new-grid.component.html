@@ -367,44 +367,88 @@
        because what is underneath is always black. -->
   <g id="sliderHolder" style="transform: scaleY(-1)">
     @for (mark of sliderMarkList; track mark.id) {
-      <g [attr.transform]="sliderMarks.frame(mark)" [class]="'slider-mark'">
-        <!-- Grabbing the block starts a drag on its pin (§4.4). The block is a
+      @if (!isSkinned(mark)) {
+        <g [attr.transform]="sliderMarks.frame(mark)" [class]="'slider-mark'">
+          <!-- Grabbing the block starts a drag on its pin (§4.4). The block is a
              far bigger target than the marker at its centre, and the two sit on
              the same point, so it is the same grab with a better hitbox. -->
-        <g
-          class="slider-block"
-          cursor="move"
-          (pointerdown)="setLastLeftClick(mark.pin)"
-          (contextmenu)="setLastRightClick(mark.pin)"
-        >
-          <path
-            [attr.d]="mark.block"
-            [attr.fill]="mark.dangling ? '#c5cae9' : '#000000'"
-            [attr.fill-opacity]="mark.dangling ? 0.7 : 1"
-            [attr.stroke]="mark.dangling ? '#F44336' : null"
-            [attr.stroke-width]="mark.dangling ? svgGrid.scaleWithZoom(3) : null"
-            filter="url(#elevation-1)"
-          />
-        </g>
-        @if (mark.plate) {
           <g
-            class="slider-plate"
-            pointer-events="none"
-            [attr.fill]="mark.plate.fill"
-            fill-opacity="0.7"
+            class="slider-block"
+            cursor="move"
+            (pointerdown)="setLastLeftClick(mark.pin)"
+            (contextmenu)="setLastRightClick(mark.pin)"
           >
-            @for (rider of mark.plate.riders; track $index) {
-              <path [attr.d]="rider" />
-            }
-            <path [attr.d]="mark.plate.block" />
-            @for (fillet of mark.plate.fillets; track $index) {
-              <path [attr.d]="fillet" />
-            }
+            <path
+              [attr.d]="mark.block"
+              [attr.fill]="mark.dangling ? '#c5cae9' : '#000000'"
+              [attr.fill-opacity]="mark.dangling ? 0.7 : 1"
+              [attr.stroke]="mark.dangling ? '#F44336' : null"
+              [attr.stroke-width]="mark.dangling ? svgGrid.scaleWithZoom(3) : null"
+              filter="url(#elevation-1)"
+            />
           </g>
-        }
-        @if (mark.driven) {
-          <g class="slider-arrows" pointer-events="none">
-            @for (arrow of mark.arrows; track $index) {
+          @if (mark.plate) {
+            <g
+              class="slider-plate"
+              pointer-events="none"
+              [attr.fill]="mark.plate.fill"
+              fill-opacity="0.7"
+            >
+              @for (rider of mark.plate.riders; track $index) {
+                <path [attr.d]="rider" />
+              }
+              <path [attr.d]="mark.plate.block" />
+              @for (fillet of mark.plate.fillets; track $index) {
+                <path [attr.d]="fillet" />
+              }
+            </g>
+          }
+          @if (mark.driven) {
+            <g class="slider-arrows" pointer-events="none">
+              @for (arrow of mark.arrows; track $index) {
+                <line
+                  [attr.x1]="arrow.line.x1"
+                  [attr.y1]="arrow.line.y1"
+                  [attr.x2]="arrow.line.x2"
+                  [attr.y2]="arrow.line.y2"
+                  stroke="#ffffff"
+                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                />
+                <path [attr.d]="arrow.head" fill="#ffffff" />
+              }
+            </g>
+          }
+        </g>
+      }
+    }
+    <!-- §2.7: a piston is a Slide whose rod and barrel line up, so it is drawn
+         as the part rather than as a block in a channel. Nothing about the
+         mechanism changes -- selecting it simply stops collapsing the skin, and
+         the ordinary slot drawing underneath is the same size in the same
+         place, which is what makes the reveal additive. -->
+    @for (cyl of cylinderList; track cyl.id) {
+      <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
+        <path
+          class="cylinder-barrel"
+          [attr.d]="cyl.barrel"
+          [attr.fill]="cyl.barrelFill"
+          fill-opacity="0.7"
+        />
+        <path [attr.d]="cyl.block" fill="#000000" filter="url(#elevation-1)" />
+        <path
+          class="cylinder-rod"
+          cursor="move"
+          (pointerdown)="setLastLeftClick(cyl.pin)"
+          (contextmenu)="setLastRightClick(cyl.pin)"
+          [attr.d]="cyl.rod"
+          [attr.fill]="cyl.rodFill"
+          fill-opacity="0.7"
+          [attr.stroke]="cyl.rodFill"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+        />
+        @if (cyl.driven) {
+          <g pointer-events="none">
+            @for (arrow of cyl.arrows; track $index) {
               <line
                 [attr.x1]="arrow.line.x1"
                 [attr.y1]="arrow.line.y1"
@@ -417,6 +461,13 @@
             }
           </g>
         }
+        <path
+          class="cylinder-marker"
+          pointer-events="none"
+          [attr.d]="cyl.marker"
+          fill="#FFF8E1"
+          filter="url(#elevation-1)"
+        />
       </g>
     }
     <!-- A driven floating pin has no block to put a white arrow on, so the
@@ -477,45 +528,49 @@
       ></circle>
     }
     @for (joint of mechanismSrv.getJoints(); track joint) {
-      <svg
-        [attr.x]="joint.x"
-        [attr.y]="joint.y"
-        (pointerover)="joint.showHighlight = true"
-        (pointerout)="joint.showHighlight = false"
-        (contextmenu)="setLastRightClick(joint)"
-        (pointerdown)="setLastLeftClick(joint)"
-        width="20"
-        height="20"
-        style="overflow: visible"
-        cursor="move"
-      >
-        <!-- Grouped so a refused or completed drop can animate the whole joint -->
-        <g [class]="jointEffectClass(joint)">
-          <!-- Hitbox -->
-          @if (gridUtils.typeOfJoint(joint) == 'R') {
-            <circle [attr.r]="settings.objectScale / 4" cx="0" cy="0" fill="transparent" />
-          }
-          <!--      Normal Joint-->
-          @if (!gridUtils.getWelded(joint)) {
-            <circle
-              id="joint_{{ joint.id }}"
-              class="joint_circles"
-              [attr.r]="settings.objectScale * gridUtils.getJointR(joint)"
-              [attr.cx]="0"
-              [attr.cy]="0"
-              [class]="mechanismSrv.getJointCSSClass(joint)"
-            />
-          }
-          <!--      Welded Joint-->
-          @if (gridUtils.getWelded(joint)) {
-            <path
-              [attr.id]="'joint_' + joint.id"
-              [class]="mechanismSrv.getJointCSSClass(joint)"
-              [attr.d]="weldMarkerPath"
-            ></path>
-          }
-        </g>
-      </svg>
+      <!-- The barrel's far end disappears into a collapsed cylinder skin; the
+           reveal on selection is what brings it back (§2.7). -->
+      @if (!isHiddenByCylinder(joint)) {
+        <svg
+          [attr.x]="joint.x"
+          [attr.y]="joint.y"
+          (pointerover)="joint.showHighlight = true"
+          (pointerout)="joint.showHighlight = false"
+          (contextmenu)="setLastRightClick(joint)"
+          (pointerdown)="setLastLeftClick(joint)"
+          width="20"
+          height="20"
+          style="overflow: visible"
+          cursor="move"
+        >
+          <!-- Grouped so a refused or completed drop can animate the whole joint -->
+          <g [class]="jointEffectClass(joint)">
+            <!-- Hitbox -->
+            @if (gridUtils.typeOfJoint(joint) == 'R') {
+              <circle [attr.r]="settings.objectScale / 4" cx="0" cy="0" fill="transparent" />
+            }
+            <!--      Normal Joint-->
+            @if (!gridUtils.getWelded(joint)) {
+              <circle
+                id="joint_{{ joint.id }}"
+                class="joint_circles"
+                [attr.r]="settings.objectScale * gridUtils.getJointR(joint)"
+                [attr.cx]="0"
+                [attr.cy]="0"
+                [class]="mechanismSrv.getJointCSSClass(joint)"
+              />
+            }
+            <!--      Welded Joint-->
+            @if (gridUtils.getWelded(joint)) {
+              <path
+                [attr.id]="'joint_' + joint.id"
+                [class]="mechanismSrv.getJointCSSClass(joint)"
+                [attr.d]="weldMarkerPath"
+              ></path>
+            }
+          </g>
+        </svg>
+      }
     }
   </g>
 

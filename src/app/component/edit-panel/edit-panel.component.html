@@ -111,6 +111,31 @@
         >
           Weld
         </toggle-block>
+        @if (showCylinderSkin) {
+          <div class="skinPicker">
+            <div class="skinPicker__label">Cylinder skin</div>
+            <div class="skinPicker__row">
+              <button [class.is-on]="skinPreference === 'auto'" (click)="setSkinPreference('auto')">
+                Auto
+              </button>
+              <button
+                [class.is-on]="skinPreference === 'cylinder'"
+                (click)="setSkinPreference('cylinder')"
+              >
+                Cylinder
+              </button>
+              <button
+                [class.is-on]="skinPreference === 'slotted'"
+                (click)="setSkinPreference('slotted')"
+              >
+                Slotted
+              </button>
+            </div>
+            <div class="slotNote">
+              View preference — not in the URL, not in undo. A shared link always opens on Auto.
+            </div>
+          </div>
+        }
         <div class="row">
           <button
             mat-stroked-button

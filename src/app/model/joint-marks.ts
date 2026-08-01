@@ -60,6 +60,91 @@ export const MARK = {
   shadowBlur: 0.21,
 } as const;
 
+/**
+ * The cylinder skin (§2.7). Scoped to the skin: the barrel is deliberately much
+ * fatter than the rod, and that heft is what reads as a cylinder body rather
+ * than as another bar.
+ */
+export const CYLINDER = {
+  barrelHalf: 2.95,
+  /** The rod is a standard link width, so block and rod form one uniform bar. */
+  rodHalf: 1.84,
+  /** Where the barrel stops: inside the block, so the rod visibly enters it. */
+  flatCut: 0.56,
+  boreHalf: 1.39,
+  /** Larger than the general 1.47R weld glyph, matching the reference. */
+  markerArm: 0.31,
+  markerExtent: 0.95,
+  arrowTail: 1.55,
+  arrowHeadBase: 2.75,
+  arrowTip: 3.3,
+  arrowHeadHalf: 0.62,
+} as const;
+
+/**
+ * The barrel, collapsed: rounded on its own far joint and cut flat inside the
+ * block, so the rod disappears into it instead of stopping against it.
+ *
+ * `reach` is how far the barrel's far joint sits from the block, measured
+ * against the slot with the rod in the +x direction — so the barrel runs the
+ * other way and `reach` is negative.
+ */
+export function barrelCollapsedPath(r: number, reach: number): string {
+  const h = CYLINDER.barrelHalf * r;
+  const cut = CYLINDER.flatCut * MARK.blockAlongHalf * r * Math.sign(reach || -1) * -1;
+  const cap = reach;
+  const sweep = reach < 0 ? 1 : 0;
+  return (
+    `M ${cap} ${-h} L ${cut} ${-h} L ${cut} ${h} L ${cap} ${h} ` +
+    `A ${h} ${h} 0 0 ${sweep} ${cap} ${-h} Z`
+  );
+}
+
+/**
+ * Rod and block as one body: square where it slides inside the barrel — it is a
+ * cut plane, not a free end — and rounded only on the joint it reaches.
+ */
+export function rodBodyPath(r: number, reach: number): string {
+  const h = CYLINDER.rodHalf * r;
+  const inner = -MARK.blockAlongHalf * r * Math.sign(reach || 1);
+  const sweep = reach > 0 ? 1 : 0;
+  return `M ${inner} ${-h} L ${reach} ${-h} A ${h} ${h} 0 0 ${sweep} ${reach} ${h} L ${inner} ${h} Z`;
+}
+
+/** The bore, for the revealed state: the barrel's own slot, cut through it. */
+export function borePath(r: number, halfLength: number): string {
+  return capsulePath(-halfLength, halfLength, CYLINDER.boreHalf * r);
+}
+
+/** The cylinder's welded marker, larger than the general one. */
+export function cylinderMarkerPath(r: number): string {
+  const a = CYLINDER.markerArm * r;
+  const e = CYLINDER.markerExtent * r;
+  return (
+    `M ${-a} ${-e} H ${a} V ${-a} H ${e} V ${a} H ${a} V ${e} ` +
+    `H ${-a} V ${a} H ${-e} V ${-a} H ${-a} Z`
+  );
+}
+
+/** The driven arrows of a cylinder, flanking its marker. */
+export function cylinderArrowPaths(r: number): { line: Segment; head: string }[] {
+  return [1, -1].map((side) => ({
+    line: {
+      x1: side * CYLINDER.arrowTail * r,
+      y1: 0,
+      x2: side * CYLINDER.arrowHeadBase * r,
+      y2: 0,
+    },
+    head: arrowHeadAt(
+      side * CYLINDER.arrowTip * r,
+      0,
+      side > 0 ? 0 : Math.PI,
+      MARK.arrowHeadLength * r,
+      CYLINDER.arrowHeadHalf * r
+    ),
+  }));
+}
+
 /** A line segment, in the frame the caller asked for. */
 export interface Segment {
   x1: number;
@@ -233,8 +318,10 @@ export function curvedArrowPath(r: number): { arc: string; head: string } {
 
 /** A filled triangular head, tip at (x, y), pointing along `angle`. */
 function arrowHead(r: number, x: number, y: number, angle: number): string {
-  const back = MARK.arrowHeadLength * r;
-  const half = MARK.arrowHeadHalf * r;
+  return arrowHeadAt(x, y, angle, MARK.arrowHeadLength * r, MARK.arrowHeadHalf * r);
+}
+
+function arrowHeadAt(x: number, y: number, angle: number, back: number, half: number): string {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   const at = (dx: number, dy: number) => `${x + dx * c - dy * s} ${y + dx * s + dy * c}`;

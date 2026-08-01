@@ -74,3 +74,43 @@
   background: #ffebee;
   color: #b3261e;
 }
+
+// The cylinder-skin override (§2.7). A view preference rather than mechanism
+// state, so it sits apart from the toggles that change what the linkage is.
+.skinPicker {
+  margin-bottom: 10px;
+
+  &__label {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
+    margin-bottom: 7px;
+  }
+
+  &__row {
+    display: flex;
+    border: 1px solid #c5cae9;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+
+    button {
+      flex: 1;
+      font-family: Roboto, sans-serif;
+      font-size: 12.5px;
+      height: 30px;
+      border: 0;
+      cursor: pointer;
+      background: #fff;
+      color: #3f51b5;
+
+      &:not(:first-child) {
+        border-left: 1px solid #c5cae9;
+      }
+
+      &.is-on {
+        background: #3f51b5;
+        color: #fff;
+      }
+    }
+  }
+}

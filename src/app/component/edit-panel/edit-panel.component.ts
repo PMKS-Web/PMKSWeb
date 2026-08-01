@@ -27,6 +27,8 @@ import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { resolveCylinder, SkinPreference } from '../../model/cylinder';
+import { SliderMarkService } from '../../services/slider-mark.service';
 
 /**
  * Input Settings unit choices, in the order the picker shows them. The labels
@@ -111,7 +113,8 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     private nup: NumberUnitParserService,
     private cd: ChangeDetectorRef,
     public mechanismService: MechanismService,
-    public gridUtils: GridUtilsService
+    public gridUtils: GridUtilsService,
+    private sliderMarks: SliderMarkService
   ) {
     //Set the instance to this
     EditPanelComponent.instance = this;
@@ -258,6 +261,27 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   /** A slider with a block and nowhere to slide: invalid until it gets a carrier. */
   get isDanglingSlider(): boolean {
     return this.selectedSlider?.isDangling === true;
+  }
+
+  /**
+   * The cylinder-skin override (§2.7), shown only where the assembly actually
+   * qualifies for a skin -- a control for a picture that cannot be drawn is
+   * just a puzzle.
+   *
+   * A view preference: it does not serialize into the URL and does not enter
+   * the undo stack, so a shared link always opens on Auto.
+   */
+  get showCylinderSkin(): boolean {
+    return !!this.activeSrv.selectedJoint && !!resolveCylinder(this.activeSrv.selectedJoint);
+  }
+
+  get skinPreference(): SkinPreference {
+    return this.sliderMarks.preferenceFor(this.activeSrv.selectedJoint?.id ?? '');
+  }
+
+  setSkinPreference(preference: SkinPreference): void {
+    this.sliderMarks.setPreference(this.activeSrv.selectedJoint?.id ?? '', preference);
+    this.mechanismService.onMechUpdateState.next(2);
   }
 
   disableAndEnableLinkFields(): void {

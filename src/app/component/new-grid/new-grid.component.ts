@@ -55,7 +55,12 @@ import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 import { DragStateService } from '../../services/drag-state.service';
-import { Channel, SliderMark, SliderMarkService } from '../../services/slider-mark.service';
+import {
+  Channel,
+  CylinderMark,
+  SliderMark,
+  SliderMarkService,
+} from '../../services/slider-mark.service';
 import {
   curvedArrowPath,
   MARK,
@@ -1480,6 +1485,62 @@ export class NewGridComponent {
    * cut channel is otherwise indistinguishable from a compound link's extra
    * subpath, and a test that cannot tell them apart is not testing the channel.
    */
+  /**
+   * The pistons currently wearing their cylinder skin.
+   *
+   * Not cached with the marks: it depends on the selection and on whether the
+   * animation is running, neither of which is in the mark fingerprint — and
+   * both change without anything moving.
+   */
+  get cylinderList(): CylinderMark[] {
+    return this.sliderMarks.cylinderMarks(
+      this.mechanismSrv.getJoints(),
+      0.15 * this.settings.objectScale,
+      this.activeObjService.objType === 'Joint'
+        ? this.selectedAssemblyId()
+        : this.activeObjService.objType === 'Link'
+          ? this.selectedAssemblyId()
+          : undefined,
+      AnimationBarComponent.animate
+    );
+  }
+
+  /**
+   * Which assembly the current selection belongs to, so selecting any member of
+   * a piston — barrel, rod, or the joint itself — reveals the same one.
+   */
+  private selectedAssemblyId(): string | undefined {
+    const joints = this.mechanismSrv.getJoints();
+    const r = 0.15 * this.settings.objectScale;
+    for (const candidate of this.sliderMarks.cylinderMarks(joints, r)) {
+      if (this.activeObjService.objType === 'Joint') {
+        const id = this.activeObjService.selectedJoint?.id;
+        if (id === candidate.id || id === candidate.hiddenJointId) return candidate.id;
+        if (candidate.rodId.includes(id ?? ' ')) return candidate.id;
+      }
+      if (this.activeObjService.objType === 'Link') {
+        const id = this.activeObjService.selectedLink?.id;
+        if (id === candidate.barrelId || id === candidate.rodId) return candidate.id;
+      }
+    }
+    return undefined;
+  }
+
+  /** A link the cylinder skin is standing in for, so it is not drawn twice. */
+  private skinnedLink(link: Link): CylinderMark | undefined {
+    return this.cylinderList.find((mark) => mark.barrelId === link.id || mark.rodId === link.id);
+  }
+
+  /** A slider the cylinder skin has replaced. */
+  isSkinned(mark: SliderMark): boolean {
+    return this.cylinderList.some((cylinder) => cylinder.pin.id === (mark.pin as Joint).id);
+  }
+
+  /** The barrel's far joint disappears into the skin while it is collapsed. */
+  isHiddenByCylinder(joint: Joint): boolean {
+    return this.cylinderList.some((mark) => mark.hiddenJointId === joint.id);
+  }
+
   channelCountOn(link: Link): number {
     return (
       this.channelList.filter((channel) => channel.carrierId === link.id).length +
@@ -1488,6 +1549,10 @@ export class NewGridComponent {
   }
 
   linkPathWithChannels(link: Link): string {
+    // A skinned barrel or rod is drawn by the cylinder instead, so its ordinary
+    // outline is suppressed rather than drawn underneath — otherwise the skin
+    // would be a shape laid over the shape it replaces.
+    if (this.skinnedLink(link)) return '';
     const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
     const paths = this.channelList
       .filter((channel) => channel.carrierId === link.id)

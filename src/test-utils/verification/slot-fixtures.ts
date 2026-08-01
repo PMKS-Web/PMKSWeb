@@ -279,3 +279,29 @@ export function ellipticalTrammelFixture(): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/**
+ * A hydraulic cylinder: a rod welded to a block that slides in a barrel, with
+ * the barrel's far end and the rod's far end on opposite sides of the block and
+ * everything on one line (§2.7).
+ *
+ * Drawn, not solved. A Slide on a *moving* carrier is out of Phase 3's scope --
+ * the rider's angle tracks a carrier that is itself unknown -- so this mechanism
+ * is deliberately invalid and exists to exercise the cylinder skin, which is a
+ * rendering question rather than a kinematic one.
+ */
+export function cylinderSkinFixture(): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: -4, y: 0, ground: true },
+      { id: 'B', x: -1, y: 0 },
+      { id: 'C', x: 0, y: 0 },
+      { id: 'D', x: 4, y: 0 },
+      { id: 'E', x: 4, y: 3, ground: true, input: true },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'CD' }, { joints: 'DE' }],
+    sliders: [{ at: 'C', prisId: 'P', on: { carrier: 'AB', a: 'A', b: 'B' } }],
+    welds: ['C'],
+    inputAngVel: INPUT_SPEED,
+  };
+}
