@@ -273,63 +273,47 @@
             style="transform: scaleY(-1)"
           />
         }
-        @if (
-          gridUtils.typeOfJoint(joint) === 'P' &&
-          gridUtils.getGround(joint) &&
-          !gridUtils.getInput(joint)
-        ) {
-          <image
-            xlink:href="../../../assets/SliderPill.svg"
-            [attr.width]="settings.objectScale * 1.2"
-            [attr.x]="settings.objectScale * -0.6"
-            [attr.y]="settings.objectScale * -0.6"
-            [attr.height]="settings.objectScale * 1.2"
-            style="transform: rotateZ({{ gridUtils.getPrisAngle(joint) }}rad)"
-          />
-        }
-        @if (
-          gridUtils.typeOfJoint(joint) === 'P' &&
-          gridUtils.getGround(joint) &&
-          gridUtils.getInput(joint)
-        ) {
-          <image
-            xlink:href="../../../assets/SliderPillInput.svg"
-            [attr.width]="settings.objectScale * 1.2"
-            [attr.x]="settings.objectScale * -0.6"
-            [attr.y]="settings.objectScale * -0.6"
-            [attr.height]="settings.objectScale * 1.2"
-            style="transform: rotateZ({{ gridUtils.getPrisAngle(joint) }}rad)"
-          />
-        }
       </svg>
     }
   </g>
-  <g id="linkBGHolder" style="transform: scaleY(-1); pointer-events: none">
-    @for (link of mechanismSrv.getLinks(); track link) {
-      <ng-container>
-        @if (gridUtils.typeOfLink(link) == 'P') {
-          <svg
-            [attr.x]="getFirstXPos(link)"
-            [attr.y]="getFirstYPos(link)"
-            width="10"
-            height="10"
-            style="overflow: visible"
-          >
-            <image
-              xlink:href="../../../assets/SliderTrackMid.svg"
-              [attr.width]="settings.objectScale * 3"
-              [attr.height]="settings.objectScale * 3"
-              [attr.x]="settings.objectScale * -1.5"
-              [attr.y]="settings.objectScale * -1.5"
-              style="transform: scaleY(-1) rotateZ({{
-                -gridUtils.getPrisAngle(link.joints[1])
-              }}rad)"
+  <!-- Layer 1 of §2.8: hatch. Bottom of the stack, so nothing is ever cut out
+       of it and no gap has to track the rod — the links simply draw over it at
+       whatever angle they happen to point. Hatching never rotates with the rod;
+       the rails do, because they are the guide itself. -->
+  <g id="railHolder" style="transform: scaleY(-1); pointer-events: none">
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.rails) {
+        <g [attr.transform]="sliderMarks.frame(mark)">
+          @for (rail of mark.rails.rails; track $index) {
+            <line
+              [attr.x1]="rail.x1"
+              [attr.y1]="rail.y1"
+              [attr.x2]="rail.x2"
+              [attr.y2]="rail.y2"
+              stroke="#000000"
+              stroke-linecap="round"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
             />
-          </svg>
-        }
-      </ng-container>
+          }
+          @for (tick of mark.rails.ticks; track $index) {
+            <line
+              [attr.x1]="tick.x1"
+              [attr.y1]="tick.y1"
+              [attr.x2]="tick.x2"
+              [attr.y2]="tick.y2"
+              stroke="#000000"
+              stroke-linecap="round"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(2.4)"
+            />
+          }
+        </g>
+      }
     }
   </g>
+  <!-- Layer 2 of §2.8: the carrier, with its channel subtracted. The window is a
+       real hole rather than a lighter shape laid on top, so it reads as a slot
+       cut through the bar and its legibility cannot depend on the random colour
+       that bar happens to have. -->
   <g id="linkHolder" style="transform: scaleY(-1)">
     @for (link of mechanismSrv.getLinks(); track link) {
       <ng-container>
@@ -339,8 +323,9 @@
             (pointerout)="link.showHighlight = false"
             (pointerdown)="setLastLeftClick(link, $event)"
             (contextmenu)="setLastRightClick(link, $event)"
-            [attr.d]="mechanismSrv.getLinkProp(link, 'd')"
+            [attr.d]="linkPathWithChannels(link)"
             [attr.id]="link.id"
+            [attr.data-channels]="channelCountOn(link)"
             [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
             fill-rule="evenodd"
             [attr.fill-opacity]="0.7"
@@ -371,6 +356,56 @@
       </ng-container>
     }
     <!--          Angle and length indicator overlay-->
+  </g>
+  <!-- Layers 3-5 of §2.8: the block, then the weld plate that fuses a Slide's
+       rider to it, then the arrows. The block is #000 in every one of the four
+       slider cells — there is no colour derivation anywhere in this system. A
+       Slide looks like it shares the rider's colour because the plate above it
+       is painted in the rider's own colour at the link's own alpha, which is
+       why a random palette can never break the cue. Arrows sit above the plate
+       so nothing can tint them: they are always white, and that is only safe
+       because what is underneath is always black. -->
+  <g id="sliderHolder" style="transform: scaleY(-1); pointer-events: none">
+    @for (mark of sliderMarkList; track mark.id) {
+      <g [attr.transform]="sliderMarks.frame(mark)" [class]="'slider-mark'">
+        <g class="slider-block">
+          <path
+            [attr.d]="mark.block"
+            [attr.fill]="mark.dangling ? '#c5cae9' : '#000000'"
+            [attr.fill-opacity]="mark.dangling ? 0.7 : 1"
+            [attr.stroke]="mark.dangling ? '#F44336' : null"
+            [attr.stroke-width]="mark.dangling ? svgGrid.scaleWithZoom(3) : null"
+            filter="url(#elevation-1)"
+          />
+        </g>
+        @if (mark.plate) {
+          <g class="slider-plate" [attr.fill]="mark.plate.fill" fill-opacity="0.7">
+            @for (rider of mark.plate.riders; track $index) {
+              <path [attr.d]="rider" />
+            }
+            <path [attr.d]="mark.plate.block" />
+            @for (fillet of mark.plate.fillets; track $index) {
+              <path [attr.d]="fillet" />
+            }
+          </g>
+        }
+        @if (mark.driven) {
+          <g class="slider-arrows">
+            @for (arrow of mark.arrows; track $index) {
+              <line
+                [attr.x1]="arrow.line.x1"
+                [attr.y1]="arrow.line.y1"
+                [attr.x2]="arrow.line.x2"
+                [attr.y2]="arrow.line.y2"
+                stroke="#ffffff"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+              />
+              <path [attr.d]="arrow.head" fill="#ffffff" />
+            }
+          </g>
+        }
+      </g>
+    }
   </g>
   <g id="jointHolder" style="transform: scaleY(-1)">
     @for (joint of mechanismSrv.getJoints(); track joint) {
@@ -443,8 +478,7 @@
             <path
               [attr.id]="'joint_' + joint.id"
               [class]="mechanismSrv.getJointCSSClass(joint)"
-              d="M -5.5 -5.5 H-16.5 V4.5 H-5.5 V15.5 H4.5 V4.5 H15.5 V-5.5 H4.5 V-16.5 H-5.5 V-5.5 Z"
-              [attr.transform]="'scale(' + 0.01 * settings.objectScale + ')'"
+              [attr.d]="weldMarkerPath"
             ></path>
           }
         </g>

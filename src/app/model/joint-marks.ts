@@ -78,6 +78,57 @@ export function capsulePath(x0: number, x1: number, halfWidth: number): string {
   return `M ${x0} ${-h} H ${x1} A ${h} ${h} 0 0 1 ${x1} ${h} H ${x0} A ${h} ${h} 0 0 1 ${x0} ${-h} Z`;
 }
 
+/**
+ * The same capsule, placed and turned in the frame the caller is already
+ * drawing in, so it can be appended to a link's own path data.
+ *
+ * That is how the channel becomes a real hole: the carrier is filled even-odd,
+ * so a subpath inside it is subtracted, and the carrier's existing stroke then
+ * traces the new edge in the carrier's own colour with no second element. A
+ * mask would do the same job, but an SVG mask big enough to cover any pan or
+ * zoom makes the browser rasterize a surface that size and downsample the whole
+ * canvas with it.
+ */
+export function orientedCapsulePath(
+  centre: { x: number; y: number },
+  angle: number,
+  halfLength: number,
+  halfWidth: number
+): string {
+  const u = { x: Math.cos(angle), y: Math.sin(angle) };
+  const n = { x: -u.y, y: u.x };
+  const at = (along: number, across: number) =>
+    `${centre.x + along * u.x + across * n.x} ${centre.y + along * u.y + across * n.y}`;
+  const h = halfWidth;
+  return (
+    `M ${at(-halfLength, -h)} L ${at(halfLength, -h)} ` +
+    `A ${h} ${h} 0 0 1 ${at(halfLength, h)} ` +
+    `L ${at(-halfLength, h)} ` +
+    `A ${h} ${h} 0 0 1 ${at(-halfLength, -h)} Z`
+  );
+}
+
+/**
+ * A rider as the weld plate redraws it: from the joint outward along `angle`,
+ * square where it meets the block so the two read as fused, rounded at the far
+ * end concentric on the joint it reaches.
+ *
+ * Both ends are offset along the rider's own normal. Anchoring the near end on
+ * the frame's normal instead draws a wedge tapering from the block to the far
+ * joint — a plausible link shape, and not this one.
+ */
+export function riderCapsulePath(reach: number, halfWidth: number, angle: number): string {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const nx = -sin * halfWidth;
+  const ny = cos * halfWidth;
+  return (
+    `M ${-nx} ${-ny} L ${reach * cos - nx} ${reach * sin - ny} ` +
+    `A ${halfWidth} ${halfWidth} 0 0 1 ${reach * cos + nx} ${reach * sin + ny} ` +
+    `L ${nx} ${ny} Z`
+  );
+}
+
 /** The block, centred on the joint, long axis along the slot. Always #000. */
 export function blockPath(r: number): string {
   const a = MARK.blockAlongHalf * r;

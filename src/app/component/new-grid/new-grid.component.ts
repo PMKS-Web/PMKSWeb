@@ -55,6 +55,8 @@ import { ColorService } from '../../services/color.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { EditPanelComponent } from '../edit-panel/edit-panel.component';
 import { DragStateService } from '../../services/drag-state.service';
+import { Channel, SliderMark, SliderMarkService } from '../../services/slider-mark.service';
+import { plusPath } from '../../model/joint-marks';
 import {
   JointDropCandidate,
   MERGE_REFUSAL_MESSAGES,
@@ -91,7 +93,8 @@ export class NewGridComponent {
     public saveHistoryService: SaveHistoryService,
     private colorService: ColorService,
     public nup: NumberUnitParserService,
-    public dragState: DragStateService
+    public dragState: DragStateService,
+    public sliderMarks: SliderMarkService
   ) {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
@@ -1325,6 +1328,89 @@ export class NewGridComponent {
 
   getFirstYPos(link: Link) {
     return this.getFirstPosCoords(link).y;
+  }
+
+  /**
+   * The slider marks of §2.8, recomputed only when something they depend on has
+   * actually moved.
+   *
+   * Change detection asks for these far more often than the mechanism changes —
+   * and during playback it asks every frame across ~360 timesteps — so the
+   * fingerprint is what keeps the glyphs cheap. It is deliberately built from
+   * the same values the marks are: anything that can change a mark and not the
+   * fingerprint would be a stale drawing.
+   */
+  private markCache?: { key: string; marks: SliderMark[]; channels: Channel[] };
+
+  get sliderMarkList(): SliderMark[] {
+    return this.freshMarks().marks;
+  }
+
+  get channelList(): Channel[] {
+    return this.freshMarks().channels;
+  }
+
+  /**
+   * A carrier's outline with its channels cut out of it.
+   *
+   * The link already fills even-odd, so appending a channel subpath subtracts
+   * it, and the link's own stroke then traces the new edge in the link's own
+   * colour — the channel is a hole in the bar rather than a lighter shape laid
+   * on top, which is what keeps its legibility independent of the random colour
+   * that bar happens to have. A bar carrying two slots simply gets two
+   * subpaths.
+   */
+  /**
+   * How many channels this carrier holds. Published on the element because a
+   * cut channel is otherwise indistinguishable from a compound link's extra
+   * subpath, and a test that cannot tell them apart is not testing the channel.
+   */
+  channelCountOn(link: Link): number {
+    return this.channelList.filter((channel) => channel.carrierId === link.id).length;
+  }
+
+  linkPathWithChannels(link: Link): string {
+    const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
+    const channels = this.channelList.filter((channel) => channel.carrierId === link.id);
+    return channels.length === 0
+      ? outline
+      : `${outline} ${channels.map((channel) => channel.path).join(' ')}`;
+  }
+
+  /**
+   * The welded marker, at the 1.47R the mark system specifies.
+   *
+   * It replaces a hand-written path that predates the system and drew 2.2R —
+   * larger than the free circle it stands opposite, which inverted the reading
+   * that a weld removes a freedom. One marker, one size, everywhere.
+   */
+  get weldMarkerPath(): string {
+    return plusPath(0.15 * this.settings.objectScale);
+  }
+
+  private freshMarks(): { marks: SliderMark[]; channels: Channel[] } {
+    const joints = this.mechanismSrv.getJoints();
+    const r = 0.15 * this.settings.objectScale;
+    const key =
+      `${r}|` +
+      joints
+        .map((joint) => {
+          const real = joint as RealJoint;
+          const base = `${joint.id},${joint.x.toFixed(6)},${joint.y.toFixed(6)},${real.ground},${real.input},${real.isWelded}`;
+          // Rebinding a slot changes its channel without moving anything.
+          return joint instanceof PrisJoint
+            ? `${base},${joint.carrier?.id},${joint.slotJointA?.id},${joint.slotJointB?.id}`
+            : base;
+        })
+        .join(';');
+    if (this.markCache?.key !== key) {
+      this.markCache = {
+        key,
+        marks: this.sliderMarks.marks(joints, r),
+        channels: this.sliderMarks.channels(joints, r),
+      };
+    }
+    return this.markCache;
   }
 
   /**

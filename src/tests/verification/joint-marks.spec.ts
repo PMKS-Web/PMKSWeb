@@ -5,6 +5,7 @@ import {
   curvedArrowPath,
   MARK,
   railGeometry,
+  riderCapsulePath,
   slotHalfLength,
   straightArrowPaths,
 } from '../../app/model/joint-marks';
@@ -17,6 +18,27 @@ const R = 10;
 /** Every number in a path string, in order. */
 function numbers(path: string): number[] {
   return (path.match(/-?\d+(\.\d+)?(e-?\d+)?/g) ?? []).map(Number);
+}
+
+/**
+ * Where each drawing command ends up. An arc carries seven numbers and a line
+ * two, so counting numbers to find a point reads the radii as coordinates.
+ */
+function endpoints(path: string): [number, number][] {
+  const found: [number, number][] = [];
+  for (const [, , body] of path.matchAll(/([MLA])([^MLAZ]*)/g)) {
+    const values = numbers(body);
+    if (values.length >= 2) found.push([values[values.length - 2], values[values.length - 1]]);
+  }
+  return found;
+}
+
+function distance(a: [number, number], b: [number, number]): number {
+  return Math.hypot(a[0] - b[0], a[1] - b[1]);
+}
+
+function midpoint(a: [number, number], b: [number, number]): [number, number] {
+  return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
 }
 
 describe('the mark system, against the delivered SVGs', () => {
@@ -79,6 +101,33 @@ describe('the mark system, against the delivered SVGs', () => {
     // Tips at ±3R, which is clear of the 1.47R welded marker between them.
     expect(numbers(forward.head)[0]).toBeCloseTo(30, 6);
     expect(numbers(backward.head)[0]).toBeCloseTo(-30, 6);
+  });
+
+  it('keeps a rider the same width at both ends', () => {
+    // The failure this exists for draws a wedge: anchoring the near end on the
+    // frame's normal instead of the rider's own tapers the plate from the block
+    // down to the far joint. It animates, it looks like a link, and it is a
+    // different link -- so width is asserted rather than eyeballed.
+    for (const deg of [0, 31, 58.9, 90, 137, 180, 244, 300]) {
+      const angle = (deg * Math.PI) / 180;
+      const [nearA, farA, farB, nearB] = endpoints(riderCapsulePath(120, 18.4, angle));
+
+      expect(distance(nearA, nearB), `near end at ${deg} deg`).toBeCloseTo(36.8, 6);
+      expect(distance(farA, farB), `far end at ${deg} deg`).toBeCloseTo(36.8, 6);
+    }
+  });
+
+  it('starts a rider at its joint and ends it at the far one', () => {
+    for (const deg of [0, 58.9, 137, 244]) {
+      const angle = (deg * Math.PI) / 180;
+      const [nearA, farA, farB, nearB] = endpoints(riderCapsulePath(120, 18.4, angle));
+      const nearMid = midpoint(nearA, nearB);
+      const farMid = midpoint(farA, farB);
+
+      expect(Math.hypot(nearMid[0], nearMid[1]), `near at ${deg} deg`).toBeCloseTo(0, 6);
+      expect(farMid[0], `far x at ${deg} deg`).toBeCloseTo(120 * Math.cos(angle), 6);
+      expect(farMid[1], `far y at ${deg} deg`).toBeCloseTo(120 * Math.sin(angle), 6);
+    }
   });
 
   it('sweeps the driven-pin arc the long way round', () => {
