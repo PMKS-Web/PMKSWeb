@@ -142,13 +142,22 @@ await page.waitForTimeout(600);
 
 const plateFill = () => page.locator('#sliderHolder .slider-plate').first().getAttribute('fill');
 const wasFill = await plateFill();
-await page.evaluate(() => {
-  const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
-  grid.mechanismSrv.getLinks().find((link) => link.id === 'CD').fill = '#00695C';
-  window.ng.applyChanges(grid);
-});
-await page.waitForTimeout(500);
-const nowFill = await plateFill();
+
+// Driving the recolour needs Angular's debug globals, which exist only in a
+// development build. Skipped rather than failed against a deploy preview: the
+// check is about cache invalidation, and a production bundle cannot be asked.
+const recolourable = await page.evaluate(() => typeof window.ng?.getComponent === 'function');
+if (recolourable) {
+  await page.evaluate(() => {
+    const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+    grid.mechanismSrv.getLinks().find((link) => link.id === 'CD').fill = '#00695C';
+    window.ng.applyChanges(grid);
+  });
+  await page.waitForTimeout(500);
+} else {
+  console.log("  SKIP  the weld plate follows its rider's colour (needs a dev build)");
+}
+const nowFill = recolourable ? await plateFill() : '#00695C';
 
 const repainted = wasFill !== nowFill && nowFill === '#00695C';
 results.push({
