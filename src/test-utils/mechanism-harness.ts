@@ -43,12 +43,18 @@ export function createMechanismHarness(): MechanismHarness {
   } as unknown as Injector);
   const active = new ActiveObjService();
   let saves = 0;
+  // Resolved by token rather than one catch-all object: MechanismService pulls
+  // several services out of the injector to break dependency cycles, and a stub
+  // that answers every token with the same shape makes a missing one look like
+  // a working one until it is called.
+  const dragState = new DragStateService();
+  const history = {
+    save: () => {
+      saves += 1;
+    },
+  };
   const injector = {
-    get: () => ({
-      save: () => {
-        saves += 1;
-      },
-    }),
+    get: (token: unknown) => (token === DragStateService ? dragState : history),
   } as unknown as Injector;
   service = new MechanismService(grid, active, injector, settings, parser);
   return { service, active, saveCount: () => saves };

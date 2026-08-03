@@ -27,6 +27,7 @@ import { AnimationBarComponent } from '../component/animation-bar/animation-bar.
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
 import { SliderMarkService } from './slider-mark.service';
+import { DragStateService } from './drag-state.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { SaveHistoryService } from './save-history.service';
@@ -750,6 +751,11 @@ export class MechanismService {
   }
 
   deleteJoint() {
+    // A gesture in flight targets a joint that is about to stop existing. The
+    // pointer keeps sending moves after the delete -- from the keyboard, or a
+    // second pointer -- and the drag then writes through a SliderBlock whose
+    // joint list no longer holds what it is looking for.
+    this.injector.get(DragStateService).cancel();
     this.slotStashes.delete(this.activeObjService.selectedJoint.id);
     const jointIndex = this.gridUtils.findJointIDIndex(
       this.activeObjService.selectedJoint.id,

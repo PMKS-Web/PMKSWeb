@@ -177,9 +177,14 @@ export class GridUtilsService {
         selectedJoint.links.forEach((l) => {
           if (l instanceof SliderBlock) {
             //If the joint is a slider, then the joint is the second joint in the link must follow the first joint
+            // -1 once the block has been taken apart under an in-flight drag.
+            // The gesture is cancelled on delete, but a pointer move can still
+            // arrive first, and writing through -1 throws.
             const jointIndex = l.joints.findIndex((jt) => jt.id !== selectedJoint.id);
-            l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
-            l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
+            if (jointIndex >= 0) {
+              l.joints[jointIndex].x = roundNumber(trueCoord.x, 6);
+              l.joints[jointIndex].y = roundNumber(trueCoord.y, 6);
+            }
           }
           if (!(l instanceof RealLink)) {
             return;
@@ -259,12 +264,15 @@ export class GridUtilsService {
         });
         break;
     }
-    this.mechanismSrv.updateMechanism(false);
-    // A floating slider is deliberately not a member of its carrier -- that is
-    // what makes it a slot rather than a pin -- so moving one of the two joints
-    // that define the slot moves the channel and leaves the block behind. Put it
-    // back on the line it rides, keeping where it sat along that line.
+    // Before the rebuild, not after. A floating slider is deliberately not a
+    // member of its carrier -- that is what makes it a slot rather than a pin --
+    // so moving the carrier, or one of the two joints defining the slot, leaves
+    // the block behind. Putting it back afterwards fixes only the pose on
+    // screen: updateMechanism has already copied the stale position into every
+    // solved timestep, so pressing Play snapped the block straight back off its
+    // channel.
     this.mechanismSrv.reseatFloatingSliders();
+    this.mechanismSrv.updateMechanism(false);
     return selectedJoint;
   }
 
@@ -342,10 +350,15 @@ export class GridUtilsService {
       PositionSolver.setUpInitialJointLocations(link.joints);
     });
 
-    this.mechanismSrv.updateMechanism(false);
-    // Same for a whole carrier moving: its channel travels with it, and the
-    // block riding in that channel is not one of its joints.
+    // Before the rebuild, not after. A floating slider is deliberately not a
+    // member of its carrier -- that is what makes it a slot rather than a pin --
+    // so moving the carrier, or one of the two joints defining the slot, leaves
+    // the block behind. Putting it back afterwards fixes only the pose on
+    // screen: updateMechanism has already copied the stale position into every
+    // solved timestep, so pressing Play snapped the block straight back off its
+    // channel.
     this.mechanismSrv.reseatFloatingSliders();
+    this.mechanismSrv.updateMechanism(false);
     return selectedLink;
   }
 

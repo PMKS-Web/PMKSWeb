@@ -390,6 +390,61 @@ checkThat(
 );
 await page.screenshot({ path: `${OUT}/13-bad-angle.png` });
 
+// -------------------------------------------------- things that must not break
+console.log('\nhostile input');
+
+// Object Scale multiplies every dimension in the mark system, so a value that is
+// not a positive number does not degrade the drawing -- it erases it, behind
+// dozens of invalid-SVG errors. The pattern used an unescaped dot, so "1x2"
+// validated and Number() turned it into NaN.
+await load(FOUR_BAR);
+await page.getByText('Settings', { exact: true }).first().click();
+await page.waitForTimeout(900);
+const scaleField = page.locator('app-settings-panel input').first();
+let scaleOk = true;
+for (const bad of ['1x2', 'abc', '-3', '0']) {
+  await scaleField.fill(bad);
+  await scaleField.press('Enter');
+  await page.waitForTimeout(400);
+  const shown = await scaleField.inputValue();
+  const nan = await page.evaluate(
+    () =>
+      [
+        ...document.querySelectorAll('#linkHolder path, #sliderHolder path, #railHolder line'),
+      ].filter((n) => /NaN/.test(n.getAttribute('d') ?? n.getAttribute('x1') ?? '')).length
+  );
+  if (shown === bad || nan > 0) scaleOk = false;
+}
+checkThat('a nonsensical object scale is refused rather than drawn', scaleOk);
+await page.screenshot({ path: `${OUT}/14-bad-scale.png` });
+
+// A gesture in flight targets a joint that is about to stop existing.
+await load(FOUR_BAR);
+const before14 = consoleErrors.length;
+await page.locator('#joint_E').click();
+await page.waitForTimeout(400);
+const doomed = await centreOf('#joint_E');
+if (doomed) {
+  await page.mouse.move(doomed.x, doomed.y);
+  await page.mouse.down();
+  await page.mouse.move(doomed.x + 35, doomed.y + 20);
+  await page.evaluate(() => {
+    [...document.querySelectorAll('button')]
+      .find((n) => n.textContent?.trim() === 'Delete')
+      ?.click();
+  });
+  await page.waitForTimeout(250);
+  await page.mouse.move(doomed.x + 70, doomed.y + 45);
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+}
+checkThat(
+  'deleting a joint mid-drag does not keep dragging deleted topology',
+  consoleErrors.length === before14,
+  consoleErrors.slice(before14, before14 + 1).join('')
+);
+await page.screenshot({ path: `${OUT}/15-delete-mid-drag.png` });
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);

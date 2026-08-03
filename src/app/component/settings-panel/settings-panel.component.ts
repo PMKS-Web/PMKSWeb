@@ -105,11 +105,20 @@ export class SettingsPanelComponent implements OnDestroy {
 
   onChanges(): void {
     this.settingsForm.controls['objectScale'].valueChanges.subscribe((val) => {
-      if (this.settingsForm.controls['objectScale'].invalid) {
+      const parsed = Number(val);
+      // The pattern is the gate the user sees; this is the one that protects the
+      // canvas. Every dimension in the mark system is a multiple of this number,
+      // so a NaN or a zero does not degrade the drawing -- it erases it, behind
+      // dozens of invalid-SVG errors.
+      if (
+        this.settingsForm.controls['objectScale'].invalid ||
+        !Number.isFinite(parsed) ||
+        parsed <= 0
+      ) {
         // Restore the last good scale into its own field, not the speed field.
         this.settingsForm.patchValue({ objectScale: this.currentObjectScaleSetting.toString() });
       } else {
-        this.currentObjectScaleSetting = Number(val);
+        this.currentObjectScaleSetting = parsed;
         SettingsService._objectScale.next(this.currentObjectScaleSetting);
       }
       this.mechanismSrv.updateMechanism();
@@ -192,7 +201,12 @@ export class SettingsPanelComponent implements OnDestroy {
     }
   }
 
-  numRegex = '^-?[0-9]+(.[0-9]{0,10})?$';
+  // The dot is escaped, and the scale has to be positive. Unescaped, `.` matched
+  // any character, so "1x2" validated, Number() turned it into NaN, and the NaN
+  // reached every mark on the canvas -- the mechanism vanished behind dozens of
+  // invalid-SVG errors. A zero or negative scale is just as unusable: every
+  // dimension in the mark system is a multiple of it.
+  numRegex = '^[0-9]*\\.?[0-9]+$';
   settingsForm = this.fb.group(
     {
       objectScale: ['', [Validators.required, Validators.pattern(this.numRegex)]],

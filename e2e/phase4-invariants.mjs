@@ -320,6 +320,46 @@ for (const [name, query] of Object.entries(MECHANISMS)) {
     !results.some((r) => !r.ok && r.label.startsWith(`${name}: link `))
   );
 
+  // The reseat has to reach the solved timesteps, not just the pose on screen.
+  // updateMechanism copies the current pose into every frame, so reseating after
+  // it fixed the canvas and left Play snapping the block straight back off its
+  // channel -- correct at rest, wrong the moment it moves.
+  await load(query);
+  const slotJoint = await page.evaluate(() => {
+    const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+    const slider = grid.mechanismSrv
+      .getJoints()
+      .find((j) => j.constructor.name === 'PrisJoint' && j.isFloating && j.isSlotWellFormed);
+    return slider ? `joint_${slider.slotJointA.id}` : null;
+  });
+  if (slotJoint) {
+    const at = await centreOf(`#${slotJoint}`);
+    if (at) await drag(at, 110, -80);
+    const framed = await page.evaluate(() => {
+      const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+      const frames = grid.mechanismSrv.mechanisms[0]?.joints;
+      if (!frames?.length) return null;
+      const live = grid.mechanismSrv
+        .getJoints()
+        .find((j) => j.constructor.name === 'PrisJoint' && j.isFloating);
+      if (!live) return null;
+      const f = frames[0];
+      const S = f.find((j) => j.id === live.id);
+      const A = f.find((j) => j.id === live.slotJointA.id);
+      const B = f.find((j) => j.id === live.slotJointB.id);
+      if (!S || !A || !B) return null;
+      const dx = B.x - A.x;
+      const dy = B.y - A.y;
+      const L = Math.hypot(dx, dy);
+      return Math.abs((S.x - A.x) * (-dy / L) + (S.y - A.y) * (dx / L));
+    });
+    checkThat(
+      `${name}: the reseat reaches frame zero, not just the canvas`,
+      framed === null || framed < 1e-3,
+      framed === null ? 'no frames' : framed.toFixed(6)
+    );
+  }
+
   // Independence: dragging something unrelated to a slot must leave that slot's
   // block exactly where it was. Reseating has to be a no-op for every slider
   // whose slot did not move, or "drag one thing" quietly becomes "drag
