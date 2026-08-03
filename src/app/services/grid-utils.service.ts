@@ -260,6 +260,11 @@ export class GridUtilsService {
         break;
     }
     this.mechanismSrv.updateMechanism(false);
+    // A floating slider is deliberately not a member of its carrier -- that is
+    // what makes it a slot rather than a pin -- so moving one of the two joints
+    // that define the slot moves the channel and leaves the block behind. Put it
+    // back on the line it rides, keeping where it sat along that line.
+    this.mechanismSrv.reseatFloatingSliders();
     return selectedJoint;
   }
 
@@ -338,6 +343,9 @@ export class GridUtilsService {
     });
 
     this.mechanismSrv.updateMechanism(false);
+    // Same for a whole carrier moving: its channel travels with it, and the
+    // block riding in that channel is not one of its joints.
+    this.mechanismSrv.reseatFloatingSliders();
     return selectedLink;
   }
 

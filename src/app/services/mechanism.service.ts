@@ -96,7 +96,16 @@ export class MechanismService {
     // and now the whole mark system) grew around it. On a slotted link that
     // shows worst: the channel is R-relative and kept scaling, so it outgrew the
     // bar it is supposed to be a hole in.
-    SettingsService._objectScale.subscribe(() => {
+    //
+    // Guarded against the value it already has: a BehaviorSubject replays its
+    // current value to every new subscriber, so an unguarded handler rebuilds
+    // every link the moment the service is constructed -- and rebuilds them
+    // again on any re-emission of the same number, which is what made the
+    // compound-contour caching test flaky.
+    let lastScale = SettingsService.objectScale;
+    SettingsService._objectScale.subscribe((scale) => {
+      if (scale === lastScale) return;
+      lastScale = scale;
       this.links.forEach((link) => {
         if (link instanceof RealLink) link.reComputeDPath();
       });
@@ -1268,6 +1277,52 @@ export class MechanismService {
 
     this.updateMechanism();
     this.onMechUpdateState.next(3);
+  }
+
+  /**
+   * Put every floating block back on the slot it rides, after something moved
+   * the slot out from under it.
+   *
+   * A floating slider is deliberately *not* a member of its carrier -- that is
+   * what makes it a slot rather than a pin -- so nothing that drags the carrier,
+   * or one of the two joints defining the slot, touches the block. It stayed
+   * where it was while the channel rotated away from it, which reads as the
+   * block having come loose.
+   *
+   * Its position along the slot is preserved, measured from the slot's midpoint,
+   * so reseating does not also move s0: one drag still changes one quantity.
+   */
+  reseatFloatingSliders(): void {
+    for (const slider of this.joints) {
+      if (!(slider instanceof PrisJoint) || !slider.isFloating) continue;
+      if (!slider.isSlotWellFormed) continue;
+      const a = slider.slotJointA!;
+      const b = slider.slotJointB!;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const length = Math.hypot(dx, dy);
+      if (length < 1e-9) continue;
+
+      const ux = dx / length;
+      const uy = dy / length;
+      const midX = (a.x + b.x) / 2;
+      const midY = (a.y + b.y) / 2;
+      const along = (slider.x - midX) * ux + (slider.y - midY) * uy;
+      const x = midX + along * ux;
+      const y = midY + along * uy;
+      if (Math.hypot(x - slider.x, y - slider.y) < 1e-12) continue;
+
+      slider.x = x;
+      slider.y = y;
+      // The block is zero-length by construction, so its pin travels with it.
+      const pin = slider.links
+        .find((link): link is SliderBlock => link instanceof SliderBlock)
+        ?.joints.find((joint) => joint.id !== slider.id);
+      if (pin) {
+        pin.x = x;
+        pin.y = y;
+      }
+    }
   }
 
   /**

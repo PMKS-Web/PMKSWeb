@@ -58,12 +58,12 @@ export class SettingsPanelComponent implements OnDestroy {
           { emitEvent: false }
         );
 
-        //Werid place to put this but
-        this.mechanismSrv.links.forEach((link: Link) => {
-          (link as RealLink).reComputeDPath();
-        });
-
-        this.mechanismSrv.updateMechanism();
+        // Recomputing the link outlines used to happen here, casting every
+        // Link to RealLink -- which threw on the first SliderBlock and left
+        // every link after it stale, so any mechanism with a slider logged a
+        // TypeError the moment Settings opened. MechanismService does it now,
+        // guarded, and for every route that changes the scale rather than only
+        // this panel.
       })
     );
 

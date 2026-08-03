@@ -65,12 +65,31 @@ describe('a slot losing what defines it', () => {
 
   it('dangles when a defining joint is merged away by a snap', () => {
     const s = slottedLever();
+    // Somewhere unrelated to the assembly, so the merge is legal: D snapping
+    // onto the block's own pin is refused outright now (see below), which
+    // closes that route rather than repairing after it.
+    const spare = new RevJoint('Z', 5, 5);
+    const bar = new RealLink('AZ', [s.a, spare], 1, 1, new Coord(2.5, 2.5));
+    s.service.joints.push(spare);
+    s.service.links.push(bar);
+    wireGraph(s.service);
 
-    // D snaps onto the crank pin, so the carrier no longer has a joint D at all.
-    expect(s.service.mergeJoints(s.d, s.b)).toBeUndefined();
+    expect(s.service.mergeJoints(s.d, spare)).toBeUndefined();
 
     expect(s.slot.isFloating).toBe(false);
     expect(s.slot.isDangling).toBe(true);
+  });
+
+  it('refuses to merge a defining joint into the block riding its own slot', () => {
+    // The assembly would then slide on a link it is part of: the slot's
+    // direction is measured from two joints, one of which has become the block.
+    // Found by dragging a block 25 px, which snapped it onto the nearer end of
+    // its own carrier and left it non-dangling and unflagged.
+    const s = slottedLever();
+
+    expect(s.service.mergeJoints(s.d, s.b)).toBe('own-carrier');
+    expect(s.slot.isFloating, 'the slot is left alone').toBe(true);
+    expect(s.service.joints.map((joint) => joint.id)).toContain('D');
   });
 
   it('dangles when a defining joint is deleted outright', () => {

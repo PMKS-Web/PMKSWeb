@@ -315,3 +315,63 @@ describe('resolving the joint a drag is aimed at', () => {
     expect(resolveDropCandidate(dragged, 3, 0, [dragged, prismatic], 5)).toBeUndefined();
   });
 });
+
+describe('a slider and the link it rides', () => {
+  /** Bar C--D, with a block at P riding a slot cut into it. */
+  function slottedLever() {
+    const c = new RevJoint('C', 0, 0);
+    const d = new RevJoint('D', 4, 0);
+    const carrier = connect('CD', [c, d]);
+    const p = new RevJoint('P', 2, 0);
+    const e = new RevJoint('E', 2, 3);
+    connect('EP', [e, p]);
+    const slider = new PrisJoint('S', 2, 0);
+    const block = new SliderBlock('PS', [p, slider]);
+    p.links.push(block);
+    slider.links.push(block);
+    p.connectedJoints.push(slider);
+    slider.connectedJoints.push(p);
+    slider.slideOn(carrier, c, d);
+    return { c, d, p, e, slider };
+  }
+
+  it('refuses to merge the block into a joint that defines its own slot', () => {
+    // Found by dragging a block 25px: it snapped onto the nearer end of its own
+    // carrier, and the assembly went on sliding on itself -- non-dangling and
+    // unflagged, because the slot's own well-formedness test looks at the
+    // PrisJoint, and the merge happens to its paired pin.
+    const scene = slottedLever();
+
+    expect(refuseJointMerge(scene.p, scene.c)).toBe('own-carrier');
+    expect(refuseJointMerge(scene.p, scene.d)).toBe('own-carrier');
+  });
+
+  it('refuses it from either direction', () => {
+    const scene = slottedLever();
+
+    expect(refuseJointMerge(scene.c, scene.p)).toBe('own-carrier');
+  });
+
+  it('says which rule it hit', () => {
+    expect(MERGE_REFUSAL_MESSAGES['own-carrier']).toMatch(/ride/i);
+  });
+
+  it('still allows a merge with a joint that has nothing to do with the slot', () => {
+    // The refusal must be about the carrier, not about sliders in general --
+    // dropping a pin onto a slider's pin is a pin-in-slot, which is the point.
+    const scene = slottedLever();
+    const loose = new RevJoint('Z', 9, 9);
+    const other = new RevJoint('Y', 9, 8);
+    connect('YZ', [loose, other]);
+
+    expect(refuseJointMerge(loose, scene.p)).toBeUndefined();
+  });
+
+  it('never offers such a target to a drag', () => {
+    const scene = slottedLever();
+
+    const found = resolveJointDropTarget(scene.p, 0.05, 0, [scene.c, scene.d], 1);
+
+    expect(found).toBeUndefined();
+  });
+});

@@ -8,6 +8,7 @@ export type MergeRefusal =
   | 'prismatic'
   | 'two-sliders'
   | 'over-constrained'
+  | 'own-carrier'
   | 'not-a-real-joint';
 
 /** What to tell the user when a merge is refused. */
@@ -18,6 +19,7 @@ export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
   'two-sliders': 'Only one of these joints can carry a slider',
   'over-constrained':
     'Merging here would tie the same two joints together twice, over-constraining the linkage',
+  'own-carrier': 'A slider cannot ride on a link it is part of',
   'not-a-real-joint': 'This joint cannot be merged',
 };
 
@@ -38,6 +40,14 @@ export function refuseJointMerge(source: Joint, target: Joint): MergeRefusal | u
   // Dropping a pin onto a slider's pin is a pin-in-slot, which is the point.
   // Two blocks on one pin is a different joint type, not a merge.
   if (carriesASlider(source) && carriesASlider(target)) return 'two-sliders';
+
+  // A slider merged into one of its own carrier's joints would ride on a link
+  // it is now part of: the slot's direction is measured from two joints, one of
+  // which has become the block itself, so the constraint refers to its own
+  // answer. `isSlotWellFormed` refuses that shape for the PrisJoint, but the
+  // merge happens to its paired pin, which that check never sees -- so the
+  // assembly stayed non-dangling and unflagged, sliding on itself.
+  if (ridesOn(source, target) || ridesOn(target, source)) return 'own-carrier';
 
   // Two joints on one link collapsing to one point would leave that link a
   // zero-length body — degenerate for every solver downstream.
@@ -70,6 +80,16 @@ function wouldOverConstrain(source: RealJoint, target: RealJoint): boolean {
 
 function carriesASlider(joint: RealJoint): boolean {
   return joint.connectedJoints.some((connected) => connected instanceof PrisJoint);
+}
+
+/** Whether `joint`'s slider slides along a link that `other` is a member of. */
+function ridesOn(joint: RealJoint, other: RealJoint): boolean {
+  return joint.connectedJoints.some(
+    (connected) =>
+      connected instanceof PrisJoint &&
+      connected.isFloating &&
+      connected.carrier!.joints.some((member) => member.id === other.id)
+  );
 }
 
 function jointIDSet(link: Link, replace?: string, replacement?: string): Set<string> {

@@ -173,6 +173,30 @@ const violations = () =>
       }
     }
 
+    // 5. a floating block is ON the line it rides.
+    //
+    // Distinct from 3: the channel can be drawn perfectly on the carrier while
+    // the block sits off it, which is what dragging a slot's defining joint or
+    // the carrier body used to leave behind -- the slider is deliberately not a
+    // member of its carrier, so nothing that moved the carrier moved it.
+    for (const slider of sliders) {
+      if (!slider.isFloating || !slider.isSlotWellFormed) continue;
+      const a = slider.slotJointA;
+      const b = slider.slotJointB;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1e-9) continue;
+      const off = Math.abs((slider.x - a.x) * (-dy / len) + (slider.y - a.y) * (dx / len));
+      // 1e-3, not machine epsilon: joint coordinates come back out of the URL
+      // at a fixed decimal precision, so a mechanism is a little off its own
+      // constraints the moment it is loaded. The breakage this catches measured
+      // 0.16 and 0.47 model units -- hundreds of times larger.
+      if (off > 1e-3) {
+        bad.push(`${slider.id}: block sits ${off.toFixed(4)} off its own slot line`);
+      }
+    }
+
     // Nothing may render a NaN.
     for (const node of document.querySelectorAll(
       '#sliderHolder path, #railHolder line, #linkHolder path'
