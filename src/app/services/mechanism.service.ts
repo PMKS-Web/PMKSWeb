@@ -89,7 +89,20 @@ export class MechanismService {
     private injector: Injector,
     private settingsService: SettingsService,
     private nup: NumberUnitParserService
-  ) {}
+  ) {
+    // A link's outline is computed once and cached on the link, but its width is
+    // objectScale / 4 -- so changing the scale left every bar at the old size
+    // while everything that reads objectScale per frame (joints, ground marks,
+    // and now the whole mark system) grew around it. On a slotted link that
+    // shows worst: the channel is R-relative and kept scaling, so it outgrew the
+    // bar it is supposed to be a hole in.
+    SettingsService._objectScale.subscribe(() => {
+      this.links.forEach((link) => {
+        if (link instanceof RealLink) link.reComputeDPath();
+      });
+      this.updateMechanism();
+    });
+  }
 
   // delete mechanism and reset
   resetMechanism() {

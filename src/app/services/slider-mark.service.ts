@@ -107,13 +107,24 @@ export interface CylinderMark {
 @Injectable({ providedIn: 'root' })
 export class SliderMarkService {
   /**
-   * The transform that puts a group into the slot's frame, given that the
-   * holder above it is y-flipped. The inner flip cancels the holder's, and the
-   * negated angle compensates for the handedness the flip reverses -- so local
-   * +x runs along the slot and local +y along its normal, in model space.
+   * The transform that puts a group into the slot's frame: local +x along the
+   * slot, local +y along its normal, origin on the joint.
+   *
+   * Plainly a rotation, and it has to be. It was written as `rotate(-theta)
+   * scale(1 -1)` to "undo" the y-flip on the holder above -- but the holder's
+   * flip is what turns model coordinates into screen ones, and everything
+   * inside it is already in model coordinates. The extra flip therefore
+   * composed to a *reflection*: local +x landed on model angle -theta and local
+   * +y pointed the wrong way entirely.
+   *
+   * Every mark in the set is symmetric about both axes -- block, channel,
+   * rails, arrows -- so a mirror was invisible in all of them. The weld plate
+   * and its fillets are the only asymmetric geometry here, and they were drawn
+   * pointing away from the rider they belong to: on a Scotch yoke the plate ran
+   * three units below joint C when its rider runs three units above it.
    */
   frame(mark: { x: number; y: number; rotation: number }): string {
-    return `translate(${mark.x} ${mark.y}) rotate(${mark.rotation}) scale(1 -1)`;
+    return `translate(${mark.x} ${mark.y}) rotate(${mark.rotation})`;
   }
 
   /**
@@ -221,7 +232,7 @@ export class SliderMarkService {
       y: pin.y,
       // +x runs toward the rod, so the barrel is the negative side and the
       // geometry reads the same whichever way round the slot was declared.
-      rotation: -toDegrees(angle),
+      rotation: toDegrees(angle),
       barrelId: found.barrel.id,
       rodId: found.rod.id,
       hiddenJointId: barrelFar.id,
@@ -283,7 +294,7 @@ export class SliderMarkService {
       // and the sliding joint tracks the pin rather than the other way round.
       x: pin.x,
       y: pin.y,
-      rotation: -toDegrees(angle),
+      rotation: toDegrees(angle),
       block: blockPath(r),
       welded,
       driven,
@@ -349,7 +360,7 @@ export class SliderMarkService {
       ...railGeometry(r, half),
       x: anchor.x + middle * Math.cos(angle),
       y: anchor.y + middle * Math.sin(angle),
-      rotation: -toDegrees(angle),
+      rotation: toDegrees(angle),
     };
   }
 }
