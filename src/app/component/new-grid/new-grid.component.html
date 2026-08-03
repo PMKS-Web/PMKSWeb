@@ -223,7 +223,12 @@
     </g>
   }
 
-  <g id="jointBGHolder" style="transform: scaleY(-1)">
+  <!-- Decoration, not controls: the ground triangle and the input arrow mark
+       what a joint *is*, and both are drawn wider than the joint itself. Left
+       hit-testable they sit over whatever is beneath them and swallow clicks
+       meant for a link body -- a cylinder barrel could not be selected at all
+       because a ground mark overlapped it. -->
+  <g id="jointBGHolder" style="transform: scaleY(-1)" pointer-events="none">
     @for (joint of mechanismSrv.getJoints(); track joint) {
       <svg [attr.x]="joint.x" [attr.y]="joint.y" width="10" height="10" style="overflow: visible">
         @if (
@@ -433,8 +438,14 @@
          place, which is what makes the reveal additive. -->
     @for (cyl of cylinderList; track cyl.id) {
       <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
+        <!-- Selecting any member of a piston reveals it (§2.7): barrel, rod, or
+             the joint itself. The barrel hands the gesture to the pin, which is
+             the same assembly and already knows how to reveal. -->
         <path
           class="cylinder-barrel"
+          cursor="pointer"
+          (pointerdown)="setLastLeftClick(cyl.pin)"
+          (contextmenu)="setLastRightClick(cyl.pin)"
           [attr.d]="cyl.barrel"
           [attr.fill]="cyl.barrelFill"
           fill-opacity="0.7"

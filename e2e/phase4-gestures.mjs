@@ -445,6 +445,41 @@ checkThat(
 );
 await page.screenshot({ path: `${OUT}/15-delete-mid-drag.png` });
 
+// ------------------------------------------------- §2.7 reveal from any member
+console.log('\nselecting any member of a piston reveals it');
+const CYLINDER =
+  '?2P.Fe.K,0.1011.KA,A,0_W,0,0.GB,B,0Fe,0,0.OC,C,0,0,0.GD,D,_W,0,0.ME,E,_W,ku,0.HP,P,0,0,0,AB,A,B..YRAB,AB,Fe,Fe,0d4,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,VG,0,303e9f,C,D,,.YRDE,DE,Fe,Fe,_W,NS,0d125a,D,E,,.YPCP,CP,Fe,0,0,0,,C,P,,...N_a';
+
+for (const [part, selector] of [
+  ['barrel', '.cylinder-barrel'],
+  ['rod', '.cylinder-rod'],
+]) {
+  await load(CYLINDER);
+  const collapsed = await page.locator('.cylinder-mark').count();
+  const at = await page.evaluate((sel) => {
+    const node = document.querySelector(sel);
+    if (!node) return null;
+    const box = node.getBoundingClientRect();
+    // A quarter in from the end: the middle of a barrel is where the block and
+    // the rod sit on top of it.
+    return { x: box.x + box.width * 0.25, y: box.y + box.height / 2 };
+  }, selector);
+  if (!checkThat(`the ${part} is there to click`, collapsed === 1 && !!at)) continue;
+  await page.mouse.click(at.x, at.y);
+  await page.waitForTimeout(700);
+  const revealed = await page.locator('.cylinder-mark').count();
+  checkThat(
+    `clicking the ${part} reveals the slotted form underneath`,
+    revealed === 0,
+    `marks ${collapsed} -> ${revealed}`
+  );
+  checkThat(
+    `and brings up the skin control for it`,
+    (await page.locator('.skinPicker').count()) === 1
+  );
+}
+await page.screenshot({ path: `${OUT}/16-cylinder-reveal.png` });
+
 await browser.close();
 
 const failed = results.filter((r) => !r.ok);
