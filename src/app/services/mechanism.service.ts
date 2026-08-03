@@ -89,28 +89,30 @@ export class MechanismService {
     private injector: Injector,
     private settingsService: SettingsService,
     private nup: NumberUnitParserService
-  ) {
-    // A link's outline is computed once and cached on the link, but its width is
-    // objectScale / 4 -- so changing the scale left every bar at the old size
-    // while everything that reads objectScale per frame (joints, ground marks,
-    // and now the whole mark system) grew around it. On a slotted link that
-    // shows worst: the channel is R-relative and kept scaling, so it outgrew the
-    // bar it is supposed to be a hole in.
-    //
-    // Guarded against the value it already has: a BehaviorSubject replays its
-    // current value to every new subscriber, so an unguarded handler rebuilds
-    // every link the moment the service is constructed -- and rebuilds them
-    // again on any re-emission of the same number, which is what made the
-    // compound-contour caching test flaky.
-    let lastScale = SettingsService.objectScale;
-    SettingsService._objectScale.subscribe((scale) => {
-      if (scale === lastScale) return;
-      lastScale = scale;
-      this.links.forEach((link) => {
-        if (link instanceof RealLink) link.reComputeDPath();
-      });
-      this.updateMechanism();
+  ) {}
+
+  /**
+   * Recompute every link outline after the object scale changed.
+   *
+   * A link's `d` is computed once and cached, but its width is objectScale / 4 --
+   * so changing the scale left every bar at its old size while joints, ground
+   * marks and the whole mark system grew around it. Worst on a slotted link,
+   * where the R-relative channel kept scaling and outgrew the bar it is meant to
+   * be a hole in.
+   *
+   * A method rather than a subscription to `_objectScale`. That subject is
+   * static and replays its current value, so subscribing in the constructor
+   * rebuilt every link the moment a service was built and left one live
+   * subscriber per instance ever created -- which under a test run meant one
+   * recompute per accumulated service, and a spec asserting the contour is
+   * built once saw fifteen. Every other route that changes the scale rebuilds
+   * the links from scratch anyway; the settings panel is the one that does not.
+   */
+  applyObjectScaleChange(): void {
+    this.links.forEach((link) => {
+      if (link instanceof RealLink) link.reComputeDPath();
     });
+    this.updateMechanism();
   }
 
   // delete mechanism and reset
