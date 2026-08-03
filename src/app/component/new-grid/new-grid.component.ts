@@ -58,6 +58,7 @@ import { DragStateService } from '../../services/drag-state.service';
 import {
   Channel,
   CylinderMark,
+  Guide,
   SliderMark,
   SliderMarkService,
 } from '../../services/slider-mark.service';
@@ -1455,6 +1456,45 @@ export class NewGridComponent {
    * subpaths.
    */
   /**
+   * Where each grounded guide sits in the world, and how far along itself its
+   * block runs.
+   *
+   * Measured over the solved timesteps rather than read off the joint, because
+   * during playback the joint *is* the thing sliding: anchoring the rails to it
+   * makes the track travel with the block, which is only visible once the
+   * mechanism is playing and looks like the whole guide has come loose.
+   *
+   * An unsolved or invalid linkage has no timesteps, and then the joint's own
+   * position is the only frame there is -- which is also the right one, since
+   * nothing is moving.
+   */
+  private guides(): Map<string, Guide> {
+    const found = new Map<string, Guide>();
+    const mechanism = this.mechanismSrv.mechanisms[0];
+    const frames = mechanism?.isMechanismValid() ? mechanism.joints : undefined;
+    if (!frames?.length) return found;
+
+    const rest = frames[0];
+    for (const joint of rest) {
+      if (!(joint instanceof PrisJoint) || !joint.ground) continue;
+      const angle = joint.slotAngle;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      let lo = 0;
+      let hi = 0;
+      for (const frame of frames) {
+        const at = frame.find((member) => member.id === joint.id);
+        if (!at) continue;
+        const along = (at.x - joint.x) * cos + (at.y - joint.y) * sin;
+        lo = Math.min(lo, along);
+        hi = Math.max(hi, along);
+      }
+      found.set(joint.id, { x: joint.x, y: joint.y, lo, hi });
+    }
+    return found;
+  }
+
+  /**
    * Pins that carry the drive but no block and no ground.
    *
    * Grounded pins already have the black input arrow, and a slider's drive
@@ -1622,7 +1662,7 @@ export class NewGridComponent {
     if (this.markCache?.key !== key) {
       this.markCache = {
         key,
-        marks: this.sliderMarks.marks(joints, r),
+        marks: this.sliderMarks.marks(joints, r, this.guides()),
         channels: this.sliderMarks.channels(joints, r),
       };
     }

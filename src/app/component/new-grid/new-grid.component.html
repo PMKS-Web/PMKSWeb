@@ -283,7 +283,9 @@
   <g id="railHolder" style="transform: scaleY(-1); pointer-events: none">
     @for (mark of sliderMarkList; track mark.id) {
       @if (mark.rails) {
-        <g [attr.transform]="sliderMarks.frame(mark)">
+        <!-- The guide's own frame, not the block's: it is fixed in the world and
+             the block slides along it. -->
+        <g [attr.transform]="sliderMarks.frame(mark.rails)">
           @for (rail of mark.rails.rails; track $index) {
             <line
               [attr.x1]="rail.x1"
@@ -393,6 +395,7 @@
             <g
               class="slider-plate"
               pointer-events="none"
+              fill-rule="evenodd"
               [attr.fill]="mark.plate.fill"
               fill-opacity="0.7"
             >

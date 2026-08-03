@@ -49,7 +49,15 @@ export interface SliderMark {
   driven: boolean;
   plate?: WeldPlate;
   arrows: { line: Segment; head: string }[];
-  rails?: { rails: Segment[]; ticks: Segment[] };
+  /**
+   * A grounded guide, carrying its own frame.
+   *
+   * Deliberately not drawn in the block's frame like everything else here: the
+   * guide is fixed in the world and the block slides along it, so anchoring the
+   * rails to the block makes the track travel with the thing that is supposed to
+   * be moving through it. Only visible once the mechanism is playing.
+   */
+  rails?: { rails: Segment[]; ticks: Segment[]; x: number; y: number; rotation: number };
   /** A slider with a block but no carrier and no ground: invalid, drawn red. */
   dangling: boolean;
 }
@@ -112,10 +120,10 @@ export class SliderMarkService {
    * `travel` is how far each slider's block runs across the solved timesteps,
    * keyed by joint id. Absent entries fall back to the drawn rail length.
    */
-  marks(joints: Joint[], r: number, travel?: Map<string, number>): SliderMark[] {
+  marks(joints: Joint[], r: number, guides?: Map<string, Guide>): SliderMark[] {
     return joints
       .filter((joint): joint is PrisJoint => joint instanceof PrisJoint)
-      .map((slider) => this.markFor(slider, r, travel?.get(slider.id) ?? 0))
+      .map((slider) => this.markFor(slider, r, guides?.get(slider.id), joints))
       .filter((mark): mark is SliderMark => mark !== undefined);
   }
 
@@ -162,6 +170,42 @@ export class SliderMarkService {
         return playing || found.pin.id !== revealedId;
       })
       .map((found) => this.cylinderMark(found, r));
+  }
+
+  /**
+   * The channels cut into `carrier`, expressed in the slot's own frame so they
+   * can be appended to a path already drawn there.
+   *
+   * The frame is centred on the pin with +x along the slot, so a model point is
+   * carried into it by subtracting the pin and turning by the slot angle.
+   */
+  private channelsInLocalFrame(
+    carrier: Link,
+    pin: RealJoint,
+    slotAngle: number,
+    r: number,
+    joints: Joint[]
+  ): string[] {
+    const cos = Math.cos(slotAngle);
+    const sin = Math.sin(slotAngle);
+    const cuts: string[] = [];
+    for (const joint of joints) {
+      if (!(joint instanceof PrisJoint) || !joint.isFloating) continue;
+      if (!joint.isSlotWellFormed || joint.carrier!.id !== carrier.id) continue;
+      const a = joint.slotJointA!;
+      const b = joint.slotJointB!;
+      const midX = (a.x + b.x) / 2 - pin.x;
+      const midY = (a.y + b.y) / 2 - pin.y;
+      cuts.push(
+        orientedCapsulePath(
+          { x: midX * cos + midY * sin, y: -midX * sin + midY * cos },
+          joint.slotAngle - slotAngle,
+          slotHalfLength(r, Math.hypot(b.x - a.x, b.y - a.y)),
+          MARK.channelHalfWidth * r
+        )
+      );
+    }
+    return cuts;
   }
 
   private cylinderMark(found: Cylinder, r: number): CylinderMark {
@@ -214,7 +258,12 @@ export class SliderMarkService {
     return found;
   }
 
-  private markFor(slider: PrisJoint, r: number, travel: number): SliderMark | undefined {
+  private markFor(
+    slider: PrisJoint,
+    r: number,
+    guide: Guide | undefined,
+    joints: Joint[]
+  ): SliderMark | undefined {
     const block = slider.links.find((link): link is SliderBlock => link instanceof SliderBlock);
     if (!block) return undefined;
     const pin = block.joints.find(
@@ -238,9 +287,9 @@ export class SliderMarkService {
       block: blockPath(r),
       welded,
       driven,
-      plate: welded ? this.plateFor(pin, riders, angle, r) : undefined,
+      plate: welded ? this.plateFor(pin, riders, angle, r, joints) : undefined,
       arrows: driven ? straightArrowPaths(r) : [],
-      rails: slider.ground ? railGeometry(r, this.railHalfLength(travel, r)) : undefined,
+      rails: slider.ground ? this.railsFor(slider, guide, angle, r) : undefined,
       dangling: !slider.ground && !slider.isFloating,
     };
   }
@@ -249,7 +298,8 @@ export class SliderMarkService {
     pin: RealJoint,
     riders: RealLink[],
     slotAngle: number,
-    r: number
+    r: number,
+    joints: Joint[]
   ): WeldPlate | undefined {
     if (riders.length === 0) return undefined;
     const bar = MARK.barHalf * r;
@@ -259,7 +309,12 @@ export class SliderMarkService {
       const relative = riderDirection(pin, rider) - slotAngle;
       if (!Number.isFinite(relative)) continue;
       const reach = riderReach(pin, rider);
-      paths.push(riderCapsulePath(reach, bar, relative));
+      // A link can be a slot carrier *and* a welded rider at once -- the Scotch
+      // yoke's yoke is both. The plate redraws that link, so it has to cut the
+      // same channels the link itself cuts, or it fills the slot back in and the
+      // block appears to ride on a solid bar.
+      const cuts = this.channelsInLocalFrame(rider, pin, slotAngle, r, joints);
+      paths.push([riderCapsulePath(reach, bar, relative), ...cuts].join(' '));
       fillets.push(...weldPlateFillets(r, relative));
     }
     return {
@@ -271,18 +326,44 @@ export class SliderMarkService {
   }
 
   /**
-   * How long to draw a grounded guide.
+   * The rails of a grounded guide, in the guide's own world-fixed frame.
    *
-   * A fixed 19.2R, as the marks are drawn. Travel would be the better answer --
-   * a guide that spans where its block actually goes stops looking like a
-   * fixed-length part -- but travel is a property of the solved timesteps, not
-   * of the frame being drawn, and the editable mechanism at t = 0 does not have
-   * them when the linkage is invalid. `travelHalfLength` takes that number when
-   * a caller has it.
+   * `guide` carries where the guide sits when the mechanism is at rest and how
+   * far along it the block travels; without it -- an invalid linkage has no
+   * solved timesteps -- the rails fall back to the block's own position and a
+   * fixed length, which is right at t = 0 and is the only frame there is.
    */
-  private railHalfLength(travel: number, r: number): number {
-    return Math.max(MARK.railHalfLengthMin * r, travel + MARK.blockAlongHalf * r);
+  private railsFor(
+    slider: PrisJoint,
+    guide: Guide | undefined,
+    angle: number,
+    r: number
+  ): SliderMark['rails'] {
+    const anchor = guide ?? { x: slider.x, y: slider.y, lo: 0, hi: 0 };
+    const pad = MARK.blockAlongHalf * r + MARK.railHalfLengthMin * r * 0.25;
+    const half = Math.max(MARK.railHalfLengthMin * r, (anchor.hi - anchor.lo) / 2 + pad);
+    // Centred on the middle of the travel rather than on the resting point, so
+    // the block is inside its own track wherever the cycle takes it.
+    const middle = (anchor.lo + anchor.hi) / 2;
+    return {
+      ...railGeometry(r, half),
+      x: anchor.x + middle * Math.cos(angle),
+      y: anchor.y + middle * Math.sin(angle),
+      rotation: -toDegrees(angle),
+    };
   }
+}
+
+/**
+ * Where a grounded guide sits in the world, and how far along itself its block
+ * runs. Measured over the solved timesteps, so it does not move when the block
+ * does.
+ */
+export interface Guide {
+  x: number;
+  y: number;
+  lo: number;
+  hi: number;
 }
 
 /** Where a rider points, away from the joint it is welded at. */
