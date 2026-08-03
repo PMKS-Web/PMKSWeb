@@ -198,6 +198,25 @@ const centreOf = (selector) =>
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   }, selector);
 
+/**
+ * A point genuinely on a link's body. A link's bounding-box centre is mostly the
+ * empty space inside its hull once it has three joints, so aiming there grabs
+ * the canvas instead.
+ */
+const centreOfLink = (id) =>
+  page.evaluate((linkId) => {
+    const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+    const link = grid.mechanismSrv.getLinks().find((l) => l.id === linkId);
+    if (!link || link.joints.length < 2) return null;
+    const [a, b] = link.joints;
+    const svg = document.querySelector('#canvas');
+    const pt = svg.createSVGPoint();
+    pt.x = (a.x + b.x) / 2;
+    pt.y = (a.y + b.y) / 2;
+    const screen = pt.matrixTransform(document.querySelector('#linkHolder').getScreenCTM());
+    return { x: screen.x, y: screen.y };
+  }, id);
+
 async function drag(from, dx, dy) {
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
@@ -236,7 +255,7 @@ for (const [name, query] of Object.entries(MECHANISMS)) {
       await drag(at, dx, dy);
       const bad = await violations();
       if (bad.length) {
-        checkThat(`${name}: ${id} dragged ${way}`, false, bad.slice(0, 2).join(' | '));
+        checkThat(`${name}: joint ${id} dragged ${way}`, false, bad.slice(0, 2).join(' | '));
         await page.screenshot({
           path: `${OUT}/${name}-${id}-${way.replace('+', 'p').replace('-', 'm')}.png`,
         });
@@ -245,7 +264,36 @@ for (const [name, query] of Object.entries(MECHANISMS)) {
   }
   checkThat(
     `${name}: holds through every joint drag`,
-    !results.some((r) => !r.ok && r.label.startsWith(`${name}: `) && r.label.includes('dragged'))
+    !results.some((r) => !r.ok && r.label.startsWith(`${name}: joint`))
+  );
+
+  // Links too: dragging a body translates every joint on it at once, which is a
+  // different path through the code from dragging one joint, and a slot's
+  // carrier moving wholesale is the case most likely to leave its channel
+  // behind.
+  const linkIds = await page.evaluate(() =>
+    [...document.querySelectorAll('#linkHolder path[data-channels]')].map((n) => n.id)
+  );
+  for (const id of linkIds) {
+    for (const [dx, dy, way] of [
+      [70, 0, '+x'],
+      [-70, 0, '-x'],
+      [0, -70, '+y'],
+      [0, 70, '-y'],
+    ]) {
+      const at = await centreOfLink(id);
+      if (!at) continue;
+      await drag(at, dx, dy);
+      const bad = await violations();
+      if (bad.length) {
+        checkThat(`${name}: link ${id} dragged ${way}`, false, bad.slice(0, 2).join(' | '));
+        await page.screenshot({ path: `${OUT}/${name}-link-${id}-${way.replace(/[+-]/, '')}.png` });
+      }
+    }
+  }
+  checkThat(
+    `${name}: holds through every link drag`,
+    !results.some((r) => !r.ok && r.label.startsWith(`${name}: link `))
   );
 
   // Object scale is a global setting; slotted links were reported to break when
