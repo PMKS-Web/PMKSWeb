@@ -320,6 +320,53 @@ for (const [name, query] of Object.entries(MECHANISMS)) {
     !results.some((r) => !r.ok && r.label.startsWith(`${name}: link `))
   );
 
+  // Independence: dragging something unrelated to a slot must leave that slot's
+  // block exactly where it was. Reseating has to be a no-op for every slider
+  // whose slot did not move, or "drag one thing" quietly becomes "drag
+  // everything a little".
+  await load(query);
+  const sliderPoseNow = () =>
+    page.evaluate(() => {
+      const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+      return grid.mechanismSrv
+        .getJoints()
+        .filter((j) => j.constructor.name === 'PrisJoint')
+        .map((j) => `${j.id}:${j.x},${j.y}`)
+        .join('|');
+    });
+  const unrelated = await page.evaluate(() => {
+    const grid = window.ng.getComponent(document.querySelector('app-new-grid'));
+    const sliders = grid.mechanismSrv.getJoints().filter((j) => j.constructor.name === 'PrisJoint');
+    const touched = new Set();
+    for (const s of sliders) {
+      // A slider's own pin counts as touched whether the slot floats or not --
+      // a grounded guide still travels with the joint it sits on, so dragging
+      // that joint moving the block is the correct answer, not a violation.
+      s.links
+        .find((l) => l.constructor.name === 'SliderBlock')
+        ?.joints.forEach((j) => touched.add(j.id));
+      if (!s.isFloating) continue;
+      touched.add(s.slotJointA.id);
+      touched.add(s.slotJointB.id);
+      s.carrier.joints.forEach((j) => touched.add(j.id));
+    }
+    return grid.mechanismSrv
+      .getJoints()
+      .filter((j) => j.constructor.name === 'RevJoint' && !touched.has(j.id))
+      .map((j) => `joint_${j.id}`);
+  });
+  if (unrelated.length) {
+    const before = await sliderPoseNow();
+    const at = await centreOf(`#${unrelated[0]}`);
+    if (at) await drag(at, 80, 0);
+    const after = await sliderPoseNow();
+    checkThat(
+      `${name}: dragging ${unrelated[0]} leaves every slot's block alone`,
+      before === after,
+      `${before}  ->  ${after}`
+    );
+  }
+
   // Object scale is a global setting; slotted links were reported to break when
   // it changes. Everything here is a multiple of R = 0.15 * objectScale, so a
   // scale change must move every mark together.

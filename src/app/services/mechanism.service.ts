@@ -1312,7 +1312,12 @@ export class MechanismService {
       const along = (slider.x - midX) * ux + (slider.y - midY) * uy;
       const x = midX + along * ux;
       const y = midY + along * uy;
-      if (Math.hypot(x - slider.x, y - slider.y) < 1e-12) continue;
+      // Below this, leave it exactly where it is. Joint coordinates come back
+      // out of the URL at a fixed precision, so a slider is already a hair off
+      // its own line the moment a mechanism loads -- and correcting that here
+      // would mean dragging any joint anywhere silently moved every other
+      // slider. The breakage this exists for measures 0.17 and 0.41.
+      if (Math.hypot(x - slider.x, y - slider.y) < 1e-4) continue;
 
       slider.x = x;
       slider.y = y;
