@@ -78,6 +78,7 @@ import {
   SlotDropCandidate,
 } from '../../model/drop-target';
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
+import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import introJs from 'intro.js';
 
 @Component({
@@ -642,6 +643,9 @@ export class NewGridComponent {
           return;
         }
         this.updateDropCandidate(mousePosInSvg, $event.altKey);
+        // A capture has a target of its own, so any axis the last move squared
+        // itself against is no longer what decides where the joint goes.
+        this.axisSnapGuides = [];
         // Captured: the joint sits exactly on the target instead of trailing the
         // cursor, so what is on screen is what a release would produce.
         // A slot capture pulls the joint onto the slot line the same way, so a
@@ -838,7 +842,7 @@ export class NewGridComponent {
    */
   private alongItsSlot(joint: Joint, wanted: Coord): Coord {
     const slider = this.mechanismSrv.sliderFor(joint);
-    if (!slider?.isFloating || !slider.isSlotWellFormed) return wanted;
+    if (!slider?.isFloating || !slider.isSlotWellFormed) return this.withAxisSnap(joint, wanted);
 
     const a = slider.slotJointA!;
     const b = slider.slotJointB!;
@@ -852,8 +856,52 @@ export class NewGridComponent {
     const midX = (a.x + b.x) / 2;
     const midY = (a.y + b.y) / 2;
     const half = slotHalfLength(0.15 * this.settings.objectScale, length);
-    const along = Math.max(-half, Math.min(half, (wanted.x - midX) * ux + (wanted.y - midY) * uy));
+    const offset = (wanted.x - midX) * ux + (wanted.y - midY) * uy;
+    const across = -(wanted.x - midX) * uy + (wanted.y - midY) * ux;
+
+    // Sticky, then it lets go (§4.4). Sliding along the slot is by far the
+    // commoner intent, so the block stays on its line through any amount of
+    // sideways wobble -- but a slot is not a life sentence, and pulling clear
+    // of the bar is the one gesture that plainly means "take this off here".
+    // What is left behind is the dangling block: a slider with nowhere to
+    // slide, drawn red until it is dropped on a link again.
+    if (Math.abs(across) > this.slotReleaseDistance()) {
+      this.mechanismSrv.detachSlider(slider);
+      return this.withAxisSnap(joint, wanted);
+    }
+
+    const along = Math.max(-half, Math.min(half, offset));
     return new Coord(midX + along * ux, midY + along * uy);
+  }
+
+  /**
+   * How far across its own slot a block has to be pulled before it comes out.
+   *
+   * Two bar-widths: far enough that no ordinary along-the-slot drag reaches it
+   * by accident, close enough that deliberately pulling the block off the bar
+   * does it on the first try.
+   */
+  private slotReleaseDistance(): number {
+    return 4 * MARK.barHalf * 0.15 * this.settings.objectScale;
+  }
+
+  /** Lines showing which joints a drag has just squared itself against. */
+  public axisSnapGuides: SnapGuide[] = [];
+
+  /**
+   * Pull a free drag onto a neighbour's axis when it is nearly on it.
+   *
+   * Only a free drag: a block is already constrained to its slot, and a capture
+   * has a target of its own, so snapping either would be a second opinion about
+   * where the joint goes.
+   */
+  private withAxisSnap(joint: Joint, wanted: Coord): Coord {
+    const others = this.mechanismSrv
+      .getJoints()
+      .filter((other) => other.id !== joint.id && !(other instanceof PrisJoint));
+    const snapped = snapToAxes(wanted, others, this.svgGrid.scaleWithZoom(8));
+    this.axisSnapGuides = snapped.guides;
+    return new Coord(snapped.point.x, snapped.point.y);
   }
 
   /**
@@ -988,6 +1036,8 @@ export class NewGridComponent {
   mouseUp($event: MouseEvent) {
     //This is the mouseUp that is called no matter what is clicked on
     this.synthesisClickMode = SynthesisClickMode.NORMAL;
+    // The alignment guides belong to the drag that made them.
+    this.axisSnapGuides = [];
 
     // Resolve the drop before releasing: the snap target is only meaningful
     // while the drag it belongs to is still in flight.

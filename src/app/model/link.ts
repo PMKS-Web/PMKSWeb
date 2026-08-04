@@ -7,7 +7,7 @@ import hull from 'hull.js';
 import { SettingsService } from '../services/settings.service';
 import { Arc, Line } from './line';
 import { buildCompoundPath, transformRigidCoord, transformRigidPath } from './compound-link-path';
-import { outlineSweepFlag } from './outline-winding';
+import { outlineSweepFlag, withoutCollinearVertices } from './outline-winding';
 
 export enum Shape {
   line = 'line',
@@ -347,6 +347,13 @@ export class RealLink extends Link {
     });
 
     let width: number = SettingsService.objectScale / 4;
+    // A joint sitting on the line between two others is not a corner of the
+    // outline, however defensible it is as a hull vertex: the offset edge would
+    // arrive, turn through a semicircle it does not need, and leave along the
+    // same line, folding the outline back over itself. Even-odd fill then
+    // cancels the doubled region and draws it white, which is the thin white
+    // sliver that flickers in and out as a joint is dragged past its neighbours.
+    desiredJointsIDs = withoutCollinearVertices(desiredJointsIDs, allJoints, jointIDtoIndex, width);
     let d = '';
 
     // Which way every corner arc bulges follows from the winding of the outline

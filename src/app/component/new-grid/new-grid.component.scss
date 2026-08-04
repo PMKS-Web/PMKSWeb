@@ -130,6 +130,14 @@
     pointer-events: none;
   }
 
+  // The axis a drag has just squared itself against, drawn to the joint that
+  // supplied it. Broken rather than solid so it cannot be mistaken for a link.
+  .axisSnapGuide {
+    stroke: mat.m2-get-color-from-palette($accent-palette, 500);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
   // The same ring in red, for a joint in range that refuses the merge.
   .snapRefused {
     fill: none;

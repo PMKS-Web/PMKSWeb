@@ -1,4 +1,4 @@
-import { outlineSweepFlag } from '../../app/model/outline-winding';
+import { outlineSweepFlag, withoutCollinearVertices } from '../../app/model/outline-winding';
 
 /**
  * Every corner of a link outline turns the same way, and which way is decided
@@ -22,6 +22,60 @@ function winding(ring: { x: number; y: number }[]): number {
     return total + (point.x * next.y - next.x * point.y);
   }, 0);
 }
+
+describe('which joints are corners of the outline', () => {
+  const keep = (order: string, joints: { id: string; x: number; y: number }[]) =>
+    withoutCollinearVertices(
+      order,
+      joints,
+      new Map(joints.map((joint, index) => [joint.id, index])),
+      WIDTH
+    );
+
+  it('drops a joint sitting on the line between its neighbours', () => {
+    // Drag any joint of a three-joint link onto the line of the other two and
+    // this is what `hull` hands back. Kept as a corner, the offset edge arrives
+    // at it, turns through a semicircle, and leaves along the same line -- the
+    // outline folds over itself, and even-odd fill renders the doubled part
+    // white. That sliver is what flickers in and out during a drag.
+    const flat = [
+      { id: 'A', x: 0, y: 0 },
+      { id: 'H', x: 1.1975, y: 0 },
+      { id: 'B', x: 1.52, y: 0 },
+    ];
+
+    expect(keep('AHB', flat)).toBe('AB');
+  });
+
+  it('drops a fold too thin to see, on the same grounds', () => {
+    const almost = [
+      { id: 'A', x: 0, y: 0 },
+      { id: 'H', x: 1.1975, y: WIDTH * 1e-6 },
+      { id: 'B', x: 1.52, y: 0 },
+    ];
+
+    expect(keep('AHB', almost)).toBe('AB');
+  });
+
+  it('keeps a corner that is a corner', () => {
+    const triangle = [
+      { id: 'A', x: 0, y: 0 },
+      { id: 'H', x: 0.76, y: 1.028 },
+      { id: 'B', x: 1.52, y: 0 },
+    ];
+
+    expect(keep('AHB', triangle)).toBe('AHB');
+  });
+
+  it('never reduces an outline below two ends', () => {
+    const coincident = [
+      { id: 'A', x: 1, y: 1 },
+      { id: 'B', x: 1, y: 1 },
+    ];
+
+    expect(keep('AB', coincident)).toBe('AB');
+  });
+});
 
 describe('which way a link outline turns its corners', () => {
   it('follows the hull it is given, counter-clockwise', () => {
@@ -56,6 +110,18 @@ describe('which way a link outline turns its corners', () => {
     const withInterior = [...triangle, { id: 'D', x: 2, y: 1 }];
 
     expect(sweepOf('ABC', withInterior)).toBe(sweepOf('ABC', triangle));
+  });
+
+  it('reads a hull with no area as the bar it has collapsed to', () => {
+    // Three joints in a line have no winding to take a sign from. The outline
+    // is still a rectangle, wound the way a two-joint link's is.
+    const flat = [
+      { id: 'A', x: 0, y: 0 },
+      { id: 'B', x: 1.52, y: 0 },
+      { id: 'H', x: 1.1975, y: 0 },
+    ];
+
+    expect(sweepOf('ABH', flat)).toBe(sweepOf('AB', flat));
   });
 
   it('holds where three hull points are almost collinear', () => {

@@ -576,6 +576,20 @@
         }
       </ng-container>
     }
+    <!-- Which joint the drag has just squared itself against. Without it the
+         snap is a jump with no stated reason; with it, the reason is on screen
+         before the drag is released. -->
+    @for (guide of axisSnapGuides; track $index) {
+      <line
+        class="axisSnapGuide"
+        [attr.x1]="guide.x1"
+        [attr.y1]="guide.y1"
+        [attr.x2]="guide.x2"
+        [attr.y2]="guide.y2"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(1.5)"
+        [attr.stroke-dasharray]="svgGrid.scaleWithZoom(6) + ' ' + svgGrid.scaleWithZoom(5)"
+      ></line>
+    }
     <!-- Where the joint being dragged will land if it is released now -->
     @if (snapTargetJoint) {
       <circle

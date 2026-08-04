@@ -1386,6 +1386,29 @@ export class MechanismService {
   }
 
   /**
+   * Take a block out of the channel it is riding in, mid-drag (§4.4).
+   *
+   * The inverse of `cutSlotOn`, and deliberately the same shape: it rebuilds
+   * but does not save, because the release at the end of the drag is the one
+   * thing that mints an undo entry. What is left is a dangling slider — a block
+   * with nowhere to slide — which the canvas draws red until it is dropped onto
+   * a link again.
+   *
+   * The slot is stashed on the way out, so putting the block back on the same
+   * bar is a drop rather than a rebuild.
+   */
+  detachSlider(slider: PrisJoint): void {
+    if (!slider.isFloating) return;
+    const block = slider.links.find((link): link is SliderBlock => link instanceof SliderBlock);
+    const pin = block?.joints.find(
+      (joint): joint is RealJoint => joint instanceof RealJoint && !(joint instanceof PrisJoint)
+    );
+    if (pin && block) this.stashSlot(pin, block);
+    slider.detach();
+    this.finishStructuralEdit(false);
+  }
+
+  /**
    * Remember a slot on its pin before the block goes away, so turning Slider
    * back on restores the guide the user had rather than building a new one.
    */
