@@ -166,34 +166,6 @@ export class SvgGridService {
     return this.screenToSVG(new Coord(screenX, screenY));
   }
 
-  /**
-   * How far past the visible box the background and grid are drawn, as a
-   * fraction of that box on each side.
-   *
-   * These coordinates are read back from the pan/zoom transform and then have
-   * to make a round trip through Angular before the rect and the grid lines
-   * carry them, while the transform itself is already on screen. Every frame in
-   * between draws the previous frame's box under the current frame's transform,
-   * so a box that stopped exactly at the edge leaves a band along the leading
-   * edge with no background and no grid on it — the white streak, which reads as
-   * a streak even against a white page because the grid stops short in it.
-   *
-   * A real mouse is what makes it visible: it delivers several moves per
-   * compositor frame, so the lag is a whole gesture's worth rather than one
-   * step's. Synthetic input that waits between moves lets the render catch up
-   * every time, which is why this never appeared under automation.
-   *
-   * 0.8 is set by measurement, not by taste: a fast fling combined with a wheel
-   * burst was still exposing 470px of a 1240px canvas at 0.3, because the lag is
-   * a translation and a scale together rather than either alone. 0.8 leaves
-   * about 990px of margin on each side, which covered every gesture tried.
-   *
-   * The grid stays cheap because its cell size already adapts to zoom, so this
-   * widens a roughly 90-line grid to roughly 230 lines rather than growing
-   * without bound as you zoom in.
-   */
-  private static readonly OVERSCAN = 0.8;
-
   updateVisibleCoords() {
     let zoomLevel = this.getZoom();
     const { width, height } = this.getSizes();
@@ -202,12 +174,10 @@ export class SvgGridService {
     const visibleHeight = height / zoomLevel; // calculate visible height
     const visibleX = -x / zoomLevel; // calculate visible X position
     const visibleY = -y / zoomLevel; // calculate visible Y position
-    const padX = visibleWidth * SvgGridService.OVERSCAN;
-    const padY = visibleHeight * SvgGridService.OVERSCAN;
-    this.viewBoxMinX = visibleX - padX;
-    this.viewBoxMaxX = visibleX + visibleWidth + padX;
-    this.viewBoxMinY = visibleY - padY;
-    this.viewBoxMaxY = visibleY + visibleHeight + padY;
+    this.viewBoxMinX = visibleX;
+    this.viewBoxMaxX = visibleX + visibleWidth;
+    this.viewBoxMinY = visibleY;
+    this.viewBoxMaxY = visibleY + visibleHeight;
     // this.panZoomObject.updateBBox(); // Update viewport bounding box
     // console.log(viewBox);
     // console.log(this.viewBoxMinX, this.viewBoxMaxX);
@@ -376,14 +346,6 @@ export class SvgGridService {
 
   handleUpdatedCTM(newCTM: SVGMatrix) {
     this.CTM = newCTM;
-    // Re-fit the background and grid to whatever the transform actually became,
-    // rather than to what onPan and onZoom were told it would become. Those two
-    // miss the paths that change the transform without going through them —
-    // notably a zoom clamped at MAX_ZOOM, which still moves the view — and a box
-    // that misses an update stays stale until some later event happens to
-    // refresh it, leaving the grid ending in mid-canvas the whole time. This
-    // fires for every change by definition, so there is nothing left to miss.
-    this.handlePan();
   }
 
   zoomIn() {

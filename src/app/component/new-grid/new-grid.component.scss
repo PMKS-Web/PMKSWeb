@@ -189,18 +189,6 @@
   }
 }
 
-// The canvas paints its own background, matching the rect inside it.
-//
-// Nothing else in the page paints one — #canvas, app-new-grid, app-root, body
-// and html are all transparent — so anything that rect leaves uncovered falls
-// through to the browser's default white rather than to anything this app
-// chose. SvgGridService.OVERSCAN is what keeps it covered; this is here so that
-// failing to cover it can never expose the page again, whatever a later gesture
-// or a later theme does. Keep the two colours the same.
-#canvas {
-  background: white;
-}
-
 // Phase 4 motion. Toggling Slider or Weld has to visibly change exactly one
 // mark, and each change has to read as one thing arriving rather than as a
 // redraw — so every transition here is scoped to the primitive that actually
