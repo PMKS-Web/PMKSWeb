@@ -166,9 +166,15 @@ export class SliderMarkService {
     // A link pinned to two different blocks would otherwise be drawn as a rider
     // by both of them, at double its own alpha where they overlap. The first
     // assembly to reach it draws it; the second leaves it alone.
+    //
+    // Welded blocks are exempt: a rider welded to two blocks makes all three one
+    // rigid body, and the plate that draws it has to contain all three. Letting
+    // the first assembly claim the rider left the second with nothing to plate,
+    // so of two identically welded sliders one came out fused to the link and
+    // the other stayed a bare black block.
     const claimed = new Set<string>();
     const bands = this.bands(joints, r, guides);
-    return joints
+    const marks = joints
       .filter((joint): joint is PrisJoint => joint instanceof PrisJoint)
       .map((slider) =>
         this.markFor(
@@ -182,6 +188,45 @@ export class SliderMarkService {
         )
       )
       .filter((mark): mark is SliderMark => mark !== undefined);
+    this.fuseSharedPlates(marks, r, joints);
+    return marks;
+  }
+
+  /**
+   * One plate per rigid weld group, however many blocks are in it.
+   *
+   * Two welded blocks on one link are one body: drawing a plate per block would
+   * paint the shared link twice at its own alpha, and drawing only the first
+   * leaves the second bare. The group's blocks and riders are unioned together
+   * once, in the frame of whichever block leads it, and the rest keep their
+   * black block underneath with no plate of their own.
+   */
+  private fuseSharedPlates(marks: SliderMark[], r: number, joints: Joint[]): void {
+    const welded = marks.filter((mark) => mark.welded);
+    const groupOf = new Map<string, SliderMark[]>();
+    for (const mark of welded) {
+      const riders = this.ridersOn(mark.pin as RealJoint);
+      const leader = riders
+        .map((rider) => groupOf.get(rider.id))
+        .find((group): group is SliderMark[] => group !== undefined);
+      const group = leader ?? [];
+      group.push(mark);
+      for (const rider of riders) groupOf.set(rider.id, group);
+    }
+
+    for (const group of new Set(groupOf.values())) {
+      if (group.length < 2) continue;
+      const [leader, ...rest] = group;
+      leader.plate = this.groupPlate(group, r, joints);
+      for (const member of rest) member.plate = undefined;
+    }
+  }
+
+  /** The links pinned to a block, which are what a weld fuses it to. */
+  private ridersOn(pin: RealJoint): RealLink[] {
+    return pin.links.filter(
+      (link): link is RealLink => link instanceof RealLink && !(link instanceof SliderBlock)
+    );
   }
 
   /**
@@ -416,6 +461,57 @@ export class SliderMarkService {
           path: [outline, mergedChannels(cuts)].join(' ').trim(),
         },
       ];
+    });
+  }
+
+  /**
+   * Every block and every rider of a weld group, fused into one outline in the
+   * leader's frame.
+   *
+   * Built in world coordinates and carried into that frame at the end, because
+   * the members sit at different points on different slot angles and there is
+   * no local frame all of them are already in.
+   */
+  private groupPlate(group: SliderMark[], r: number, joints: Joint[]): WeldPlate | undefined {
+    const leader = group[0];
+    const links = new Map<string, RealLink>();
+    const shapes: string[] = [];
+    for (const mark of group) {
+      const angle = (mark.rotation * Math.PI) / 180;
+      shapes.push(this.placed(blockPath(r), mark.pin, angle));
+      for (const rider of this.ridersOn(mark.pin as RealJoint)) {
+        if (links.has(rider.id) || !rider.d) continue;
+        links.set(rider.id, rider);
+        shapes.push(rider.d);
+      }
+    }
+    if (links.size === 0) return undefined;
+
+    const fused = buildCompoundPath(shapes, MARK.plateFillet * r);
+    const leaderAngle = (leader.rotation * Math.PI) / 180;
+    const intoLeader = (path: string) =>
+      transformRigidPath(
+        path,
+        leader.pin,
+        { x: leader.pin.x + Math.cos(leaderAngle), y: leader.pin.y + Math.sin(leaderAngle) },
+        { x: 0, y: 0 },
+        { x: 1, y: 0 }
+      );
+    const cuts = [...links.values()].flatMap((rider) =>
+      this.channelsInLocalFrame(rider, leader.pin as RealJoint, leaderAngle, r, joints)
+    );
+    return {
+      fill: [...links.values()][0].fill ?? '#000000',
+      path: [intoLeader(fused.path), mergedChannels(cuts)].join(' ').trim(),
+      links: [...links.values()],
+    };
+  }
+
+  /** A local-frame shape put where a mark sits, in world coordinates. */
+  private placed(path: string, at: Joint, angle: number): string {
+    return transformRigidPath(path, { x: 0, y: 0 }, { x: 1, y: 0 }, at, {
+      x: at.x + Math.cos(angle),
+      y: at.y + Math.sin(angle),
     });
   }
 

@@ -1,5 +1,5 @@
-// Paint order, the block staying in its channel, the dimension line staying
-// clear of the body, and the right-click menu agreeing with the Edit panel.
+// Paint order, the block staying in its channel, and the right-click menu
+// agreeing with the Edit panel.
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
@@ -121,33 +121,6 @@ check(
   'the block never leaves its channel while the slot is dragged',
   worst < 1e-3,
   `worst overshoot ${worst.toExponential(2)}`
-);
-
-// --- the dimension line is clear of the body ------------------------------
-await load(COUPLER);
-await clickJoint('A');
-const fields = page.locator('app-edit-panel input');
-const count = await fields.count();
-await fields.nth(count - 2).focus();
-await page.waitForTimeout(600);
-const clear = await page.evaluate(() => {
-  const c = ng.getComponent(document.querySelector('app-new-grid'));
-  if (c.showLinkLengthOverlay < -1) return { shown: false };
-  const nums = (s) => (s.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number);
-  const axis = nums(c.getSVGPrimaryAxisLine1());
-  const ends = c.findStartAndEndPoints();
-  // How far the dimension line sits from the line through the two joints.
-  const len = Math.hypot(ends.x2 - ends.x1, ends.y2 - ends.y1);
-  const away =
-    Math.abs(
-      (axis[0] - ends.x1) * (ends.y2 - ends.y1) - (axis[1] - ends.y1) * (ends.x2 - ends.x1)
-    ) / len;
-  return { shown: true, away, barHalf: c.settings.objectScale / 4 };
-});
-check(
-  'the length dimension line sits clear of the bar it measures',
-  clear.shown && clear.away > clear.barHalf,
-  JSON.stringify(clear)
 );
 
 // --- the menu agrees with the panel --------------------------------------

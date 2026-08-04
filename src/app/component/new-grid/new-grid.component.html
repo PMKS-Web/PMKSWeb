@@ -428,13 +428,7 @@
                    slide: the red is a highlight around it, the way the
                    orphan-joint mark works, not a different block. §2.8 rule 3
                    has no exceptions. -->
-              <path
-                [attr.d]="item.mark.block"
-                fill="#000000"
-                [attr.stroke]="item.mark.dangling ? '#F44336' : null"
-                [attr.stroke-width]="item.mark.dangling ? svgGrid.scaleWithZoom(3) : null"
-                filter="url(#elevation-1)"
-              />
+              <path [attr.d]="item.mark.block" fill="#000000" filter="url(#elevation-1)" />
             </g>
           }
           @case ('rider') {
@@ -482,6 +476,23 @@
           }
         }
       </g>
+    }
+    <!-- A slider with nowhere to slide, marked the way an orphan joint is. Drawn
+         after every body rather than on the block itself: a welded block is
+         covered by its own weld plate, so a highlight painted under it was the
+         one state that could not be seen. -->
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.dangling && !isSkinned(mark)) {
+        <g [attr.transform]="sliderMarks.frame(mark)" pointer-events="none">
+          <path
+            class="dangling-block"
+            [attr.d]="mark.block"
+            fill="none"
+            stroke="#F44336"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(4)"
+          />
+        </g>
+      }
     }
     <!-- Layer 5: the arrows, above every body so nothing can tint them. They
          are always white, and that is only safe because what is underneath is

@@ -65,33 +65,39 @@ export function transformRigidPath(
   targetStart: PointLike,
   targetEnd: PointLike
 ): string {
-  const tokens = path.match(/[MLQAZ]|[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi) ?? [];
+  const tokens = path.match(/[MLHVQAZ]|[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi) ?? [];
   const output: string[] = [];
   const rotation = rigidRotation(sourceStart, sourceEnd, targetStart, targetEnd);
   let index = 0;
+  // Tracked because the shorthand is relative to it, and because a rotation
+  // turns a horizontal line into a sloped one: H and V have to come out as L.
+  let current: PointLike = { x: 0, y: 0 };
 
   const number = (): number => {
     const value = Number(tokens[index++]);
     if (!Number.isFinite(value)) throw new Error('Invalid SVG path number');
     return value;
   };
-  const point = (): string => {
-    const transformed = transformRigidPoint(
-      { x: number(), y: number() },
-      sourceStart,
-      targetStart,
-      rotation
-    );
+  const place = (at: PointLike): string => {
+    current = at;
+    const transformed = transformRigidPoint(at, sourceStart, targetStart, rotation);
     return `${formatNumber(transformed.x)} ${formatNumber(transformed.y)}`;
   };
+  const point = (): string => place({ x: number(), y: number() });
 
   while (index < tokens.length) {
     const command = tokens[index++].toUpperCase();
-    output.push(command);
+    output.push(command === 'H' || command === 'V' ? 'L' : command);
     switch (command) {
       case 'M':
       case 'L':
         output.push(point());
+        break;
+      case 'H':
+        output.push(place({ x: number(), y: current.y }));
+        break;
+      case 'V':
+        output.push(place({ x: current.x, y: number() }));
         break;
       case 'Q':
         output.push(point(), point());

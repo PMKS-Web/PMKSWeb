@@ -83,7 +83,9 @@ function sliderState() {
     const blocks = [...document.querySelectorAll('#sliderHolder .slider-block path')];
     return {
       blocks: blocks.length,
-      dangling: blocks.filter((b) => b.getAttribute('stroke') === '#F44336').length,
+      // The red mark is its own top-layer path now: a welded block is covered
+      // by its own plate, so a highlight painted on the block could not be seen.
+      dangling: document.querySelectorAll('.dangling-block').length,
       plates: document.querySelectorAll('#sliderHolder .slider-plate').length,
       rails: document.querySelectorAll('#railHolder > g').length,
       channels: [...document.querySelectorAll('#linkHolder path[data-channels]')].reduce(

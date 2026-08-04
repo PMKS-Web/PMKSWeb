@@ -121,6 +121,55 @@ describe('the weld plate', () => {
     expect(plateOf(false)).toBeUndefined();
   });
 
+  it('gives two welded blocks on one link a single plate covering both', () => {
+    // A rider welded to two blocks makes all three one rigid body. Drawing a
+    // plate per block would paint the shared link twice at its own alpha; the
+    // rule that stopped that let the first block claim the rider outright, so
+    // the second had nothing left to plate and stayed a bare black block beside
+    // an identically welded one that did not.
+    const harness = createMechanismHarness();
+    const a = new RevJoint('A', 0, 0);
+    const b = new RevJoint('B', 8, 0);
+    const rider = new RevJoint('R', 2, 0);
+    const far = new RevJoint('F', 6, 0);
+    const wire = (id: string, joints: RevJoint[]) => {
+      const link = new RealLink(id, joints);
+      joints.forEach((joint) => {
+        joint.links.push(link);
+        joints
+          .filter((other) => other !== joint)
+          .forEach((other) => joint.connectedJoints.push(other));
+      });
+      return link;
+    };
+    const carrier = wire('AB', [a, b]);
+    harness.service.joints = [a, b, rider, far];
+    harness.service.links = [carrier, wire('RF', [rider, far])];
+
+    for (const pin of [rider, far]) {
+      harness.active.updateSelectedObj(pin);
+      harness.service.toggleSlider();
+      const slider = harness.service.joints
+        .filter((joint): joint is PrisJoint => joint instanceof PrisJoint)
+        .find((joint) => !joint.isFloating || joint.carrier?.id !== carrier.id)!;
+      slider.slideOn(carrier, a, b);
+      harness.active.updateSelectedObj(pin);
+      harness.service.weldJoint();
+    }
+    harness.service.finishStructuralEdit(false);
+
+    const marks = new SliderMarkService().marks(harness.service.joints, R);
+    const plated = marks.filter((mark) => mark.plate);
+
+    expect(marks.length, 'two blocks').toBe(2);
+    expect(plated.length, 'one plate between them').toBe(1);
+    // And it is one shape, reaching across both blocks rather than one of them.
+    const path = plated[0].plate!.path;
+    expect(subpaths(path).length).toBe(1);
+    const along = points(path).map(([x]) => x);
+    expect(Math.max(...along) - Math.min(...along)).toBeGreaterThan(4);
+  });
+
   it('stays a single finite outline for a rider at any angle', () => {
     for (const deg of [0, 31, 58.9, 90, 137, 180, 244, 300]) {
       const angle = (deg * Math.PI) / 180;

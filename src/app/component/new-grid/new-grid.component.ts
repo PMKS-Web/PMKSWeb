@@ -2017,17 +2017,10 @@ export class NewGridComponent {
     let angle = Math.atan(m2);
 
     //Find the endpoints of the perpendicular line
-    // An extension line, not a cap: from just clear of the body out past the
-    // dimension line, so the measurement is tied to the joint without touching
-    // it. Whichever way the offset points is the side it has to run to.
-    const away = this.lengthOverlayOffset();
-    const reach = Math.hypot(away.dx, away.dy) || length;
-    const ux = away.dx / (reach || 1);
-    const uy = away.dy / (reach || 1);
-    let x3 = x1 + ux * SettingsService.objectScale * 0.32;
-    let y3 = y1 + uy * SettingsService.objectScale * 0.32;
-    let x4 = x1 + ux * (reach + SettingsService.objectScale * 0.12);
-    let y4 = y1 + uy * (reach + SettingsService.objectScale * 0.12);
+    let x3 = x1 + length * Math.cos(angle);
+    let y3 = y1 + length * Math.sin(angle);
+    let x4 = x1 - length * Math.cos(angle);
+    let y4 = y1 - length * Math.sin(angle);
 
     //Return the SVG path of the perpendicular line
     return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
@@ -2042,36 +2035,12 @@ export class NewGridComponent {
     let m2 = -1 / m1;
     let angle = Math.atan(m2);
 
-    const away = this.lengthOverlayOffset();
-    const reach = Math.hypot(away.dx, away.dy) || length;
-    const ux = away.dx / (reach || 1);
-    const uy = away.dy / (reach || 1);
-    let x3 = x2 + ux * SettingsService.objectScale * 0.32;
-    let y3 = y2 + uy * SettingsService.objectScale * 0.32;
-    let x4 = x2 + ux * (reach + SettingsService.objectScale * 0.12);
-    let y4 = y2 + uy * (reach + SettingsService.objectScale * 0.12);
+    let x3 = x2 + length * Math.cos(angle);
+    let y3 = y2 + length * Math.sin(angle);
+    let x4 = x2 - length * Math.cos(angle);
+    let y4 = y2 - length * Math.sin(angle);
 
     return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
-  }
-
-  /**
-   * The dimension line for a length, held clear of the body it measures.
-   *
-   * It used to be drawn straight down the middle of the link: two segments a
-   * third of its length starting at each joint, with the middle third cut out
-   * for the number. On a link body that reads as two stray lines through the
-   * part rather than as a measurement of it — which is exactly what it is not.
-   * Offset onto its own line beside the link, with extension lines reaching
-   * back to the joints, it is the drawing convention every reader already
-   * knows, and it cannot be mistaken for a mark on the body at any colour.
-   */
-  private lengthOverlayOffset(): { dx: number; dy: number } {
-    const { x1, y1, x2, y2 } = this.findStartAndEndPoints();
-    const length = Math.hypot(x2 - x1, y2 - y1);
-    if (length < 1e-9) return { dx: 0, dy: 0 };
-    // Clear of the bar, which is half an objectScale wide.
-    const away = SettingsService.objectScale * 0.55;
-    return { dx: (-(y2 - y1) / length) * away, dy: ((x2 - x1) / length) * away };
   }
 
   getSVGPrimaryAxisLine1() {
@@ -2091,10 +2060,7 @@ export class NewGridComponent {
     let y3 = y1 + (length / 3) * Math.sin(angle);
 
     //Return the SVG paths of the two lines that start from the joints and end at the middle points
-    const away = this.lengthOverlayOffset();
-    return (
-      'M' + (x1 + away.dx) + ' ' + (y1 + away.dy) + ' L' + (x3 + away.dx) + ' ' + (y3 + away.dy)
-    );
+    return 'M' + x1 + ' ' + y1 + ' L' + x3 + ' ' + y3;
   }
 
   getSVGPrimaryAxisLine2() {
@@ -2114,10 +2080,7 @@ export class NewGridComponent {
     let y4 = y2 - (length / 3) * Math.sin(angle);
 
     //Return the SVG paths of the two lines that start from the joints and end at the middle points
-    const away = this.lengthOverlayOffset();
-    return (
-      'M' + (x4 + away.dx) + ' ' + (y4 + away.dy) + ' L' + (x2 + away.dx) + ' ' + (y2 + away.dy)
-    );
+    return 'M' + x4 + ' ' + y4 + ' L' + x2 + ' ' + y2;
   }
 
   getSVGAngleOverlayLines() {
@@ -2197,9 +2160,8 @@ export class NewGridComponent {
   getSVGLengthOverlayTextPos() {
     //Return the average of the two joints
     let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
-    const away = this.lengthOverlayOffset();
-    let x = (x1 + x2) / 2 + away.dx;
-    let y = (y1 + y2) / 2 + away.dy;
+    let x = (x1 + x2) / 2;
+    let y = (y1 + y2) / 2;
     return { x, y };
   }
 

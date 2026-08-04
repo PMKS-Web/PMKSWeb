@@ -57,7 +57,7 @@ const drag = async (from, to, steps = 20) => {
 };
 const state = () =>
   page.evaluate(() => ({
-    dangling: document.querySelectorAll('#sliderHolder path[stroke="#F44336"]').length,
+    dangling: document.querySelectorAll('.dangling-block').length,
     guides: document.querySelectorAll('.axisSnapGuide').length,
     marks: document.querySelectorAll('#sliderHolder .slider-mark').length,
   }));
