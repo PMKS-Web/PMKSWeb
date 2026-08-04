@@ -4,7 +4,7 @@ import { groupRigidBodies } from '../rigid-bodies';
 import { assemblyBodyIds, slideAssemblies } from '../slide-assembly';
 import { Force } from '../force';
 // import {LoopSolver} from "./loop-solver";
-import { PositionSolver } from './position-solver';
+import { PositionSolver, PRISMATIC_INPUT_STEP } from './position-solver';
 // import {IcSolver} from "./ic-solver";
 import { InstantCenter } from '../instant-center';
 import { Loop, LoopSolver } from './loop-solver';
@@ -366,13 +366,18 @@ export class Mechanism {
     // A rocker cannot complete a crank revolution; it reverses instead, and only the
     // return-to-start tolerance can tell us where its cycle ends.
     let everReversed = false;
-    // TODO: Make sure to also account for m/s for slider and for other units, such as degree per second
     const angularSpeed = Math.abs(inputAngVel);
+    // How far one sample advances the input: a degree of crank for a revolute
+    // input, a fixed step along the slot for a prismatic one. Dividing by the
+    // speed turns that into the seconds each sample spans, so the two have to
+    // be measured in the same units -- a prismatic input's speed is length per
+    // second, and using the rotational step against it put playback and the
+    // reported cycle time on a clock unrelated to the speed that was asked for.
+    const sampleStep = revoluteInput ? Math.PI / 180 : PRISMATIC_INPUT_STEP;
     // Time always moves forward, including across a rocking mechanism's
     // direction reversal. At zero speed retain finite sample coordinates so
     // static-equivalent dynamic results can still be plotted and exported.
-    let timeNumIncrement =
-      angularSpeed > Number.EPSILON ? Math.PI / 180 / angularSpeed : Math.PI / 180;
+    let timeNumIncrement = angularSpeed > Number.EPSILON ? sampleStep / angularSpeed : sampleStep;
     PositionSolver.resetStaticVariables();
     PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
     PositionSolver.setUpSolvingForces(this.forces[0]);

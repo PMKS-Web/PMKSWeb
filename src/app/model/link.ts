@@ -7,6 +7,7 @@ import hull from 'hull.js';
 import { SettingsService } from '../services/settings.service';
 import { Arc, Line } from './line';
 import { buildCompoundPath, transformRigidCoord, transformRigidPath } from './compound-link-path';
+import { outlineSweepFlag } from './outline-winding';
 
 export enum Shape {
   line = 'line',
@@ -348,7 +349,14 @@ export class RealLink extends Link {
     let width: number = SettingsService.objectScale / 4;
     let d = '';
 
-    let clockWise = 'Will be set later';
+    // Which way every corner arc bulges follows from the winding of the outline
+    // being traced, and nothing else. It used to be guessed from one coordinate
+    // of the first corner and then flipped for links with more than three
+    // joints, which is not a property of the outline at all: `hull` does not
+    // return a consistent winding, so on the hulls where the guess disagreed
+    // the arcs took the short way round the *other* circle and drew a concave
+    // notch into every corner instead of rounding it.
+    const clockWise = outlineSweepFlag(desiredJointsIDs, allJoints, jointIDtoIndex, width);
 
     let j: number;
     for (let i = 0; i < desiredJointsIDs.length; i++) {
@@ -462,10 +470,6 @@ export class RealLink extends Link {
       const returnLines: Line[] = [];
 
       if (d === '') {
-        clockWise = coord1.y > point1.y ? '1' : '0';
-        if (allJoints.length > 3) {
-          clockWise = clockWise == '1' ? '0' : '1';
-        }
         d += 'M ' + point1.x.toString() + ' ' + point1.y.toString();
         d += ' L ' + point2.x.toString() + ' ' + point2.y.toString();
         returnLines.push(new Line(point1, point2));

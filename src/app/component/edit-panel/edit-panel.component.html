@@ -136,22 +136,20 @@
             </div>
           </div>
         }
-        <div class="row">
-          <button
-            mat-stroked-button
-            color="primary"
-            [disabled]="!canToggleInput(activeSrv.selectedJoint)"
-            class="{{ !canToggleInput(activeSrv.selectedJoint) ? 'buttonDisabled' : '' }}"
-            (click)="mechanismService.adjustInput()"
-          >
-            <mat-icon
-              [svgIcon]="
-                gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'remove_input' : 'add_input'
-              "
-            ></mat-icon>
-            {{ gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Make Input' }}
-          </button>
-        </div>
+        <!-- The same block every other button in this panel is built from, so
+             its border, its label and its icon take the panel's own colours.
+             Written out by hand it was the one control here that did not: grey
+             label, default border, and a black icon clipped by its own missing
+             viewBox. -->
+        <button-block
+          [customIcon]="
+            gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'remove_input' : 'add_input'
+          "
+          [disabled]="!canToggleInput(activeSrv.selectedJoint)"
+          [click]="mechanismService.adjustInput.bind(mechanismService)"
+        >
+          {{ gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Make Input' }}
+        </button-block>
       </collapsible-subseciton>
       @if (gridUtils.isVisuallyInput(activeSrv.selectedJoint)) {
         <div class="inputSettings">
@@ -161,17 +159,22 @@
             (opened)="sectionExpanded['JInput'] = true"
             (closed)="sectionExpanded['JInput'] = false"
           >
-            <button-block
-              [icon]="settingsService.isInputCW.value ? 'rotate_right' : 'rotate_left'"
-              [click]="flipInputDirection.bind(this)"
-              >{{ settingsService.isInputCW.value ? 'Clockwise' : 'Counter-Clockwise' }}
+            <!-- A driven block translates; it has no sense of rotation and no
+                 RPM. Both controls read the drive's kind rather than assuming
+                 the rotational one. -->
+            <button-block [icon]="inputDirectionIcon" [click]="flipInputDirection.bind(this)"
+              >{{ inputDirectionLabel }}
             </button-block>
             <input-block
               [formGroup]="jointForm"
               _formControl="inputSpeed"
-              [unitOptions]="speedUnitOptions"
+              [unitOptions]="isSliderInput ? linearSpeedUnitOptions : speedUnitOptions"
               unitFormControl="inputSpeedUnit"
-              tooltip="How fast this input joint turns, in the unit picked beside the value. A negative value flips the direction. Drives the animation and dynamic force analysis."
+              [tooltip]="
+                isSliderInput
+                  ? 'How fast this block travels along its slot. A negative value flips the direction. Drives the animation and dynamic force analysis.'
+                  : 'How fast this input joint turns, in the unit picked beside the value. A negative value flips the direction. Drives the animation and dynamic force analysis.'
+              "
               >Input Speed
             </input-block>
           </collapsible-subseciton>

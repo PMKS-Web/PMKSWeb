@@ -10,14 +10,14 @@ import {
   cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
+  GuideBand,
   railGeometry,
-  riderCapsulePath,
   Segment,
   rodBodyPath,
   slotHalfLength,
   straightArrowPaths,
 } from '../model/joint-marks';
-import { weldPlateFillets } from '../model/weld-plate';
+import { buildCompoundPath, mergedChannels, transformRigidPath } from '../model/compound-link-path';
 
 /**
  * The rider's own paint, redrawn over the black block so a Slide reads as one
@@ -26,9 +26,25 @@ import { weldPlateFillets } from '../model/weld-plate';
  */
 export interface WeldPlate {
   fill: string;
-  riders: string[];
-  block: string;
-  fillets: string[];
+  /**
+   * Rider and block fused into one outline, with the rider's channels cut back
+   * out of it. Deliberately a single path: the rider used to be approximated by
+   * a capsule, laid over the block, and patched at the two internal angles with
+   * separate fillet wedges — four shapes at three different widths, every seam
+   * between them visible through the plate's own alpha. A Boolean union has no
+   * seams to show, and it draws the rider's real outline rather than a stand-in
+   * for it, so a welded slider is the same body it was before it was welded.
+   */
+  path: string;
+  /** The links this plate stands in for, so it can be selected like one. */
+  links: Link[];
+}
+
+/** One link pinned to a block, ready to draw in the block's own frame. */
+export interface RiderDraw {
+  link: Link;
+  fill: string;
+  path: string;
 }
 
 /** One slider assembly, ready to draw, in the slot's own frame. */
@@ -48,7 +64,9 @@ export interface SliderMark {
   welded: boolean;
   driven: boolean;
   plate?: WeldPlate;
-  arrows: { line: Segment; head: string }[];
+  /** Links pinned to this block, redrawn above it. Empty when it is welded. */
+  riders: RiderDraw[];
+  arrows: { line: Segment; head: string; emphasised: boolean }[];
   /**
    * A grounded guide, carrying its own frame.
    *
@@ -57,7 +75,15 @@ export interface SliderMark {
    * rails to the block makes the track travel with the thing that is supposed to
    * be moving through it. Only visible once the mechanism is playing.
    */
-  rails?: { rails: Segment[]; ticks: Segment[]; x: number; y: number; rotation: number };
+  rails?: {
+    rails: Segment[];
+    /** Where this guide passes through another one, drawn broken (§2.8). */
+    dashedRails: Segment[];
+    ticks: Segment[];
+    x: number;
+    y: number;
+    rotation: number;
+  };
   /** A slider with a block but no carrier and no ground: invalid, drawn red. */
   dangling: boolean;
 }
@@ -131,10 +157,30 @@ export class SliderMarkService {
    * `travel` is how far each slider's block runs across the solved timesteps,
    * keyed by joint id. Absent entries fall back to the drawn rail length.
    */
-  marks(joints: Joint[], r: number, guides?: Map<string, Guide>): SliderMark[] {
+  marks(
+    joints: Joint[],
+    r: number,
+    guides?: Map<string, Guide>,
+    driveForward = true
+  ): SliderMark[] {
+    // A link pinned to two different blocks would otherwise be drawn as a rider
+    // by both of them, at double its own alpha where they overlap. The first
+    // assembly to reach it draws it; the second leaves it alone.
+    const claimed = new Set<string>();
+    const bands = this.bands(joints, r, guides);
     return joints
       .filter((joint): joint is PrisJoint => joint instanceof PrisJoint)
-      .map((slider) => this.markFor(slider, r, guides?.get(slider.id), joints))
+      .map((slider) =>
+        this.markFor(
+          slider,
+          r,
+          guides?.get(slider.id),
+          joints,
+          claimed,
+          driveForward,
+          [...bands.entries()].filter(([id]) => id !== slider.id).map(([, band]) => band)
+        )
+      )
       .filter((mark): mark is SliderMark => mark !== undefined);
   }
 
@@ -273,7 +319,10 @@ export class SliderMarkService {
     slider: PrisJoint,
     r: number,
     guide: Guide | undefined,
-    joints: Joint[]
+    joints: Joint[],
+    claimed: Set<string>,
+    driveForward: boolean,
+    otherGuides: GuideBand[]
   ): SliderMark | undefined {
     const block = slider.links.find((link): link is SliderBlock => link instanceof SliderBlock);
     if (!block) return undefined;
@@ -285,7 +334,13 @@ export class SliderMarkService {
     const angle = slider.slotAngle;
     const welded = pin.isWelded;
     const driven = slider.input || pin.input;
-    const riders = pin.links.filter((link): link is RealLink => link instanceof RealLink);
+    // The block's own zero-length link is a RealLink subclass and has no
+    // outline at all; it is the thing being welded to, not a rider on it.
+    const riders = pin.links.filter(
+      (link): link is RealLink =>
+        link instanceof RealLink && !(link instanceof SliderBlock) && !claimed.has(link.id)
+    );
+    riders.forEach((rider) => claimed.add(rider.id));
 
     return {
       id: slider.id,
@@ -299,8 +354,9 @@ export class SliderMarkService {
       welded,
       driven,
       plate: welded ? this.plateFor(pin, riders, angle, r, joints) : undefined,
-      arrows: driven ? straightArrowPaths(r) : [],
-      rails: slider.ground ? this.railsFor(slider, guide, angle, r) : undefined,
+      riders: welded ? [] : this.ridersFor(pin, riders, angle, r, joints),
+      arrows: driven ? straightArrowPaths(r, driveForward ? 1 : -1) : [],
+      rails: slider.ground ? this.railsFor(slider, guide, angle, r, otherGuides) : undefined,
       dangling: !slider.ground && !slider.isFloating,
     };
   }
@@ -312,28 +368,73 @@ export class SliderMarkService {
     r: number,
     joints: Joint[]
   ): WeldPlate | undefined {
-    if (riders.length === 0) return undefined;
-    const bar = MARK.barHalf * r;
-    const paths: string[] = [];
-    const fillets: string[] = [];
-    for (const rider of riders) {
-      const relative = riderDirection(pin, rider) - slotAngle;
-      if (!Number.isFinite(relative)) continue;
-      const reach = riderReach(pin, rider);
-      // A link can be a slot carrier *and* a welded rider at once -- the Scotch
-      // yoke's yoke is both. The plate redraws that link, so it has to cut the
-      // same channels the link itself cuts, or it fills the slot back in and the
-      // block appears to ride on a solid bar.
-      const cuts = this.channelsInLocalFrame(rider, pin, slotAngle, r, joints);
-      paths.push([riderCapsulePath(reach, bar, relative), ...cuts].join(' '));
-      fillets.push(...weldPlateFillets(r, relative));
-    }
+    const outlines = riders
+      .map((rider) => this.riderOutline(rider, pin, slotAngle))
+      .filter((outline): outline is string => outline !== undefined);
+    if (outlines.length === 0) return undefined;
+
+    const fused = buildCompoundPath([...outlines, blockPath(r)], MARK.plateFillet * r);
+    // A link can be a slot carrier *and* a welded rider at once -- the Scotch
+    // yoke's yoke is both. The plate stands in for that link, so it has to cut
+    // the same channels the link itself cuts, or it fills the slot back in and
+    // the block appears to ride on a solid bar.
+    const cuts = riders.flatMap((rider) =>
+      this.channelsInLocalFrame(rider, pin, slotAngle, r, joints)
+    );
     return {
       fill: riders[0].fill ?? '#000000',
-      riders: paths,
-      block: blockPath(r),
-      fillets,
+      path: [fused.path, mergedChannels(cuts)].join(' ').trim(),
+      links: riders,
     };
+  }
+
+  /**
+   * The links pinned to this block, drawn in the block's own frame so they land
+   * above it (§2.8 layer 4) instead of behind it.
+   *
+   * They were left in the link layer, which is layer 2 — under every block on
+   * the canvas. A coupler ending at a slider then vanished behind the block for
+   * the last bar-width of its length, so it read as passing underneath the
+   * block rather than being pinned to it. The joint marker is drawn later still,
+   * so the pin stays on top of both.
+   */
+  private ridersFor(
+    pin: RealJoint,
+    riders: RealLink[],
+    slotAngle: number,
+    r: number,
+    joints: Joint[]
+  ): RiderDraw[] {
+    return riders.flatMap((rider) => {
+      const outline = this.riderOutline(rider, pin, slotAngle);
+      if (!outline) return [];
+      const cuts = this.channelsInLocalFrame(rider, pin, slotAngle, r, joints);
+      return [
+        {
+          link: rider,
+          fill: rider.fill ?? '#000000',
+          path: [outline, mergedChannels(cuts)].join(' ').trim(),
+        },
+      ];
+    });
+  }
+
+  /**
+   * A rider's own outline, carried into the slot's frame.
+   *
+   * The link's real path rather than a capsule fitted to it: a rider can be a
+   * ternary body or a welded compound, and a capsule drawn from the pin to its
+   * furthest joint is only the same shape when it happens to be a bar.
+   */
+  private riderOutline(rider: RealLink, pin: RealJoint, slotAngle: number): string | undefined {
+    const outline = rider.d;
+    if (!outline) return undefined;
+    const along = { x: pin.x + Math.cos(slotAngle), y: pin.y + Math.sin(slotAngle) };
+    try {
+      return transformRigidPath(outline, pin, along, { x: 0, y: 0 }, { x: 1, y: 0 });
+    } catch {
+      return undefined;
+    }
   }
 
   /**
@@ -348,20 +449,57 @@ export class SliderMarkService {
     slider: PrisJoint,
     guide: Guide | undefined,
     angle: number,
-    r: number
+    r: number,
+    others: GuideBand[]
   ): SliderMark['rails'] {
-    const anchor = guide ?? { x: slider.x, y: slider.y, lo: 0, hi: 0 };
-    const pad = MARK.blockAlongHalf * r + MARK.railHalfLengthMin * r * 0.25;
-    const half = Math.max(MARK.railHalfLengthMin * r, (anchor.hi - anchor.lo) / 2 + pad);
-    // Centred on the middle of the travel rather than on the resting point, so
-    // the block is inside its own track wherever the cycle takes it.
-    const middle = (anchor.lo + anchor.hi) / 2;
+    const band = this.bandFor(slider, guide, angle, r);
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const place = (point: { x: number; y: number }) => ({
+      x: band.x + point.x * cos - point.y * sin,
+      y: band.y + point.x * sin + point.y * cos,
+    });
     return {
-      ...railGeometry(r, half),
-      x: anchor.x + middle * Math.cos(angle),
-      y: anchor.y + middle * Math.sin(angle),
+      ...railGeometry(r, band.halfLength, others, place),
+      x: band.x,
+      y: band.y,
       rotation: toDegrees(angle),
     };
+  }
+
+  /**
+   * Where a grounded guide sits and how far it runs, in world coordinates.
+   *
+   * Centred on the middle of the block's travel rather than on its resting
+   * point, so the block is inside its own track wherever the cycle takes it.
+   */
+  private bandFor(
+    slider: PrisJoint,
+    guide: Guide | undefined,
+    angle: number,
+    r: number
+  ): GuideBand {
+    const anchor = guide ?? { x: slider.x, y: slider.y, lo: 0, hi: 0 };
+    const pad = MARK.blockAlongHalf * r + MARK.railHalfLengthMin * r * 0.25;
+    const halfLength = Math.max(MARK.railHalfLengthMin * r, (anchor.hi - anchor.lo) / 2 + pad);
+    const middle = (anchor.lo + anchor.hi) / 2;
+    return {
+      x: anchor.x + middle * Math.cos(angle),
+      y: anchor.y + middle * Math.sin(angle),
+      angle,
+      halfLength,
+      halfWidth: MARK.railOffset * r,
+    };
+  }
+
+  /** Every grounded guide's strip, keyed by its slider, for crossing tests. */
+  private bands(joints: Joint[], r: number, guides?: Map<string, Guide>): Map<string, GuideBand> {
+    const found = new Map<string, GuideBand>();
+    for (const joint of joints) {
+      if (!(joint instanceof PrisJoint) || !joint.ground) continue;
+      found.set(joint.id, this.bandFor(joint, guides?.get(joint.id), joint.slotAngle, r));
+    }
+    return found;
   }
 }
 
@@ -375,24 +513,6 @@ export interface Guide {
   y: number;
   lo: number;
   hi: number;
-}
-
-/** Where a rider points, away from the joint it is welded at. */
-function riderDirection(pin: RealJoint, rider: RealLink): number {
-  const others = rider.joints.filter((joint) => joint.id !== pin.id);
-  if (others.length === 0) return NaN;
-  const x = others.reduce((sum, joint) => sum + joint.x, 0) / others.length;
-  const y = others.reduce((sum, joint) => sum + joint.y, 0) / others.length;
-  return Math.atan2(y - pin.y, x - pin.x);
-}
-
-/** How far a rider reaches, so its plate ends where the link does. */
-function riderReach(pin: RealJoint, rider: RealLink): number {
-  const others = rider.joints.filter((joint) => joint.id !== pin.id);
-  return others.reduce(
-    (far, joint) => Math.max(far, Math.hypot(joint.x - pin.x, joint.y - pin.y)),
-    0
-  );
 }
 
 function toDegrees(radians: number): number {

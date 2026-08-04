@@ -5,11 +5,9 @@ import {
   curvedArrowPath,
   MARK,
   railGeometry,
-  riderCapsulePath,
   slotHalfLength,
   straightArrowPaths,
 } from '../../app/model/joint-marks';
-import { weldPlateFillets } from '../../app/model/weld-plate';
 
 // The design package authors every mark at R = 10, so the shipped SVGs are a
 // numeric reference this module has to reproduce rather than approximate.
@@ -56,9 +54,9 @@ describe('the mark system, against the delivered SVGs', () => {
     expect(capsulePath(0, 116, 11.5)).toContain('M 0 -11.5 H 116 A 11.5 11.5 0 0 1 116 11.5');
   });
 
-  it('insets the slot 1.8R from each defining joint', () => {
-    // Two joints 200 apart leave 200/2 - 18 = 82 each way from the midpoint.
-    expect(slotHalfLength(R, 200)).toBeCloseTo(82, 9);
+  it('insets the slot 2.8R from each defining joint', () => {
+    // Two joints 200 apart leave 200/2 - 28 = 72 each way from the midpoint.
+    expect(slotHalfLength(R, 200)).toBeCloseTo(72, 9);
   });
 
   it('never lets the slot be shorter than the block inside it', () => {
@@ -103,83 +101,26 @@ describe('the mark system, against the delivered SVGs', () => {
     expect(numbers(backward.head)[0]).toBeCloseTo(-30, 6);
   });
 
-  it('keeps a rider the same width at both ends', () => {
-    // The failure this exists for draws a wedge: anchoring the near end on the
-    // frame's normal instead of the rider's own tapers the plate from the block
-    // down to the far joint. It animates, it looks like a link, and it is a
-    // different link -- so width is asserted rather than eyeballed.
-    for (const deg of [0, 31, 58.9, 90, 137, 180, 244, 300]) {
-      const angle = (deg * Math.PI) / 180;
-      const [nearA, farA, farB, nearB] = endpoints(riderCapsulePath(120, 18.4, angle));
-
-      expect(distance(nearA, nearB), `near end at ${deg} deg`).toBeCloseTo(36.8, 6);
-      expect(distance(farA, farB), `far end at ${deg} deg`).toBeCloseTo(36.8, 6);
-    }
+  it('measures a bar half-width as the width links are actually drawn at', () => {
+    // Everything derived from barHalf assumed a bar 10% wider than the one on
+    // screen: the weld plate stood proud of its own rider all the way round,
+    // and the drop radius for cutting a slot reached past the bar's edge.
+    // objectScale / 4 is the link half-width, so barHalf is that in units of R.
+    const objectScale = 4;
+    expect(MARK.barHalf * 0.15 * objectScale).toBeCloseTo(objectScale / 4, 12);
   });
 
-  it('starts a rider at its joint and ends it at the far one', () => {
-    for (const deg of [0, 58.9, 137, 244]) {
-      const angle = (deg * Math.PI) / 180;
-      const [nearA, farA, farB, nearB] = endpoints(riderCapsulePath(120, 18.4, angle));
-      const nearMid = midpoint(nearA, nearB);
-      const farMid = midpoint(farA, farB);
-
-      expect(Math.hypot(nearMid[0], nearMid[1]), `near at ${deg} deg`).toBeCloseTo(0, 6);
-      expect(farMid[0], `far x at ${deg} deg`).toBeCloseTo(120 * Math.cos(angle), 6);
-      expect(farMid[1], `far y at ${deg} deg`).toBeCloseTo(120 * Math.sin(angle), 6);
-    }
+  it('leaves a margin of bar between a slot and the joint it stops short of', () => {
+    // A channel that reaches the joint circle reads as a bar cut through rather
+    // than slotted, which is what 1.8R drew: 0.27 objectScale against a joint
+    // drawn at 0.2.
+    const objectScale = 1;
+    const jointRadius = 0.2 * objectScale;
+    expect(MARK.slotInset * 0.15 * objectScale).toBeGreaterThan(jointRadius * 1.5);
   });
 
   it('sweeps the driven-pin arc the long way round', () => {
     // A short arc reads as a wobble rather than as a revolution.
     expect(curvedArrowPath(R).arc).toContain('A 15.5 15.5 0 1 1');
-  });
-});
-
-describe('the weld plate', () => {
-  it('fillets both internal angles where the reference does', () => {
-    // slide-floating-driven.svg, rider at 58.9 degrees:
-    //   Q -12.289 15.25  and  Q 30.688 15.25
-    const fillets = weldPlateFillets(R, (58.9 * Math.PI) / 180);
-
-    expect(fillets.length).toBe(2);
-    const corners = fillets.map((path) => numbers(path).slice(2, 4));
-    expect(corners[0][0]).toBeCloseTo(-12.289, 2);
-    expect(corners[0][1]).toBeCloseTo(15.25, 6);
-    expect(corners[1][0]).toBeCloseTo(30.688, 2);
-    expect(corners[1][1]).toBeCloseTo(15.25, 6);
-  });
-
-  it('turns each fillet away from the rider, not both the same way', () => {
-    // Both leaning one way would read as a fold rather than as two welds.
-    const fillets = weldPlateFillets(R, (58.9 * Math.PI) / 180);
-    const [left, right] = fillets.map((path) => numbers(path));
-
-    expect(left[0]).toBeCloseTo(-24.789, 2);
-    expect(right[0]).toBeCloseTo(43.188, 2);
-  });
-
-  it('draws no fillet where there is no corner on screen', () => {
-    // A rider along its own slot is 3.68R wide against a block 3.05R across, so
-    // it swallows the block rather than meeting it at an angle. Filleting there
-    // would soften a corner nobody can see.
-    expect(weldPlateFillets(R, 0)).toEqual([]);
-  });
-
-  it('fillets a rider square across its slot', () => {
-    const fillets = weldPlateFillets(R, Math.PI / 2);
-
-    expect(fillets.length).toBe(2);
-    for (const path of fillets) {
-      expect(numbers(path).every(Number.isFinite)).toBe(true);
-    }
-  });
-
-  it('stays finite all the way round', () => {
-    for (let deg = 0; deg < 360; deg += 1) {
-      for (const path of weldPlateFillets(R, (deg * Math.PI) / 180)) {
-        expect(numbers(path).every(Number.isFinite), `rider at ${deg} deg`).toBe(true);
-      }
-    }
   });
 });

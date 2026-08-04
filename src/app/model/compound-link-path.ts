@@ -11,6 +11,7 @@ interface PointLike {
 }
 
 const ARC_STEP = Math.PI / 24;
+const QUADRATIC_STEPS = 12;
 const CORNER_THRESHOLD = Math.PI / 12;
 const EPSILON = 1e-9;
 
@@ -29,6 +30,27 @@ export function buildCompoundPath(leafPaths: string[], filletRadius: number): Co
     // A malformed legacy leaf must not prevent the mechanism from rendering.
     return { path: leafPaths.join(' '), rings: [] };
   }
+}
+
+/**
+ * Several holes as one subtractable outline.
+ *
+ * A carrier subtracts its channels by appending them to its own path and
+ * filling even-odd, which is exactly right for one channel and wrong for two
+ * that cross: the crossing is inside both, so it is wound three times, comes
+ * out odd, and fills back in — a carrier-coloured diamond sitting in the middle
+ * of the X with both capsule outlines stroked straight through it. Unioning
+ * first turns the pair into a single ring, which even-odd then subtracts whole.
+ *
+ * One channel is returned untouched, so the ordinary case keeps its exact arcs
+ * instead of the polygon a union would flatten it to.
+ */
+export function mergedChannels(channels: string[]): string {
+  if (channels.length < 2) return channels.join(' ');
+  // No fillet: a slot is a machined hole, and rounding the corners where two
+  // cross would invent a radius the geometry does not have.
+  const merged = buildCompoundPath(channels, 0).path;
+  return merged || channels.join(' ');
 }
 
 /**
@@ -144,7 +166,7 @@ function transformRigidPoint(
 }
 
 function flattenPath(path: string): Ring {
-  const tokens = path.match(/[MLAZ]|[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi) ?? [];
+  const tokens = path.match(/[MLHVQAZ]|[-+]?(?:\d*\.?\d+)(?:e[-+]?\d+)?/gi) ?? [];
   const ring: Ring = [];
   let index = 0;
   let current: [number, number] = [0, 0];
@@ -161,6 +183,26 @@ function flattenPath(path: string): Ring {
     if (command === 'M' || command === 'L') {
       current = [number(), number()];
       appendPoint(ring, current);
+      continue;
+    }
+    // Every rectangle and capsule in the mark system is written with the
+    // shorthand, so refusing it meant any union involving one silently fell
+    // back to emitting its inputs side by side -- which under an even-odd fill
+    // subtracts their overlap instead of joining them.
+    if (command === 'H' || command === 'V') {
+      current = command === 'H' ? [number(), current[1]] : [current[0], number()];
+      appendPoint(ring, current);
+      continue;
+    }
+    // Quadratics are what this module's own output uses for a filleted corner,
+    // so refusing them made a compound link impossible to feed back in — and
+    // the weld plate does exactly that, unioning a rider that may itself be a
+    // welded body with the block it is fused to.
+    if (command === 'Q') {
+      const control: [number, number] = [number(), number()];
+      const end: [number, number] = [number(), number()];
+      flattenQuadratic(current, control, end).forEach((point) => appendPoint(ring, point));
+      current = end;
       continue;
     }
     if (command === 'A') {
@@ -186,6 +228,25 @@ function flattenPath(path: string): Ring {
     ring[ring.length - 1] = [ring[0][0], ring[0][1]];
   }
   return ring;
+}
+
+/** A quadratic Bézier as a polyline, at the resolution arcs are flattened to. */
+function flattenQuadratic(
+  start: [number, number],
+  control: [number, number],
+  end: [number, number]
+): Ring {
+  // A fillet never turns more than a right angle, so the same step an arc uses
+  // bounds the error: twelve segments is finer than that everywhere.
+  const count = QUADRATIC_STEPS;
+  return Array.from({ length: count }, (_, step) => {
+    const t = (step + 1) / count;
+    const inverse = 1 - t;
+    return [
+      inverse * inverse * start[0] + 2 * inverse * t * control[0] + t * t * end[0],
+      inverse * inverse * start[1] + 2 * inverse * t * control[1] + t * t * end[1],
+    ] as [number, number];
+  });
 }
 
 function flattenArc(

@@ -290,6 +290,12 @@
       @if (mark.rails) {
         <!-- The guide's own frame, not the block's: it is fixed in the world and
              the block slides along it. -->
+        <!-- Drawn at model scale rather than through scaleWithZoom, which is
+             the one exception in the app and a deliberate one: the ground
+             triangle beside it is an asset sized in model units, so a rail on a
+             constant screen width drifted from the hatch it is meant to match —
+             half its weight zoomed out, twelve times it zoomed in. Two marks
+             for the same thing have to read as the same thing at every zoom. -->
         <g [attr.transform]="sliderMarks.frame(mark.rails)">
           @for (rail of mark.rails.rails; track $index) {
             <line
@@ -299,7 +305,23 @@
               [attr.y2]="rail.y2"
               stroke="#000000"
               stroke-linecap="round"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+              [attr.stroke-width]="groundLineWidth"
+            />
+          }
+          <!-- Where this guide runs through another one. Solid through solid
+               paints an X-shaped knot that says nothing about which member is
+               which; a broken line is the drawing convention for the one
+               passing behind. -->
+          @for (rail of mark.rails.dashedRails; track $index) {
+            <line
+              [attr.x1]="rail.x1"
+              [attr.y1]="rail.y1"
+              [attr.x2]="rail.x2"
+              [attr.y2]="rail.y2"
+              stroke="#000000"
+              stroke-linecap="butt"
+              [attr.stroke-width]="groundLineWidth"
+              [attr.stroke-dasharray]="groundLineWidth * 2 + ' ' + groundLineWidth * 2"
             />
           }
           @for (tick of mark.rails.ticks; track $index) {
@@ -310,7 +332,7 @@
               [attr.y2]="tick.y2"
               stroke="#000000"
               stroke-linecap="round"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(2.4)"
+              [attr.stroke-width]="groundHatchWidth"
             />
           }
         </g>
@@ -396,25 +418,56 @@
               filter="url(#elevation-1)"
             />
           </g>
-          @if (mark.plate) {
-            <g
-              class="slider-plate"
-              pointer-events="none"
+          <!-- §2.8 layer 4: what is pinned to the block, over the block. Drawn
+               here rather than in the link layer because that layer is under
+               every block on the canvas, so a coupler ending at a slider
+               disappeared behind its own block for the last bar-width of its
+               length. The joint marker comes later still, so the pin stays on
+               top of both. -->
+          @for (rider of mark.riders; track rider.link.id) {
+            <path
+              (pointerover)="rider.link.showHighlight = true"
+              (pointerout)="rider.link.showHighlight = false"
+              (pointerdown)="setLastLeftClick(rider.link, $event)"
+              (contextmenu)="setLastRightClick(rider.link, $event)"
+              [attr.d]="markPathWithPreview(mark, rider.path, rider.link)"
+              [attr.id]="rider.link.id + '__rider'"
               fill-rule="evenodd"
-              [attr.fill]="mark.plate.fill"
+              [attr.fill]="rider.fill"
               fill-opacity="0.7"
-            >
-              @for (rider of mark.plate.riders; track $index) {
-                <path [attr.d]="rider" />
-              }
-              <path [attr.d]="mark.plate.block" />
-              @for (fillet of mark.plate.fillets; track $index) {
-                <path [attr.d]="fillet" />
-              }
+              [attr.stroke]="rider.fill"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+              [class]="mechanismSrv.getLinkCSSClass(rider.link)"
+            ></path>
+          }
+          @if (mark.plate) {
+            <!-- The rider's ordinary drawing is suppressed while this stands in
+                 for it, so the two cannot double their alpha over each other or
+                 leave the rider's own outline showing as a seam through the
+                 plate. That makes the plate the only thing left to click, so it
+                 carries the rider's selection the way the link body would. -->
+            <g class="slider-plate">
+              <path
+                cursor="move"
+                (pointerover)="mark.plate.links[0].showHighlight = true"
+                (pointerout)="mark.plate.links[0].showHighlight = false"
+                (pointerdown)="setLastLeftClick(mark.plate.links[0], $event)"
+                (contextmenu)="setLastRightClick(mark.plate.links[0], $event)"
+                [attr.d]="markPathWithPreview(mark, mark.plate.path, mark.plate.links[0])"
+                fill-rule="evenodd"
+                [attr.fill]="mark.plate.fill"
+                fill-opacity="0.7"
+                [attr.stroke]="mark.plate.fill"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                [class]="mechanismSrv.getLinkCSSClass(mark.plate.links[0])"
+              />
             </g>
           }
           @if (mark.driven) {
             <g class="slider-arrows" pointer-events="none">
+              <!-- The heavier arrow is the way the block sets off. Two matched
+                   arrows only say "this translates"; they cannot say which way
+                   it goes first, which is the question a driven mark answers. -->
               @for (arrow of mark.arrows; track $index) {
                 <line
                   [attr.x1]="arrow.line.x1"
@@ -422,7 +475,7 @@
                   [attr.x2]="arrow.line.x2"
                   [attr.y2]="arrow.line.y2"
                   stroke="#ffffff"
-                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                  [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
                 />
                 <path [attr.d]="arrow.head" fill="#ffffff" />
               }

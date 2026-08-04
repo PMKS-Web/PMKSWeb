@@ -77,6 +77,7 @@ import {
   resolveSlotDropTarget,
   SlotDropCandidate,
 } from '../../model/drop-target';
+import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
 import introJs from 'intro.js';
 
 @Component({
@@ -1571,6 +1572,40 @@ export class NewGridComponent {
     return this.cylinderList.find((mark) => mark.barrelId === link.id || mark.rodId === link.id);
   }
 
+  /**
+   * The weight of a grounded guide's rails, matched to the ground symbol a
+   * grounded pin already uses.
+   *
+   * `Ground.svg` is placed at 1.2 objectScale and draws its baseline 4/157 of
+   * its own width, so this is that same line in model units. It deliberately
+   * does not go through `scaleWithZoom`: that keeps a stroke a constant number
+   * of screen pixels, and the asset beside it does not, so across a 25x zoom
+   * range a rail went from half the hatch's weight to twelve times it. The two
+   * marks say the same thing about the same world, so they have to be drawn the
+   * same way, and the asset is the one that cannot change.
+   */
+  get groundLineWidth(): number {
+    return (1.2 * 4 * this.settings.objectScale) / 157;
+  }
+
+  /** The hatch bars of that same symbol, drawn at 5/157 of its width. */
+  get groundHatchWidth(): number {
+    return (1.2 * 5 * this.settings.objectScale) / 157;
+  }
+
+  /**
+   * A link its own slider assembly is drawing: either fused into a weld plate,
+   * or hoisted above the block it is pinned to. Either way the link layer has
+   * to leave it alone, or it is drawn twice at 0.7 alpha over itself.
+   */
+  private platedLink(link: Link): boolean {
+    return this.sliderMarkList.some((mark) => {
+      if (this.isSkinned(mark)) return false;
+      if (mark.plate?.links.some((rider) => rider.id === link.id)) return true;
+      return mark.riders.some((rider) => rider.link.id === link.id);
+    });
+  }
+
   /** A slider the cylinder skin has replaced. */
   isSkinned(mark: SliderMark): boolean {
     return this.cylinderList.some((cylinder) => cylinder.pin.id === (mark.pin as Joint).id);
@@ -1593,6 +1628,10 @@ export class NewGridComponent {
     // outline is suppressed rather than drawn underneath — otherwise the skin
     // would be a shape laid over the shape it replaces.
     if (this.skinnedLink(link)) return '';
+    // Likewise a welded rider: its weld plate draws the rider and the block it
+    // is fused to as one outline, so drawing the rider here as well would put
+    // its own edge inside that outline and double the fill's alpha over itself.
+    if (this.platedLink(link)) return '';
     const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
     const paths = this.channelList
       .filter((channel) => channel.carrierId === link.id)
@@ -1607,7 +1646,28 @@ export class NewGridComponent {
     const preview = this.previewChannelOn(link);
     if (preview) paths.push(preview);
 
-    return paths.length === 0 ? outline : `${outline} ${paths.join(' ')}`;
+    return paths.length === 0 ? outline : `${outline} ${mergedChannels(paths)}`;
+  }
+
+  /**
+   * A rider or plate outline with the previewed slot cut into it as well.
+   *
+   * The preview has to reach whatever is actually drawing the link. Once a
+   * rider is hoisted out of the link layer, cutting the preview into the link
+   * layer's copy cuts it into nothing, and sweeping a joint across a coupler
+   * that happens to be pinned to a slider shows no feedback at all.
+   */
+  markPathWithPreview(mark: SliderMark, base: string, link: Link): string {
+    const preview = this.previewChannelOn(link);
+    if (!preview) return base;
+    const angle = (mark.rotation * Math.PI) / 180;
+    return `${base} ${transformRigidPath(
+      preview,
+      { x: mark.x, y: mark.y },
+      { x: mark.x + Math.cos(angle), y: mark.y + Math.sin(angle) },
+      { x: 0, y: 0 },
+      { x: 1, y: 0 }
+    )}`;
   }
 
   private previewChannelOn(link: Link): string | undefined {
@@ -1645,7 +1705,7 @@ export class NewGridComponent {
       .map((link) => `${link.id}:${(link as RealLink).fill}`)
       .join(',');
     const key =
-      `${r}|${paint}|` +
+      `${r}|${paint}|${this.settings.isInputCW.value}|` +
       joints
         .map((joint) => {
           const real = joint as RealJoint;
@@ -1662,7 +1722,7 @@ export class NewGridComponent {
     if (this.markCache?.key !== key) {
       this.markCache = {
         key,
-        marks: this.sliderMarks.marks(joints, r, this.guides()),
+        marks: this.sliderMarks.marks(joints, r, this.guides(), !this.settings.isInputCW.value),
         channels: this.sliderMarks.channels(joints, r),
       };
     }

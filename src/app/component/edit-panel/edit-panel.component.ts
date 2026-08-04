@@ -81,13 +81,21 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.mechanismService.updateMechanism(true);
   }
 
-  /** Show the stored RPM speed in whichever unit the picker is set to. */
+  /**
+   * Show the stored speed in whichever unit the picker is set to.
+   *
+   * A slider input's speed is already length per second — the one unit it is
+   * offered — so it is shown as stored rather than run through an angular
+   * conversion that would report a translation in RPM.
+   */
   private patchInputSpeedField(): void {
-    const shown = this.nup.convertAngularVelocity(
-      this.settingsService.inputSpeed.value,
-      AngularVelocityUnit.RPM,
-      this.settingsService.inputSpeedUnit.value
-    );
+    const shown = this.isSliderInput
+      ? this.settingsService.inputSpeed.value
+      : this.nup.convertAngularVelocity(
+          this.settingsService.inputSpeed.value,
+          AngularVelocityUnit.RPM,
+          this.settingsService.inputSpeedUnit.value
+        );
     this.jointForm.patchValue(
       { inputSpeed: Number(shown.toFixed(2)).toString() },
       { emitEvent: false }
@@ -96,9 +104,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   /** Mirror the current input speed and unit into the Input Settings fields. */
   private syncInputSettingsFields(): void {
-    const unitIndex = INPUT_SPEED_UNITS.findIndex(
-      (option) => option.unit === this.settingsService.inputSpeedUnit.value
-    );
+    const unitIndex = this.isSliderInput
+      ? 0
+      : INPUT_SPEED_UNITS.findIndex(
+          (option) => option.unit === this.settingsService.inputSpeedUnit.value
+        );
     this.jointForm.patchValue(
       { inputSpeedUnit: (unitIndex < 0 ? 0 : unitIndex).toString() },
       { emitEvent: false }
@@ -249,6 +259,46 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   get isGroundedSlider(): boolean {
     return this.selectedSlider?.ground === true;
+  }
+
+  /**
+   * Whether the drive on this joint is a translation rather than a rotation.
+   *
+   * Everything the Input Settings section says changes with the answer. A block
+   * on a slot does not turn clockwise, and it does not have an RPM: the panel
+   * was offering both, and the value in the box was not reaching the solver at
+   * all, so a slider input always ran at one fixed speed however it was set.
+   */
+  get isSliderInput(): boolean {
+    return this.selectedSlider !== undefined;
+  }
+
+  /** Length per second, in whatever length unit the mechanism is drawn in. */
+  get linearSpeedUnitOptions(): { value: string; label: string }[] {
+    const unit = this.settingsService.lengthUnit.value;
+    const label = unit === LengthUnit.INCH ? 'in/s' : unit === LengthUnit.METER ? 'm/s' : 'cm/s';
+    return [{ value: '0', label }];
+  }
+
+  /**
+   * Which way along its slot a driven block sets off.
+   *
+   * Named for the slot rather than for the screen: the slot's own angle is
+   * shown right above this, so "forward" means along it and "backward" against
+   * it, whichever way it happens to point.
+   */
+  get inputDirectionLabel(): string {
+    if (!this.isSliderInput) {
+      return this.settingsService.isInputCW.value ? 'Clockwise' : 'Counter-Clockwise';
+    }
+    return this.settingsService.isInputCW.value ? 'Backward along slot' : 'Forward along slot';
+  }
+
+  get inputDirectionIcon(): string {
+    if (!this.isSliderInput) {
+      return this.settingsService.isInputCW.value ? 'rotate_right' : 'rotate_left';
+    }
+    return this.settingsService.isInputCW.value ? 'arrow_back' : 'arrow_forward';
   }
 
   /** A slot cut into a moving link names the link and the pair that defines it. */
@@ -470,11 +520,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             this.settingsService.isInputCW.next(!this.settingsService.isInputCW.value);
           }
           this.settingsService.inputSpeed.next(
-            this.nup.convertAngularVelocity(
-              Math.abs(typed),
-              this.settingsService.inputSpeedUnit.value,
-              AngularVelocityUnit.RPM
-            )
+            this.isSliderInput
+              ? Math.abs(typed)
+              : this.nup.convertAngularVelocity(
+                  Math.abs(typed),
+                  this.settingsService.inputSpeedUnit.value,
+                  AngularVelocityUnit.RPM
+                )
           );
           this.mechanismService.updateMechanism(true);
         }

@@ -30,8 +30,23 @@ export const MARK = {
   /** Channel: a 2.3R window subtracted from the carrier, outlined in its colour. */
   channelHalfWidth: 1.15,
 
-  /** Link bars, unchanged from today: 3.68R wide. */
-  barHalf: 1.84,
+  /**
+   * Half a link bar, which is `objectScale / 4` and therefore exactly 5/3 R.
+   *
+   * The design package rounded this to 1.84 off a mockup, and 1.84 is 10% wider
+   * than the bars the app actually draws. Everything derived from it inherited
+   * that error: the weld plate, which redraws a rider, stood proud of the rider
+   * all the way round as a pale halo, and it is the one number here that is not
+   * free to be chosen — it belongs to the link drawing, not to this system.
+   */
+  barHalf: 5 / 3,
+
+  /**
+   * Fillet radius where the weld plate fuses a rider to its block. The same
+   * radius `buildCompoundPath` softens a welded compound link with, because it
+   * is the same join being drawn.
+   */
+  plateFillet: 5 / 3,
 
   /** Grounded rails and their ground ticks. */
   railOffset: 1.975,
@@ -42,8 +57,16 @@ export const MARK = {
   /** The plate that welds a rider to its block — visual only. */
   fillet: 1.25,
 
-  /** A slot stops short of the joints that define it, never touching them. */
-  slotInset: 1.8,
+  /**
+   * A slot stops short of the joints that define it, leaving a visible margin
+   * of bar between the end of the channel and the joint it stops short of.
+   *
+   * At 1.8R the channel's end cap landed 0.27 objectScale from the joint centre
+   * and the joint's own circle is 0.2 — the two touched, and the bar read as
+   * cut through rather than slotted. 2.8R clears the circle by most of its own
+   * radius, which is the margin the reference drawing shows.
+   */
+  slotInset: 2.8,
 
   /** Driven overlay. Always white, which the black block underneath guarantees. */
   arrowTail: 1.4,
@@ -51,6 +74,8 @@ export const MARK = {
   arrowTip: 3.0,
   arrowHeadLength: 0.74,
   arrowHeadHalf: 0.46,
+  /** How much larger the arrow the block sets off along is drawn. */
+  arrowEmphasis: 1.25,
 
   /** A driven floating pin has no block, so the overlay brings its own backing. */
   pinBackingHalf: 2.2,
@@ -194,27 +219,6 @@ export function orientedCapsulePath(
   );
 }
 
-/**
- * A rider as the weld plate redraws it: from the joint outward along `angle`,
- * square where it meets the block so the two read as fused, rounded at the far
- * end concentric on the joint it reaches.
- *
- * Both ends are offset along the rider's own normal. Anchoring the near end on
- * the frame's normal instead draws a wedge tapering from the block to the far
- * joint — a plausible link shape, and not this one.
- */
-export function riderCapsulePath(reach: number, halfWidth: number, angle: number): string {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const nx = -sin * halfWidth;
-  const ny = cos * halfWidth;
-  return (
-    `M ${-nx} ${-ny} L ${reach * cos - nx} ${reach * sin - ny} ` +
-    `A ${halfWidth} ${halfWidth} 0 0 1 ${reach * cos + nx} ${reach * sin + ny} ` +
-    `L ${nx} ${ny} Z`
-  );
-}
-
 /** The block, centred on the joint, long axis along the slot. Always #000. */
 export function blockPath(r: number): string {
   const a = MARK.blockAlongHalf * r;
@@ -262,45 +266,192 @@ export function slotHalfLength(r: number, jointSeparation: number): number {
 }
 
 /**
+ * The strip a guide occupies: everything between its two rails, for the length
+ * they run. Used to work out where two guides cross each other.
+ */
+export interface GuideBand {
+  x: number;
+  y: number;
+  angle: number;
+  halfLength: number;
+  halfWidth: number;
+}
+
+/**
  * The two rails of a grounded guide and the ground ticks hanging off them.
  *
  * Returned in the slot's own frame, so the caller rotates the whole group to
  * the slot angle. The ticks lean one way regardless of that angle: hatching
  * marks "the world is on this side", and the world does not rotate.
+ *
+ * `crossings` are the other guides on the canvas, in world coordinates, with
+ * `place` mapping this guide's local frame into that world. Where a rail runs
+ * through another guide's strip it is handed back as `dashedRails` instead, and
+ * the ticks in that strip are dropped: two guides drawn solid straight through
+ * each other paint an X-shaped knot with no reading at all, whereas a broken
+ * line is the drawing convention for the member that passes behind.
  */
 export function railGeometry(
   r: number,
-  halfLength: number
-): { rails: Segment[]; ticks: Segment[] } {
+  halfLength: number,
+  crossings: GuideBand[] = [],
+  place: (point: { x: number; y: number }) => { x: number; y: number } = (point) => point
+): { rails: Segment[]; dashedRails: Segment[]; ticks: Segment[] } {
   const offset = MARK.railOffset * r;
   const leg = MARK.tickLeg * r;
   const pitch = MARK.tickPitch * r;
-  const rails: Segment[] = [
+  const whole: Segment[] = [
     { x1: -halfLength, y1: -offset, x2: halfLength, y2: -offset },
     { x1: -halfLength, y1: offset, x2: halfLength, y2: offset },
   ];
+
+  const rails: Segment[] = [];
+  const dashedRails: Segment[] = [];
+  for (const rail of whole) {
+    const inside = mergeIntervals(
+      crossings.flatMap((band) => segmentInsideBand(rail, band, place))
+    );
+    rails.push(...outsideIntervals(rail, inside));
+    dashedRails.push(...inside.map(([from, to]) => sliceSegment(rail, from, to)));
+  }
+
   const ticks: Segment[] = [];
   for (let x = -halfLength + leg; x <= halfLength; x += pitch) {
-    ticks.push({ x1: x, y1: -offset, x2: x - leg, y2: -offset - leg });
-    ticks.push({ x1: x, y1: offset, x2: x - leg, y2: offset + leg });
+    for (const side of [-1, 1]) {
+      const tick = { x1: x, y1: side * offset, x2: x - leg, y2: side * (offset + leg) };
+      // Both ends, not just the root: a tick whose leg reaches into the other
+      // guide draws an X across its rail, which is the knot this is avoiding.
+      const touches = crossings.some(
+        (band) =>
+          pointInBand(place({ x: tick.x1, y: tick.y1 }), band) ||
+          pointInBand(place({ x: tick.x2, y: tick.y2 }), band)
+      );
+      if (touches) continue;
+      ticks.push(tick);
+    }
   }
-  return { rails, ticks };
+  return { rails, dashedRails, ticks };
+}
+
+function pointInBand(point: { x: number; y: number }, band: GuideBand): boolean {
+  const dx = point.x - band.x;
+  const dy = point.y - band.y;
+  const cos = Math.cos(band.angle);
+  const sin = Math.sin(band.angle);
+  return (
+    Math.abs(dx * cos + dy * sin) <= band.halfLength &&
+    Math.abs(-dx * sin + dy * cos) <= band.halfWidth
+  );
+}
+
+/**
+ * The parameter interval of `segment` that lies inside `band`, or nothing.
+ * Clipped against the band's four edges in the band's own frame, which is the
+ * whole of what makes a rotated rectangle convex.
+ */
+function segmentInsideBand(
+  segment: Segment,
+  band: GuideBand,
+  place: (point: { x: number; y: number }) => { x: number; y: number }
+): [number, number][] {
+  const start = place({ x: segment.x1, y: segment.y1 });
+  const end = place({ x: segment.x2, y: segment.y2 });
+  const cos = Math.cos(band.angle);
+  const sin = Math.sin(band.angle);
+  const local = (point: { x: number; y: number }) => ({
+    x: (point.x - band.x) * cos + (point.y - band.y) * sin,
+    y: -(point.x - band.x) * sin + (point.y - band.y) * cos,
+  });
+  const from = local(start);
+  const to = local(end);
+  let low = 0;
+  let high = 1;
+  const clip = (position: number, delta: number, limit: number): boolean => {
+    // position + t * delta <= limit
+    if (Math.abs(delta) < 1e-12) return position <= limit;
+    const t = (limit - position) / delta;
+    if (delta > 0) high = Math.min(high, t);
+    else low = Math.max(low, t);
+    return true;
+  };
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const inside =
+    clip(from.x, dx, band.halfLength) &&
+    clip(-from.x, -dx, band.halfLength) &&
+    clip(from.y, dy, band.halfWidth) &&
+    clip(-from.y, -dy, band.halfWidth);
+  return inside && high - low > 1e-9 ? [[low, high]] : [];
+}
+
+function mergeIntervals(intervals: [number, number][]): [number, number][] {
+  const sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const [from, to] of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && from <= last[1]) last[1] = Math.max(last[1], to);
+    else merged.push([from, to]);
+  }
+  return merged;
+}
+
+function outsideIntervals(segment: Segment, inside: [number, number][]): Segment[] {
+  const pieces: Segment[] = [];
+  let cursor = 0;
+  for (const [from, to] of inside) {
+    if (from - cursor > 1e-9) pieces.push(sliceSegment(segment, cursor, from));
+    cursor = to;
+  }
+  if (1 - cursor > 1e-9) pieces.push(sliceSegment(segment, cursor, 1));
+  return pieces;
+}
+
+function sliceSegment(segment: Segment, from: number, to: number): Segment {
+  const dx = segment.x2 - segment.x1;
+  const dy = segment.y2 - segment.y1;
+  return {
+    x1: segment.x1 + dx * from,
+    y1: segment.y1 + dy * from,
+    x2: segment.x1 + dx * to,
+    y2: segment.y1 + dy * to,
+  };
 }
 
 /**
  * The straight arrows of a driven slider: one each way along the slot, clear
  * of the block's centre so the marker sits between them.
+ *
+ * `leading` is the way the block sets off, as a sign along the slot. That arrow
+ * is drawn larger, because two identical arrows say only "this one translates"
+ * — they cannot say which way, which is the one thing a driven mark exists to
+ * tell you. Pass nothing where the direction is not known and both are equal.
  */
-export function straightArrowPaths(r: number): { line: Segment; head: string }[] {
-  return [1, -1].map((side) => ({
-    line: {
-      x1: side * MARK.arrowTail * r,
-      y1: 0,
-      x2: side * MARK.arrowHeadBase * r,
-      y2: 0,
-    },
-    head: arrowHead(r, side * MARK.arrowTip * r, 0, side > 0 ? 0 : Math.PI),
-  }));
+export function straightArrowPaths(
+  r: number,
+  leading?: 1 | -1
+): { line: Segment; head: string; emphasised: boolean }[] {
+  return [1, -1].map((side) => {
+    const emphasised = side === leading;
+    // Bounded by the block: at the emphasis factor the tip still lands inside
+    // blockAlongHalf, so the arrow grows without breaking out of its own block.
+    const grow = emphasised ? MARK.arrowEmphasis : 1;
+    return {
+      line: {
+        x1: side * MARK.arrowTail * r,
+        y1: 0,
+        x2: side * MARK.arrowHeadBase * r * grow,
+        y2: 0,
+      },
+      head: arrowHeadAt(
+        side * MARK.arrowTip * r * grow,
+        0,
+        side > 0 ? 0 : Math.PI,
+        MARK.arrowHeadLength * r * grow,
+        MARK.arrowHeadHalf * r * grow
+      ),
+      emphasised,
+    };
+  });
 }
 
 /**
