@@ -136,6 +136,7 @@ export class SvgGridService {
       customEventsHandler: eventsHandler,
     });
     this.guardAgainstStuckPan(root);
+    this.stripPanZoomStyleTransform(root);
     this.scaleToFitLinkage();
   }
 
@@ -346,6 +347,51 @@ export class SvgGridService {
 
   handleUpdatedCTM(newCTM: SVGMatrix) {
     this.CTM = newCTM;
+    this.keepPanZoomOffTheCompositor();
+  }
+
+  /**
+   * Strip the CSS copy of the pan/zoom matrix, leaving the SVG attribute.
+   *
+   * `svg-pan-zoom` writes the matrix twice — `setAttributeNS(null, 'transform')`
+   * and then `element.style.transform` — a shim for browsers that only ever
+   * understood `-ms-transform` and `-webkit-transform` (svg-utilities.js:174).
+   * On anything current the CSS one wins, and a CSS transform on an SVG group
+   * hands that group to the compositor: Chrome rasterises its contents into
+   * layer tiles and scales them, instead of rasterising the SVG at the
+   * resolution it is actually being shown at.
+   *
+   * That is what produces hairline white tears through a filled body, why they
+   * are worse the further in you zoom — the cached raster is stretched further
+   * — and why they come and go as the pointer moves, since each repaint only
+   * refreshes some tiles. Headless Chromium rasterises in software and never
+   * shows it, which is why the artifact survived every screenshot check.
+   *
+   * Both matrices are identical, so removing the CSS one changes nothing about
+   * where anything is: `getScreenCTM` reads the attribute either way.
+   */
+  private keepPanZoomOffTheCompositor(): void {
+    this.viewportGroup?.style.removeProperty('transform');
+  }
+
+  private viewportGroup?: SVGGElement;
+
+  /**
+   * Watch the viewport for the CSS copy and take it off again.
+   *
+   * The library rewrites it on every pan and zoom frame, and not every one of
+   * those goes through a callback this service is given, so the removal is
+   * attached to the element rather than to any one code path.
+   */
+  private stripPanZoomStyleTransform(root: HTMLElement): void {
+    const viewport = root.querySelector(':scope > g') as SVGGElement | null;
+    if (!viewport) return;
+    this.viewportGroup = viewport;
+    this.keepPanZoomOffTheCompositor();
+    new MutationObserver(() => this.keepPanZoomOffTheCompositor()).observe(viewport, {
+      attributes: true,
+      attributeFilter: ['style'],
+    });
   }
 
   zoomIn() {

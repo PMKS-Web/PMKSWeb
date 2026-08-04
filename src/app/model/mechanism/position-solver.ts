@@ -192,12 +192,26 @@ export class PositionSolver {
     if (!(inputJoint instanceof RealJoint)) {
       return;
     }
+    // The drive turns one body, so only that body's joints travel with it.
+    //
+    // Every joint connected to the input used to be swung round it by the same
+    // degree per sample. That is right for a ternary crank -- its joints are one
+    // rigid body and do move together -- and wrong the moment a second link is
+    // pinned to the same ground pivot: the two are free to turn relative to each
+    // other, so driving both imposes a rigidity the mechanism does not have. On
+    // a bar carrying two blocks, each pushed by its own crank off one pivot, the
+    // second crank's joint was carried round instead of being solved, and its
+    // block left the bar entirely -- nearly two units off at the widest.
+    const driven = this.drivenBody(inputJoint);
     const tracer_joints: Joint[] = [];
     inputJoint.connectedJoints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
       }
       if (j.ground) {
+        return;
+      }
+      if (!driven.has(j.id)) {
         return;
       }
       // if (j.ground && j.constructor !== PrisJoint) {
@@ -238,6 +252,23 @@ export class PositionSolver {
     this.unsolvableJoints = joints
       .filter((j) => j instanceof RealJoint && !j.ground && !knownJointsIds.includes(j.id))
       .map((j) => j.id);
+  }
+
+  /**
+   * The joints the drive carries with it: those of the one link it turns.
+   *
+   * A ground pivot can hold several links, and only one of them is being
+   * driven. Which one is not something the model says, so the first non-block
+   * link on the joint is taken and the rest are left to the solver — the same
+   * arbitrary-but-consistent choice `incrementRevInput` was already making when
+   * it picked a neighbour to measure the crank radius from.
+   */
+  private static drivenBody(inputJoint: RealJoint): Set<string> {
+    const body = inputJoint.links.find(
+      (link) => !link.joints.some((joint) => joint instanceof PrisJoint)
+    );
+    const members = (body ?? inputJoint.links[0])?.joints ?? [];
+    return new Set(members.filter((joint) => joint.id !== inputJoint.id).map((joint) => joint.id));
   }
 
   /**
