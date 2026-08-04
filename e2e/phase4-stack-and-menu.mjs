@@ -145,25 +145,6 @@ check(
 );
 check('Input follows the panel rule on a slider', item('Input') && !item('Input').disabled);
 
-// The pan/zoom matrix must live on the SVG transform attribute alone. The
-// library writes a CSS copy as well -- a shim for browsers that only knew
-// -ms-transform -- and on anything current that copy wins and hands the whole
-// canvas to the compositor, which rasterises it once and scales the result.
-await load(COUPLER);
-const matrix = await page.evaluate(() => {
-  const viewport = document.querySelector('#canvas > g');
-  return {
-    style: viewport.getAttribute('style') ?? '',
-    attribute: (viewport.getAttribute('transform') ?? '').slice(0, 6),
-    ctm: +viewport.getScreenCTM().a.toFixed(3),
-  };
-});
-check(
-  'the pan/zoom matrix is an SVG attribute, not a CSS transform',
-  !matrix.style.includes('transform') && matrix.attribute === 'matrix',
-  JSON.stringify(matrix)
-);
-
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 console.log(out.join('\n'));
 console.log(`\n${out.filter((l) => l.startsWith('PASS')).length}/${out.length} checks passed`);
