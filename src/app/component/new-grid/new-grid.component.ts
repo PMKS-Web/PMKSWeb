@@ -816,8 +816,20 @@ export class NewGridComponent {
     // the slot preview only appears where no joint is claiming the drop -- which
     // is also what makes the two distinguishable before release: you either see
     // a ring on a joint, or a channel opening in a bar, never both.
+    // A joint you are not allowed to merge with is still a joint you are aiming
+    // at. `resolveDropCandidate` deliberately says nothing about the far end of
+    // your own link -- the drawing already says the two are joined, so there is
+    // no rule there worth explaining -- but dropping on top of it must not then
+    // quietly cut a slot into whatever else passes through that point. Landing
+    // a joint on a joint gave the four-bar a fifth one.
+    const overAJoint = this.mechanismSrv.joints.some(
+      (joint) =>
+        joint.id !== this.activeObjService.selectedJoint?.id &&
+        !(joint instanceof PrisJoint) &&
+        Math.hypot(joint.x - mousePos.x, joint.y - mousePos.y) < this.snapRadius()
+    );
     this.slotCandidate =
-      altHeld || candidate
+      altHeld || candidate || overAJoint
         ? undefined
         : resolveSlotDropTarget(
             this.activeObjService.selectedJoint,

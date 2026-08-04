@@ -126,18 +126,33 @@ const violations = () =>
       // 4. a weld plate reaches the joint its rider reaches
       const plate = mark.querySelector('.slider-plate path');
       if (plate) {
-        const riders = pin.links.filter((l) => l.constructor.name === 'RealLink');
+        const riders = pin.links.filter(
+          (l) => l.constructor.name === 'RealLink' && l.constructor.name !== 'SliderBlock'
+        );
         const far = riders[0]?.joints.find((j) => j.id !== pin.id);
         if (far) {
-          const nums =
-            (plate.getAttribute('d') ?? '').match(/-?[\d.]+(e-?\d+)?/g)?.map(Number) ?? [];
-          const tip = toModel(plate, nums[2], nums[3]);
-          // The path traces the capsule edge, so it lands half a bar-width off
+          // The plate is one unioned outline, so its point furthest from the
+          // pin is the tip of whichever limb reaches furthest -- the rider's.
+          // Reading a fixed index would read a capsule that no longer exists.
+          const outline = (plate.getAttribute('d') ?? '').split(/(?=M)/)[0] ?? '';
+          let tip = null;
+          let reach = -1;
+          for (const [, body] of outline.matchAll(/[MLQ]([^MLQAZ]*)/g)) {
+            const values = (body.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number);
+            if (values.length < 2) continue;
+            const at = toModel(plate, values[values.length - 2], values[values.length - 1]);
+            const distance = Math.hypot(at[0] - pin.x, at[1] - pin.y);
+            if (distance > reach) {
+              reach = distance;
+              tip = at;
+            }
+          }
+          // The outline traces the bar's edge, so it lands half a bar-width off
           // the joint itself; anything further means it points somewhere else.
-          const off = Math.hypot(tip[0] - far.x, tip[1] - far.y);
+          const off = tip ? Math.hypot(tip[0] - far.x, tip[1] - far.y) : Infinity;
           if (off > 0.4 * grid.settings.objectScale) {
             bad.push(
-              `${slider.id}: plate tip ${tip.map((n) => n.toFixed(2))} is ${off.toFixed(2)} from rider end ${far.id}`
+              `${slider.id}: plate tip ${tip?.map((n) => n.toFixed(2))} is ${off.toFixed(2)} from rider end ${far.id}`
             );
           }
         }
@@ -147,24 +162,44 @@ const violations = () =>
     // 3. a floating slot's channel follows the joints that define it
     for (const slider of sliders) {
       if (!slider.isFloating || !slider.isSlotWellFormed) continue;
-      const carrier = document.querySelector(`#linkHolder path[id="${slider.carrier.id}"]`);
+      // Whichever element is drawing the carrier. A carrier that is also a
+      // welded rider is drawn by its own weld plate instead of by the link
+      // layer, and the channel is cut into that -- so looking only in the link
+      // layer finds an empty path and reads it as a missing channel.
+      const inLayer = document.querySelector(`#linkHolder path[id="${slider.carrier.id}"]`);
+      const standIn = [
+        ...document.querySelectorAll('#sliderHolder .slider-plate path, #sliderHolder path[id]'),
+      ].find(
+        (node) =>
+          node.id === `${slider.carrier.id}__rider` ||
+          (node.closest('.slider-plate') && (node.getAttribute('d') ?? '').includes('M'))
+      );
+      const carrier = inLayer?.getAttribute('d') ? inLayer : standIn;
       if (!carrier) {
         bad.push(`${slider.id}: carrier ${slider.carrier.id} not drawn`);
         continue;
       }
-      if (Number(carrier.getAttribute('data-channels')) < 1) {
+      if (inLayer && Number(inLayer.getAttribute('data-channels')) < 1) {
         bad.push(`${slider.id}: carrier ${slider.carrier.id} has no channel`);
       }
       const a = slider.slotJointA;
       const b = slider.slotJointB;
       const d = (carrier.getAttribute('d') ?? '').split(/(?=M)/).slice(1);
       const sub = d[d.length - 1];
+      if (!sub) {
+        bad.push(`${slider.id}: no channel subpath on ${slider.carrier.id}`);
+        continue;
+      }
       const nums = sub.match(/-?[\d.]+(e-?\d+)?/g)?.map(Number) ?? [];
       if (nums.length < 11) continue;
       // orientedCapsulePath: M c0 L c1 A rx ry rot laf sf c2 L c3 A ... Z
       // so the corner opposite c0 is c2, and the arc's five parameters sit
       // between them -- reading indices 4,5 gets the radii, not a point.
-      const centre = [(nums[0] + nums[9]) / 2, (nums[1] + nums[10]) / 2];
+      // Through the element's own transform: a plate emits its channels in the
+      // slot's frame, so the raw numbers are not model coordinates there.
+      const first = toModel(carrier, nums[0], nums[1]);
+      const opposite = toModel(carrier, nums[9], nums[10]);
+      const centre = [(first[0] + opposite[0]) / 2, (first[1] + opposite[1]) / 2];
       const want = [(a.x + b.x) / 2, (a.y + b.y) / 2];
       if (Math.hypot(centre[0] - want[0], centre[1] - want[1]) > 0.05) {
         bad.push(

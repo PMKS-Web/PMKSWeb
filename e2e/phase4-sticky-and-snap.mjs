@@ -1,5 +1,9 @@
 // Sticky slot release + axis snapping, driven by mouse.
-import { chromium } from 'playwright';
+const { chromium } = await import(
+  (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
+);
+
+const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 
 const YOKE =
   '?2P.Fe.K,0.1011.MA,A,0,0,0.GB,B,Fe,0,0.OC,C,Fe,0VG,0.GD,D,Fe,Fe,0.HE,E,Fe,0,0,CD,C,D.LF,F,Fe,0VG,0..YRAB,AB,Fe,Fe,7q,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,Fe,07q,303e9f,C,D,,.YPBE,BE,Fe,0,0,0,,B,E,,.YPCF,CF,Fe,0,0,0,,C,F,,...N_V';
@@ -17,7 +21,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 
 const load = async (query) => {
-  await page.goto(`http://127.0.0.1:4200/${query}`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/${query}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);
 };
 const screenOf = (x, y) =>

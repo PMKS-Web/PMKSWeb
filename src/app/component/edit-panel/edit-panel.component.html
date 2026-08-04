@@ -120,6 +120,7 @@
               </button>
               <button
                 [class.is-on]="skinPreference === 'cylinder'"
+                [disabled]="!!cylinderRefusal"
                 (click)="setSkinPreference('cylinder')"
               >
                 Cylinder
@@ -131,6 +132,12 @@
                 Slotted
               </button>
             </div>
+            <!-- What is missing, rather than a control that has quietly gone
+                 away: this is the only place in the app that says what a piston
+                 is made of, so it has to be readable before you have one. -->
+            @if (cylinderRefusal) {
+              <div class="slotNote">{{ cylinderRefusal }}</div>
+            }
             <div class="slotNote">
               View preference — not in the URL, not in undo. A shared link always opens on Auto.
             </div>

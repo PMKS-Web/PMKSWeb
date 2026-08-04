@@ -140,7 +140,9 @@ await page.goto(BASE + MECHANISMS[0].query, { waitUntil: 'networkidle' });
 await page.waitForSelector('#sliderHolder', { state: 'attached', timeout: 15000 });
 await page.waitForTimeout(600);
 
-const plateFill = () => page.locator('#sliderHolder .slider-plate').first().getAttribute('fill');
+// The plate is one path inside its group now, so the paint is on the path.
+const plateFill = () =>
+  page.locator('#sliderHolder .slider-plate path').first().getAttribute('fill');
 const wasFill = await plateFill();
 
 // Driving the recolour needs Angular's debug globals, which exist only in a

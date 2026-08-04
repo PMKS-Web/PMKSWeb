@@ -27,7 +27,7 @@ import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
 import { NewGridComponent } from '../new-grid/new-grid.component';
-import { resolveCylinder, SkinPreference } from '../../model/cylinder';
+import { describeCylinder, SkinPreference } from '../../model/cylinder';
 import { SliderMarkService } from '../../services/slider-mark.service';
 
 /**
@@ -321,8 +321,25 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
    * A view preference: it does not serialize into the URL and does not enter
    * the undo stack, so a shared link always opens on Auto.
    */
+  /**
+   * Offered to any welded slider, not only to one already shaped like a piston.
+   *
+   * It used to appear only when `resolveCylinder` succeeded, which made the
+   * "Cylinder" button unreachable by anyone who did not already have a cylinder
+   * — the one control that could explain what a piston is made of was invisible
+   * to exactly the people who needed it.
+   */
   get showCylinderSkin(): boolean {
-    return !!this.activeSrv.selectedJoint && !!resolveCylinder(this.activeSrv.selectedJoint);
+    const joint = this.activeSrv.selectedJoint;
+    return !!joint && !!this.selectedSlider && this.gridUtils.getWelded(joint);
+  }
+
+  /** Why this assembly cannot wear the skin, or nothing when it can. */
+  get cylinderRefusal(): string | undefined {
+    const joint = this.activeSrv.selectedJoint;
+    if (!joint) return undefined;
+    const found = describeCylinder(joint);
+    return typeof found === 'string' ? found : undefined;
   }
 
   get skinPreference(): SkinPreference {

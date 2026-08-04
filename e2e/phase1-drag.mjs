@@ -733,9 +733,11 @@ await safe('welding a pair that is already pinned goes through with a warning', 
   await page.mouse.click(c.screenX, c.screenY);
   await page.waitForTimeout(500);
 
-  const weld = page.locator('button', { hasText: 'Weld' }).first();
+  // Phase 4 replaced the Weld/Unweld button pair with a toggle: a pair of
+  // buttons cannot show which side of the axis the joint is currently on.
+  const weld = page.locator('toggle-block', { hasText: 'Weld' }).locator('button').first();
   const enabled = await weld.isEnabled().catch(() => null);
-  record('the Weld button is still clickable', enabled === true, { enabled });
+  record('the Weld toggle is still clickable', enabled === true, { enabled });
 
   if (enabled) {
     await weld.click();

@@ -111,6 +111,12 @@
         background: #3f51b5;
         color: #fff;
       }
+
+      // Offered but not available: the note under the row says what is missing.
+      &:disabled {
+        color: rgba(0, 0, 0, 0.38);
+        cursor: default;
+      }
     }
   }
 }

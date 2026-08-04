@@ -1,7 +1,9 @@
 import '../../app/model/joint';
 import { PrisJoint, RevJoint } from '../../app/model/joint';
 import { RealLink, SliderBlock } from '../../app/model/link';
-import { resolveCylinder } from '../../app/model/cylinder';
+import { describeCylinder, resolveCylinder } from '../../app/model/cylinder';
+import { MARK } from '../../app/model/joint-marks';
+import { SettingsService } from '../../app/services/settings.service';
 
 // §2.7. A piston is not a new joint type -- it is a Slide whose rod and barrel
 // happen to line up, drawn as the part an engineer would recognise. The test is
@@ -95,6 +97,27 @@ describe('recognising a cylinder', () => {
     extra.links.push(scene.barrel);
 
     expect(resolveCylinder(scene.p)).toBeUndefined();
+  });
+
+  it('tolerates a rod drawn by hand, not only one placed by arithmetic', () => {
+    // At 1e-6 a piston could be opened from a URL and never built: nothing
+    // placed with a mouse lands within a millionth of a unit of a line. Half a
+    // block's width across is the bound, because anything inside that is behind
+    // the block the skin draws over it.
+    const inside = MARK.blockAcrossHalf * 0.15 * SettingsService.objectScale * 0.9;
+    const outside = MARK.blockAcrossHalf * 0.15 * SettingsService.objectScale * 1.1;
+
+    expect(resolveCylinder(piston({ rodAt: [6, inside] }).p)).toBeDefined();
+    expect(resolveCylinder(piston({ rodAt: [6, outside] }).p)).toBeUndefined();
+  });
+
+  it('says what is missing when the shape does not qualify', () => {
+    // The panel offers the picker to any Slide now, so the reason has to be
+    // readable by someone who does not yet have a cylinder.
+    const bent = describeCylinder(piston({ rodAt: [6, 2] }).p);
+
+    expect(typeof bent).toBe('string');
+    expect(bent).toContain('line up');
   });
 
   it('tolerates the float error a solved position carries', () => {
