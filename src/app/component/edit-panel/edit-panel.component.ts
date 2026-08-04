@@ -1100,13 +1100,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return joint.canBeWelded();
   }
 
+  /** One rule, shared with the right-click menu so the two cannot disagree. */
   canToggleInput(selectedJoint: RealJoint) {
-    //If this is attached to a slider, return true
-    if (this.gridUtils.isAttachedToSlider(selectedJoint)) {
-      return true;
-    }
-    //If the joint is grounded, return true
-    return selectedJoint.ground;
+    return this.gridUtils.canToggleInput(selectedJoint);
   }
 
   setShowLinkLengthOverlay($event: number) {

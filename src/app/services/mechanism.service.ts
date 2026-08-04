@@ -26,6 +26,7 @@ import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
+import { slotHalfLength } from '../model/joint-marks';
 import { SliderMarkService } from './slider-mark.service';
 import { DragStateService } from './drag-state.service';
 import { Coord } from '../model/coord';
@@ -1315,15 +1316,29 @@ export class MechanismService {
       const uy = dy / length;
       const midX = (a.x + b.x) / 2;
       const midY = (a.y + b.y) / 2;
-      const along = (slider.x - midX) * ux + (slider.y - midY) * uy;
-      const x = midX + along * ux;
-      const y = midY + along * uy;
+      const offset = (slider.x - midX) * ux + (slider.y - midY) * uy;
+      const onLine = { x: midX + offset * ux, y: midY + offset * uy };
       // Below this, leave it exactly where it is. Joint coordinates come back
       // out of the URL at a fixed precision, so a slider is already a hair off
       // its own line the moment a mechanism loads -- and correcting that here
       // would mean dragging any joint anywhere silently moved every other
       // slider. The breakage this exists for measures 0.17 and 0.41.
-      if (Math.hypot(x - slider.x, y - slider.y) < 1e-4) continue;
+      //
+      // The clamp below is inside this guard for the same reason: a mechanism
+      // can arrive with its block already outside the drawn channel, and
+      // hauling it in because some unrelated joint moved would be editing a
+      // slot nobody touched.
+      if (Math.hypot(onLine.x - slider.x, onLine.y - slider.y) < 1e-4) continue;
+
+      // Clamped to the channel, not merely projected onto its line. A slot is a
+      // hole of a definite length, and dragging the carrier -- or either joint
+      // that defines it -- can carry that hole right off the block. Projection
+      // alone put the block back on the line and left it out past the end of
+      // the bar, which is a block riding on nothing.
+      const half = slotHalfLength(0.15 * SettingsService.objectScale, length);
+      const along = Math.max(-half, Math.min(half, offset));
+      const x = midX + along * ux;
+      const y = midY + along * uy;
 
       slider.x = x;
       slider.y = y;

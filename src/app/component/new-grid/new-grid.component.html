@@ -395,91 +395,113 @@
        so nothing can tint them: they are always white, and that is only safe
        because what is underneath is always black. -->
   <g id="sliderHolder" style="transform: scaleY(-1)">
-    @for (mark of sliderMarkList; track mark.id) {
-      @if (!isSkinned(mark)) {
-        <g [attr.transform]="sliderMarks.frame(mark)" [class]="'slider-mark'">
-          <!-- Grabbing the block starts a drag on its pin (§4.4). The block is a
-             far bigger target than the marker at its centre, and the two sit on
-             the same point, so it is the same grab with a better hitbox. -->
-          <g
-            class="slider-block"
-            cursor="move"
-            (pointerdown)="setLastLeftClick(mark.pin)"
-            (contextmenu)="setLastRightClick(mark.pin)"
-          >
-            <!-- The block stays #000 even when the slider has nowhere to slide:
-                 the red is a highlight around it, the way the orphan-joint mark
-                 works, not a different block. §2.8 rule 3 has no exceptions. -->
-            <path
-              [attr.d]="mark.block"
-              fill="#000000"
-              [attr.stroke]="mark.dangling ? '#F44336' : null"
-              [attr.stroke-width]="mark.dangling ? svgGrid.scaleWithZoom(3) : null"
-              filter="url(#elevation-1)"
-            />
-          </g>
-          <!-- §2.8 layer 4: what is pinned to the block, over the block. Drawn
-               here rather than in the link layer because that layer is under
-               every block on the canvas, so a coupler ending at a slider
-               disappeared behind its own block for the last bar-width of its
-               length. The joint marker comes later still, so the pin stays on
-               top of both. -->
-          @for (rider of mark.riders; track rider.link.id) {
-            <path
-              (pointerover)="rider.link.showHighlight = true"
-              (pointerout)="rider.link.showHighlight = false"
-              (pointerdown)="setLastLeftClick(rider.link, $event)"
-              (contextmenu)="setLastRightClick(rider.link, $event)"
-              [attr.d]="markPathWithPreview(mark, rider.path, rider.link)"
-              [attr.id]="rider.link.id + '__rider'"
-              fill-rule="evenodd"
-              [attr.fill]="rider.fill"
-              fill-opacity="0.7"
-              [attr.stroke]="rider.fill"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-              [class]="mechanismSrv.getLinkCSSClass(rider.link)"
-            ></path>
+    <!-- Ordered by how deep in the stack each body sits, not grouped by
+         assembly: a block is above the carrier it slides in, and a link is
+         above the block it is pinned to, and no assignment of the two to fixed
+         layers can express both when one link is a carrier *and* a rider. Per
+         assembly it also put one block over another assembly's rider whenever
+         the two shared a link -- which is what a pair of dangling blocks on one
+         bar looks like. -->
+    @for (item of slotStack; track item.key) {
+      <!-- The positioned group carries the mark identity: it is the one with
+           the slot's transform on it, and the one anything measuring an
+           assembly has to find. Ordering by depth means DOM order no longer
+           follows joint order, so it is named rather than counted. -->
+      <g
+        [attr.transform]="sliderMarks.frame(item.mark)"
+        [attr.class]="item.kind === 'block' ? 'slider-mark' : null"
+        [attr.data-slider]="item.mark.id"
+      >
+        @switch (item.kind) {
+          @case ('block') {
+            <!-- Grabbing the block starts a drag on its pin (§4.4). The block is
+                 a far bigger target than the marker at its centre, and the two
+                 sit on the same point, so it is the same grab with a better
+                 hitbox. -->
+            <g
+              class="slider-block"
+              cursor="move"
+              (pointerdown)="setLastLeftClick(item.mark.pin)"
+              (contextmenu)="setLastRightClick(item.mark.pin)"
+            >
+              <!-- The block stays #000 even when the slider has nowhere to
+                   slide: the red is a highlight around it, the way the
+                   orphan-joint mark works, not a different block. §2.8 rule 3
+                   has no exceptions. -->
+              <path
+                [attr.d]="item.mark.block"
+                fill="#000000"
+                [attr.stroke]="item.mark.dangling ? '#F44336' : null"
+                [attr.stroke-width]="item.mark.dangling ? svgGrid.scaleWithZoom(3) : null"
+                filter="url(#elevation-1)"
+              />
+            </g>
           }
-          @if (mark.plate) {
+          @case ('rider') {
+            @if (item.rider) {
+              <path
+                (pointerover)="item.rider.link.showHighlight = true"
+                (pointerout)="item.rider.link.showHighlight = false"
+                (pointerdown)="setLastLeftClick(item.rider.link, $event)"
+                (contextmenu)="setLastRightClick(item.rider.link, $event)"
+                [attr.d]="markPathWithPreview(item.mark, item.rider.path, item.rider.link)"
+                [attr.id]="item.rider.link.id + '__rider'"
+                fill-rule="evenodd"
+                [attr.fill]="item.rider.fill"
+                fill-opacity="0.7"
+                [attr.stroke]="item.rider.fill"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                [class]="mechanismSrv.getLinkCSSClass(item.rider.link)"
+              ></path>
+            }
+          }
+          @case ('plate') {
             <!-- The rider's ordinary drawing is suppressed while this stands in
                  for it, so the two cannot double their alpha over each other or
                  leave the rider's own outline showing as a seam through the
                  plate. That makes the plate the only thing left to click, so it
                  carries the rider's selection the way the link body would. -->
-            <g class="slider-plate">
-              <path
-                cursor="move"
-                (pointerover)="mark.plate.links[0].showHighlight = true"
-                (pointerout)="mark.plate.links[0].showHighlight = false"
-                (pointerdown)="setLastLeftClick(mark.plate.links[0], $event)"
-                (contextmenu)="setLastRightClick(mark.plate.links[0], $event)"
-                [attr.d]="markPathWithPreview(mark, mark.plate.path, mark.plate.links[0])"
-                fill-rule="evenodd"
-                [attr.fill]="mark.plate.fill"
-                fill-opacity="0.7"
-                [attr.stroke]="mark.plate.fill"
-                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-                [class]="mechanismSrv.getLinkCSSClass(mark.plate.links[0])"
-              />
-            </g>
-          }
-          @if (mark.driven) {
-            <g class="slider-arrows" pointer-events="none">
-              <!-- The heavier arrow is the way the block sets off. Two matched
-                   arrows only say "this translates"; they cannot say which way
-                   it goes first, which is the question a driven mark answers. -->
-              @for (arrow of mark.arrows; track $index) {
-                <line
-                  [attr.x1]="arrow.line.x1"
-                  [attr.y1]="arrow.line.y1"
-                  [attr.x2]="arrow.line.x2"
-                  [attr.y2]="arrow.line.y2"
-                  stroke="#ffffff"
-                  [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
+            @if (item.plate) {
+              <g class="slider-plate">
+                <path
+                  cursor="move"
+                  (pointerover)="item.plate.links[0].showHighlight = true"
+                  (pointerout)="item.plate.links[0].showHighlight = false"
+                  (pointerdown)="setLastLeftClick(item.plate.links[0], $event)"
+                  (contextmenu)="setLastRightClick(item.plate.links[0], $event)"
+                  [attr.d]="markPathWithPreview(item.mark, item.plate.path, item.plate.links[0])"
+                  fill-rule="evenodd"
+                  [attr.fill]="item.plate.fill"
+                  fill-opacity="0.7"
+                  [attr.stroke]="item.plate.fill"
+                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                  [class]="mechanismSrv.getLinkCSSClass(item.plate.links[0])"
                 />
-                <path [attr.d]="arrow.head" fill="#ffffff" />
-              }
-            </g>
+              </g>
+            }
+          }
+        }
+      </g>
+    }
+    <!-- Layer 5: the arrows, above every body so nothing can tint them. They
+         are always white, and that is only safe because what is underneath is
+         always the black block. -->
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.driven && !isSkinned(mark)) {
+        <g class="slider-arrows" pointer-events="none" [attr.transform]="sliderMarks.frame(mark)">
+          <!-- The heavier arrow is the way the block sets off. Two matched
+               arrows only say "this translates"; they cannot say which way it
+               goes first, which is the question a driven mark answers. -->
+          @for (arrow of mark.arrows; track $index) {
+            <line
+              [attr.x1]="arrow.line.x1"
+              [attr.y1]="arrow.line.y1"
+              [attr.x2]="arrow.line.x2"
+              [attr.y2]="arrow.line.y2"
+              stroke="#ffffff"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
+            />
+            <path [attr.d]="arrow.head" fill="#ffffff" />
           }
         </g>
       }

@@ -163,6 +163,21 @@ export class GridUtilsService {
     return (joint as PrisJoint).angle_rad;
   }
 
+  /**
+   * Whether the Input control may be used on this joint.
+   *
+   * Lives here so the Edit panel and the right-click menu ask the same
+   * question. They had drifted: the menu still greyed Ground out on a slider
+   * and Weld out on a joint the reconciler would refuse, both of which the
+   * panel deliberately stopped doing in §4.1 — Ground and Slider are
+   * independent axes of the 2x2 now, and a refusal is explained rather than
+   * hidden. Two surfaces onto one model that disagree about what is possible
+   * are worse than either rule on its own.
+   */
+  canToggleInput(joint: Joint): boolean {
+    return this.isAttachedToSlider(joint) || (joint as RealJoint).ground === true;
+  }
+
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord

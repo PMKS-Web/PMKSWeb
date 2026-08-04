@@ -92,8 +92,11 @@ const violations = () =>
       return bad;
     }
 
-    marks.forEach((mark, i) => {
-      const slider = sliders[i];
+    // By name, not by position: the slider layer is ordered by how deep each
+    // body sits in the stack, so the nth mark in the DOM is not the nth slider.
+    sliders.forEach((slider) => {
+      const mark = marks.find((node) => node.getAttribute('data-slider') === slider.id);
+      if (!mark) return void bad.push(`${slider.id}: no mark`);
       const block = mark.querySelector('.slider-block path');
       if (!block) return void bad.push(`${slider.id}: no block`);
 

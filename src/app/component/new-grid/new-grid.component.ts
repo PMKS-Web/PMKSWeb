@@ -59,8 +59,10 @@ import {
   Channel,
   CylinderMark,
   Guide,
+  RiderDraw,
   SliderMark,
   SliderMarkService,
+  WeldPlate,
 } from '../../services/slider-mark.service';
 import {
   curvedArrowPath,
@@ -79,6 +81,19 @@ import {
 } from '../../model/drop-target';
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
+import { drawDepths } from '../../model/draw-order';
+
+/** One thing to draw in the slider layer, and how deep in the stack it sits. */
+export interface SlotStackItem {
+  key: string;
+  depth: number;
+  kind: 'block' | 'plate' | 'rider';
+  mark: SliderMark;
+  /** Set for a rider; the link this item draws. */
+  rider?: RiderDraw;
+  /** Set for a plate; the fused rider-and-block outline this item draws. */
+  plate?: WeldPlate;
+}
 import introJs from 'intro.js';
 
 @Component({
@@ -372,7 +387,7 @@ export class NewGridComponent {
       case 'RevJoint':
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
         let jointIsGround = (this.lastRightClick as RealJoint).ground;
-        let canBeWeldedOrUnwelded = (this.lastRightClick as RealJoint).canBeWeldedOrUnwelded();
+        let canToggleInput = this.gridUtils.canToggleInput(this.lastRightClick as RealJoint);
         let canTogglePath =
           !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
 
@@ -388,12 +403,15 @@ export class NewGridComponent {
           new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
         );
 
+        // Enabled whatever else the joint is, exactly as the panel's toggle is:
+        // Ground and Slider became independent axes of the 2x2 in §4.1, so
+        // greying one out because of the other puts a reachable cell out of
+        // reach from this surface and not from the other.
         this.cMenuItems.push(
           new cMenuItem(
             jointIsGround ? 'Remove Ground' : 'Add Ground',
             this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-            jointIsGround ? 'remove_ground' : 'add_ground',
-            jointIsSlider
+            jointIsGround ? 'remove_ground' : 'add_ground'
           )
         ); //Rev Joint - Ground
 
@@ -406,7 +424,8 @@ export class NewGridComponent {
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
                 ? 'remove_input'
-                : 'add_input'
+                : 'add_input',
+              !canToggleInput
             )
           ); //Rev Joint Slider
         } else {
@@ -415,7 +434,7 @@ export class NewGridComponent {
               (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
-              !jointIsGround
+              !canToggleInput
             ) //Rev Joint - Input
           );
         }
@@ -432,10 +451,9 @@ export class NewGridComponent {
           new cMenuItem(
             (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
             this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
-            !canBeWeldedOrUnwelded
+            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
           )
-        ); //Rev Joint - Can be welded
+        ); //Rev Joint - the service explains a refusal, as the panel's toggle does
 
         // this.cMenuItems.push(
         //   new cMenuItem(
@@ -1635,6 +1653,47 @@ export class NewGridComponent {
   }
 
   /**
+   * Everything in the slider layer, deepest first.
+   *
+   * A block is above the carrier it slides in; a link is above the block it is
+   * pinned to. Emitting each assembly as a unit — block, then its riders — can
+   * only honour those two while no link is ever both a carrier and a rider, and
+   * the Scotch yoke's yoke is exactly that. It also put one assembly's block
+   * over another's rider whenever the two shared a link, which is what a pair
+   * of dangling blocks on one bar looks like. Ordering by depth is the same two
+   * rules, applied to the chain rather than to a layer number.
+   */
+  get slotStack(): SlotStackItem[] {
+    const depths = drawDepths(this.mechanismSrv.getJoints());
+    const items: SlotStackItem[] = [];
+    for (const mark of this.sliderMarkList) {
+      if (this.isSkinned(mark)) continue;
+      const blockDepth = depths.block.get(mark.id) ?? 1;
+      items.push({ key: `${mark.id}:block`, depth: blockDepth, kind: 'block', mark });
+      const plate = mark.plate;
+      if (plate) {
+        items.push({
+          key: `${mark.id}:plate`,
+          depth: depths.link.get(plate.links[0]?.id ?? '') ?? blockDepth + 1,
+          kind: 'plate',
+          mark,
+          plate,
+        });
+      }
+      for (const rider of mark.riders) {
+        items.push({
+          key: `${mark.id}:${rider.link.id}`,
+          depth: depths.link.get(rider.link.id) ?? blockDepth + 1,
+          kind: 'rider',
+          mark,
+          rider,
+        });
+      }
+    }
+    return items.sort((a, b) => a.depth - b.depth);
+  }
+
+  /**
    * The weight of a grounded guide's rails, matched to the ground symbol a
    * grounded pin already uses.
    *
@@ -1958,10 +2017,17 @@ export class NewGridComponent {
     let angle = Math.atan(m2);
 
     //Find the endpoints of the perpendicular line
-    let x3 = x1 + length * Math.cos(angle);
-    let y3 = y1 + length * Math.sin(angle);
-    let x4 = x1 - length * Math.cos(angle);
-    let y4 = y1 - length * Math.sin(angle);
+    // An extension line, not a cap: from just clear of the body out past the
+    // dimension line, so the measurement is tied to the joint without touching
+    // it. Whichever way the offset points is the side it has to run to.
+    const away = this.lengthOverlayOffset();
+    const reach = Math.hypot(away.dx, away.dy) || length;
+    const ux = away.dx / (reach || 1);
+    const uy = away.dy / (reach || 1);
+    let x3 = x1 + ux * SettingsService.objectScale * 0.32;
+    let y3 = y1 + uy * SettingsService.objectScale * 0.32;
+    let x4 = x1 + ux * (reach + SettingsService.objectScale * 0.12);
+    let y4 = y1 + uy * (reach + SettingsService.objectScale * 0.12);
 
     //Return the SVG path of the perpendicular line
     return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
@@ -1976,12 +2042,36 @@ export class NewGridComponent {
     let m2 = -1 / m1;
     let angle = Math.atan(m2);
 
-    let x3 = x2 + length * Math.cos(angle);
-    let y3 = y2 + length * Math.sin(angle);
-    let x4 = x2 - length * Math.cos(angle);
-    let y4 = y2 - length * Math.sin(angle);
+    const away = this.lengthOverlayOffset();
+    const reach = Math.hypot(away.dx, away.dy) || length;
+    const ux = away.dx / (reach || 1);
+    const uy = away.dy / (reach || 1);
+    let x3 = x2 + ux * SettingsService.objectScale * 0.32;
+    let y3 = y2 + uy * SettingsService.objectScale * 0.32;
+    let x4 = x2 + ux * (reach + SettingsService.objectScale * 0.12);
+    let y4 = y2 + uy * (reach + SettingsService.objectScale * 0.12);
 
     return 'M' + x3 + ' ' + y3 + ' L' + x4 + ' ' + y4;
+  }
+
+  /**
+   * The dimension line for a length, held clear of the body it measures.
+   *
+   * It used to be drawn straight down the middle of the link: two segments a
+   * third of its length starting at each joint, with the middle third cut out
+   * for the number. On a link body that reads as two stray lines through the
+   * part rather than as a measurement of it — which is exactly what it is not.
+   * Offset onto its own line beside the link, with extension lines reaching
+   * back to the joints, it is the drawing convention every reader already
+   * knows, and it cannot be mistaken for a mark on the body at any colour.
+   */
+  private lengthOverlayOffset(): { dx: number; dy: number } {
+    const { x1, y1, x2, y2 } = this.findStartAndEndPoints();
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    if (length < 1e-9) return { dx: 0, dy: 0 };
+    // Clear of the bar, which is half an objectScale wide.
+    const away = SettingsService.objectScale * 0.55;
+    return { dx: (-(y2 - y1) / length) * away, dy: ((x2 - x1) / length) * away };
   }
 
   getSVGPrimaryAxisLine1() {
@@ -2001,7 +2091,10 @@ export class NewGridComponent {
     let y3 = y1 + (length / 3) * Math.sin(angle);
 
     //Return the SVG paths of the two lines that start from the joints and end at the middle points
-    return 'M' + x1 + ' ' + y1 + ' L' + x3 + ' ' + y3;
+    const away = this.lengthOverlayOffset();
+    return (
+      'M' + (x1 + away.dx) + ' ' + (y1 + away.dy) + ' L' + (x3 + away.dx) + ' ' + (y3 + away.dy)
+    );
   }
 
   getSVGPrimaryAxisLine2() {
@@ -2021,7 +2114,10 @@ export class NewGridComponent {
     let y4 = y2 - (length / 3) * Math.sin(angle);
 
     //Return the SVG paths of the two lines that start from the joints and end at the middle points
-    return 'M' + x4 + ' ' + y4 + ' L' + x2 + ' ' + y2;
+    const away = this.lengthOverlayOffset();
+    return (
+      'M' + (x4 + away.dx) + ' ' + (y4 + away.dy) + ' L' + (x2 + away.dx) + ' ' + (y2 + away.dy)
+    );
   }
 
   getSVGAngleOverlayLines() {
@@ -2101,8 +2197,9 @@ export class NewGridComponent {
   getSVGLengthOverlayTextPos() {
     //Return the average of the two joints
     let { x1, y1, x2, y2 } = this.findStartAndEndPoints();
-    let x = (x1 + x2) / 2;
-    let y = (y1 + y2) / 2;
+    const away = this.lengthOverlayOffset();
+    let x = (x1 + x2) / 2 + away.dx;
+    let y = (y1 + y2) / 2 + away.dy;
     return { x, y };
   }
 
