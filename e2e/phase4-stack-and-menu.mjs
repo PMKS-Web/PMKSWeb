@@ -148,6 +148,36 @@ check(
 );
 check('Input follows the panel rule on a slider', item('Input') && !item('Input').disabled);
 
+// --- weld is greyed where there is nothing to fuse ------------------------
+// E connects exactly one link (EF), so a weld has nothing to restructure; the
+// menu item and the panel's toggle both grey out through the same predicate.
+await clickJoint('E');
+const menuE = await page.evaluate(() => {
+  const c = ng.getComponent(document.querySelector('app-new-grid'));
+  const joint = c.mechanismSrv.joints.find((j) => j.id === 'E');
+  c.setLastRightClick(joint);
+  return {
+    items: c.cMenuItems.map((i) => ({ label: i.label ?? '?', disabled: i.disabled })),
+    links: joint.links.length,
+    weldControlDisabled: (() => {
+      const panel = document.querySelector('app-edit-panel');
+      const cmp = panel ? ng.getComponent(panel) : null;
+      return cmp ? cmp.jointForm.get('weld').disabled : null;
+    })(),
+  };
+});
+const weldE = menuE.items.find((m) => String(m.label).includes('Weld'));
+check(
+  'Weld is greyed on a joint with one link',
+  menuE.links === 1 && !!weldE && weldE.disabled === true,
+  JSON.stringify(menuE)
+);
+check(
+  "and the panel's toggle is disabled by the same rule",
+  menuE.weldControlDisabled !== false,
+  JSON.stringify(menuE.weldControlDisabled)
+);
+
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 console.log(out.join('\n'));
 console.log(`\n${out.filter((l) => l.startsWith('PASS')).length}/${out.length} checks passed`);

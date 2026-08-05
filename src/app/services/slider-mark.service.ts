@@ -36,6 +36,14 @@ export interface WeldPlate {
    * for it, so a welded slider is the same body it was before it was welded.
    */
   path: string;
+  /**
+   * The fused body alone, and the channels cut from it, kept apart so a caller
+   * can merge one more hole in before subtracting. The drag preview needs this:
+   * appended to `path` after the fact it lands on top of a committed channel,
+   * the overlap is wound twice, and the even-odd fill paints the slot back in.
+   */
+  outline: string;
+  cuts: string[];
   /** The links this plate stands in for, so it can be selected like one. */
   links: Link[];
 }
@@ -45,6 +53,9 @@ export interface RiderDraw {
   link: Link;
   fill: string;
   path: string;
+  /** Same split as `WeldPlate`, for the same preview-merging reason. */
+  outline: string;
+  cuts: string[];
 }
 
 /** One slider assembly, ready to draw, in the slot's own frame. */
@@ -429,6 +440,8 @@ export class SliderMarkService {
     return {
       fill: riders[0].fill ?? '#000000',
       path: [fused.path, mergedChannels(cuts)].join(' ').trim(),
+      outline: fused.path,
+      cuts,
       links: riders,
     };
   }
@@ -459,6 +472,8 @@ export class SliderMarkService {
           link: rider,
           fill: rider.fill ?? '#000000',
           path: [outline, mergedChannels(cuts)].join(' ').trim(),
+          outline,
+          cuts,
         },
       ];
     });
@@ -500,9 +515,12 @@ export class SliderMarkService {
     const cuts = [...links.values()].flatMap((rider) =>
       this.channelsInLocalFrame(rider, leader.pin as RealJoint, leaderAngle, r, joints)
     );
+    const outline = intoLeader(fused.path);
     return {
       fill: [...links.values()][0].fill ?? '#000000',
-      path: [intoLeader(fused.path), mergedChannels(cuts)].join(' ').trim(),
+      path: [outline, mergedChannels(cuts)].join(' ').trim(),
+      outline,
+      cuts,
       links: [...links.values()],
     };
   }

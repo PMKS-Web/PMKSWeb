@@ -178,6 +178,22 @@ export class GridUtilsService {
     return this.isAttachedToSlider(joint) || (joint as RealJoint).ground === true;
   }
 
+  /**
+   * Whether the Weld control may be used on this joint, shared by the Edit
+   * panel's toggle and the right-click menu so the two cannot drift.
+   *
+   * Structural rule only: a weld fuses what meets at a joint, so a joint with
+   * fewer than two links — a tracer, a bar's free end — has nothing to fuse and
+   * the control is greyed rather than offered-then-refused. A grounded or
+   * driven joint keeps the enabled control and gets the model's refusal with
+   * its reason (§4.1's explained-refusal rule); an already-welded joint stays
+   * enabled because the same control is how it is unwelded.
+   */
+  canToggleWeld(joint: Joint): boolean {
+    if (!(joint instanceof RealJoint)) return false;
+    return joint.isWelded || joint.links.length >= 2;
+  }
+
   dragJoint(selectedJoint: RealJoint, trueCoord: Coord) {
     // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord

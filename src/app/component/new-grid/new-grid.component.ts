@@ -466,7 +466,11 @@ export class NewGridComponent {
           new cMenuItem(
             (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
             this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint'
+            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
+            // Greyed only when there is structurally nothing to fuse (fewer than
+            // two links); a grounded or driven joint still gets the explained
+            // refusal, exactly as the panel's toggle does.
+            !this.gridUtils.canToggleWeld(this.lastRightClick as RealJoint)
           )
         ); //Rev Joint - the service explains a refusal, as the panel's toggle does
 
@@ -1534,7 +1538,21 @@ export class NewGridComponent {
   private markCache?: { key: string; marks: SliderMark[]; channels: Channel[] };
 
   get sliderMarkList(): SliderMark[] {
-    return this.freshMarks().marks;
+    const marks = this.freshMarks().marks;
+    // A slider dragged over a valid slot previews the accepted state: the block
+    // turns to the slot's own angle and the red nowhere-to-slide highlight goes
+    // out while the drop would land. Without this the preview showed the cut
+    // opening in the bar while the block stayed unturned and red — the channel
+    // said yes and the block said no about the same release. Presentation only:
+    // the joint itself is not reseated until the drop commits (cutSlotOn).
+    const slot = this.slotCandidate;
+    if (!slot || this.dragState.joint !== jointStates.dragging) return marks;
+    const pinID = this.activeObjService.selectedJoint?.id;
+    if (!pinID) return marks;
+    const slotAngleDeg = (Math.atan2(slot.b.y - slot.a.y, slot.b.x - slot.a.x) * 180) / Math.PI;
+    return marks.map((mark) =>
+      mark.pin.id === pinID ? { ...mark, rotation: slotAngleDeg, dangling: false } : mark
+    );
   }
 
   get channelList(): Channel[] {
@@ -1792,18 +1810,29 @@ export class NewGridComponent {
    * rider is hoisted out of the link layer, cutting the preview into the link
    * layer's copy cuts it into nothing, and sweeping a joint across a coupler
    * that happens to be pinned to a slider shows no feedback at all.
+   *
+   * The preview is merged with the piece's committed channels rather than
+   * appended after them, for the same reason `linkPathWithChannels` merges: on
+   * a carrier whose slot is already occupied the preview lands on top of the
+   * committed channel, the overlap is wound twice, and the even-odd fill paints
+   * the slot back in — a solid bar exactly where the drop is legal.
    */
-  markPathWithPreview(mark: SliderMark, base: string, link: Link): string {
+  markPathWithPreview(
+    mark: SliderMark,
+    piece: { path: string; outline: string; cuts: string[] },
+    link: Link
+  ): string {
     const preview = this.previewChannelOn(link);
-    if (!preview) return base;
+    if (!preview) return piece.path;
     const angle = (mark.rotation * Math.PI) / 180;
-    return `${base} ${transformRigidPath(
+    const localPreview = transformRigidPath(
       preview,
       { x: mark.x, y: mark.y },
       { x: mark.x + Math.cos(angle), y: mark.y + Math.sin(angle) },
       { x: 0, y: 0 },
       { x: 1, y: 0 }
-    )}`;
+    );
+    return `${piece.outline} ${mergedChannels([...piece.cuts, localPreview])}`.trim();
   }
 
   private previewChannelOn(link: Link): string | undefined {

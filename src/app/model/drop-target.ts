@@ -1,5 +1,5 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
-import { Link } from './link';
+import { Link, RealLink, SliderBlock } from './link';
 
 /** Why a candidate joint cannot receive the joint being dragged. */
 export type MergeRefusal =
@@ -178,19 +178,43 @@ export function resolveSlotDropTarget(
 
   for (const carrier of links) {
     if (carrier.joints.some((joint) => joint.id === source.id)) continue;
-    const members = carrier.joints;
-    for (let i = 0; i < members.length; i++) {
-      for (let j = i + 1; j < members.length; j++) {
-        const near = closestPointOnSegment(x, y, members[i], members[j]);
-        if (near.distance < bestDistance) {
-          bestDistance = near.distance;
-          best = { carrier, a: members[i], b: members[j], x: near.x, y: near.y };
+    for (const members of slotJointPools(carrier)) {
+      for (let i = 0; i < members.length; i++) {
+        for (let j = i + 1; j < members.length; j++) {
+          const near = closestPointOnSegment(x, y, members[i], members[j]);
+          if (near.distance < bestDistance) {
+            bestDistance = near.distance;
+            best = { carrier, a: members[i], b: members[j], x: near.x, y: near.y };
+          }
         }
       }
     }
   }
 
   return best;
+}
+
+/**
+ * The joint pairs a carrier may hang a slot between, grouped by rigid body.
+ *
+ * A slot has to lie between two joints of the same drawn bar — that segment is
+ * where the channel is cut. A welded compound's `joints` is the union of its
+ * sub-links' joints, so pairing across it offered segments joining joints of
+ * *different* constituent bars: a diagonal through the compound's empty corner,
+ * with the previewed channel floating partly outside the body. Restricting the
+ * pairs to one sub-link at a time is exactly the non-welded rule applied to
+ * each bar the compound is made of; a link with no subset is unchanged.
+ */
+function slotJointPools(carrier: Link): Joint[][] {
+  if (carrier instanceof RealLink && carrier.subset.length > 0) {
+    const pools = carrier.subset
+      .filter(
+        (leaf): leaf is RealLink => leaf instanceof RealLink && !(leaf instanceof SliderBlock)
+      )
+      .map((leaf) => leaf.joints);
+    if (pools.length > 0) return pools;
+  }
+  return [carrier.joints];
 }
 
 function closestPointOnSegment(

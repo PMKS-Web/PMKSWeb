@@ -247,6 +247,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     if (this.jointForm.get('ground')?.disabled) {
       this.jointForm.get('ground')?.enable({ emitEvent: true });
     }
+
+    // Weld is greyed when the joint connects fewer than two links — there is
+    // nothing to fuse, so offering the switch only to refuse it reads as a
+    // broken control. Silently (emitEvent: false), because the weld control's
+    // valueChanges runs the weld itself and an enable/disable must never do
+    // that. Same rule as the context menu, through the same predicate.
+    const canWeld = this.gridUtils.canToggleWeld(this.activeSrv.selectedJoint);
+    const weldControl = this.jointForm.get('weld');
+    if (canWeld && weldControl?.disabled) weldControl.enable({ emitEvent: false });
+    if (!canWeld && weldControl?.enabled) weldControl.disable({ emitEvent: false });
   }
 
   /** The selected joint's slider, whichever end of the pair is selected. */

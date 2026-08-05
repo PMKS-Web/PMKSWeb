@@ -407,9 +407,9 @@ export class MechanismService {
   }
 
   toggleWeldedJoint() {
-    const joint = this.joints.find(
-      (j) => j.id === this.activeObjService.selectedJoint.id
-    ) as RealJoint;
+    const joint = this.joints.find((j) => j.id === this.activeObjService.selectedJoint?.id) as
+      RealJoint | undefined;
+    if (!joint) return;
 
     if (!joint.isWelded) {
       this.weldJoint();
@@ -1493,6 +1493,10 @@ export class MechanismService {
     if (!this.gridUtils.isAttachedToSlider(this.activeObjService.selectedJoint)) {
       // Create Prismatic Joint
       const selectedJointInput = this.activeObjService.selectedJoint.input;
+      // Remembered before it is cleared: a pin cannot stay grounded once it
+      // carries a block, but the grounded-ness the user set moves to the slider
+      // below rather than evaporating.
+      const selectedJointGrounded = this.activeObjService.selectedJoint.ground;
       this.activeObjService.selectedJoint.input = false;
       this.activeObjService.selectedJoint.ground = false;
       const prismaticJointId = this.determineNextLetter();
@@ -1506,11 +1510,11 @@ export class MechanismService {
       //     connectedJoints.push(j);
       //   }
       // });
-      // Born dangling, not grounded. Slider and Ground are independent axes
-      // (§4.1), so switching one must not decide the other -- and a floating
-      // slot needs a carrier, which is geometry the drop gesture supplies and
-      // no toggle can invent. A slider with a stash gets its old slot back
-      // instead, which is what makes Slider off/on a round trip.
+      // Born dangling on an ungrounded pin: a floating slot needs a carrier,
+      // which is geometry the drop gesture supplies and no toggle can invent.
+      // A slider with a stash gets its old slot back instead, which is what
+      // makes Slider off/on a round trip — and a grounded pin hands its ground
+      // to the slider below, so the same click always makes the same thing.
       const prisJoint = new PrisJoint(
         prismaticJointId,
         this.activeObjService.selectedJoint.x,
@@ -1521,6 +1525,17 @@ export class MechanismService {
         connectedJoints
       );
       this.restoreStashedSlot(this.activeObjService.selectedJoint, prisJoint);
+      // Ground carried across from the pin, deterministically: toggling Slider
+      // on a grounded joint always yields a grounded slider. Before this it
+      // depended on history — a joint whose earlier slider had been grounded
+      // came back grounded through the stash, while a freshly grounded joint
+      // lost its ground and dangled — the same two clicks giving two different
+      // mechanisms. The angle kept is whatever the slider already remembers
+      // (the stash's, or zero on a first slider), the same angle grounding via
+      // the Ground toggle would pin.
+      if (selectedJointGrounded && !prisJoint.isFloating) {
+        prisJoint.groundAt(prisJoint.slotAngle);
+      }
       this.activeObjService.selectedJoint.connectedJoints.push(prisJoint);
       const piston = new SliderBlock(this.activeObjService.selectedJoint.id + prisJoint.id, [
         this.activeObjService.selectedJoint,
@@ -1894,6 +1909,14 @@ export class MechanismService {
 
   public weldJoint(joint: RealJoint = this.activeObjService.selectedJoint): void {
     if (!joint) return;
+
+    // A weld fuses what meets at a joint, so a joint connecting fewer than two
+    // links has nothing to fuse. `weldTopology` refuses this shape too (via
+    // `canBeWelded`), but that refusal is one layer down and shared with other
+    // rules; this guard is the mutation's own front door, so no caller — the
+    // panel greys its toggle, but a stray programmatic call cannot be greyed —
+    // can reach the restructure with a degenerate joint.
+    if (!(joint instanceof RealJoint) || joint.links.length < 2) return;
 
     // Clicking Weld on a named joint is a deliberate act, so this warns rather
     // than refuses. The linkage still moves and still solves; only its forces

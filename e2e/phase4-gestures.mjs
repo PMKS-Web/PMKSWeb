@@ -310,8 +310,9 @@ checkThat(
 );
 await page.screenshot({ path: `${OUT}/10-angle-edit.png` });
 
-// A weld the model refuses must not leave the switch on: a control showing a
-// state the mechanism is not in is worse than one that does nothing.
+// A weld with nothing to fuse is greyed rather than offered-then-refused:
+// joint A connects a single link, so the switch is disabled outright and the
+// state it shows (off) is the state the mechanism is in.
 await load(FOUR_BAR);
 await page.click('#joint_A');
 await page.waitForTimeout(400);
@@ -321,12 +322,10 @@ const weldSwitch = page
   .first()
   .locator('button[role="switch"], .mdc-switch')
   .first();
-await weldSwitch.click();
+await weldSwitch.click({ force: true, timeout: 5000 }).catch(() => {});
 await page.waitForTimeout(600);
-checkThat(
-  'a refused weld leaves the switch off',
-  (await weldSwitch.getAttribute('aria-checked')) === 'false'
-);
+checkThat('a weld with nothing to fuse is greyed out', (await weldSwitch.isDisabled()) === true);
+checkThat('and the switch stays off', (await weldSwitch.getAttribute('aria-checked')) === 'false');
 checkThat(
   'and the joint keeps its circle rather than becoming a plus',
   (await page.locator('#joint_A').evaluate((n) => n.tagName.toLowerCase())) === 'circle'
