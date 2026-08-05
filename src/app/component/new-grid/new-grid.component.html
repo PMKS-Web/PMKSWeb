@@ -552,6 +552,9 @@
         />
         @if (cyl.driven) {
           <g pointer-events="none">
+            <!-- The heavier arrow is the way the block sets off, same as the
+                 unskinned driven mark (§4.2b): the skin changes the drawing,
+                 not what the mark has to say. -->
             @for (arrow of cyl.arrows; track $index) {
               <line
                 [attr.x1]="arrow.line.x1"
@@ -559,7 +562,7 @@
                 [attr.x2]="arrow.line.x2"
                 [attr.y2]="arrow.line.y2"
                 stroke="#ffffff"
-                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
               />
               <path [attr.d]="arrow.head" fill="#ffffff" />
             }
@@ -678,8 +681,9 @@
                 [class]="mechanismSrv.getJointCSSClass(joint)"
               />
             }
-            <!--      Welded Joint-->
-            @if (gridUtils.getWelded(joint)) {
+            <!--      Welded Joint. The plus stands down while a cylinder skin
+                      draws its own, larger marker at the same pin (§2.7) -->
+            @if (gridUtils.getWelded(joint) && !isMarkerReplacedByCylinder(joint)) {
               <path
                 [attr.id]="'joint_' + joint.id"
                 [class]="mechanismSrv.getJointCSSClass(joint)"

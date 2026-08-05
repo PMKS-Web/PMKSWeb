@@ -7,6 +7,7 @@ import {
   blockPath,
   borePath,
   cylinderArrowPaths,
+  cylinderBlockPath,
   cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
@@ -120,7 +121,10 @@ export interface CylinderMark {
   /** The links whose ordinary drawing this skin stands in for. */
   barrelId: string;
   rodId: string;
-  /** The barrel's far joint, hidden while the skin is collapsed. */
+  /**
+   * The barrel's inner joint, buried where rod and barrel overlap — hidden
+   * while the skin is collapsed. The outer mounts stay visible.
+   */
   hiddenJointId: string;
   barrel: string;
   barrelFill: string;
@@ -129,7 +133,7 @@ export interface CylinderMark {
   block: string;
   marker: string;
   driven: boolean;
-  arrows: { line: Segment; head: string }[];
+  arrows: { line: Segment; head: string; emphasised: boolean }[];
 }
 
 /**
@@ -274,7 +278,13 @@ export class SliderMarkService {
    * possible while it is moving, which is why playback suppresses the reveal
    * and keeps the skin on.
    */
-  cylinderMarks(joints: Joint[], r: number, revealedId?: string, playing = false): CylinderMark[] {
+  cylinderMarks(
+    joints: Joint[],
+    r: number,
+    revealedId?: string,
+    playing = false,
+    driveForward = true
+  ): CylinderMark[] {
     return cylinders(joints)
       .filter((found) => {
         const preference = this.preferenceFor(found.pin.id);
@@ -282,7 +292,7 @@ export class SliderMarkService {
         if (preference === 'cylinder') return true;
         return playing || found.pin.id !== revealedId;
       })
-      .map((found) => this.cylinderMark(found, r));
+      .map((found) => this.cylinderMark(found, r, driveForward));
   }
 
   /**
@@ -321,12 +331,18 @@ export class SliderMarkService {
     return cuts;
   }
 
-  private cylinderMark(found: Cylinder, r: number): CylinderMark {
-    const { pin, rodFar, barrelFar } = found;
+  private cylinderMark(found: Cylinder, r: number, driveForward: boolean): CylinderMark {
+    const { pin, rodFar, barrelNear } = found;
     const angle = Math.atan2(rodFar.y - pin.y, rodFar.x - pin.x);
     const rodReach = Math.hypot(rodFar.x - pin.x, rodFar.y - pin.y);
-    const barrelReach = -Math.hypot(barrelFar.x - pin.x, barrelFar.y - pin.y);
+    const barrelReach = -Math.hypot(found.barrelFar.x - pin.x, found.barrelFar.y - pin.y);
     const driven = found.slider.input || pin.input;
+    // The mark's frame runs +x toward the rod; the drive direction is declared
+    // along the slot, which may point either way along the same line.
+    const leading: 1 | -1 =
+      (driveForward ? 1 : -1) * (Math.cos(found.slider.slotAngle - angle) >= 0 ? 1 : -1) > 0
+        ? 1
+        : -1;
     return {
       id: pin.id,
       pin,
@@ -337,15 +353,15 @@ export class SliderMarkService {
       rotation: toDegrees(angle),
       barrelId: found.barrel.id,
       rodId: found.rod.id,
-      hiddenJointId: barrelFar.id,
+      hiddenJointId: barrelNear.id,
       barrel: barrelCollapsedPath(r, barrelReach),
       barrelFill: (found.barrel as RealLink).fill ?? '#000000',
       rod: rodBodyPath(r, rodReach),
       rodFill: found.rod.fill ?? '#000000',
-      block: blockPath(r),
+      block: cylinderBlockPath(r),
       marker: cylinderMarkerPath(r),
       driven,
-      arrows: driven ? cylinderArrowPaths(r) : [],
+      arrows: driven ? cylinderArrowPaths(r, leading) : [],
     };
   }
 

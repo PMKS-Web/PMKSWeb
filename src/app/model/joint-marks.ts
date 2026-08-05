@@ -93,8 +93,13 @@ export const MARK = {
  */
 export const CYLINDER = {
   barrelHalf: 2.95,
-  /** The rod is a standard link width, so block and rod form one uniform bar. */
-  rodHalf: 1.84,
+  /**
+   * Exactly the block's own half-height, so block and rod form one uniform bar.
+   * It was 1.84 — the same mockup rounding `barHalf` documents — and the extra
+   * 0.315R showed as the rod standing proud of the block above and below where
+   * the two meet.
+   */
+  rodHalf: MARK.blockAcrossHalf,
   /** Where the barrel stops: inside the block, so the rod visibly enters it. */
   flatCut: 0.56,
   boreHalf: 1.39,
@@ -137,6 +142,22 @@ export function rodBodyPath(r: number, reach: number): string {
   return `M ${inner} ${-h} L ${reach} ${-h} A ${h} ${h} 0 0 ${sweep} ${reach} ${h} L ${inner} ${h} Z`;
 }
 
+/**
+ * The block of the collapsed skin: §2.8 block proportions, but square on the
+ * side facing the barrel (-x) and rounded only where it reaches toward the rod.
+ * The barrel's flat cut ends underneath it, and a rounded corner there drew a
+ * sliver of daylight between two parts that are supposed to be flush.
+ */
+export function cylinderBlockPath(r: number): string {
+  const a = MARK.blockAlongHalf * r;
+  const c = MARK.blockAcrossHalf * r;
+  const k = MARK.blockCorner * r;
+  return (
+    `M ${-a} ${-c} H ${a - k} A ${k} ${k} 0 0 1 ${a} ${-c + k} ` +
+    `V ${c - k} A ${k} ${k} 0 0 1 ${a - k} ${c} H ${-a} Z`
+  );
+}
+
 /** The bore, for the revealed state: the barrel's own slot, cut through it. */
 export function borePath(r: number, halfLength: number): string {
   return capsulePath(-halfLength, halfLength, CYLINDER.boreHalf * r);
@@ -152,23 +173,42 @@ export function cylinderMarkerPath(r: number): string {
   );
 }
 
-/** The driven arrows of a cylinder, flanking its marker. */
-export function cylinderArrowPaths(r: number): { line: Segment; head: string }[] {
-  return [1, -1].map((side) => ({
-    line: {
-      x1: side * CYLINDER.arrowTail * r,
-      y1: 0,
-      x2: side * CYLINDER.arrowHeadBase * r,
-      y2: 0,
-    },
-    head: arrowHeadAt(
-      side * CYLINDER.arrowTip * r,
-      0,
-      side > 0 ? 0 : Math.PI,
-      MARK.arrowHeadLength * r,
-      CYLINDER.arrowHeadHalf * r
-    ),
-  }));
+/**
+ * The driven arrows of a cylinder, flanking its marker.
+ *
+ * `leading` is the way the block sets off, and that arrow is drawn larger and
+ * heavier — the same §4.2b emphasis the unskinned driven mark carries, because
+ * the skin changes the drawing, not what the mark has to say.
+ */
+export function cylinderArrowPaths(
+  r: number,
+  leading?: 1 | -1
+): { line: Segment; head: string; emphasised: boolean }[] {
+  return [1, -1].map((side) => {
+    const emphasised = side === leading;
+    // Bounded by the block, like the straight arrows: the cylinder's arrows are
+    // already larger, so the full 1.25 would push the tip past blockAlongHalf
+    // and out onto the rod, where white is no longer guaranteed to read.
+    const grow = emphasised
+      ? Math.min(MARK.arrowEmphasis, (MARK.blockAlongHalf * 0.97) / CYLINDER.arrowTip)
+      : 1;
+    return {
+      line: {
+        x1: side * CYLINDER.arrowTail * r,
+        y1: 0,
+        x2: side * CYLINDER.arrowHeadBase * r * grow,
+        y2: 0,
+      },
+      head: arrowHeadAt(
+        side * CYLINDER.arrowTip * r * grow,
+        0,
+        side > 0 ? 0 : Math.PI,
+        MARK.arrowHeadLength * r * grow,
+        CYLINDER.arrowHeadHalf * r * grow
+      ),
+      emphasised,
+    };
+  });
 }
 
 /** A line segment, in the frame the caller asked for. */

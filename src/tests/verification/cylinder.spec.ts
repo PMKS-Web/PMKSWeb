@@ -57,6 +57,9 @@ describe('recognising a cylinder', () => {
     // The barrel's far end is the one further from the block, and it has to be
     // on the other side, or the rod would run out into thin air.
     expect(found!.barrelFar.id).toBe('M');
+    // The inner end is the one the skin hides: it is buried where rod and
+    // barrel overlap, while M and T are the mounts and have to stay visible.
+    expect(found!.barrelNear.id).toBe('N');
   });
 
   it('declines a rod that is not on the slot line', () => {

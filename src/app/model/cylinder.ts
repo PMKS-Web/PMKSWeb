@@ -25,8 +25,15 @@ export interface Cylinder {
   barrel: Link;
   /** The rider, drawn as the rod. */
   rod: RealLink;
-  /** The barrel's other end — hidden while the skin is collapsed. */
+  /** The barrel's outer end — the mount the cylinder rotates about, kept visible. */
   barrelFar: Joint;
+  /**
+   * The barrel's inner end, buried where the rod overlaps the barrel — hidden
+   * while the skin is collapsed. The two outer mounts stay visible: they are
+   * where the part attaches to the rest of the mechanism, and hiding a mount
+   * hides the one thing the reader needs to see the cylinder is pinned by.
+   */
+  barrelNear: Joint;
   rodFar: Joint;
 }
 
@@ -110,7 +117,8 @@ export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | s
     return 'The rod and the barrel have to reach out from opposite sides of the block.';
   }
 
-  return { slider: assembly.slider, pin, barrel, rod, barrelFar, rodFar };
+  const barrelNear = barrel.joints.find((member) => member.id !== barrelFar.id)!;
+  return { slider: assembly.slider, pin, barrel, rod, barrelFar, barrelNear, rodFar };
 }
 
 /** Every cylinder in the mechanism. */

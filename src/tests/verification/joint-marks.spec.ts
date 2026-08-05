@@ -3,8 +3,12 @@ import {
   capsulePath,
   channelPath,
   curvedArrowPath,
+  CYLINDER,
+  cylinderArrowPaths,
+  cylinderBlockPath,
   MARK,
   railGeometry,
+  rodBodyPath,
   slotHalfLength,
   straightArrowPaths,
 } from '../../app/model/joint-marks';
@@ -122,5 +126,48 @@ describe('the mark system, against the delivered SVGs', () => {
   it('sweeps the driven-pin arc the long way round', () => {
     // A short arc reads as a wobble rather than as a revolution.
     expect(curvedArrowPath(R).arc).toContain('A 15.5 15.5 0 1 1');
+  });
+});
+
+describe('the cylinder skin (§2.7)', () => {
+  it('draws the rod exactly as tall as the block, so the two are one bar', () => {
+    // At 1.84 the rod stood proud of the block by 0.315R above and below the
+    // place they meet.
+    expect(CYLINDER.rodHalf).toBe(MARK.blockAcrossHalf);
+    const ys = numbers(rodBodyPath(R, 80)).filter((v) => Math.abs(v) === CYLINDER.rodHalf * R);
+    expect(ys.length).toBeGreaterThan(0);
+  });
+
+  it('squares the block against the barrel and rounds only the rod side', () => {
+    const path = cylinderBlockPath(R);
+    const values = numbers(path);
+
+    // Full §2.8 block proportions...
+    expect(Math.max(...values.map(Math.abs))).toBeCloseTo(MARK.blockAlongHalf * R, 6);
+    expect(values).toContain(MARK.blockAcrossHalf * R);
+    // ...but only the two rod-side corners carry the radius: two arcs, and the
+    // barrel-side (-x) corners land exactly on the block's own corner points.
+    expect(path.match(/A /g)).toHaveLength(2);
+    const a = MARK.blockAlongHalf * R;
+    const c = MARK.blockAcrossHalf * R;
+    expect(path.startsWith(`M ${-a} ${-c}`)).toBe(true);
+    expect(path.endsWith(`H ${-a} Z`)).toBe(true);
+  });
+
+  it('emphasises the set-off arrow without breaking out of the block', () => {
+    // §4.2b: two matched arrows say only "this translates"; the heavier, longer
+    // one is what says which way it goes first. Same rule as the unskinned mark.
+    const [forward, backward] = cylinderArrowPaths(R, 1);
+    expect(forward.emphasised).toBe(true);
+    expect(backward.emphasised).toBe(false);
+    expect(Math.abs(forward.line.x2)).toBeGreaterThan(Math.abs(backward.line.x2));
+    // The grown tip still lands inside the block, where white is guaranteed.
+    expect(numbers(forward.head)[0]).toBeLessThanOrEqual(MARK.blockAlongHalf * R);
+    expect(numbers(backward.head)[0]).toBeCloseTo(-CYLINDER.arrowTip * R, 6);
+
+    // With no known direction the two stay matched.
+    const neutral = cylinderArrowPaths(R);
+    expect(neutral.every((arrow) => !arrow.emphasised)).toBe(true);
+    expect(neutral[0].line.x2).toBeCloseTo(-neutral[1].line.x2, 9);
   });
 });

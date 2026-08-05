@@ -1655,7 +1655,8 @@ export class NewGridComponent {
         : this.activeObjService.objType === 'Link'
           ? this.selectedAssemblyId()
           : undefined,
-      AnimationBarComponent.animate
+      AnimationBarComponent.animate,
+      !this.settings.isInputCW.value
     );
   }
 
@@ -1765,9 +1766,19 @@ export class NewGridComponent {
     return this.cylinderList.some((cylinder) => cylinder.pin.id === (mark.pin as Joint).id);
   }
 
-  /** The barrel's far joint disappears into the skin while it is collapsed. */
+  /** The barrel's inner joint disappears into the skin while it is collapsed. */
   isHiddenByCylinder(joint: Joint): boolean {
     return this.cylinderList.some((mark) => mark.hiddenJointId === joint.id);
+  }
+
+  /**
+   * The skin draws its own, larger welded marker at the pin (§2.7), so the
+   * joint layer's plus has to stand down or the two stack. Only the glyph: the
+   * joint's hitbox and highlight stay, because the pin is still the thing being
+   * selected and dragged.
+   */
+  isMarkerReplacedByCylinder(joint: Joint): boolean {
+    return this.cylinderList.some((mark) => mark.pin.id === joint.id);
   }
 
   channelCountOn(link: Link): number {
