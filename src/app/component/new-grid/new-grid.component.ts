@@ -80,6 +80,7 @@ import {
   SlotDropCandidate,
 } from '../../model/drop-target';
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
+import { Cylinder, cylinderJoints } from '../../model/cylinder';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
@@ -762,9 +763,27 @@ export class NewGridComponent {
         this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
         this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
         break;
-      case jointStates.dragging:
+      case jointStates.dragging: {
         if (!this.canEditNow() || !this.pastDragThreshold($event)) {
           return;
+        }
+        // A mount of a sealed cylinder drags parametrically: the whole
+        // assembly re-poses about the OTHER mount, collinear by construction
+        // (§ cylinder 6). No merge targets and no slot drops while doing it —
+        // a cylinder is attached by dragging other joints onto its mounts,
+        // never by dropping its mounts onto things.
+        const draggedCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedJoint);
+        if (draggedCylinder) {
+          const wanted = this.mountAxisSnap(draggedCylinder, mousePosInSvg);
+          this.gridUtils.dragCylinderMount(
+            draggedCylinder,
+            this.activeObjService.selectedJoint,
+            wanted
+          );
+          this.dragState.noteMechanismModified();
+          this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
+          this.showPathWhileDragging();
+          break;
         }
         this.updateDropCandidate(mousePosInSvg, $event.altKey);
         // A capture has a target of its own, so any axis the last move squared
@@ -787,13 +806,14 @@ export class NewGridComponent {
         this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
         this.showPathWhileDragging();
         break;
+      }
     }
     switch (this.dragState.link) {
       case linkStates.creating:
         this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
         this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
         break;
-      case linkStates.dragging:
+      case linkStates.dragging: {
         if (!this.canEditNow() || !this.pastDragThreshold($event)) {
           return;
         }
@@ -801,16 +821,27 @@ export class NewGridComponent {
         // pointer event: the moves held back below the click threshold would
         // otherwise be lost motion, leaving the link trailing the cursor by
         // however far the hold lasted.
-        this.gridUtils.dragLink(
-          this.activeObjService.selectedLink,
-          mousePosInSvg.x - this.linkDragAnchor.x,
-          mousePosInSvg.y - this.linkDragAnchor.y
-        );
+        const bodyCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedLink);
+        if (bodyCylinder) {
+          // Dragging the body translates the whole assembly rigidly.
+          this.gridUtils.dragCylinder(
+            bodyCylinder,
+            mousePosInSvg.x - this.linkDragAnchor.x,
+            mousePosInSvg.y - this.linkDragAnchor.y
+          );
+        } else {
+          this.gridUtils.dragLink(
+            this.activeObjService.selectedLink,
+            mousePosInSvg.x - this.linkDragAnchor.x,
+            mousePosInSvg.y - this.linkDragAnchor.y
+          );
+        }
         this.linkDragAnchor = mousePosInSvg;
         this.dragState.noteMechanismModified();
         this.activeObjService.updateSelectedObj(this.activeObjService.selectedLink);
         this.showPathWhileDragging();
         break;
+      }
     }
     switch (this.dragState.force) {
       case forceStates.creating:
@@ -1041,6 +1072,21 @@ export class NewGridComponent {
     const others = this.mechanismSrv
       .getJoints()
       .filter((other) => other.id !== joint.id && !(other instanceof PrisJoint));
+    const snapped = snapToAxes(wanted, others, this.svgGrid.scaleWithZoom(8));
+    this.axisSnapGuides = snapped.guides;
+    return new Coord(snapped.point.x, snapped.point.y);
+  }
+
+  /**
+   * Axis snapping for a mount drag. The assembly's own joints are excluded:
+   * they move with the drag, so squaring the mount against them would be the
+   * drag chasing its own tail. Every other joint's H/V guides still work.
+   */
+  private mountAxisSnap(sealed: Cylinder, wanted: Coord): Coord {
+    const memberIds = new Set(cylinderJoints(sealed).map((joint) => joint.id));
+    const others = this.mechanismSrv
+      .getJoints()
+      .filter((other) => !memberIds.has(other.id) && !(other instanceof PrisJoint));
     const snapped = snapToAxes(wanted, others, this.svgGrid.scaleWithZoom(8));
     this.axisSnapGuides = snapped.guides;
     return new Coord(snapped.point.x, snapped.point.y);

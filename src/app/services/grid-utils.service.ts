@@ -13,6 +13,8 @@ import {
   point_on_line_segment_closest_to_point,
 } from '../model/utils';
 import { Link, SliderBlock, RealLink } from '../model/link';
+import { Cylinder, CylinderPose, layoutCylinder, sealedCylinders } from '../model/cylinder';
+import { SettingsService } from './settings.service';
 import { MechanismService } from './mechanism.service';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
 import { Mechanism } from '../model/mechanism/mechanism';
@@ -198,6 +200,19 @@ export class GridUtilsService {
     // console.error('new drag Joint cycle');
     // TODO: have the round Number be integrated within function for determining trueCoord
 
+    // A cylinder mount never free-moves, whoever asks — canvas drag, the
+    // panel's X/Y fields, the distance-to-joint fields, the linkage table.
+    // Every route lands on the same parametric re-pose, so no surface can
+    // bend the part (§ cylinder 6).
+    const sealed = this.mechanismSrv.cylinderAt(selectedJoint);
+    if (
+      sealed &&
+      (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id)
+    ) {
+      this.dragCylinderMount(sealed, selectedJoint, trueCoord);
+      return selectedJoint;
+    }
+
     let oldX = selectedJoint.x;
     let oldY = selectedJoint.y;
 
@@ -331,6 +346,26 @@ export class GridUtilsService {
         from: link.joints.slice(0, 2).map((joint) => ({ x: joint.x, y: joint.y })),
       }));
 
+    // Member lengths of every sealed cylinder, captured while the geometry is
+    // still straight: a neighbour drag can carry one mount along, and the
+    // re-pose below has to rebuild from the rigid lengths, not from the bent
+    // intermediate state.
+    const carriedCylinders = sealedCylinders(this.mechanismSrv.joints).map((sealed) => ({
+      sealed,
+      barrelLength: this.getPointDistance(
+        sealed.barrelFar.x,
+        sealed.barrelFar.y,
+        sealed.barrelNear.x,
+        sealed.barrelNear.y
+      ),
+      rodLength: this.getPointDistance(
+        sealed.pin.x,
+        sealed.pin.y,
+        sealed.rodFar.x,
+        sealed.rodFar.y
+      ),
+    }));
+
     const movedJointIDs = new Set<string>();
     const moveJoint = (joint: Joint) => {
       if (movedJointIDs.has(joint.id)) return;
@@ -381,6 +416,28 @@ export class GridUtilsService {
       PositionSolver.setUpInitialJointLocations(link.joints);
     });
 
+    // A neighbour drag that carried a cylinder mount along re-poses that
+    // cylinder about its other mount, so the part follows its mount instead
+    // of bending (§ cylinder 6). A cylinder whose own pin moved was dragged
+    // as a body — every member translated together, nothing to repair.
+    carriedCylinders.forEach(({ sealed, barrelLength, rodLength }) => {
+      if (movedJointIDs.has(sealed.pin.id)) return;
+      const movedBarrelMount = movedJointIDs.has(sealed.barrelFar.id);
+      const movedRodMount = movedJointIDs.has(sealed.rodFar.id);
+      if (!movedBarrelMount && !movedRodMount) return;
+      const pose = layoutCylinder(
+        { x: sealed.barrelFar.x, y: sealed.barrelFar.y },
+        { x: sealed.rodFar.x, y: sealed.rodFar.y },
+        barrelLength,
+        rodLength,
+        0.15 * SettingsService.objectScale,
+        // Anchor on the mount that did NOT ride along; if both did, the whole
+        // axis translated and either anchor reproduces it.
+        movedBarrelMount ? 'rod' : 'barrel'
+      );
+      if (pose) this.applyCylinderPose(sealed, pose);
+    });
+
     // Before the rebuild, not after. A floating slider is deliberately not a
     // member of its carrier -- that is what makes it a slot rather than a pin --
     // so moving the carrier, or one of the two joints defining the slot, leaves
@@ -391,6 +448,108 @@ export class GridUtilsService {
     this.mechanismSrv.reseatFloatingSliders();
     this.mechanismSrv.updateMechanism(false);
     return selectedLink;
+  }
+
+  /**
+   * Drag one mount of a sealed cylinder (§ cylinder 6): the assembly re-poses
+   * about the OTHER mount — axis through the mounts, barrel rigid to mount A,
+   * rod rigid to mount C, pin re-derived on the axis with the stroke clamped
+   * to the slot ends. Collinearity holds by construction, so no drag can bend
+   * a cylinder.
+   */
+  dragCylinderMount(sealed: Cylinder, mount: RealJoint, wanted: Coord): void {
+    const draggingBarrelMount = mount.id === sealed.barrelFar.id;
+    const barrelLength = this.getPointDistance(
+      sealed.barrelFar.x,
+      sealed.barrelFar.y,
+      sealed.barrelNear.x,
+      sealed.barrelNear.y
+    );
+    const rodLength = this.getPointDistance(
+      sealed.pin.x,
+      sealed.pin.y,
+      sealed.rodFar.x,
+      sealed.rodFar.y
+    );
+    const pose = layoutCylinder(
+      draggingBarrelMount ? wanted : sealed.barrelFar,
+      draggingBarrelMount ? sealed.rodFar : wanted,
+      barrelLength,
+      rodLength,
+      0.15 * SettingsService.objectScale,
+      // The anchor is the mount NOT being dragged: it stays exactly still,
+      // and the dragged mount is what the stroke clamp stops.
+      draggingBarrelMount ? 'rod' : 'barrel'
+    );
+    if (!pose) return;
+    this.applyCylinderPose(sealed, pose);
+  }
+
+  /** Drag the body: the whole assembly translates rigidly. */
+  dragCylinder(sealed: Cylinder, dx: number, dy: number): void {
+    if (dx === 0 && dy === 0) return;
+    this.applyCylinderPose(sealed, {
+      barrelFar: { x: sealed.barrelFar.x + dx, y: sealed.barrelFar.y + dy },
+      barrelNear: { x: sealed.barrelNear.x + dx, y: sealed.barrelNear.y + dy },
+      pin: { x: sealed.pin.x + dx, y: sealed.pin.y + dy },
+      rodFar: { x: sealed.rodFar.x + dx, y: sealed.rodFar.y + dy },
+    });
+  }
+
+  /**
+   * Land a pose on the assembly's five joints (the slider rides the pin),
+   * then rebuild what depends on them — member links, genuinely deformed
+   * neighbours, and their forces, by the same frame-carrying rule dragLink
+   * applies.
+   */
+  private applyCylinderPose(sealed: Cylinder, pose: CylinderPose): void {
+    const placements: [Joint, { x: number; y: number }][] = [
+      [sealed.barrelFar, pose.barrelFar],
+      [sealed.barrelNear, pose.barrelNear],
+      [sealed.pin, pose.pin],
+      [sealed.slider, pose.pin],
+      [sealed.rodFar, pose.rodFar],
+    ];
+    const movedIds = new Set(placements.map(([joint]) => joint.id));
+    // Captured before the move: forces are placed relative to their link's
+    // own two reference joints, wherever those were.
+    const affected = this.mechanismSrv.links
+      .filter(
+        (link): link is RealLink =>
+          link instanceof RealLink && link.joints.some((joint) => movedIds.has(joint.id))
+      )
+      .map((link) => ({
+        link,
+        from: link.joints.slice(0, 2).map((joint) => ({ x: joint.x, y: joint.y })),
+      }));
+
+    placements.forEach(([joint, at]) => {
+      joint.x = roundNumber(at.x, 6);
+      joint.y = roundNumber(at.y, 6);
+    });
+
+    affected.forEach(({ link, from }) => {
+      const [start, end] = link.joints;
+      if (from.length === 2 && start && end) {
+        link.forces.forEach((force) => {
+          const [x, y] = pointThroughFrame(force.startCoord, from[0], from[1], start, end);
+          force.moveForceTo(x, y);
+        });
+      }
+      link.CoM = RealLink.determineCenterOfMass(link.joints);
+      link.updateCoMDs();
+      link.updateLengthAndAngle();
+      link.subset.forEach((sub) => {
+        const subLink = sub as RealLink;
+        subLink.CoM = RealLink.determineCenterOfMass(subLink.joints);
+        subLink.updateCoMDs();
+        subLink.updateLengthAndAngle();
+      });
+      PositionSolver.setUpInitialJointLocations(link.joints);
+    });
+
+    this.mechanismSrv.reseatFloatingSliders();
+    this.mechanismSrv.updateMechanism(false);
   }
 
   private translateLinkBody(link: Link, dx: number, dy: number) {

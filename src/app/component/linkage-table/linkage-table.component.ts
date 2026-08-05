@@ -71,6 +71,21 @@ export class LinkageTableComponent implements OnInit {
     if (!(joint instanceof RealJoint)) {
       return;
     }
+    // A cylinder mount edited by number still moves parametrically: the whole
+    // assembly re-poses about the other mount, exactly as the drag does.
+    const sealed = this.mechanismService.cylinderAt(joint);
+    if (sealed && (jointProp === 'x' || jointProp === 'y')) {
+      if (isNaN(Number($event.target.value))) {
+        return NewGridComponent.sendNotification('Check Joint Value');
+      }
+      const value = Number($event.target.value) * MODEL_SCALE;
+      const wanted = new Coord(
+        jointProp === 'x' ? value : joint.x,
+        jointProp === 'y' ? value : joint.y
+      );
+      this.mechanismService.gridUtils.dragCylinderMount(sealed, joint, wanted);
+      return;
+    }
     switch (jointProp) {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
