@@ -27,7 +27,6 @@ import { AnimationBarComponent } from '../component/animation-bar/animation-bar.
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
 import { slotHalfLength } from '../model/joint-marks';
-import { SliderMarkService } from './slider-mark.service';
 import { DragStateService } from './drag-state.service';
 import { Coord } from '../model/coord';
 import { Line } from '../model/line';
@@ -747,18 +746,17 @@ export class MechanismService {
   /**
    * Drop everything remembered about the mechanism that is being replaced.
    *
-   * The slot stashes and the cylinder-skin preferences are keyed by joint
-   * letter, which is unique within a mechanism and says nothing across two of
-   * them. Loading a different project in place would otherwise hand its joint B
-   * whatever the last project's joint B happened to remember -- a grounded
-   * guide at 45 degrees appearing on a joint that never had one.
+   * The slot stashes are keyed by joint letter, which is unique within a
+   * mechanism and says nothing across two of them. Loading a different project
+   * in place would otherwise hand its joint B whatever the last project's
+   * joint B happened to remember -- a grounded guide at 45 degrees appearing
+   * on a joint that never had one.
    *
    * Undo does not call this: continuing one mechanism's history is exactly the
    * case these maps exist to survive.
    */
   forgetSessionPreferences(): void {
     this.slotStashes.clear();
-    this.injector.get(SliderMarkService).clearPreferences();
   }
 
   deleteJoint() {

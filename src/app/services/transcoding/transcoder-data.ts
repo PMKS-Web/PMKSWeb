@@ -44,7 +44,11 @@ export class JointData {
     // what makes "no tokens" mean "grounded" unambiguously.
     public carrierID: string = '',
     public slotJointAID: string = '',
-    public slotJointBID: string = ''
+    public slotJointBID: string = '',
+    // The sealed-cylinder bit (§ atomic cylinder). Sixth joint flag: base-64
+    // packs six flags into the same single character five occupied, so every
+    // pre-existing URL decodes it as false and nothing shifts.
+    public isSealed: boolean = false
   ) {}
 }
 

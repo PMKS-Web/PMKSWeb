@@ -75,7 +75,8 @@ export class UrlGenerationService {
           joint.showCurve,
           joint.carrier?.id ?? '',
           joint.slotJointA?.id ?? '',
-          joint.slotJointB?.id ?? ''
+          joint.slotJointB?.id ?? '',
+          joint.isSealed
         )
       );
     }

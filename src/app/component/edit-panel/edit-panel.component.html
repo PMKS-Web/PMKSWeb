@@ -111,38 +111,6 @@
         >
           Weld
         </toggle-block>
-        @if (showCylinderSkin) {
-          <div class="skinPicker">
-            <div class="skinPicker__label">Cylinder skin</div>
-            <div class="skinPicker__row">
-              <button [class.is-on]="skinPreference === 'auto'" (click)="setSkinPreference('auto')">
-                Auto
-              </button>
-              <button
-                [class.is-on]="skinPreference === 'cylinder'"
-                [disabled]="!!cylinderRefusal"
-                (click)="setSkinPreference('cylinder')"
-              >
-                Cylinder
-              </button>
-              <button
-                [class.is-on]="skinPreference === 'slotted'"
-                (click)="setSkinPreference('slotted')"
-              >
-                Slotted
-              </button>
-            </div>
-            <!-- What is missing, rather than a control that has quietly gone
-                 away: this is the only place in the app that says what a piston
-                 is made of, so it has to be readable before you have one. -->
-            @if (cylinderRefusal) {
-              <div class="slotNote">{{ cylinderRefusal }}</div>
-            }
-            <div class="slotNote">
-              View preference — not in the URL, not in undo. A shared link always opens on Auto.
-            </div>
-          </div>
-        }
         <!-- The same block every other button in this panel is built from, so
              its border, its label and its icon take the panel's own colours.
              Written out by hand it was the one control here that did not: grey

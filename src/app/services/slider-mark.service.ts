@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Joint, PrisJoint, RealJoint } from '../model/joint';
 import { Link, RealLink, SliderBlock } from '../model/link';
-import { Cylinder, cylinders, SkinPreference } from '../model/cylinder';
+import { Cylinder, sealedCylinders } from '../model/cylinder';
 import {
   barrelCollapsedPath,
   blockPath,
@@ -111,10 +111,14 @@ export interface Channel {
   path: string;
 }
 
-/** One piston, drawn as the part rather than as a block in a channel (§2.7). */
+/** One sealed cylinder, drawn as the part rather than as a block in a channel. */
 export interface CylinderMark {
   id: string;
   pin: Joint;
+  /** The resolved assembly, for selection, menus and drags. */
+  cylinder: Cylinder;
+  /** The link a click on any part of the skin selects — the body. */
+  body: Link;
   x: number;
   y: number;
   rotation: number;
@@ -122,8 +126,9 @@ export interface CylinderMark {
   barrelId: string;
   rodId: string;
   /**
-   * The barrel's inner joint, buried where rod and barrel overlap — hidden
-   * while the skin is collapsed. The outer mounts stay visible.
+   * The barrel's inner joint, buried where rod and barrel overlap. A sealed
+   * cylinder never reveals, so this joint has no hitbox at all; only the two
+   * outer mounts stay visible.
    */
   hiddenJointId: string;
   barrel: string;
@@ -245,54 +250,12 @@ export class SliderMarkService {
   }
 
   /**
-   * How the user asked each assembly to be drawn, by weld-joint id.
-   *
-   * A view preference, deliberately held here rather than on the joint: it does
-   * not serialize into the URL and does not enter the undo stack, so a shared
-   * link always opens on Auto and nobody can undo their way into a different
-   * picture of the same mechanism.
+   * The cylinders to draw. Sealed ⇔ skinned, always: there is no reveal on
+   * selection and no per-session preference — a sealed assembly is one part,
+   * and a hand-built slide is never skinned at all.
    */
-  private readonly skinPreference = new Map<string, SkinPreference>();
-
-  preferenceFor(id: string): SkinPreference {
-    return this.skinPreference.get(id) ?? 'auto';
-  }
-
-  setPreference(id: string, preference: SkinPreference): void {
-    this.skinPreference.set(id, preference);
-  }
-
-  /**
-   * Forget every override, for when a different mechanism is loaded in place.
-   * Joint letters are unique within a mechanism and meaningless across two.
-   */
-  clearPreferences(): void {
-    this.skinPreference.clear();
-  }
-
-  /**
-   * The cylinders to draw collapsed.
-   *
-   * `revealedId` is the assembly the user has selected: on Auto it expands, so
-   * the block can be aimed at and its travel read — neither of which is
-   * possible while it is moving, which is why playback suppresses the reveal
-   * and keeps the skin on.
-   */
-  cylinderMarks(
-    joints: Joint[],
-    r: number,
-    revealedId?: string,
-    playing = false,
-    driveForward = true
-  ): CylinderMark[] {
-    return cylinders(joints)
-      .filter((found) => {
-        const preference = this.preferenceFor(found.pin.id);
-        if (preference === 'slotted') return false;
-        if (preference === 'cylinder') return true;
-        return playing || found.pin.id !== revealedId;
-      })
-      .map((found) => this.cylinderMark(found, r, driveForward));
+  cylinderMarks(joints: Joint[], r: number, driveForward = true): CylinderMark[] {
+    return sealedCylinders(joints).map((found) => this.cylinderMark(found, r, driveForward));
   }
 
   /**
@@ -346,6 +309,10 @@ export class SliderMarkService {
     return {
       id: pin.id,
       pin,
+      cylinder: found,
+      // A click anywhere on the skin selects the body; the barrel link is the
+      // canonical handle for it.
+      body: found.barrel,
       x: pin.x,
       y: pin.y,
       // +x runs toward the rod, so the barrel is the negative side and the

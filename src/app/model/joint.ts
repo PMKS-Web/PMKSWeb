@@ -167,6 +167,17 @@ export class PrisJoint extends RealJoint {
   private _carrier?: Link;
   private _slotJointA?: Joint;
   private _slotJointB?: Joint;
+  /**
+   * Whether this slider is the sealed heart of an atomic cylinder.
+   *
+   * A sealed slider's assembly — barrel, block, welded rod — is one permanent
+   * part: no unweld, no slider-off, no dragging the block out of its slot.
+   * The bit lives here (not in a view service) because undo/redo replays URL
+   * strings, so anything that must survive an undo has to enter the codec, and
+   * the prismatic pin is the one object every member of the assembly can be
+   * reached from.
+   */
+  public isSealed: boolean = false;
 
   constructor(
     id: string,

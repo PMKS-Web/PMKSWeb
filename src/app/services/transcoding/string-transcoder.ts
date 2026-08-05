@@ -45,7 +45,7 @@ export class StringTranscoder extends GenericTranscoder {
   /*
     Joint encoding is defined as:
     [FLAGS][JointID],[x],[y],[angleRadians],[linkID1],[linkID2]...
-    [FLAGS] = (JointType == PRISMATIC), (isInput), (isGrounded)
+    [FLAGS] = (JointType == PRISMATIC), (isInput), (isGrounded), (isWelded), (showCurve), (isSealed)
     [JointID] = string
     [x] = number
     [y] = number
@@ -57,12 +57,16 @@ export class StringTranscoder extends GenericTranscoder {
     This should on average be 18 characters per joint
     */
   private encodeJoint(joint: JointData): string {
+    // Six flags still pack into one base-64 character, so appending isSealed
+    // leaves every pre-sealed URL byte-identical and decodes their sixth bit
+    // as false — which is the correct legacy meaning (a plain welded slide).
     let flags = FlagPacker.pack([
       joint.type == JOINT_TYPE.PRISMATIC,
       joint.isInput,
       joint.isGrounded,
       joint.isWelded,
       joint.showCurve,
+      joint.isSealed,
     ]);
 
     let xString = this.encodeDecimalNumber(joint.x);
@@ -93,12 +97,13 @@ export class StringTranscoder extends GenericTranscoder {
   private decodeJoint(jointString: string): JointData {
     const sd = new StringDisassembler(jointString);
 
-    let flags = sd.nextFlags(5);
+    let flags = sd.nextFlags(6);
     let jointType = flags[0] ? JOINT_TYPE.PRISMATIC : JOINT_TYPE.REVOLUTE;
     let isInput = flags[1];
     let isGrounded = flags[2];
     let isWelded = flags[3];
     let showCurve = flags[4];
+    let isSealed = flags[5];
 
     let id = sd.nextToken();
     let name = sd.nextToken();
@@ -124,7 +129,8 @@ export class StringTranscoder extends GenericTranscoder {
       showCurve,
       carrierID,
       slotJointAID,
-      slotJointBID
+      slotJointBID,
+      isSealed
     );
   }
 
@@ -533,6 +539,12 @@ export class StringTranscoder extends GenericTranscoder {
     */
   private validateDecodedSlots(jointIDs: Set<string>): void {
     this.joints.forEach((joint) => {
+      // The sealed bit belongs to the prismatic pin of a floating slot — a
+      // cylinder's barrel is a link, never the ground. No legacy URL carries
+      // the bit, so strictness here costs nothing and catches hand-edits.
+      if (joint.isSealed && (joint.type !== JOINT_TYPE.PRISMATIC || joint.carrierID === '')) {
+        throw new Error('URL seals a joint that is not a floating slider');
+      }
       const tokens = [joint.carrierID, joint.slotJointAID, joint.slotJointBID];
       const present = tokens.filter((token) => token !== '').length;
       if (present === 0) return;

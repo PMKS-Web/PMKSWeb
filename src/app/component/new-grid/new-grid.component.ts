@@ -1640,45 +1640,15 @@ export class NewGridComponent {
    * subpath, and a test that cannot tell them apart is not testing the channel.
    */
   /**
-   * The pistons currently wearing their cylinder skin.
-   *
-   * Not cached with the marks: it depends on the selection and on whether the
-   * animation is running, neither of which is in the mark fingerprint — and
-   * both change without anything moving.
+   * The sealed cylinders, always wearing their skin. Sealed ⇔ skinned: there
+   * is no reveal on selection and no per-session preference any more.
    */
   get cylinderList(): CylinderMark[] {
     return this.sliderMarks.cylinderMarks(
       this.mechanismSrv.getJoints(),
       0.15 * this.settings.objectScale,
-      this.activeObjService.objType === 'Joint'
-        ? this.selectedAssemblyId()
-        : this.activeObjService.objType === 'Link'
-          ? this.selectedAssemblyId()
-          : undefined,
-      AnimationBarComponent.animate,
       !this.settings.isInputCW.value
     );
-  }
-
-  /**
-   * Which assembly the current selection belongs to, so selecting any member of
-   * a piston — barrel, rod, or the joint itself — reveals the same one.
-   */
-  private selectedAssemblyId(): string | undefined {
-    const joints = this.mechanismSrv.getJoints();
-    const r = 0.15 * this.settings.objectScale;
-    for (const candidate of this.sliderMarks.cylinderMarks(joints, r)) {
-      if (this.activeObjService.objType === 'Joint') {
-        const id = this.activeObjService.selectedJoint?.id;
-        if (id === candidate.id || id === candidate.hiddenJointId) return candidate.id;
-        if (candidate.rodId.includes(id ?? ' ')) return candidate.id;
-      }
-      if (this.activeObjService.objType === 'Link') {
-        const id = this.activeObjService.selectedLink?.id;
-        if (id === candidate.barrelId || id === candidate.rodId) return candidate.id;
-      }
-    }
-    return undefined;
   }
 
   /** A link the cylinder skin is standing in for, so it is not drawn twice. */
@@ -1766,19 +1736,26 @@ export class NewGridComponent {
     return this.cylinderList.some((cylinder) => cylinder.pin.id === (mark.pin as Joint).id);
   }
 
-  /** The barrel's inner joint disappears into the skin while it is collapsed. */
-  isHiddenByCylinder(joint: Joint): boolean {
-    return this.cylinderList.some((mark) => mark.hiddenJointId === joint.id);
+  /**
+   * A cylinder's interior joints — the buried barrel end, the pin, and the
+   * sliding joint — get no hitbox, hover, label or selection at all. Only the
+   * two mounts remain selectable; the skin's own geometry selects the body.
+   */
+  isCylinderInterior(joint: Joint): boolean {
+    return this.cylinderList.some(
+      (mark) =>
+        mark.hiddenJointId === joint.id ||
+        mark.pin.id === joint.id ||
+        mark.cylinder.slider.id === joint.id
+    );
   }
 
-  /**
-   * The skin draws its own, larger welded marker at the pin (§2.7), so the
-   * joint layer's plus has to stand down or the two stack. Only the glyph: the
-   * joint's hitbox and highlight stay, because the pin is still the thing being
-   * selected and dragged.
-   */
-  isMarkerReplacedByCylinder(joint: Joint): boolean {
-    return this.cylinderList.some((mark) => mark.pin.id === joint.id);
+  /** A member link of a sealed cylinder: never a slot-drop target. */
+  private isCylinderMemberLink(link: Link): boolean {
+    return this.cylinderList.some(
+      (mark) =>
+        mark.barrelId === link.id || mark.rodId === link.id || mark.cylinder.block.id === link.id
+    );
   }
 
   channelCountOn(link: Link): number {

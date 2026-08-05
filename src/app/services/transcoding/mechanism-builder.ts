@@ -61,6 +61,9 @@ export class MechanismBuilder {
         jointData.isGrounded
       );
       joint.angle_rad = jointData.angleRadians;
+      // The sealed-cylinder bit rides the prismatic pin; undo/redo replays
+      // URLs, so this is the line that makes sealing survive an undo.
+      joint.isSealed = jointData.isSealed;
     } else {
       joint = new RevJoint(
         jointData.id,

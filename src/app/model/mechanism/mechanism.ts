@@ -125,6 +125,7 @@ export class Mechanism {
     if (source instanceof PrisJoint) {
       const prisJoint = new PrisJoint(source.id, x, y, source.input, source.ground);
       prisJoint.angle_rad = source.angle_rad;
+      prisJoint.isSealed = source.isSealed;
       // Points at the editable objects for now; wireJointGraph rebinds it to
       // this timestep's copies once they exist.
       if (source.carrier && source.slotJointA && source.slotJointB) {

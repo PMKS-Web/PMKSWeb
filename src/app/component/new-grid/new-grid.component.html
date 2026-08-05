@@ -519,31 +519,39 @@
         </g>
       }
     }
-    <!-- §2.7: a piston is a Slide whose rod and barrel line up, so it is drawn
-         as the part rather than as a block in a channel. Nothing about the
-         mechanism changes -- selecting it simply stops collapsing the skin, and
-         the ordinary slot drawing underneath is the same size in the same
-         place, which is what makes the reveal additive. -->
+    <!-- The atomic cylinder: a sealed assembly drawn as the part, always. A
+         click anywhere on its geometry — barrel, block, rod or marker —
+         selects the BODY (one of three selectables, beside the two mounts);
+         the interior pin and the buried barrel joint have no hitboxes at all. -->
     @for (cyl of cylinderList; track cyl.id) {
       <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
-        <!-- Selecting any member of a piston reveals it (§2.7): barrel, rod, or
-             the joint itself. The barrel hands the gesture to the pin, which is
-             the same assembly and already knows how to reveal. -->
         <path
           class="cylinder-barrel"
-          cursor="pointer"
-          (pointerdown)="setLastLeftClick(cyl.pin)"
-          (contextmenu)="setLastRightClick(cyl.pin)"
+          cursor="move"
+          (pointerover)="cyl.body.showHighlight = true"
+          (pointerout)="cyl.body.showHighlight = false"
+          (pointerdown)="setLastLeftClick(cyl.body, $event)"
+          (contextmenu)="setLastRightClick(cyl.body, $event)"
           [attr.d]="cyl.barrel"
           [attr.fill]="cyl.barrelFill"
           fill-opacity="0.7"
+          [class]="mechanismSrv.getLinkCSSClass(cyl.body)"
         />
-        <path [attr.d]="cyl.block" fill="#000000" filter="url(#elevation-1)" />
+        <path
+          cursor="move"
+          (pointerdown)="setLastLeftClick(cyl.body, $event)"
+          (contextmenu)="setLastRightClick(cyl.body, $event)"
+          [attr.d]="cyl.block"
+          fill="#000000"
+          filter="url(#elevation-1)"
+        />
         <path
           class="cylinder-rod"
           cursor="move"
-          (pointerdown)="setLastLeftClick(cyl.pin)"
-          (contextmenu)="setLastRightClick(cyl.pin)"
+          (pointerover)="cyl.body.showHighlight = true"
+          (pointerout)="cyl.body.showHighlight = false"
+          (pointerdown)="setLastLeftClick(cyl.body, $event)"
+          (contextmenu)="setLastRightClick(cyl.body, $event)"
           [attr.d]="cyl.rod"
           [attr.fill]="cyl.rodFill"
           fill-opacity="0.7"
@@ -649,9 +657,10 @@
       ></circle>
     }
     @for (joint of mechanismSrv.getJoints(); track joint) {
-      <!-- The barrel's far end disappears into a collapsed cylinder skin; the
-           reveal on selection is what brings it back (§2.7). -->
-      @if (!isHiddenByCylinder(joint)) {
+      <!-- A sealed cylinder's interior joints — buried barrel end, pin,
+           slider — are not selectable at all: the skin's own geometry selects
+           the body, and only the two mounts remain individual selectables. -->
+      @if (!isCylinderInterior(joint)) {
         <svg
           [attr.x]="joint.x"
           [attr.y]="joint.y"
@@ -681,9 +690,10 @@
                 [class]="mechanismSrv.getJointCSSClass(joint)"
               />
             }
-            <!--      Welded Joint. The plus stands down while a cylinder skin
-                      draws its own, larger marker at the same pin (§2.7) -->
-            @if (gridUtils.getWelded(joint) && !isMarkerReplacedByCylinder(joint)) {
+            <!--      Welded Joint. A sealed cylinder's pin never reaches here:
+                      interior joints are filtered out above, and the skin
+                      draws its own, larger marker at that point. -->
+            @if (gridUtils.getWelded(joint)) {
               <path
                 [attr.id]="'joint_' + joint.id"
                 [class]="mechanismSrv.getJointCSSClass(joint)"
@@ -1063,6 +1073,7 @@
           </text>
         } @else if (
           !isMergingAway(joint) &&
+          !isCylinderInterior(joint) &&
           ((gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) ||
             joint.showHighlight ||
             (this.activeObjService.selectedJoint == joint &&
