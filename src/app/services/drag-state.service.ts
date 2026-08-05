@@ -95,6 +95,11 @@ export class DragStateService {
     this._force = forceStates.creating;
   }
 
+  /** Two-point cylinder creation: start point chosen, ghost tracking cursor. */
+  beginCreatingCylinder(): void {
+    this._grid = gridStates.createCylinder;
+  }
+
   /** A creation gesture reached its second click and produced its object. */
   finishCreating(): void {
     this._grid = gridStates.waiting;

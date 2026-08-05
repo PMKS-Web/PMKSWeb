@@ -585,6 +585,24 @@
         />
       </g>
     }
+    <!-- The ghost of the two-point creation gesture: the same paths the
+         committed skin draws, tracking the cursor, so what is previewed is
+         exactly what the left-click will create. -->
+    @if (cylinderPreview; as ghost) {
+      <g
+        class="cylinder-preview"
+        pointer-events="none"
+        opacity="0.5"
+        [attr.transform]="sliderMarks.frame(ghost)"
+      >
+        <!-- Same per-path alphas as the committed skin, so the black block
+             reads through the rod exactly as it will once built. -->
+        <path [attr.d]="ghost.barrel" fill="#9fa8da" fill-opacity="0.7" />
+        <path [attr.d]="ghost.block" fill="#000000" />
+        <path [attr.d]="ghost.rod" fill="#9fa8da" fill-opacity="0.7" />
+        <path [attr.d]="ghost.marker" fill="#FFF8E1" />
+      </g>
+    }
     <!-- A driven floating pin has no block to put a white arrow on, so the
          overlay brings its own dark backing rather than switching the arrow to
          a colour that would then depend on whatever is behind it. A driven

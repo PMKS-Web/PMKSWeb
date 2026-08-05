@@ -65,11 +65,15 @@ import {
   WeldPlate,
 } from '../../services/slider-mark.service';
 import {
+  barrelCollapsedPath,
   curvedArrowPath,
+  cylinderBlockPath,
+  cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
   pinBackingPath,
   plusPath,
+  rodBodyPath,
   slotHalfLength,
 } from '../../model/joint-marks';
 import {
@@ -80,7 +84,7 @@ import {
   SlotDropCandidate,
 } from '../../model/drop-target';
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
-import { Cylinder, cylinderJoints } from '../../model/cylinder';
+import { Cylinder, cylinderCreationLayout, cylinderJoints } from '../../model/cylinder';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
@@ -559,26 +563,74 @@ export class NewGridComponent {
           new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
         );
         this.cMenuItems.push(
-          new cMenuItem('Add Cylinder', this.addCylinder.bind(this), 'add_slider')
+          new cMenuItem('Create Cylinder', this.startCreatingCylinder.bind(this), 'add_slider')
         );
     }
   }
 
+  /** Where the two-point cylinder gesture started: the barrel-side mount. */
+  private cylinderCreateStart?: Coord;
+
   /**
-   * Stamp a complete cylinder at the right-click point (§ cylinder 2). One
-   * save inside the service, so creation is one undo entry.
+   * Begin the two-point cylinder gesture (§ cylinder 2), mirroring Add Link:
+   * the right-click point is the barrel-side mount, a ghost of the assembly
+   * tracks the cursor (which is where the ROD will finish), and the next
+   * left-click commits. Right- or middle-click cancels, exactly as link
+   * creation does.
    */
-  addCylinder() {
-    const coord = this.svgGrid.screenToSVGfromXY(
-      this.lastRightClickCoord.x,
-      this.lastRightClickCoord.y
-    );
+  startCreatingCylinder() {
     // Same first-object rule as link creation: fit the object scale to the
     // current zoom before anything is sized from it.
     if (this.mechanismSrv.links.length == 0) {
       this.svgGrid.updateObjectScale();
     }
-    this.mechanismSrv.createCylinderAt(coord);
+    this.cylinderCreateStart = this.svgGrid.screenToSVG(this.lastRightClickCoord);
+    this.dragState.beginCreatingCylinder();
+  }
+
+  /**
+   * The ghost cylinder of the creation gesture, tracking the cursor. Same
+   * paths, same proportions and same frame as the committed skin, so what is
+   * previewed is exactly what the left-click will create.
+   */
+  get cylinderPreview():
+    | {
+        x: number;
+        y: number;
+        rotation: number;
+        barrel: string;
+        rod: string;
+        block: string;
+        marker: string;
+      }
+    | undefined {
+    if (this.dragState.grid !== gridStates.createCylinder || !this.cylinderCreateStart) {
+      return undefined;
+    }
+    const creation = cylinderCreationLayout(
+      this.cylinderCreateStart,
+      this.mouseLocation,
+      this.settings.objectScale
+    );
+    const r = 0.15 * this.settings.objectScale;
+    return {
+      x: creation.pin.x,
+      y: creation.pin.y,
+      rotation: (creation.angleRad * 180) / Math.PI,
+      barrel: barrelCollapsedPath(r, -creation.pinFromMount),
+      rod: rodBodyPath(r, creation.rodLength),
+      block: cylinderBlockPath(r),
+      marker: cylinderMarkerPath(r),
+    };
+  }
+
+  /** The left-click that ends the gesture: build the part, one undo entry. */
+  private commitCylinderCreation(end: Coord) {
+    const start = this.cylinderCreateStart;
+    this.cylinderCreateStart = undefined;
+    this.dragState.finishCreating();
+    if (!start) return;
+    this.mechanismSrv.createCylinderFrom(start, end);
   }
 
   setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
@@ -1332,6 +1384,13 @@ export class NewGridComponent {
 
     switch ($event.button) {
       case 0: // Handle Left-Click on canvas
+        // The second click of the two-point cylinder gesture commits wherever
+        // it lands — over grid, joint or link alike — with the cursor as the
+        // rod's end, exactly where the ghost has been standing.
+        if (this.dragState.grid === gridStates.createCylinder) {
+          this.commitCylinderCreation(mousePosInSvg);
+          break;
+        }
         // let clickPos = new Coord($event.pageX, $event.pageY);
         // let mousePosInSvg = this.svgGrid.screenToSVG(clickPos);
         // console.warn('Mouse down: ');
@@ -1606,10 +1665,12 @@ export class NewGridComponent {
       // TODO: Be sure all things reset
       case 1: // Middle-Click
         this.dragState.cancel();
+        this.cylinderCreateStart = undefined;
         this.jointTempHolderSVG.style.display = 'none';
         return;
       case 2: // Right-Click
         this.dragState.cancel();
+        this.cylinderCreateStart = undefined;
         this.jointTempHolderSVG.style.display = 'none';
         break;
     }

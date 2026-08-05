@@ -183,6 +183,61 @@ export function isCylinderInterior(cylinder: Cylinder, joint: Joint): boolean {
   return [cylinder.barrelNear.id, cylinder.pin.id, cylinder.slider.id].includes(joint.id);
 }
 
+/**
+ * The proportions of a freshly drawn cylinder, mirroring the fixture
+ * gallery's hydraulic cylinder (barrel 3 : rod 4 over a span of 6 from the
+ * barrel mount to the rod's end, pin at 2 — i.e. barrel = span/2, pin at
+ * span/3, rod = 2·span/3, which keeps the pin inside the slot's span at any
+ * size).
+ */
+export interface CylinderCreation extends CylinderPose {
+  angleRad: number;
+  /** Mount-to-mount distance actually used, after the minimum is applied. */
+  span: number;
+  barrelLength: number;
+  pinFromMount: number;
+  rodLength: number;
+}
+
+/** The smallest cylinder the two-point gesture will draw, in objectScale. */
+export const CYLINDER_MIN_SPAN_SCALE = 1;
+
+/**
+ * Lay out a new cylinder from the two points of the creation gesture: the
+ * start point is the barrel-side mount, `end` is where the rod finishes.
+ * The drawn span sets every member length; a span below the minimum clamps
+ * (so a zero-length click cannot make a degenerate part), keeping the drawn
+ * direction — or +x when there is none yet.
+ */
+export function cylinderCreationLayout(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  objectScale: number
+): CylinderCreation {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const drawn = Math.hypot(dx, dy);
+  const angleRad = drawn < 1e-9 ? 0 : Math.atan2(dy, dx);
+  const span = Math.max(drawn, CYLINDER_MIN_SPAN_SCALE * objectScale);
+  const ux = Math.cos(angleRad);
+  const uy = Math.sin(angleRad);
+  const barrelLength = span / 2;
+  const pinFromMount = span / 3;
+  const rodLength = span - pinFromMount;
+  const at = (along: number) => ({ x: start.x + along * ux, y: start.y + along * uy });
+  return {
+    angleRad,
+    span,
+    barrelLength,
+    pinFromMount,
+    rodLength,
+    barrelFar: at(0),
+    barrelNear: at(barrelLength),
+    pin: at(pinFromMount),
+    rodFar: at(span),
+  };
+}
+
 /** Where each joint of a re-posed cylinder lands. */
 export interface CylinderPose {
   barrelFar: { x: number; y: number };

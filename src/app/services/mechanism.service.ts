@@ -4,6 +4,7 @@ import { Link, SliderBlock, RealLink } from '../model/link';
 import { isSlideCandidate, slideAssemblyAt } from '../model/slide-assembly';
 import {
   Cylinder,
+  cylinderCreationLayout,
   cylinderOfJoint,
   cylinderOfLink,
   isCylinderInterior,
@@ -1257,19 +1258,18 @@ export class MechanismService {
   }
 
   /**
-   * Stamp a complete cylinder at `coord` (§ cylinder 2): barrel with its slot,
-   * block and pin, welded rod, exactly collinear, sealed. Proportions mirror
-   * the fixture gallery's hydraulic cylinder (barrel 3 : rod 4), scaled to
-   * half the object scale so the part lands at a workable size; the pin sits
-   * inside the slot's span so the stroke has room both ways.
+   * Build a complete cylinder from the two points of the creation gesture
+   * (§ cylinder 2): `start` is the barrel-side mount, `end` is where the rod
+   * finishes. The drawn span sets the member lengths (fixture-gallery
+   * proportions, minimum span clamped in `cylinderCreationLayout` so a
+   * zero-length click cannot make a degenerate part); the assembly — barrel
+   * with its slot, block and welded pin, sealed slider, rod — is exactly
+   * collinear along the drawn axis by construction.
    *
    * One `finishStructuralEdit(true)` at the end makes creation one undo entry.
    */
-  createCylinderAt(coord: Coord): void {
-    const scale = this.settingsService.objectScale;
-    const barrelLength = 1.5 * scale;
-    const pinFromMount = 1.0 * scale;
-    const rodLength = 2.0 * scale;
+  createCylinderFrom(start: Coord, end: Coord): void {
+    const creation = cylinderCreationLayout(start, end, this.settingsService.objectScale);
 
     const aId = this.determineNextLetter();
     const bId = this.determineNextLetter([aId]);
@@ -1277,13 +1277,14 @@ export class MechanismService {
     const dId = this.determineNextLetter([cId]);
     const pId = this.determineNextLetter([dId]);
 
-    // Centred on the click, along +x. Rotation is a mount drag away.
-    const ax = roundNumber(coord.x - (pinFromMount + rodLength) / 2, 3);
-    const ay = roundNumber(coord.y, 3);
-    const barrelFar = new RevJoint(aId, ax, ay);
-    const barrelNear = new RevJoint(bId, roundNumber(ax + barrelLength, 3), ay);
-    const pin = new RevJoint(cId, roundNumber(ax + pinFromMount, 3), ay);
-    const rodFar = new RevJoint(dId, roundNumber(ax + pinFromMount + rodLength, 3), ay);
+    const place = (at: { x: number; y: number }): [number, number] => [
+      roundNumber(at.x, 3),
+      roundNumber(at.y, 3),
+    ];
+    const barrelFar = new RevJoint(aId, ...place(creation.barrelFar));
+    const barrelNear = new RevJoint(bId, ...place(creation.barrelNear));
+    const pin = new RevJoint(cId, ...place(creation.pin));
+    const rodFar = new RevJoint(dId, ...place(creation.rodFar));
     const slider = new PrisJoint(pId, pin.x, pin.y);
     slider.isSealed = true;
 

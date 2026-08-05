@@ -4,7 +4,21 @@ import { PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
 import { sealedCylinderAt, sealedCylinders } from '../model/cylinder';
 import { createMechanismHarness, wireGraph } from '../../test-utils/mechanism-harness';
+import { SettingsService } from './settings.service';
 import { MODEL_SCALE } from '../model/render-scale';
+
+// The object scale is process-wide static state, and earlier spec files in
+// the same worker can leave it wherever they liked. Everything here that
+// sizes a cylinder (creation minimum span, collinearity tolerance) reads it,
+// so pin it for the file and put it back.
+let previousObjectScale: number;
+beforeEach(() => {
+  previousObjectScale = SettingsService.objectScale;
+  SettingsService._objectScale.next(1 * MODEL_SCALE);
+});
+afterEach(() => {
+  SettingsService._objectScale.next(previousObjectScale);
+});
 
 // The atomic cylinder's service-level contract: creation is one undo entry,
 // the assembly is permanent (no slider-off, no drag-out, no unweld at the
@@ -13,7 +27,7 @@ import { MODEL_SCALE } from '../model/render-scale';
 
 function harnessWithCylinder() {
   const harness = createMechanismHarness();
-  harness.service.createCylinderAt(new Coord(0, 0));
+  harness.service.createCylinderFrom(new Coord(0, 0), new Coord(3 * MODEL_SCALE, 0));
   const slider = harness.service.joints.find(
     (joint): joint is PrisJoint => joint instanceof PrisJoint
   )!;
@@ -26,11 +40,14 @@ function resolve(harness: ReturnType<typeof createMechanismHarness>) {
   return sealedCylinders(harness.service.joints)[0];
 }
 
-describe('creating a cylinder from the menu point', () => {
-  it('stamps a complete, sealed, collinear assembly as one undo entry', () => {
+describe('creating a cylinder from the two-point gesture', () => {
+  it('builds a complete, sealed, collinear assembly along the drawn axis', () => {
     const harness = createMechanismHarness();
+    // A tilted axis, so collinearity is a real claim rather than shared y.
+    const start = new Coord(2 * MODEL_SCALE, 1 * MODEL_SCALE);
+    const end = new Coord(5 * MODEL_SCALE, 3.5 * MODEL_SCALE);
 
-    harness.service.createCylinderAt(new Coord(2 * MODEL_SCALE, 1 * MODEL_SCALE));
+    harness.service.createCylinderFrom(start, end);
 
     expect(harness.service.joints).toHaveLength(5);
     expect(harness.service.links).toHaveLength(3);
@@ -38,15 +55,39 @@ describe('creating a cylinder from the menu point', () => {
     expect(sealed).toBeDefined();
     expect(sealed.slider.isSealed).toBe(true);
     expect(sealed.pin.isWelded).toBe(true);
-    // Exactly collinear, centred on the click.
-    for (const joint of [sealed.barrelFar, sealed.barrelNear, sealed.pin, sealed.rodFar]) {
-      expect(joint.y).toBeCloseTo(1 * MODEL_SCALE, 6);
+    // The start point is the barrel-side mount; the rod finishes at the cursor.
+    expect(Math.hypot(sealed.barrelFar.x - start.x, sealed.barrelFar.y - start.y)).toBeLessThan(
+      0.01
+    );
+    expect(Math.hypot(sealed.rodFar.x - end.x, sealed.rodFar.y - end.y)).toBeLessThan(0.01);
+    // Collinear along the drawn axis (within the codec-grade rounding the
+    // creation applies to each coordinate).
+    const axis = Math.hypot(end.x - start.x, end.y - start.y);
+    for (const joint of [sealed.barrelNear, sealed.pin]) {
+      const cross =
+        (end.x - start.x) * (joint.y - start.y) - (end.y - start.y) * (joint.x - start.x);
+      expect(Math.abs(cross / axis)).toBeLessThan(0.01);
     }
-    expect((sealed.barrelFar.x + sealed.rodFar.x) / 2).toBeCloseTo(2 * MODEL_SCALE, 6);
-    // One gesture, one undo entry.
+    // One gesture, one undo entry, committed on the second click.
     expect(harness.saveCount()).toBe(1);
     // The body is selected, so the panel opens on the cylinder.
     expect(harness.active.selectedLink?.id).toBe(sealed.barrel.id);
+  });
+
+  it('clamps a zero-length gesture to the minimum span instead of degenerating', () => {
+    const harness = createMechanismHarness();
+
+    harness.service.createCylinderFrom(new Coord(0, 0), new Coord(0, 0));
+
+    const sealed = resolve(harness);
+    expect(sealed).toBeDefined();
+    // Minimum span is one objectScale (CYLINDER_MIN_SPAN_SCALE), along +x.
+    const span = Math.hypot(
+      sealed.rodFar.x - sealed.barrelFar.x,
+      sealed.rodFar.y - sealed.barrelFar.y
+    );
+    expect(span).toBeCloseTo(1 * MODEL_SCALE, 0);
+    expect(sealed.slider.isSlotWellFormed).toBe(true);
   });
 });
 

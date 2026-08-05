@@ -18,6 +18,7 @@ export enum gridStates {
   createJointFromJoint,
   createJointFromLink,
   createForce,
+  createCylinder,
   dragging,
 }
 

@@ -74,25 +74,101 @@ function offAxis(a, b, p) {
   return Math.abs((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x)) / len;
 }
 
-// ------------------------------------------------------------- 1. creation
-console.log('\ncreate a cylinder from the grid menu');
-const created = await page.evaluate(() => {
+// ----------------------------------------- 0. the gesture can be aborted
+console.log('\nan aborted gesture creates nothing, like link creation');
+const abort = await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   const canvas = document.querySelector('#canvas').getBoundingClientRect();
-  c.lastRightClickCoord.x = canvas.x + canvas.width / 2;
-  c.lastRightClickCoord.y = canvas.y + canvas.height / 2;
+  const start = { x: canvas.x + canvas.width / 2, y: canvas.y + canvas.height / 2 - 120 };
+  c.lastRightClickCoord.x = start.x;
+  c.lastRightClickCoord.y = start.y;
+  c.setLastRightClick('grid');
+  c.cMenuItems.find((i) => i.label === 'Create Cylinder')?.action();
+  return start;
+});
+await page.mouse.move(abort.x + 90, abort.y + 40);
+await page.waitForTimeout(150);
+checkThat('the ghost appears once the gesture starts', (await page.locator('.cylinder-preview').count()) === 1);
+// Middle-click aborts, the same cancel path Add Link uses.
+await page.mouse.click(abort.x + 90, abort.y + 40, { button: 'middle' });
+await page.waitForTimeout(300);
+checkThat(
+  'cancelling leaves no ghost and no mechanism',
+  (await page.locator('.cylinder-preview').count()) === 0 && (await model()).joints.length === 0
+);
+
+// ----------------------------------------- 1. creation, two-point gesture
+console.log('\ncreate a cylinder with the two-point gesture');
+const gesture = await page.evaluate(() => {
+  const c = ng.getComponent(document.querySelector('app-new-grid'));
+  const canvas = document.querySelector('#canvas').getBoundingClientRect();
+  const start = { x: canvas.x + canvas.width / 2 - 160, y: canvas.y + canvas.height / 2 };
+  c.lastRightClickCoord.x = start.x;
+  c.lastRightClickCoord.y = start.y;
   c.setLastRightClick('grid');
   const labels = c.cMenuItems.map((i) => i.label);
-  const item = c.cMenuItems.find((i) => i.label === 'Add Cylinder');
-  if (item) item.action();
-  return labels;
+  c.cMenuItems.find((i) => i.label === 'Create Cylinder')?.action();
+  return { labels, start, end: { x: start.x + 320, y: start.y } };
 });
-await page.waitForTimeout(600);
-checkThat('the grid menu offers Add Cylinder beside Add Link', created.includes('Add Cylinder'), created.join(', '));
+checkThat(
+  'the grid menu offers Create Cylinder beside Add Link',
+  gesture.labels.includes('Create Cylinder'),
+  gesture.labels.join(', ')
+);
+
+// The ghost tracks the cursor from the start point to wherever the rod ends.
+await page.mouse.move(gesture.start.x, gesture.start.y);
+for (let i = 1; i <= 12; i++) {
+  await page.mouse.move(
+    gesture.start.x + ((gesture.end.x - gesture.start.x) * i) / 12,
+    gesture.start.y + ((gesture.end.y - gesture.start.y) * i) / 12 - Math.sin((i / 12) * Math.PI) * 60
+  );
+  await page.waitForTimeout(20);
+  if (i === 6) {
+    checkThat(
+      'a ghost cylinder previews the assembly mid-gesture',
+      (await page.locator('.cylinder-preview').count()) === 1
+    );
+    checkThat('nothing is committed while previewing', (await model()).joints.length === 0);
+    await page.screenshot({ path: `${OUT}/00-creation-preview.png` });
+  }
+}
+await page.mouse.move(gesture.end.x, gesture.end.y);
+await page.waitForTimeout(100);
+// The left-click commits, with the cursor as the rod's end.
+await page.mouse.click(gesture.end.x, gesture.end.y);
+await page.waitForTimeout(700);
+checkThat('the ghost is gone after the commit', (await page.locator('.cylinder-preview').count()) === 0);
 
 let state = await model();
+const commitPoint = await page.evaluate(
+  ({ start, end }) => {
+    const c = ng.getComponent(document.querySelector('app-new-grid'));
+    // Coord serializes through structuredClone as private fields; hand back
+    // plain numbers.
+    const plain = (p) => ({ x: p.x, y: p.y });
+    return {
+      start: plain(c.svgGrid.screenToSVGfromXY(start.x, start.y)),
+      end: plain(c.svgGrid.screenToSVGfromXY(end.x, end.y)),
+    };
+  },
+  { start: gesture.start, end: gesture.end }
+);
 checkThat(
-  'one menu click stamps the complete assembly',
+  'the start point is the barrel mount and the rod finishes at the cursor',
+  (() => {
+    const a = state.joints.find((j) => j.id === 'A');
+    const d = state.joints.find((j) => j.id === 'D');
+    if (!a || !d) return false;
+    return (
+      Math.hypot(a.x - commitPoint.start.x, a.y - commitPoint.start.y) < 1 &&
+      Math.hypot(d.x - commitPoint.end.x, d.y - commitPoint.end.y) < 1
+    );
+  })(),
+  JSON.stringify({ commitPoint, a: state.joints[0], d: state.joints[3] })
+);
+checkThat(
+  'the committed gesture built the complete assembly',
   state.joints.length === 5 && state.links.length === 3 && state.marks === 1,
   JSON.stringify({ joints: state.joints.map((j) => j.id), links: state.links, marks: state.marks })
 );
