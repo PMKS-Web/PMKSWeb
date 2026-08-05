@@ -148,3 +148,41 @@ describe('deleting a cylinder cascades to the whole assembly', () => {
     expect(h.service.links).toHaveLength(0);
   });
 });
+
+describe('a mount welded into a neighbouring link', () => {
+  function weldedMount() {
+    const h = harnessWithCylinder();
+    const e = new RevJoint('Z', h.sealed.rodFar.x + 100, h.sealed.rodFar.y);
+    const neighbour = new RealLink(h.sealed.rodFar.id + 'Z', [h.sealed.rodFar, e]);
+    h.service.joints.push(e);
+    h.service.links.push(neighbour);
+    wireGraph(h.service);
+    h.active.updateSelectedObj(h.sealed.rodFar);
+    h.service.weldJoint();
+    return { ...h, e };
+  }
+
+  it('keeps the weld functional and the skin resolvable through the compound', () => {
+    const h = weldedMount();
+
+    expect((h.sealed.rodFar as RealJoint).isWelded).toBe(true);
+    // The rod is now a subset leaf of a compound; the resolver follows it.
+    const still = resolve(h);
+    expect(still).toBeDefined();
+    expect(still.rod.id).toBe(h.sealed.rod.id);
+    expect(still.rodFar.id).toBe(h.sealed.rodFar.id);
+  });
+
+  it('still cascades a delete, unwelding the mount so the neighbour survives', () => {
+    const h = weldedMount();
+
+    h.service.deleteCylinder(resolve(h));
+
+    expect(sealedCylinders(h.service.joints)).toHaveLength(0);
+    // The neighbour bar came back out of the compound intact.
+    expect(h.service.links.map((link) => link.id)).toEqual([h.sealed.rodFar.id + 'Z']);
+    expect(h.service.joints.map((joint) => joint.id).sort()).toEqual(
+      [h.sealed.rodFar.id, 'Z'].sort()
+    );
+  });
+});
