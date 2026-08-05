@@ -280,7 +280,13 @@ export class LinkageTableComponent implements OnInit {
   }
 
   getJoints() {
-    return this.mechanismService.joints;
+    // A sealed cylinder's interior joints (pin, slider, buried barrel end)
+    // are not editable anywhere, so the table does not list them either —
+    // editing one by number would bend a part that cannot bend.
+    return this.mechanismService.joints.filter((joint) => {
+      const sealed = this.mechanismService.cylinderAt(joint);
+      return !sealed || joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id;
+    });
   }
 
   getLinks() {

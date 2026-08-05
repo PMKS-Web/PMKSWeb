@@ -255,6 +255,56 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     const weldControl = this.jointForm.get('weld');
     if (canWeld && weldControl?.disabled) weldControl.enable({ emitEvent: false });
     if (!canWeld && weldControl?.enabled) weldControl.disable({ emitEvent: false });
+
+    // A cylinder's mount can never gain a block of its own: the slider is the
+    // sealed part itself (§ cylinder 4). Same silent enable/disable rule as
+    // Weld, and the same predicate the context menu greys its item with.
+    const sealedMount = this.isCylinderMount;
+    const sliderControl = this.jointForm.get('slider');
+    if (!sealedMount && sliderControl?.disabled) sliderControl.enable({ emitEvent: false });
+    if (sealedMount && sliderControl?.enabled) sliderControl.disable({ emitEvent: false });
+  }
+
+  /** Whether the selected joint is a mount of a sealed cylinder. */
+  get isCylinderMount(): boolean {
+    return (
+      this.activeSrv.objType === 'Joint' &&
+      !!this.mechanismService.cylinderAt(this.activeSrv.selectedJoint)
+    );
+  }
+
+  /** The sealed cylinder whose body (a member link) is selected, if any. */
+  get selectedCylinder(): Cylinder | undefined {
+    if (this.activeSrv.objType !== 'Link') return undefined;
+    return this.mechanismService.cylinderAt(this.activeSrv.selectedLink);
+  }
+
+  /** Mount-to-mount length, in the user's length unit (cm at the edge). */
+  cylinderLengthLabel(sealed: Cylinder): string {
+    return this.nup.formatModelLength(
+      getDistance(sealed.barrelFar, sealed.rodFar),
+      this.settingsService.lengthUnit.getValue()
+    );
+  }
+
+  /** Mount-to-mount axis angle, in the user's angle unit. */
+  cylinderAngleLabel(sealed: Cylinder): string {
+    const raw = Math.atan2(
+      sealed.rodFar.y - sealed.barrelFar.y,
+      sealed.rodFar.x - sealed.barrelFar.x
+    );
+    return this.nup.formatValueAndUnit(
+      this.nup.convertAngle(raw, AngleUnit.RADIAN, this.settingsService.angleUnit.getValue()),
+      this.settingsService.angleUnit.getValue()
+    );
+  }
+
+  /** Drive (or stop driving) the selected cylinder's hidden prismatic pin. */
+  toggleCylinderInput(): void {
+    const sealed = this.selectedCylinder;
+    if (!sealed) return;
+    this.mechanismService.toggleCylinderInput(sealed);
+    this.syncInputSettingsFields();
   }
 
   /** The selected joint's slider, whichever end of the pair is selected. */
@@ -278,7 +328,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
    * all, so a slider input always ran at one fixed speed however it was set.
    */
   get isSliderInput(): boolean {
-    return this.selectedSlider !== undefined;
+    // A cylinder body's drive is the hidden prismatic pin, so its speed is a
+    // translation too — same unit, same field, same machinery.
+    if (this.selectedCylinder) return true;
+    return this.activeSrv.objType === 'Joint' && this.selectedSlider !== undefined;
   }
 
   /** Length per second, in whatever length unit the mechanism is drawn in. */
@@ -905,6 +958,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             },
             { emitEvent: false }
           );
+          // A cylinder body reuses the joint form's Input Settings controls
+          // (speed, unit), so they have to be truthful when the body opens.
+          this.syncInputSettingsFields();
         } else if (newObjType == 'Force') {
           this.currentlyOpenJointID = '';
           this.forceForm.patchValue(

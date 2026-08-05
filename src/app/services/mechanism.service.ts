@@ -2,6 +2,14 @@ import { Injectable, Injector } from '@angular/core';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { Link, SliderBlock, RealLink } from '../model/link';
 import { isSlideCandidate, slideAssemblyAt } from '../model/slide-assembly';
+import {
+  Cylinder,
+  cylinderOfJoint,
+  cylinderOfLink,
+  isCylinderInterior,
+  sealedCylinderAt,
+  sealedCylinders,
+} from '../model/cylinder';
 import { Force } from '../model/force';
 import { Mechanism } from '../model/mechanism/mechanism';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
@@ -636,6 +644,18 @@ export class MechanismService {
    * broken drag rather than as a rule.
    */
   mergeJoints(source: RealJoint, target: RealJoint): MergeRefusal | undefined {
+    // A sealed cylinder's interior joints are not attachment points: a merge
+    // into the pin would hang a third joint on the rod (or a second link on
+    // the block) and break the part. The two mounts remain legal targets —
+    // they are exactly where a cylinder attaches to the rest of the linkage.
+    const cylinders = sealedCylinders(this.joints);
+    if (
+      cylinders.some(
+        (sealed) => isCylinderInterior(sealed, source) || isCylinderInterior(sealed, target)
+      )
+    ) {
+      return 'sealed-cylinder';
+    }
     const refusal = refuseJointMerge(source, target);
     if (refusal) {
       return refusal;
@@ -760,6 +780,13 @@ export class MechanismService {
   }
 
   deleteJoint() {
+    // Deleting a mount (or, defensively, any member joint) of a sealed
+    // cylinder deletes the whole assembly in one step (§ cylinder 5).
+    const sealed = this.cylinderAt(this.activeObjService.selectedJoint);
+    if (sealed) {
+      this.deleteCylinder(sealed);
+      return;
+    }
     // A gesture in flight targets a joint that is about to stop existing. The
     // pointer keeps sending moves after the delete -- from the keyboard, or a
     // second pointer -- and the drag then writes through a SliderBlock whose
@@ -1195,6 +1222,13 @@ export class MechanismService {
 
   deleteLink() {
     const link = this.activeObjService.selectedLink;
+    // Deleting any member of a sealed cylinder — barrel, rod, block, or a
+    // compound that swallowed one — deletes the whole assembly (§ cylinder 5).
+    const sealed = this.cylinderAt(link);
+    if (sealed) {
+      this.deleteCylinder(sealed);
+      return;
+    }
     const linkIndex = this.links.findIndex((candidate) => candidate === link);
     if (linkIndex === -1) return;
 
@@ -1213,6 +1247,126 @@ export class MechanismService {
     );
     this.activeObjService.updateSelectedObj(undefined);
     this.finishStructuralEdit(true);
+  }
+
+  /** The sealed cylinder a joint or link belongs to, if any. */
+  cylinderAt(obj: Joint | Link | undefined): Cylinder | undefined {
+    if (obj instanceof Joint) return cylinderOfJoint(this.joints, obj);
+    if (obj instanceof Link) return cylinderOfLink(this.joints, obj);
+    return undefined;
+  }
+
+  /**
+   * Stamp a complete cylinder at `coord` (§ cylinder 2): barrel with its slot,
+   * block and pin, welded rod, exactly collinear, sealed. Proportions mirror
+   * the fixture gallery's hydraulic cylinder (barrel 3 : rod 4), scaled to
+   * half the object scale so the part lands at a workable size; the pin sits
+   * inside the slot's span so the stroke has room both ways.
+   *
+   * One `finishStructuralEdit(true)` at the end makes creation one undo entry.
+   */
+  createCylinderAt(coord: Coord): void {
+    const scale = this.settingsService.objectScale;
+    const barrelLength = 1.5 * scale;
+    const pinFromMount = 1.0 * scale;
+    const rodLength = 2.0 * scale;
+
+    const aId = this.determineNextLetter();
+    const bId = this.determineNextLetter([aId]);
+    const cId = this.determineNextLetter([bId]);
+    const dId = this.determineNextLetter([cId]);
+    const pId = this.determineNextLetter([dId]);
+
+    // Centred on the click, along +x. Rotation is a mount drag away.
+    const ax = roundNumber(coord.x - (pinFromMount + rodLength) / 2, 3);
+    const ay = roundNumber(coord.y, 3);
+    const barrelFar = new RevJoint(aId, ax, ay);
+    const barrelNear = new RevJoint(bId, roundNumber(ax + barrelLength, 3), ay);
+    const pin = new RevJoint(cId, roundNumber(ax + pinFromMount, 3), ay);
+    const rodFar = new RevJoint(dId, roundNumber(ax + pinFromMount + rodLength, 3), ay);
+    const slider = new PrisJoint(pId, pin.x, pin.y);
+    slider.isSealed = true;
+
+    const barrel = this.gridUtils.createRealLink(aId + bId, [barrelFar, barrelNear]);
+    const rod = this.gridUtils.createRealLink(cId + dId, [pin, rodFar]);
+    const block = new SliderBlock(cId + pId, [pin, slider]);
+    slider.slideOn(barrel, barrelFar, barrelNear);
+    pin.isWelded = true;
+
+    barrelFar.links.push(barrel);
+    barrelNear.links.push(barrel);
+    pin.links.push(rod, block);
+    rodFar.links.push(rod);
+    slider.links.push(block);
+
+    this.joints.push(barrelFar, barrelNear, pin, rodFar, slider);
+    this.links.push(barrel, rod, block);
+    // The body is what a click on the skin selects; select it on creation so
+    // the edit panel opens on the cylinder.
+    this.activeObjService.updateSelectedObj(barrel);
+    this.finishStructuralEdit(true);
+  }
+
+  /**
+   * Delete a whole cylinder in one undoable step (§ cylinder 5): the three
+   * member links and the three interior joints always go; a mount survives
+   * only while some other link still holds it — the same rule deleteLink
+   * applies to any orphaned joint.
+   */
+  deleteCylinder(target?: Cylinder): void {
+    const sealed =
+      target ??
+      this.cylinderAt(this.activeObjService.selectedJoint) ??
+      this.cylinderAt(this.activeObjService.selectedLink);
+    if (!sealed) return;
+    // A gesture in flight targets objects about to stop existing.
+    this.injector.get(DragStateService).cancel();
+
+    // A mount welded into a neighbouring compound has to come apart first, so
+    // the member links are top-level again and can be removed cleanly. The
+    // sealed pin's own weld is not a compound and needs no unweld.
+    [sealed.barrelFar, sealed.rodFar].forEach((mount) => {
+      if (mount instanceof RealJoint && mount.isWelded) this.unweldTopology(mount);
+    });
+
+    const memberLinkIds = new Set([sealed.barrel.id, sealed.rod.id, sealed.block.id]);
+    this.forces
+      .filter((force) => memberLinkIds.has(force.link.id))
+      .forEach((force) => this.detachForce(force));
+    this.links = this.links.filter((link) => !memberLinkIds.has(link.id));
+
+    const interior = new Set([sealed.pin.id, sealed.slider.id, sealed.barrelNear.id]);
+    [...interior, sealed.barrelFar.id, sealed.rodFar.id].forEach((id) =>
+      this.slotStashes.delete(id)
+    );
+    this.joints = this.joints.filter((joint) => !interior.has(joint.id));
+    this.joints = this.joints.filter(
+      (joint) =>
+        !(joint instanceof RealJoint) ||
+        this.links.some((candidate) => candidate.joints.includes(joint))
+    );
+
+    this.activeObjService.updateSelectedObj(undefined);
+    this.finishStructuralEdit(true);
+  }
+
+  /**
+   * Drive (or stop driving) a cylinder. The hidden prismatic pin is the
+   * underlying input joint; the body's Make Input control lands here because
+   * that pin is deliberately unselectable.
+   */
+  toggleCylinderInput(target?: Cylinder): void {
+    const sealed = target ?? this.cylinderAt(this.activeObjService.selectedLink);
+    if (!sealed) return;
+    if (!sealed.slider.input) {
+      // Only one input at a time, same as adjustInput.
+      this.joints.forEach((joint) => {
+        if (joint instanceof RealJoint && joint.input) joint.input = false;
+      });
+    }
+    sealed.slider.input = !sealed.slider.input;
+    this.updateMechanism();
+    this.onMechUpdateState.next(3);
   }
 
   /**
@@ -1421,6 +1575,10 @@ export class MechanismService {
    * bar is a drop rather than a rebuild.
    */
   detachSlider(slider: PrisJoint): void {
+    // A sealed cylinder's block never leaves its bore (§ cylinder 4). The
+    // drag pipeline never offers the gesture — the pin has no hitbox — so
+    // this is the defensive backstop, not the UI rule.
+    if (slider.isSealed) return;
     if (!slider.isFloating) return;
     const block = slider.links.find((link): link is SliderBlock => link instanceof SliderBlock);
     const pin = block?.joints.find(
@@ -1469,6 +1627,15 @@ export class MechanismService {
   }
 
   toggleSlider() {
+    // No member of a sealed cylinder can gain or lose a block: the slider IS
+    // the cylinder (§ cylinder 4). The panel and menu grey the control on the
+    // mounts; this is the rule they are both fronting.
+    if (this.cylinderAt(this.activeObjService.selectedJoint)) {
+      NewGridComponent.sendNotification(
+        'A cylinder is one sealed part — delete the cylinder instead of editing its slider.'
+      );
+      return;
+    }
     this.sliderTopology();
     // Through finishStructuralEdit rather than straight to updateMechanism: it
     // is what runs reconcileAssemblyWelds, and removing a slider from a Slide
@@ -2006,6 +2173,11 @@ export class MechanismService {
   /** Undo a weld at this joint, whatever kind of weld it is. Pure topology. */
   private unweldTopology(joint: RealJoint): boolean {
     if (!joint.isWelded) return false;
+    // The sealed pin's weld is what makes a cylinder one part; it never comes
+    // off (§ cylinder 4). Only the pin resolves here — a welded *mount* has no
+    // block of its own, so unwelding a mount out of a neighbouring compound
+    // stays legal.
+    if (sealedCylinderAt(joint)) return false;
     const compound = this.compoundAt(joint);
     if (compound) {
       return this.unweldJointTopology(joint);

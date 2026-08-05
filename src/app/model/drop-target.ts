@@ -9,7 +9,8 @@ export type MergeRefusal =
   | 'two-sliders'
   | 'over-constrained'
   | 'own-carrier'
-  | 'not-a-real-joint';
+  | 'not-a-real-joint'
+  | 'sealed-cylinder';
 
 /** What to tell the user when a merge is refused. */
 export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
@@ -21,6 +22,7 @@ export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
     'Merging here would tie the same two joints together twice, over-constraining the linkage',
   'own-carrier': 'A slider cannot ride on a link it is part of',
   'not-a-real-joint': 'This joint cannot be merged',
+  'sealed-cylinder': 'A cylinder is one sealed part — attach at its mounts instead',
 };
 
 /**

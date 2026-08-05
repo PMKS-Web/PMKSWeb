@@ -111,6 +111,12 @@
         >
           Weld
         </toggle-block>
+        @if (isCylinderMount) {
+          <div class="slotNote">
+            Mount of a sealed cylinder. Ground and weld it freely; the slider is part of the part,
+            and deleting this joint deletes the whole cylinder.
+          </div>
+        }
         <!-- The same block every other button in this panel is built from, so
              its border, its label and its icon take the panel's own colours.
              Written out by hand it was the one control here that did not: grey
@@ -198,8 +204,65 @@
     </panel-section>
   }
 
+  <!--  CYLINDER BODY PANEL: selecting any of a sealed cylinder's geometry
+        (barrel, rod, block or skin) selects the body, and the body edits as
+        one part — mounts, length/angle read-outs, and the drive controls of
+        its hidden prismatic pin. -->
+  @if (this.activeSrv.objType == 'Link' && !hideEditPanel() && selectedCylinder; as cyl) {
+    <panel-section>
+      <editable-title-block [deleteAction]="deleteLink.bind(this)">
+        Edit Cylinder
+      </editable-title-block>
+      <collapsible-subseciton
+        titleLabel="Cylinder"
+        [expanded]="sectionExpanded['LBasic']"
+        (opened)="sectionExpanded['LBasic'] = true"
+        (closed)="sectionExpanded['LBasic'] = false"
+      >
+        <div class="slotNote">
+          Mounts: {{ cyl.barrelFar.name }} (barrel) &ndash; {{ cyl.rodFar.name }} (rod)
+        </div>
+        <div class="slotNote">
+          Length {{ cylinderLengthLabel(cyl) }} &middot; Angle {{ cylinderAngleLabel(cyl) }}
+        </div>
+        <div class="slotNote">
+          One sealed part. Drag a mount to re-pose or stroke it; deleting any member deletes the
+          whole cylinder.
+        </div>
+        <button-block
+          [customIcon]="cyl.slider.input ? 'remove_input' : 'add_input'"
+          [click]="toggleCylinderInput.bind(this)"
+        >
+          {{ cyl.slider.input ? 'Remove Input' : 'Make Input' }}
+        </button-block>
+      </collapsible-subseciton>
+      @if (cyl.slider.input) {
+        <div class="inputSettings">
+          <collapsible-subseciton
+            titleLabel="Input Settings"
+            [expanded]="sectionExpanded['JInput']"
+            (opened)="sectionExpanded['JInput'] = true"
+            (closed)="sectionExpanded['JInput'] = false"
+          >
+            <button-block [icon]="inputDirectionIcon" [click]="flipInputDirection.bind(this)"
+              >{{ inputDirectionLabel }}
+            </button-block>
+            <input-block
+              [formGroup]="jointForm"
+              _formControl="inputSpeed"
+              [unitOptions]="linearSpeedUnitOptions"
+              unitFormControl="inputSpeedUnit"
+              tooltip="How fast the rod extends along the cylinder's axis. A negative value flips the direction. Drives the animation and dynamic force analysis."
+              >Expansion Speed
+            </input-block>
+          </collapsible-subseciton>
+        </div>
+      }
+    </panel-section>
+  }
+
   <!--  LINK PANEL-->
-  @if (this.activeSrv.objType == 'Link' && !hideEditPanel()) {
+  @if (this.activeSrv.objType == 'Link' && !hideEditPanel() && !selectedCylinder) {
     <panel-section>
       <editable-title-block [deleteAction]="deleteLink.bind(this)"> Edit Link</editable-title-block>
       <collapsible-subseciton

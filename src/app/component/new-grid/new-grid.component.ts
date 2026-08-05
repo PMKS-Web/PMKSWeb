@@ -360,7 +360,29 @@ export class NewGridComponent {
           )
         );
         break;
-      case 'RealLink':
+      case 'RealLink': {
+        // The BODY of a sealed cylinder: barrel, rod or the skin itself. Two
+        // actions only — the assembly is one part, so no attach items (a
+        // tracer on the barrel would be a third joint on a two-joint bar) and
+        // Delete takes the whole cylinder (§ cylinder 3, 5).
+        const bodyCylinder = this.mechanismSrv.cylinderAt(this.lastRightClick as RealLink);
+        if (bodyCylinder) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              'Delete Cylinder',
+              () => this.mechanismSrv.deleteCylinder(bodyCylinder),
+              'remove'
+            )
+          );
+          this.cMenuItems.push(
+            new cMenuItem(
+              bodyCylinder.slider.input ? 'Remove Input' : 'Make Input',
+              () => this.mechanismSrv.toggleCylinderInput(bodyCylinder),
+              bodyCylinder.slider.input ? 'remove_input' : 'add_input'
+            )
+          );
+          break;
+        }
         //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
         //Don't give options if a fillet it selected and not a primary link
         let weldedLinkFilletSelected =
@@ -399,10 +421,54 @@ export class NewGridComponent {
           )
         );
         break;
-      case 'RevJoint':
+      }
+      case 'RevJoint': {
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
         let jointIsGround = (this.lastRightClick as RealJoint).ground;
         let canToggleInput = this.gridUtils.canToggleInput(this.lastRightClick as RealJoint);
+
+        // A MOUNT of a sealed cylinder (the interior joints have no hitboxes,
+        // so no other member can arrive here). Ground and Weld stay; Slider is
+        // structurally off the table, and Delete cascades to the whole part —
+        // mirrored by the edit panel so the two surfaces cannot disagree.
+        const mountCylinder = this.mechanismSrv.cylinderAt(this.lastRightClick as RealJoint);
+        if (mountCylinder) {
+          this.cMenuItems.push(
+            new cMenuItem(
+              'Delete Cylinder',
+              () => this.mechanismSrv.deleteCylinder(mountCylinder),
+              'remove'
+            )
+          );
+          this.cMenuItems.push(
+            new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+          );
+          this.cMenuItems.push(
+            new cMenuItem(
+              jointIsGround ? 'Remove Ground' : 'Add Ground',
+              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
+              jointIsGround ? 'remove_ground' : 'add_ground'
+            )
+          );
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
+              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
+              !canToggleInput
+            )
+          );
+          this.cMenuItems.push(new cMenuItem('Add Slider', () => {}, 'add_slider', true));
+          this.cMenuItems.push(
+            new cMenuItem(
+              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
+              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
+              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
+              !this.gridUtils.canToggleWeld(this.lastRightClick as RealJoint)
+            )
+          );
+          break;
+        }
         let canTogglePath =
           !(this.lastRightClick as RealJoint).ground && this.mechanismSrv.oneValidMechanismExists();
 
@@ -485,12 +551,33 @@ export class NewGridComponent {
         //   )
         // ); //Rev Joint - Not Ground and at least one valid mechanism exists
         break;
+      }
 
       case 'String': //This means grid
         this.cMenuItems.push(
           new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
         );
+        this.cMenuItems.push(
+          new cMenuItem('Add Cylinder', this.addCylinder.bind(this), 'add_slider')
+        );
     }
+  }
+
+  /**
+   * Stamp a complete cylinder at the right-click point (§ cylinder 2). One
+   * save inside the service, so creation is one undo entry.
+   */
+  addCylinder() {
+    const coord = this.svgGrid.screenToSVGfromXY(
+      this.lastRightClickCoord.x,
+      this.lastRightClickCoord.y
+    );
+    // Same first-object rule as link creation: fit the object scale to the
+    // current zoom before anything is sized from it.
+    if (this.mechanismSrv.links.length == 0) {
+      this.svgGrid.updateObjectScale();
+    }
+    this.mechanismSrv.createCylinderAt(coord);
   }
 
   setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
@@ -843,7 +930,9 @@ export class NewGridComponent {
           this.activeObjService.selectedJoint,
           mousePos.x,
           mousePos.y,
-          this.mechanismSrv.joints,
+          // A sealed cylinder's interior joints are not attachment points, so
+          // they never capture a drop; the mounts remain ordinary targets.
+          this.mechanismSrv.joints.filter((joint) => !this.isCylinderInterior(joint)),
           this.snapRadius()
         );
     this.setDropCandidate(candidate);
@@ -872,7 +961,11 @@ export class NewGridComponent {
             this.activeObjService.selectedJoint,
             mousePos.x,
             mousePos.y,
-            this.mechanismSrv.links.filter((link) => link instanceof RealLink),
+            // No slot is ever cut into a sealed cylinder's members: the
+            // barrel's one slot is the part's own bore.
+            this.mechanismSrv.links.filter(
+              (link) => link instanceof RealLink && !this.isCylinderMemberLink(link)
+            ),
             this.slotDropRadius()
           );
   }
