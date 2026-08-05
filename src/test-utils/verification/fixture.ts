@@ -57,6 +57,13 @@ export interface SliderSpec {
    * through carrier joints `a` and `b` (§2.4).
    */
   on?: { carrier: string; a: string; b: string };
+  /**
+   * Marks the slider as the sealed heart of an atomic cylinder. Requires a
+   * floating slot (`on`) and a weld at the pin, which is what the resolver
+   * demands of a cylinder; the flag rides the URL, so a sealed fixture opens
+   * skinned.
+   */
+  sealed?: boolean;
 }
 
 export interface FixtureLink {
@@ -134,6 +141,7 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
     const revJoint = jointById.get(spec.at)!;
     // A floating slot is not grounded; that pair of states is exclusive (§2.4a).
     const prisJoint = new PrisJoint(spec.prisId, revJoint.x, revJoint.y, false, !spec.on);
+    prisJoint.isSealed = spec.sealed ?? false;
     if (spec.on) {
       const carrier = links.find((link) => link.id === spec.on!.carrier)!;
       prisJoint.slideOn(carrier, jointById.get(spec.on.a)!, jointById.get(spec.on.b)!);

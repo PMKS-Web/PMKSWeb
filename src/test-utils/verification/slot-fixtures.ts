@@ -300,7 +300,7 @@ export function cylinderSkinFixture(): MechanismFixture {
       { id: 'E', x: 4, y: 3, ground: true, input: true },
     ],
     links: [{ joints: 'AB' }, { joints: 'CD' }, { joints: 'DE' }],
-    sliders: [{ at: 'C', prisId: 'P', on: { carrier: 'AB', a: 'A', b: 'B' } }],
+    sliders: [{ at: 'C', prisId: 'P', on: { carrier: 'AB', a: 'A', b: 'B' }, sealed: true }],
     welds: ['C'],
     inputAngVel: INPUT_SPEED,
   };

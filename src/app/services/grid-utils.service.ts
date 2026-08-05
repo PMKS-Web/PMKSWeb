@@ -205,11 +205,13 @@ export class GridUtilsService {
     // Every route lands on the same parametric re-pose, so no surface can
     // bend the part (§ cylinder 6).
     const sealed = this.mechanismSrv.cylinderAt(selectedJoint);
-    if (
-      sealed &&
-      (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id)
-    ) {
-      this.dragCylinderMount(sealed, selectedJoint, trueCoord);
+    if (sealed) {
+      if (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id) {
+        this.dragCylinderMount(sealed, selectedJoint, trueCoord);
+      }
+      // An interior joint (pin, buried barrel end) takes no free move at all:
+      // nothing selects one, so a call here is a stray path, and moving it
+      // would bend the part.
       return selectedJoint;
     }
 

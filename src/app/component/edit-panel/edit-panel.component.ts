@@ -1170,6 +1170,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       return !(joint instanceof PrisJoint);
     });
 
+    // A sealed cylinder's interior joints are not editable from anywhere, so
+    // a mount's Distance To Joints must not offer a field that would drag one.
+    otherJoints = otherJoints.filter((joint) => {
+      const sealed = this.mechanismService.cylinderAt(joint);
+      return !sealed || joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id;
+    });
+
     if (otherJoints == undefined) {
       return [];
     }

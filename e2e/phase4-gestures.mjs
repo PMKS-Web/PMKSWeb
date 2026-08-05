@@ -446,40 +446,58 @@ checkThat(
 );
 await page.screenshot({ path: `${OUT}/15-delete-mid-drag.png` });
 
-// ------------------------------------------------- §2.7 reveal from any member
-console.log('\nselecting any member of a piston reveals it');
-const CYLINDER =
+// --------------------------------------- atomic cylinder: sealed <=> skinned
+console.log('\nonly a sealed cylinder is skinned, and the skin never reveals');
+// The same assembly twice: identical geometry, welded slide either way. The
+// only difference is the sealed bit on the prismatic pin (H vs n in P's flag
+// character; the checksum covers length only, so it is unchanged).
+const UNSEALED_SLIDE =
   '?2P.Fe.K,0.1011.KA,A,0_W,0,0.GB,B,0Fe,0,0.OC,C,0,0,0.GD,D,_W,0,0.ME,E,_W,ku,0.HP,P,0,0,0,AB,A,B..YRAB,AB,Fe,Fe,0d4,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,VG,0,303e9f,C,D,,.YRDE,DE,Fe,Fe,_W,NS,0d125a,D,E,,.YPCP,CP,Fe,0,0,0,,C,P,,...N_a';
+const SEALED_CYLINDER =
+  '?2P.Fe.K,0.1011.KA,A,0_W,0,0.GB,B,0Fe,0,0.OC,C,0,0,0.GD,D,_W,0,0.ME,E,_W,ku,0.nP,P,0,0,0,AB,A,B..YRAB,AB,Fe,Fe,0d4,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,VG,0,303e9f,C,D,,.YRDE,DE,Fe,Fe,_W,NS,0d125a,D,E,,.YPCP,CP,Fe,0,0,0,,C,P,,...N_a';
 
+// A hand-built (unsealed) welded slide never wears the skin any more, and the
+// Auto/Cylinder/Slotted picker is gone from the app entirely.
+await load(UNSEALED_SLIDE);
+checkThat(
+  'a hand-built welded slide is never skinned',
+  (await page.locator('.cylinder-mark').count()) === 0
+);
+const unsealedPin = await centreOf('#joint_C');
+if (unsealedPin) {
+  await page.mouse.click(unsealedPin.x, unsealedPin.y);
+  await page.waitForTimeout(400);
+}
+checkThat('and no skin picker exists anywhere', (await page.locator('.skinPicker').count()) === 0);
+await page.screenshot({ path: `${OUT}/16-unsealed-never-skinned.png` });
+
+// A sealed cylinder is always skinned; clicking its geometry selects the BODY
+// and collapses nothing.
 for (const [part, selector] of [
   ['barrel', '.cylinder-barrel'],
   ['rod', '.cylinder-rod'],
 ]) {
-  await load(CYLINDER);
+  await load(SEALED_CYLINDER);
   const collapsed = await page.locator('.cylinder-mark').count();
   const at = await page.evaluate((sel) => {
     const node = document.querySelector(sel);
     if (!node) return null;
     const box = node.getBoundingClientRect();
-    // A quarter in from the end: the middle of a barrel is where the block and
-    // the rod sit on top of it.
     return { x: box.x + box.width * 0.25, y: box.y + box.height / 2 };
   }, selector);
-  if (!checkThat(`the ${part} is there to click`, collapsed === 1 && !!at)) continue;
+  if (!checkThat(`the sealed ${part} is there to click`, collapsed === 1 && !!at)) continue;
   await page.mouse.click(at.x, at.y);
   await page.waitForTimeout(700);
-  const revealed = await page.locator('.cylinder-mark').count();
   checkThat(
-    `clicking the ${part} reveals the slotted form underneath`,
-    revealed === 0,
-    `marks ${collapsed} -> ${revealed}`
+    `clicking the ${part} keeps the skin on (sealed <=> skinned)`,
+    (await page.locator('.cylinder-mark').count()) === 1
   );
   checkThat(
-    `and brings up the skin control for it`,
-    (await page.locator('.skinPicker').count()) === 1
+    `and selects the body (Edit Cylinder panel)`,
+    (await page.getByText('Edit Cylinder').count()) >= 1
   );
 }
-await page.screenshot({ path: `${OUT}/16-cylinder-reveal.png` });
+await page.screenshot({ path: `${OUT}/16-sealed-always-skinned.png` });
 
 await browser.close();
 
