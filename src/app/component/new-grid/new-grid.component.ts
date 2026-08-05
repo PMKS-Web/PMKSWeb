@@ -68,7 +68,6 @@ import {
   barrelCollapsedPath,
   curvedArrowPath,
   cylinderBlockPath,
-  cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
   pinBackingPath,
@@ -83,7 +82,11 @@ import {
   resolveSlotDropTarget,
   SlotDropCandidate,
 } from '../../model/drop-target';
-import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
+import {
+  buildCompoundPath,
+  mergedChannels,
+  transformRigidPath,
+} from '../../model/compound-link-path';
 import { Cylinder, cylinderCreationLayout, cylinderJoints } from '../../model/cylinder';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
@@ -563,7 +566,7 @@ export class NewGridComponent {
           new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
         );
         this.cMenuItems.push(
-          new cMenuItem('Create Cylinder', this.startCreatingCylinder.bind(this), 'add_slider')
+          new cMenuItem('Create Cylinder', this.startCreatingCylinder.bind(this), 'add_cylinder')
         );
     }
   }
@@ -601,7 +604,6 @@ export class NewGridComponent {
         barrel: string;
         rod: string;
         block: string;
-        marker: string;
       }
     | undefined {
     if (this.dragState.grid !== gridStates.createCylinder || !this.cylinderCreateStart) {
@@ -620,7 +622,6 @@ export class NewGridComponent {
       barrel: barrelCollapsedPath(r, -creation.pinFromMount),
       rod: rodBodyPath(r, creation.rodLength),
       block: cylinderBlockPath(r),
-      marker: cylinderMarkerPath(r),
     };
   }
 
@@ -1849,6 +1850,34 @@ export class NewGridComponent {
       0.15 * this.settings.objectScale,
       !this.settings.isInputCW.value
     );
+  }
+
+  /** Whether the selection is this cylinder's body, however it was selected. */
+  isBodySelected(mark: CylinderMark): boolean {
+    return (
+      this.activeObjService.objType === 'Link' &&
+      this.activeObjService.selectedLink?.id === mark.body.id
+    );
+  }
+
+  private silhouetteCache?: { key: string; path: string };
+
+  /**
+   * The whole skin fused into one outline — barrel, block and rod as a single
+   * silhouette — so selecting the body highlights the part, not its pieces.
+   * The Boolean union is only paid for while a cylinder is actually selected,
+   * and cached against the drawn paths.
+   */
+  cylinderSilhouette(mark: CylinderMark): string {
+    const key = `${mark.id}|${mark.barrel}|${mark.rod}|${mark.block}`;
+    if (this.silhouetteCache?.key !== key) {
+      const r = 0.15 * this.settings.objectScale;
+      this.silhouetteCache = {
+        key,
+        path: buildCompoundPath([mark.barrel, mark.block, mark.rod], MARK.plateFillet * r).path,
+      };
+    }
+    return this.silhouetteCache.path;
   }
 
   /** A link the cylinder skin is standing in for, so it is not drawn twice. */

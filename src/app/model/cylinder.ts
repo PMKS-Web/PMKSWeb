@@ -68,9 +68,19 @@ export function resolveCylinder(joint: Joint, tolerance?: number): Cylinder | un
   return typeof found === 'string' ? undefined : found;
 }
 
-/** The same test, but saying *why* when the answer is no. */
-export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | string {
-  const allowed = tolerance ?? cylinderCollinearTolerance();
+/**
+ * The structural half of the cylinder test: the members and mounts, with no
+ * geometry asked of them at all.
+ *
+ * Split from the geometric half deliberately. Everything that *protects* a
+ * sealed assembly — drag routing, permanence guards, the delete cascade, the
+ * normalization pass — has to keep recognising it even while its geometry is
+ * momentarily wrong, or the guards fail open at exactly the moment they are
+ * needed and a stray write tears the part for good. That is how a fast mount
+ * drag used to break a cylinder: one clamped frame stopped resolving, the
+ * next pointermove fell into the free-move path, and the tear stuck.
+ */
+function describeCylinderStructure(joint: Joint): Cylinder | string {
   const assembly = slideAssemblyAt(joint);
   if (!assembly) return 'A cylinder is a slider welded to what it carries.';
   if (!assembly.slider.isFloating || !assembly.slider.isSlotWellFormed) {
@@ -100,30 +110,19 @@ export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | s
   const rodFar = rod.joints.find((member) => member.id !== pin.id);
   if (!rodFar) return 'The rod needs a far end.';
 
-  const angle = assembly.slider.slotAngle;
-  const along = (point: Joint) =>
-    (point.x - pin.x) * Math.cos(angle) + (point.y - pin.y) * Math.sin(angle);
-  const across = (point: Joint) =>
-    -(point.x - pin.x) * Math.sin(angle) + (point.y - pin.y) * Math.cos(angle);
-
-  // Everything has to lie on the slot, or the drawing would claim a straight
-  // part where the mechanism has a bent one.
-  const members = [rodFar, ...barrel.joints];
-  if (members.some((member) => Math.abs(across(member)) > allowed)) {
-    return 'The rod and the barrel have to line up with the slot.';
-  }
-
-  // The barrel's far end is whichever of its joints is further from the block;
-  // it has to be on the other side of the block from the rod, or the rod would
-  // be drawn disappearing into thin air.
-  const barrelFar = barrel.joints.reduce((far, member) =>
-    Math.abs(along(member)) > Math.abs(along(far)) ? member : far
-  );
-  if (along(rodFar) * along(barrelFar) >= 0) {
-    return 'The rod and the barrel have to reach out from opposite sides of the block.';
-  }
-
+  // The barrel's far end — mount A — is the barrel joint further from the
+  // rod's mount. By Euclidean distance from the rod mount, deliberately NOT
+  // by distance from the block: at full retraction the pin sits nearer the
+  // barrel's far end than its near end, and the distance-from-block rule
+  // then swapped the two, which is what made a deep-retraction frame stop
+  // resolving.
+  const barrelFar = barrel.joints.reduce((far, member) => {
+    const memberDistance = Math.hypot(member.x - rodFar.x, member.y - rodFar.y);
+    const farDistance = Math.hypot(far.x - rodFar.x, far.y - rodFar.y);
+    return memberDistance > farDistance ? member : far;
+  });
   const barrelNear = barrel.joints.find((member) => member.id !== barrelFar.id)!;
+
   return {
     slider: assembly.slider,
     pin,
@@ -136,17 +135,64 @@ export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | s
   };
 }
 
-/** The sealed cylinder whose pin this is, or nothing. */
+/** The same test, but saying *why* when the answer is no. */
+export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | string {
+  const structure = describeCylinderStructure(joint);
+  if (typeof structure === 'string') return structure;
+  const allowed = tolerance ?? cylinderCollinearTolerance();
+  const { slider, pin, barrel, rodFar, barrelFar } = structure;
+
+  const angle = slider.slotAngle;
+  const along = (point: Joint) =>
+    (point.x - pin.x) * Math.cos(angle) + (point.y - pin.y) * Math.sin(angle);
+  const across = (point: Joint) =>
+    -(point.x - pin.x) * Math.sin(angle) + (point.y - pin.y) * Math.cos(angle);
+
+  // Everything has to lie on the slot, or the drawing would claim a straight
+  // part where the mechanism has a bent one.
+  const members = [rodFar, ...barrel.joints];
+  if (members.some((member) => Math.abs(across(member)) > allowed)) {
+    return 'The rod and the barrel have to line up with the slot.';
+  }
+
+  // The barrel's far end has to be on the other side of the block from the
+  // rod, or the rod would be drawn disappearing into thin air.
+  if (along(rodFar) * along(barrelFar) >= 0) {
+    return 'The rod and the barrel have to reach out from opposite sides of the block.';
+  }
+
+  return structure;
+}
+
+/** The sealed cylinder whose pin this is, or nothing. Geometry-checked. */
 export function sealedCylinderAt(joint: Joint, tolerance?: number): Cylinder | undefined {
   const found = resolveCylinder(joint, tolerance);
   return found?.slider.isSealed ? found : undefined;
 }
 
-/** Every sealed cylinder in the mechanism. Sealed ⇔ skinned, always. */
+/**
+ * The sealed cylinder whose pin this is, by structure alone — the resolution
+ * every guard and routing decision uses, so protection cannot lapse while
+ * the geometry is mid-repair.
+ */
+export function structuralCylinderAt(joint: Joint): Cylinder | undefined {
+  const found = describeCylinderStructure(joint);
+  return typeof found !== 'string' && found.slider.isSealed ? found : undefined;
+}
+
+/** Every sealed cylinder in the mechanism, geometry-checked. Sealed ⇔ skinned. */
 export function sealedCylinders(joints: Joint[], tolerance?: number): Cylinder[] {
   return joints
     .filter((joint): joint is RealJoint => joint instanceof RealJoint)
     .map((joint) => sealedCylinderAt(joint, tolerance))
+    .filter((found): found is Cylinder => found !== undefined);
+}
+
+/** Every sealed cylinder by structure alone, however its geometry stands. */
+export function sealedCylinderStructures(joints: Joint[]): Cylinder[] {
+  return joints
+    .filter((joint): joint is RealJoint => joint instanceof RealJoint)
+    .map((joint) => structuralCylinderAt(joint))
     .filter((found): found is Cylinder => found !== undefined);
 }
 
@@ -155,10 +201,14 @@ export function cylinderJoints(cylinder: Cylinder): Joint[] {
   return [cylinder.barrelFar, cylinder.barrelNear, cylinder.pin, cylinder.slider, cylinder.rodFar];
 }
 
-/** The sealed cylinder this joint is a member of, from any of its five joints. */
+/**
+ * The sealed cylinder this joint is a member of, from any of its five joints.
+ * Structural on purpose: membership is what every permanence guard and drag
+ * route asks, and it must hold even while the geometry is momentarily wrong.
+ */
 export function cylinderOfJoint(joints: Joint[], joint: Joint | undefined): Cylinder | undefined {
   if (!joint) return undefined;
-  return sealedCylinders(joints).find((cylinder) =>
+  return sealedCylinderStructures(joints).find((cylinder) =>
     cylinderJoints(cylinder).some((member) => member.id === joint.id)
   );
 }
@@ -175,7 +225,7 @@ export function cylinderOfLink(joints: Joint[], link: Link | undefined): Cylinde
       candidate instanceof RealLink && candidate.subset.some((leaf) => memberIds.includes(leaf.id))
     );
   };
-  return sealedCylinders(joints).find((cylinder) => containsMember(link, cylinder));
+  return sealedCylinderStructures(joints).find((cylinder) => containsMember(link, cylinder));
 }
 
 /** The joints of a cylinder that get no hitbox, hover or selection at all. */
@@ -235,6 +285,46 @@ export function cylinderCreationLayout(
     barrelNear: at(barrelLength),
     pin: at(pinFromMount),
     rodFar: at(span),
+  };
+}
+
+/**
+ * Re-derive a cylinder's member positions from its two mounts — the
+ * invariant-enforcement pose (§ cylinder 1-fix).
+ *
+ * The mounts are the user's handles and stay exactly where they are; the
+ * buried barrel end goes back on the axis at the barrel's length, and the
+ * pin's current position is projected onto the axis and clamped into the
+ * slot. For a valid assembly this is the identity (every drag already rounds
+ * to the same 6 decimals), so running it on every mechanism update costs a
+ * no-op — and any code path that wrote a member joint without going through
+ * the parametric layout gets silently straightened before anything
+ * downstream can read the bent state.
+ */
+export function normalizedCylinderPose(
+  barrelMount: { x: number; y: number },
+  rodMount: { x: number; y: number },
+  barrelLength: number,
+  pinPoint: { x: number; y: number },
+  r: number
+): CylinderPose | undefined {
+  const dx = rodMount.x - barrelMount.x;
+  const dy = rodMount.y - barrelMount.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 1e-9 || !(barrelLength > 1e-9)) return undefined;
+  const ux = dx / distance;
+  const uy = dy / distance;
+
+  const half = slotHalfLength(r, barrelLength);
+  const mid = barrelLength / 2;
+  const projection = (pinPoint.x - barrelMount.x) * ux + (pinPoint.y - barrelMount.y) * uy;
+  const along = Math.min(Math.max(projection, Math.max(mid - half, 0)), mid + half);
+
+  return {
+    barrelFar: { x: barrelMount.x, y: barrelMount.y },
+    barrelNear: { x: barrelMount.x + barrelLength * ux, y: barrelMount.y + barrelLength * uy },
+    pin: { x: barrelMount.x + along * ux, y: barrelMount.y + along * uy },
+    rodFar: { x: rodMount.x, y: rodMount.y },
   };
 }
 

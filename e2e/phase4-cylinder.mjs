@@ -269,6 +269,53 @@ checkThat('mount A did not move', (() => {
 })());
 await page.screenshot({ path: `${OUT}/03-rotated.png` });
 
+// -------------------------------- 2b. fast flood drag cannot tear the part
+console.log('\nflood the mount drag with big jumps, through the anchor and back');
+const floodD = await jointOnScreen('D');
+const floodA = await jointOnScreen('A');
+let floodWorst = 0;
+if (checkThat('mounts on screen for the flood', !!floodD && !!floodA)) {
+  await page.mouse.move(floodD.x, floodD.y);
+  await page.mouse.down();
+  const waypoints = [];
+  for (let lap = 0; lap < 3; lap++) {
+    waypoints.push(
+      { x: floodA.x - 300, y: floodA.y - 40 }, // straight through the anchor, out the far side
+      { x: floodA.x + 30, y: floodA.y + 200 }, // deep retraction beside the anchor
+      { x: floodD.x + 150, y: floodD.y - 250 }, // flung far out
+      { x: floodA.x - 80, y: floodA.y + 20 } // and through again
+    );
+  }
+  for (const p of waypoints) {
+    await page.mouse.move(p.x, p.y, { steps: 2 }); // big jumps, many per frame
+    const during = await model();
+    floodWorst = Math.max(
+      floodWorst,
+      offAxis(byId(during, 'A'), byId(during, 'D'), byId(during, 'B')),
+      offAxis(byId(during, 'A'), byId(during, 'D'), byId(during, 'C'))
+    );
+  }
+  // Park the mount somewhere sane before releasing, so later steps have room.
+  await page.mouse.move(floodA.x + 260, floodA.y - 160, { steps: 3 });
+  await page.mouse.up();
+  await page.waitForTimeout(500);
+}
+const floodAfter = await model();
+floodWorst = Math.max(
+  floodWorst,
+  offAxis(byId(floodAfter, 'A'), byId(floodAfter, 'D'), byId(floodAfter, 'B')),
+  offAxis(byId(floodAfter, 'A'), byId(floodAfter, 'D'), byId(floodAfter, 'C'))
+);
+checkThat(
+  'the flood never bent the assembly, even mid-frame',
+  floodWorst < 1e-3,
+  `worst off-axis ${floodWorst.toExponential(2)} model units`
+);
+checkThat(
+  'the skin survived the flood',
+  (await page.locator('.cylinder-mark').count()) === 1 && floodAfter.joints.length === 5
+);
+
 // -------------------------------------------------------- 3. ground a mount
 console.log('\nground mount A from its context menu');
 await page.evaluate(() => {

@@ -8,8 +8,9 @@ import {
   cylinderOfJoint,
   cylinderOfLink,
   isCylinderInterior,
-  sealedCylinderAt,
-  sealedCylinders,
+  normalizedCylinderPose,
+  sealedCylinderStructures,
+  structuralCylinderAt,
 } from '../model/cylinder';
 import { Force } from '../model/force';
 import { Mechanism } from '../model/mechanism/mechanism';
@@ -168,6 +169,13 @@ export class MechanismService {
     const heldTime = this.currentTimeSeconds();
     this.restoreStartPose();
 
+    // The sealed-cylinder invariant is enforced HERE, at the one funnel every
+    // mutation passes through, not at the gestures: whatever wrote a member
+    // joint — a drag path, a panel or table field, a merge, an undo edge, or
+    // a code path nobody found — the assembly is re-derived from its two
+    // mounts before the solver, the codec or the canvas can read a bent one.
+    this.normalizeSealedCylinders();
+
     // A compound Boolean union is pose-independent. Build it once for the
     // editable pose, then let Mechanism rigidly transform it for solved frames.
     this.links.forEach((link) => {
@@ -220,6 +228,61 @@ export class MechanismService {
 
     if (save) {
       this.save();
+    }
+  }
+
+  /**
+   * Make every sealed cylinder collinear again, whatever wrote its joints.
+   *
+   * Structural resolution on purpose — a bent assembly is exactly the state
+   * this exists to repair, so it cannot be found through the geometric test
+   * it currently fails. The mounts are the user's handles and stay put; the
+   * members are re-derived on the mount axis, the pin clamped into the slot.
+   * For a valid assembly the pose is the identity at the same 6-decimal
+   * rounding every drag applies, so the common case writes nothing.
+   */
+  private normalizeSealedCylinders(): void {
+    for (const sealed of sealedCylinderStructures(this.joints)) {
+      const barrelLength = getDistance(
+        new Coord(sealed.barrelFar.x, sealed.barrelFar.y),
+        new Coord(sealed.barrelNear.x, sealed.barrelNear.y)
+      );
+      const pose = normalizedCylinderPose(
+        sealed.barrelFar,
+        sealed.rodFar,
+        barrelLength,
+        sealed.pin,
+        0.15 * this.settingsService.objectScale
+      );
+      if (!pose) continue;
+
+      const placements: [Joint, { x: number; y: number }][] = [
+        [sealed.barrelNear, pose.barrelNear],
+        [sealed.pin, pose.pin],
+        [sealed.slider, pose.pin],
+      ];
+      let moved = false;
+      for (const [joint, at] of placements) {
+        const x = roundNumber(at.x, 6);
+        const y = roundNumber(at.y, 6);
+        if (joint.x !== x || joint.y !== y) {
+          joint.x = x;
+          joint.y = y;
+          moved = true;
+        }
+      }
+      if (!moved) continue;
+
+      // Only the repair path pays for this: the member links' derived state
+      // follows the joints that just straightened.
+      const movedIds = new Set(placements.map(([joint]) => joint.id));
+      for (const link of this.links) {
+        if (!(link instanceof RealLink)) continue;
+        if (!link.joints.some((joint) => movedIds.has(joint.id))) continue;
+        link.CoM = RealLink.determineCenterOfMass(link.joints);
+        link.updateCoMDs();
+        link.updateLengthAndAngle();
+      }
     }
   }
 
@@ -649,7 +712,7 @@ export class MechanismService {
     // into the pin would hang a third joint on the rod (or a second link on
     // the block) and break the part. The two mounts remain legal targets —
     // they are exactly where a cylinder attaches to the rest of the linkage.
-    const cylinders = sealedCylinders(this.joints);
+    const cylinders = sealedCylinderStructures(this.joints);
     if (
       cylinders.some(
         (sealed) => isCylinderInterior(sealed, source) || isCylinderInterior(sealed, target)
@@ -2178,7 +2241,7 @@ export class MechanismService {
     // off (§ cylinder 4). Only the pin resolves here — a welded *mount* has no
     // block of its own, so unwelding a mount out of a neighbouring compound
     // stays legal.
-    if (sealedCylinderAt(joint)) return false;
+    if (structuralCylinderAt(joint)) return false;
     const compound = this.compoundAt(joint);
     if (compound) {
       return this.unweldJointTopology(joint);

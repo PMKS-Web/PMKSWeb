@@ -103,9 +103,6 @@ export const CYLINDER = {
   /** Where the barrel stops: inside the block, so the rod visibly enters it. */
   flatCut: 0.56,
   boreHalf: 1.39,
-  /** Larger than the general 1.47R weld glyph, matching the reference. */
-  markerArm: 0.31,
-  markerExtent: 0.95,
   arrowTail: 1.55,
   arrowHeadBase: 2.75,
   arrowTip: 3.3,
@@ -163,15 +160,9 @@ export function borePath(r: number, halfLength: number): string {
   return capsulePath(-halfLength, halfLength, CYLINDER.boreHalf * r);
 }
 
-/** The cylinder's welded marker, larger than the general one. */
-export function cylinderMarkerPath(r: number): string {
-  const a = CYLINDER.markerArm * r;
-  const e = CYLINDER.markerExtent * r;
-  return (
-    `M ${-a} ${-e} H ${a} V ${-a} H ${e} V ${a} H ${a} V ${e} ` +
-    `H ${-a} V ${a} H ${-e} V ${-a} H ${-a} Z`
-  );
-}
+// The skin used to draw a large welded plus at the pin. An atomic cylinder is
+// one part — its weld is not an editable fact worth a glyph — so the marker
+// is gone and the block reads as the block.
 
 /**
  * The driven arrows of a cylinder, flanking its marker.

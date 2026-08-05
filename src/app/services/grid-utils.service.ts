@@ -13,7 +13,12 @@ import {
   point_on_line_segment_closest_to_point,
 } from '../model/utils';
 import { Link, SliderBlock, RealLink } from '../model/link';
-import { Cylinder, CylinderPose, layoutCylinder, sealedCylinders } from '../model/cylinder';
+import {
+  Cylinder,
+  CylinderPose,
+  layoutCylinder,
+  sealedCylinderStructures,
+} from '../model/cylinder';
 import { SettingsService } from './settings.service';
 import { MechanismService } from './mechanism.service';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
@@ -352,7 +357,7 @@ export class GridUtilsService {
     // still straight: a neighbour drag can carry one mount along, and the
     // re-pose below has to rebuild from the rigid lengths, not from the bent
     // intermediate state.
-    const carriedCylinders = sealedCylinders(this.mechanismSrv.joints).map((sealed) => ({
+    const carriedCylinders = sealedCylinderStructures(this.mechanismSrv.joints).map((sealed) => ({
       sealed,
       barrelLength: this.getPointDistance(
         sealed.barrelFar.x,

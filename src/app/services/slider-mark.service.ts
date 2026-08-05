@@ -8,7 +8,6 @@ import {
   borePath,
   cylinderArrowPaths,
   cylinderBlockPath,
-  cylinderMarkerPath,
   MARK,
   orientedCapsulePath,
   GuideBand,
@@ -136,7 +135,6 @@ export interface CylinderMark {
   rod: string;
   rodFill: string;
   block: string;
-  marker: string;
   driven: boolean;
   arrows: { line: Segment; head: string; emphasised: boolean }[];
 }
@@ -326,7 +324,6 @@ export class SliderMarkService {
       rod: rodBodyPath(r, rodReach),
       rodFill: found.rod.fill ?? '#000000',
       block: cylinderBlockPath(r),
-      marker: cylinderMarkerPath(r),
       driven,
       arrows: driven ? cylinderArrowPaths(r, leading) : [],
     };

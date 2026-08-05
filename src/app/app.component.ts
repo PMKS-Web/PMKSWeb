@@ -51,6 +51,10 @@ export class AppComponent {
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/add_slider.svg')
     );
     this.matIconRegistry.addSvgIcon(
+      'add_cylinder',
+      this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/add_cylinder.svg')
+    );
+    this.matIconRegistry.addSvgIcon(
       'remove_slider',
       this.domSanitizer.bypassSecurityTrustResourceUrl('assets/icons/remove_slider.svg')
     );

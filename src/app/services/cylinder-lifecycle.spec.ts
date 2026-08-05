@@ -190,6 +190,74 @@ describe('deleting a cylinder cascades to the whole assembly', () => {
   });
 });
 
+describe('the invariant: no write can leave a sealed cylinder bent', () => {
+  const offAxis = (
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+    p: { x: number; y: number }
+  ) => {
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    return Math.abs((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x)) / length;
+  };
+
+  it('straightens a garbage pin position on the next mechanism update', () => {
+    const h = harnessWithCylinder();
+    // A write that bypassed every gesture: the pin flung far off the axis.
+    h.sealed.pin.x += 137;
+    h.sealed.pin.y -= 89;
+    h.sealed.slider.x = h.sealed.pin.x;
+    h.sealed.slider.y = h.sealed.pin.y;
+
+    h.service.updateMechanism();
+
+    // Geometric resolution — the strict test — succeeds again.
+    const restored = resolve(h);
+    expect(restored).toBeDefined();
+    expect(offAxis(restored.barrelFar, restored.rodFar, restored.pin)).toBeLessThan(1e-3);
+    expect(offAxis(restored.barrelFar, restored.rodFar, restored.barrelNear)).toBeLessThan(1e-3);
+  });
+
+  it('straightens a garbage buried barrel end without moving the mounts', () => {
+    const h = harnessWithCylinder();
+    const mountA = { x: h.sealed.barrelFar.x, y: h.sealed.barrelFar.y };
+    const mountC = { x: h.sealed.rodFar.x, y: h.sealed.rodFar.y };
+    h.sealed.barrelNear.y += 220;
+
+    h.service.updateMechanism();
+
+    const restored = resolve(h);
+    expect(restored).toBeDefined();
+    expect(offAxis(restored.barrelFar, restored.rodFar, restored.barrelNear)).toBeLessThan(1e-3);
+    // The mounts are the user's handles; normalization never moves them.
+    expect(restored.barrelFar.x).toBeCloseTo(mountA.x, 6);
+    expect(restored.barrelFar.y).toBeCloseTo(mountA.y, 6);
+    expect(restored.rodFar.x).toBeCloseTo(mountC.x, 6);
+    expect(restored.rodFar.y).toBeCloseTo(mountC.y, 6);
+  });
+
+  it('is the identity for an assembly that is already valid', () => {
+    const h = harnessWithCylinder();
+    const before = h.service.joints.map((joint) => ({ id: joint.id, x: joint.x, y: joint.y }));
+
+    h.service.updateMechanism();
+
+    h.service.joints.forEach((joint, index) => {
+      expect(joint.x).toBeCloseTo(before[index].x, 6);
+      expect(joint.y).toBeCloseTo(before[index].y, 6);
+    });
+  });
+
+  it('keeps recognising the assembly structurally while it is bent', () => {
+    // The guards and drag routing must not fail open mid-repair — that lapse
+    // is exactly how a fast drag used to tear a cylinder for good.
+    const h = harnessWithCylinder();
+    h.sealed.pin.y += 300;
+
+    expect(h.service.cylinderAt(h.sealed.rodFar)).toBeDefined();
+    expect(h.service.cylinderAt(h.sealed.barrel)).toBeDefined();
+  });
+});
+
 describe('a mount welded into a neighbouring link', () => {
   function weldedMount() {
     const h = harnessWithCylinder();

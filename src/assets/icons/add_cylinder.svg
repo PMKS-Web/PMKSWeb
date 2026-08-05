@@ -1,0 +1,8 @@
+<svg width='26' height='26' viewBox='0 0 26 26' fill='none' xmlns='http://www.w3.org/2000/svg'>
+  <!-- A cylinder: the barrel, the rod emerging from its open end, and the
+       rod-end mount, in the menu icon family's 2px black stroke. -->
+  <rect x='2' y='5' width='11' height='8' rx='2' stroke='black' stroke-width='2' />
+  <line x1='13' y1='9' x2='19.5' y2='9' stroke='black' stroke-width='2' />
+  <circle cx='21.5' cy='9' r='2.5' stroke='black' stroke-width='2' />
+  <path d='M18 19.275V22.275H20.275V19.275H23.275V17H20.275V14H18V17H15V19.275H18Z' fill='black' />
+</svg>
