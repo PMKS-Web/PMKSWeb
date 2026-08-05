@@ -7,6 +7,7 @@ import { NewGridComponent } from '../component/new-grid/new-grid.component';
 import { SettingsService } from './settings.service';
 import { DragStateService } from './drag-state.service';
 import Hammer from 'hammerjs';
+import { MODEL_SCALE } from '../model/render-scale';
 
 @Injectable({
   providedIn: 'root',
@@ -22,50 +23,19 @@ export class SvgGridService {
   verticalLinesMinor: number[] = [];
   horizontalLines: number[] = [];
   horizontalLinesMinor: number[] = [];
-
-  /**
-   * The background and grid, in screen pixels.
-   *
-   * The grid used to be drawn in model units inside the pan-zoom transform,
-   * which at a working zoom puts a viewport-sized surface with coordinates
-   * like 0.15 under a matrix scale of several hundred. That combination is
-   * what the white streaks are: under real-mouse input the browser
-   * intermittently fails to rasterize exactly that layer — the DOM stays
-   * provably correct while white paints — and an interleaved A/B with real
-   * HID input showed the same geometry with big numbers under a small matrix
-   * never streaking (0 of 12 runs against 8 of 30 for the baseline, with the
-   * baseline hitting 6 of 9 in the same window).
-   *
-   * So the grid is now drawn where the numbers are big and the matrix is
-   * identity: these arrays hold screen-pixel positions, recomputed from the
-   * pan/zoom on every transform change, and the template paints them OUTSIDE
-   * the viewport group. `label` carries the model-unit value each line
-   * represents, which is no longer recoverable from its position.
-   */
-  screenWidth: number = 0;
-  screenHeight: number = 0;
-  verticalLinesScreen: { pos: number; label: number }[] = [];
-  verticalLinesMinorScreen: number[] = [];
-  horizontalLinesScreen: { pos: number; label: number }[] = [];
-  horizontalLinesMinorScreen: number[] = [];
-  axisXScreen: number = 0;
-  axisYScreen: number = 0;
-
-  private defualtCellSize: number = 10000;
+  private defualtCellSize: number = 10000 * MODEL_SCALE;
 
   private cellSize: number = this.defualtCellSize;
 
   private panLockOut: boolean = false;
 
-  /**
-   * 1400, down from 3300: the ceiling of the range in which the content
-   * layers (links, marks, joints) were stress-verified clean under real-mouse
-   * input. The failing layer was the grid, which no longer renders under this
-   * transform at all — the clamp is the belt to that suspenders, keeping the
-   * remaining layers inside the verified range.
-   */
-  private MAX_ZOOM: number = 1400;
-  private MIN_ZOOM: number = 0.04;
+  // The same visual range as the old 3300/0.04, divided by MODEL_SCALE: model
+  // coordinates are 200x larger, so the matrix is 200x smaller for the same
+  // picture. Keeping MAX_ZOOM at ~16.5 is the guarantee that the compositor's
+  // white-streak failure regime (matrix scale ≳450; verified clean at ≤11.3)
+  // can never be zoomed into again.
+  private MAX_ZOOM: number = 16.5;
+  private MIN_ZOOM: number = 0.0002;
 
   constructor(
     private settingsService: SettingsService,
@@ -330,29 +300,8 @@ export class SvgGridService {
       return Math.round(line * 10000) / 10000;
     });
 
-    // Project the model-unit lines into screen pixels for the template. The
-    // grid paints outside the pan-zoom transform, so this projection is the
-    // only place its geometry and the mechanism's transform meet.
-    const zoom = this.getZoom();
-    const pan = this.getPan();
-    const sizes = this.getSizes();
-    this.screenWidth = sizes.width;
-    this.screenHeight = sizes.height;
-    this.axisXScreen = pan.x;
-    this.axisYScreen = pan.y;
-    this.verticalLinesScreen = this.verticalLines.map((u) => ({
-      pos: u * zoom + pan.x,
-      label: u,
-    }));
-    this.verticalLinesMinorScreen = this.verticalLinesMinor.map((u) => u * zoom + pan.x);
-    // Screen y grows downward while the model's y grows upward, which the old
-    // template handled by negating the label; the label here is the value to
-    // display, so it carries the negation.
-    this.horizontalLinesScreen = this.horizontalLines.map((u) => ({
-      pos: u * zoom + pan.y,
-      label: -u,
-    }));
-    this.horizontalLinesMinorScreen = this.horizontalLinesMinor.map((u) => u * zoom + pan.y);
+    // console.log(this.verticalLines);
+    // console.log(this.verticalLinesMinor);
   }
 
   handleBeforeZoom(oldZoom: any, newZoom: any) {
@@ -403,11 +352,6 @@ export class SvgGridService {
 
   handleUpdatedCTM(newCTM: SVGMatrix) {
     this.CTM = newCTM;
-    // The grid is drawn in screen space, so its geometry depends on the
-    // transform directly. onPan and onZoom miss some transform changes (a
-    // clamped zoom still moves the view); this fires for every change by
-    // definition, so the grid can never be left following a stale transform.
-    this.handlePan();
   }
 
   zoomIn() {

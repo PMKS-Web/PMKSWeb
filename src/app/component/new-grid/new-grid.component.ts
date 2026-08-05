@@ -82,6 +82,7 @@ import {
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
+import { MODEL_SCALE } from '../../model/render-scale';
 
 /** One thing to draw in the slider layer, and how deep in the stack it sits. */
 export interface SlotStackItem {
@@ -186,6 +187,20 @@ export class NewGridComponent {
 
   public sConstants = new SynthesisConstants();
   mouseLocationRaw: Coord = new Coord(0, 0);
+
+  /** For template bindings that size things in user units. */
+  readonly MODEL_SCALE = MODEL_SCALE;
+
+  /**
+   * A grid line's label, in the user's units. Grid lines live at internal
+   * model coordinates (MODEL_SCALE times the user's unit); the label is the
+   * one place that number reaches the screen, so it converts here. Rounded so
+   * a binary-representation artifact of the division never shows up as
+   * 0.6000000001.
+   */
+  axisLabel(line: number): number {
+    return Math.round((line / MODEL_SCALE) * 1e6) / 1e6;
+  }
 
   @ViewChild('trigger') contextMenu!: CdkContextMenuTrigger;
 

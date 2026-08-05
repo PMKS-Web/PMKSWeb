@@ -86,10 +86,15 @@ try {
 
   // The lever tip: if the slot were still being treated as grounded, D would
   // sit where the old angle put it rather than on the ray through the block.
+  // Coordinates read off the SVG are internal model units — user units x 200
+  // (src/app/model/render-scale.ts) — so the pinned value scales with them.
+  const MODEL_SCALE = 200;
   const d = joints.find((joint) => joint.id === 'D');
-  record('the lever starts on the ray through the block', !!d && Math.abs(d.x - -1.743) < 0.05, {
-    d,
-  });
+  record(
+    'the lever starts on the ray through the block',
+    !!d && Math.abs(d.x / MODEL_SCALE - -1.743) < 0.05,
+    { d }
+  );
   await shot(page, 'loaded.png');
 
   // Animate and confirm the lever actually swings.

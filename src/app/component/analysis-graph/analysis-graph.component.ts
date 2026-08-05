@@ -26,6 +26,7 @@ import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
 import { ForceAnalysisMode } from 'src/app/model/mechanism/force-solver';
 import { AngleUnit, ForceUnit, LengthUnit, roundNumber } from '../../model/utils';
 import { LBF_IN_PER_NEWTON_METER, LBF_PER_NEWTON } from '../../model/unit-conversions';
+import { MODEL_SCALE } from '../../model/render-scale';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { FormBuilder } from '@angular/forms';
 import { MechanismService } from '../../services/mechanism.service';
@@ -814,11 +815,15 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
         }
 
         if (mechProp === 'Input Torque' || mechProp === 'Input Effort') {
+          // A torque's moment arms are internal model lengths (MODEL_SCALE
+          // times the user's unit), so the solved value divides back down for
+          // display. An input *force* has no length in it and is invariant.
           datum_X.push(
             frame.inputEffort
               ? roundNumber(
-                  frame.inputEffort.valueSI *
-                    (frame.inputEffort.kind === 'force' ? forceConversion : torqueConversion),
+                  (frame.inputEffort.valueSI *
+                    (frame.inputEffort.kind === 'force' ? forceConversion : torqueConversion)) /
+                    (frame.inputEffort.kind === 'force' ? 1 : MODEL_SCALE),
                   3
                 )
               : Number.NaN
@@ -863,12 +868,15 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
       const vector = (value: [number, number] | undefined): [number, number] =>
         value ?? [Number.NaN, Number.NaN];
       switch (mechProp) {
+        // Positions, velocities and accelerations are linear in length, so
+        // each internal model value divides by MODEL_SCALE for display in the
+        // user's unit. Angular series carry no length and pass through.
         case 'Linear Joint Pos':
           const jt = this.mechanismService.mechanisms[0].joints[index].find(
             (j) => j.id === mechPart
           );
-          x = jt?.x ?? Number.NaN;
-          y = jt?.y ?? Number.NaN;
+          x = (jt?.x ?? Number.NaN) / MODEL_SCALE;
+          y = (jt?.y ?? Number.NaN) / MODEL_SCALE;
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
           break;
@@ -879,6 +887,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].inputAngularVelocities[index]
           );
           [x, y] = vector(KinematicsSolver.jointVelMap.get(mechPart));
+          x /= MODEL_SCALE;
+          y /= MODEL_SCALE;
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
@@ -891,6 +901,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].inputAngularVelocities[index]
           );
           [x, y] = vector(KinematicsSolver.jointAccMap.get(mechPart));
+          x /= MODEL_SCALE;
+          y /= MODEL_SCALE;
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
@@ -903,6 +915,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].inputAngularVelocities[index]
           );
           [x, y] = vector(KinematicsSolver.linkCoMMap.get(mechPart));
+          x /= MODEL_SCALE;
+          y /= MODEL_SCALE;
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
           break;
@@ -913,6 +927,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].inputAngularVelocities[index]
           );
           [x, y] = vector(KinematicsSolver.linkVelMap.get(mechPart));
+          x /= MODEL_SCALE;
+          y /= MODEL_SCALE;
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));
@@ -925,6 +941,8 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             this.mechanismService.mechanisms[0].inputAngularVelocities[index]
           );
           [x, y] = vector(KinematicsSolver.linkAccMap.get(mechPart));
+          x /= MODEL_SCALE;
+          y /= MODEL_SCALE;
           z = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
           datum_X.push(roundNumber(x, 3));
           datum_Y.push(roundNumber(y, 3));

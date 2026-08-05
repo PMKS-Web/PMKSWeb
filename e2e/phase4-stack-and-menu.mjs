@@ -92,11 +92,14 @@ const slotOf = () =>
     return { along: Number(along.toFixed(4)), across: Number(across.toFixed(6)), half };
   });
 
+// Model coordinates are user units x 200 (src/app/model/render-scale.ts);
+// the drag intents and the on-slot tolerance are user-unit quantities.
+const MODEL_SCALE = 200;
 let worst = 0;
 for (const [dx, dy] of [
-  [2.4, 1.8],
-  [-3.1, 0.6],
-  [0.4, -2.7],
+  [2.4 * MODEL_SCALE, 1.8 * MODEL_SCALE],
+  [-3.1 * MODEL_SCALE, 0.6 * MODEL_SCALE],
+  [0.4 * MODEL_SCALE, -2.7 * MODEL_SCALE],
 ]) {
   await load(COUPLER);
   // Drag a joint that defines the slot, dragging the channel out from under it.
@@ -119,8 +122,8 @@ for (const [dx, dy] of [
 }
 check(
   'the block never leaves its channel while the slot is dragged',
-  worst < 1e-3,
-  `worst overshoot ${worst.toExponential(2)}`
+  worst / MODEL_SCALE < 1e-3,
+  `worst overshoot ${worst.toExponential(2)} (model units)`
 );
 
 // --- the menu agrees with the panel --------------------------------------

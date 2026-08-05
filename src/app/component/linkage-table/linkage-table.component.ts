@@ -16,6 +16,7 @@ import { InstantCenter } from '../../model/instant-center';
 import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { MODEL_SCALE } from '../../model/render-scale';
 
 @Component({
   selector: 'app-linkage-table',
@@ -32,6 +33,12 @@ export class LinkageTableComponent implements OnInit {
   private static showLinkageTableButton: SVGElement;
 
   constructor(private mechanismService: MechanismService) {}
+
+  // The table's cells speak the user's units; the model is MODEL_SCALE times
+  // larger (render-scale.ts), so every length converts at this boundary.
+  toUserUnits(modelValue: number): number {
+    return roundNumber(modelValue / MODEL_SCALE, 4);
+  }
 
   ngOnInit(): void {}
 
@@ -55,7 +62,7 @@ export class LinkageTableComponent implements OnInit {
 
   distFromJoint(joint1: Joint, joint2: Joint) {
     return roundNumber(
-      Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2)),
+      Math.sqrt(Math.pow(joint1.x - joint2.x, 2) + Math.pow(joint1.y - joint2.y, 2)) / MODEL_SCALE,
       3
     );
   }
@@ -70,7 +77,7 @@ export class LinkageTableComponent implements OnInit {
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Joint X Value');
         }
-        joint.x = Number($event.target.value);
+        joint.x = Number($event.target.value) * MODEL_SCALE;
         joint.links.forEach((l) => {
           if (!(l instanceof RealLink)) {
             return;
@@ -92,7 +99,7 @@ export class LinkageTableComponent implements OnInit {
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Joint Y Value');
         }
-        joint.y = Number($event.target.value);
+        joint.y = Number($event.target.value) * MODEL_SCALE;
         joint.links.forEach((l) => {
           if (!(l instanceof RealLink)) {
             return;
@@ -150,13 +157,13 @@ export class LinkageTableComponent implements OnInit {
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Link CoM Y');
         }
-        link.CoM.x = Number($event.target.value);
+        link.CoM.x = Number($event.target.value) * MODEL_SCALE;
         break;
       case 'CoMY':
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Link CoM Y');
         }
-        link.CoM.y = Number($event.target.value);
+        link.CoM.y = Number($event.target.value) * MODEL_SCALE;
         break;
     }
     this.mechanismService.updateMechanism();
@@ -178,13 +185,13 @@ export class LinkageTableComponent implements OnInit {
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Force X Position');
         }
-        force.moveAnchor(new Coord(Number($event.target.value), force.startCoord.y));
+        force.moveAnchor(new Coord(Number($event.target.value) * MODEL_SCALE, force.startCoord.y));
         break;
       case 'yPos':
         if (isNaN(Number($event.target.value))) {
           return NewGridComponent.sendNotification('Check Force Y Position');
         }
-        force.moveAnchor(new Coord(force.startCoord.x, Number($event.target.value)));
+        force.moveAnchor(new Coord(force.startCoord.x, Number($event.target.value) * MODEL_SCALE));
         break;
       case 'mag':
         if (isNaN(Number($event.target.value))) {
@@ -257,9 +264,9 @@ export class LinkageTableComponent implements OnInit {
       case 'massMoI':
         return link.massMoI;
       case 'CoMX':
-        return link.CoM.x;
+        return this.toUserUnits(link.CoM.x);
       case 'CoMY':
-        return link.CoM.y;
+        return this.toUserUnits(link.CoM.y);
       default:
         return '?';
     }

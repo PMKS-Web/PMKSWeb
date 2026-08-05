@@ -14,6 +14,7 @@ import {
   MASS_TO_KG,
   TIME_TO_SECONDS,
 } from '../model/unit-conversions';
+import { MODEL_SCALE } from '../model/render-scale';
 
 type AnyUnit =
   LengthUnit | AngleUnit | AngularVelocityUnit | ForceUnit | MassUnit | InertiaUnit | TimeUnit;
@@ -74,6 +75,22 @@ export class NumberUnitParserService {
     if (label === '') return 'Error in formatValueAndUnit()';
     const decimals = units === AngleUnit.DEGREE ? 0 : 2;
     return value.toFixed(decimals) + ' ' + label;
+  }
+
+  /**
+   * Format a length held in internal model units (MODEL_SCALE times the user's
+   * unit — see render-scale.ts) for display in the user's unit. The one
+   * companion of parseModelLengthString: every panel that shows a model length
+   * goes through this pair so the internal scale never reaches the screen.
+   */
+  public formatModelLength(modelValue: number, units: LengthUnit): string {
+    return this.formatValueAndUnit(modelValue / MODEL_SCALE, units);
+  }
+
+  /** Parse user input in user units and return internal model units. */
+  public parseModelLengthString(input: string, desiredUnits: LengthUnit): [boolean, number] {
+    const [success, value] = this.parseLengthString(input, desiredUnits);
+    return [success, value * MODEL_SCALE];
   }
 
   public preProcessInput(input: string): [number, string] {

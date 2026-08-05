@@ -22,10 +22,16 @@ import {
 } from './transcoding/transcoder-data';
 import { SettingsService } from './settings.service';
 import { ActiveObjService } from './active-obj.service';
+import { MODEL_SCALE } from '../model/render-scale';
 
 /*
  * This service is responsible for generating the URL from the current mechanism.
  * It is not responsible for decoding the URL.
+ *
+ * The internal world is MODEL_SCALE times the user's units (render-scale.ts),
+ * so every length divides by MODEL_SCALE on its way into the URL. Together
+ * with the matching multiply in MechanismBuilder, URLs carry exactly the same
+ * numbers they did before the internal scale existed.
  */
 
 @Injectable({
@@ -45,8 +51,8 @@ export class UrlGenerationService {
           JOINT_TYPE.REVOLUTE,
           joint.id,
           joint.name,
-          joint.x,
-          joint.y,
+          joint.x / MODEL_SCALE,
+          joint.y / MODEL_SCALE,
           joint.ground,
           joint.input,
           joint.isWelded,
@@ -60,8 +66,8 @@ export class UrlGenerationService {
           JOINT_TYPE.PRISMATIC,
           joint.id,
           joint.name,
-          joint.x,
-          joint.y,
+          joint.x / MODEL_SCALE,
+          joint.y / MODEL_SCALE,
           joint.ground,
           joint.input,
           joint.isWelded,
@@ -85,8 +91,8 @@ export class UrlGenerationService {
           link.name,
           link.mass,
           link.massMoI,
-          link.CoM.x,
-          link.CoM.y,
+          link.CoM.x / MODEL_SCALE,
+          link.CoM.y / MODEL_SCALE,
           link.fill,
           link.joints.map((joint) => joint.id),
           link.subset.map((subset) => subset.id)
@@ -117,10 +123,10 @@ export class UrlGenerationService {
         force.id,
         force.link.id,
         force.name,
-        force.startCoord.x,
-        force.startCoord.y,
-        force.endCoord.x,
-        force.endCoord.y,
+        force.startCoord.x / MODEL_SCALE,
+        force.startCoord.y / MODEL_SCALE,
+        force.endCoord.x / MODEL_SCALE,
+        force.endCoord.y / MODEL_SCALE,
         force.local,
         force.arrowOutward,
         force.mag
@@ -190,7 +196,7 @@ export class UrlGenerationService {
     );
     encoder.addBoolSetting(BoolSetting.IS_SHOW_ID, this.settings.isShowID.getValue());
     encoder.addBoolSetting(BoolSetting.IS_SHOW_COM, this.settings.isShowCOM.getValue());
-    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale);
+    encoder.addDecimalSetting(DecimalSetting.SCALE, this.settings.objectScale / MODEL_SCALE);
 
     encoder.addIntSetting(IntSetting.TIMESTEP, cachedAnimationFrame);
 

@@ -11,6 +11,7 @@ import { Force } from '../force';
 import { Coord } from '../coord';
 import { assemblyBodyIds, SlideAssembly, slideAssemblies, slotOffset } from '../slide-assembly';
 import { core } from '@angular/compiler';
+import { MODEL_SCALE } from '../render-scale';
 
 /**
  * How far a driven prismatic input advances along its slot per solved sample,
@@ -22,7 +23,9 @@ import { core } from '@angular/compiler';
  * with how fast it was told to move, and the value in the Input Speed box
  * changed nothing at all.
  */
-export const PRISMATIC_INPUT_STEP = 0.1;
+// 0.1 of a user length unit, expressed in internal model units so the sampled
+// motion is identical to what it was before the internal world scaled up.
+export const PRISMATIC_INPUT_STEP = 0.1 * MODEL_SCALE;
 
 /**
  * How close two solve-circle centres must be to count as coincident. Joint

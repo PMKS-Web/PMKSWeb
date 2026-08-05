@@ -87,7 +87,7 @@
             <input
               type="text"
               width="37px"
-              value="{{ joint.x }}"
+              value="{{ toUserUnits(joint.x) }}"
               (change)="changeJointProp($event, joint, 'x')"
             />
           </td>
@@ -95,7 +95,7 @@
             <input
               type="text"
               width="37px"
-              value="{{ joint.y }}"
+              value="{{ toUserUnits(joint.y) }}"
               (change)="changeJointProp($event, joint, 'y')"
             />
           </td>
@@ -266,14 +266,14 @@
           <td>
             <input
               type="text"
-              value="{{ force.startCoord.x }}"
+              value="{{ toUserUnits(force.startCoord.x) }}"
               (change)="changeForceProp($event, force, 'xPos')"
             />
           </td>
           <td>
             <input
               type="text"
-              value="{{ force.startCoord.y }}"
+              value="{{ toUserUnits(force.startCoord.y) }}"
               (change)="changeForceProp($event, force, 'yPos')"
             />
           </td>

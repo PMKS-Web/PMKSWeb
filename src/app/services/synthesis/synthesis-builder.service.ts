@@ -6,6 +6,7 @@ import { Coord } from 'src/app/model/coord';
 import { SynthesisClickMode, SynthesisConstants } from './synthesis-constants';
 import { NumberUnitParserService } from '../number-unit-parser.service';
 import { SettingsService } from '../settings.service';
+import { MODEL_SCALE } from 'src/app/model/render-scale';
 
 /*
 Service responsible for storing end effector poses to be synthesized
@@ -37,9 +38,9 @@ export class SynthesisBuilderService {
     this.valueChanges = new Subject<any>();
     this.constants = new SynthesisConstants();
 
-    // start with a length of 1
+    // start with a length of 5 user units, held in model units
     this._COR = COR.CENTER;
-    this._length = 5;
+    this._length = 5 * MODEL_SCALE;
     this._selectedPose = 1;
 
     // start with no defined poses
@@ -156,7 +157,7 @@ export class SynthesisBuilderService {
     else this._COR = COR.FRONT;
 
     // if length is a number and positive, update length
-    const [success, maybeLength] = this.nup.parseLengthString(
+    const [success, maybeLength] = this.nup.parseModelLengthString(
       form['length'],
       this.settings.lengthUnit.getValue()
     );
@@ -170,11 +171,11 @@ export class SynthesisBuilderService {
       if (!this.isPoseDefined(i)) continue;
 
       // if x and y are numbers, update position
-      const [successX, maybeX] = this.nup.parseLengthString(
+      const [successX, maybeX] = this.nup.parseModelLengthString(
         form[`p${i}x`],
         this.settings.lengthUnit.getValue()
       );
-      const [successY, maybeY] = this.nup.parseLengthString(
+      const [successY, maybeY] = this.nup.parseModelLengthString(
         form[`p${i}y`],
         this.settings.lengthUnit.getValue()
       );

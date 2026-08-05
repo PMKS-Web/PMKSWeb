@@ -14,6 +14,11 @@ import { MechanismBuilder } from './mechanism-builder';
 import { BoolSetting, EnumSetting } from './stored-settings';
 import { StringTranscoder } from './string-transcoder';
 import { LEGACY_FORCE_MECHANISM } from '../../../tests/fixtures/mechanism-fixtures';
+import { MODEL_SCALE } from '../../model/render-scale';
+
+// Models are built in internal model units (user units x MODEL_SCALE) so the
+// encoded URLs carry the same user-unit numbers they always have.
+const S = MODEL_SCALE;
 
 function withChecksum(raw: string): string {
   return raw + new Checksum().generateChecksum(raw.length);
@@ -30,17 +35,25 @@ function targetService(): MechanismService {
 
 function weldedSource() {
   const a = new RevJoint('A', 0, 0);
-  const b = new RevJoint('B', 1, 0);
-  const c = new RevJoint('C', 2, 0);
+  const b = new RevJoint('B', 1 * S, 0);
+  const c = new RevJoint('C', 2 * S, 0);
   b.isWelded = true;
-  const ab = new RealLink('AB', [a, b], 2, 3, new Coord(0.5, 0));
-  const bc = new RealLink('BC', [b, c], 1, 4, new Coord(1.5, 0));
-  const root = new RealLink('ABC', [a, b, c], 3, 23 / 3, new Coord(5 / 6, 0), [ab, bc]);
+  const ab = new RealLink('AB', [a, b], 2, 3, new Coord(0.5 * S, 0));
+  const bc = new RealLink('BC', [b, c], 1, 4, new Coord(1.5 * S, 0));
+  const root = new RealLink('ABC', [a, b, c], 3, 23 / 3, new Coord((5 / 6) * S, 0), [ab, bc]);
   [a, b, c].forEach((joint) => {
     joint.links = [root];
     joint.connectedJoints = [a, b, c].filter((candidate) => candidate !== joint);
   });
-  const force = new Force('F1', root, new Coord(0.25, 0), new Coord(0.25, -1), true, true, 10);
+  const force = new Force(
+    'F1',
+    root,
+    new Coord(0.25 * S, 0),
+    new Coord(0.25 * S, -1 * S),
+    true,
+    true,
+    10
+  );
   root.forces.push(force);
   return { joints: [a, b, c], links: [root], forces: [force], force };
 }

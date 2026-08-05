@@ -67,131 +67,157 @@
       <polygon points="10 0, 0 3.5, 10 7" />
     </marker>
   </defs>
-  <!-- The background and grid, in screen pixels, deliberately OUTSIDE the
-       pan-zoom viewport below.
+  <!-- This is only used to to scale onto when there is not link -->
+  <!-- +-10 user units, in model coordinates, so fitting an empty canvas lands
+       on the same visual zoom (and small matrix) as before the world scaled -->
+  @if (mechanismSrv.joints.length == 0) {
+    <rect
+      [attr.x]="-10 * MODEL_SCALE"
+      [attr.y]="-10 * MODEL_SCALE"
+      [attr.width]="20 * MODEL_SCALE"
+      [attr.height]="20 * MODEL_SCALE"
+      fill="none"
+      stroke="#00000000"
+      opacity="0.5"
+    ></rect>
+  }
+  <!--      <rect *ngIf='mechanismSrv.joints.length == 0'-->
+  <!--            [attr.x]='-100' [attr.y]='100'-->
+  <!--            [attr.width]='200'-->
+  <!--            [attr.height]='20' fill='#ffffff' stroke='#00000000'>-->
+  <!--      </rect>-->
 
-       Drawn inside the transform, this layer was a viewport-sized surface
-       with model-unit coordinates under a matrix scale in the hundreds, and
-       that is the combination the browser intermittently fails to rasterize
-       under real-mouse input — the white streaks, painted while the DOM is
-       provably correct. The same picture drawn with big numbers under an
-       identity matrix never streaked in an interleaved real-mouse A/B
-       (0 of 12 runs against a baseline hitting 6 of 9 in the same window),
-       so the grid now renders exactly that way: SvgGridService projects each
-       line into screen pixels on every transform change, and nothing in this
-       group is subject to the pan-zoom matrix. Line positions here cannot
-       carry their model value, which is why each major line brings its label
-       with it. -->
+  <!-- This is a strucrially intergral rect and should not be removed! -->
+  <rect x="-1px" y="-1px" width="2px" height="2px" fill="white"></rect>
+
+  <!-- Axes and Grid-->
   @if (!settings.tempGridDisable) {
     <g
       id="backgroundAndGrid"
       (contextmenu)="setLastRightClick('grid')"
       (pointerdown)="setLastLeftClick('grid')"
     >
-      <!-- The Background: the whole canvas, always, with no geometry to get
-           stale. What this rect fails to cover is bare page, so it must not
-           be able to fail to cover anything. -->
-      <rect x="0" y="0" width="100%" height="100%" fill="white" stroke="#00000000"></rect>
+      <!--  The Background-->
+      <rect
+        [attr.x]="svgGrid.viewBoxMinX"
+        [attr.y]="svgGrid.viewBoxMinY"
+        [attr.width]="svgGrid.viewBoxMaxX - svgGrid.viewBoxMinX"
+        [attr.height]="svgGrid.viewBoxMaxY - svgGrid.viewBoxMinY"
+        fill="white"
+        stroke="#00000000"
+      ></rect>
       <!--  The Minor Axes-->
       @if (settings.isShowMajorGrid.getValue() && settings.isShowMinorGrid.getValue()) {
         <ng-container>
-          @for (pos of svgGrid.verticalLinesMinorScreen; track $index) {
-            <line
-              [attr.x1]="pos"
-              y1="0"
-              [attr.x2]="pos"
-              [attr.y2]="svgGrid.screenHeight"
-              stroke="black"
-              stroke-width="0.15"
-            ></line>
+          @for (line of svgGrid.verticalLinesMinor; track line) {
+            <ng-container>
+              <line
+                [attr.x1]="line"
+                [attr.y1]="svgGrid.viewBoxMinY"
+                [attr.x2]="line"
+                [attr.y2]="svgGrid.viewBoxMaxY"
+                stroke="black"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(0.15)"
+              ></line>
+            </ng-container>
           }
-          @for (pos of svgGrid.horizontalLinesMinorScreen; track $index) {
-            <line
-              x1="0"
-              [attr.y1]="pos"
-              [attr.x2]="svgGrid.screenWidth"
-              [attr.y2]="pos"
-              stroke="black"
-              stroke-width="0.15"
-            ></line>
+          @for (line of svgGrid.horizontalLinesMinor; track line) {
+            <ng-container>
+              <line
+                [attr.x1]="svgGrid.viewBoxMinX"
+                [attr.y1]="line"
+                [attr.x2]="svgGrid.viewBoxMaxX"
+                [attr.y2]="line"
+                stroke="black"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(0.15)"
+              ></line>
+            </ng-container>
           }
         </ng-container>
       }
       <!--  The Major Axes-->
       @if (settings.isShowMajorGrid.getValue()) {
         <ng-container>
-          @for (line of svgGrid.verticalLinesScreen; track $index) {
-            <line
-              [attr.x1]="line.pos"
-              y1="0"
-              [attr.x2]="line.pos"
-              [attr.y2]="svgGrid.screenHeight"
-              stroke="black"
-              stroke-width="0.75"
-            ></line>
+          @for (line of svgGrid.verticalLines; track line) {
+            <ng-container>
+              <line
+                [attr.x1]="line"
+                [attr.y1]="svgGrid.viewBoxMinY"
+                [attr.x2]="line"
+                [attr.y2]="svgGrid.viewBoxMaxY"
+                stroke="black"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(0.75)"
+              ></line>
+            </ng-container>
           }
-          @for (line of svgGrid.horizontalLinesScreen; track $index) {
-            <line
-              x1="0"
-              [attr.y1]="line.pos"
-              [attr.x2]="svgGrid.screenWidth"
-              [attr.y2]="line.pos"
-              stroke="black"
-              stroke-width="0.75"
-            ></line>
+          @for (line of svgGrid.horizontalLines; track line) {
+            <ng-container>
+              <line
+                [attr.x1]="svgGrid.viewBoxMinX"
+                [attr.y1]="line"
+                [attr.x2]="svgGrid.viewBoxMaxX"
+                [attr.y2]="line"
+                stroke="black"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(0.75)"
+              ></line>
+            </ng-container>
           }
         </ng-container>
       }
       <!--  The X and Y Axis-->
       <line
         id="axes"
-        x1="0"
-        [attr.y1]="svgGrid.axisYScreen"
-        [attr.x2]="svgGrid.screenWidth"
-        [attr.y2]="svgGrid.axisYScreen"
-        stroke-width="3"
+        [attr.x1]="svgGrid.viewBoxMinX"
+        y1="0"
+        [attr.x2]="svgGrid.viewBoxMaxX"
+        y2="0"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
       ></line>
       <line
         id="axes"
-        [attr.x1]="svgGrid.axisXScreen"
-        y1="0"
-        [attr.x2]="svgGrid.axisXScreen"
-        [attr.y2]="svgGrid.screenHeight"
-        stroke-width="3"
+        x1="0"
+        [attr.y1]="svgGrid.viewBoxMinY"
+        x2="0"
+        [attr.y2]="svgGrid.viewBoxMaxY"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
       ></line>
-      <!-- Axes Labels: riding the axes at the same pixel offsets as before -->
+      <!-- Axes Labels -->
       <ng-container>
-        @for (line of svgGrid.verticalLinesScreen; track $index) {
-          <text
-            id="axes_numbers"
-            text-anchor="middle"
-            [attr.x]="line.pos"
-            [attr.y]="svgGrid.axisYScreen + 20"
-            stroke-width="5"
-            font-size="15"
-          >
-            {{ line.label }}
-          </text>
+        @for (line of svgGrid.verticalLines; track line) {
+          <ng-container>
+            <text
+              id="axes_numbers"
+              text-anchor="middle"
+              [attr.x]="line"
+              [attr.y]="svgGrid.scaleWithZoom(20)"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+              [attr.font-size]="svgGrid.scaleWithZoom(15)"
+            >
+              {{ axisLabel(line) }}
+            </text>
+          </ng-container>
         }
-        @for (line of svgGrid.horizontalLinesScreen; track $index) {
-          <text
-            id="axes_numbers"
-            text-anchor="end"
-            [attr.x]="svgGrid.axisXScreen - 10"
-            [attr.y]="line.pos"
-            stroke-width="5"
-            font-size="15"
-          >
-            {{ line.label }}
-          </text>
+        @for (line of svgGrid.horizontalLines; track line) {
+          <ng-container>
+            <text
+              id="axes_numbers"
+              text-anchor="end"
+              [attr.y]="line"
+              [attr.x]="svgGrid.scaleWithZoom(-10)"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+              [attr.font-size]="svgGrid.scaleWithZoom(15)"
+            >
+              {{ axisLabel(-line) }}
+            </text>
+          </ng-container>
         }
         <text
           id="axes_numbers"
           text-anchor="end"
-          [attr.x]="svgGrid.axisXScreen - 10"
-          [attr.y]="svgGrid.axisYScreen + 20"
-          stroke-width="5"
-          font-size="15"
+          [attr.y]="svgGrid.scaleWithZoom(20)"
+          [attr.x]="svgGrid.scaleWithZoom(-10)"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+          [attr.font-size]="svgGrid.scaleWithZoom(15)"
         >
           0
         </text>
@@ -199,195 +225,170 @@
     </g>
   }
 
-  <!-- Everything the user can pan and zoom. Declared explicitly because
-       svg-pan-zoom adopts a group carrying this class instead of wrapping
-       every child of the svg — which is what lets the grid above stay in
-       screen space. -->
-  <g class="svg-pan-zoom_viewport">
-    <!-- This is only used to to scale onto when there is not link -->
-    @if (mechanismSrv.joints.length == 0) {
-      <rect
-        [attr.x]="-10"
-        [attr.y]="-10"
-        [attr.width]="20"
-        [attr.height]="20"
-        fill="none"
-        stroke="#00000000"
-        opacity="0.5"
-      ></rect>
-    }
-
-    <!-- This is a structurally integral rect and should not be removed! It
-         anchors the viewport's bounding box at the origin. It contributes
-         geometry, not paint — and it must not paint, because it sits above
-         the background now and at high zoom those two units are over a
-         thousand pixels. -->
-    <rect x="-1px" y="-1px" width="2px" height="2px" fill="none"></rect>
-
-    <!-- Decoration, not controls: the ground triangle and the input arrow mark
+  <!-- Decoration, not controls: the ground triangle and the input arrow mark
        what a joint *is*, and both are drawn wider than the joint itself. Left
        hit-testable they sit over whatever is beneath them and swallow clicks
        meant for a link body -- a cylinder barrel could not be selected at all
        because a ground mark overlapped it. -->
-    <g id="jointBGHolder" style="transform: scaleY(-1)" pointer-events="none">
-      @for (joint of mechanismSrv.getJoints(); track joint) {
-        <svg [attr.x]="joint.x" [attr.y]="joint.y" width="10" height="10" style="overflow: visible">
-          @if (
-            gridUtils.getGround(joint) &&
-            gridUtils.typeOfJoint(joint) !== 'P' &&
-            !gridUtils.getInput(joint)
-          ) {
-            <image
-              xlink:href="../../../assets/Ground.svg"
-              [attr.width]="settings.objectScale * 1.2"
-              [attr.x]="settings.objectScale * -0.6"
-              [attr.y]="settings.objectScale * -0.35 * 1.2"
-              [attr.height]="settings.objectScale * 1.2"
-              style="transform: scaleY(-1)"
-            />
-          }
-          @if (
-            gridUtils.getGround(joint) &&
-            gridUtils.typeOfJoint(joint) !== 'P' &&
-            gridUtils.getInput(joint) &&
-            settings.isInputCW.value
-          ) {
-            <!-- The grid's y-flip reverses each asset's apparent chirality, so the
+  <g id="jointBGHolder" style="transform: scaleY(-1)" pointer-events="none">
+    @for (joint of mechanismSrv.getJoints(); track joint) {
+      <svg [attr.x]="joint.x" [attr.y]="joint.y" width="10" height="10" style="overflow: visible">
+        @if (
+          gridUtils.getGround(joint) &&
+          gridUtils.typeOfJoint(joint) !== 'P' &&
+          !gridUtils.getInput(joint)
+        ) {
+          <image
+            xlink:href="../../../assets/Ground.svg"
+            [attr.width]="settings.objectScale * 1.2"
+            [attr.x]="settings.objectScale * -0.6"
+            [attr.y]="settings.objectScale * -0.35 * 1.2"
+            [attr.height]="settings.objectScale * 1.2"
+            style="transform: scaleY(-1)"
+          />
+        }
+        @if (
+          gridUtils.getGround(joint) &&
+          gridUtils.typeOfJoint(joint) !== 'P' &&
+          gridUtils.getInput(joint) &&
+          settings.isInputCW.value
+        ) {
+          <!-- The grid's y-flip reverses each asset's apparent chirality, so the
                file that *looks* clockwise here is InputCW.svg, verified on screen
                against the actual motion. -->
-            <image
-              xlink:href="../../../assets/InputCW.svg"
-              [attr.width]="settings.objectScale * 1.2"
-              [attr.x]="settings.objectScale * -0.505 * 1.2"
-              [attr.y]="settings.objectScale * -0.435 * 1.2"
-              [attr.height]="settings.objectScale * 1.2"
-              style="transform: scaleY(-1)"
-            />
-          }
-          @if (
-            gridUtils.getGround(joint) &&
-            gridUtils.typeOfJoint(joint) !== 'P' &&
-            gridUtils.getInput(joint) &&
-            !settings.isInputCW.value
-          ) {
-            <image
-              xlink:href="../../../assets/InputCCW.svg"
-              [attr.width]="settings.objectScale * 1.2"
-              [attr.x]="settings.objectScale * -0.505 * 1.2"
-              [attr.y]="settings.objectScale * -0.435 * 1.2"
-              [attr.height]="settings.objectScale * 1.2"
-              style="transform: scaleY(-1)"
-            />
-          }
-        </svg>
-      }
-    </g>
-    <!-- Layer 1 of §2.8: hatch. Bottom of the stack, so nothing is ever cut out
+          <image
+            xlink:href="../../../assets/InputCW.svg"
+            [attr.width]="settings.objectScale * 1.2"
+            [attr.x]="settings.objectScale * -0.505 * 1.2"
+            [attr.y]="settings.objectScale * -0.435 * 1.2"
+            [attr.height]="settings.objectScale * 1.2"
+            style="transform: scaleY(-1)"
+          />
+        }
+        @if (
+          gridUtils.getGround(joint) &&
+          gridUtils.typeOfJoint(joint) !== 'P' &&
+          gridUtils.getInput(joint) &&
+          !settings.isInputCW.value
+        ) {
+          <image
+            xlink:href="../../../assets/InputCCW.svg"
+            [attr.width]="settings.objectScale * 1.2"
+            [attr.x]="settings.objectScale * -0.505 * 1.2"
+            [attr.y]="settings.objectScale * -0.435 * 1.2"
+            [attr.height]="settings.objectScale * 1.2"
+            style="transform: scaleY(-1)"
+          />
+        }
+      </svg>
+    }
+  </g>
+  <!-- Layer 1 of §2.8: hatch. Bottom of the stack, so nothing is ever cut out
        of it and no gap has to track the rod — the links simply draw over it at
        whatever angle they happen to point. Hatching never rotates with the rod;
        the rails do, because they are the guide itself. -->
-    <g id="railHolder" style="transform: scaleY(-1); pointer-events: none">
-      @for (mark of sliderMarkList; track mark.id) {
-        @if (mark.rails) {
-          <!-- The guide's own frame, not the block's: it is fixed in the world and
+  <g id="railHolder" style="transform: scaleY(-1); pointer-events: none">
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.rails) {
+        <!-- The guide's own frame, not the block's: it is fixed in the world and
              the block slides along it. -->
-          <!-- Drawn at model scale rather than through scaleWithZoom, which is
+        <!-- Drawn at model scale rather than through scaleWithZoom, which is
              the one exception in the app and a deliberate one: the ground
              triangle beside it is an asset sized in model units, so a rail on a
              constant screen width drifted from the hatch it is meant to match —
              half its weight zoomed out, twelve times it zoomed in. Two marks
              for the same thing have to read as the same thing at every zoom. -->
-          <g [attr.transform]="sliderMarks.frame(mark.rails)">
-            @for (rail of mark.rails.rails; track $index) {
-              <line
-                [attr.x1]="rail.x1"
-                [attr.y1]="rail.y1"
-                [attr.x2]="rail.x2"
-                [attr.y2]="rail.y2"
-                stroke="#000000"
-                stroke-linecap="round"
-                [attr.stroke-width]="groundLineWidth"
-              />
-            }
-            <!-- Where this guide runs through another one. Solid through solid
+        <g [attr.transform]="sliderMarks.frame(mark.rails)">
+          @for (rail of mark.rails.rails; track $index) {
+            <line
+              [attr.x1]="rail.x1"
+              [attr.y1]="rail.y1"
+              [attr.x2]="rail.x2"
+              [attr.y2]="rail.y2"
+              stroke="#000000"
+              stroke-linecap="round"
+              [attr.stroke-width]="groundLineWidth"
+            />
+          }
+          <!-- Where this guide runs through another one. Solid through solid
                paints an X-shaped knot that says nothing about which member is
                which; a broken line is the drawing convention for the one
                passing behind. -->
-            @for (rail of mark.rails.dashedRails; track $index) {
-              <line
-                [attr.x1]="rail.x1"
-                [attr.y1]="rail.y1"
-                [attr.x2]="rail.x2"
-                [attr.y2]="rail.y2"
-                stroke="#000000"
-                stroke-linecap="butt"
-                [attr.stroke-width]="groundLineWidth"
-                [attr.stroke-dasharray]="groundLineWidth * 2 + ' ' + groundLineWidth * 2"
-              />
-            }
-            @for (tick of mark.rails.ticks; track $index) {
-              <line
-                [attr.x1]="tick.x1"
-                [attr.y1]="tick.y1"
-                [attr.x2]="tick.x2"
-                [attr.y2]="tick.y2"
-                stroke="#000000"
-                stroke-linecap="round"
-                [attr.stroke-width]="groundHatchWidth"
-              />
-            }
-          </g>
-        }
+          @for (rail of mark.rails.dashedRails; track $index) {
+            <line
+              [attr.x1]="rail.x1"
+              [attr.y1]="rail.y1"
+              [attr.x2]="rail.x2"
+              [attr.y2]="rail.y2"
+              stroke="#000000"
+              stroke-linecap="butt"
+              [attr.stroke-width]="groundLineWidth"
+              [attr.stroke-dasharray]="groundLineWidth * 2 + ' ' + groundLineWidth * 2"
+            />
+          }
+          @for (tick of mark.rails.ticks; track $index) {
+            <line
+              [attr.x1]="tick.x1"
+              [attr.y1]="tick.y1"
+              [attr.x2]="tick.x2"
+              [attr.y2]="tick.y2"
+              stroke="#000000"
+              stroke-linecap="round"
+              [attr.stroke-width]="groundHatchWidth"
+            />
+          }
+        </g>
       }
-    </g>
-    <!-- Layer 2 of §2.8: the carrier, with its channel subtracted. The window is a
+    }
+  </g>
+  <!-- Layer 2 of §2.8: the carrier, with its channel subtracted. The window is a
        real hole rather than a lighter shape laid on top, so it reads as a slot
        cut through the bar and its legibility cannot depend on the random colour
        that bar happens to have. -->
-    <g id="linkHolder" style="transform: scaleY(-1)">
-      @for (link of mechanismSrv.getLinks(); track link) {
-        <ng-container>
-          @if (gridUtils.typeOfLink(link) == 'R') {
-            <path
-              (pointerover)="link.showHighlight = true"
-              (pointerout)="link.showHighlight = false"
-              (pointerdown)="setLastLeftClick(link, $event)"
-              (contextmenu)="setLastRightClick(link, $event)"
-              [attr.d]="linkPathWithChannels(link)"
-              [attr.id]="link.id"
-              [attr.data-channels]="channelCountOn(link)"
-              [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
-              fill-rule="evenodd"
-              [attr.fill-opacity]="0.7"
-              [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-              [class]="mechanismSrv.getLinkCSSClass(link)"
-            ></path>
-          }
-          @if (
-            gridUtils.typeOfLink(link) == 'R' &&
-            gridUtils.getLinkSubset(link).length > 0 &&
-            activeObjService.objType == 'Link' &&
-            activeObjService.selectedLink == link
-          ) {
-            <g [attr.id]="link.id + '__components'" pointer-events="none">
-              @for (subLink of gridUtils.getLinkSubset(link); track subLink) {
-                <path
-                  [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
-                  [attr.id]="link.id + '__' + subLink.id + '__component'"
-                  fill="rgba(0,0,0,0.3)"
-                  stroke="black"
-                  [attr.stroke-width]="0.01 * settings.objectScale"
-                  [attr.stroke-dasharray]="0.1 * settings.objectScale"
-                ></path>
-              }
-            </g>
-          }
-        </ng-container>
-      }
-      <!--          Angle and length indicator overlay-->
-    </g>
-    <!-- Layers 3-5 of §2.8: the block, then the weld plate that fuses a Slide's
+  <g id="linkHolder" style="transform: scaleY(-1)">
+    @for (link of mechanismSrv.getLinks(); track link) {
+      <ng-container>
+        @if (gridUtils.typeOfLink(link) == 'R') {
+          <path
+            (pointerover)="link.showHighlight = true"
+            (pointerout)="link.showHighlight = false"
+            (pointerdown)="setLastLeftClick(link, $event)"
+            (contextmenu)="setLastRightClick(link, $event)"
+            [attr.d]="linkPathWithChannels(link)"
+            [attr.id]="link.id"
+            [attr.data-channels]="channelCountOn(link)"
+            [attr.fill]="mechanismSrv.getLinkProp(link, 'fill')"
+            fill-rule="evenodd"
+            [attr.fill-opacity]="0.7"
+            [attr.stroke]="mechanismSrv.getLinkProp(link, 'fill')"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+            [class]="mechanismSrv.getLinkCSSClass(link)"
+          ></path>
+        }
+        @if (
+          gridUtils.typeOfLink(link) == 'R' &&
+          gridUtils.getLinkSubset(link).length > 0 &&
+          activeObjService.objType == 'Link' &&
+          activeObjService.selectedLink == link
+        ) {
+          <g [attr.id]="link.id + '__components'" pointer-events="none">
+            @for (subLink of gridUtils.getLinkSubset(link); track subLink) {
+              <path
+                [attr.d]="mechanismSrv.getLinkProp(subLink, 'd')"
+                [attr.id]="link.id + '__' + subLink.id + '__component'"
+                fill="rgba(0,0,0,0.3)"
+                stroke="black"
+                [attr.stroke-width]="0.01 * settings.objectScale"
+                [attr.stroke-dasharray]="0.1 * settings.objectScale"
+              ></path>
+            }
+          </g>
+        }
+      </ng-container>
+    }
+    <!--          Angle and length indicator overlay-->
+  </g>
+  <!-- Layers 3-5 of §2.8: the block, then the weld plate that fuses a Slide's
        rider to it, then the arrows. The block is #000 in every one of the four
        slider cells — there is no colour derivation anywhere in this system. A
        Slide looks like it shares the rider's colour because the plate above it
@@ -395,887 +396,883 @@
        why a random palette can never break the cue. Arrows sit above the plate
        so nothing can tint them: they are always white, and that is only safe
        because what is underneath is always black. -->
-    <g id="sliderHolder" style="transform: scaleY(-1)">
-      <!-- Ordered by how deep in the stack each body sits, not grouped by
+  <g id="sliderHolder" style="transform: scaleY(-1)">
+    <!-- Ordered by how deep in the stack each body sits, not grouped by
          assembly: a block is above the carrier it slides in, and a link is
          above the block it is pinned to, and no assignment of the two to fixed
          layers can express both when one link is a carrier *and* a rider. Per
          assembly it also put one block over another assembly's rider whenever
          the two shared a link -- which is what a pair of dangling blocks on one
          bar looks like. -->
-      @for (item of slotStack; track item.key) {
-        <!-- The positioned group carries the mark identity: it is the one with
+    @for (item of slotStack; track item.key) {
+      <!-- The positioned group carries the mark identity: it is the one with
            the slot's transform on it, and the one anything measuring an
            assembly has to find. Ordering by depth means DOM order no longer
            follows joint order, so it is named rather than counted. -->
-        <g
-          [attr.transform]="sliderMarks.frame(item.mark)"
-          [attr.class]="item.kind === 'block' ? 'slider-mark' : null"
-          [attr.data-slider]="item.mark.id"
-        >
-          @switch (item.kind) {
-            @case ('block') {
-              <!-- Grabbing the block starts a drag on its pin (§4.4). The block is
+      <g
+        [attr.transform]="sliderMarks.frame(item.mark)"
+        [attr.class]="item.kind === 'block' ? 'slider-mark' : null"
+        [attr.data-slider]="item.mark.id"
+      >
+        @switch (item.kind) {
+          @case ('block') {
+            <!-- Grabbing the block starts a drag on its pin (§4.4). The block is
                  a far bigger target than the marker at its centre, and the two
                  sit on the same point, so it is the same grab with a better
                  hitbox. -->
-              <g
-                class="slider-block"
-                cursor="move"
-                (pointerdown)="setLastLeftClick(item.mark.pin)"
-                (contextmenu)="setLastRightClick(item.mark.pin)"
-              >
-                <!-- The block stays #000 even when the slider has nowhere to
+            <g
+              class="slider-block"
+              cursor="move"
+              (pointerdown)="setLastLeftClick(item.mark.pin)"
+              (contextmenu)="setLastRightClick(item.mark.pin)"
+            >
+              <!-- The block stays #000 even when the slider has nowhere to
                    slide: the red is a highlight around it, the way the
                    orphan-joint mark works, not a different block. §2.8 rule 3
                    has no exceptions. -->
-                <path [attr.d]="item.mark.block" fill="#000000" filter="url(#elevation-1)" />
-              </g>
+              <path [attr.d]="item.mark.block" fill="#000000" filter="url(#elevation-1)" />
+            </g>
+          }
+          @case ('rider') {
+            @if (item.rider) {
+              <path
+                (pointerover)="item.rider.link.showHighlight = true"
+                (pointerout)="item.rider.link.showHighlight = false"
+                (pointerdown)="setLastLeftClick(item.rider.link, $event)"
+                (contextmenu)="setLastRightClick(item.rider.link, $event)"
+                [attr.d]="markPathWithPreview(item.mark, item.rider.path, item.rider.link)"
+                [attr.id]="item.rider.link.id + '__rider'"
+                fill-rule="evenodd"
+                [attr.fill]="item.rider.fill"
+                fill-opacity="0.7"
+                [attr.stroke]="item.rider.fill"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                [class]="mechanismSrv.getLinkCSSClass(item.rider.link)"
+              ></path>
             }
-            @case ('rider') {
-              @if (item.rider) {
-                <path
-                  (pointerover)="item.rider.link.showHighlight = true"
-                  (pointerout)="item.rider.link.showHighlight = false"
-                  (pointerdown)="setLastLeftClick(item.rider.link, $event)"
-                  (contextmenu)="setLastRightClick(item.rider.link, $event)"
-                  [attr.d]="markPathWithPreview(item.mark, item.rider.path, item.rider.link)"
-                  [attr.id]="item.rider.link.id + '__rider'"
-                  fill-rule="evenodd"
-                  [attr.fill]="item.rider.fill"
-                  fill-opacity="0.7"
-                  [attr.stroke]="item.rider.fill"
-                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-                  [class]="mechanismSrv.getLinkCSSClass(item.rider.link)"
-                ></path>
-              }
-            }
-            @case ('plate') {
-              <!-- The rider's ordinary drawing is suppressed while this stands in
+          }
+          @case ('plate') {
+            <!-- The rider's ordinary drawing is suppressed while this stands in
                  for it, so the two cannot double their alpha over each other or
                  leave the rider's own outline showing as a seam through the
                  plate. That makes the plate the only thing left to click, so it
                  carries the rider's selection the way the link body would. -->
-              @if (item.plate) {
-                <g class="slider-plate">
-                  <path
-                    cursor="move"
-                    (pointerover)="item.plate.links[0].showHighlight = true"
-                    (pointerout)="item.plate.links[0].showHighlight = false"
-                    (pointerdown)="setLastLeftClick(item.plate.links[0], $event)"
-                    (contextmenu)="setLastRightClick(item.plate.links[0], $event)"
-                    [attr.d]="markPathWithPreview(item.mark, item.plate.path, item.plate.links[0])"
-                    fill-rule="evenodd"
-                    [attr.fill]="item.plate.fill"
-                    fill-opacity="0.7"
-                    [attr.stroke]="item.plate.fill"
-                    [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-                    [class]="mechanismSrv.getLinkCSSClass(item.plate.links[0])"
-                  />
-                </g>
-              }
+            @if (item.plate) {
+              <g class="slider-plate">
+                <path
+                  cursor="move"
+                  (pointerover)="item.plate.links[0].showHighlight = true"
+                  (pointerout)="item.plate.links[0].showHighlight = false"
+                  (pointerdown)="setLastLeftClick(item.plate.links[0], $event)"
+                  (contextmenu)="setLastRightClick(item.plate.links[0], $event)"
+                  [attr.d]="markPathWithPreview(item.mark, item.plate.path, item.plate.links[0])"
+                  fill-rule="evenodd"
+                  [attr.fill]="item.plate.fill"
+                  fill-opacity="0.7"
+                  [attr.stroke]="item.plate.fill"
+                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+                  [class]="mechanismSrv.getLinkCSSClass(item.plate.links[0])"
+                />
+              </g>
             }
           }
-        </g>
-      }
-      <!-- A slider with nowhere to slide, marked the way an orphan joint is. Drawn
+        }
+      </g>
+    }
+    <!-- A slider with nowhere to slide, marked the way an orphan joint is. Drawn
          after every body rather than on the block itself: a welded block is
          covered by its own weld plate, so a highlight painted under it was the
          one state that could not be seen. -->
-      @for (mark of sliderMarkList; track mark.id) {
-        @if (mark.dangling && !isSkinned(mark)) {
-          <g [attr.transform]="sliderMarks.frame(mark)" pointer-events="none">
-            <path
-              class="dangling-block"
-              [attr.d]="mark.block"
-              fill="none"
-              stroke="#F44336"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(4)"
-            />
-          </g>
-        }
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.dangling && !isSkinned(mark)) {
+        <g [attr.transform]="sliderMarks.frame(mark)" pointer-events="none">
+          <path
+            class="dangling-block"
+            [attr.d]="mark.block"
+            fill="none"
+            stroke="#F44336"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(4)"
+          />
+        </g>
       }
-      <!-- Layer 5: the arrows, above every body so nothing can tint them. They
+    }
+    <!-- Layer 5: the arrows, above every body so nothing can tint them. They
          are always white, and that is only safe because what is underneath is
          always the black block. -->
-      @for (mark of sliderMarkList; track mark.id) {
-        @if (mark.driven && !isSkinned(mark)) {
-          <g class="slider-arrows" pointer-events="none" [attr.transform]="sliderMarks.frame(mark)">
-            <!-- The heavier arrow is the way the block sets off. Two matched
+    @for (mark of sliderMarkList; track mark.id) {
+      @if (mark.driven && !isSkinned(mark)) {
+        <g class="slider-arrows" pointer-events="none" [attr.transform]="sliderMarks.frame(mark)">
+          <!-- The heavier arrow is the way the block sets off. Two matched
                arrows only say "this translates"; they cannot say which way it
                goes first, which is the question a driven mark answers. -->
-            @for (arrow of mark.arrows; track $index) {
+          @for (arrow of mark.arrows; track $index) {
+            <line
+              [attr.x1]="arrow.line.x1"
+              [attr.y1]="arrow.line.y1"
+              [attr.x2]="arrow.line.x2"
+              [attr.y2]="arrow.line.y2"
+              stroke="#ffffff"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
+            />
+            <path [attr.d]="arrow.head" fill="#ffffff" />
+          }
+        </g>
+      }
+    }
+    <!-- §2.7: a piston is a Slide whose rod and barrel line up, so it is drawn
+         as the part rather than as a block in a channel. Nothing about the
+         mechanism changes -- selecting it simply stops collapsing the skin, and
+         the ordinary slot drawing underneath is the same size in the same
+         place, which is what makes the reveal additive. -->
+    @for (cyl of cylinderList; track cyl.id) {
+      <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
+        <!-- Selecting any member of a piston reveals it (§2.7): barrel, rod, or
+             the joint itself. The barrel hands the gesture to the pin, which is
+             the same assembly and already knows how to reveal. -->
+        <path
+          class="cylinder-barrel"
+          cursor="pointer"
+          (pointerdown)="setLastLeftClick(cyl.pin)"
+          (contextmenu)="setLastRightClick(cyl.pin)"
+          [attr.d]="cyl.barrel"
+          [attr.fill]="cyl.barrelFill"
+          fill-opacity="0.7"
+        />
+        <path [attr.d]="cyl.block" fill="#000000" filter="url(#elevation-1)" />
+        <path
+          class="cylinder-rod"
+          cursor="move"
+          (pointerdown)="setLastLeftClick(cyl.pin)"
+          (contextmenu)="setLastRightClick(cyl.pin)"
+          [attr.d]="cyl.rod"
+          [attr.fill]="cyl.rodFill"
+          fill-opacity="0.7"
+          [attr.stroke]="cyl.rodFill"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+        />
+        @if (cyl.driven) {
+          <g pointer-events="none">
+            @for (arrow of cyl.arrows; track $index) {
               <line
                 [attr.x1]="arrow.line.x1"
                 [attr.y1]="arrow.line.y1"
                 [attr.x2]="arrow.line.x2"
                 [attr.y2]="arrow.line.y2"
                 stroke="#ffffff"
-                [attr.stroke-width]="svgGrid.scaleWithZoom(arrow.emphasised ? 4.5 : 2.5)"
+                [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
               />
               <path [attr.d]="arrow.head" fill="#ffffff" />
             }
           </g>
         }
-      }
-      <!-- §2.7: a piston is a Slide whose rod and barrel line up, so it is drawn
-         as the part rather than as a block in a channel. Nothing about the
-         mechanism changes -- selecting it simply stops collapsing the skin, and
-         the ordinary slot drawing underneath is the same size in the same
-         place, which is what makes the reveal additive. -->
-      @for (cyl of cylinderList; track cyl.id) {
-        <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
-          <!-- Selecting any member of a piston reveals it (§2.7): barrel, rod, or
-             the joint itself. The barrel hands the gesture to the pin, which is
-             the same assembly and already knows how to reveal. -->
-          <path
-            class="cylinder-barrel"
-            cursor="pointer"
-            (pointerdown)="setLastLeftClick(cyl.pin)"
-            (contextmenu)="setLastRightClick(cyl.pin)"
-            [attr.d]="cyl.barrel"
-            [attr.fill]="cyl.barrelFill"
-            fill-opacity="0.7"
-          />
-          <path [attr.d]="cyl.block" fill="#000000" filter="url(#elevation-1)" />
-          <path
-            class="cylinder-rod"
-            cursor="move"
-            (pointerdown)="setLastLeftClick(cyl.pin)"
-            (contextmenu)="setLastRightClick(cyl.pin)"
-            [attr.d]="cyl.rod"
-            [attr.fill]="cyl.rodFill"
-            fill-opacity="0.7"
-            [attr.stroke]="cyl.rodFill"
-            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-          />
-          @if (cyl.driven) {
-            <g pointer-events="none">
-              @for (arrow of cyl.arrows; track $index) {
-                <line
-                  [attr.x1]="arrow.line.x1"
-                  [attr.y1]="arrow.line.y1"
-                  [attr.x2]="arrow.line.x2"
-                  [attr.y2]="arrow.line.y2"
-                  stroke="#ffffff"
-                  [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-                />
-                <path [attr.d]="arrow.head" fill="#ffffff" />
-              }
-            </g>
-          }
-          <path
-            class="cylinder-marker"
-            pointer-events="none"
-            [attr.d]="cyl.marker"
-            fill="#FFF8E1"
-            filter="url(#elevation-1)"
-          />
-        </g>
-      }
-      <!-- A driven floating pin has no block to put a white arrow on, so the
+        <path
+          class="cylinder-marker"
+          pointer-events="none"
+          [attr.d]="cyl.marker"
+          fill="#FFF8E1"
+          filter="url(#elevation-1)"
+        />
+      </g>
+    }
+    <!-- A driven floating pin has no block to put a white arrow on, so the
          overlay brings its own dark backing rather than switching the arrow to
          a colour that would then depend on whatever is behind it. A driven
          grounded pin keeps today's black arrow, which already reads on the
          white canvas. -->
-      @for (pin of drivenFloatingPins; track pin.id) {
-        <g
-          pointer-events="none"
-          [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'"
-        >
-          <path [attr.d]="drivenPin.backing" fill="#000000" filter="url(#elevation-1)" />
-          <path
-            [attr.d]="drivenPin.arc"
-            fill="none"
-            stroke="#ffffff"
-            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-          />
-          <path [attr.d]="drivenPin.head" fill="#ffffff" />
-        </g>
-      }
-    </g>
-    <g id="jointHolder" style="transform: scaleY(-1)">
-      @for (joint of mechanismSrv.getJoints(); track joint) {
-        <ng-container>
-          @if (mechanismSrv.isJointOrphan(joint)) {
-            <circle
-              [attr.r]="0.25 * settings.objectScale"
-              [attr.cx]="joint.x"
-              [attr.cy]="joint.y"
-              [attr.fill]="'#c5cae9'"
-              [attr.fill-opacity]="0.7"
-              [attr.stroke]="'#F44336'"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-            ></circle>
-          }
-        </ng-container>
-      }
-      <!-- Which joint the drag has just squared itself against. Without it the
-         snap is a jump with no stated reason; with it, the reason is on screen
-         before the drag is released. -->
-      @for (guide of axisSnapGuides; track $index) {
-        <line
-          class="axisSnapGuide"
-          [attr.x1]="guide.x1"
-          [attr.y1]="guide.y1"
-          [attr.x2]="guide.x2"
-          [attr.y2]="guide.y2"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(1.5)"
-          [attr.stroke-dasharray]="svgGrid.scaleWithZoom(6) + ' ' + svgGrid.scaleWithZoom(5)"
-        ></line>
-      }
-      <!-- Where the joint being dragged will land if it is released now -->
-      @if (snapTargetJoint) {
-        <circle
-          class="snapTarget"
-          [attr.r]="0.4 * settings.objectScale"
-          [attr.cx]="snapTargetJoint.x"
-          [attr.cy]="snapTargetJoint.y"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(4)"
-        ></circle>
-      }
-      <!-- A joint in range that will not take the merge -->
-      @if (refusedTarget) {
-        <circle
-          class="snapRefused"
-          [attr.r]="0.38 * settings.objectScale"
-          [attr.cx]="refusedTarget.joint.x"
-          [attr.cy]="refusedTarget.joint.y"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-        ></circle>
-      }
-      @for (joint of mechanismSrv.getJoints(); track joint) {
-        <!-- The barrel's far end disappears into a collapsed cylinder skin; the
-           reveal on selection is what brings it back (§2.7). -->
-        @if (!isHiddenByCylinder(joint)) {
-          <svg
-            [attr.x]="joint.x"
-            [attr.y]="joint.y"
-            (pointerover)="joint.showHighlight = true"
-            (pointerout)="joint.showHighlight = false"
-            (contextmenu)="setLastRightClick(joint)"
-            (pointerdown)="setLastLeftClick(joint)"
-            width="20"
-            height="20"
-            style="overflow: visible"
-            cursor="move"
-          >
-            <!-- Grouped so a refused or completed drop can animate the whole joint -->
-            <g [class]="jointEffectClass(joint)">
-              <!-- Hitbox -->
-              @if (gridUtils.typeOfJoint(joint) == 'R') {
-                <circle [attr.r]="settings.objectScale / 4" cx="0" cy="0" fill="transparent" />
-              }
-              <!--      Normal Joint-->
-              @if (!gridUtils.getWelded(joint)) {
-                <circle
-                  id="joint_{{ joint.id }}"
-                  class="joint_circles"
-                  [attr.r]="settings.objectScale * gridUtils.getJointR(joint)"
-                  [attr.cx]="0"
-                  [attr.cy]="0"
-                  [class]="mechanismSrv.getJointCSSClass(joint)"
-                />
-              }
-              <!--      Welded Joint-->
-              @if (gridUtils.getWelded(joint)) {
-                <path
-                  [attr.id]="'joint_' + joint.id"
-                  [class]="mechanismSrv.getJointCSSClass(joint)"
-                  [attr.d]="weldMarkerPath"
-                ></path>
-              }
-            </g>
-          </svg>
-        }
-      }
-    </g>
-
-    <!-- show synthesis poses if on the synthesis tab -->
-    @if (showSynthesis()) {
-      <g id="synthesis">
-        @for (pose of synthesisBuilder.getAllPoses(); track pose) {
-          <ng-container>
-            <g id="synthesisLinkHolder" style="transform: scaleY(-1)">
-              <path
-                cursor="move"
-                (pointerover)="pose.showHighlight = true"
-                (pointerout)="pose.showHighlight = false"
-                (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
-                [attr.d]="pose.pathString"
-                [attr.id]=""
-                [attr.fill]="
-                  pose.isAnyHighlight()
-                    ? sConstants.LINK_COLOR_H[pose.status]
-                    : sConstants.LINK_COLOR[pose.status]
-                "
-                [attr.fill-opacity]="0.4"
-                [class]=""
-              ></path>
-            </g>
-            <g id="synthesisPoseHolder" style="transform: scaleY(-1)">
-              <svg
-                width="20"
-                height="20"
-                style="overflow: visible"
-                cursor="move"
-                (pointerover)="pose.showHighlight = true"
-                (pointerout)="pose.showHighlight = false"
-                (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
-              >
-                @for (nodePos of [pose.posBack, pose.posFront]; track nodePos) {
-                  <circle
-                    class="joint_circles"
-                    [attr.r]="sConstants.CIRCLE_RADIUS * settings.objectScale"
-                    [attr.cx]="nodePos.x"
-                    [attr.cy]="nodePos.y"
-                    [attr.fill]="
-                      pose.showHighlight ? sConstants.CIRCLE_COLOR_H : sConstants.CIRCLE_COLOR
-                    "
-                    [class]=""
-                  />
-                }
-              </svg>
-              <svg
-                [attr.height]="10"
-                [attr.width]="10"
-                style="overflow: visible; text-anchor: middle"
-                cursor="move"
-                (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
-              >
-                <!-- reference frame arrows -->
-                <g
-                  app-svg-arrow
-                  (pointerover)="pose.showHighlight = true; pose.showHighlightX = true"
-                  (pointerout)="pose.showHighlight = false; pose.showHighlightX = false"
-                  (pointerdown)="
-                    setLastLeftClick(pose);
-                    activeObjService.updateSelectedObj(pose);
-                    setSynthesisClickMode(mode.X)
-                  "
-                  [x]="pose.position.x"
-                  [y]="pose.position.y"
-                  [direction]="pose.thetaDegrees"
-                  [magnitude]="1 * settings.objectScale"
-                  [width]="0.075 * settings.objectScale"
-                  [color]="
-                    pose.showHighlightX ? sConstants.ARROW_X_COLOR_H : sConstants.ARROW_X_COLOR
-                  "
-                ></g>
-                <g
-                  app-svg-arrow
-                  (pointerover)="pose.showHighlight = true; pose.showHighlightY = true"
-                  (pointerout)="pose.showHighlight = false; pose.showHighlightY = false"
-                  (pointerdown)="
-                    setLastLeftClick(pose);
-                    activeObjService.updateSelectedObj(pose);
-                    setSynthesisClickMode(mode.Y)
-                  "
-                  [x]="pose.position.x"
-                  [y]="pose.position.y"
-                  [direction]="pose.thetaDegrees + 90"
-                  [magnitude]="1 * settings.objectScale"
-                  [width]="0.075 * settings.objectScale"
-                  [color]="
-                    pose.showHighlightY ? sConstants.ARROW_Y_COLOR_H : sConstants.ARROW_Y_COLOR
-                  "
-                ></g>
-                <!-- small black circle for COR -->
-                <circle
-                  (pointerover)="pose.showHighlight = true"
-                  (pointerout)="pose.showHighlight = false"
-                  class="joint_circles"
-                  [attr.r]="sConstants.COR_RADIUS * settings.objectScale"
-                  [attr.cx]="pose.position.x"
-                  [attr.cy]="pose.position.y"
-                  [attr.fill]="sConstants.COR_COLOR"
-                  [class]=""
-                />
-                <!-- rotation circle -->
-                <circle
-                  (pointerover)="pose.showHighlightR = true"
-                  (pointerout)="pose.showHighlightR = false"
-                  (pointerdown)="
-                    setLastLeftClick(pose);
-                    activeObjService.updateSelectedObj(pose);
-                    setSynthesisClickMode(mode.ROTATE)
-                  "
-                  [attr.r]="sConstants.ROTATION_CIRCLE_RADIUS * 1.5 * settings.objectScale"
-                  [attr.cx]="pose.rotationCircleX"
-                  [attr.cy]="pose.rotationCircleY"
-                  fill="black"
-                  style="opacity: 0"
-                />
-                <circle
-                  class="joint_circles"
-                  [attr.r]="sConstants.ROTATION_CIRCLE_RADIUS * settings.objectScale"
-                  [attr.cx]="pose.rotationCircleX"
-                  [attr.cy]="pose.rotationCircleY"
-                  [attr.fill]="
-                    pose.showHighlightR
-                      ? sConstants.ROTATION_CIRCLE_COLOR_H
-                      : sConstants.ROTATION_CIRCLE_COLOR
-                  "
-                  style="pointer-events: none"
-                />
-                <text
-                  style="pointer-events: none"
-                  transform="scale(+1,-1)"
-                  [attr.x]="pose.posCenter.x + 0.5"
-                  [attr.y]="-pose.posCenter.y - 0.5"
-                  style="font-size: {{ svgGrid.scaleWithZoom(20) }}; text-anchor: middle"
-                >
-                  Pose {{ pose.id }}
-                </text>
-              </svg>
-            </g>
-          </ng-container>
-        }
-      </g>
-    }
-
-    <!--  For Debugging-->
-    @if (settings.isGridDebugOn) {
-      <g style="transform: scaleY(-1); pointer-events: none">
-        @for (line of getDebugLines(); track line) {
-          <ng-container>
-            <circle
-              [attr.r]="svgGrid.scaleWithZoom(8)"
-              [attr.cx]="line.startPosition.x"
-              [attr.cy]="line.startPosition.y"
-              [attr.fill]="line.color"
-            />
-            <circle
-              [attr.r]="svgGrid.scaleWithZoom(5.5)"
-              [attr.cx]="line.endPosition.x"
-              [attr.cy]="line.endPosition.y"
-              [attr.fill]="line.color"
-            />
-            @if (line.isArc) {
-              <circle
-                [attr.r]="svgGrid.scaleWithZoom(5)"
-                [attr.cx]="gridUtils.getCenter(line).x"
-                [attr.cy]="gridUtils.getCenter(line).y"
-                [attr.fill]="line.color"
-              />
-            }
-            <line
-              [attr.x1]="line.startPosition.x"
-              [attr.y1]="line.startPosition.y"
-              [attr.x2]="line.endPosition.x"
-              [attr.y2]="line.endPosition.y"
-              [attr.stroke]="line.color"
-              [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
-              marker-end="url(#arrowhead)"
-            ></line>
-          </ng-container>
-        }
-        @for (link of mechanismSrv.getLinks(); track link) {
-          <ng-container>
-            @if (gridUtils.typeOfLink(link) == 'R' && link.subset.length == 0) {
-              <ng-container>
-                @for (line of link.externalLines; track line) {
-                  <circle
-                    [attr.r]="svgGrid.scaleWithZoom(8)"
-                    [attr.cx]="line.startPosition.x"
-                    [attr.cy]="line.startPosition.y"
-                    [attr.fill]="line.color"
-                  />
-                }
-                @for (line of link.externalLines; track line) {
-                  <circle
-                    [attr.r]="svgGrid.scaleWithZoom(5.5)"
-                    [attr.cx]="line.endPosition.x"
-                    [attr.cy]="line.endPosition.y"
-                    [attr.fill]="line.color"
-                  />
-                }
-                @for (line of link.externalLines; track line) {
-                  <ng-container>
-                    @if (line.isArc) {
-                      <circle
-                        [attr.r]="svgGrid.scaleWithZoom(5)"
-                        [attr.cx]="gridUtils.getCenter(line).x"
-                        [attr.cy]="gridUtils.getCenter(line).y"
-                        [attr.fill]="line.color"
-                      />
-                    }
-                  </ng-container>
-                }
-              </ng-container>
-            }
-            @for (coord of getDebugPoints(); track coord) {
-              <circle
-                [attr.r]="svgGrid.scaleWithZoom(5)"
-                [attr.cx]="getDebugPointX(coord)"
-                [attr.cy]="getDebugPointY(coord)"
-                fill="hotpink"
-              />
-            }
-          </ng-container>
-        }
-      </g>
-    }
-
-    @if (mechanismSrv.showPathHolder) {
-      <g id="pathsHolder">
-        @for (joint of mechanismSrv.getJoints(); track joint) {
-          <ng-container>
-            @if (gridUtils.getJointShowCurve(joint)) {
-              <path
-                [attr.d]="mechanismSrv.getJointPath(joint)"
-                fill="none"
-                [attr.stroke-width]="0.01 * settings.objectScale"
-                style="transform: scaleY(-1); pointer-events: none"
-              ></path>
-            }
-          </ng-container>
-        }
-      </g>
-    }
-    @for (force of mechanismSrv.getForces(); track force) {
+    @for (pin of drivenFloatingPins; track pin.id) {
       <g
-        id="forcesHolder"
-        style="transform: scaleY(-1)"
-        (contextmenu)="setLastRightClick(force)"
-        (pointerdown)="setLastLeftClick(force)"
-        (pointerover)="force.showHighlight = true"
-        (pointerout)="force.showHighlight = false"
+        pointer-events="none"
+        [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'"
       >
-        <g [attr.id]="force.id">
-          <svg
-            [attr.x]="force.startCoord.x"
-            [attr.y]="force.startCoord.y"
-            style="pointer-events: none; overflow: visible"
-          >
-            @if (!force.local) {
-              <circle [attr.r]="settings.objectScale * 0.15" class="forceAnchor"></circle>
-            }
-            @if (force.local) {
-              <rect
-                [attr.width]="settings.objectScale * 0.25"
-                [attr.height]="settings.objectScale * 0.25"
-                [attr.x]="settings.objectScale * -0.125"
-                [attr.y]="settings.objectScale * -0.125"
-                class="forceAnchor"
-                style="transform: rotateZ({{ force.angleRad + 0.785 }}rad)"
-              ></rect>
-            }
-          </svg>
-          <!-- Transpent thicker force to increase hitbox for the group for highliting-->
-          <path
-            [attr.d]="force.forceLine"
-            class="forceLine"
-            [attr.stroke-width]="force.visualWidth * settings.objectScale"
-          ></path>
-          <path
-            [attr.d]="force.forceLineLong"
-            stroke="transparent"
-            [attr.stroke-width]="
-              force.visualWidth * settings.objectScale + svgGrid.scaleWithZoom(10)
-            "
-          ></path>
-          <path [attr.d]="force.forceArrow" class="forceArrow" [attr.fill]="force.fill"></path>
-        </g>
-        @if (activeObjService.selectedForce == force && activeObjService.objType == 'Force') {
-          <ng-container>
-            <line
-              [attr.x1]="force.startCoord.x"
-              [attr.y1]="force.startCoord.y"
-              [attr.x2]="force.endCoord.x"
-              [attr.y2]="force.endCoord.y"
-              class="forceSelectedLine"
-              [attr.stroke-width]="0.03 * settings.objectScale"
-            >
-              >
-            </line>
-            <svg
-              id="startForceEndpoint"
-              [attr.x]="force.startCoord.x"
-              [attr.y]="force.startCoord.y"
-              [attr.stroke-width]="0.03 * settings.objectScale"
-              (pointerdown)="
-                setLastLeftClick(force);
-                activeObjService.updateSelectedObj(force.startCoord, force);
-                mouseDown($event);
-                $event.stopPropagation()
-              "
-              height="10"
-              width="10"
-              style="overflow: visible; cursor: move"
-            >
-              <rect
-                [attr.x]="-0.075 * settings.objectScale"
-                [attr.y]="-0.075 * settings.objectScale"
-                [attr.width]="0.15 * settings.objectScale"
-                [attr.height]="0.15 * settings.objectScale"
-                class="forceEndpointSquare"
-                style="transform: rotateZ({{ force.angleRad }}rad)"
-              ></rect>
-            </svg>
-            <svg
-              id="endForceEndpoint"
-              [attr.x]="force.endCoord.x"
-              [attr.y]="force.endCoord.y"
-              [attr.stroke-width]="0.03 * settings.objectScale"
-              (pointerdown)="
-                setLastLeftClick(force);
-                activeObjService.updateSelectedObj(force.endCoord, force);
-                mouseDown($event);
-                $event.stopPropagation()
-              "
-              height="10"
-              width="10"
-              style="overflow: visible; cursor: move"
-            >
-              <rect
-                [attr.x]="-0.075 * settings.objectScale"
-                [attr.y]="-0.075 * settings.objectScale"
-                [attr.width]="0.15 * settings.objectScale"
-                [attr.height]="0.15 * settings.objectScale"
-                class="forceEndpointSquare"
-                style="transform: rotateZ({{ force.angleRad }}rad)"
-              ></rect>
-            </svg>
-          </ng-container>
-        }
-      </g>
-    }
-
-    <g id="jointTagHolder" style="pointer-events: none">
-      @for (joint of mechanismSrv.getJoints(); track joint) {
-        <svg
-          [attr.x]="joint.x - settings.objectScale * 0.3"
-          [attr.y]="-1 * joint.y - settings.objectScale * 0.5"
-          [attr.height]="10"
-          [attr.width]="10"
-          style="overflow: visible; text-anchor: middle"
-        >
-          @if (mergeLabelFor(joint); as mergeLabel) {
-            <!-- While a joint is captured, the two names sit on the same point and
-               overlap into an unreadable smudge. One label naming the merge says
-               what is about to happen instead. -->
-            <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
-              {{ mergeLabel }}
-            </text>
-          } @else if (
-            !isMergingAway(joint) &&
-            ((gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) ||
-              joint.showHighlight ||
-              (this.activeObjService.selectedJoint == joint &&
-                this.activeObjService.objType == 'Joint'))
-          ) {
-            <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
-              {{ joint.name }}
-            </text>
-          }
-        </svg>
-      }
-    </g>
-    @if (settings.isShowCOM.value) {
-      <g id="comTagHolder" style="transform: scaleY(-1); pointer-events: none">
-        @for (link of mechanismSrv.getLinks(); track link) {
-          <svg style="overflow: visible">
-            <path
-              stroke-width="2"
-              stroke-linejoin="round"
-              fill="black"
-              opacity="1.0"
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
-            ></path>
-            <path
-              stroke-width="2"
-              stroke-linejoin="round"
-              fill="white"
-              opacity="1.0"
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
-            ></path>
-            <path
-              stroke-width="2"
-              stroke-linejoin="round"
-              fill="black"
-              opacity="1.0"
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
-            ></path>
-            <path
-              stroke-width="2"
-              stroke-linejoin="round"
-              fill="white"
-              opacity="1.0"
-              [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
-            ></path>
-          </svg>
-        }
-      </g>
-    }
-    <g id="linkTagHolder" style="pointer-events: none">
-      @for (link of mechanismSrv.getLinks(); track link) {
-        <svg
-          [attr.x]="mechanismSrv.getLinkProp(link, 'CoMX')"
-          [attr.y]="mechanismSrv.getLinkProp(link, 'CoMY')"
-          [attr.height]="10"
-          [attr.width]="10"
-          style="overflow: visible; text-anchor: middle"
-        >
-          @if (
-            this.showLinkLengthOverlay < -1 &&
-            this.showLinkAngleOverlay < -1 &&
-            ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) ||
-              link.showHighlight ||
-              (this.activeObjService.selectedLink == link &&
-                this.activeObjService.objType == 'Link'))
-          ) {
-            <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
-              {{ link.name }}
-            </text>
-          }
-        </svg>
-      }
-    </g>
-    <g id="forceTagHolder" style="pointer-events: none">
-      @for (force of mechanismSrv.getForces(); track force) {
-        <svg
-          [attr.x]="(force.startCoord.x + force.endCoord.x) / 2 - settings.objectScale * 0.3"
-          [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1 - settings.objectScale * 0.3"
-          [attr.height]="10"
-          [attr.width]="10"
-          style="overflow: visible; text-anchor: middle"
-        >
-          @if (
-            settings.isShowID.value ||
-            force.showHighlight ||
-            (this.activeObjService.selectedForce == force &&
-              this.activeObjService.objType == 'Force')
-          ) {
-            <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: left">
-              {{ force.name }}
-            </text>
-          }
-        </svg>
-      }
-    </g>
-    <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
-      <line
-        stroke="black"
-        [attr.stroke-width]="0.02 * settings.objectScale"
-        stroke-opacity="0.5"
-        style="pointer-events: none"
-      ></line>
-      <svg height="10" width="10" style="overflow: visible" cursor="move">
-        <circle
-          [attr.r]="0.14 * settings.objectScale"
-          cx="0%"
-          cy="0%"
-          fill="black"
-          fill-opacity="0.5"
-          stroke-opacity="0.5"
-        ></circle>
-        <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
-        <circle
-          [attr.r]="0.1 * settings.objectScale"
-          cx="0%"
-          cy="0%"
-          fill="gray"
-          stroke="#00000000"
-          stroke-width="0.2"
-        ></circle>
-      </svg>
-    </g>
-    <g
-      id="forceTempHolder"
-      opacity="0.5"
-      style="display: none; pointer-events: none; transform: scaleY(-1)"
-    >
-      <path stroke-width="0.04" stroke="black" d=""></path>
-      <path fill="black" d=""></path>
-    </g>
-
-    @if (
-      (activeObjService.objType == 'Link' || activeObjService.objType == 'Joint') &&
-      this.showLinkLengthOverlay >= -1 &&
-      this.showLinkAngleOverlay < -1
-    ) {
-      <g style="pointer-events: none; transform: scaleY(-1)">
+        <path [attr.d]="drivenPin.backing" fill="#000000" filter="url(#elevation-1)" />
         <path
-          [attr.d]="getSVGPerpendicularLine1() + getSVGPerpendicularLine2()"
-          [attr.stroke-width]="0.02 * settings.objectScale"
-          [attr.stroke]="'#000000'"
-        ></path>
-        <path
-          [attr.d]="getSVGPrimaryAxisLine1()"
-          [attr.stroke-width]="0.02 * settings.objectScale"
-          [attr.stroke]="'#000000'"
-          [attr.marker-start]="
-            secondJointIsGrounded(activeObjService.selectedLink) ? 'url(#arrowheadArcFlipped)' : ''
-          "
-        ></path>
-        <path
-          [attr.d]="getSVGPrimaryAxisLine2()"
-          [attr.stroke-width]="0.02 * settings.objectScale"
-          [attr.stroke]="'#000000'"
-          [attr.marker-end]="
-            secondJointIsGrounded(activeObjService.selectedLink) ? '' : 'url(#arrowheadArc)'
-          "
-        ></path>
-        <text
-          text-anchor="middle"
-          style="transform: scaleY(-1)"
-          [attr.x]="getSVGLengthOverlayTextPos().x"
-          [attr.y]="-getSVGLengthOverlayTextPos().y"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
-          [attr.font-size]="svgGrid.scaleWithZoom(20)"
-        >
-          {{
-            this.nup.formatValueAndUnit(
-              getLengthBetweenOverlayPoints(),
-              this.settings.lengthUnit.getValue()
-            )
-          }}
-        </text>
-      </g>
-    }
-    @if (
-      (activeObjService.objType == 'Link' || activeObjService.objType == 'Joint') &&
-      this.showLinkAngleOverlay >= -1
-    ) {
-      <g style="pointer-events: none; transform: scaleY(-1)">
-        <path
-          [attr.d]="getSVGAngleOverlayLines()"
-          [attr.stroke-width]="0.02 * settings.objectScale"
-          [attr.stroke]="'#000000'"
-          [attr.stroke-dasharray]="0.1 * settings.objectScale"
-        ></path>
-        <path
-          [attr.d]="getSVGAngleOverlayArc()"
-          [attr.stroke-width]="0.02 * settings.objectScale"
-          [attr.fill]="'transparent'"
-          [attr.stroke]="'#000000'"
-          marker-end="url(#arrowheadArc)"
-        ></path>
-        <text
-          text-anchor="left"
-          style="transform: scaleY(-1)"
-          [attr.x]="getSVGAngleOverlayTextPos().x"
-          [attr.y]="-getSVGAngleOverlayTextPos().y"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
-          [attr.font-size]="svgGrid.scaleWithZoom(20)"
-        >
-          {{
-            this.nup.formatValueAndUnit(
-              getAngleBetweenOverlayPoints(),
-              this.settings.angleUnit.getValue()
-            )
-          }}
-        </text>
+          [attr.d]="drivenPin.arc"
+          fill="none"
+          stroke="#ffffff"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+        />
+        <path [attr.d]="drivenPin.head" fill="#ffffff" />
       </g>
     }
   </g>
+  <g id="jointHolder" style="transform: scaleY(-1)">
+    @for (joint of mechanismSrv.getJoints(); track joint) {
+      <ng-container>
+        @if (mechanismSrv.isJointOrphan(joint)) {
+          <circle
+            [attr.r]="0.25 * settings.objectScale"
+            [attr.cx]="joint.x"
+            [attr.cy]="joint.y"
+            [attr.fill]="'#c5cae9'"
+            [attr.fill-opacity]="0.7"
+            [attr.stroke]="'#F44336'"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+          ></circle>
+        }
+      </ng-container>
+    }
+    <!-- Which joint the drag has just squared itself against. Without it the
+         snap is a jump with no stated reason; with it, the reason is on screen
+         before the drag is released. -->
+    @for (guide of axisSnapGuides; track $index) {
+      <line
+        class="axisSnapGuide"
+        [attr.x1]="guide.x1"
+        [attr.y1]="guide.y1"
+        [attr.x2]="guide.x2"
+        [attr.y2]="guide.y2"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(1.5)"
+        [attr.stroke-dasharray]="svgGrid.scaleWithZoom(6) + ' ' + svgGrid.scaleWithZoom(5)"
+      ></line>
+    }
+    <!-- Where the joint being dragged will land if it is released now -->
+    @if (snapTargetJoint) {
+      <circle
+        class="snapTarget"
+        [attr.r]="0.4 * settings.objectScale"
+        [attr.cx]="snapTargetJoint.x"
+        [attr.cy]="snapTargetJoint.y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(4)"
+      ></circle>
+    }
+    <!-- A joint in range that will not take the merge -->
+    @if (refusedTarget) {
+      <circle
+        class="snapRefused"
+        [attr.r]="0.38 * settings.objectScale"
+        [attr.cx]="refusedTarget.joint.x"
+        [attr.cy]="refusedTarget.joint.y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+      ></circle>
+    }
+    @for (joint of mechanismSrv.getJoints(); track joint) {
+      <!-- The barrel's far end disappears into a collapsed cylinder skin; the
+           reveal on selection is what brings it back (§2.7). -->
+      @if (!isHiddenByCylinder(joint)) {
+        <svg
+          [attr.x]="joint.x"
+          [attr.y]="joint.y"
+          (pointerover)="joint.showHighlight = true"
+          (pointerout)="joint.showHighlight = false"
+          (contextmenu)="setLastRightClick(joint)"
+          (pointerdown)="setLastLeftClick(joint)"
+          width="20"
+          height="20"
+          style="overflow: visible"
+          cursor="move"
+        >
+          <!-- Grouped so a refused or completed drop can animate the whole joint -->
+          <g [class]="jointEffectClass(joint)">
+            <!-- Hitbox -->
+            @if (gridUtils.typeOfJoint(joint) == 'R') {
+              <circle [attr.r]="settings.objectScale / 4" cx="0" cy="0" fill="transparent" />
+            }
+            <!--      Normal Joint-->
+            @if (!gridUtils.getWelded(joint)) {
+              <circle
+                id="joint_{{ joint.id }}"
+                class="joint_circles"
+                [attr.r]="settings.objectScale * gridUtils.getJointR(joint)"
+                [attr.cx]="0"
+                [attr.cy]="0"
+                [class]="mechanismSrv.getJointCSSClass(joint)"
+              />
+            }
+            <!--      Welded Joint-->
+            @if (gridUtils.getWelded(joint)) {
+              <path
+                [attr.id]="'joint_' + joint.id"
+                [class]="mechanismSrv.getJointCSSClass(joint)"
+                [attr.d]="weldMarkerPath"
+              ></path>
+            }
+          </g>
+        </svg>
+      }
+    }
+  </g>
+
+  <!-- show synthesis poses if on the synthesis tab -->
+  @if (showSynthesis()) {
+    <g id="synthesis">
+      @for (pose of synthesisBuilder.getAllPoses(); track pose) {
+        <ng-container>
+          <g id="synthesisLinkHolder" style="transform: scaleY(-1)">
+            <path
+              cursor="move"
+              (pointerover)="pose.showHighlight = true"
+              (pointerout)="pose.showHighlight = false"
+              (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
+              [attr.d]="pose.pathString"
+              [attr.id]=""
+              [attr.fill]="
+                pose.isAnyHighlight()
+                  ? sConstants.LINK_COLOR_H[pose.status]
+                  : sConstants.LINK_COLOR[pose.status]
+              "
+              [attr.fill-opacity]="0.4"
+              [class]=""
+            ></path>
+          </g>
+          <g id="synthesisPoseHolder" style="transform: scaleY(-1)">
+            <svg
+              width="20"
+              height="20"
+              style="overflow: visible"
+              cursor="move"
+              (pointerover)="pose.showHighlight = true"
+              (pointerout)="pose.showHighlight = false"
+              (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
+            >
+              @for (nodePos of [pose.posBack, pose.posFront]; track nodePos) {
+                <circle
+                  class="joint_circles"
+                  [attr.r]="sConstants.CIRCLE_RADIUS * settings.objectScale"
+                  [attr.cx]="nodePos.x"
+                  [attr.cy]="nodePos.y"
+                  [attr.fill]="
+                    pose.showHighlight ? sConstants.CIRCLE_COLOR_H : sConstants.CIRCLE_COLOR
+                  "
+                  [class]=""
+                />
+              }
+            </svg>
+            <svg
+              [attr.height]="10"
+              [attr.width]="10"
+              style="overflow: visible; text-anchor: middle"
+              cursor="move"
+              (pointerdown)="setLastLeftClick(pose); activeObjService.updateSelectedObj(pose)"
+            >
+              <!-- reference frame arrows -->
+              <g
+                app-svg-arrow
+                (pointerover)="pose.showHighlight = true; pose.showHighlightX = true"
+                (pointerout)="pose.showHighlight = false; pose.showHighlightX = false"
+                (pointerdown)="
+                  setLastLeftClick(pose);
+                  activeObjService.updateSelectedObj(pose);
+                  setSynthesisClickMode(mode.X)
+                "
+                [x]="pose.position.x"
+                [y]="pose.position.y"
+                [direction]="pose.thetaDegrees"
+                [magnitude]="1 * settings.objectScale"
+                [width]="0.075 * settings.objectScale"
+                [color]="
+                  pose.showHighlightX ? sConstants.ARROW_X_COLOR_H : sConstants.ARROW_X_COLOR
+                "
+              ></g>
+              <g
+                app-svg-arrow
+                (pointerover)="pose.showHighlight = true; pose.showHighlightY = true"
+                (pointerout)="pose.showHighlight = false; pose.showHighlightY = false"
+                (pointerdown)="
+                  setLastLeftClick(pose);
+                  activeObjService.updateSelectedObj(pose);
+                  setSynthesisClickMode(mode.Y)
+                "
+                [x]="pose.position.x"
+                [y]="pose.position.y"
+                [direction]="pose.thetaDegrees + 90"
+                [magnitude]="1 * settings.objectScale"
+                [width]="0.075 * settings.objectScale"
+                [color]="
+                  pose.showHighlightY ? sConstants.ARROW_Y_COLOR_H : sConstants.ARROW_Y_COLOR
+                "
+              ></g>
+              <!-- small black circle for COR -->
+              <circle
+                (pointerover)="pose.showHighlight = true"
+                (pointerout)="pose.showHighlight = false"
+                class="joint_circles"
+                [attr.r]="sConstants.COR_RADIUS * settings.objectScale"
+                [attr.cx]="pose.position.x"
+                [attr.cy]="pose.position.y"
+                [attr.fill]="sConstants.COR_COLOR"
+                [class]=""
+              />
+              <!-- rotation circle -->
+              <circle
+                (pointerover)="pose.showHighlightR = true"
+                (pointerout)="pose.showHighlightR = false"
+                (pointerdown)="
+                  setLastLeftClick(pose);
+                  activeObjService.updateSelectedObj(pose);
+                  setSynthesisClickMode(mode.ROTATE)
+                "
+                [attr.r]="sConstants.ROTATION_CIRCLE_RADIUS * 1.5 * settings.objectScale"
+                [attr.cx]="pose.rotationCircleX"
+                [attr.cy]="pose.rotationCircleY"
+                fill="black"
+                style="opacity: 0"
+              />
+              <circle
+                class="joint_circles"
+                [attr.r]="sConstants.ROTATION_CIRCLE_RADIUS * settings.objectScale"
+                [attr.cx]="pose.rotationCircleX"
+                [attr.cy]="pose.rotationCircleY"
+                [attr.fill]="
+                  pose.showHighlightR
+                    ? sConstants.ROTATION_CIRCLE_COLOR_H
+                    : sConstants.ROTATION_CIRCLE_COLOR
+                "
+                style="pointer-events: none"
+              />
+              <text
+                style="pointer-events: none"
+                transform="scale(+1,-1)"
+                [attr.x]="pose.posCenter.x + 0.5"
+                [attr.y]="-pose.posCenter.y - 0.5"
+                style="font-size: {{ svgGrid.scaleWithZoom(20) }}; text-anchor: middle"
+              >
+                Pose {{ pose.id }}
+              </text>
+            </svg>
+          </g>
+        </ng-container>
+      }
+    </g>
+  }
+
+  <!--  For Debugging-->
+  @if (settings.isGridDebugOn) {
+    <g style="transform: scaleY(-1); pointer-events: none">
+      @for (line of getDebugLines(); track line) {
+        <ng-container>
+          <circle
+            [attr.r]="svgGrid.scaleWithZoom(8)"
+            [attr.cx]="line.startPosition.x"
+            [attr.cy]="line.startPosition.y"
+            [attr.fill]="line.color"
+          />
+          <circle
+            [attr.r]="svgGrid.scaleWithZoom(5.5)"
+            [attr.cx]="line.endPosition.x"
+            [attr.cy]="line.endPosition.y"
+            [attr.fill]="line.color"
+          />
+          @if (line.isArc) {
+            <circle
+              [attr.r]="svgGrid.scaleWithZoom(5)"
+              [attr.cx]="gridUtils.getCenter(line).x"
+              [attr.cy]="gridUtils.getCenter(line).y"
+              [attr.fill]="line.color"
+            />
+          }
+          <line
+            [attr.x1]="line.startPosition.x"
+            [attr.y1]="line.startPosition.y"
+            [attr.x2]="line.endPosition.x"
+            [attr.y2]="line.endPosition.y"
+            [attr.stroke]="line.color"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+            marker-end="url(#arrowhead)"
+          ></line>
+        </ng-container>
+      }
+      @for (link of mechanismSrv.getLinks(); track link) {
+        <ng-container>
+          @if (gridUtils.typeOfLink(link) == 'R' && link.subset.length == 0) {
+            <ng-container>
+              @for (line of link.externalLines; track line) {
+                <circle
+                  [attr.r]="svgGrid.scaleWithZoom(8)"
+                  [attr.cx]="line.startPosition.x"
+                  [attr.cy]="line.startPosition.y"
+                  [attr.fill]="line.color"
+                />
+              }
+              @for (line of link.externalLines; track line) {
+                <circle
+                  [attr.r]="svgGrid.scaleWithZoom(5.5)"
+                  [attr.cx]="line.endPosition.x"
+                  [attr.cy]="line.endPosition.y"
+                  [attr.fill]="line.color"
+                />
+              }
+              @for (line of link.externalLines; track line) {
+                <ng-container>
+                  @if (line.isArc) {
+                    <circle
+                      [attr.r]="svgGrid.scaleWithZoom(5)"
+                      [attr.cx]="gridUtils.getCenter(line).x"
+                      [attr.cy]="gridUtils.getCenter(line).y"
+                      [attr.fill]="line.color"
+                    />
+                  }
+                </ng-container>
+              }
+            </ng-container>
+          }
+          @for (coord of getDebugPoints(); track coord) {
+            <circle
+              [attr.r]="svgGrid.scaleWithZoom(5)"
+              [attr.cx]="getDebugPointX(coord)"
+              [attr.cy]="getDebugPointY(coord)"
+              fill="hotpink"
+            />
+          }
+        </ng-container>
+      }
+    </g>
+  }
+
+  @if (mechanismSrv.showPathHolder) {
+    <g id="pathsHolder">
+      @for (joint of mechanismSrv.getJoints(); track joint) {
+        <ng-container>
+          @if (gridUtils.getJointShowCurve(joint)) {
+            <path
+              [attr.d]="mechanismSrv.getJointPath(joint)"
+              fill="none"
+              [attr.stroke-width]="0.01 * settings.objectScale"
+              style="transform: scaleY(-1); pointer-events: none"
+            ></path>
+          }
+        </ng-container>
+      }
+    </g>
+  }
+  @for (force of mechanismSrv.getForces(); track force) {
+    <g
+      id="forcesHolder"
+      style="transform: scaleY(-1)"
+      (contextmenu)="setLastRightClick(force)"
+      (pointerdown)="setLastLeftClick(force)"
+      (pointerover)="force.showHighlight = true"
+      (pointerout)="force.showHighlight = false"
+    >
+      <g [attr.id]="force.id">
+        <svg
+          [attr.x]="force.startCoord.x"
+          [attr.y]="force.startCoord.y"
+          style="pointer-events: none; overflow: visible"
+        >
+          @if (!force.local) {
+            <circle [attr.r]="settings.objectScale * 0.15" class="forceAnchor"></circle>
+          }
+          @if (force.local) {
+            <rect
+              [attr.width]="settings.objectScale * 0.25"
+              [attr.height]="settings.objectScale * 0.25"
+              [attr.x]="settings.objectScale * -0.125"
+              [attr.y]="settings.objectScale * -0.125"
+              class="forceAnchor"
+              style="transform: rotateZ({{ force.angleRad + 0.785 }}rad)"
+            ></rect>
+          }
+        </svg>
+        <!-- Transpent thicker force to increase hitbox for the group for highliting-->
+        <path
+          [attr.d]="force.forceLine"
+          class="forceLine"
+          [attr.stroke-width]="force.visualWidth * settings.objectScale"
+        ></path>
+        <path
+          [attr.d]="force.forceLineLong"
+          stroke="transparent"
+          [attr.stroke-width]="force.visualWidth * settings.objectScale + svgGrid.scaleWithZoom(10)"
+        ></path>
+        <path [attr.d]="force.forceArrow" class="forceArrow" [attr.fill]="force.fill"></path>
+      </g>
+      @if (activeObjService.selectedForce == force && activeObjService.objType == 'Force') {
+        <ng-container>
+          <line
+            [attr.x1]="force.startCoord.x"
+            [attr.y1]="force.startCoord.y"
+            [attr.x2]="force.endCoord.x"
+            [attr.y2]="force.endCoord.y"
+            class="forceSelectedLine"
+            [attr.stroke-width]="0.03 * settings.objectScale"
+          >
+            >
+          </line>
+          <svg
+            id="startForceEndpoint"
+            [attr.x]="force.startCoord.x"
+            [attr.y]="force.startCoord.y"
+            [attr.stroke-width]="0.03 * settings.objectScale"
+            (pointerdown)="
+              setLastLeftClick(force);
+              activeObjService.updateSelectedObj(force.startCoord, force);
+              mouseDown($event);
+              $event.stopPropagation()
+            "
+            height="10"
+            width="10"
+            style="overflow: visible; cursor: move"
+          >
+            <rect
+              [attr.x]="-0.075 * settings.objectScale"
+              [attr.y]="-0.075 * settings.objectScale"
+              [attr.width]="0.15 * settings.objectScale"
+              [attr.height]="0.15 * settings.objectScale"
+              class="forceEndpointSquare"
+              style="transform: rotateZ({{ force.angleRad }}rad)"
+            ></rect>
+          </svg>
+          <svg
+            id="endForceEndpoint"
+            [attr.x]="force.endCoord.x"
+            [attr.y]="force.endCoord.y"
+            [attr.stroke-width]="0.03 * settings.objectScale"
+            (pointerdown)="
+              setLastLeftClick(force);
+              activeObjService.updateSelectedObj(force.endCoord, force);
+              mouseDown($event);
+              $event.stopPropagation()
+            "
+            height="10"
+            width="10"
+            style="overflow: visible; cursor: move"
+          >
+            <rect
+              [attr.x]="-0.075 * settings.objectScale"
+              [attr.y]="-0.075 * settings.objectScale"
+              [attr.width]="0.15 * settings.objectScale"
+              [attr.height]="0.15 * settings.objectScale"
+              class="forceEndpointSquare"
+              style="transform: rotateZ({{ force.angleRad }}rad)"
+            ></rect>
+          </svg>
+        </ng-container>
+      }
+    </g>
+  }
+
+  <g id="jointTagHolder" style="pointer-events: none">
+    @for (joint of mechanismSrv.getJoints(); track joint) {
+      <svg
+        [attr.x]="joint.x - settings.objectScale * 0.3"
+        [attr.y]="-1 * joint.y - settings.objectScale * 0.5"
+        [attr.height]="10"
+        [attr.width]="10"
+        style="overflow: visible; text-anchor: middle"
+      >
+        @if (mergeLabelFor(joint); as mergeLabel) {
+          <!-- While a joint is captured, the two names sit on the same point and
+               overlap into an unreadable smudge. One label naming the merge says
+               what is about to happen instead. -->
+          <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
+            {{ mergeLabel }}
+          </text>
+        } @else if (
+          !isMergingAway(joint) &&
+          ((gridUtils.typeOfJoint(joint) !== 'P' && settings.isShowID.value) ||
+            joint.showHighlight ||
+            (this.activeObjService.selectedJoint == joint &&
+              this.activeObjService.objType == 'Joint'))
+        ) {
+          <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
+            {{ joint.name }}
+          </text>
+        }
+      </svg>
+    }
+  </g>
+  @if (settings.isShowCOM.value) {
+    <g id="comTagHolder" style="transform: scaleY(-1); pointer-events: none">
+      @for (link of mechanismSrv.getLinks(); track link) {
+        <svg style="overflow: visible">
+          <path
+            stroke-width="2"
+            stroke-linejoin="round"
+            fill="black"
+            opacity="1.0"
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d1')"
+          ></path>
+          <path
+            stroke-width="2"
+            stroke-linejoin="round"
+            fill="white"
+            opacity="1.0"
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d2')"
+          ></path>
+          <path
+            stroke-width="2"
+            stroke-linejoin="round"
+            fill="black"
+            opacity="1.0"
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d3')"
+          ></path>
+          <path
+            stroke-width="2"
+            stroke-linejoin="round"
+            fill="white"
+            opacity="1.0"
+            [attr.d]="mechanismSrv.getLinkProp(link, 'CoM_d4')"
+          ></path>
+        </svg>
+      }
+    </g>
+  }
+  <g id="linkTagHolder" style="pointer-events: none">
+    @for (link of mechanismSrv.getLinks(); track link) {
+      <svg
+        [attr.x]="mechanismSrv.getLinkProp(link, 'CoMX')"
+        [attr.y]="mechanismSrv.getLinkProp(link, 'CoMY')"
+        [attr.height]="10"
+        [attr.width]="10"
+        style="overflow: visible; text-anchor: middle"
+      >
+        @if (
+          this.showLinkLengthOverlay < -1 &&
+          this.showLinkAngleOverlay < -1 &&
+          ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) ||
+            link.showHighlight ||
+            (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link'))
+        ) {
+          <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: middle">
+            {{ link.name }}
+          </text>
+        }
+      </svg>
+    }
+  </g>
+  <g id="forceTagHolder" style="pointer-events: none">
+    @for (force of mechanismSrv.getForces(); track force) {
+      <svg
+        [attr.x]="(force.startCoord.x + force.endCoord.x) / 2 - settings.objectScale * 0.3"
+        [attr.y]="((force.startCoord.y + force.endCoord.y) / 2) * -1 - settings.objectScale * 0.3"
+        [attr.height]="10"
+        [attr.width]="10"
+        style="overflow: visible; text-anchor: middle"
+      >
+        @if (
+          settings.isShowID.value ||
+          force.showHighlight ||
+          (this.activeObjService.selectedForce == force && this.activeObjService.objType == 'Force')
+        ) {
+          <text style="font-size: {{ svgGrid.scaleWithZoom(20) }}px; text-anchor: left">
+            {{ force.name }}
+          </text>
+        }
+      </svg>
+    }
+  </g>
+  <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
+    <line
+      stroke="black"
+      [attr.stroke-width]="0.02 * settings.objectScale"
+      stroke-opacity="0.5"
+      style="pointer-events: none"
+    ></line>
+    <svg height="10" width="10" style="overflow: visible" cursor="move">
+      <circle
+        [attr.r]="0.14 * settings.objectScale"
+        cx="0%"
+        cy="0%"
+        fill="black"
+        fill-opacity="0.5"
+        stroke-opacity="0.5"
+      ></circle>
+      <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
+      <circle
+        [attr.r]="0.1 * settings.objectScale"
+        cx="0%"
+        cy="0%"
+        fill="gray"
+        stroke="#00000000"
+        stroke-width="0.2"
+      ></circle>
+    </svg>
+  </g>
+  <g
+    id="forceTempHolder"
+    opacity="0.5"
+    style="display: none; pointer-events: none; transform: scaleY(-1)"
+  >
+    <path stroke-width="0.04" stroke="black" d=""></path>
+    <path fill="black" d=""></path>
+  </g>
+
+  @if (
+    (activeObjService.objType == 'Link' || activeObjService.objType == 'Joint') &&
+    this.showLinkLengthOverlay >= -1 &&
+    this.showLinkAngleOverlay < -1
+  ) {
+    <g style="pointer-events: none; transform: scaleY(-1)">
+      <path
+        [attr.d]="getSVGPerpendicularLine1() + getSVGPerpendicularLine2()"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke]="'#000000'"
+      ></path>
+      <path
+        [attr.d]="getSVGPrimaryAxisLine1()"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke]="'#000000'"
+        [attr.marker-start]="
+          secondJointIsGrounded(activeObjService.selectedLink) ? 'url(#arrowheadArcFlipped)' : ''
+        "
+      ></path>
+      <path
+        [attr.d]="getSVGPrimaryAxisLine2()"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke]="'#000000'"
+        [attr.marker-end]="
+          secondJointIsGrounded(activeObjService.selectedLink) ? '' : 'url(#arrowheadArc)'
+        "
+      ></path>
+      <text
+        text-anchor="middle"
+        style="transform: scaleY(-1)"
+        [attr.x]="getSVGLengthOverlayTextPos().x"
+        [attr.y]="-getSVGLengthOverlayTextPos().y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+        [attr.font-size]="svgGrid.scaleWithZoom(20)"
+      >
+        {{
+          this.nup.formatModelLength(
+            getLengthBetweenOverlayPoints(),
+            this.settings.lengthUnit.getValue()
+          )
+        }}
+      </text>
+    </g>
+  }
+  @if (
+    (activeObjService.objType == 'Link' || activeObjService.objType == 'Joint') &&
+    this.showLinkAngleOverlay >= -1
+  ) {
+    <g style="pointer-events: none; transform: scaleY(-1)">
+      <path
+        [attr.d]="getSVGAngleOverlayLines()"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke]="'#000000'"
+        [attr.stroke-dasharray]="0.1 * settings.objectScale"
+      ></path>
+      <path
+        [attr.d]="getSVGAngleOverlayArc()"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.fill]="'transparent'"
+        [attr.stroke]="'#000000'"
+        marker-end="url(#arrowheadArc)"
+      ></path>
+      <text
+        text-anchor="left"
+        style="transform: scaleY(-1)"
+        [attr.x]="getSVGAngleOverlayTextPos().x"
+        [attr.y]="-getSVGAngleOverlayTextPos().y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+        [attr.font-size]="svgGrid.scaleWithZoom(20)"
+      >
+        {{
+          this.nup.formatValueAndUnit(
+            getAngleBetweenOverlayPoints(),
+            this.settings.angleUnit.getValue()
+          )
+        }}
+      </text>
+    </g>
+  }
 </svg>
 @if (settings.isGridDebugOn) {
   <div id="mouseLocation">
-    Mouse Location: {{ mouseLocation.x.toFixed(2) }}, {{ mouseLocation.y.toFixed(2) }} Zoom:
-    {{ svgGrid.getZoom().toFixed(2) }} Mouse Raw: {{ mouseLocationRaw.x.toFixed(2) }},
-    {{ mouseLocationRaw.y.toFixed(2) }} 0,0: {{ originInScreen.x.toFixed(2) }},
+    Mouse Location: {{ (mouseLocation.x / MODEL_SCALE).toFixed(2) }},
+    {{ (mouseLocation.y / MODEL_SCALE).toFixed(2) }} Zoom: {{ svgGrid.getZoom().toFixed(2) }} Mouse
+    Raw: {{ mouseLocationRaw.x.toFixed(2) }}, {{ mouseLocationRaw.y.toFixed(2) }} 0,0:
+    {{ originInScreen.x.toFixed(2) }},
     {{ originInScreen.y.toFixed(2) }}
     <br />
     {{ returnDebugValue() }}

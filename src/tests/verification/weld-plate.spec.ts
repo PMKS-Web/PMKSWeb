@@ -7,6 +7,12 @@ import { MARK } from '../../app/model/joint-marks';
 import { SliderMarkService } from '../../app/services/slider-mark.service';
 import { SettingsService } from '../../app/services/settings.service';
 import { createMechanismHarness } from '../../test-utils/mechanism-harness';
+import { MODEL_SCALE } from '../../app/model/render-scale';
+
+// Geometry is built in internal model units (user units x MODEL_SCALE) so the
+// link-to-mark proportions match what the app actually renders; R is
+// objectScale-derived and therefore already a model-unit size.
+const S = MODEL_SCALE;
 
 /**
  * A Slide is one body, so its plate has to be one outline.
@@ -22,12 +28,12 @@ import { createMechanismHarness } from '../../test-utils/mechanism-harness';
 
 const R = 0.15 * SettingsService.objectScale;
 
-/** A---B, with a slider at B riding on AB, optionally welded. */
+/** A---B, with a slider at B riding on AB, optionally welded. `at` is in user units. */
 function slide(welded: boolean, at = { x: 3, y: 0 }) {
   const harness = createMechanismHarness();
   const a = new RevJoint('A', 0, 0);
-  const b = new RevJoint('B', at.x, at.y);
-  const c = new RevJoint('C', at.x * 2, at.y * 2);
+  const b = new RevJoint('B', at.x * S, at.y * S);
+  const c = new RevJoint('C', at.x * 2 * S, at.y * 2 * S);
   const wire = (id: string, joints: RevJoint[]) => {
     const link = new RealLink(id, joints);
     joints.forEach((joint) => {
@@ -112,7 +118,7 @@ describe('the weld plate', () => {
     const plate = plateOf(true);
     const along = points(plate!.path).map(([x]) => x);
 
-    expect(Math.min(...along)).toBeCloseTo(-(3 + MARK.barHalf * R), 2);
+    expect(Math.min(...along)).toBeCloseTo(-(3 * S + MARK.barHalf * R), 2);
     // ...and the other end is the block's, since the rider stops at the pin.
     expect(Math.max(...along)).toBeCloseTo(MARK.blockAlongHalf * R, 2);
   });
@@ -129,9 +135,9 @@ describe('the weld plate', () => {
     // an identically welded one that did not.
     const harness = createMechanismHarness();
     const a = new RevJoint('A', 0, 0);
-    const b = new RevJoint('B', 8, 0);
-    const rider = new RevJoint('R', 2, 0);
-    const far = new RevJoint('F', 6, 0);
+    const b = new RevJoint('B', 8 * S, 0);
+    const rider = new RevJoint('R', 2 * S, 0);
+    const far = new RevJoint('F', 6 * S, 0);
     const wire = (id: string, joints: RevJoint[]) => {
       const link = new RealLink(id, joints);
       joints.forEach((joint) => {
@@ -167,7 +173,7 @@ describe('the weld plate', () => {
     const path = plated[0].plate!.path;
     expect(subpaths(path).length).toBe(1);
     const along = points(path).map(([x]) => x);
-    expect(Math.max(...along) - Math.min(...along)).toBeGreaterThan(4);
+    expect(Math.max(...along) - Math.min(...along)).toBeGreaterThan(4 * S);
   });
 
   it('stays a single finite outline for a rider at any angle', () => {

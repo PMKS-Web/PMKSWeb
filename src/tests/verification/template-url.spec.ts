@@ -11,6 +11,7 @@ import { StringTranscoder } from '../../app/services/transcoding/string-transcod
 import { JOINT_TYPE, LINK_TYPE } from '../../app/services/transcoding/transcoder-data';
 import { buildMechanismFixture } from '../fixtures/mechanism-fixtures';
 import { TEMPLATE_BASELINES } from './template-baseline';
+import { MODEL_SCALE } from '../../app/model/render-scale';
 
 // The URL codec is a compatibility surface: every mechanism anyone has ever
 // shared is a string in this format. These tests pin what the five built-in
@@ -94,10 +95,21 @@ describe('built-in template URLs', () => {
         expect(mechanism.joints.length).toBe(baseline.steps);
 
         baseline.picks.forEach((timestep, index) => {
-          const solved = mechanism.joints[timestep].map(
-            (joint) => [joint.id, joint.x, joint.y] as [string, number, number]
-          );
-          expect(solved).toEqual(baseline.samples[index]);
+          // Solved positions are internal model units (user x MODEL_SCALE);
+          // the baseline pins what the user sees, so compare in user units.
+          // The solver rounds every step to 1e-4 of a model unit, which used
+          // to be 1e-4 of a user unit and is now 200x finer — so the 4th
+          // user decimal can legitimately move by up to ~2e-4. Half of the
+          // last pinned digit is the bound; a real solver change is far
+          // coarser than that.
+          const frame = mechanism.joints[timestep];
+          const sample = baseline.samples[index];
+          expect(frame.map((joint) => joint.id)).toEqual(sample.map(([id]) => id));
+          frame.forEach((joint, jointIndex) => {
+            const [id, x, y] = sample[jointIndex];
+            expect(joint.x / MODEL_SCALE, `${id} x at t=${timestep}`).toBeCloseTo(x, 3);
+            expect(joint.y / MODEL_SCALE, `${id} y at t=${timestep}`).toBeCloseTo(y, 3);
+          });
         });
       });
     });
@@ -153,7 +165,13 @@ describe('Slider_Crank prismatic structure', () => {
     expect((prismatic as unknown as PrisJoint).angle_rad).toBe(0);
 
     for (let timestep = 0; timestep < mechanism.joints.length; timestep++) {
-      expect(mechanism.joints[timestep].find((joint) => joint.id === 'C')!.y).toBe(guideY);
+      // Bit-exact equality held in the unscaled world; at model scale one
+      // solve path leaves float noise ~1e-13 of a model unit. Six decimals of
+      // a model unit is 5e-9 of a user unit — the invariant, minus the bits.
+      expect(mechanism.joints[timestep].find((joint) => joint.id === 'C')!.y).toBeCloseTo(
+        guideY,
+        6
+      );
     }
   });
 });

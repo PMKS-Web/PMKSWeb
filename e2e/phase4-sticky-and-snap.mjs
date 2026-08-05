@@ -62,6 +62,10 @@ const state = () =>
     marks: document.querySelectorAll('#sliderHolder .slider-mark').length,
   }));
 
+// Model coordinates are user units x 200 (src/app/model/render-scale.ts);
+// the drag intents and position thresholds below are user-unit quantities.
+const MS = 200;
+
 // --- 6. sticky, then release ---------------------------------------------
 await load(YOKE);
 let before = await state();
@@ -69,7 +73,7 @@ check('yoke starts with no dangling block', before.dangling === 0, JSON.stringif
 
 // A modest sideways nudge must NOT drop the block out of its slot.
 let block = await jointAt('B');
-await drag(block, { x: block.x + 0.25, y: block.y + 0.4 });
+await drag(block, { x: block.x + 0.25 * MS, y: block.y + 0.4 * MS });
 let mid = await state();
 await page.mouse.up();
 await page.waitForTimeout(400);
@@ -81,14 +85,14 @@ check(
 let after = await jointAt('B');
 check(
   'the block still slid along the slot',
-  Math.abs(after.x - block.x) < 0.05 && Math.abs(after.y - block.y) > 0.1,
+  Math.abs(after.x - block.x) < 0.05 * MS && Math.abs(after.y - block.y) > 0.1 * MS,
   JSON.stringify(after)
 );
 
 // Pulling clear of the bar releases it.
 await load(YOKE);
 block = await jointAt('B');
-await drag(block, { x: block.x + 2.2, y: block.y + 0.3 }, 24);
+await drag(block, { x: block.x + 2.2 * MS, y: block.y + 0.3 * MS }, 24);
 mid = await state();
 await page.mouse.up();
 await page.waitForTimeout(500);
@@ -96,14 +100,14 @@ after = await state();
 check('pulling the block clear of the bar releases it', mid.dangling === 1, JSON.stringify(mid));
 check('and it stays released after the drop', after.dangling === 1, JSON.stringify(after));
 const pos = await jointAt('B');
-check('the released block follows the cursor off the slot', pos.x > 2.4, JSON.stringify(pos));
+check('the released block follows the cursor off the slot', pos.x > 2.4 * MS, JSON.stringify(pos));
 
 // --- 12. axis snapping ----------------------------------------------------
 await load(COUPLER);
 const target = await jointAt('C');
 const moving = await jointAt('D');
 // Aim just off C's x axis; the snap should close the gap exactly.
-await drag(moving, { x: target.x + 0.02, y: moving.y - 0.6 }, 24);
+await drag(moving, { x: target.x + 0.02 * MS, y: moving.y - 0.6 * MS }, 24);
 const guiding = await state();
 const landed = await jointAt('D');
 await page.mouse.up();
@@ -121,7 +125,7 @@ check('the guide goes away on release', cleared.guides === 0, JSON.stringify(cle
 // Far from any axis, nothing snaps.
 await load(COUPLER);
 const free = await jointAt('D');
-await drag(free, { x: free.x + 1.37, y: free.y + 0.83 }, 20);
+await drag(free, { x: free.x + 1.37 * MS, y: free.y + 0.83 * MS }, 20);
 const nothing = await state();
 await page.mouse.up();
 check('an unaligned drag snaps to nothing', nothing.guides === 0, JSON.stringify(nothing));

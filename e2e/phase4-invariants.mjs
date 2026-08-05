@@ -226,11 +226,12 @@ const violations = () =>
       const len = Math.hypot(dx, dy);
       if (len < 1e-9) continue;
       const off = Math.abs((slider.x - a.x) * (-dy / len) + (slider.y - a.y) * (dx / len));
-      // 1e-3, not machine epsilon: joint coordinates come back out of the URL
-      // at a fixed decimal precision, so a mechanism is a little off its own
-      // constraints the moment it is loaded. The breakage this catches measured
-      // 0.16 and 0.47 model units -- hundreds of times larger.
-      if (off > 1e-3) {
+      // 1e-3 of a *user* unit, not machine epsilon: joint coordinates come
+      // back out of the URL at a fixed decimal precision in user units, and
+      // the model is user units x 200 (src/app/model/render-scale.ts), so the
+      // decode quantization is 200x larger in model units. The breakage this
+      // catches measured 0.16 and 0.47 user units -- hundreds of times larger.
+      if (off > 1e-3 * 200) {
         bad.push(`${slider.id}: block sits ${off.toFixed(4)} off its own slot line`);
       }
     }

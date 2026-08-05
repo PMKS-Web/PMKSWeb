@@ -39,6 +39,7 @@ import { siUnitFactorsForLength } from '../model/unit-conversions';
 import { transformRigidCoord, transformRigidPath } from '../model/compound-link-path';
 import { MergeRefusal, refuseJointMerge } from '../model/drop-target';
 import { redundantlyHeldJointSets } from '../model/rigid-bodies';
+import { MODEL_SCALE } from '../model/render-scale';
 
 /** Blend two angles along the shorter arc, so a wrap past pi does not spin. */
 function blendAngle(from: number, to: number, blend: number): number {
@@ -172,6 +173,15 @@ export class MechanismService {
     // TODO: Determine logic later once everything else is determined
     // Settings exposes RPM to users and persistence; solvers use rad/s.
     let inputAngularVelocity = (this.settingsService.inputSpeed.value * Math.PI) / 30;
+    // A prismatic input's speed is linear -- length per second -- and the
+    // solvers consume it against internal model units, which are MODEL_SCALE
+    // times the user's. Scaling it here keeps the time axis and the solved
+    // velocities meaning exactly what they meant before the world scaled up;
+    // an angular speed has no length in it and passes through untouched.
+    const drivenJoint = this.joints.find((j) => j instanceof RealJoint && j.input);
+    if (drivenJoint instanceof PrisJoint) {
+      inputAngularVelocity = inputAngularVelocity * MODEL_SCALE;
+    }
     if (this.settingsService.isInputCW.value) {
       inputAngularVelocity = inputAngularVelocity * -1;
     }
@@ -1146,8 +1156,8 @@ export class MechanismService {
     let perpAngle = angle + Math.PI / 2;
     //Get the perpendicular vector
     let perpVector = new Coord(Math.cos(perpAngle), Math.sin(perpAngle));
-    //Scale this vector to be 0.01
-    perpVector = perpVector.normalize().scale(0.01);
+    //Scale this vector to be 0.01 of a user unit (in model units)
+    perpVector = perpVector.normalize().scale(0.01 * MODEL_SCALE);
     //Add this vector to the com
     com = com.add(perpVector);
 
@@ -1328,7 +1338,7 @@ export class MechanismService {
       // can arrive with its block already outside the drawn channel, and
       // hauling it in because some unrelated joint moved would be editing a
       // slot nobody touched.
-      if (Math.hypot(onLine.x - slider.x, onLine.y - slider.y) < 1e-4) continue;
+      if (Math.hypot(onLine.x - slider.x, onLine.y - slider.y) < 1e-4 * MODEL_SCALE) continue;
 
       // Clamped to the channel, not merely projected onto its line. A slot is a
       // hole of a definite length, and dragging the carrier -- or either joint
@@ -2125,7 +2135,11 @@ export class MechanismService {
 
   createForceAtCOM() {
     const com = this.activeObjService.selectedLink.CoM;
-    this.createForce(new Coord(com.x, com.y), new Coord(com.x + 1, com.y + 3));
+    // The default arrow is (1, 3) of the user's units long, in model units.
+    this.createForce(
+      new Coord(com.x, com.y),
+      new Coord(com.x + 1 * MODEL_SCALE, com.y + 3 * MODEL_SCALE)
+    );
   }
 
   createForce(startCoord: Coord, endCoord: Coord): Force | undefined {

@@ -124,7 +124,9 @@ export class SynthesisPanelComponent implements OnInit {
   }
 
   private convertL(value: number): string {
-    return this.nup.formatValueAndUnit(value, this.settings.lengthUnit.getValue());
+    // Pose coordinates and the end-effector length live in internal model
+    // units; the form speaks the user's unit.
+    return this.nup.formatModelLength(value, this.settings.lengthUnit.getValue());
   }
 
   private convertA(value: number): string {

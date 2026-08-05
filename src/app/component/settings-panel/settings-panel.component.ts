@@ -8,6 +8,7 @@ import { SvgGridService } from '../../services/svg-grid.service';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { Coord } from '../../model/coord';
 import { combineLatest, Subscription } from 'rxjs';
+import { MODEL_SCALE } from '../../model/render-scale';
 
 @Component({
   selector: 'app-settings-panel',
@@ -38,7 +39,9 @@ export class SettingsPanelComponent implements OnDestroy {
     this.currentForceUnit = this.settingsService.forceUnit.value;
     this.currentAngleUnit = this.settingsService.angleUnit.value;
     this.currentGlobalUnit = this.settingsService.globalUnit.value;
-    this.currentObjectScaleSetting = SettingsService.objectScale;
+    // The form shows the scale in the user's frame; internally it is
+    // MODEL_SCALE times larger (render-scale.ts), like every other length.
+    this.currentObjectScaleSetting = SettingsService.objectScale / MODEL_SCALE;
 
     this.settingsForm.patchValue({
       objectScale: this.currentObjectScaleSetting.toString(),
@@ -52,7 +55,7 @@ export class SettingsPanelComponent implements OnDestroy {
 
     this.settingsSubscriptions.add(
       SettingsService._objectScale.subscribe((val) => {
-        this.currentObjectScaleSetting = val;
+        this.currentObjectScaleSetting = val / MODEL_SCALE;
         this.settingsForm.patchValue(
           { objectScale: this.currentObjectScaleSetting.toString() },
           { emitEvent: false }
@@ -119,7 +122,7 @@ export class SettingsPanelComponent implements OnDestroy {
         this.settingsForm.patchValue({ objectScale: this.currentObjectScaleSetting.toString() });
       } else {
         this.currentObjectScaleSetting = parsed;
-        SettingsService._objectScale.next(this.currentObjectScaleSetting);
+        SettingsService._objectScale.next(this.currentObjectScaleSetting * MODEL_SCALE);
       }
       this.mechanismSrv.updateMechanism();
     });

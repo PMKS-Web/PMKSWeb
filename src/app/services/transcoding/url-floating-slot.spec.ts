@@ -9,6 +9,11 @@ import { UrlGenerationService } from '../url-generation.service';
 import { Checksum } from './checksum';
 import { MechanismBuilder } from './mechanism-builder';
 import { StringTranscoder } from './string-transcoder';
+import { MODEL_SCALE } from '../../model/render-scale';
+
+// Models are built in internal model units (user units x MODEL_SCALE) so the
+// encoded URLs carry the same user-unit numbers they always have.
+const S = MODEL_SCALE;
 
 function withChecksum(raw: string): string {
   return raw + new Checksum().generateChecksum(raw.length);
@@ -30,13 +35,13 @@ function targetService(): MechanismService {
  */
 function invertedSliderCrank() {
   const a = new RevJoint('A', 0, 0, true, true);
-  const b = new RevJoint('B', 1, 0);
-  const c = new RevJoint('C', 3, 0, false, true);
-  const d = new RevJoint('D', 3, 2);
-  const ab = new RealLink('AB', [a, b], 1, 1, new Coord(0.5, 0));
-  const cd = new RealLink('CD', [c, d], 1, 1, new Coord(3, 1));
+  const b = new RevJoint('B', 1 * S, 0);
+  const c = new RevJoint('C', 3 * S, 0, false, true);
+  const d = new RevJoint('D', 3 * S, 2 * S);
+  const ab = new RealLink('AB', [a, b], 1, 1, new Coord(0.5 * S, 0));
+  const cd = new RealLink('CD', [c, d], 1, 1, new Coord(3 * S, 1 * S));
 
-  const slot = new PrisJoint('P', 1, 0);
+  const slot = new PrisJoint('P', 1 * S, 0);
   slot.slideOn(cd, c, d);
   const block = new SliderBlock('BP', [b, slot], 1);
 
@@ -96,9 +101,9 @@ describe('floating slot URL round-trip', () => {
 
   it('writes no slot tokens for a grounded slider', () => {
     const a = new RevJoint('A', 0, 0, true, true);
-    const b = new RevJoint('B', 1, 0);
-    const ab = new RealLink('AB', [a, b], 1, 1, new Coord(0.5, 0));
-    const slot = new PrisJoint('P', 1, 0, false, true);
+    const b = new RevJoint('B', 1 * S, 0);
+    const ab = new RealLink('AB', [a, b], 1, 1, new Coord(0.5 * S, 0));
+    const slot = new PrisJoint('P', 1 * S, 0, false, true);
     slot.angle_rad = Math.PI / 6;
     const block = new SliderBlock('BP', [b, slot], 1);
     a.links = [ab];

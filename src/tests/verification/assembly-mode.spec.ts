@@ -13,6 +13,7 @@ import { DragStateService } from '../../app/services/drag-state.service';
 import { SynthesisBuilderService } from '../../app/services/synthesis/synthesis-builder.service';
 import { MechanismBuilder } from '../../app/services/transcoding/mechanism-builder';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
+import { MODEL_SCALE } from '../../app/model/render-scale';
 
 // The linkage from issue #199. An exact parallelogram four-bar: A->B and D->C are
 // the same vector, so every revolution the crank lines up with the ground link and
@@ -75,9 +76,10 @@ describe('Assembly mode tracking', () => {
     expect(service.mechanisms[0].isMechanismValid()).toBe(true);
 
     // One degree of crank per sample: no joint on this linkage moves more than a
-    // fraction of a unit per step. The old branch flip moved joint C by ~9.9.
+    // fraction of a user unit per step. The old branch flip moved joint C by
+    // ~9.9. Solved coordinates are model units, so measure in user units.
     const worst = largestStep(service);
-    expect(worst.distance).toBeLessThan(0.5);
+    expect(worst.distance / MODEL_SCALE).toBeLessThan(0.5);
   });
 
   it('keeps every link rigid across the full revolution', () => {
@@ -105,7 +107,7 @@ describe('Assembly mode tracking', () => {
     // Reversing at the fold used to nearly double the sample count; one clean
     // revolution is 360 one-degree steps plus the pose at t = 0.
     expect(service.mechanisms[0].joints.length).toBe(361);
-    expect(largestStep(service).distance).toBeLessThan(0.5);
+    expect(largestStep(service).distance / MODEL_SCALE).toBeLessThan(0.5);
   });
 
   it('keeps a square parallelogram in parallelogram mode the whole revolution', () => {

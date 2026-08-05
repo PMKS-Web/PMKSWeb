@@ -16,6 +16,7 @@ import { SettingsService } from '../settings.service';
 import { AngleUnit, ForceUnit, GlobalUnit, LengthUnit } from 'src/app/model/utils';
 import { BoolSetting, DecimalSetting, EnumSetting, IntSetting } from './stored-settings';
 import { ActiveObjService } from '../active-obj.service';
+import { MODEL_SCALE } from 'src/app/model/render-scale';
 
 /*
  * MechanismBuilder is a class that takes in a decoder and mechanism service and
@@ -46,14 +47,16 @@ export class MechanismBuilder {
   }
 
   // Create Joints from JointData. Joint starts off with no links, to be added later
+  // URLs carry user-unit coordinates; the internal world is MODEL_SCALE times
+  // larger (see render-scale.ts), so every decoded coordinate scales up here.
   private buildJoint(jointData: JointData): Joint {
     let joint;
 
     if (jointData.type === JOINT_TYPE.PRISMATIC) {
       joint = new PrisJoint(
         jointData.id,
-        jointData.x,
-        jointData.y,
+        jointData.x * MODEL_SCALE,
+        jointData.y * MODEL_SCALE,
         jointData.isInput,
         jointData.isGrounded
       );
@@ -61,8 +64,8 @@ export class MechanismBuilder {
     } else {
       joint = new RevJoint(
         jointData.id,
-        jointData.x,
-        jointData.y,
+        jointData.x * MODEL_SCALE,
+        jointData.y * MODEL_SCALE,
         jointData.isInput,
         jointData.isGrounded
       );
@@ -94,7 +97,7 @@ export class MechanismBuilder {
 
     let link;
     if (linkData.type === LINK_TYPE.REAL) {
-      let CoM: Coord = new Coord(linkData.xCoM, linkData.yCoM);
+      let CoM: Coord = new Coord(linkData.xCoM * MODEL_SCALE, linkData.yCoM * MODEL_SCALE);
       link = new RealLink(linkData.id, jointsOnLink, linkData.mass, linkData.massMoI, CoM);
       link.fill = linkData.color;
     } else {
@@ -119,8 +122,8 @@ export class MechanismBuilder {
           candidate.subset.some((subset) => subset.id === forceData.linkID))
     );
 
-    let startCoord = new Coord(forceData.startX, forceData.startY);
-    let endCoord = new Coord(forceData.endX, forceData.endY);
+    let startCoord = new Coord(forceData.startX * MODEL_SCALE, forceData.startY * MODEL_SCALE);
+    let endCoord = new Coord(forceData.endX * MODEL_SCALE, forceData.endY * MODEL_SCALE);
 
     if (!(link instanceof RealLink)) {
       throw new Error('Force can only be applied to RealLink');
@@ -299,7 +302,11 @@ export class MechanismBuilder {
       );
       this.settings.isShowID.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_ID));
       this.settings.isShowCOM.next(this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_COM));
-      SettingsService._objectScale.next(this.transcoder.getDecimalSetting(DecimalSetting.SCALE));
+      // The URL stores the user-unit object scale; the internal one is
+      // MODEL_SCALE times larger, like every other length.
+      SettingsService._objectScale.next(
+        this.transcoder.getDecimalSetting(DecimalSetting.SCALE) * MODEL_SCALE
+      );
     }
 
     this.mechanism.mechanismTimeStep = this.transcoder.getIntSetting(IntSetting.TIMESTEP);

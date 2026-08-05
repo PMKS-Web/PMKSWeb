@@ -4,6 +4,12 @@ import { RealLink, SliderBlock } from '../../app/model/link';
 import { describeCylinder, resolveCylinder } from '../../app/model/cylinder';
 import { MARK } from '../../app/model/joint-marks';
 import { SettingsService } from '../../app/services/settings.service';
+import { MODEL_SCALE } from '../../app/model/render-scale';
+
+// Geometry is built in internal model units (user units x MODEL_SCALE) so the
+// shape-to-mark proportions match what the app actually renders. Options that
+// are already model-unit quantities (derived from objectScale) pass through.
+const S = MODEL_SCALE;
 
 // §2.7. A piston is not a new joint type -- it is a Slide whose rod and barrel
 // happen to line up, drawn as the part an engineer would recognise. The test is
@@ -15,11 +21,11 @@ import { SettingsService } from '../../app/services/settings.service';
  * reaching out to T on the far side of P from N.
  */
 function piston(options: { rodAt?: [number, number]; barrelFarAt?: [number, number] } = {}) {
-  const [rodX, rodY] = options.rodAt ?? [6, 0];
-  const [barX, barY] = options.barrelFarAt ?? [-8, 0];
+  const [rodX, rodY] = options.rodAt ?? [6 * S, 0];
+  const [barX, barY] = options.barrelFarAt ?? [-8 * S, 0];
 
   const m = new RevJoint('M', barX, barY);
-  const n = new RevJoint('N', -1, 0);
+  const n = new RevJoint('N', -1 * S, 0);
   const p = new RevJoint('P', 0, 0);
   const t = new RevJoint('T', rodX, rodY);
   const slider = new PrisJoint('S', 0, 0);
@@ -56,13 +62,13 @@ describe('recognising a cylinder', () => {
   it('declines a rod that is not on the slot line', () => {
     // A bent assembly drawn as a straight part would claim geometry the
     // mechanism does not have.
-    expect(resolveCylinder(piston({ rodAt: [6, 2] }).p)).toBeUndefined();
+    expect(resolveCylinder(piston({ rodAt: [6 * S, 2 * S] }).p)).toBeUndefined();
   });
 
   it('declines a rod on the same side as the barrel', () => {
     // Both ends pointing the same way is not a piston; the ordinary channel
     // drawing is the honest one.
-    expect(resolveCylinder(piston({ rodAt: [-6, 0] }).p)).toBeUndefined();
+    expect(resolveCylinder(piston({ rodAt: [-6 * S, 0] }).p)).toBeUndefined();
   });
 
   it('declines a Slot — the rider has to be welded to the block', () => {
@@ -83,7 +89,7 @@ describe('recognising a cylinder', () => {
     // Three joints on the rod is a body with its own shape, and hiding it
     // inside a cylinder would lose a joint the user placed.
     const scene = piston();
-    const extra = new RevJoint('U', 3, 4);
+    const extra = new RevJoint('U', 3 * S, 4 * S);
     scene.rod.joints.push(extra);
     extra.links.push(scene.rod);
 
@@ -92,7 +98,7 @@ describe('recognising a cylinder', () => {
 
   it('declines a barrel carrying more than two joints', () => {
     const scene = piston();
-    const extra = new RevJoint('V', -4, 3);
+    const extra = new RevJoint('V', -4 * S, 3 * S);
     scene.barrel.joints.push(extra);
     extra.links.push(scene.barrel);
 
@@ -107,14 +113,15 @@ describe('recognising a cylinder', () => {
     const inside = MARK.blockAcrossHalf * 0.15 * SettingsService.objectScale * 0.9;
     const outside = MARK.blockAcrossHalf * 0.15 * SettingsService.objectScale * 1.1;
 
-    expect(resolveCylinder(piston({ rodAt: [6, inside] }).p)).toBeDefined();
-    expect(resolveCylinder(piston({ rodAt: [6, outside] }).p)).toBeUndefined();
+    // `inside`/`outside` are objectScale-derived and so already model units.
+    expect(resolveCylinder(piston({ rodAt: [6 * S, inside] }).p)).toBeDefined();
+    expect(resolveCylinder(piston({ rodAt: [6 * S, outside] }).p)).toBeUndefined();
   });
 
   it('says what is missing when the shape does not qualify', () => {
     // The panel offers the picker to any Slide now, so the reason has to be
     // readable by someone who does not yet have a cylinder.
-    const bent = describeCylinder(piston({ rodAt: [6, 2] }).p);
+    const bent = describeCylinder(piston({ rodAt: [6 * S, 2 * S] }).p);
 
     expect(typeof bent).toBe('string');
     expect(bent).toContain('line up');
@@ -124,7 +131,7 @@ describe('recognising a cylinder', () => {
     // Positions come out of a numeric solve, so exact collinearity never
     // survives to the renderer. A test at machine epsilon would make the skin
     // flicker on and off between timesteps.
-    const scene = piston({ rodAt: [6, 1e-9] });
+    const scene = piston({ rodAt: [6 * S, 1e-9] });
 
     expect(resolveCylinder(scene.p, 1e-6)).toBeDefined();
   });

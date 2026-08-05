@@ -7,6 +7,7 @@ import { SettingsService } from '../../app/services/settings.service';
 import { MechanismBuilder } from '../../app/services/transcoding/mechanism-builder';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
 import { createMechanismHarness } from '../../test-utils/mechanism-harness';
+import { MODEL_SCALE } from '../../app/model/render-scale';
 
 /**
  * Two blocks riding one bar, each pushed by its own crank off a common ground
@@ -72,8 +73,9 @@ describe('two slots cut into one carrier', () => {
     expect(worst.size, 'both sliders were measured').toBe(2);
     for (const [id, across] of worst) {
       // A block off its slot is not sliding on anything. The tolerance is the
-      // solver's own rounding, not a licence to drift.
-      expect(across, `${id} stays on its slot`).toBeLessThan(1e-3);
+      // solver's own rounding, not a licence to drift — measured in user
+      // units, since the solved coordinates are model units.
+      expect(across / MODEL_SCALE, `${id} stays on its slot`).toBeLessThan(1e-3);
     }
   });
 });

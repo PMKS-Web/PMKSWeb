@@ -8,6 +8,7 @@ import {
   AngularVelocityUnit,
 } from '../model/unit-enums';
 import type { ForceAnalysisMode } from '../model/mechanism/force-solver';
+import { MODEL_SCALE } from '../model/render-scale';
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +39,9 @@ export class SettingsService {
   tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit
 
   isGridDebugOn: boolean = false;
-  static _objectScale = new BehaviorSubject(1);
+  // 1 in user units; the internal world is MODEL_SCALE times larger, and every
+  // visual size in the mark system is a multiple of this number.
+  static _objectScale = new BehaviorSubject(1 * MODEL_SCALE);
 
   static get objectScale(): number {
     return SettingsService._objectScale.value;

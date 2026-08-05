@@ -1,4 +1,4 @@
-import { MechanismFixture, buildMechanism } from './fixture';
+import { MechanismFixture, BuiltMechanism, buildMechanism } from './fixture';
 import {
   sliderCrankTracerFixture,
   stephensonIiiEx2Fixture,
@@ -23,6 +23,8 @@ import { SettingsService } from '../../app/services/settings.service';
 import { ActiveObjService } from '../../app/services/active-obj.service';
 import { ColorService } from '../../app/services/color.service';
 import { UrlGenerationService } from '../../app/services/url-generation.service';
+import { Link, RealLink } from '../../app/model/link';
+import { MODEL_SCALE } from '../../app/model/render-scale';
 
 /**
  * Every mechanism the verification suite asserts on, as something a reviewer
@@ -33,8 +35,41 @@ import { UrlGenerationService } from '../../app/services/url-generation.service'
  * failing test is about, instead of reading coordinates out of a spec file and
  * rebuilding it by hand.
  */
-/** The scale a freshly opened app uses; pinned so payloads do not drift. */
-const DEFAULT_OBJECT_SCALE = 1;
+/**
+ * The scale a freshly opened app uses; pinned so payloads do not drift. In
+ * internal units: the encoder divides by MODEL_SCALE, so the URL stores 1.
+ */
+const DEFAULT_OBJECT_SCALE = 1 * MODEL_SCALE;
+
+/**
+ * Lift a fixture-built mechanism from user units into the internal model
+ * world (render-scale.ts).
+ *
+ * Fixtures stay in the user's units because the solver specs assert MATLAB
+ * numbers against them directly. Encoding, though, happens at the codec
+ * boundary, where coordinates are internal and divide by MODEL_SCALE on the
+ * way out — so the copy built for a URL scales up first, and the published
+ * payload carries exactly the numbers it always has.
+ */
+function scaleBuiltToModelUnits(built: BuiltMechanism): void {
+  built.joints.forEach((joint) => {
+    joint.x *= MODEL_SCALE;
+    joint.y *= MODEL_SCALE;
+  });
+  const scaleLink = (link: Link): void => {
+    if (!(link instanceof RealLink)) return;
+    link.CoM.x *= MODEL_SCALE;
+    link.CoM.y *= MODEL_SCALE;
+    link.subset.forEach(scaleLink);
+  };
+  built.links.forEach(scaleLink);
+  built.forces.forEach((force) => {
+    force.startCoord.x *= MODEL_SCALE;
+    force.startCoord.y *= MODEL_SCALE;
+    force.endCoord.x *= MODEL_SCALE;
+    force.endCoord.y *= MODEL_SCALE;
+  });
+}
 
 export interface GalleryEntry {
   name: string;
@@ -170,6 +205,7 @@ export function fixturePayload(fixture: MechanismFixture): string {
   SettingsService._objectScale.next(DEFAULT_OBJECT_SCALE);
   try {
     const built = buildMechanism(fixture);
+    scaleBuiltToModelUnits(built);
     return new UrlGenerationService(
       {
         joints: built.joints,

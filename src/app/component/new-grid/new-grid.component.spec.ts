@@ -9,6 +9,7 @@ import { MechanismService } from '../../services/mechanism.service';
 import { SvgGridService } from '../../services/svg-grid.service';
 import { NewGridComponent } from './new-grid.component';
 import { SelectedTabService, TabID } from '../../selected-tab.service';
+import { MODEL_SCALE } from '../../model/render-scale';
 
 /**
  * NewGridComponent renders through svg-pan-zoom, which needs real SVG layout;
@@ -31,14 +32,6 @@ async function configureGridTestBed() {
     horizontalLinesMinor: [],
     verticalLines: [],
     verticalLinesMinor: [],
-    horizontalLinesScreen: [],
-    horizontalLinesMinorScreen: [],
-    verticalLinesScreen: [],
-    verticalLinesMinorScreen: [],
-    screenWidth: 100,
-    screenHeight: 100,
-    axisXScreen: 50,
-    axisYScreen: 50,
     viewBoxMinX: -10,
     viewBoxMaxX: 10,
     viewBoxMinY: -10,
@@ -61,9 +54,11 @@ describe('NewGridComponent welded SVG presentation', () => {
   it('renders one filleted root path plus dotted constituent paths when selected', () => {
     const mechanism = TestBed.inject(MechanismService);
     const active = TestBed.inject(ActiveObjService);
+    // Model units (user units x MODEL_SCALE), so the link geometry and the
+    // objectScale-derived link width keep the proportions the app renders at.
     const a = new RevJoint('A', 0, 0, true, true);
-    const b = new RevJoint('B', 0, 4);
-    const c = new RevJoint('C', 3, 5);
+    const b = new RevJoint('B', 0, 4 * MODEL_SCALE);
+    const c = new RevJoint('C', 3 * MODEL_SCALE, 5 * MODEL_SCALE);
     const ab = new RealLink('AB', [a, b]);
     const bc = new RealLink('BC', [b, c]);
     const compound = new RealLink('ABC', [a, b, c], 2, 1, undefined, [ab, bc]);
