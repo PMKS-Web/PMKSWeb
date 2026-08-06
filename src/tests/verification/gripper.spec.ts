@@ -5,6 +5,7 @@ import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { gripperFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
+import { SettingsService } from '../../app/services/settings.service';
 
 // §2.7a: the first mechanism in this suite that no chain of dyads can solve.
 //
@@ -28,6 +29,11 @@ interface Frame {
 }
 
 function frames(): Frame[] {
+  // objectScale is a process-wide static, and the cylinder's stroke is measured
+  // against it — the slot is drawn in mark units. Left to whatever the last
+  // spec in the run happened to set, this mechanism's travel changes with the
+  // file order, which is exactly how it passed here and failed in CI.
+  SettingsService._objectScale.next(1 * MODEL_SCALE);
   const { mechanism } = buildMechanism(gripperFixture(S));
   return mechanism.joints.map((joint) => {
     const at = (id: string) => joint.find((candidate) => candidate.id === id)!;
