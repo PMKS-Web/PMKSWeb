@@ -209,3 +209,53 @@ describe('a boom driven by its cylinder', () => {
     expect(period).toBeCloseTo(travelled / EXTENSION_SPEED, 6);
   });
 });
+
+// The same boom with the cylinder turned end for end: the barrel now rides the
+// moving member and the rod's mount is the grounded one. Worth its own case
+// because the walk has to choose which mount the mechanism already holds and
+// drive the other, and the two ends are not symmetric in the model — the
+// barrel carries the slot, the rod carries the pin.
+describe('a boom driven by a cylinder mounted the other way round', () => {
+  const reversedFixture = (): MechanismFixture => {
+    // Axis C -> G: barrel out from the boom tip, rod back to ground.
+    const c = { x: 0, y: BOOM };
+    const g = { x: BASE, y: 0 };
+    const span = Math.hypot(g.x - c.x, g.y - c.y);
+    const along = (d: number) => ({
+      x: (c.x + ((g.x - c.x) * d) / span) * S,
+      y: (c.y + ((g.y - c.y) * d) / span) * S,
+    });
+    return {
+      joints: [
+        { id: 'O', x: 0, y: 0, ground: true },
+        { id: 'C', x: c.x * S, y: c.y * S },
+        { id: 'G', x: g.x * S, y: g.y * S, ground: true },
+        { id: 'N', ...along(BARREL_LENGTH) },
+        { id: 'P', ...along(PIN_FROM_MOUNT) },
+      ],
+      links: [{ joints: 'OC' }, { joints: 'CN' }, { joints: 'PG' }],
+      slider: {
+        at: 'P',
+        prisId: 'S',
+        on: { carrier: 'CN', a: 'C', b: 'N' },
+        sealed: true,
+        input: true,
+      },
+      welds: ['P'],
+      inputAngVel: EXTENSION_SPEED * S,
+    };
+  };
+
+  it('solves, and the boom still follows the law of cosines', () => {
+    const { mechanism } = buildMechanism(reversedFixture());
+    expect(mechanism.joints.length).toBeGreaterThan(2);
+
+    for (const frame of mechanism.joints) {
+      const at = (id: string): Joint => frame.find((joint) => joint.id === id)!;
+      const [o, c, g] = ['O', 'C', 'G'].map(at);
+      const span = Math.hypot(c.x - g.x, c.y - g.y) / S;
+      expect(Math.hypot(c.x - o.x, c.y - o.y) / S).toBeCloseTo(BOOM, 6);
+      expect(Math.atan2(c.y - o.y, c.x - o.x)).toBeCloseTo(thetaFor(span), 6);
+    }
+  });
+});
