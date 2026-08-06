@@ -1025,7 +1025,11 @@ export class NewGridComponent {
           // A sealed cylinder's interior joints are not attachment points, so
           // they never capture a drop; the mounts remain ordinary targets.
           this.mechanismSrv.joints.filter((joint) => !this.isCylinderInterior(joint)),
-          this.snapRadius()
+          this.snapRadius(),
+          // The full structural picture rides along separately: the filtered
+          // list above cannot answer mount questions (the pins are gone), and
+          // this is the cached list, not a per-move derivation.
+          this.mechanismSrv.sealedStructures()
         );
     this.setDropCandidate(candidate);
 
@@ -1852,12 +1856,39 @@ export class NewGridComponent {
    * The sealed cylinders, always wearing their skin. Sealed ⇔ skinned: there
    * is no reveal on selection and no per-session preference any more.
    */
+  private cylinderListCache?: {
+    revision: number;
+    scale: number;
+    forward: boolean;
+    list: CylinderMark[];
+  };
+
+  /**
+   * The drawn cylinder marks, cached per mechanism revision. This getter runs
+   * for every template binding on every change-detection pass — dozens of
+   * times per pointer move — and each uncached call re-resolved every
+   * assembly and rebuilt every path string, which is where the quarter-second
+   * interaction stutters came from.
+   */
   get cylinderList(): CylinderMark[] {
-    return this.sliderMarks.cylinderMarks(
-      this.mechanismSrv.getJoints(),
-      0.15 * this.settings.objectScale,
-      !this.settings.isInputCW.value
-    );
+    const revision = this.mechanismSrv.cylinderRevision;
+    const scale = this.settings.objectScale;
+    const forward = !this.settings.isInputCW.value;
+    const cache = this.cylinderListCache;
+    if (
+      !cache ||
+      cache.revision !== revision ||
+      cache.scale !== scale ||
+      cache.forward !== forward
+    ) {
+      this.cylinderListCache = {
+        revision,
+        scale,
+        forward,
+        list: this.sliderMarks.cylinderMarks(this.mechanismSrv.getJoints(), 0.15 * scale, forward),
+      };
+    }
+    return this.cylinderListCache!.list;
   }
 
   /** Whether the selection is this cylinder's body, however it was selected. */

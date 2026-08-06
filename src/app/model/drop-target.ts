@@ -1,6 +1,6 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from './joint';
 import { Link, RealLink, SliderBlock } from './link';
-import { sealedCylinderStructures } from './cylinder';
+import { Cylinder, cylinderJoints, sealedCylinderStructures } from './cylinder';
 
 /** Why a candidate joint cannot receive the joint being dragged. */
 export type MergeRefusal =
@@ -156,7 +156,7 @@ export function resolveJointDropTarget(
 
   joints.forEach((candidate) => {
     if (!(candidate instanceof RevJoint)) return;
-    if (refuseJointMerge(source, candidate, joints)) return;
+    if (refuseJointMerge(source, candidate)) return;
     const distance = Math.hypot(candidate.x - x, candidate.y - y);
     if (distance < bestDistance) {
       bestDistance = distance;
@@ -287,17 +287,47 @@ export function resolveDropCandidate(
   x: number,
   y: number,
   joints: Joint[],
-  radius: number
+  radius: number,
+  /**
+   * Precomputed sealed-cylinder structures, from the service's per-revision
+   * cache. Passed in rather than derived here for two reasons: the caller's
+   * `joints` list is already filtered (the interior pins the structural
+   * resolution enters through are gone, so deriving from it finds nothing —
+   * which is how the mount rules silently skipped the drag and the refusal
+   * appeared only at release, with no ring); and deriving per candidate per
+   * pointermove is exactly the kind of quadratic work the stutter came from.
+   */
+  cylinders: Cylinder[] = []
 ): JointDropCandidate | undefined {
   let best: JointDropCandidate | undefined;
   let bestDistance = radius;
+  const sourceCylinder = cylinders.find((c) =>
+    cylinderJoints(c).some((member) => member.id === source.id)
+  );
+  const mountOf = (joint: Joint) =>
+    cylinders.find((c) => c.barrelFar.id === joint.id || c.rodFar.id === joint.id);
 
   joints.forEach((candidate) => {
     if (!(candidate instanceof RevJoint)) return;
     // The joint under the cursor is the one being dragged; pointing at itself is
     // not a near miss worth reporting.
     if (candidate.id === source.id) return;
-    const refusal = refuseJointMerge(source, candidate, joints);
+    // A joint of the dragged mount's own cylinder is not a target at all —
+    // like the far end of a held link, the drawing already says they are one
+    // part, so there is nothing to mark red and a legal joint further out can
+    // still win.
+    if (sourceCylinder && cylinderJoints(sourceCylinder).some((m) => m.id === candidate.id)) {
+      return;
+    }
+    let refusal = refuseJointMerge(source, candidate);
+    // A weld may not land on a mount, from either side; the ring says so live.
+    if (
+      !refusal &&
+      source instanceof RealJoint &&
+      ((mountOf(source) && candidate.isWelded) || (mountOf(candidate) && source.isWelded))
+    ) {
+      refusal = 'welded-mount';
+    }
     // Nor is the other end of the link you are holding. Marking that in red
     // would be explaining something the drawing already says — the two have a
     // bar between them — so it is not a target at all, and a legal joint

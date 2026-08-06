@@ -207,8 +207,16 @@ export function cylinderJoints(cylinder: Cylinder): Joint[] {
  * route asks, and it must hold even while the geometry is momentarily wrong.
  */
 export function cylinderOfJoint(joints: Joint[], joint: Joint | undefined): Cylinder | undefined {
+  return cylinderOfJointIn(sealedCylinderStructures(joints), joint);
+}
+
+/** Same membership question against a precomputed structure list. */
+export function cylinderOfJointIn(
+  cylinders: Cylinder[],
+  joint: Joint | undefined
+): Cylinder | undefined {
   if (!joint) return undefined;
-  return sealedCylinderStructures(joints).find((cylinder) =>
+  return cylinders.find((cylinder) =>
     cylinderJoints(cylinder).some((member) => member.id === joint.id)
   );
 }
@@ -226,6 +234,25 @@ export function cylinderOfLink(joints: Joint[], link: Link | undefined): Cylinde
     );
   };
   return sealedCylinderStructures(joints).find((cylinder) => containsMember(link, cylinder));
+}
+
+/** The link-membership question against a precomputed structure list. */
+export function cylinderOfLinkIn(
+  cylinders: Cylinder[],
+  link: Link | undefined
+): Cylinder | undefined {
+  if (!link) return undefined;
+  const memberIds = (cylinder: Cylinder) => [
+    cylinder.barrel.id,
+    cylinder.rod.id,
+    cylinder.block.id,
+  ];
+  return cylinders.find(
+    (cylinder) =>
+      memberIds(cylinder).includes(link.id) ||
+      (link instanceof RealLink &&
+        link.subset.some((leaf) => memberIds(cylinder).includes(leaf.id)))
+  );
 }
 
 /** The joints of a cylinder that get no hitbox, hover or selection at all. */
@@ -255,7 +282,7 @@ export interface CylinderCreation extends CylinderPose {
  * from R at R = 0.15 · objectScale.
  */
 export const CYLINDER_MIN_SPAN_SCALE =
-  0.75 - 0.15 * MARK.slotInset + 0.15 * 1.7 * MARK.blockAlongHalf;
+  1.3 - 0.15 * MARK.slotInset + 0.15 * 1.7 * MARK.blockAlongHalf;
 
 /**
  * Lay out a new cylinder from the two points of the creation gesture: the
@@ -363,11 +390,9 @@ export interface CylinderPose {
  * shorter barrel would wear a slot longer than itself); the rod's minimum
  * clears the block with room for its mount's pin.
  */
-// 0.75 and 5 objectScale, by review: the barrel's working range. At the very
-// minimum the block overhangs the mount's cap slightly — the compact pose
-// trades that corner for the shorter part the review asked for.
-const BARREL_MIN_R = 0.75 / 0.15;
-const BARREL_MAX_R = 5 / 0.15;
+// 1.3 and 2 objectScale, by review: the barrel's working range.
+const BARREL_MIN_R = 1.3 / 0.15;
+const BARREL_MAX_R = 2 / 0.15;
 const ROD_MIN_R = 1.7 * MARK.blockAlongHalf;
 const SPAN_MIN_R = BARREL_MIN_R - MARK.slotInset + ROD_MIN_R;
 

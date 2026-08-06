@@ -6,7 +6,9 @@ import {
   Cylinder,
   cylinderCreationLayout,
   cylinderOfJoint,
+  cylinderOfJointIn,
   cylinderOfLink,
+  cylinderOfLinkIn,
   isCylinderInterior,
   normalizedCylinderPose,
   sealedCylinderStructures,
@@ -159,7 +161,11 @@ export class MechanismService {
   }
 
   updateMechanism(save: boolean = false) {
-    console.log('update mechanism', save);
+    // Everything derived from cylinder STRUCTURE (not pose) caches against
+    // this: the structures themselves, the drawn marks, the guards. Bumped
+    // here because this is the one funnel every mutation passes through, so
+    // within a revision the topology cannot have changed.
+    this.cylinderRevision++;
     Force.normalizeVisualWidths(this.forces);
     // Changing the input speed re-samples the same geometry onto a different time
     // axis. Hold the simulation time rather than the sample index, so t and the pose
@@ -242,7 +248,7 @@ export class MechanismService {
    * rounding every drag applies, so the common case writes nothing.
    */
   private normalizeSealedCylinders(): void {
-    for (const sealed of sealedCylinderStructures(this.joints)) {
+    for (const sealed of this.sealedStructures()) {
       const barrelLength = getDistance(
         new Coord(sealed.barrelFar.x, sealed.barrelFar.y),
         new Coord(sealed.barrelNear.x, sealed.barrelNear.y)
@@ -712,7 +718,7 @@ export class MechanismService {
     // into the pin would hang a third joint on the rod (or a second link on
     // the block) and break the part. The two mounts remain legal targets —
     // they are exactly where a cylinder attaches to the rest of the linkage.
-    const cylinders = sealedCylinderStructures(this.joints);
+    const cylinders = this.sealedStructures();
     if (
       cylinders.some(
         (sealed) => isCylinderInterior(sealed, source) || isCylinderInterior(sealed, target)
@@ -857,7 +863,7 @@ export class MechanismService {
     // back into the neighbour's own bar — which is what the deletion then
     // operates on — and the cylinder stands untouched.
     const doomed = this.activeObjService.selectedJoint;
-    for (const cyl of sealedCylinderStructures(this.joints)) {
+    for (const cyl of this.sealedStructures()) {
       for (const mount of [cyl.barrelFar, cyl.rodFar]) {
         if (
           mount instanceof RealJoint &&
@@ -1333,10 +1339,31 @@ export class MechanismService {
     this.finishStructuralEdit(true);
   }
 
+  /** Bumped by updateMechanism; consumers key caches on it. */
+  cylinderRevision = 0;
+  private structuresCache?: { revision: number; list: Cylinder[] };
+
+  /**
+   * The sealed cylinders, by structure, cached per revision. The structural
+   * walk is O(joints) with an assembly resolution per joint, and it was being
+   * re-run by every guard, label, mark list and hover check on every change
+   * detection pass — dozens of times per pointer move. One list per revision
+   * is the same answer at none of the cost.
+   */
+  sealedStructures(): Cylinder[] {
+    if (this.structuresCache?.revision !== this.cylinderRevision) {
+      this.structuresCache = {
+        revision: this.cylinderRevision,
+        list: sealedCylinderStructures(this.joints),
+      };
+    }
+    return this.structuresCache.list;
+  }
+
   /** The sealed cylinder a joint or link belongs to, if any. */
   cylinderAt(obj: Joint | Link | undefined): Cylinder | undefined {
-    if (obj instanceof Joint) return cylinderOfJoint(this.joints, obj);
-    if (obj instanceof Link) return cylinderOfLink(this.joints, obj);
+    if (obj instanceof Joint) return cylinderOfJointIn(this.sealedStructures(), obj);
+    if (obj instanceof Link) return cylinderOfLinkIn(this.sealedStructures(), obj);
     return undefined;
   }
 
