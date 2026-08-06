@@ -286,7 +286,17 @@ export class Mechanism {
     // A Slide's rider and block share one joint, so the shared-joint rule above
     // cannot see the weld that makes them one body. Left uncounted, the extra
     // freedom is real to Gruebler and a Scotch yoke reports DOF 2.
-    return groupRigidBodies(this.links[0], slideAssemblies(this.joints[0]).map(assemblyBodyIds));
+    //
+    // Links pinned to ground at every joint are merged with each other for the
+    // same reason: they cannot move, so they are one body — the world's. Which
+    // body that is gets settled in the count below, where the world exists.
+    const anchored = this.links[0]
+      .filter((link) => link.joints.length > 0 && link.joints.every((j) => (j as RealJoint).ground))
+      .map((link) => link.id);
+    return groupRigidBodies(this.links[0], [
+      ...slideAssemblies(this.joints[0]).map(assemblyBodyIds),
+      anchored,
+    ]);
   }
 
   /**
@@ -298,55 +308,64 @@ export class Mechanism {
    */
   determineDegreesOfFreedom() {
     const rigidBody = this.determineRigidBodies();
-    // A joint's mobility cost is set by how many distinct bodies meet there, not
-    // how many links: pins between links of the same rigid body are redundant.
-    const bodiesAt = (joint: RealJoint) =>
-      new Set(joint.links.map((l) => rigidBody.get(l.id) ?? l.id)).size;
+    /** The world: one body, however many anchored bars are drawn on top of it. */
+    const WORLD = ' world';
+    const groupOf = (link: Link) => rigidBody.get(link.id) ?? link.id;
+    // A group every one of whose links is pinned down at every joint *is* the
+    // world. Deciding it per group rather than per link keeps a rail that has
+    // been merged with something movable out of the world by mistake.
+    const anchoredGroups = new Set(
+      [...new Set(this.links[0].map(groupOf))].filter((group) =>
+        this.links[0]
+          .filter((link) => groupOf(link) === group)
+          .every(
+            (link) => link.joints.length > 0 && link.joints.every((j) => (j as RealJoint).ground)
+          )
+      )
+    );
+    const bodyOf = (link: Link) => (anchoredGroups.has(groupOf(link)) ? WORLD : groupOf(link));
 
-    let N = new Set(rigidBody.values()).size;
-    let J1 = 0;
-    const J2 = 0;
-    let groundNotFound = true;
-
-    this.joints[0].forEach((j) => {
-      // TODO: Account for this instance later
-      switch (j.constructor) {
-        case RevJoint:
-          if (!(j instanceof RevJoint)) {
-            return;
-          }
-          if (j.ground) {
-            J1 += bodiesAt(j);
-            if (groundNotFound) {
-              N++;
-              groundNotFound = false;
-            }
-          } else {
-            J1 += bodiesAt(j) - 1;
-          }
-          break;
-        case PrisJoint:
-          if (!(j instanceof PrisJoint)) {
-            return;
-          }
-          // A prismatic pair costs one lower pair either way. What differs is
-          // the body on the far side of it: ground for a grounded slot, the
-          // carrier link for a floating one — and the carrier is already
-          // counted, since it is an ordinary link.
-          J1 += bodiesAt(j);
-          // A guide fixed in the world anchors the mechanism just as a grounded
-          // pin does. Without this, a linkage held only by its slides — an
-          // elliptical trammel, say — has no ground body and reports NaN.
-          if (j.ground && groundNotFound) {
-            N++;
-            groundNotFound = false;
-          }
-          break;
+    /**
+     * Every distinct body meeting at a joint, the world among them.
+     *
+     * One rule for both joint types, because it is one question. A pin joins
+     * the bodies of its links, plus the world if it is grounded; a sliding
+     * joint joins its block to whatever the slot is cut into — the world for a
+     * fixed guide, the carrier for a floating one. What a joint *costs* is then
+     * always one less than the number of bodies it holds together, which is
+     * what makes a bar pinned to ground at both ends cost nothing: only one
+     * body meets at each of its ends, and that body is the world.
+     */
+    const bodiesAt = (joint: RealJoint): number => {
+      const bodies = new Set(joint.links.map(bodyOf));
+      if (joint.ground) {
+        bodies.add(WORLD);
       }
-    });
-    if (groundNotFound) {
+      if (joint instanceof PrisJoint && !joint.ground) {
+        // A slider with no carrier and no ground slides against nothing. It is
+        // an invalid mechanism either way; naming the absent body keeps the
+        // reported number the one this case has always reported.
+        bodies.add(joint.carrier ? bodyOf(joint.carrier) : ' dangling' + joint.id);
+      }
+      return bodies.size;
+    };
+
+    const hasGround = this.joints[0].some((j) => j instanceof RealJoint && j.ground);
+    if (!hasGround) {
       return NaN;
     }
+
+    const bodies = new Set(this.links[0].map(bodyOf));
+    bodies.add(WORLD);
+    const N = bodies.size;
+    let J1 = 0;
+    const J2 = 0;
+    this.joints[0].forEach((j) => {
+      if (!(j instanceof RealJoint)) {
+        return;
+      }
+      J1 += Math.max(bodiesAt(j) - 1, 0);
+    });
     return 3 * (N - 1) - 2 * J1 - J2;
   }
 
@@ -370,6 +389,8 @@ export class Mechanism {
     const angularSpeed = Math.abs(inputAngVel);
     PositionSolver.resetStaticVariables();
     PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
+    // Before anything is measured from t = 0, put t = 0 on its own constraints.
+    PositionSolver.settleInitialPose(this.joints[0]);
     PositionSolver.setUpSolvingForces(this.forces[0]);
 
     // How far one sample advances the input: a degree of crank for a revolute

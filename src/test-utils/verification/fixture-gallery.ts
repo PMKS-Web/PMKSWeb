@@ -9,6 +9,7 @@ import {
 import {
   cylinderBoomFixture,
   cylinderSkinFixture,
+  gripperFixture,
   ellipticalTrammelFixture,
   invertedSliderCrankFixture,
   loadedInvertedSliderCrankFixture,
@@ -101,6 +102,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: true,
     slide: true,
     fixture: cylinderBoomFixture(),
+  },
+  {
+    name: 'Cylinder-driven gripper',
+    purpose: '§2.7a: no chain of dyads solves this — the plate and both arms settle together',
+    spec: 'gripper.spec.ts, anchored-bar-mobility.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: gripperFixture(),
   },
   {
     name: 'Inverted slider-crank',

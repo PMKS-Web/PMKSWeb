@@ -638,6 +638,31 @@ without redesigning the ordering:
 4. The exit calls a **strategy**. v1 ships exactly one: report unsolvable, naming the joints it
    could not order.
 
+**Built in Phase 5** (`simultaneous-solver.ts`), against a real mechanism a user shared: a
+cylinder-driven toggle gripper whose plate reaches two arms through four links, each arm riding two
+fixed rails. The ordering walk emits *zero* steps for it — there is no joint anywhere in it that two
+known joints locate.
+
+The shape the section anticipated was right, and three things about it were not obvious in advance:
+
+- **The constraint set is small and mechanical to derive.** A link holds its joints at fixed
+  distances (2n−3 of them, not every pair), a block is a single point, a slider stays on its slot, a
+  weld keeps a rider parallel to the slot it rides, and the drive prescribes one length. The
+  gripper comes out as 36 residuals in 36 unknowns.
+- **Newton is the wrong solver, and fails on exactly the mechanisms this exists for.** A toggle
+  clamp works *because* it sits near a dead-centre, and there the Jacobian is nearly singular:
+  undamped steps fly off, and a finite-difference Jacobian is not accurate enough to recover.
+  Levenberg–Marquardt with an analytic Jacobian converges; both were needed, and the second only
+  became visible once the first was in place.
+- **A mechanism drawn on its own limit is normal, not pathological.** A toggle clamp is drawn
+  clamped. The solve at the fold is singular, so `settleInitialPose` settles at the nearest command
+  that can be reached — thousandths of a sample away — and the return leg reinstates a pose it
+  solved on the way out rather than re-deriving one at the singularity. Without those two, the
+  cycle never closes and the run ends at the sample cap calling the mechanism invalid.
+
+Item 3's residual library exists as `residuals()`, and it earns its keep exactly as predicted: the
+Jacobian is checked against it, and the gripper spec checks the solved poses against it.
+
 If the fallback does land, it is Newton–Raphson (or Levenberg–Marquardt for damping near
 singularities) over the unsolved joint coordinates, with equations of the form
 `(xᵢ−xⱼ)² + (yᵢ−yⱼ)² − Lᵢⱼ² = 0` for rigid links and `(P − A) × û = 0` for slots, **seeded from

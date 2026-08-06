@@ -340,3 +340,91 @@ export function cylinderBoomFixture(scale: number = 1): MechanismFixture {
     inputAngVel: INPUT_SPEED * scale,
   };
 }
+
+/**
+ * A cylinder-driven gripper, drawn by a user and shared as a URL.
+ *
+ * Worth keeping exactly as drawn — hand-placed coordinates, near-symmetric
+ * rather than symmetric — because it is the first mechanism in this suite that
+ * no chain of dyads can solve. The cylinder A→D pushes the plate DGHIJ; the
+ * plate reaches two arms MQS and TVX through four short links; and each arm has
+ * two points riding two vertical rails. The plate's pose and the two arms are
+ * one simultaneous system of five unknowns, so it needs § 2.7a rather than the
+ * ordering walk.
+ *
+ * It also has two bars pinned to ground at both ends — the rails KL and OP —
+ * which is the natural way to draw a fixed guide and which Gruebler counts as
+ * a body with two lower pairs, subtracting a degree of freedom per rail.
+ */
+export function gripperFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  return {
+    joints: [
+      { id: 'A', ...at(-4.684, 0.747), ground: true },
+      { id: 'B', ...at(-0.693, 0.746) },
+      { id: 'C', ...at(-1.531, 0.746) },
+      { id: 'D', ...at(2.902, 0.745) },
+      { id: 'G', ...at(4.311, 3.004) },
+      { id: 'H', ...at(8.246, 3.004) },
+      { id: 'I', ...at(4.311, -1.011) },
+      { id: 'J', ...at(8.246, -1.011) },
+      { id: 'K', ...at(0.0, 9.696), ground: true },
+      { id: 'L', ...at(0.09, -7.371), ground: true },
+      { id: 'M', ...at(0.02, 5.903) },
+      { id: 'O', ...at(6.519, 9.862), ground: true },
+      { id: 'P', ...at(6.682, -10.105), ground: true },
+      { id: 'Q', ...at(6.552, 5.786) },
+      { id: 'S', ...at(14.851, 4.32) },
+      { id: 'T', ...at(0.07, -3.573) },
+      { id: 'V', ...at(6.63, -3.716) },
+      { id: 'X', ...at(14.851, -2.223) },
+    ],
+    links: [
+      { joints: 'AB' },
+      { joints: 'CD' },
+      { joints: 'DGHIJ' },
+      { joints: 'KL' },
+      { joints: 'GM' },
+      { joints: 'OP' },
+      { joints: 'HQ' },
+      { joints: 'MQS' },
+      { joints: 'IT' },
+      { joints: 'JV' },
+      { joints: 'TVX' },
+    ],
+    sliders: [
+      { at: 'C', prisId: 'E', on: { carrier: 'AB', a: 'A', b: 'B' }, sealed: true, input: true },
+      { at: 'M', prisId: 'N', on: { carrier: 'KL', a: 'K', b: 'L' } },
+      { at: 'Q', prisId: 'R', on: { carrier: 'OP', a: 'O', b: 'P' } },
+      { at: 'T', prisId: 'U', on: { carrier: 'KL', a: 'K', b: 'L' } },
+      { at: 'V', prisId: 'W', on: { carrier: 'OP', a: 'O', b: 'P' } },
+    ],
+    welds: ['C'],
+    inputAngVel: INPUT_SPEED * scale,
+  };
+}
+
+/** A bar doing nothing, pinned to ground at both ends: a guide rail, alone. */
+export function anchoredBarFixture(withRail: boolean): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: 0, y: 0, ground: true, input: true },
+      { id: 'B', x: 1, y: 1 },
+      { id: 'C', x: 4, y: 1 },
+      { id: 'D', x: 5, y: 0, ground: true },
+      ...(withRail
+        ? [
+            { id: 'E', x: 0, y: 5, ground: true },
+            { id: 'F', x: 3, y: 5, ground: true },
+          ]
+        : []),
+    ],
+    links: [
+      { joints: 'AB' },
+      { joints: 'BC' },
+      { joints: 'CD' },
+      ...(withRail ? [{ joints: 'EF' }] : []),
+    ],
+    inputAngVel: INPUT_SPEED,
+  };
+}

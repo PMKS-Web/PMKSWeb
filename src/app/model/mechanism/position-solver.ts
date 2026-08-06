@@ -1,5 +1,5 @@
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../joint';
-import { Link } from '../link';
+import { Link, RealLink, SliderBlock } from '../link';
 import {
   circleCircleIntersection,
   circleLineIntersection,
@@ -18,6 +18,12 @@ import {
   cylinderStrokeAlong,
   sealedCylinderStructures,
 } from '../cylinder';
+import {
+  Constraint,
+  residuals,
+  SimultaneousSystem,
+  solveSimultaneous,
+} from './simultaneous-solver';
 
 /**
  * How far a driven prismatic input advances along its slot per solved sample,
@@ -57,6 +63,14 @@ export const SAMPLES_PER_STROKE = 180;
  * would cut the stroke a sample short at each end and stop the cycle closing.
  */
 const STROKE_TOLERANCE = 1e-3;
+
+/**
+ * How exactly a remembered pose still has to satisfy the constraints to be
+ * reinstated. Looser than the solver's own tolerance, since a pose solved at
+ * one command is being checked against the same command reached from the other
+ * side, but far tighter than anything a reader could see.
+ */
+const POSE_RECALL_TOLERANCE = 1e-4;
 
 /**
  * How close two solve-circle centres must be to count as coincident. Joint
@@ -191,6 +205,10 @@ export class PositionSolver {
   private static cylinderDrive?: CylinderDrive;
   /** The cylinder the input flag names, before the walk decides which end moves. */
   private static drivenCylinder?: Cylinder;
+  /** Joints no chain of dyads can place, and what they have to satisfy (§2.7a). */
+  private static simultaneousSystem?: SimultaneousSystem;
+  /** Poses already solved, with the length that produced them (§2.7a). */
+  private static solvedPoses: { span: number; pose: Map<string, number[]> }[] = [];
   /**
    * The command this timestep proposed, held back until every other step has
    * agreed to it. A sample the mechanism refuses must leave the commanded
@@ -240,6 +258,8 @@ export class PositionSolver {
     this.cylinderInteriorMap = new Map<string, CylinderInterior>();
     this.cylinderDrive = undefined;
     this.drivenCylinder = undefined;
+    this.simultaneousSystem = undefined;
+    this.solvedPoses = [];
     this.pendingSpan = undefined;
     this.drivenSampleStep = undefined;
     this.stepCount = 0;
@@ -306,7 +326,7 @@ export class PositionSolver {
     // nothing to say about it; the deferred sweep places both mounts instead.
     if (this.registerCylinderDrive(cylinders, inputJoint)) {
       orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
-      this.finishOrder(joints, orderNum, knownJointsIds);
+      this.finishOrder(joints, links, orderNum, knownJointsIds);
       return;
     }
     inputJoint.connectedJoints.forEach((j) => {
@@ -353,15 +373,180 @@ export class PositionSolver {
     });
 
     orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
-    this.finishOrder(joints, orderNum, knownJointsIds);
+    this.finishOrder(joints, links, orderNum, knownJointsIds);
   }
 
-  /** Close the walk: how many steps it emitted, and what it could not reach. */
-  private static finishOrder(joints: Joint[], orderNum: number, known: string[]): void {
+  /**
+   * Close the walk: how many steps it emitted, and what it could not reach.
+   *
+   * What it could not reach is not necessarily a mistake. A set of joints that
+   * only locate each other is a simultaneous system (§2.7a), and it gets one
+   * final step of its own; only joints left over after *that* are unsolvable.
+   */
+  private static finishOrder(
+    joints: Joint[],
+    links: Link[],
+    orderNum: number,
+    known: string[]
+  ): void {
+    const pending = joints
+      .filter((j): j is RealJoint => j instanceof RealJoint && !j.ground && !known.includes(j.id))
+      .map((j) => j.id);
+
+    if (pending.length > 0) {
+      const system = this.buildSimultaneousSystem(joints, links, pending);
+      if (system) {
+        this.simultaneousSystem = system;
+        this.desiredConnectedJointIndicesMap.set(pending[0], []);
+        this.desiredAnalysisJointMap.set(pending[0], 'simultaneousSystem');
+        this.jointNumOrderSolverMap.set(orderNum, pending);
+        orderNum++;
+        pending.forEach((id) => known.push(id));
+      }
+    }
+
     this.stepCount = orderNum - 1;
     this.unsolvableJoints = joints
       .filter((j) => j instanceof RealJoint && !j.ground && !known.includes(j.id))
       .map((j) => j.id);
+  }
+
+  /**
+   * Write down what the unsolved joints have to satisfy, as constraints.
+   *
+   * Everything the model already says, said once more in a form Newton can
+   * read: a link holds its joints at fixed distances, a block is a single
+   * point, a slider stays on its slot, a weld keeps a rider parallel to the
+   * slot it rides, and the drive prescribes one length. A constraint is emitted
+   * only when it touches an unknown — anything among joints the walk already
+   * placed is satisfied and would only make the system redundant.
+   */
+  private static buildSimultaneousSystem(
+    joints: Joint[],
+    links: Link[],
+    unknownIds: string[]
+  ): SimultaneousSystem | undefined {
+    const unknown = new Set(unknownIds);
+    const touches = (...ids: string[]) => ids.some((id) => unknown.has(id));
+    const constraints: Constraint[] = [];
+    const at = (joint: Joint): [number, number] => [joint.x, joint.y];
+
+    for (const link of links) {
+      const members = link.joints;
+      if (link instanceof SliderBlock) {
+        // §2.10 item 1: the block is zero-length, so its two joints are one
+        // point rather than two at a fixed distance.
+        if (members.length === 2 && touches(members[0].id, members[1].id)) {
+          constraints.push({ kind: 'coincident', a: members[0].id, b: members[1].id });
+        }
+        continue;
+      }
+      if (members.length < 2) continue;
+      // A rigid body of n joints is pinned by 2n-3 distances: the first pair,
+      // then every other joint tied to both of them. Every pair would say the
+      // same thing several times over and leave the system redundant.
+      const [first, second, ...rest] = members;
+      if (touches(first.id, second.id)) {
+        constraints.push({
+          kind: 'distance',
+          a: first.id,
+          b: second.id,
+          length: euclideanDistance(first.x, first.y, second.x, second.y),
+        });
+      }
+      for (const member of rest) {
+        for (const anchor of [first, second]) {
+          if (!touches(member.id, anchor.id)) continue;
+          constraints.push({
+            kind: 'distance',
+            a: member.id,
+            b: anchor.id,
+            length: euclideanDistance(member.x, member.y, anchor.x, anchor.y),
+          });
+        }
+      }
+    }
+
+    for (const joint of joints) {
+      if (!(joint instanceof PrisJoint)) continue;
+      if (joint.isFloating && joint.slotJointA && joint.slotJointB) {
+        if (touches(joint.id, joint.slotJointA.id, joint.slotJointB.id)) {
+          constraints.push({
+            kind: 'onLine',
+            point: joint.id,
+            from: joint.slotJointA.id,
+            to: joint.slotJointB.id,
+          });
+        }
+      } else if (joint.ground) {
+        if (touches(joint.id)) {
+          constraints.push({
+            kind: 'onFixedLine',
+            point: joint.id,
+            at: at(joint),
+            dir: [Math.cos(joint.angle_rad), Math.sin(joint.angle_rad)],
+          });
+        }
+      } else {
+        // A slider with nothing to slide along: no constraint exists to write.
+        return undefined;
+      }
+    }
+
+    // A weld at a block is what stops the rider turning inside its slot, and
+    // nothing above says so — the rider's distances leave it free to rotate.
+    for (const assembly of slideAssemblies(joints)) {
+      const slider = assembly.slider;
+      const rider = assembly.riders[0];
+      const other = rider?.joints.find((member) => member.id !== assembly.weldJoint.id);
+      if (!rider || !other) continue;
+      if (!touches(assembly.weldJoint.id, other.id, slider.id)) continue;
+      if (slider.isFloating && slider.slotJointA && slider.slotJointB) {
+        constraints.push({
+          kind: 'parallel',
+          a1: assembly.weldJoint.id,
+          a2: other.id,
+          b1: slider.slotJointA.id,
+          b2: slider.slotJointB.id,
+        });
+      }
+    }
+
+    const drive = this.drivenConstraint(joints, unknown);
+    if (!drive) return undefined;
+    constraints.push(drive);
+
+    return { unknownIds, constraints };
+  }
+
+  /**
+   * The one length the drive prescribes.
+   *
+   * A driven cylinder commands the distance between its mounts, which is the
+   * same quantity `drivenCylinderMount` steps when the walk can place it the
+   * ordinary way. A driven crank commands its own angle, which reaches the
+   * system as the distance from the far end of the crank to a point fixed in
+   * the world — the chord, which is what a prescribed angle is once the radius
+   * is already held by the link.
+   */
+  private static drivenConstraint(joints: Joint[], unknown: Set<string>): Constraint | undefined {
+    const cylinder = this.drivenCylinder;
+    if (cylinder) {
+      const drive = this.cylinderDrive ?? {
+        anchorMountId: cylinder.barrelFar.id,
+        drivenMountId: cylinder.rodFar.id,
+        span: euclideanDistance(
+          cylinder.barrelFar.x,
+          cylinder.barrelFar.y,
+          cylinder.rodFar.x,
+          cylinder.rodFar.y
+        ),
+        step: this.drivenSampleStep ?? PRISMATIC_INPUT_STEP,
+      };
+      this.cylinderDrive = drive;
+      return { kind: 'driven', a: drive.drivenMountId, b: drive.anchorMountId };
+    }
+    return undefined;
   }
 
   /**
@@ -658,6 +843,216 @@ export class PositionSolver {
     this.recordJointPosition(interior.pinId, pinX, pinY);
     this.recordJointPosition(interior.sliderId, pinX, pinY);
     return true;
+  }
+
+  /**
+   * Put the drawn pose exactly on its own constraints, before sampling starts.
+   *
+   * A linkage placed by hand never satisfies its constraints to the last
+   * decimal, and the dyad walk hides that by deriving every position from
+   * lengths measured at t = 0. A simultaneous solve cannot: its first sample
+   * corrects the pose onto the constraint manifold and moves every joint a
+   * fraction of a unit, permanently. The cycle then never closes, because the
+   * mechanism is being asked to come back to a pose it was never actually in,
+   * and the run ends at the sample cap reporting an invalid mechanism.
+   *
+   * The correction is far below anything visible — thousandths of a user unit
+   * on a hand-drawn linkage — and it is the honest rest pose.
+   */
+  static settleInitialPose(joints: Joint[]): void {
+    const system = this.simultaneousSystem;
+    const drive = this.cylinderDrive;
+    if (!system || !drive) {
+      return;
+    }
+    for (const id of system.unknownIds) {
+      if (!this.jointMapPositions.has(id)) {
+        const joint = joints.find((candidate) => candidate.id === id);
+        if (joint) this.jointMapPositions.set(id, [joint.x, joint.y]);
+      }
+    }
+    const drawn = new Map(
+      system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])
+    );
+    // A mechanism can be drawn exactly on a limit of its own travel — a toggle
+    // clamp usually is, since the clamped pose is the dead-centre. The solve
+    // there is singular and cannot converge, so settle at the nearest command
+    // that *can* be reached instead. The offsets below are thousandths of a
+    // sample, and the pose moves by a few thousandths of a unit with them.
+    let settledSpan = drive.span;
+    let settled = solveSimultaneous(system, this.jointMapPositions, settledSpan);
+    if (!settled) {
+      const nudges = [1e-3, 1e-2, 1e-1, 1].flatMap((size) => [size, -size]);
+      for (const nudge of nudges) {
+        drawn.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+        settledSpan = drive.span + nudge * drive.step;
+        if (solveSimultaneous(system, this.jointMapPositions, settledSpan)) {
+          settled = true;
+          break;
+        }
+      }
+    }
+    if (!settled) {
+      drawn.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+      return;
+    }
+    drive.span = settledSpan;
+    for (const id of system.unknownIds) {
+      const settled = this.jointMapPositions.get(id)!;
+      const joint = joints.find((candidate) => candidate.id === id);
+      if (joint) {
+        joint.x = roundNumber(settled[0], 4);
+        joint.y = roundNumber(settled[1], 4);
+      }
+      this.jointMapPositions.set(id, [roundNumber(settled[0], 4), roundNumber(settled[1], 4)]);
+    }
+    // The pose the motion has to come back to, which is the one command a
+    // solve approaching from the other side may not manage on its own.
+    this.rememberPose(system, drive.span);
+  }
+
+  /**
+   * Settle a whole simultaneous system at once (§2.7a).
+   *
+   * Seeded from where these joints were last time — which for the first sample
+   * is where the user drew them. That seed is the assembly mode: the same
+   * constraints are satisfied by the mirror image and by the far branch of
+   * every dyad in the set, and nothing but continuity distinguishes the one the
+   * mechanism actually reached.
+   */
+  private static simultaneous(joints: Joint[], forward: boolean): boolean {
+    const system = this.simultaneousSystem;
+    const drive = this.cylinderDrive;
+    if (!system || !drive) {
+      return false;
+    }
+    const next = drive.span + (forward ? drive.step : -drive.step);
+    if (!this.withinStroke(next)) {
+      return false;
+    }
+
+    // Anything the system has not been told about yet starts where the joint
+    // object stands, which is the previous sample's pose.
+    for (const id of system.unknownIds) {
+      if (!this.jointMapPositions.has(id)) {
+        const joint = joints.find((candidate) => candidate.id === id);
+        if (joint) this.jointMapPositions.set(id, [joint.x, joint.y]);
+      }
+    }
+
+    const before = new Map(
+      system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])
+    );
+    const restore = () =>
+      before.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+
+    if (!this.reachSpan(system, drive.span, next, restore)) {
+      // Leave the pose exactly as it was: a half-converged answer drawn once is
+      // a mechanism that visibly tears itself apart at the limit.
+      restore();
+      return false;
+    }
+
+    for (const id of system.unknownIds) {
+      const solved = this.jointMapPositions.get(id)!;
+      this.recordJointPosition(id, solved[0], solved[1]);
+    }
+    this.pendingSpan = next;
+    return true;
+  }
+
+  /**
+   * Drive the commanded length from one value to another, in as many goes as
+   * it takes.
+   *
+   * One jump is right almost always. It is wrong approaching a dead-centre,
+   * where a short command moves the mechanism a long way: the seed then lands
+   * outside the basin the answer is in and the solve stalls, which reads as a
+   * limit the mechanism does not actually have. Walking the same interval in
+   * halves keeps every seed close to its answer. A genuine limit still fails,
+   * because no subdivision of an unreachable command becomes reachable.
+   */
+  private static reachSpan(
+    system: SimultaneousSystem,
+    from: number,
+    to: number,
+    restore: () => void
+  ): boolean {
+    if (solveSimultaneous(system, this.jointMapPositions, to)) {
+      this.rememberPose(system, to);
+      return true;
+    }
+    for (const divisions of [2, 4, 8, 16]) {
+      restore();
+      let reached = true;
+      for (let part = 1; part <= divisions && reached; part++) {
+        const between = from + ((to - from) * part) / divisions;
+        reached = solveSimultaneous(system, this.jointMapPositions, between);
+      }
+      if (reached) {
+        this.rememberPose(system, to);
+        return true;
+      }
+    }
+
+    // Last resort: this exact command may have been solved on the way out.
+    //
+    // Iteration cannot always come back to a *limit* of travel. At one the
+    // solution curve folds — two poses either side merge into one — and the
+    // Jacobian there is singular, so a solve approaching it converges slower
+    // and slower and gives up a sample short. The pose is not unknown though:
+    // the mechanism was standing in it a moment ago, and a 1-DOF linkage
+    // retracing its own commands passes back through the same poses. Reinstate
+    // it, having checked that it still satisfies every constraint.
+    const remembered = this.recallPose(to);
+    if (remembered) {
+      restore();
+      remembered.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+      const off = residuals(system, this.jointMapPositions, to);
+      if (Math.max(...off.map(Math.abs)) < POSE_RECALL_TOLERANCE) {
+        return true;
+      }
+      restore();
+    }
+    return false;
+  }
+
+  /**
+   * The pose solved at this command, if there was one.
+   *
+   * Matched by nearness rather than by an exact key: the command is stepped by
+   * repeated addition, so the value on the way back down is the same number
+   * only to within the drift of two dozen float operations.
+   */
+  private static recallPose(span: number): Map<string, number[]> | undefined {
+    const tolerance = Math.max(Math.abs(span), 1) * 1e-9;
+    return this.solvedPoses.find((entry) => Math.abs(entry.span - span) <= tolerance)?.pose;
+  }
+
+  private static rememberPose(system: SimultaneousSystem, span: number): void {
+    this.solvedPoses.push({
+      span,
+      pose: new Map(system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])),
+    });
+  }
+
+  /**
+   * Whether a commanded mount-to-mount length keeps the pin inside its slot.
+   *
+   * The interior step enforces this when the walk can place a cylinder the
+   * ordinary way; a cylinder inside a simultaneous system never reaches that
+   * step, so the same bound is asked here instead of nowhere.
+   */
+  private static withinStroke(span: number): boolean {
+    const cylinder = this.drivenCylinder;
+    const interior = cylinder && this.cylinderInteriorMap.get(cylinder.barrelNear.id);
+    if (!interior) {
+      return true;
+    }
+    const along = span - interior.rodLength;
+    return (
+      along >= interior.minAlong - STROKE_TOLERANCE && along <= interior.maxAlong + STROKE_TOLERANCE
+    );
   }
 
   /** The other joint of a sliding joint's block (§2.10 item 1). */
@@ -1255,6 +1650,9 @@ export class PositionSolver {
           break;
         case 'sealedCylinderInterior':
           possible = this.sealedCylinderInterior(step_targets);
+          break;
+        case 'simultaneousSystem':
+          possible = this.simultaneous(joints, angVelDir);
           break;
         case 'determineTracerJoint':
           this.twoCircleIntersectionPoints(
