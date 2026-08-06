@@ -425,7 +425,11 @@ export class StringTranscoder extends GenericTranscoder {
     let decimalSettings = decimalString.split(',');
     i = 0;
     for (const key in this.decimalData) {
-      this.decimalData[key] = this.decodeDecimalNumber(decimalSettings[i]);
+      // One-decimal URLs predate LINEAR_INPUT_SPEED. A missing trailing token
+      // must not be decoded as a truncated base-N number; zero here is what the
+      // builder reads as "not in this URL" and answers with the default.
+      this.decimalData[key] =
+        i < decimalSettings.length ? this.decodeDecimalNumber(decimalSettings[i]) : 0;
       i++;
     }
 

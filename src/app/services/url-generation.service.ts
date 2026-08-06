@@ -187,6 +187,10 @@ export class UrlGenerationService {
     encoder.addBoolSetting(BoolSetting.IS_INPUT_CW, this.settings.isInputCW.getValue());
     //encoder.addBoolSetting(BoolSetting.IS_GRAVITY, this.settings.isGravity.getValue());
     encoder.addIntSetting(IntSetting.INPUT_SPEED, this.settings.inputSpeed.getValue());
+    encoder.addDecimalSetting(
+      DecimalSetting.LINEAR_INPUT_SPEED,
+      this.settings.linearInputSpeed.getValue()
+    );
     encoder.addBoolSetting(
       BoolSetting.IS_SHOW_MAJOR_GRID,
       this.settings.isShowMajorGrid.getValue()

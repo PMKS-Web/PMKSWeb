@@ -307,7 +307,11 @@ export class KinematicsSolver {
           if (inputLink.joints === undefined) {
             return;
           }
-          const realJoint = inputLink.joints.find((j) => j instanceof RealJoint);
+          // The sliding joint, specifically. `instanceof RealJoint` matched the
+          // block's *pin* first -- a PrisJoint is a RealJoint -- and the
+          // PrisJoint check below then bailed out of the whole initializer, so
+          // a driven block was seeded with no velocity at all.
+          const realJoint = inputLink.joints.find((j) => j instanceof PrisJoint);
           if (realJoint === undefined) {
             return;
           }
@@ -330,11 +334,20 @@ export class KinematicsSolver {
         if (!(realJoint instanceof PrisJoint)) {
           return;
         }
-        this.jointVelMap.set(realJoint.id, [
-          initialAngularVelocity * Math.cos(realJoint.slotAngle),
-          initialAngularVelocity * Math.sin(realJoint.slotAngle),
-        ]);
-        this.jointAccMap.set(realJoint.id, [0.0, 0.0]);
+        // Along the guide at the commanded speed -- true only while the guide
+        // is fixed in the world. On a slot cut into a moving link the block's
+        // absolute velocity is the carrier's plus the sliding rate, and
+        // writing the sliding rate alone would report a cylinder's mount as
+        // travelling through ground it is actually being carried over. Phase 5
+        // drives such a cylinder's *positions*; its velocity analysis is left
+        // unseeded rather than seeded wrongly, and is Phase 6 work.
+        if (realJoint.ground) {
+          this.jointVelMap.set(realJoint.id, [
+            initialAngularVelocity * Math.cos(realJoint.slotAngle),
+            initialAngularVelocity * Math.sin(realJoint.slotAngle),
+          ]);
+          this.jointAccMap.set(realJoint.id, [0.0, 0.0]);
+        }
         break;
       default:
         break;
@@ -762,10 +775,8 @@ export class KinematicsSolver {
     if (!velocity) {
       // Coriolis and centripetal, both settled by the velocity pass.
       const rate = this.slideRateMap.get(frame.slider.id) ?? 0;
-      const carriedX =
-        2 * rate * omega * frame.uPerp[0] - frame.s * omega * omega * frame.u[0];
-      const carriedY =
-        2 * rate * omega * frame.uPerp[1] - frame.s * omega * omega * frame.u[1];
+      const carriedX = 2 * rate * omega * frame.uPerp[0] - frame.s * omega * omega * frame.u[0];
+      const carriedY = 2 * rate * omega * frame.uPerp[1] - frame.s * omega * omega * frame.u[1];
       B[rowIndex][0] -= frame.sign * carriedX;
       B[rowIndex + 1][0] -= frame.sign * carriedY;
     }

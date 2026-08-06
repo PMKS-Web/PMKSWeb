@@ -14,6 +14,16 @@ export enum IntSetting {
 
 export enum DecimalSetting {
   SCALE,
+  /**
+   * A driven prismatic joint's speed, in user length units per second.
+   *
+   * Appended, so URLs written before it decode with the token missing; the
+   * decoder leaves those at zero and the builder reads zero as "this URL
+   * predates the setting" and keeps the default. Zero is safe to spend that
+   * way because a drive that does not move is not a speed anyone chose — the
+   * panel refuses it.
+   */
+  LINEAR_INPUT_SPEED,
 }
 
 export enum BoolSetting {

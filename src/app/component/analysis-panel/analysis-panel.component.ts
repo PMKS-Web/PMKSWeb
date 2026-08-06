@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ForceAnalysisMode, ForceReactionIndex } from 'src/app/model/mechanism/force-solver';
-import { PrisJoint } from 'src/app/model/joint';
+import { PrisJoint, RealJoint } from 'src/app/model/joint';
+import { LengthUnit } from 'src/app/model/unit-enums';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { FormBuilder } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -45,6 +46,33 @@ export class AnalysisPanelComponent {
   mechStateSub: any;
   private subscriptions = new Subscription();
   private rowCache?: { key: string; mechanism: unknown; rows: ForceAnalysisRow[] };
+
+  /**
+   * What the drive is doing, in the terms the drive itself has (§5.5).
+   *
+   * A driven block does not turn, so neither "RPM" nor "clockwise" says
+   * anything true about it — the header used to report a cylinder extending at
+   * 5 cm/s as turning at 5.00 RPM clockwise.
+   */
+  get inputSummary(): string {
+    const driven = this.mechanismService.joints.find(
+      (joint) => joint instanceof RealJoint && joint.input
+    );
+    if (driven instanceof PrisJoint) {
+      const speed = this.settingsService.linearInputSpeed.value.toFixed(2);
+      const direction = this.settingsService.isInputCW.value ? 'retracting' : 'extending';
+      return `The input speed is set to ${speed} ${this.linearSpeedUnit}, ${direction}.`;
+    }
+    const speed = this.settingsService.inputSpeed.value.toFixed(2);
+    const direction = this.settingsService.isInputCW.value ? 'clockwise' : 'counter-clockwise';
+    return `The input speed is set to ${speed} RPM in the ${direction} direction.`;
+  }
+
+  /** Length per second, spelled the way the mechanism's length unit is. */
+  private get linearSpeedUnit(): string {
+    const unit = this.settingsService.lengthUnit.value;
+    return unit === LengthUnit.INCH ? 'in/s' : unit === LengthUnit.METER ? 'm/s' : 'cm/s';
+  }
 
   constructor(
     public activeSrv: ActiveObjService,

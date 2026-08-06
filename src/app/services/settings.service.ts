@@ -28,6 +28,17 @@ export class SettingsService {
    * stays in RPM and the URL format is unchanged.
    */
   inputSpeedUnit = new BehaviorSubject(AngularVelocityUnit.RPM);
+  /**
+   * How fast a driven prismatic joint travels, in user length units per second.
+   *
+   * Its own setting, not a second reading of `inputSpeed`, because the two are
+   * different physical quantities: every rebuild turns `inputSpeed` into rad/s
+   * by multiplying by π/30, and a translation put through that conversion moves
+   * at 0.105 of the speed the panel says. There is no unit *picker* to go with
+   * it — length per second has one honest spelling, and which one it is follows
+   * `lengthUnit` (cm/s, m/s, in/s).
+   */
+  linearInputSpeed = new BehaviorSubject(5);
   // One mechanism-wide choice, shown by every force-analysis panel.
   forceAnalysisMode = new BehaviorSubject<ForceAnalysisMode>('static');
   animating = new BehaviorSubject(false);

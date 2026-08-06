@@ -296,6 +296,12 @@ export class MechanismBuilder {
       this.settings.globalUnit.next(normalizedGlobal);
       this.settings.isInputCW.next(this.transcoder.getBoolSetting(BoolSetting.IS_INPUT_CW));
       this.settings.inputSpeed.next(this.transcoder.getIntSetting(IntSetting.INPUT_SPEED));
+      // Zero means the URL was written before linear speeds had a setting of
+      // their own, not that someone asked for a drive that stands still.
+      const linearSpeed = this.transcoder.getDecimalSetting(DecimalSetting.LINEAR_INPUT_SPEED);
+      if (linearSpeed > 0) {
+        this.settings.linearInputSpeed.next(linearSpeed);
+      }
       this.settings.animating.next(this.transcoder.getBoolSetting(BoolSetting.ANIMATING));
       this.settings.isShowMajorGrid.next(
         this.transcoder.getBoolSetting(BoolSetting.IS_SHOW_MAJOR_GRID)

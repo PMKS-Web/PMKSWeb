@@ -83,13 +83,7 @@
   @if (validMechanisms() && this.activeSrv.objType == 'Joint') {
     <panel-section id="analysis-panel">
       <title-block
-        description="The input speed is set to {{
-          settingsService.inputSpeed.value.toFixed(2)
-        }} RPM in
-      the {{
-          settingsService.isInputCW.value ? 'clockwise' : 'counter-clockwise'
-        }} direction. This can be changed in the
-    input joint's Edit panel."
+        description="{{ inputSummary }} This can be changed in the input joint's Edit panel."
       >
         Analysis for Joint
         {{ this.activeSrv.selectedJoint.name }}
@@ -267,13 +261,7 @@
   @if (validMechanisms() && this.activeSrv.objType == 'Link') {
     <panel-section id="analysis-panel">
       <title-block
-        description="The input speed is set to {{
-          settingsService.inputSpeed.value.toFixed(2)
-        }} RPM in
-      the {{
-          settingsService.isInputCW.value ? 'clockwise' : 'counter-clockwise'
-        }} direction. This can be changed in the
-    input joint's Edit panel."
+        description="{{ inputSummary }} This can be changed in the input joint's Edit panel."
       >
         Analysis for Link {{ this.activeSrv.selectedLink.name }}
       </title-block>

@@ -83,13 +83,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   /**
    * Show the stored speed in whichever unit the picker is set to.
    *
-   * A slider input's speed is already length per second — the one unit it is
-   * offered — so it is shown as stored rather than run through an angular
-   * conversion that would report a translation in RPM.
+   * A slider input reads a different setting, not the same one in another unit:
+   * `linearInputSpeed` is length per second and is shown exactly as stored,
+   * where the rotational speed is kept in RPM and converted for display.
    */
   private patchInputSpeedField(): void {
     const shown = this.isSliderInput
-      ? this.settingsService.inputSpeed.value
+      ? this.settingsService.linearInputSpeed.value
       : this.nup.convertAngularVelocity(
           this.settingsService.inputSpeed.value,
           AngularVelocityUnit.RPM,
@@ -404,13 +404,18 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   }
 
   /**
-   * Which way along its slot a driven block sets off.
+   * Which way the drive sets off, said in the terms that drive has (§5.5).
    *
-   * Named for the slot rather than for the screen: the slot's own angle is
-   * shown right above this, so "forward" means along it and "backward" against
-   * it, whichever way it happens to point.
+   * A cylinder extends or retracts — it is the one part whose two directions
+   * have names an engineer already uses. A bare block on a slot has no such
+   * pair, so it is named for the slot rather than for the screen: the slot's
+   * own angle is shown right above this, and "forward" means along it whichever
+   * way it happens to point.
    */
   get inputDirectionLabel(): string {
+    if (this.selectedCylinder) {
+      return this.settingsService.isInputCW.value ? 'Retracting' : 'Extending';
+    }
     if (!this.isSliderInput) {
       return this.settingsService.isInputCW.value ? 'Clockwise' : 'Counter-Clockwise';
     }
@@ -620,6 +625,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.onDestroySubscriptions.push(
       this.settingsService.inputSpeed.subscribe(() => this.syncInputSettingsFields())
     );
+    this.onDestroySubscriptions.push(
+      this.settingsService.linearInputSpeed.subscribe(() => this.syncInputSettingsFields())
+    );
 
     this.onDestroySubscriptions.push(
       this.jointForm.controls['inputSpeed'].valueChanges.subscribe((val) => {
@@ -633,15 +641,17 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           if (typed < 0) {
             this.settingsService.isInputCW.next(!this.settingsService.isInputCW.value);
           }
-          this.settingsService.inputSpeed.next(
-            this.isSliderInput
-              ? Math.abs(typed)
-              : this.nup.convertAngularVelocity(
-                  Math.abs(typed),
-                  this.settingsService.inputSpeedUnit.value,
-                  AngularVelocityUnit.RPM
-                )
-          );
+          if (this.isSliderInput) {
+            this.settingsService.linearInputSpeed.next(Math.abs(typed));
+          } else {
+            this.settingsService.inputSpeed.next(
+              this.nup.convertAngularVelocity(
+                Math.abs(typed),
+                this.settingsService.inputSpeedUnit.value,
+                AngularVelocityUnit.RPM
+              )
+            );
+          }
           this.mechanismService.updateMechanism(true);
         }
         this.patchInputSpeedField();

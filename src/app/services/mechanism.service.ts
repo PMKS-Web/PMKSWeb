@@ -194,16 +194,18 @@ export class MechanismService {
     this.mechanisms = [];
     // TODO: Determine logic later once everything else is determined
     // Settings exposes RPM to users and persistence; solvers use rad/s.
-    let inputAngularVelocity = (this.settingsService.inputSpeed.value * Math.PI) / 30;
-    // A prismatic input's speed is linear -- length per second -- and the
-    // solvers consume it against internal model units, which are MODEL_SCALE
-    // times the user's. Scaling it here keeps the time axis and the solved
-    // velocities meaning exactly what they meant before the world scaled up;
-    // an angular speed has no length in it and passes through untouched.
+    //
+    // A prismatic input is a different quantity, not another unit of the same
+    // one: its speed is length per second, so it comes from its own setting and
+    // never meets the pi/30 conversion -- which used to run on it anyway,
+    // leaving a driven block travelling at a tenth of the speed the panel
+    // reported. What it does need is the MODEL_SCALE the solvers measure length
+    // in; an angular speed has no length in it to want one.
     const drivenJoint = this.joints.find((j) => j instanceof RealJoint && j.input);
-    if (drivenJoint instanceof PrisJoint) {
-      inputAngularVelocity = inputAngularVelocity * MODEL_SCALE;
-    }
+    let inputAngularVelocity =
+      drivenJoint instanceof PrisJoint
+        ? this.settingsService.linearInputSpeed.value * MODEL_SCALE
+        : (this.settingsService.inputSpeed.value * Math.PI) / 30;
     if (this.settingsService.isInputCW.value) {
       inputAngularVelocity = inputAngularVelocity * -1;
     }
