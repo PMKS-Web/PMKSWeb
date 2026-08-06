@@ -172,8 +172,6 @@ export class NewGridComponent {
 
   /** Where the link being dragged was last placed, in SVG coordinates. */
   private linkDragAnchor: Coord = new Coord(0, 0);
-  /** Which half of a cylinder body a drag grabbed, fixed at gesture start. */
-  private cylinderBodyDragSide?: 'barrel' | 'rod';
 
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
@@ -879,33 +877,12 @@ export class NewGridComponent {
         // however far the hold lasted.
         const bodyCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedLink);
         if (bodyCylinder) {
-          // Dragging the body moves the HALF you grabbed: the nearer mount
-          // follows the pointer through the parametric re-pose and the far
-          // mount stays put — grabbing the rod side swings the rod about the
-          // barrel mount, not the whole part across the canvas. The side is
-          // chosen once, where the drag started, so crossing the middle
-          // mid-gesture cannot hand the part to the other mount.
-          if (!this.cylinderBodyDragSide) {
-            const toBarrel = Math.hypot(
-              this.linkDragAnchor.x - bodyCylinder.barrelFar.x,
-              this.linkDragAnchor.y - bodyCylinder.barrelFar.y
-            );
-            const toRod = Math.hypot(
-              this.linkDragAnchor.x - bodyCylinder.rodFar.x,
-              this.linkDragAnchor.y - bodyCylinder.rodFar.y
-            );
-            this.cylinderBodyDragSide = toBarrel <= toRod ? 'barrel' : 'rod';
-          }
-          const grabbed = (
-            this.cylinderBodyDragSide === 'barrel' ? bodyCylinder.barrelFar : bodyCylinder.rodFar
-          ) as RealJoint;
-          this.gridUtils.dragCylinderMount(
+          // Dragging the body translates the whole assembly rigidly; the
+          // mounts are the handles for re-posing.
+          this.gridUtils.dragCylinder(
             bodyCylinder,
-            grabbed,
-            new Coord(
-              grabbed.x + (mousePosInSvg.x - this.linkDragAnchor.x),
-              grabbed.y + (mousePosInSvg.y - this.linkDragAnchor.y)
-            )
+            mousePosInSvg.x - this.linkDragAnchor.x,
+            mousePosInSvg.y - this.linkDragAnchor.y
           );
         } else {
           this.gridUtils.dragLink(
@@ -1300,7 +1277,6 @@ export class NewGridComponent {
   }
 
   mouseUp($event: MouseEvent) {
-    this.cylinderBodyDragSide = undefined;
     //This is the mouseUp that is called no matter what is clicked on
     this.synthesisClickMode = SynthesisClickMode.NORMAL;
     // The alignment guides belong to the drag that made them.
@@ -2009,6 +1985,12 @@ export class NewGridComponent {
    * an implementation detail, so its letters come from the two mounts alone —
    * and a compound that swallowed a member keeps only its visible letters too.
    */
+  /** One tag per part: the rod defers to the barrel's tag. */
+  isSecondaryCylinderTag(link: Link): boolean {
+    const sealed = this.mechanismSrv.cylinderAt(link);
+    return !!sealed && link.id !== sealed.barrel.id;
+  }
+
   linkDisplayName(link: Link): string {
     const sealed = this.mechanismSrv.cylinderAt(link);
     if (!sealed) return link.name;

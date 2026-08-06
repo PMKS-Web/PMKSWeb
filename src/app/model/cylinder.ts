@@ -249,15 +249,21 @@ export interface CylinderCreation extends CylinderPose {
   rodLength: number;
 }
 
-/** The smallest cylinder the two-point gesture will draw, in objectScale. */
-export const CYLINDER_MIN_SPAN_SCALE = 1;
+/**
+ * The smallest cylinder any gesture will draw, in objectScale: the flex
+ * solve's minimum span (barrel at its minimum, rod at its minimum), converted
+ * from R at R = 0.15 · objectScale.
+ */
+export const CYLINDER_MIN_SPAN_SCALE =
+  0.15 * (2 * (MARK.blockAlongHalf + MARK.slotInset) - MARK.slotInset + 1.7 * MARK.blockAlongHalf);
 
 /**
  * Lay out a new cylinder from the two points of the creation gesture: the
  * start point is the barrel-side mount, `end` is where the rod finishes.
- * The drawn span sets every member length; a span below the minimum clamps
- * (so a zero-length click cannot make a degenerate part), keeping the drawn
- * direction — or +x when there is none yet.
+ * The drawn span runs through the same flex solve every mount drag uses, so
+ * creating at a span and dragging to that span draw the identical part; a
+ * span below the minimum clamps (a zero-length click cannot make a
+ * degenerate part), keeping the drawn direction — or +x when there is none.
  */
 export function cylinderCreationLayout(
   start: { x: number; y: number },
@@ -268,23 +274,20 @@ export function cylinderCreationLayout(
   const dy = end.y - start.y;
   const drawn = Math.hypot(dx, dy);
   const angleRad = drawn < 1e-9 ? 0 : Math.atan2(dy, dx);
-  const span = Math.max(drawn, CYLINDER_MIN_SPAN_SCALE * objectScale);
+  const flex = flexLayout(drawn, 0.15 * objectScale);
   const ux = Math.cos(angleRad);
   const uy = Math.sin(angleRad);
-  const barrelLength = span / 2;
-  const pinFromMount = span / 3;
-  const rodLength = span - pinFromMount;
   const at = (along: number) => ({ x: start.x + along * ux, y: start.y + along * uy });
   return {
     angleRad,
-    span,
-    barrelLength,
-    pinFromMount,
-    rodLength,
+    span: flex.span,
+    barrelLength: flex.barrel,
+    pinFromMount: flex.pinAlong,
+    rodLength: flex.rod,
     barrelFar: at(0),
-    barrelNear: at(barrelLength),
-    pin: at(pinFromMount),
-    rodFar: at(span),
+    barrelNear: at(flex.barrel),
+    pin: at(flex.pinAlong),
+    rodFar: at(flex.span),
   };
 }
 
@@ -340,21 +343,44 @@ export interface CylinderPose {
 /**
  * Re-pose a cylinder from its two mounts — the parametric drag (§ cylinder 6).
  *
- * The axis is the line between the mounts; the barrel's joints stay rigid
- * relative to mount A, and the pin is re-derived on the axis. Inside the
- * slot's span the rod is rigid and the pin strokes; beyond either end the rod
- * resizes to follow the gesture — a mount drag has no maximum length, and its
- * minimum is one block-length of rod. The `anchor` mount stays exactly where
- * it is in every case.
- *
- * Collinearity holds by construction: every returned point is on the axis.
+ * The span between the mounts drives the flex solve above: the barrel absorbs
+ * the change first between its minimum and maximum, then the rod grows without
+ * bound. The `anchor` mount stays exactly where it is in every case, and
+ * collinearity holds by construction: every returned point is on the axis.
+ * `barrelLength`/`rodLength` are accepted for the callers' convenience but the
+ * flex solve owns the member lengths — the same span always draws the same
+ * part, whichever mount was dragged and whatever the part measured before.
  */
 /**
- * The shortest a mount drag can make a cylinder, in R: the block with just
- * enough part on either side for the two mounts to sit clear of it — the
- * compact pose of the reference drawing.
+ * The flexbox of the part (the user's own metaphor): as the span between the
+ * mounts changes, the BARREL absorbs it first — high flex-grow, but with a
+ * hard minimum and maximum — and the ROD only starts growing once the barrel
+ * is at full length, with no maximum of its own. The pin rides the slot's
+ * outer end, so the numbers compose by simple addition along the axis.
+ *
+ * All in R. The barrel's minimum is the shortest barrel whose slot still fits
+ * inside it (`slotHalfLength` floors the slot at one block-length, so any
+ * shorter barrel would wear a slot longer than itself); the rod's minimum
+ * clears the block with room for its mount's pin.
  */
-const MIN_SPAN_R = 2.6 * MARK.blockAlongHalf;
+const BARREL_MIN_R = 2 * (MARK.blockAlongHalf + MARK.slotInset);
+const BARREL_MAX_R = 48;
+const ROD_MIN_R = 1.7 * MARK.blockAlongHalf;
+const SPAN_MIN_R = BARREL_MIN_R - MARK.slotInset + ROD_MIN_R;
+
+/** The flex solve: member lengths and pin position for a mount-to-mount span. */
+function flexLayout(
+  span: number,
+  r: number
+): { span: number; barrel: number; pinAlong: number; rod: number } {
+  const clamped = Math.max(span, SPAN_MIN_R * r);
+  const barrel = Math.min(
+    Math.max(clamped - ROD_MIN_R * r + MARK.slotInset * r, BARREL_MIN_R * r),
+    BARREL_MAX_R * r
+  );
+  const pinAlong = barrel - MARK.slotInset * r;
+  return { span: clamped, barrel, pinAlong, rod: clamped - pinAlong };
+}
 
 export function layoutCylinder(
   barrelMount: { x: number; y: number },
@@ -395,46 +421,21 @@ export function layoutCylinder(
     }
   }
 
-  const half = slotHalfLength(r, barrelLength);
-  const slotMid = barrelLength / 2;
-  const minAlong = Math.max(slotMid - half, 0);
-  const maxAlong = slotMid + half;
-  // Inside the stroke the members are rigid and the pin slides. Beyond either
-  // end, the WHOLE part scales — barrel and rod together, holding their ratio,
-  // so the resize reads the same whichever mount is dragged and whichever way.
-  // The only hard stop is the minimum span of the reference drawing; there is
-  // no maximum at all.
-  const naturalMin = minAlong + rodLength;
-  const naturalMax = maxAlong + rodLength;
-  const separation = Math.max(distance, MIN_SPAN_R * r);
-  let scale = 1;
-  let along: number;
-  if (separation < naturalMin) {
-    scale = separation / naturalMin;
-    along = minAlong * scale;
-  } else if (separation > naturalMax) {
-    scale = separation / naturalMax;
-    along = maxAlong * scale;
-  } else {
-    along = separation - rodLength;
-  }
+  const flex = flexLayout(distance, r);
 
   const a =
     anchor === 'barrel'
       ? { x: barrelMount.x, y: barrelMount.y }
-      : { x: rodMount.x - separation * ux, y: rodMount.y - separation * uy };
+      : { x: rodMount.x - flex.span * ux, y: rodMount.y - flex.span * uy };
   const c =
     anchor === 'barrel'
-      ? { x: barrelMount.x + separation * ux, y: barrelMount.y + separation * uy }
+      ? { x: barrelMount.x + flex.span * ux, y: barrelMount.y + flex.span * uy }
       : { x: rodMount.x, y: rodMount.y };
 
   return {
     barrelFar: a,
-    barrelNear: {
-      x: a.x + barrelLength * scale * ux,
-      y: a.y + barrelLength * scale * uy,
-    },
-    pin: { x: a.x + along * ux, y: a.y + along * uy },
+    barrelNear: { x: a.x + flex.barrel * ux, y: a.y + flex.barrel * uy },
+    pin: { x: a.x + flex.pinAlong * ux, y: a.y + flex.pinAlong * uy },
     rodFar: c,
   };
 }

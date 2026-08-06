@@ -198,6 +198,16 @@ export class GridUtilsService {
    */
   canToggleWeld(joint: Joint): boolean {
     if (!(joint instanceof RealJoint)) return false;
+    // A cylinder mount cannot weld: welding a mount into a neighbouring
+    // compound opened more edge cases than it was worth. Attach by revolute.
+    const sealed = this.mechanismSrv.cylinderAt(joint);
+    if (
+      sealed &&
+      (joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id) &&
+      !joint.isWelded
+    ) {
+      return false;
+    }
     return joint.isWelded || joint.links.length >= 2;
   }
 

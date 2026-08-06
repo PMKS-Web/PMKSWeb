@@ -210,7 +210,10 @@
         its hidden prismatic pin. -->
   @if (this.activeSrv.objType == 'Link' && !hideEditPanel() && selectedCylinder; as cyl) {
     <panel-section>
-      <editable-title-block [deleteAction]="deleteLink.bind(this)">
+      <editable-title-block
+        [deleteAction]="deleteLink.bind(this)"
+        [displayName]="cyl.barrelFar.name + cyl.rodFar.name"
+      >
         Edit Cylinder
       </editable-title-block>
       <collapsible-subseciton

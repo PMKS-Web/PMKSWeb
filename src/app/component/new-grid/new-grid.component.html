@@ -535,6 +535,8 @@
           [attr.d]="cyl.barrel"
           [attr.fill]="cyl.barrelFill"
           fill-opacity="0.7"
+          [attr.stroke]="cyl.barrelFill"
+          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
         />
         <!-- The linear-motion cue, under the block: a dotted line inside the
              barrel that never draws over the part sliding through it. -->
@@ -1168,6 +1170,7 @@
         @if (
           this.showLinkLengthOverlay < -1 &&
           this.showLinkAngleOverlay < -1 &&
+          !isSecondaryCylinderTag(link) &&
           ((gridUtils.typeOfLink(link) !== 'P' && settings.isShowID.value) ||
             link.showHighlight ||
             (this.activeObjService.selectedLink == link && this.activeObjService.objType == 'Link'))

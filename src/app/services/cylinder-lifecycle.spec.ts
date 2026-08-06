@@ -2,7 +2,7 @@ import '../model/joint';
 import { Coord } from '../model/coord';
 import { PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
-import { sealedCylinderAt, sealedCylinders } from '../model/cylinder';
+import { sealedCylinderAt, sealedCylinders, CYLINDER_MIN_SPAN_SCALE } from '../model/cylinder';
 import { createMechanismHarness, wireGraph } from '../../test-utils/mechanism-harness';
 import { SettingsService } from './settings.service';
 import { MODEL_SCALE } from '../model/render-scale';
@@ -81,12 +81,12 @@ describe('creating a cylinder from the two-point gesture', () => {
 
     const sealed = resolve(harness);
     expect(sealed).toBeDefined();
-    // Minimum span is one objectScale (CYLINDER_MIN_SPAN_SCALE), along +x.
+    // Minimum span is the flex solve's floor (CYLINDER_MIN_SPAN_SCALE), along +x.
     const span = Math.hypot(
       sealed.rodFar.x - sealed.barrelFar.x,
       sealed.rodFar.y - sealed.barrelFar.y
     );
-    expect(span).toBeCloseTo(1 * MODEL_SCALE, 0);
+    expect(span).toBeCloseTo(CYLINDER_MIN_SPAN_SCALE * MODEL_SCALE, 0);
     expect(sealed.slider.isSlotWellFormed).toBe(true);
   });
 });

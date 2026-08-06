@@ -12,6 +12,8 @@ import { ActiveObjService } from 'src/app/services/active-obj.service';
 })
 export class EditableTitleComponent {
   @Input() showActionButtons: boolean = false;
+  /** Shown instead of the object's own name — a cylinder displays its mounts. */
+  @Input() displayName?: string;
   @Input() deleteAction!: () => void;
 
   editMode = false;
