@@ -178,6 +178,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     },
     { updateOn: 'blur' }
   );
+  // The cylinder body edits like a binary link: length is mount-to-mount,
+  // angle runs barrel mount → rod mount. Writes re-pose the part by dragging
+  // the rod mount through the parametric pipeline, so collinearity holds.
+  cylinderForm = this.fb.group(
+    {
+      length: [''],
+      angle: [''],
+    },
+    { updateOn: 'blur' }
+  );
   forceForm = this.fb.group(
     {
       magnitude: [''],
@@ -296,6 +306,41 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return this.nup.formatValueAndUnit(
       this.nup.convertAngle(raw, AngleUnit.RADIAN, this.settingsService.angleUnit.getValue()),
       this.settingsService.angleUnit.getValue()
+    );
+  }
+
+  /**
+   * Re-pose the selected cylinder to the given mount-to-mount span and axis
+   * angle, anchored on the barrel mount. Routed through the same drag pipeline
+   * as a canvas gesture, so the parametric layout keeps it collinear and every
+   * downstream update fires the same way.
+   */
+  private reposeCylinder(span?: number, angleRad?: number): void {
+    const sealed = this.selectedCylinder;
+    if (!sealed) return;
+    const a = sealed.barrelFar;
+    const c = sealed.rodFar;
+    const current = Math.atan2(c.y - a.y, c.x - a.x);
+    const s = span ?? getDistance(a, c);
+    const ang = angleRad ?? current;
+    this.gridUtils.dragJoint(
+      c as RealJoint,
+      new Coord(a.x + s * Math.cos(ang), a.y + s * Math.sin(ang))
+    );
+    this.mechanismService.onMechUpdateState.next(2);
+    this.patchCylinderForm();
+  }
+
+  /** Refresh the cylinder form's fields from the part, without re-firing them. */
+  patchCylinderForm(): void {
+    const sealed = this.selectedCylinder;
+    if (!sealed) return;
+    this.cylinderForm.patchValue(
+      {
+        length: this.cylinderLengthLabel(sealed),
+        angle: this.cylinderAngleLabel(sealed),
+      },
+      { emitEvent: false }
     );
   }
 
@@ -662,6 +707,36 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     );
 
     this.onDestroySubscriptions.push(
+      this.cylinderForm.controls['length'].valueChanges.subscribe((val) => {
+        const [success, value] = this.nup.parseModelLengthString(
+          val!,
+          this.settingsService.lengthUnit.getValue()
+        );
+        if (!success || !(value > 0)) this.patchCylinderForm();
+        else this.reposeCylinder(value, undefined);
+      })
+    );
+
+    this.onDestroySubscriptions.push(
+      this.cylinderForm.controls['angle'].valueChanges.subscribe((val) => {
+        const [success, value] = this.nup.parseAngleString(
+          val!,
+          this.settingsService.angleUnit.getValue()
+        );
+        if (!success) this.patchCylinderForm();
+        else
+          this.reposeCylinder(
+            undefined,
+            this.nup.convertAngle(
+              value,
+              this.settingsService.angleUnit.getValue(),
+              AngleUnit.RADIAN
+            )
+          );
+      })
+    );
+
+    this.onDestroySubscriptions.push(
       this.linkForm.controls['angle'].valueChanges.subscribe((val) => {
         const [success, value] = this.nup.parseAngleString(
           val!,
@@ -928,6 +1003,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           });
         } else if (newObjType == 'Link') {
           this.currentlyOpenJointID = '';
+          this.patchCylinderForm();
           this.linkForm.patchValue(
             {
               length: this.nup.formatModelLength(
@@ -1176,6 +1252,21 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       const sealed = this.mechanismService.cylinderAt(joint);
       return !sealed || joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id;
     });
+
+    // A mount reads like a binary link's endpoint: its far end is the OTHER
+    // mount, which the interior filter above just removed along with the
+    // joints between them. Editing that D drags the far mount, which re-poses
+    // the whole part parametrically.
+    const mountOf = this.mechanismService.cylinderAt(selectedJoint);
+    if (
+      mountOf &&
+      (selectedJoint.id === mountOf.barrelFar.id || selectedJoint.id === mountOf.rodFar.id)
+    ) {
+      const far = selectedJoint.id === mountOf.barrelFar.id ? mountOf.rodFar : mountOf.barrelFar;
+      if (far instanceof RealJoint && !otherJoints.some((joint) => joint.id === far.id)) {
+        otherJoints.push(far);
+      }
+    }
 
     if (otherJoints == undefined) {
       return [];

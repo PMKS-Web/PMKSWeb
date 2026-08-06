@@ -851,6 +851,26 @@ export class MechanismService {
       this.deleteCylinder(sealed);
       return;
     }
+    // Deleting a joint of a NEIGHBOUR welded to a mount must not take the
+    // cylinder with it: dismantling the compound through the generic path
+    // stripped the seal. Unweld the mount first, so the compound dissolves
+    // back into the neighbour's own bar — which is what the deletion then
+    // operates on — and the cylinder stands untouched.
+    const doomed = this.activeObjService.selectedJoint;
+    for (const cyl of sealedCylinderStructures(this.joints)) {
+      for (const mount of [cyl.barrelFar, cyl.rodFar]) {
+        if (
+          mount instanceof RealJoint &&
+          mount.isWelded &&
+          doomed.id !== mount.id &&
+          doomed.links.some(
+            (l) => l instanceof RealLink && l.subset.length > 0 && l.joints.includes(mount)
+          )
+        ) {
+          this.unweldTopology(mount);
+        }
+      }
+    }
     // A gesture in flight targets a joint that is about to stop existing. The
     // pointer keeps sending moves after the delete -- from the keyboard, or a
     // second pointer -- and the drag then writes through a SliderBlock whose

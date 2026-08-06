@@ -222,9 +222,17 @@
         <div class="slotNote">
           Mounts: {{ cyl.barrelFar.name }} (barrel) &ndash; {{ cyl.rodFar.name }} (rod)
         </div>
-        <div class="slotNote">
-          Length {{ cylinderLengthLabel(cyl) }} &middot; Angle {{ cylinderAngleLabel(cyl) }}
-        </div>
+        <dual-input-block
+          label1="L"
+          label2="⊾"
+          formControl1="length"
+          formControl2="angle"
+          [formGroup]="cylinderForm"
+          tooltip="Mount-to-mount length and axis angle. Edits re-pose the whole part about the barrel mount; the rod resizes to serve any length."
+          [emitterOutputID]="-1"
+        >
+          Cylinder Length and Angle
+        </dual-input-block>
         <div class="slotNote">
           One sealed part. Drag a mount to re-pose or stroke it; deleting any member deletes the
           whole cylinder.

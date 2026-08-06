@@ -341,11 +341,11 @@ export interface CylinderPose {
  * Re-pose a cylinder from its two mounts — the parametric drag (§ cylinder 6).
  *
  * The axis is the line between the mounts; the barrel's joints stay rigid
- * relative to mount A, the rod stays rigid relative to mount C, and the pin is
- * re-derived on the axis, clamped to the slot's ends (`slotHalfLength`) so the
- * stroke extends and retracts as the mounts separate and approach. Clamping is
- * expressed as a bound on the mounts' separation, so whichever mount is the
- * `anchor` stays exactly where it is and the *dragged* mount is what stops.
+ * relative to mount A, and the pin is re-derived on the axis. Inside the
+ * slot's span the rod is rigid and the pin strokes; beyond either end the rod
+ * resizes to follow the gesture — a mount drag has no maximum length, and its
+ * minimum is one block-length of rod. The `anchor` mount stays exactly where
+ * it is in every case.
  *
  * Collinearity holds by construction: every returned point is on the axis.
  */
@@ -367,11 +367,17 @@ export function layoutCylinder(
 
   const half = slotHalfLength(r, barrelLength);
   const slotMid = barrelLength / 2;
-  // The pin can run the slot's span; the rod is rigid, so the mounts'
-  // separation is that span shifted by the rod's length.
-  const minSeparation = Math.max(slotMid - half, 0) + rodLength;
-  const maxSeparation = slotMid + half + rodLength;
-  const separation = Math.min(Math.max(distance, minSeparation), maxSeparation);
+  const minAlong = Math.max(slotMid - half, 0);
+  const maxAlong = slotMid + half;
+  // Inside the stroke the rod is rigid and the pin slides. Beyond it, the rod
+  // resizes instead of the mount stopping dead: dragged past full extension it
+  // grows without bound, and dragged shorter than full retraction it shrinks —
+  // down to one block-length, the only hard floor, so a mount drag can make
+  // the part any length the gesture asks for.
+  const rodMin = MARK.blockAlongHalf * r;
+  const along = Math.min(Math.max(distance - rodLength, minAlong), maxAlong);
+  const effectiveRod = Math.max(distance - along, rodMin);
+  const separation = Math.max(distance, minAlong + rodMin);
 
   const a =
     anchor === 'barrel'
@@ -385,7 +391,7 @@ export function layoutCylinder(
   return {
     barrelFar: a,
     barrelNear: { x: a.x + barrelLength * ux, y: a.y + barrelLength * uy },
-    pin: { x: c.x - rodLength * ux, y: c.y - rodLength * uy },
+    pin: { x: c.x - effectiveRod * ux, y: c.y - effectiveRod * uy },
     rodFar: c,
   };
 }

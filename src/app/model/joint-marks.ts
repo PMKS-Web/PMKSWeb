@@ -92,7 +92,12 @@ export const MARK = {
  * than as another bar.
  */
 export const CYLINDER = {
-  barrelHalf: 2.95,
+  /**
+   * Was 2.95 — nearly twice the block. The redesign reads the barrel as a
+   * sleeve just proud of the block rather than a fat body: a quarter over the
+   * block's half-height keeps the step visible without the bulk.
+   */
+  barrelHalf: 1.9,
   /**
    * Exactly the block's own half-height, so block and rod form one uniform bar.
    * It was 1.84 — the same mockup rounding `barHalf` documents — and the extra
@@ -158,6 +163,41 @@ export function cylinderBlockPath(r: number): string {
 /** The bore, for the revealed state: the barrel's own slot, cut through it. */
 export function borePath(r: number, halfLength: number): string {
   return capsulePath(-halfLength, halfLength, CYLINDER.boreHalf * r);
+}
+
+/**
+ * The dotted line inside the barrel that says "this part translates": from
+ * just clear of the barrel mount's pin to just short of the block. Drawn
+ * white at half opacity over the barrel fill, sized in R so it scales with
+ * the part like every other mark.
+ */
+export function cylinderMotionDash(
+  r: number,
+  barrelReach: number
+): { x1: number; x2: number; width: number; dashArray: string } {
+  return {
+    x1: barrelReach + 2.3 * r,
+    x2: -MARK.blockAlongHalf * r - 0.55 * r,
+    width: 0.32 * r,
+    dashArray: `${0.55 * r} ${0.42 * r}`,
+  };
+}
+
+/**
+ * The exact outline of the assembled part, for the selection stroke: the
+ * barrel's profile to its flat cut, a sharp step down to the block-and-rod
+ * bar, and on to the rod's end. The only curves are the two end caps — a
+ * selection is a crisp trace of the silhouette, not a softened echo of it.
+ */
+export function cylinderContourPath(r: number, barrelReach: number, rodReach: number): string {
+  const hB = CYLINDER.barrelHalf * r;
+  const hR = CYLINDER.rodHalf * r;
+  const cut = CYLINDER.flatCut * MARK.blockAlongHalf * r;
+  return (
+    `M ${cut} ${-hB} L ${barrelReach} ${-hB} A ${hB} ${hB} 0 0 0 ${barrelReach} ${hB} ` +
+    `L ${cut} ${hB} L ${cut} ${hR} L ${rodReach} ${hR} ` +
+    `A ${hR} ${hR} 0 0 0 ${rodReach} ${-hR} L ${cut} ${-hR} Z`
+  );
 }
 
 // The skin used to draw a large welded plus at the pin. An atomic cylinder is

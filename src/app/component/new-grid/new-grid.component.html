@@ -525,17 +525,22 @@
          the interior pin and the buried barrel joint have no hitboxes at all. -->
     @for (cyl of cylinderList; track cyl.id) {
       <g class="cylinder-mark" [attr.transform]="sliderMarks.frame(cyl)">
-        <path
-          class="cylinder-barrel"
-          cursor="move"
-          (pointerover)="cyl.body.showHighlight = true"
-          (pointerout)="cyl.body.showHighlight = false"
-          (pointerdown)="setLastLeftClick(cyl.body, $event)"
-          (contextmenu)="setLastRightClick(cyl.body, $event)"
-          [attr.d]="cyl.barrel"
-          [attr.fill]="cyl.barrelFill"
-          fill-opacity="0.7"
-        />
+        <!-- A side whose mount is welded into a neighbouring link is drawn by
+             that compound, fused into one piece; the skin repeating it here is
+             what read as two layered parts. -->
+        @if (!cyl.barrelHidden) {
+          <path
+            class="cylinder-barrel"
+            cursor="move"
+            (pointerover)="cyl.body.showHighlight = true"
+            (pointerout)="cyl.body.showHighlight = false"
+            (pointerdown)="setLastLeftClick(cyl.body, $event)"
+            (contextmenu)="setLastRightClick(cyl.body, $event)"
+            [attr.d]="cyl.barrel"
+            [attr.fill]="cyl.barrelFill"
+            fill-opacity="0.7"
+          />
+        }
         <path
           cursor="move"
           (pointerdown)="setLastLeftClick(cyl.body, $event)"
@@ -544,18 +549,32 @@
           fill="#000000"
           filter="url(#elevation-1)"
         />
-        <path
-          class="cylinder-rod"
-          cursor="move"
-          (pointerover)="cyl.body.showHighlight = true"
-          (pointerout)="cyl.body.showHighlight = false"
-          (pointerdown)="setLastLeftClick(cyl.body, $event)"
-          (contextmenu)="setLastRightClick(cyl.body, $event)"
-          [attr.d]="cyl.rod"
-          [attr.fill]="cyl.rodFill"
-          fill-opacity="0.7"
-          [attr.stroke]="cyl.rodFill"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+        @if (!cyl.rodHidden) {
+          <path
+            class="cylinder-rod"
+            cursor="move"
+            (pointerover)="cyl.body.showHighlight = true"
+            (pointerout)="cyl.body.showHighlight = false"
+            (pointerdown)="setLastLeftClick(cyl.body, $event)"
+            (contextmenu)="setLastRightClick(cyl.body, $event)"
+            [attr.d]="cyl.rod"
+            [attr.fill]="cyl.rodFill"
+            fill-opacity="0.7"
+            [attr.stroke]="cyl.rodFill"
+            [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+          />
+        }
+        <!-- The linear-motion cue: a dotted line inside the barrel. -->
+        <line
+          pointer-events="none"
+          [attr.x1]="cyl.dash.x1"
+          y1="0"
+          [attr.x2]="cyl.dash.x2"
+          y2="0"
+          stroke="#ffffff"
+          stroke-opacity="0.5"
+          [attr.stroke-width]="cyl.dash.width"
+          [attr.stroke-dasharray]="cyl.dash.dashArray"
         />
         @if (cyl.driven) {
           <g pointer-events="none">

@@ -1,10 +1,11 @@
 import './joint';
 import { layoutCylinder } from './cylinder';
-import { slotHalfLength } from './joint-marks';
+import { MARK, slotHalfLength } from './joint-marks';
 
 // The parametric drag (§ cylinder 6): dragging a mount re-poses the whole
 // assembly about the other mount. Collinearity has to hold by construction,
-// the member lengths are rigid, and the stroke clamps to the slot's ends.
+// the member lengths are rigid inside the stroke, and beyond the slot's ends
+// the rod resizes to follow the gesture (no maximum, one block-length minimum).
 
 const BARREL = 3;
 const ROD = 4;
@@ -55,16 +56,19 @@ describe('layoutCylinder', () => {
     expect(pose.rodFar.x).toBeCloseTo(6, 9);
   });
 
-  it('clamps the stroke at the slot ends instead of stretching a member', () => {
+  it('resizes the rod past the slot ends instead of stopping the mount', () => {
     const half = slotHalfLength(R, BARREL);
     const mid = BARREL / 2;
 
-    // Pulled far past full extension: the dragged mount stops at the slot end.
+    // Pulled far past full extension: the pin holds the slot end and the rod
+    // grows to follow the gesture — a mount drag has no maximum length.
     const extended = layoutCylinder({ x: 0, y: 0 }, { x: 50, y: 0 }, BARREL, ROD, R, 'barrel')!;
     expect(extended.pin.x).toBeCloseTo(mid + half, 9);
-    expect(dist(extended.pin, extended.rodFar)).toBeCloseTo(ROD, 9);
+    expect(extended.rodFar.x).toBeCloseTo(50, 9);
+    expect(dist(extended.pin, extended.rodFar)).toBeCloseTo(50 - (mid + half), 9);
 
-    // Pushed far past full retraction: same, at the other end.
+    // Pushed past full retraction: the pin holds the near end and the rod
+    // shrinks to serve the shorter span.
     const retracted = layoutCylinder(
       { x: 0, y: 0 },
       { x: ROD * 0.5, y: 0 },
@@ -74,19 +78,25 @@ describe('layoutCylinder', () => {
       'barrel'
     )!;
     expect(retracted.pin.x).toBeCloseTo(Math.max(mid - half, 0), 9);
-    expect(dist(retracted.pin, retracted.rodFar)).toBeCloseTo(ROD, 9);
+    expect(retracted.rodFar.x).toBeCloseTo(ROD * 0.5, 9);
+    expect(dist(retracted.pin, retracted.rodFar)).toBeCloseTo(
+      ROD * 0.5 - Math.max(mid - half, 0),
+      9
+    );
   });
 
-  it('clamps against the anchor when the other mount is being dragged', () => {
-    // Dragging the barrel mount toward a fixed rod mount: the rod mount must
-    // not move, so the barrel mount is what stops.
+  it('floors the rod at one block-length, holding the anchor still', () => {
+    // Dragging the barrel mount nearly onto a fixed rod mount: the rod shrinks
+    // to its floor and the barrel mount stops there; the anchor never moves.
     const rodMount = { x: 10, y: 0 };
-    const pose = layoutCylinder({ x: 9, y: 0 }, rodMount, BARREL, ROD, R, 'rod')!;
+    const pose = layoutCylinder({ x: 9.99, y: 0 }, rodMount, BARREL, ROD, R, 'rod')!;
 
     expect(pose.rodFar).toEqual(rodMount);
     const half = slotHalfLength(R, BARREL);
-    const minSeparation = Math.max(BARREL / 2 - half, 0) + ROD;
-    expect(dist(pose.barrelFar, pose.rodFar)).toBeCloseTo(minSeparation, 9);
+    const minAlong = Math.max(BARREL / 2 - half, 0);
+    const rodMin = MARK.blockAlongHalf * R;
+    expect(dist(pose.barrelFar, pose.rodFar)).toBeCloseTo(minAlong + rodMin, 9);
+    expect(dist(pose.pin, pose.rodFar)).toBeCloseTo(rodMin, 9);
   });
 
   it('rotates rigidly about the anchor as the dragged mount swings', () => {

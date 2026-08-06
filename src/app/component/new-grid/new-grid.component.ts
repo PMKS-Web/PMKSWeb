@@ -82,11 +82,7 @@ import {
   resolveSlotDropTarget,
   SlotDropCandidate,
 } from '../../model/drop-target';
-import {
-  buildCompoundPath,
-  mergedChannels,
-  transformRigidPath,
-} from '../../model/compound-link-path';
+import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
 import { Cylinder, cylinderCreationLayout, cylinderJoints } from '../../model/cylinder';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
@@ -1860,24 +1856,13 @@ export class NewGridComponent {
     );
   }
 
-  private silhouetteCache?: { key: string; path: string };
-
   /**
-   * The whole skin fused into one outline — barrel, block and rod as a single
-   * silhouette — so selecting the body highlights the part, not its pieces.
-   * The Boolean union is only paid for while a cylinder is actually selected,
-   * and cached against the drawn paths.
+   * The selection stroke traces the part's exact silhouette — sharp at every
+   * profile step, curved only at the two end caps. The mark computes it
+   * analytically, so there is no union to pay for or to soften the corners.
    */
   cylinderSilhouette(mark: CylinderMark): string {
-    const key = `${mark.id}|${mark.barrel}|${mark.rod}|${mark.block}`;
-    if (this.silhouetteCache?.key !== key) {
-      const r = 0.15 * this.settings.objectScale;
-      this.silhouetteCache = {
-        key,
-        path: buildCompoundPath([mark.barrel, mark.block, mark.rod], MARK.plateFillet * r).path,
-      };
-    }
-    return this.silhouetteCache.path;
+    return mark.contour;
   }
 
   /** A link the cylinder skin is standing in for, so it is not drawn twice. */
