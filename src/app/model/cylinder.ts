@@ -319,6 +319,24 @@ export function cylinderCreationLayout(
 }
 
 /**
+ * How far along the barrel the pin may sit: the slot's own travel.
+ *
+ * One definition, read by three things that would otherwise disagree — the
+ * pose normalizer clamps a stray pin into it, the drawing cuts the slot to it,
+ * and the simulation treats it as the cylinder's stroke. A driven cylinder can
+ * therefore only reach poses the part can actually be drawn in, and it reverses
+ * at the ends of its own travel rather than telescoping out of its barrel.
+ */
+export function cylinderStrokeAlong(
+  barrelLength: number,
+  r: number = 0.15 * SettingsService.objectScale
+): { min: number; max: number } {
+  const half = slotHalfLength(r, barrelLength);
+  const mid = barrelLength / 2;
+  return { min: Math.max(mid - half, 0), max: mid + half };
+}
+
+/**
  * Re-derive a cylinder's member positions from its two mounts — the
  * invariant-enforcement pose (§ cylinder 1-fix).
  *
@@ -345,10 +363,9 @@ export function normalizedCylinderPose(
   const ux = dx / distance;
   const uy = dy / distance;
 
-  const half = slotHalfLength(r, barrelLength);
-  const mid = barrelLength / 2;
+  const stroke = cylinderStrokeAlong(barrelLength, r);
   const projection = (pinPoint.x - barrelMount.x) * ux + (pinPoint.y - barrelMount.y) * uy;
-  const along = Math.min(Math.max(projection, Math.max(mid - half, 0)), mid + half);
+  const along = Math.min(Math.max(projection, stroke.min), stroke.max);
 
   return {
     barrelFar: { x: barrelMount.x, y: barrelMount.y },

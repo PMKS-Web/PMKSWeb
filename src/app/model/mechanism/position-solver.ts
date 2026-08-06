@@ -12,6 +12,12 @@ import { Coord } from '../coord';
 import { assemblyBodyIds, SlideAssembly, slideAssemblies, slotOffset } from '../slide-assembly';
 import { core } from '@angular/compiler';
 import { MODEL_SCALE } from '../render-scale';
+import {
+  Cylinder,
+  cylinderJoints,
+  cylinderStrokeAlong,
+  sealedCylinderStructures,
+} from '../cylinder';
 
 /**
  * How far a driven prismatic input advances along its slot per solved sample,
@@ -26,6 +32,31 @@ import { MODEL_SCALE } from '../render-scale';
 // 0.1 of a user length unit, expressed in internal model units so the sampled
 // motion is identical to what it was before the internal world scaled up.
 export const PRISMATIC_INPUT_STEP = 0.1 * MODEL_SCALE;
+
+/**
+ * How many samples one stroke of a driven cylinder is cut into.
+ *
+ * A crank closes its cycle in 360 one-degree samples. A cylinder has no
+ * revolution to close on — it runs to one end of its travel, reverses, runs to
+ * the other and comes back — so the analogous constant is per *stroke*, and an
+ * out-and-back cycle costs about the same 360 samples whatever the part
+ * measures. The fixed `PRISMATIC_INPUT_STEP` cannot do that job: it samples a
+ * long slot finely and a short one into a handful of frames.
+ *
+ * "About", because the samples are spaced from the pose the cylinder was drawn
+ * in rather than from a limit, and the part of a step left over at each end of
+ * the travel is not taken — so a cycle is 360 samples or two fewer.
+ */
+export const SAMPLES_PER_STROKE = 180;
+
+/**
+ * How far outside its stroke a solved pin may land before the step is refused.
+ *
+ * Positions are rounded to four decimals per timestep, so a command that lands
+ * exactly on the end of the travel can measure a hair beyond it. Refusing that
+ * would cut the stroke a sample short at each end and stop the cycle closing.
+ */
+const STROKE_TOLERANCE = 1e-3;
 
 /**
  * How close two solve-circle centres must be to count as coincident. Joint
@@ -99,6 +130,41 @@ interface SlideAssemblyStep {
   targets: string[];
 }
 
+/**
+ * A sealed cylinder's interior, placed from its two mounts rather than solved
+ * joint by joint (§ cylinder 1).
+ *
+ * The barrel and the rod are steel: their lengths are read once, at t = 0, and
+ * held. Only the overlap between them changes, which is the whole of what a
+ * cylinder does — and stating it this way is what keeps the part straight
+ * without asking the solver to satisfy a collinearity constraint it has no
+ * primitive for.
+ */
+interface CylinderInterior {
+  barrelFarId: string;
+  rodFarId: string;
+  barrelNearId: string;
+  pinId: string;
+  sliderId: string;
+  barrelLength: number;
+  rodLength: number;
+  /** The pin's travel inside the slot: where the stroke begins and ends. */
+  minAlong: number;
+  maxAlong: number;
+}
+
+/** The commanded extension of the one cylinder driving the mechanism (§5.1). */
+interface CylinderDrive {
+  /** The mount the rest of the mechanism already holds. */
+  anchorMountId: string;
+  /** The mount the command moves. */
+  drivenMountId: string;
+  /** Mount-to-mount length as of the last committed sample. */
+  span: number;
+  /** How far one sample extends it. */
+  step: number;
+}
+
 export class PositionSolver {
   static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
   static jointMapPositions = new Map<string, Array<number>>();
@@ -120,6 +186,23 @@ export class PositionSolver {
   static unsolvableJoints: string[] = [];
   private static inverseSlotMap = new Map<string, InverseSlotStep>();
   private static slideAssemblyMap = new Map<string, SlideAssemblyStep>();
+  /** Every sealed cylinder, keyed by the buried barrel end its step targets. */
+  private static cylinderInteriorMap = new Map<string, CylinderInterior>();
+  private static cylinderDrive?: CylinderDrive;
+  /** The cylinder the input flag names, before the walk decides which end moves. */
+  private static drivenCylinder?: Cylinder;
+  /**
+   * The command this timestep proposed, held back until every other step has
+   * agreed to it. A sample the mechanism refuses must leave the commanded
+   * length exactly where it was, or the reversal would come back on a different
+   * grid from the one it went out on and the cycle would never close.
+   */
+  private static pendingSpan?: number;
+  /**
+   * Sample spacing a driven cylinder asks for — its stroke cut into
+   * `SAMPLES_PER_STROKE`. Undefined when nothing prismatic is driving.
+   */
+  static drivenSampleStep?: number;
   private static internalTriangleValuesMap = new Map<string, number[]>();
   private static desiredConnectedJointIndicesMap = new Map<string, number[]>();
   private static desiredAnalysisJointMap = new Map<string, string>();
@@ -154,6 +237,11 @@ export class PositionSolver {
     this.slotLineMap = new Map<string, SlotLine>();
     this.inverseSlotMap = new Map<string, InverseSlotStep>();
     this.slideAssemblyMap = new Map<string, SlideAssemblyStep>();
+    this.cylinderInteriorMap = new Map<string, CylinderInterior>();
+    this.cylinderDrive = undefined;
+    this.drivenCylinder = undefined;
+    this.pendingSpan = undefined;
+    this.drivenSampleStep = undefined;
     this.stepCount = 0;
     this.unsolvableJoints = [];
   }
@@ -205,8 +293,22 @@ export class PositionSolver {
     // a bar carrying two blocks, each pushed by its own crank off one pivot, the
     // second crank's joint was carried round instead of being solved, and its
     // block left the bar entirely -- nearly two units off at the widest.
+    // Every sealed cylinder is placed as one part, driven or not: its interior
+    // follows from its two mounts. That is also what makes a Slide on a moving
+    // carrier solvable at all — the pin rides a slot whose own direction is
+    // still being solved, so no primitive that measures the slot first can
+    // reach it.
+    const cylinders = this.registerSealedCylinders(joints);
     const driven = this.drivenBody(inputJoint);
     const tracer_joints: Joint[] = [];
+    // A driven cylinder commands a length between two mounts rather than a step
+    // taken by a neighbour of the input joint, so the drive loop below has
+    // nothing to say about it; the deferred sweep places both mounts instead.
+    if (this.registerCylinderDrive(cylinders, inputJoint)) {
+      orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
+      this.finishOrder(joints, orderNum, knownJointsIds);
+      return;
+    }
     inputJoint.connectedJoints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;
@@ -251,10 +353,69 @@ export class PositionSolver {
     });
 
     orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
+    this.finishOrder(joints, orderNum, knownJointsIds);
+  }
+
+  /** Close the walk: how many steps it emitted, and what it could not reach. */
+  private static finishOrder(joints: Joint[], orderNum: number, known: string[]): void {
     this.stepCount = orderNum - 1;
     this.unsolvableJoints = joints
-      .filter((j) => j instanceof RealJoint && !j.ground && !knownJointsIds.includes(j.id))
+      .filter((j) => j instanceof RealJoint && !j.ground && !known.includes(j.id))
       .map((j) => j.id);
+  }
+
+  /**
+   * Record every sealed cylinder's members and the stroke they allow.
+   *
+   * Lengths are measured once, here, from the t = 0 pose. Re-measuring them per
+   * timestep would let the part grow by whatever the last solve's rounding
+   * left behind, which over a few hundred samples is a visibly longer cylinder.
+   */
+  private static registerSealedCylinders(joints: Joint[]): Cylinder[] {
+    const cylinders = sealedCylinderStructures(joints);
+    for (const cylinder of cylinders) {
+      const { barrelFar, barrelNear, pin, slider, rodFar } = cylinder;
+      const barrelLength = euclideanDistance(barrelFar.x, barrelFar.y, barrelNear.x, barrelNear.y);
+      const stroke = cylinderStrokeAlong(barrelLength);
+      this.cylinderInteriorMap.set(barrelNear.id, {
+        barrelFarId: barrelFar.id,
+        rodFarId: rodFar.id,
+        barrelNearId: barrelNear.id,
+        pinId: pin.id,
+        sliderId: slider.id,
+        barrelLength,
+        rodLength: euclideanDistance(pin.x, pin.y, rodFar.x, rodFar.y),
+        minAlong: stroke.min,
+        maxAlong: stroke.max,
+      });
+    }
+    return cylinders;
+  }
+
+  /**
+   * Take the input flag on a sealed slider as a command to extend that
+   * cylinder, and settle how finely the stroke is sampled.
+   *
+   * A cylinder with no travel left to give is not a drive; saying so here is
+   * what keeps the mechanism reporting itself unsolvable rather than dividing
+   * the sample step by zero.
+   */
+  private static registerCylinderDrive(cylinders: Cylinder[], inputJoint: RealJoint): boolean {
+    if (!(inputJoint instanceof PrisJoint) || !inputJoint.isSealed) {
+      return false;
+    }
+    const cylinder = cylinders.find((candidate) => candidate.slider.id === inputJoint.id);
+    const interior = cylinder && this.cylinderInteriorMap.get(cylinder.barrelNear.id);
+    if (!interior) {
+      return false;
+    }
+    const stroke = interior.maxAlong - interior.minAlong;
+    if (!(stroke > DEGENERATE_SLOT_TOLERANCE)) {
+      return false;
+    }
+    this.drivenSampleStep = stroke / SAMPLES_PER_STROKE;
+    this.drivenCylinder = cylinder;
+    return true;
   }
 
   /**
@@ -301,7 +462,13 @@ export class PositionSolver {
         (j): j is RealJoint => j instanceof RealJoint && !known.includes(j.id)
       );
       for (const joint of pending) {
+        // The two cylinder primitives come first. A sealed cylinder's joints
+        // also match the generic slot primitives, and letting one of those win
+        // would solve the part joint by joint — which is exactly the freedom
+        // sealing it took away.
         const advanced =
+          this.orderDrivenCylinderMount(joints, links, joint, orderNum, known) ??
+          this.orderSealedCylinderInterior(joints, links, joint, orderNum, known) ??
           this.orderCoincidentBlock(joints, joint, orderNum, known) ??
           this.orderCarrierFromBlock(joints, links, joint, orderNum, known) ??
           this.orderSlideAssembly(joints, links, joint, orderNum, known) ??
@@ -313,6 +480,184 @@ export class PositionSolver {
       }
     }
     return orderNum;
+  }
+
+  /**
+   * Place the mount a driven cylinder pushes (§5.1).
+   *
+   * The constraint is `|P₁P₂| = s(t)` and nothing more: a circle about the
+   * mount the mechanism already holds, of the commanded radius, meeting the
+   * circle that the driven mount's own body sweeps. That is the ordinary dyad,
+   * with one radius that changes per sample instead of staying put — no slot
+   * line, and no ordering problem.
+   *
+   * v1 requires one mount to be reachable before the other. A cylinder floating
+   * between two moving bodies prescribes a length between two unknowns, which
+   * is the simultaneous system Phase 6 exists for; it reports unsolvable here
+   * rather than picking one and drawing something plausible.
+   */
+  private static orderDrivenCylinderMount(
+    joints: Joint[],
+    links: Link[],
+    joint: RealJoint,
+    orderNum: number,
+    known: string[]
+  ): number | undefined {
+    const cylinder = this.drivenCylinder;
+    if (!cylinder || known.includes(joint.id)) {
+      return undefined;
+    }
+    const mounts = [cylinder.barrelFar, cylinder.rodFar];
+    if (!mounts.some((mount) => mount.id === joint.id)) {
+      return undefined;
+    }
+    const anchor = mounts.find((mount) => mount.id !== joint.id)!;
+    if (!known.includes(anchor.id)) {
+      return undefined;
+    }
+    // The second circle has to come from the driven mount's *own* body. A
+    // reference reached back through the cylinder would be constrained by the
+    // very length being commanded, and the two circles would be the same one.
+    const members = new Set(cylinderJoints(cylinder).map((member) => member.id));
+    const reference = joint.connectedJoints.find(
+      (candidate) => known.includes(candidate.id) && !members.has(candidate.id)
+    );
+    if (!reference) {
+      return undefined;
+    }
+
+    const span = euclideanDistance(joint.x, joint.y, anchor.x, anchor.y);
+    this.desiredConnectedJointIndicesMap.set(joint.id, [
+      joints.findIndex((j) => j.id === anchor.id),
+      joints.findIndex((j) => j.id === reference.id),
+    ]);
+    this.desiredAnalysisJointMap.set(joint.id, 'drivenCylinderMount');
+    this.jointNumOrderSolverMap.set(orderNum, [joint.id]);
+    this.jointDistMap.set(
+      joint.id + ',' + reference.id,
+      euclideanDistance(joint.x, joint.y, reference.x, reference.y)
+    );
+    // Rewritten every sample; seeded here so the first solve has a radius.
+    this.jointDistMap.set(joint.id + ',' + anchor.id, span);
+    this.cylinderDrive = {
+      anchorMountId: anchor.id,
+      drivenMountId: joint.id,
+      span,
+      step: this.drivenSampleStep ?? PRISMATIC_INPUT_STEP,
+    };
+    known.push(joint.id);
+    return this.detJointOrder(joints, links, joint, orderNum + 1, known);
+  }
+
+  /**
+   * Place a sealed cylinder's interior once both its mounts are known.
+   *
+   * One step for three joints, because they are one part: the buried barrel end
+   * at the barrel's length from its mount, the pin wherever the rod's length
+   * leaves it, and the sliding joint on top of the pin (§2.10 item 2).
+   */
+  private static orderSealedCylinderInterior(
+    joints: Joint[],
+    links: Link[],
+    joint: RealJoint,
+    orderNum: number,
+    known: string[]
+  ): number | undefined {
+    const interior = [...this.cylinderInteriorMap.values()].find((candidate) =>
+      [candidate.barrelNearId, candidate.pinId, candidate.sliderId].includes(joint.id)
+    );
+    if (!interior || known.includes(interior.barrelNearId)) {
+      return undefined;
+    }
+    if (!known.includes(interior.barrelFarId) || !known.includes(interior.rodFarId)) {
+      return undefined;
+    }
+
+    const targets = [interior.barrelNearId, interior.pinId, interior.sliderId];
+    this.desiredConnectedJointIndicesMap.set(interior.barrelNearId, []);
+    this.desiredAnalysisJointMap.set(interior.barrelNearId, 'sealedCylinderInterior');
+    this.jointNumOrderSolverMap.set(orderNum, targets);
+    targets.forEach((id) => known.push(id));
+
+    let next = orderNum + 1;
+    // Whatever hangs off the rod or the barrel can now be walked normally.
+    for (const id of targets) {
+      const placed = joints.find((j) => j.id === id);
+      if (placed instanceof RealJoint) {
+        next = this.detJointOrder(joints, links, placed, next, known);
+      }
+    }
+    return next;
+  }
+
+  /**
+   * Extend the driven cylinder by one sample and solve the mount it pushes.
+   *
+   * The command advances on a grid anchored at the starting length, so a
+   * reversal retraces the samples it went out on and the cycle closes exactly
+   * where it began. Measuring the current length back off the joints instead
+   * would let each sample's rounding accumulate, and the return trip would miss
+   * the start by a little more every stroke.
+   */
+  private static drivenCylinderMount(joints: Joint[], joint: Joint, forward: boolean): boolean {
+    const drive = this.cylinderDrive;
+    const indices = this.desiredConnectedJointIndicesMap.get(joint.id);
+    if (!drive || !indices) {
+      return false;
+    }
+    const next = drive.span + (forward ? drive.step : -drive.step);
+    this.jointDistMap.set(drive.drivenMountId + ',' + drive.anchorMountId, next);
+    const solved = this.twoCircleIntersectionPoints(joints[indices[0]], joints[indices[1]], joint);
+    if (solved) {
+      this.pendingSpan = next;
+    }
+    return solved;
+  }
+
+  /**
+   * Derive a sealed cylinder's interior from its mounts, and refuse the pose if
+   * the rod has been pulled out of the barrel.
+   *
+   * The stroke is the same travel the drawing cuts its slot to, so a refusal
+   * here is the part reaching the end of its own extension. The mechanism reads
+   * that the way it reads any other limit — it reverses.
+   */
+  private static sealedCylinderInterior(targets: string[]): boolean {
+    const interior = this.cylinderInteriorMap.get(targets[0]);
+    if (!interior) {
+      return false;
+    }
+    const barrelMount = this.jointMapPositions.get(interior.barrelFarId);
+    const rodMount = this.jointMapPositions.get(interior.rodFarId);
+    if (!barrelMount || !rodMount) {
+      return false;
+    }
+    const dx = rodMount[0] - barrelMount[0];
+    const dy = rodMount[1] - barrelMount[1];
+    const span = Math.hypot(dx, dy);
+    if (span < DEGENERATE_SLOT_TOLERANCE) {
+      return false;
+    }
+    const along = span - interior.rodLength;
+    if (
+      along < interior.minAlong - STROKE_TOLERANCE ||
+      along > interior.maxAlong + STROKE_TOLERANCE
+    ) {
+      return false;
+    }
+
+    const ux = dx / span;
+    const uy = dy / span;
+    this.recordJointPosition(
+      interior.barrelNearId,
+      barrelMount[0] + interior.barrelLength * ux,
+      barrelMount[1] + interior.barrelLength * uy
+    );
+    const pinX = barrelMount[0] + along * ux;
+    const pinY = barrelMount[1] + along * uy;
+    this.recordJointPosition(interior.pinId, pinX, pinY);
+    this.recordJointPosition(interior.sliderId, pinX, pinY);
+    return true;
   }
 
   /** The other joint of a sliding joint's block (§2.10 item 1). */
@@ -861,6 +1206,10 @@ export class PositionSolver {
     if (this.unsolvableJoints.length > 0) {
       return false;
     }
+    // A command left over from a sample the mechanism refused. Clearing it here
+    // rather than at each of the failure returns below is what makes "committed
+    // only when every step agreed" true without a guard on every exit.
+    this.pendingSpan = undefined;
     let counter = 1;
     while (counter <= this.stepCount) {
       const step_targets = this.jointNumOrderSolverMap.get(counter)!;
@@ -901,6 +1250,12 @@ export class PositionSolver {
         case 'slideAssemblyThroughSlot':
           possible = this.slideAssemblyThroughSlot(step_targets);
           break;
+        case 'drivenCylinderMount':
+          possible = this.drivenCylinderMount(joints, joint, angVelDir);
+          break;
+        case 'sealedCylinderInterior':
+          possible = this.sealedCylinderInterior(step_targets);
+          break;
         case 'determineTracerJoint':
           this.twoCircleIntersectionPoints(
             joints[connected_joint_indices[0]],
@@ -939,6 +1294,12 @@ export class PositionSolver {
         this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'end');
       }
     });
+    // Every step agreed, so the sample the drive proposed is now the one it is
+    // extending from.
+    if (this.cylinderDrive && this.pendingSpan !== undefined) {
+      this.cylinderDrive.span = this.pendingSpan;
+      this.pendingSpan = undefined;
+    }
     return true;
   }
 

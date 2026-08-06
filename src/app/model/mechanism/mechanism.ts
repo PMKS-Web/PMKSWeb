@@ -364,24 +364,32 @@ export class Mechanism {
     const STEPS_PER_REVOLUTION = 360;
     const inputJoint = this.joints[0].find((j) => j instanceof RealJoint && j.input);
     const revoluteInput = inputJoint !== undefined && !(inputJoint instanceof PrisJoint);
-    // A rocker cannot complete a crank revolution; it reverses instead, and only the
+    // An input that cannot go round reverses instead, and only the
     // return-to-start tolerance can tell us where its cycle ends.
-    let everReversed = false;
+    let reversals = 0;
     const angularSpeed = Math.abs(inputAngVel);
+    PositionSolver.resetStaticVariables();
+    PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
+    PositionSolver.setUpSolvingForces(this.forces[0]);
+
     // How far one sample advances the input: a degree of crank for a revolute
-    // input, a fixed step along the slot for a prismatic one. Dividing by the
+    // input, a length along the slot for a prismatic one. Dividing by the
     // speed turns that into the seconds each sample spans, so the two have to
     // be measured in the same units -- a prismatic input's speed is length per
     // second, and using the rotational step against it put playback and the
     // reported cycle time on a clock unrelated to the speed that was asked for.
-    const sampleStep = revoluteInput ? Math.PI / 180 : PRISMATIC_INPUT_STEP;
+    //
+    // A driven cylinder knows its own travel and asks for a step that cuts it
+    // into a fixed number of samples, so a short part is not animated in six
+    // frames and a long one in six hundred. Anything else prismatic keeps the
+    // fixed step, having no end of travel to divide.
+    const sampleStep = revoluteInput
+      ? Math.PI / 180
+      : (PositionSolver.drivenSampleStep ?? PRISMATIC_INPUT_STEP);
     // Time always moves forward, including across a rocking mechanism's
     // direction reversal. At zero speed retain finite sample coordinates so
     // static-equivalent dynamic results can still be plotted and exported.
     let timeNumIncrement = angularSpeed > Number.EPSILON ? sampleStep / angularSpeed : sampleStep;
-    PositionSolver.resetStaticVariables();
-    PositionSolver.determineJointOrder(this.joints[0], this.links[0]);
-    PositionSolver.setUpSolvingForces(this.forces[0]);
 
     const connectedJointMapIndices = new Map<string, number[]>();
     this.links[0].forEach((l) => {
@@ -406,10 +414,16 @@ export class Mechanism {
     let yDiff = Math.abs(startingPositionY - Math.round(desiredJoint.y * 100) / 100);
     this._timeNum.push(curTimeNum);
 
+    // A reversing input passes through its starting pose twice: once on the way
+    // back from the first limit, and again after the second. Stopping at the
+    // first crossing precomputes half the motion — for a cylinder, whichever
+    // fraction of its stroke happened to lie on one side of where it was drawn.
+    // The cycle is closed only once both limits have been reached and the
+    // mechanism is home again.
     const cycleIncomplete = () =>
-      revoluteInput && !everReversed
+      revoluteInput && reversals === 0
         ? currentTimeStamp < STEPS_PER_REVOLUTION
-        : xDiff > TOLERANCE || yDiff > TOLERANCE;
+        : reversals < 2 || xDiff > TOLERANCE || yDiff > TOLERANCE;
 
     while (!simForward || currentTimeStamp === 0 || cycleIncomplete()) {
       const possible = PositionSolver.determinePositionAnalysis(
@@ -566,7 +580,7 @@ export class Mechanism {
           return;
         }
         falseTwice += 1;
-        everReversed = true;
+        reversals += 1;
         simForward = !simForward;
         inputAngVel = inputAngVel * -1;
         inputAngVelDirection = !inputAngVelDirection;
@@ -589,7 +603,7 @@ export class Mechanism {
     // Pin the closing sample to the analytic period 2*pi/|w| rather than to 360
     // accumulated float additions, so the reported cycle time scales exactly with
     // input speed and the last sample lines up with the first.
-    if (revoluteInput && !everReversed && angularSpeed > Number.EPSILON) {
+    if (revoluteInput && reversals === 0 && angularSpeed > Number.EPSILON) {
       this._timeNum[this._timeNum.length - 1] = (2 * Math.PI) / angularSpeed;
       // Closing at a fixed 360 steps assumes assembly-mode tracking held all the
       // way around; if it did not, the cycle no longer ends where it began and

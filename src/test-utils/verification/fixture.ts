@@ -64,6 +64,13 @@ export interface SliderSpec {
    * skinned.
    */
   sealed?: boolean;
+  /**
+   * Drives the mechanism from this prismatic joint (§5.1). The flag has to go
+   * on the slider rather than on a fixture joint: a driven cylinder's commanded
+   * quantity is how far the block has travelled along its slot, and no RevJoint
+   * in the fixture list owns that.
+   */
+  input?: boolean;
 }
 
 export interface FixtureLink {
@@ -140,7 +147,7 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
   sliderSpecs.forEach((spec) => {
     const revJoint = jointById.get(spec.at)!;
     // A floating slot is not grounded; that pair of states is exclusive (§2.4a).
-    const prisJoint = new PrisJoint(spec.prisId, revJoint.x, revJoint.y, false, !spec.on);
+    const prisJoint = new PrisJoint(spec.prisId, revJoint.x, revJoint.y, !!spec.input, !spec.on);
     prisJoint.isSealed = spec.sealed ?? false;
     if (spec.on) {
       const carrier = links.find((link) => link.id === spec.on!.carrier)!;
