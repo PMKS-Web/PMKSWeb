@@ -7,6 +7,7 @@ import {
   wattIFixture,
 } from './fixtures';
 import {
+  cylinderBoomFixture,
   cylinderSkinFixture,
   ellipticalTrammelFixture,
   invertedSliderCrankFixture,
@@ -92,6 +93,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: true,
     slide: true,
     fixture: cylinderSkinFixture(),
+  },
+  {
+    name: 'Cylinder-driven boom',
+    purpose: 'Gate 5: the cylinder is the drive, and the boom follows the law of cosines',
+    spec: 'driven-cylinder.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: cylinderBoomFixture(),
   },
   {
     name: 'Inverted slider-crank',

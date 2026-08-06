@@ -166,6 +166,7 @@ export class MechanismService {
     // here because this is the one funnel every mutation passes through, so
     // within a revision the topology cannot have changed.
     this.cylinderRevision++;
+    this.poseRevision++;
     Force.normalizeVisualWidths(this.forces);
     // Changing the input speed re-samples the same geometry onto a different time
     // axis. Hold the simulation time rather than the sample index, so t and the pose
@@ -1343,6 +1344,19 @@ export class MechanismService {
 
   /** Bumped by updateMechanism; consumers key caches on it. */
   cylinderRevision = 0;
+  /**
+   * Bumped whenever the drawn pose changes — by a rebuild, and by every
+   * animation frame.
+   *
+   * Structure and pose need separate counters. A sealed cylinder's *drawing*
+   * is a function of where its joints are, and keying it on the structure
+   * revision alone left the skin painted at the pose the mechanism was built
+   * in: correct until Phase 5 made a cylinder something that could be driven,
+   * at which point the boom animated and the cylinder sat still on top of it.
+   * Reusing the structure counter here instead would rebuild the assembly walk
+   * on every frame to answer a question whose answer cannot have changed.
+   */
+  poseRevision = 0;
   private structuresCache?: { revision: number; list: Cylinder[] };
 
   /**
@@ -1978,6 +1992,9 @@ export class MechanismService {
   private applyPose(step: number, blend: number) {
     const nextStep = blend > 0 ? step + 1 : step;
     const frames = this.mechanisms[0];
+    // This is the one place a solved sample becomes the drawn pose, so it is
+    // where anything cached against the pose has to be let go of.
+    this.poseRevision++;
 
     this.joints.forEach((j, j_index) => {
       const from = frames.joints[step][j_index];

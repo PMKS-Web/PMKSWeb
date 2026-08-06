@@ -1858,6 +1858,7 @@ export class NewGridComponent {
    */
   private cylinderListCache?: {
     revision: number;
+    pose: number;
     scale: number;
     forward: boolean;
     list: CylinderMark[];
@@ -1869,20 +1870,27 @@ export class NewGridComponent {
    * times per pointer move — and each uncached call re-resolved every
    * assembly and rebuilt every path string, which is where the quarter-second
    * interaction stutters came from.
+   *
+   * Keyed on the pose as well as the structure. A mark is a drawing of where
+   * the joints *are*, and against the structure revision alone the skin stayed
+   * painted where the mechanism was built while the linkage under it animated.
    */
   get cylinderList(): CylinderMark[] {
     const revision = this.mechanismSrv.cylinderRevision;
+    const pose = this.mechanismSrv.poseRevision;
     const scale = this.settings.objectScale;
     const forward = !this.settings.isInputCW.value;
     const cache = this.cylinderListCache;
     if (
       !cache ||
       cache.revision !== revision ||
+      cache.pose !== pose ||
       cache.scale !== scale ||
       cache.forward !== forward
     ) {
       this.cylinderListCache = {
         revision,
+        pose,
         scale,
         forward,
         list: this.sliderMarks.cylinderMarks(this.mechanismSrv.getJoints(), 0.15 * scale, forward),

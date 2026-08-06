@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SAMPLES_PER_STROKE } from '../../app/model/mechanism/position-solver';
 
@@ -48,34 +49,11 @@ const ROD_LENGTH = 3.0;
 /** Linear input speed, in user length units per second. */
 const EXTENSION_SPEED = 2;
 
-const O = { x: 0, y: 0 };
-const C = { x: 0, y: BOOM };
-const G = { x: BASE, y: 0 };
-// Unit vector along the cylinder's axis, G -> C.
-const span0 = Math.hypot(C.x - G.x, C.y - G.y); // 5
-const ux = (C.x - G.x) / span0;
-const uy = (C.y - G.y) / span0;
-const along = (d: number) => ({ x: G.x + d * ux, y: G.y + d * uy });
-const N = along(BARREL_LENGTH);
-const P = along(PIN_FROM_MOUNT);
-
+// The published mechanism, built in internal model units: the cylinder's
+// stroke is bounded by its own slot, and a slot is drawn in mark units, which
+// are absolute internal units rather than the user's.
 const boomFixture = (): MechanismFixture => ({
-  joints: [
-    { id: 'O', x: O.x * S, y: O.y * S, ground: true },
-    { id: 'C', x: C.x * S, y: C.y * S },
-    { id: 'G', x: G.x * S, y: G.y * S, ground: true },
-    { id: 'N', x: N.x * S, y: N.y * S },
-    { id: 'P', x: P.x * S, y: P.y * S },
-  ],
-  links: [{ joints: 'OC' }, { joints: 'GN' }, { joints: 'PC' }],
-  slider: {
-    at: 'P',
-    prisId: 'S',
-    on: { carrier: 'GN', a: 'G', b: 'N' },
-    sealed: true,
-    input: true,
-  },
-  welds: ['P'],
+  ...cylinderBoomFixture(S),
   inputAngVel: EXTENSION_SPEED * S,
 });
 

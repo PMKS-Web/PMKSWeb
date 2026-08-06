@@ -402,11 +402,14 @@ if (checkThat('the panel offers an Expansion Speed field', (await speedInput.cou
   await speedInput.fill('25');
   await speedInput.blur();
   await page.waitForTimeout(400);
+  // linearInputSpeed, not inputSpeed: §5.2 gave a translation its own setting,
+  // because the rotational one is turned into rad/s by a pi/30 that has no
+  // business anywhere near a length per second.
   const speed = await page.evaluate(() => {
     const panel = ng.getComponent(document.querySelector('app-edit-panel'));
-    return panel.settingsService.inputSpeed.value;
+    return panel.settingsService.linearInputSpeed.value;
   });
-  checkThat('the speed reaches the solver settings', speed === 25, `inputSpeed=${speed}`);
+  checkThat('the speed reaches the solver settings', speed === 25, `linearInputSpeed=${speed}`);
 }
 await page.screenshot({ path: `${OUT}/04-driven-body-panel.png` });
 

@@ -305,3 +305,38 @@ export function cylinderSkinFixture(): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/**
+ * A boom raised by a hydraulic cylinder — the Gate 5 mechanism (§5.1).
+ *
+ * O and G are ground; the boom O→C is rigid; the cylinder runs G→C and is the
+ * drive. Commanding its length therefore fixes the boom angle by the law of
+ * cosines, which is the closed form the verification spec asserts against.
+ *
+ * `scale` exists because the cylinder's stroke is bounded by its own slot, and
+ * a slot is drawn in mark units — absolute internal model units. Solving this
+ * mechanism needs it built in that world, where the other slot fixtures are in
+ * user units and never ask a mark how big it is.
+ */
+export function cylinderBoomFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  return {
+    joints: [
+      { id: 'O', ...at(0, 0), ground: true },
+      { id: 'C', ...at(0, 4) },
+      { id: 'G', ...at(3, 0), ground: true },
+      { id: 'N', ...at(1.5, 2) },
+      { id: 'P', ...at(1.8, 1.6) },
+    ],
+    links: [{ joints: 'OC' }, { joints: 'GN' }, { joints: 'PC' }],
+    slider: {
+      at: 'P',
+      prisId: 'S',
+      on: { carrier: 'GN', a: 'G', b: 'N' },
+      sealed: true,
+      input: true,
+    },
+    welds: ['P'],
+    inputAngVel: INPUT_SPEED * scale,
+  };
+}
