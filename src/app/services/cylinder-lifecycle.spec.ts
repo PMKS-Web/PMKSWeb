@@ -3,6 +3,7 @@ import { Coord } from '../model/coord';
 import { PrisJoint, RealJoint, RevJoint } from '../model/joint';
 import { RealLink } from '../model/link';
 import { sealedCylinderAt, sealedCylinders, CYLINDER_MIN_SPAN_SCALE } from '../model/cylinder';
+import { refuseJointMerge } from '../model/drop-target';
 import { createMechanismHarness, wireGraph } from '../../test-utils/mechanism-harness';
 import { SettingsService } from './settings.service';
 import { MODEL_SCALE } from '../model/render-scale';
@@ -293,5 +294,36 @@ describe('a mount welded into a neighbouring link', () => {
     expect(h.service.joints.map((joint) => joint.id).sort()).toEqual(
       [h.sealed.rodFar.id, 'Z'].sort()
     );
+  });
+});
+
+describe('mount merge rules', () => {
+  // Mounts merge like any joint — that is how a cylinder attaches — but a
+  // weld may not ride along in either direction, and a part cannot fold onto
+  // itself.
+  it('refuses merging a welded joint with a mount, both directions', () => {
+    const h = harnessWithCylinder();
+    const stray = new RevJoint('Z', 999, 999);
+    stray.isWelded = true;
+    h.service.joints.push(stray);
+
+    expect(refuseJointMerge(stray, h.sealed.rodFar, h.service.joints)).toBe('welded-mount');
+    expect(refuseJointMerge(h.sealed.rodFar, stray, h.service.joints)).toBe('welded-mount');
+  });
+
+  it('refuses folding a cylinder onto itself', () => {
+    const h = harnessWithCylinder();
+
+    expect(refuseJointMerge(h.sealed.barrelFar, h.sealed.rodFar, h.service.joints)).toBe(
+      'own-cylinder'
+    );
+  });
+
+  it('allows a mount onto a plain joint', () => {
+    const h = harnessWithCylinder();
+    const plain = new RevJoint('Z', 999, 999);
+    h.service.joints.push(plain);
+
+    expect(refuseJointMerge(h.sealed.rodFar, plain, h.service.joints)).toBeUndefined();
   });
 });

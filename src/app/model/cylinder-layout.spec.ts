@@ -11,8 +11,8 @@ import { MARK } from './joint-marks';
 const R = 0.15;
 // The spec restates the flex constants from their R definitions, so a change
 // to either side is a visible diff here.
-const BARREL_MIN = 2 * (MARK.blockAlongHalf + MARK.slotInset) * R;
-const BARREL_MAX = 48 * R;
+const BARREL_MIN = 0.75;
+const BARREL_MAX = 5;
 const ROD_MIN = 1.7 * MARK.blockAlongHalf * R;
 const INSET = MARK.slotInset * R;
 const SPAN_MIN = BARREL_MIN - INSET + ROD_MIN;

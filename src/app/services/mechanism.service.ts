@@ -720,7 +720,7 @@ export class MechanismService {
     ) {
       return 'sealed-cylinder';
     }
-    const refusal = refuseJointMerge(source, target);
+    const refusal = refuseJointMerge(source, target, this.joints);
     if (refusal) {
       return refusal;
     }

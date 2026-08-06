@@ -255,7 +255,7 @@ export interface CylinderCreation extends CylinderPose {
  * from R at R = 0.15 · objectScale.
  */
 export const CYLINDER_MIN_SPAN_SCALE =
-  0.15 * (2 * (MARK.blockAlongHalf + MARK.slotInset) - MARK.slotInset + 1.7 * MARK.blockAlongHalf);
+  0.75 - 0.15 * MARK.slotInset + 0.15 * 1.7 * MARK.blockAlongHalf;
 
 /**
  * Lay out a new cylinder from the two points of the creation gesture: the
@@ -363,8 +363,11 @@ export interface CylinderPose {
  * shorter barrel would wear a slot longer than itself); the rod's minimum
  * clears the block with room for its mount's pin.
  */
-const BARREL_MIN_R = 2 * (MARK.blockAlongHalf + MARK.slotInset);
-const BARREL_MAX_R = 48;
+// 0.75 and 5 objectScale, by review: the barrel's working range. At the very
+// minimum the block overhangs the mount's cap slightly — the compact pose
+// trades that corner for the shorter part the review asked for.
+const BARREL_MIN_R = 0.75 / 0.15;
+const BARREL_MAX_R = 5 / 0.15;
 const ROD_MIN_R = 1.7 * MARK.blockAlongHalf;
 const SPAN_MIN_R = BARREL_MIN_R - MARK.slotInset + ROD_MIN_R;
 

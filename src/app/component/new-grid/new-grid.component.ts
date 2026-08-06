@@ -823,12 +823,18 @@ export class NewGridComponent {
         }
         // A mount of a sealed cylinder drags parametrically: the whole
         // assembly re-poses about the OTHER mount, collinear by construction
-        // (§ cylinder 6). No merge targets and no slot drops while doing it —
-        // a cylinder is attached by dragging other joints onto its mounts,
-        // never by dropping its mounts onto things.
+        // (§ cylinder 6). Mounts merge onto other joints like any joint does —
+        // that is how a cylinder attaches — with the refusal rules keeping
+        // welded targets and the part's own joints out. Slot drops stay off
+        // the table: a mount never rides a slot.
         const draggedCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedJoint);
         if (draggedCylinder) {
-          const wanted = this.mountAxisSnap(draggedCylinder, mousePosInSvg);
+          this.updateDropCandidate(mousePosInSvg, $event.altKey);
+          this.slotCandidate = undefined;
+          this.axisSnapGuides = [];
+          const wanted = this.snapTargetJoint
+            ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
+            : this.mountAxisSnap(draggedCylinder, mousePosInSvg);
           this.gridUtils.dragCylinderMount(
             draggedCylinder,
             this.activeObjService.selectedJoint,
