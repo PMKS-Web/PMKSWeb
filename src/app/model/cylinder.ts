@@ -349,35 +349,75 @@ export interface CylinderPose {
  *
  * Collinearity holds by construction: every returned point is on the axis.
  */
+/**
+ * The shortest a mount drag can make a cylinder, in R: the block with just
+ * enough part on either side for the two mounts to sit clear of it — the
+ * compact pose of the reference drawing.
+ */
+const MIN_SPAN_R = 2.6 * MARK.blockAlongHalf;
+
 export function layoutCylinder(
   barrelMount: { x: number; y: number },
   rodMount: { x: number; y: number },
   barrelLength: number,
   rodLength: number,
   r: number,
-  anchor: 'barrel' | 'rod'
+  anchor: 'barrel' | 'rod',
+  /**
+   * The axis direction before this move. A drag that crosses the anchor
+   * would otherwise flip the part 180° the instant the direction reverses;
+   * with the hint, the crossing clamps at the minimum span on the side the
+   * part was already on.
+   */
+  axisHint?: { x: number; y: number }
 ): CylinderPose | undefined {
   const dx = rodMount.x - barrelMount.x;
   const dy = rodMount.y - barrelMount.y;
-  const distance = Math.hypot(dx, dy);
-  // Coincident mounts leave the axis undefined; the caller ignores the move.
-  if (distance < 1e-9) return undefined;
-  const ux = dx / distance;
-  const uy = dy / distance;
+  let distance = Math.hypot(dx, dy);
+  let ux: number;
+  let uy: number;
+  const hintLen = axisHint ? Math.hypot(axisHint.x, axisHint.y) : 0;
+  if (distance < 1e-9) {
+    // Coincident mounts define no axis; the hint does, if there is one.
+    if (!(hintLen > 1e-9)) return undefined;
+    ux = axisHint!.x / hintLen;
+    uy = axisHint!.y / hintLen;
+    distance = 0;
+  } else {
+    ux = dx / distance;
+    uy = dy / distance;
+    if (hintLen > 1e-9 && ux * axisHint!.x + uy * axisHint!.y < 0) {
+      // The dragged mount crossed the anchor: hold the old axis and let the
+      // span clamp at its minimum rather than flipping the part.
+      ux = axisHint!.x / hintLen;
+      uy = axisHint!.y / hintLen;
+      distance = 0;
+    }
+  }
 
   const half = slotHalfLength(r, barrelLength);
   const slotMid = barrelLength / 2;
   const minAlong = Math.max(slotMid - half, 0);
   const maxAlong = slotMid + half;
-  // Inside the stroke the rod is rigid and the pin slides. Beyond it, the rod
-  // resizes instead of the mount stopping dead: dragged past full extension it
-  // grows without bound, and dragged shorter than full retraction it shrinks —
-  // down to one block-length, the only hard floor, so a mount drag can make
-  // the part any length the gesture asks for.
-  const rodMin = MARK.blockAlongHalf * r;
-  const along = Math.min(Math.max(distance - rodLength, minAlong), maxAlong);
-  const effectiveRod = Math.max(distance - along, rodMin);
-  const separation = Math.max(distance, minAlong + rodMin);
+  // Inside the stroke the members are rigid and the pin slides. Beyond either
+  // end, the WHOLE part scales — barrel and rod together, holding their ratio,
+  // so the resize reads the same whichever mount is dragged and whichever way.
+  // The only hard stop is the minimum span of the reference drawing; there is
+  // no maximum at all.
+  const naturalMin = minAlong + rodLength;
+  const naturalMax = maxAlong + rodLength;
+  const separation = Math.max(distance, MIN_SPAN_R * r);
+  let scale = 1;
+  let along: number;
+  if (separation < naturalMin) {
+    scale = separation / naturalMin;
+    along = minAlong * scale;
+  } else if (separation > naturalMax) {
+    scale = separation / naturalMax;
+    along = maxAlong * scale;
+  } else {
+    along = separation - rodLength;
+  }
 
   const a =
     anchor === 'barrel'
@@ -390,8 +430,11 @@ export function layoutCylinder(
 
   return {
     barrelFar: a,
-    barrelNear: { x: a.x + barrelLength * ux, y: a.y + barrelLength * uy },
-    pin: { x: c.x - effectiveRod * ux, y: c.y - effectiveRod * uy },
+    barrelNear: {
+      x: a.x + barrelLength * scale * ux,
+      y: a.y + barrelLength * scale * uy,
+    },
+    pin: { x: a.x + along * ux, y: a.y + along * uy },
     rodFar: c,
   };
 }

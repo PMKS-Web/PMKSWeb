@@ -141,13 +141,6 @@ export interface CylinderMark {
   contour: string;
   /** The dotted linear-motion cue inside the barrel. */
   dash: { x1: number; x2: number; width: number; dashArray: string };
-  /**
-   * A mount welded into a neighbouring link hands that side's body to the
-   * compound, which draws it fused with the neighbour — the skin drawing it
-   * too is what read as two layered parts.
-   */
-  barrelHidden: boolean;
-  rodHidden: boolean;
   driven: boolean;
   arrows: { line: Segment; head: string; emphasised: boolean }[];
 }
@@ -340,8 +333,6 @@ export class SliderMarkService {
       block: cylinderBlockPath(r),
       contour: cylinderContourPath(r, barrelReach, rodReach),
       dash: cylinderMotionDash(r, barrelReach),
-      barrelHidden: found.barrelFar instanceof RealJoint && found.barrelFar.isWelded,
-      rodHidden: found.rodFar instanceof RealJoint && found.rodFar.isWelded,
       driven,
       arrows: driven ? cylinderArrowPaths(r, leading) : [],
     };

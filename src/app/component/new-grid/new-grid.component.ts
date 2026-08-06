@@ -83,7 +83,12 @@ import {
   SlotDropCandidate,
 } from '../../model/drop-target';
 import { mergedChannels, transformRigidPath } from '../../model/compound-link-path';
-import { Cylinder, cylinderCreationLayout, cylinderJoints } from '../../model/cylinder';
+import {
+  Cylinder,
+  cylinderCreationLayout,
+  cylinderJoints,
+  isCylinderInterior as isCylinderInteriorOf,
+} from '../../model/cylinder';
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
@@ -167,6 +172,8 @@ export class NewGridComponent {
 
   /** Where the link being dragged was last placed, in SVG coordinates. */
   private linkDragAnchor: Coord = new Coord(0, 0);
+  /** Which half of a cylinder body a drag grabbed, fixed at gesture start. */
+  private cylinderBodyDragSide?: 'barrel' | 'rod';
 
   private jointTempHolderSVG!: SVGElement;
   private forceTempHolderSVG!: SVGElement;
@@ -872,11 +879,33 @@ export class NewGridComponent {
         // however far the hold lasted.
         const bodyCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedLink);
         if (bodyCylinder) {
-          // Dragging the body translates the whole assembly rigidly.
-          this.gridUtils.dragCylinder(
+          // Dragging the body moves the HALF you grabbed: the nearer mount
+          // follows the pointer through the parametric re-pose and the far
+          // mount stays put — grabbing the rod side swings the rod about the
+          // barrel mount, not the whole part across the canvas. The side is
+          // chosen once, where the drag started, so crossing the middle
+          // mid-gesture cannot hand the part to the other mount.
+          if (!this.cylinderBodyDragSide) {
+            const toBarrel = Math.hypot(
+              this.linkDragAnchor.x - bodyCylinder.barrelFar.x,
+              this.linkDragAnchor.y - bodyCylinder.barrelFar.y
+            );
+            const toRod = Math.hypot(
+              this.linkDragAnchor.x - bodyCylinder.rodFar.x,
+              this.linkDragAnchor.y - bodyCylinder.rodFar.y
+            );
+            this.cylinderBodyDragSide = toBarrel <= toRod ? 'barrel' : 'rod';
+          }
+          const grabbed = (
+            this.cylinderBodyDragSide === 'barrel' ? bodyCylinder.barrelFar : bodyCylinder.rodFar
+          ) as RealJoint;
+          this.gridUtils.dragCylinderMount(
             bodyCylinder,
-            mousePosInSvg.x - this.linkDragAnchor.x,
-            mousePosInSvg.y - this.linkDragAnchor.y
+            grabbed,
+            new Coord(
+              grabbed.x + (mousePosInSvg.x - this.linkDragAnchor.x),
+              grabbed.y + (mousePosInSvg.y - this.linkDragAnchor.y)
+            )
           );
         } else {
           this.gridUtils.dragLink(
@@ -1271,6 +1300,7 @@ export class NewGridComponent {
   }
 
   mouseUp($event: MouseEvent) {
+    this.cylinderBodyDragSide = undefined;
     //This is the mouseUp that is called no matter what is clicked on
     this.synthesisClickMode = SynthesisClickMode.NORMAL;
     // The alignment guides belong to the drag that made them.
@@ -1956,12 +1986,40 @@ export class NewGridComponent {
    * two mounts remain selectable; the skin's own geometry selects the body.
    */
   isCylinderInterior(joint: Joint): boolean {
-    return this.cylinderList.some(
-      (mark) =>
-        mark.hiddenJointId === joint.id ||
-        mark.pin.id === joint.id ||
-        mark.cylinder.slider.id === joint.id
+    // Checked against the structural resolution as well as the drawn marks:
+    // the marks are geometric, and mid-edit (a weld landing, a drag in
+    // flight) they can lag a frame — long enough for an interior label to
+    // blink into view.
+    if (
+      this.cylinderList.some(
+        (mark) =>
+          mark.hiddenJointId === joint.id ||
+          mark.pin.id === joint.id ||
+          mark.cylinder.slider.id === joint.id
+      )
+    ) {
+      return true;
+    }
+    const sealed = this.mechanismSrv.cylinderAt(joint);
+    return !!sealed && isCylinderInteriorOf(sealed, joint);
+  }
+
+  /**
+   * What a link's canvas tag calls it. A sealed cylinder's interior joints are
+   * an implementation detail, so its letters come from the two mounts alone —
+   * and a compound that swallowed a member keeps only its visible letters too.
+   */
+  linkDisplayName(link: Link): string {
+    const sealed = this.mechanismSrv.cylinderAt(link);
+    if (!sealed) return link.name;
+    const interior = new Set(
+      [sealed.pin.id, sealed.slider.id, sealed.barrelNear.id].map((id) => id)
     );
+    const stripped = [...link.name].filter((letter) => !interior.has(letter)).join('');
+    if (link.id === sealed.barrel.id || link.id === sealed.rod.id) {
+      return `${sealed.barrelFar.name}${sealed.rodFar.name}`;
+    }
+    return stripped || link.name;
   }
 
   /** A member link of a sealed cylinder: never a slot-drop target. */
@@ -2201,13 +2259,18 @@ export class NewGridComponent {
             'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
           );
           break;
-        case -1:
-          let link = this.activeObjService.selectedLink;
-          x1 = link.joints[0].x;
-          y1 = link.joints[0].y;
-          x2 = link.joints[1].x;
-          y2 = link.joints[1].y;
+        case -1: {
+          const link = this.activeObjService.selectedLink;
+          // A cylinder body's span is mount to mount, not the barrel's own
+          // two joints (one of which is buried inside the part).
+          const sealed = this.mechanismSrv.cylinderAt(link);
+          const [from, to] = sealed ? [sealed.barrelFar, sealed.rodFar] : link.joints;
+          x1 = from.x;
+          y1 = from.y;
+          x2 = to.x;
+          y2 = to.y;
           break;
+        }
         default:
           let thisJoint = this.activeObjService.selectedJoint;
           let otherJoint =
@@ -2225,13 +2288,16 @@ export class NewGridComponent {
             'showLinkLengthOverlay should not be -2, this means an overlay was requested even though the objects to show the overlay based on was not selected'
           );
           break;
-        case -1:
-          let link = this.activeObjService.selectedLink;
-          x1 = link.joints[0].x;
-          y1 = link.joints[0].y;
-          x2 = link.joints[1].x;
-          y2 = link.joints[1].y;
+        case -1: {
+          const link = this.activeObjService.selectedLink;
+          const sealed = this.mechanismSrv.cylinderAt(link);
+          const [from, to] = sealed ? [sealed.barrelFar, sealed.rodFar] : link.joints;
+          x1 = from.x;
+          y1 = from.y;
+          x2 = to.x;
+          y2 = to.y;
           break;
+        }
         default:
           let thisJoint = this.activeObjService.selectedJoint;
           let otherJoint = EditPanelComponent.instance.listOfOtherJoints[this.showLinkAngleOverlay];

@@ -178,7 +178,7 @@ export function cylinderMotionDash(
   return {
     x1: barrelReach + 2.3 * r,
     x2: -MARK.blockAlongHalf * r - 0.55 * r,
-    width: 0.32 * r,
+    width: 0.2 * r,
     dashArray: `${0.55 * r} ${0.42 * r}`,
   };
 }

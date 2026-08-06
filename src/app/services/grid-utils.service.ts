@@ -485,8 +485,14 @@ export class GridUtilsService {
       rodLength,
       0.15 * SettingsService.objectScale,
       // The anchor is the mount NOT being dragged: it stays exactly still,
-      // and the dragged mount is what the stroke clamp stops.
-      draggingBarrelMount ? 'rod' : 'barrel'
+      // and the dragged mount is what the span floor stops.
+      draggingBarrelMount ? 'rod' : 'barrel',
+      // The axis before this move, so a drag through the anchor clamps at the
+      // minimum span instead of flipping the part 180°.
+      {
+        x: sealed.rodFar.x - sealed.barrelFar.x,
+        y: sealed.rodFar.y - sealed.barrelFar.y,
+      }
     );
     if (!pose) return;
     this.applyCylinderPose(sealed, pose);

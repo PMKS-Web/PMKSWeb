@@ -1,4 +1,4 @@
-import { Joint, RealJoint } from './joint';
+import { Joint, PrisJoint, RealJoint } from './joint';
 import { Coord } from './coord';
 import { AppConstants } from './app-constants';
 import { Force } from './force';
@@ -269,7 +269,24 @@ export class RealLink extends Link {
   }
 
   getCompoundPathString(): string {
-    const linkSubset = this.subset.filter((link): link is RealLink => link instanceof RealLink);
+    // A sealed cylinder's rod welded into this compound is drawn by the skin,
+    // above the block; the compound repeating it drew the same bar twice, one
+    // copy on the wrong side of the block. The leaf is recognised through its
+    // pin: the joint that shares a SliderBlock with a sealed slider.
+    const isSealedRodLeaf = (leaf: RealLink) =>
+      leaf.joints.length === 2 &&
+      leaf.joints.some(
+        (joint) =>
+          joint instanceof RealJoint &&
+          joint.links.some(
+            (l) =>
+              l instanceof SliderBlock && l.joints.some((j) => j instanceof PrisJoint && j.isSealed)
+          )
+      );
+    const linkSubset = this.subset.filter(
+      (link): link is RealLink =>
+        link instanceof RealLink && !(this.subset.length > 1 && isSealedRodLeaf(link))
+    );
     linkSubset.forEach((link) => link.reComputeDPath());
     const geometry = buildCompoundPath(
       linkSubset.map((link) => link.d),

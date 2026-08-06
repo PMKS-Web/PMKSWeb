@@ -111,12 +111,6 @@
         >
           Weld
         </toggle-block>
-        @if (isCylinderMount) {
-          <div class="slotNote">
-            Mount of a sealed cylinder. Ground and weld it freely; the slider is part of the part,
-            and deleting this joint deletes the whole cylinder.
-          </div>
-        }
         <!-- The same block every other button in this panel is built from, so
              its border, its label and its icon take the panel's own colours.
              Written out by hand it was the one control here that did not: grey
@@ -146,18 +140,24 @@
             <button-block [icon]="inputDirectionIcon" [click]="flipInputDirection.bind(this)"
               >{{ inputDirectionLabel }}
             </button-block>
-            <input-block
-              [formGroup]="jointForm"
-              _formControl="inputSpeed"
-              [unitOptions]="isSliderInput ? linearSpeedUnitOptions : speedUnitOptions"
-              unitFormControl="inputSpeedUnit"
-              [tooltip]="
-                isSliderInput
-                  ? 'How fast this block travels along its slot. A negative value flips the direction. Drives the animation and dynamic force analysis.'
-                  : 'How fast this input joint turns, in the unit picked beside the value. A negative value flips the direction. Drives the animation and dynamic force analysis.'
-              "
-              >Input Speed
-            </input-block>
+            @if (isSliderInput) {
+              <input-block
+                [formGroup]="jointForm"
+                _formControl="inputSpeed"
+                [unit]="linearSpeedUnitLabel"
+                tooltip="How fast this block travels along its slot. A negative value flips the direction. Drives the animation and dynamic force analysis."
+                >Input Speed
+              </input-block>
+            } @else {
+              <input-block
+                [formGroup]="jointForm"
+                _formControl="inputSpeed"
+                [unitOptions]="speedUnitOptions"
+                unitFormControl="inputSpeedUnit"
+                tooltip="How fast this input joint turns, in the unit picked beside the value. A negative value flips the direction. Drives the animation and dynamic force analysis."
+                >Input Speed
+              </input-block>
+            }
           </collapsible-subseciton>
         </div>
       }
@@ -219,9 +219,6 @@
         (opened)="sectionExpanded['LBasic'] = true"
         (closed)="sectionExpanded['LBasic'] = false"
       >
-        <div class="slotNote">
-          Mounts: {{ cyl.barrelFar.name }} (barrel) &ndash; {{ cyl.rodFar.name }} (rod)
-        </div>
         <dual-input-block
           label1="L"
           label2="⊾"
@@ -229,20 +226,26 @@
           formControl2="angle"
           [formGroup]="cylinderForm"
           tooltip="Mount-to-mount length and axis angle. Edits re-pose the whole part about the barrel mount; the rod resizes to serve any length."
+          (field1Entry)="setShowLinkLengthOverlay($event)"
+          (field2Entry)="setShowLinkAngleOverlay($event)"
           [emitterOutputID]="-1"
         >
           Cylinder Length and Angle
         </dual-input-block>
-        <div class="slotNote">
-          One sealed part. Drag a mount to re-pose or stroke it; deleting any member deletes the
-          whole cylinder.
-        </div>
         <button-block
           [customIcon]="cyl.slider.input ? 'remove_input' : 'add_input'"
           [click]="toggleCylinderInput.bind(this)"
         >
           {{ cyl.slider.input ? 'Remove Input' : 'Make Input' }}
         </button-block>
+      </collapsible-subseciton>
+      <collapsible-subseciton
+        titleLabel="Visual Settings"
+        [expanded]="sectionExpanded['LVisual']"
+        (opened)="sectionExpanded['LVisual'] = true"
+        (closed)="sectionExpanded['LVisual'] = false"
+      >
+        <color-picker type="link" [link]="cylinderBodyLink(cyl)">Cylinder Color</color-picker>
       </collapsible-subseciton>
       @if (cyl.slider.input) {
         <div class="inputSettings">
@@ -258,8 +261,7 @@
             <input-block
               [formGroup]="jointForm"
               _formControl="inputSpeed"
-              [unitOptions]="linearSpeedUnitOptions"
-              unitFormControl="inputSpeedUnit"
+              [unit]="linearSpeedUnitLabel"
               tooltip="How fast the rod extends along the cylinder's axis. A negative value flips the direction. Drives the animation and dynamic force analysis."
               >Expansion Speed
             </input-block>

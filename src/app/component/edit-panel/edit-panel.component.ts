@@ -381,9 +381,18 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
 
   /** Length per second, in whatever length unit the mechanism is drawn in. */
   get linearSpeedUnitOptions(): { value: string; label: string }[] {
+    return [{ value: '0', label: this.linearSpeedUnitLabel }];
+  }
+
+  /** A translation's speed has exactly one unit — shown as plain text, no picker. */
+  get linearSpeedUnitLabel(): string {
     const unit = this.settingsService.lengthUnit.value;
-    const label = unit === LengthUnit.INCH ? 'in/s' : unit === LengthUnit.METER ? 'm/s' : 'cm/s';
-    return [{ value: '0', label }];
+    return unit === LengthUnit.INCH ? 'in/s' : unit === LengthUnit.METER ? 'm/s' : 'cm/s';
+  }
+
+  /** The barrel as the RealLink the colour picker paints; the rod follows it. */
+  cylinderBodyLink(sealed: Cylinder): RealLink {
+    return sealed.barrel as RealLink;
   }
 
   /**
