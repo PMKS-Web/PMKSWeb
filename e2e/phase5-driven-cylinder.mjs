@@ -144,11 +144,6 @@ for (let i = 0; i < 10; i++) {
   await page.waitForTimeout(90);
   during.push({ ...(await model()), drawn: await drawnGeometry() });
 }
-// Screenshot the pose furthest from where it started, so the artifact shows the
-// stroke rather than whatever phase the timing happened to catch.
-const furthest = during.reduce((far, s) =>
-  Math.abs(s.tip.x - opened.tip.x) > Math.abs(far.tip.x - opened.tip.x) ? s : far
-);
 await page.waitForTimeout(120);
 await page.screenshot({ path: `${OUT}/02-mid-stroke.png` });
 await page.locator('.playbackControls .playButton').click();

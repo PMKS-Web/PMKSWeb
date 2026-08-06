@@ -836,6 +836,42 @@ Decide which entry point is canonical: the joint panel's Driven toggle, or the l
 > **Gate 5:** cylinder-driven boom matches the law-of-cosines solution; a linear input completes a
 > cycle, reverses correctly, and its speed round-trips through the URL in its own units.
 
+**What Phase 5 actually did**, where it departed from the table above:
+
+- **5.1 is smaller than expected and 5.3 is larger.** The constraint was exactly the predicted
+  one-line dyad. What it needed underneath was a way to place a *sealed cylinder as one part* —
+  barrel and rod lengths read once at t = 0, the interior derived from the two mounts — which is
+  also what lifts the §4 restriction that put a Slide on a moving carrier out of scope. The
+  cylinder's stroke is the pin's travel in its own slot, the same range the pose normalizer clamps
+  to, so a driven part can only reach poses it can be drawn in.
+- **Sampling is per stroke, not per unit length.** `SAMPLES_PER_STROKE` cuts the travel into 180,
+  so an out-and-back cycle costs about the 360 samples a crank costs, whatever the part measures;
+  the old fixed 0.1-unit step sampled a long slot finely and a short one into a handful of frames.
+- **Cycle termination needed *two* reversals, not one.** A reversing input passes through its
+  starting pose on the way back from the first limit, and the tolerance test stopped there —
+  precomputing whichever part of the stroke happened to lie on one side of where the part was
+  drawn. This was already true of a rocking *revolute* input; a cylinder made it visible.
+- **5.4 found a bug rather than a scaling factor.** The kinematics initializer looked up a driven
+  block's sliding joint with `instanceof RealJoint`, matched the pin first and bailed, so no driven
+  block has ever been seeded with a velocity. Fixed for a grounded guide. Deliberately left
+  unseeded for a slot on a moving carrier: there the block's absolute velocity is the carrier's
+  plus the sliding rate, and seeding the rate alone reports a cylinder mount as travelling through
+  ground it is being carried over. **A cylinder-driven mechanism has correct positions and playback
+  and no velocity analysis** — that pairing is Phase 6's, alongside the floating pin.
+- **5.5 stops at the labels.** A cylinder's direction button and the analysis header now say
+  extending/retracting. `isInputCW` keeps its name: the URL bit keeps its meaning, and renaming the
+  property across seven files buys no reader anything.
+- **5.6 and 5.7 were overtaken by Phase 4.** The skin shipped there, and sealed ⇔ skinned means
+  there is no reveal-on-select to decide about.
+- **5.8 was already true.** The edit panel is hidden whenever the timestep is not zero, and the
+  cylinder panel measures its length from the mounts rather than caching one. Nothing to change.
+- **The canonical entry point is the joint's `input` flag**, reached from the cylinder body panel.
+  The link panel has no "driven length" field and did not grow one.
+- **A rendering bug came with it**, worth recording because the class will recur: the cylinder's
+  marks were cached against the structure revision, which no animation frame bumps, so the skin
+  stayed painted at the build pose while the linkage animated under it — with every model-level
+  assertion passing. Structure and pose are separate counters now.
+
 ### Phase 6 — Driven floating Pin
 
 Two problems, not one.
