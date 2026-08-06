@@ -88,7 +88,10 @@ const abort = await page.evaluate(() => {
 });
 await page.mouse.move(abort.x + 90, abort.y + 40);
 await page.waitForTimeout(150);
-checkThat('the ghost appears once the gesture starts', (await page.locator('.cylinder-preview').count()) === 1);
+checkThat(
+  'the ghost appears once the gesture starts',
+  (await page.locator('.cylinder-preview').count()) === 1
+);
 // Middle-click aborts, the same cancel path Add Link uses.
 await page.mouse.click(abort.x + 90, abort.y + 40, { button: 'middle' });
 await page.waitForTimeout(300);
@@ -121,7 +124,9 @@ await page.mouse.move(gesture.start.x, gesture.start.y);
 for (let i = 1; i <= 12; i++) {
   await page.mouse.move(
     gesture.start.x + ((gesture.end.x - gesture.start.x) * i) / 12,
-    gesture.start.y + ((gesture.end.y - gesture.start.y) * i) / 12 - Math.sin((i / 12) * Math.PI) * 60
+    gesture.start.y +
+      ((gesture.end.y - gesture.start.y) * i) / 12 -
+      Math.sin((i / 12) * Math.PI) * 60
   );
   await page.waitForTimeout(20);
   if (i === 6) {
@@ -138,7 +143,10 @@ await page.waitForTimeout(100);
 // The left-click commits, with the cursor as the rod's end.
 await page.mouse.click(gesture.end.x, gesture.end.y);
 await page.waitForTimeout(700);
-checkThat('the ghost is gone after the commit', (await page.locator('.cylinder-preview').count()) === 0);
+checkThat(
+  'the ghost is gone after the commit',
+  (await page.locator('.cylinder-preview').count()) === 0
+);
 
 let state = await model();
 const commitPoint = await page.evaluate(
@@ -214,7 +222,10 @@ if (checkThat('both mounts are on screen to drag', !!dScreen && !!aScreen)) {
   const steps = 26;
   for (let i = 1; i <= steps; i++) {
     const theta = start - (0.96 * i) / steps;
-    await page.mouse.move(aScreen.x + radius * Math.cos(theta), aScreen.y + radius * Math.sin(theta));
+    await page.mouse.move(
+      aScreen.x + radius * Math.cos(theta),
+      aScreen.y + radius * Math.sin(theta)
+    );
     await page.waitForTimeout(12);
     const during = await model();
     worstOffAxis = Math.max(
@@ -262,11 +273,14 @@ checkThat(
   Math.abs(lengthAB1 - lengthAB0) < 1e-3 && Math.abs(lengthCD1 - lengthCD0) < 1e-3,
   `dAB ${(lengthAB1 - lengthAB0).toExponential(2)}, dCD ${(lengthCD1 - lengthCD0).toExponential(2)}`
 );
-checkThat('mount A did not move', (() => {
-  const a0 = byId(before, 'A');
-  const a1 = byId(after, 'A');
-  return Math.hypot(a1.x - a0.x, a1.y - a0.y) < 1e-6;
-})());
+checkThat(
+  'mount A did not move',
+  (() => {
+    const a0 = byId(before, 'A');
+    const a1 = byId(after, 'A');
+    return Math.hypot(a1.x - a0.x, a1.y - a0.y) < 1e-6;
+  })()
+);
 await page.screenshot({ path: `${OUT}/03-rotated.png` });
 
 // -------------------------------- 2b. fast flood drag cannot tear the part
@@ -344,9 +358,7 @@ checkThat(
 console.log('\nmake the cylinder the input from the body menu');
 const bodyMenu = await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
-  const barrel = c.mechanismSrv.links.find((l) =>
-    l.joints.some((j) => j.id === 'A')
-  );
+  const barrel = c.mechanismSrv.links.find((l) => l.joints.some((j) => j.id === 'A'));
   c.setLastRightClick(barrel);
   const labels = c.cMenuItems.map((i) => i.label);
   c.cMenuItems.find((i) => i.label === 'Make Input')?.action();
@@ -359,7 +371,10 @@ checkThat(
   bodyMenu.join(', ')
 );
 state = await model();
-checkThat('the hidden prismatic pin is the input joint', !!state.joints.find((j) => j.kind === 'PrisJoint')?.input);
+checkThat(
+  'the hidden prismatic pin is the input joint',
+  !!state.joints.find((j) => j.kind === 'PrisJoint')?.input
+);
 checkThat(
   'the skin shows the driven arrows',
   (await page.locator('.cylinder-mark line').count()) >= 2

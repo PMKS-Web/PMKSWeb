@@ -135,10 +135,18 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   onDestroySubscriptions: any[] = [];
   //dynamic form array subscriptions
   otherJoitnsSubscriptions: any[] = [];
+  /**
+   * The pending re-enable pass scheduled by a selection change. It has to be
+   * cancellable: the pass asks the mechanism what the joint may do, and a
+   * timer that fires after the component is gone reaches an injector that no
+   * longer exists.
+   */
+  private pendingFieldSync?: ReturnType<typeof setTimeout>;
 
   ngOnDestroy() {
     this.onDestroySubscriptions.forEach((subscription) => subscription.unsubscribe());
     this.otherJoitnsSubscriptions.forEach((subscription) => subscription.unsubscribe());
+    if (this.pendingFieldSync !== undefined) clearTimeout(this.pendingFieldSync);
   }
 
   lengthUnit: LengthUnit = this.settingsService.lengthUnit.value;
@@ -450,7 +458,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.onDestroySubscriptions.push(
       this.activeSrv.onActiveObjChange.subscribe((val) => {
         this.disableAndEnableLinkFields();
-        setTimeout(() => {
+        clearTimeout(this.pendingFieldSync);
+        this.pendingFieldSync = setTimeout(() => {
+          this.pendingFieldSync = undefined;
           this.disableAndEnableJointFields();
         });
       })
