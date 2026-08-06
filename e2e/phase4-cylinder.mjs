@@ -403,6 +403,13 @@ await page.evaluate(() => {
   c.setLastRightClick(barrel);
   c.cMenuItems.find((i) => i.label === 'Delete Cylinder')?.action();
 });
+// The action above ran via evaluate — outside Angular's zone — so nothing
+// schedules change detection. A real user reaches this through a menu click,
+// which is in-zone; the test nudges the pointer across the canvas (the svg's
+// own pointermove listener enters the zone) so the DOM settles before it is
+// read. Without this the check raced whatever zone event happened next.
+await page.mouse.move(900, 300);
+await page.mouse.move(905, 305);
 await page.waitForTimeout(600);
 state = await model();
 checkThat(
