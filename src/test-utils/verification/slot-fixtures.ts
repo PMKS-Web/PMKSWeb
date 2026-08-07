@@ -545,3 +545,64 @@ export function pinchingGripperFixture(scale: number = 1): MechanismFixture {
     inputAngVel: INPUT_SPEED * scale,
   };
 }
+
+// --- MotionGen cross-check -------------------------------------------------
+
+/**
+ * The MotionGen library's "Gripper", rebuilt joint for joint.
+ *
+ * A cylinder pushes a plate; the plate reaches two jaws through four short
+ * links; and each jaw has two points riding a fixed vertical rail. Captured
+ * geometry and MotionGen's own solved joint paths are in the PMKS_Verification
+ * repository under reference-data/motiongen-library/gripper.
+ *
+ * The drive is a grounded slider rather than a drawn cylinder, and that is
+ * faithful rather than a simplification: MotionGen's actuator record for this
+ * model is `{ type: 'linear', at: J1, from: J16 }` -- a sliding freedom between
+ * the plate anchor and ground, with no barrel or rod length anywhere in the
+ * model. Its `cylinders` entry names the same two joints and a stroke, and is
+ * what gets drawn. Giving PMKS a barrel and a rod would mean inventing two
+ * lengths MotionGen never specified, and the reachable stroke depends on them.
+ *
+ * Coordinates are verbatim, including the near-symmetry: the two rails sit at
+ * x = -1.989744 and x = 0.010256, which is a hand-placed mechanism rather than
+ * a generated one, and rounding it would be rebuilding a different linkage.
+ */
+export function motionGenGripperFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  const RAIL = Math.PI / 2;
+  return {
+    joints: [
+      { id: 'A', ...at(-1.924786, -0.00057) },
+      { id: 'B', ...at(-1.133345, 1.004752) },
+      { id: 'C', ...at(-1.133345, -0.995248) },
+      { id: 'D', ...at(0.866655, 1.004752) },
+      { id: 'E', ...at(0.866655, -0.995248) },
+      { id: 'F', ...at(-1.989728, 2.121085) },
+      { id: 'G', ...at(0.010272, 2.121085) },
+      { id: 'H', ...at(-1.98973, -2.11158) },
+      { id: 'I', ...at(0.01027, -2.11158) },
+      { id: 'J', ...at(4.007358, -0.753037) },
+      { id: 'K', ...at(4.017962, 1.051501) },
+    ],
+    links: [
+      { joints: 'ABCDE' },
+      { joints: 'BF' },
+      { joints: 'DG' },
+      { joints: 'CH' },
+      { joints: 'EI' },
+      { joints: 'HIJ' },
+      { joints: 'FGK' },
+    ],
+    sliders: [
+      // The cylinder's freedom: along the line from its ground anchor at
+      // (-4.86561, -0.000826) to A, which is 8.7e-5 rad off the x axis.
+      { at: 'A', prisId: 'P', angleRad: 8.7e-5, input: true },
+      { at: 'F', prisId: 'Q', angleRad: RAIL },
+      { at: 'G', prisId: 'R', angleRad: RAIL },
+      { at: 'H', prisId: 'S', angleRad: RAIL },
+      { at: 'I', prisId: 'T', angleRad: RAIL },
+    ],
+    inputAngVel: INPUT_SPEED * scale,
+  };
+}
