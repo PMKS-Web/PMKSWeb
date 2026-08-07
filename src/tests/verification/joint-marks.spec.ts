@@ -2,7 +2,6 @@ import {
   blockPath,
   capsulePath,
   channelPath,
-  curvedArrowPath,
   CYLINDER,
   cylinderArrowPaths,
   cylinderBlockPath,
@@ -11,6 +10,8 @@ import {
   rodBodyPath,
   slotHalfLength,
   straightArrowPaths,
+  motorBodyAt,
+  motorBodyPath,
 } from '../../app/model/joint-marks';
 
 // The design package authors every mark at R = 10, so the shipped SVGs are a
@@ -122,21 +123,6 @@ describe('the mark system, against the delivered SVGs', () => {
     const jointRadius = 0.2 * objectScale;
     expect(MARK.slotInset * 0.15 * objectScale).toBeGreaterThan(jointRadius * 1.5);
   });
-
-  it('draws the motor two arrows, half a turn apart', () => {
-    // One long arc read as a stray stroke, and a member passing over it took
-    // the whole indication with it. A pair reads as rotation at a glance, and
-    // still does with half of it covered.
-    const { arc, head } = curvedArrowPath(R);
-    expect(arc.match(/A 15.5 15.5/g)?.length).toBe(2);
-    expect(head.match(/M /g)?.length).toBe(2);
-  });
-
-  it('leaves the motor a shoulder for its fillets to sit in', () => {
-    // With the case no wider than the bar there is nowhere for the blend to
-    // go, and the fillet draws as a spike off the corner instead.
-    expect(MARK.motorHalf).toBeGreaterThan(MARK.barHalf + MARK.motorFillet);
-  });
 });
 
 describe('the cylinder skin (§2.7)', () => {
@@ -179,5 +165,41 @@ describe('the cylinder skin (§2.7)', () => {
     const neutral = cylinderArrowPaths(R);
     expect(neutral.every((arrow) => !arrow.emphasised)).toBe(true);
     expect(neutral[0].line.x2).toBeCloseTo(-neutral[1].line.x2, 9);
+  });
+});
+
+describe('the motor case in world coordinates', () => {
+  it('places the same shape, turned and moved', () => {
+    // Unrotated at the origin it is the local path, expanded but congruent:
+    // same extent, so nothing has been sheared or scaled on the way.
+    const local = motorBodyPath(R);
+    const placed = motorBodyAt(R, { x: 0, y: 0 }, 0);
+    const extent = (path: string) => {
+      const values = (path.match(/-?\d*\.?\d+/g) ?? []).map(Number);
+      return Math.max(...values.map(Math.abs));
+    };
+    expect(extent(placed)).toBeCloseTo(extent(local), 6);
+  });
+
+  it('turns the case with the body it is bolted to', () => {
+    // A quarter turn takes the case's far edge from +x to +y.
+    const turned = motorBodyAt(R, { x: 0, y: 0 }, Math.PI / 2);
+    const first = (turned.match(/M\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)/) ?? []).slice(1).map(Number);
+    const straight = motorBodyAt(R, { x: 0, y: 0 }, 0);
+    const flat = (straight.match(/M\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)/) ?? []).slice(1).map(Number);
+    expect(first[0]).toBeCloseTo(-flat[1], 6);
+    expect(first[1]).toBeCloseTo(flat[0], 6);
+  });
+
+  it('moves the case to the joint it belongs to', () => {
+    const here = motorBodyAt(R, { x: 100, y: -40 }, 0);
+    const values = (here.match(/M\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)/) ?? []).slice(1).map(Number);
+    const origin = (
+      motorBodyAt(R, { x: 0, y: 0 }, 0).match(/M\s+(-?\d*\.?\d+)\s+(-?\d*\.?\d+)/) ?? []
+    )
+      .slice(1)
+      .map(Number);
+    expect(values[0]).toBeCloseTo(origin[0] + 100, 6);
+    expect(values[1]).toBeCloseTo(origin[1] - 40, 6);
   });
 });

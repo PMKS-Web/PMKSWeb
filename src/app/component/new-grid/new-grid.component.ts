@@ -66,15 +66,14 @@ import {
 } from '../../services/slider-mark.service';
 import {
   barrelCollapsedPath,
-  curvedArrowPath,
   cylinderBlockPath,
   MARK,
   orientedCapsulePath,
-  pinBackingPath,
   plusPath,
   rodBodyPath,
   slotHalfLength,
   motorBodyPath,
+  motorBodyAt,
 } from '../../model/joint-marks';
 import {
   JointDropCandidate,
@@ -93,6 +92,7 @@ import {
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
+import { buildCompoundPath } from '../../model/compound-link-path';
 import { angleReference, GROUND_BODY, resolveActuator } from '../../model/actuator';
 
 /** One thing to draw in the slider layer, and how deep in the stack it sits. */
@@ -1866,45 +1866,25 @@ export class NewGridComponent {
     x: number;
     y: number;
     angle: number;
-    weldedToABar: boolean;
+    bodyId: string | undefined;
   }[] {
     return this.drivenFloatingPins.map((joint) => {
       const actuator = resolveActuator(joint);
       const reference = actuator
         ? angleReference(actuator.referenceBody, joint as RealJoint)
         : undefined;
-      // With no resolvable actuator there is no side to take, and the square
-      // sits square. That joint is refused by the solver anyway.
       // Degrees, in the same frame the joints are drawn in: the layer's own
       // y-flip is what turns this into a screen angle, so the mark must not
       // pre-flip it as well or it lands mirrored about the bar.
       const angle = reference
         ? (Math.atan2(reference.y - joint.y, reference.x - joint.x) * 180) / Math.PI
         : 0;
-      // Only a two-joint bar has an edge at a known width for the motor's case
-      // to be filleted into; anything else is drawn as a polygon.
-      const weldedToABar =
-        actuator !== undefined &&
-        actuator.referenceBody !== GROUND_BODY &&
-        (actuator.referenceBody as Link).joints.length === 2;
-      return { id: joint.id, x: joint.x, y: joint.y, angle, weldedToABar };
+      const bodyId =
+        actuator && actuator.referenceBody !== GROUND_BODY
+          ? (actuator.referenceBody as Link).id
+          : undefined;
+      return { id: joint.id, x: joint.x, y: joint.y, angle, bodyId };
     });
-  }
-
-  get drivenPin(): {
-    backing: string;
-    body: string;
-    plainBody: string;
-    arc: string;
-    head: string;
-  } {
-    const r = 0.15 * this.settings.objectScale;
-    return {
-      backing: pinBackingPath(r),
-      body: motorBodyPath(r, true),
-      plainBody: motorBodyPath(r, false),
-      ...curvedArrowPath(r),
-    };
   }
 
   /**
@@ -2124,6 +2104,39 @@ export class NewGridComponent {
     );
   }
 
+  /** The unioned outline, per pose, so the clipping is not redone every frame. */
+  private motorUnionCache?: { pose: number; scale: number; byLink: Map<string, string> };
+
+  /**
+   * A link's outline, with the motor's case fused into it where one is bolted
+   * on (§2.9).
+   *
+   * A union rather than a black box laid behind: the motor's case *is* part of
+   * the body it is bolted to, and drawing it as a separate shape in a separate
+   * colour says the opposite -- that it is an ornament sitting on the joint.
+   * Same Boolean and the same fillet a welded compound uses, so a motor reads
+   * as the app's other rigid attachments read.
+   */
+  private outlineWithMotor(link: Link): string {
+    const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
+    const pose = this.mechanismSrv.poseRevision;
+    const scale = this.settings.objectScale;
+    if (this.motorUnionCache?.pose !== pose || this.motorUnionCache.scale !== scale) {
+      this.motorUnionCache = { pose, scale, byLink: new Map() };
+    }
+    const cached = this.motorUnionCache.byLink.get(link.id);
+    if (cached !== undefined) return cached;
+
+    const r = 0.15 * scale;
+    const cases = this.drivenPinMotors
+      .filter((motor) => motor.bodyId === link.id)
+      .map((motor) => motorBodyAt(r, { x: motor.x, y: motor.y }, (motor.angle * Math.PI) / 180));
+    const fused =
+      cases.length === 0 ? outline : buildCompoundPath([outline, ...cases], MARK.fillet * r).path;
+    this.motorUnionCache.byLink.set(link.id, fused);
+    return fused;
+  }
+
   linkPathWithChannels(link: Link): string {
     // A skinned barrel or rod is drawn by the cylinder instead, so its ordinary
     // outline is suppressed rather than drawn underneath — otherwise the skin
@@ -2133,7 +2146,7 @@ export class NewGridComponent {
     // is fused to as one outline, so drawing the rider here as well would put
     // its own edge inside that outline and double the fill's alpha over itself.
     if (this.platedLink(link)) return '';
-    const outline = String(this.mechanismSrv.getLinkProp(link, 'd') ?? '');
+    const outline = this.outlineWithMotor(link);
     const paths = this.channelList
       .filter((channel) => channel.carrierId === link.id)
       .map((channel) => channel.path);

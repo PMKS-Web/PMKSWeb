@@ -86,11 +86,7 @@ export const MARK = {
    * -- with no shoulder the fillet has nowhere to go and draws as a spike.
    */
   motorHalf: 2.9,
-  motorFillet: 0.62,
   pinArcRadius: 1.55,
-  /** Each of the motor's two arrows, and the gap between their tails. */
-  motorArrowSweep: (Math.PI * 2) / 3,
-  motorArrowGap: Math.PI / 8,
 
   /** The welded marker, replacing the circle at 1.47R across. */
   plusArm: 0.22,
@@ -331,25 +327,12 @@ export function pinBackingPath(r: number): string {
  * sweep-flag arithmetic that a mirrored coordinate system makes so easy to get
  * backwards.
  */
-export function motorBodyPath(r: number, weldedToABar: boolean = true): string {
+export function motorBodyPath(r: number): string {
   const h = MARK.motorHalf * r;
-  const w = MARK.barHalf * r;
-  const f = MARK.motorFillet * r;
-  const body = roundedRect(-h, -h, 2 * h, 2 * h, MARK.blockCorner * 2 * r);
-  if (!weldedToABar) {
-    // A body of three or more joints is drawn as a polygon through them, not
-    // as a bar of known width, so there is no edge here for a fillet to meet.
-    // `weldPlateFillets` refuses the same case for the same reason: a fillet
-    // against an edge that is not on screen invents a corner.
-    return body;
-  }
-  // One fillet on each side of the bar, at the edge the bar leaves through.
-  const fillet = (side: number) => {
-    const y = side * w;
-    const out = side * (w + f);
-    return `M ${h} ${out} L ${h} ${y} L ${h + f} ${y} Q ${h} ${y} ${h} ${out} Z`;
-  };
-  return `${body} ${fillet(1)} ${fillet(-1)}`;
+  // No fillet of its own: the case is unioned into the body it is bolted to,
+  // and that union fillets the corner where the two meet. A wedge added here as
+  // well is a second fillet on the same corner, which draws as a blister.
+  return roundedRect(-h, -h, 2 * h, 2 * h, MARK.blockCorner * 2 * r);
 }
 
 /** The welded marker: a plus, 1.47R across, in place of the free circle. */
@@ -573,35 +556,6 @@ export function straightArrowPaths(
   });
 }
 
-/**
- * The curved arrow of a driven floating pin: an arc most of the way round,
- * with its head tangent to the end.
- */
-export function curvedArrowPath(r: number): { arc: string; head: string } {
-  const radius = MARK.pinArcRadius * r;
-  // Two arcs, half a turn apart, each ending in a head: a pair reads as
-  // rotation at a glance where a single long arc reads as a stray stroke, and
-  // it stays legible when a member passes over half of it.
-  const sweep = MARK.motorArrowSweep;
-  const gap = MARK.motorArrowGap;
-  const arm = (from: number) => {
-    const start = angleOnCircle(radius, from);
-    const end = angleOnCircle(radius, from + sweep);
-    return {
-      arc: `M ${start.x} ${start.y} A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`,
-      // Tangent at the end, which for a counter-clockwise arc is a quarter
-      // turn past the radius.
-      head: arrowHead(r, end.x, end.y, from + sweep + Math.PI / 2),
-    };
-  };
-  const first = arm(gap);
-  const second = arm(gap + Math.PI);
-  return {
-    arc: `${first.arc} ${second.arc}`,
-    head: `${first.head} ${second.head}`,
-  };
-}
-
 /** A filled triangular head, tip at (x, y), pointing along `angle`. */
 function arrowHead(r: number, x: number, y: number, angle: number): string {
   return arrowHeadAt(x, y, angle, MARK.arrowHeadLength * r, MARK.arrowHeadHalf * r);
@@ -626,4 +580,63 @@ function roundedRect(x: number, y: number, w: number, h: number, k: number): str
     `H ${x + c} A ${c} ${c} 0 0 1 ${x} ${y + h - c} ` +
     `V ${y + c} A ${c} ${c} 0 0 1 ${x + c} ${y} Z`
   );
+}
+
+/**
+ * The motor's case, in world coordinates, ready to be unioned with the body it
+ * is bolted to.
+ *
+ * Built here rather than placed by a transform on the element, because the
+ * point of it is to become *part of* that body's outline: a Boolean union
+ * needs both shapes in the same coordinates, and a case drawn separately and
+ * laid on top is exactly the two-shapes-pretending-to-be-one this replaces.
+ */
+export function motorBodyAt(r: number, centre: { x: number; y: number }, along: number): string {
+  const cos = Math.cos(along);
+  const sin = Math.sin(along);
+  const place = (x: number, y: number) =>
+    `${centre.x + x * cos - y * sin} ${centre.y + x * sin + y * cos}`;
+
+  const path = motorBodyPath(r);
+  const tokens = path.match(/[MLHVQAZ]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? [];
+  const out: string[] = [];
+  let command = '';
+  let cursor = { x: 0, y: 0 };
+  let index = 0;
+  while (index < tokens.length) {
+    const token = tokens[index];
+    if (/^[MLHVQAZ]$/i.test(token)) {
+      command = token.toUpperCase();
+      index += 1;
+      if (command === 'Z') out.push('Z');
+      continue;
+    }
+    const numbers = (count: number) => tokens.slice(index, index + count).map(Number);
+    if (command === 'H' || command === 'V') {
+      // A rotation turns an axis line into a sloped one, so it has to come out
+      // as an L or the case arrives sheared.
+      const [value] = numbers(1);
+      cursor = command === 'H' ? { x: value, y: cursor.y } : { x: cursor.x, y: value };
+      out.push(`L ${place(cursor.x, cursor.y)}`);
+      index += 1;
+    } else if (command === 'A') {
+      // Circular arcs only, from `roundedRect`: turning them leaves the radii
+      // and the flags alone and moves only the endpoint.
+      const [rx, ry, rotation, large, sweep, x, y] = numbers(7);
+      cursor = { x, y };
+      out.push(`A ${rx} ${ry} ${rotation} ${large} ${sweep} ${place(x, y)}`);
+      index += 7;
+    } else if (command === 'Q') {
+      const [cx, cy, x, y] = numbers(4);
+      cursor = { x, y };
+      out.push(`Q ${place(cx, cy)} ${place(x, y)}`);
+      index += 4;
+    } else {
+      const [x, y] = numbers(2);
+      cursor = { x, y };
+      out.push(`${command} ${place(x, y)}`);
+      index += 2;
+    }
+  }
+  return out.join(' ');
 }

@@ -345,27 +345,6 @@
        real hole rather than a lighter shape laid on top, so it reads as a slot
        cut through the bar and its legibility cannot depend on the random colour
        that bar happens to have. -->
-  <!-- The motor of a driven pin, *under* the links (§2.9). Its body is welded
-       to one of the two members and its shaft turns the other; drawing it in
-       that member's frame, with the internal corners filleted, says which is
-       which. Behind the links, so the member it drives passes over it — the
-       part it is bolted to reads as continuous with it, and the part it turns
-       reads as riding on top. -->
-  <g id="motorHolder" style="transform: scaleY(-1)" pointer-events="none">
-    @for (motor of drivenPinMotors; track motor.id) {
-      <g
-        [attr.transform]="
-          'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ') scale(1 -1)'
-        "
-      >
-        <path
-          [attr.d]="motor.weldedToABar ? drivenPin.body : drivenPin.plainBody"
-          fill="#000000"
-          filter="url(#elevation-1)"
-        />
-      </g>
-    }
-  </g>
   <g id="linkHolder" style="transform: scaleY(-1)">
     @for (link of mechanismSrv.getLinks(); track link) {
       <ng-container>
@@ -643,23 +622,32 @@
       </g>
     }
   </g>
-  <!-- The arrows stay above the links: they are the part that has to stay
-       legible, and the body they are read against is beneath them. -->
+  <!-- The turning arrow of a driven pin, above the links so a member passing
+       over the joint cannot take the indication with it. The case it turns in
+       is not drawn here: it is unioned into the outline of the body it is
+       bolted to (§2.9), which is what makes the two read as one part rather
+       than as a box parked on a joint. The artwork is the same file a grounded
+       input uses, placed by the same arithmetic, so the two cannot drift. -->
   <g id="motorArrowHolder" style="transform: scaleY(-1)" pointer-events="none">
     @for (motor of drivenPinMotors; track motor.id) {
-      <g
-        pointer-events="none"
-        [attr.transform]="
-          'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ') scale(1 -1)'
-        "
-      >
-        <path
-          [attr.d]="drivenPin.arc"
-          fill="none"
-          stroke="#ffffff"
-          [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+      <!-- Placed exactly as the grounded glyph is placed, because it is the
+           same element with the same attributes on an asset that differs only
+           by what has been taken out of it. Upright, not turned with the case:
+           a driven joint should not look like a different kind of thing
+           depending on which body its motor is bolted to. -->
+      <g [attr.transform]="'translate(' + motor.x + ' ' + motor.y + ')'">
+        <image
+          [attr.xlink:href]="
+            settings.isInputCW.value
+              ? '../../../assets/InputArrowCW.svg'
+              : '../../../assets/InputArrowCCW.svg'
+          "
+          [attr.width]="settings.objectScale * 1.2"
+          [attr.x]="settings.objectScale * -0.505 * 1.2"
+          [attr.y]="settings.objectScale * -0.435 * 1.2"
+          [attr.height]="settings.objectScale * 1.2"
+          style="transform: scaleY(-1)"
         />
-        <path [attr.d]="drivenPin.head" fill="#ffffff" />
       </g>
     }
   </g>
