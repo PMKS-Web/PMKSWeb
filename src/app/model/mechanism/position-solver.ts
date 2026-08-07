@@ -20,6 +20,7 @@ import {
 } from '../cylinder';
 import {
   Constraint,
+  constraintRates,
   residuals,
   SimultaneousSystem,
   solveSimultaneous,
@@ -975,6 +976,70 @@ export class PositionSolver {
     // The pose the motion has to come back to, which is the one command a
     // solve approaching from the other side may not manage on its own.
     this.rememberPose(system, drive.span);
+  }
+
+  /**
+   * Velocities and accelerations for a mechanism the constraint set solved.
+   *
+   * The command is *measured* from the pose rather than read from the drive's
+   * running total: the analysis panel asks about one timestep at a time, long
+   * after the precompute walked past it, and the pose satisfies the constraint
+   * exactly, so measuring it is not an approximation.
+   */
+  static constraintKinematics(
+    joints: Joint[],
+    links: Link[],
+    commandRate: number
+  ):
+    | { velocity: Map<string, [number, number]>; acceleration: Map<string, [number, number]> }
+    | undefined {
+    // Only for the drives the loop formulation cannot express. A grounded crank
+    // keeps the existing, MATLAB-verified path: it is cheaper, and replacing a
+    // checked answer with an unchecked one is not an improvement.
+    if (!this.cylinderDrive && !this.pinDrive) {
+      return undefined;
+    }
+    // The constraint set describes the mechanism whatever route the positions
+    // took, so a mechanism the *walk* solved still has one to differentiate --
+    // it just has not been built yet.
+    const system =
+      this.simultaneousSystem ??
+      this.buildSimultaneousSystem(
+        joints,
+        links,
+        joints
+          .filter((joint): joint is RealJoint => joint instanceof RealJoint && !joint.ground)
+          .map((joint) => joint.id)
+      );
+    if (!system) {
+      return undefined;
+    }
+    const positions = new Map<string, number[]>();
+    joints.forEach((joint) => positions.set(joint.id, [joint.x, joint.y]));
+
+    const at = (id: string) => positions.get(id) ?? [0, 0];
+    let command: number | undefined;
+    const cylinder = this.cylinderDrive;
+    if (cylinder) {
+      const [ax, ay] = at(cylinder.anchorMountId);
+      const [dx, dy] = at(cylinder.drivenMountId);
+      command = Math.hypot(dx - ax, dy - ay);
+    }
+    const pin = this.pinDrive;
+    if (pin) {
+      const [px, py] = at(pin.pivotId);
+      const [rx, ry] = at(pin.referenceId);
+      const [dx, dy] = at(pin.drivenId);
+      const ux = rx - px;
+      const uy = ry - py;
+      const wx = dx - px;
+      const wy = dy - py;
+      command = Math.atan2(ux * wy - uy * wx, ux * wx + uy * wy);
+    }
+    if (command === undefined) {
+      return undefined;
+    }
+    return constraintRates(system, positions, command, commandRate);
   }
 
   /**

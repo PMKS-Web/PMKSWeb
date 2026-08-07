@@ -410,3 +410,139 @@ function solveDamped(jacobian: number[][], f: number[], damping: number): number
   }
   return solveLinear(normal, rhs);
 }
+
+/**
+ * How each residual moves when the *command* moves, holding the pose still.
+ *
+ * Only the driven row has one, and this is the whole of what makes velocities
+ * available: differentiating `F(q, c) = 0` gives `J q̇ = −F_c ċ`, so the same
+ * Jacobian that solves the positions solves the rates, exactly, with no second
+ * formulation to disagree with the first.
+ */
+export function commandDerivative(
+  system: SimultaneousSystem,
+  positions: PositionMap,
+  command: number
+): number[] {
+  const at = (id: string): number[] => positions.get(id) ?? [0, 0];
+  const out: number[] = [];
+  for (const c of system.constraints) {
+    switch (c.kind) {
+      case 'driven':
+        out.push(-1);
+        break;
+      case 'drivenAngle': {
+        const [px, py] = at(c.pivot);
+        const [rx, ry] = at(c.reference);
+        const [dx, dy] = at(c.driven);
+        const ax = rx - px;
+        const ay = ry - py;
+        const wx = dx - px;
+        const wy = dy - py;
+        const arm = Math.hypot(ax, ay) || 1;
+        const cross = ax * wy - ay * wx;
+        const dot = ax * wx + ay * wy;
+        out.push((-cross * Math.sin(command) - dot * Math.cos(command)) / arm);
+        break;
+      }
+      case 'coincident':
+        out.push(0, 0);
+        break;
+      default:
+        out.push(0);
+        break;
+    }
+  }
+  return out;
+}
+
+/** Least squares: solve `JᵀJ x = Jᵀ b`, which is the undamped `solveDamped`. */
+function leastSquares(matrix: number[][], rhs: number[]): number[] | undefined {
+  const negated = rhs.map((value) => -value);
+  return solveDamped(matrix, negated, 0);
+}
+
+/**
+ * Velocities and accelerations of the solved joints, by differentiating the
+ * constraints the positions came from.
+ *
+ * `J q̇ = −F_c ċ` for the rates, and differentiating once more in time gives
+ * `J q̈ = −(dJ/dt) q̇ − (dF_c/dt) ċ`, with the two time derivatives taken along
+ * the motion the rates just described. Analytic in space, differenced in time:
+ * the space part is where the conditioning problems live, and it is exact.
+ *
+ * Returns nothing when the constraints cannot be differentiated at this pose —
+ * a toggle, where the rates are genuinely undefined rather than merely awkward.
+ */
+export function constraintRates(
+  system: SimultaneousSystem,
+  positions: PositionMap,
+  command: number,
+  commandRate: number
+):
+  | { velocity: Map<string, [number, number]>; acceleration: Map<string, [number, number]> }
+  | undefined {
+  const ids = system.unknownIds;
+  const columnOf = new Map(ids.map((id, index) => [id, index]));
+  const derivative = jacobian(system, positions, columnOf, command);
+  const byCommand = commandDerivative(system, positions, command);
+
+  // J q̇ = −F_c ċ. The minus is the whole of the sign convention, and a test
+  // that only ever compares speeds cannot see it.
+  const rates = leastSquares(
+    derivative,
+    byCommand.map((value) => -value * commandRate)
+  );
+  if (!rates || !rates.every(Number.isFinite)) {
+    return undefined;
+  }
+
+  // A step along the motion, small against the mechanism rather than against
+  // the clock, so the differenced time derivative is well scaled whatever the
+  // input speed happens to be.
+  const fastest = Math.max(...rates.map(Math.abs), Math.abs(commandRate), 1e-12);
+  const step = 1e-4 / fastest;
+  const shifted = (direction: number): PositionMap => {
+    const moved: PositionMap = new Map(positions);
+    ids.forEach((id, index) => {
+      const here = positions.get(id) ?? [0, 0];
+      moved.set(id, [
+        here[0] + direction * step * rates[index * 2],
+        here[1] + direction * step * rates[index * 2 + 1],
+      ]);
+    });
+    return moved;
+  };
+  const ahead = shifted(1);
+  const behind = shifted(-1);
+  const commandAhead = command + step * commandRate;
+  const commandBehind = command - step * commandRate;
+
+  const jacobianAhead = jacobian(system, ahead, columnOf, commandAhead);
+  const jacobianBehind = jacobian(system, behind, columnOf, commandBehind);
+  const commandAheadRow = commandDerivative(system, ahead, commandAhead);
+  const commandBehindRow = commandDerivative(system, behind, commandBehind);
+
+  const rhs = derivative.map((_, row) => {
+    let jacobianRate = 0;
+    for (let column = 0; column < rates.length; column++) {
+      jacobianRate +=
+        ((jacobianAhead[row][column] - jacobianBehind[row][column]) / (2 * step)) * rates[column];
+    }
+    const commandRateChange = (commandAheadRow[row] - commandBehindRow[row]) / (2 * step);
+    // J q̈ = −(dJ/dt) q̇ − (dF_c/dt) ċ, with the input rate held constant.
+    return -(jacobianRate + commandRateChange * commandRate);
+  });
+  const accelerations = leastSquares(derivative, rhs);
+  if (!accelerations || !accelerations.every(Number.isFinite)) {
+    return undefined;
+  }
+
+  const velocity = new Map<string, [number, number]>();
+  const acceleration = new Map<string, [number, number]>();
+  ids.forEach((id, index) => {
+    velocity.set(id, [rates[index * 2], rates[index * 2 + 1]]);
+    acceleration.set(id, [accelerations[index * 2], accelerations[index * 2 + 1]]);
+  });
+  return { velocity, acceleration };
+}
