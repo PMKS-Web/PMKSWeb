@@ -72,6 +72,16 @@ export function describeActuator(joint: Joint): Actuator | string {
   if (!(joint instanceof RealJoint)) {
     return 'Only a joint can be driven.';
   }
+  // A weld is the statement that these bodies do *not* move relative to each
+  // other, so there is no freedom at this joint for an input to prescribe.
+  // Most welds fuse their links into one compound and are caught by the count
+  // below; a Slide's weld does not -- its block stays a separate link -- so
+  // the flag has to be asked directly. Driving one would put a commanded angle
+  // on top of the weld's own constraint, and the mechanism would report itself
+  // unsolvable rather than saying what was wrong.
+  if (joint.isWelded) {
+    return 'This joint is welded, so the bodies it joins cannot move relative to each other. Unweld it, or drive a joint that has a freedom.';
+  }
   const bodies = incidentBodies(joint);
   if (bodies.length < 2) {
     return 'A driven joint needs two bodies to move relative to each other.';

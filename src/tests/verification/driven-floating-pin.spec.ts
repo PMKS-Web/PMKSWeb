@@ -5,6 +5,8 @@ import { Joint, RevJoint } from '../../app/model/joint';
 import { RealLink } from '../../app/model/link';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { fourBarDrivenAtFixture } from '../../test-utils/verification/fixtures';
+import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
+import { MODEL_SCALE } from '../../app/model/render-scale';
 import { describeActuator, incidentBodies, GROUND_BODY } from '../../app/model/actuator';
 
 // Gate 6 (docs/joint-types-plan.md § Phase 6): the same four-bar driven at its
@@ -144,6 +146,32 @@ describe('what a driven joint names', () => {
     const refusal = describeActuator(pin);
     expect(typeof refusal).toBe('string');
     expect(refusal as string).toContain('3 bodies');
+  });
+
+  it('refuses a welded joint, which has no freedom to drive', () => {
+    // A Slide's weld does not fuse its links -- the block stays separate -- so
+    // the joint still looks like two bodies meeting. Driving it would lay a
+    // commanded angle on top of the weld's own constraint, and the mechanism
+    // would come back unsolvable without ever saying why.
+    const { joints } = buildMechanism(cylinderBoomFixture(MODEL_SCALE));
+    const weldedPin = joints.find((joint) => joint.id === 'P')! as RevJoint;
+    expect(weldedPin.isWelded).toBe(true);
+    expect(incidentBodies(weldedPin).length).toBe(2);
+
+    const refusal = describeActuator(weldedPin);
+    expect(typeof refusal).toBe('string');
+    expect(refusal as string).toContain('welded');
+  });
+
+  it('still drives the cylinder through its slider, which is not welded', () => {
+    // The cylinder's drive is the sliding joint, not the welded pin: the block
+    // slides in the barrel, and that is the freedom being commanded.
+    const { joints } = buildMechanism(cylinderBoomFixture(MODEL_SCALE));
+    const slider = joints.find((joint) => joint.id === 'S')! as RevJoint;
+    const actuator = describeActuator(slider);
+    expect(typeof actuator).not.toBe('string');
+    if (typeof actuator === 'string') return;
+    expect(actuator.kind).toBe('length');
   });
 
   it('counts the body on the far side of a slot, which is not in links', () => {
