@@ -19,6 +19,7 @@ import {
   scotchYokeGuidedAtFarEndFixture,
   scotchYokeWithTracerFixture,
   slottedCouplerFixture,
+  squareRodSliderCrankFixture,
   WHITWORTH_CRANK,
   WHITWORTH_OFFSET,
 } from './slot-fixtures';
@@ -120,6 +121,13 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: true,
     slide: true,
     fixture: pinchingGripperFixture(),
+  },
+  {
+    name: 'Slider-crank whose rod comes square to the guide',
+    purpose: 'The slot tangent to the rod circle: the two roots meet and trade places',
+    spec: 'square-rod-tangency.spec.ts',
+    floatingSlot: false,
+    fixture: squareRodSliderCrankFixture(),
   },
   {
     name: 'Inverted slider-crank',

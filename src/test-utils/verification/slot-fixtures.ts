@@ -222,6 +222,48 @@ export function swingingBlockFixture(): MechanismFixture {
   };
 }
 
+/** Height of the crank pivot above the guide, and the crank itself. */
+export const SQUARE_ROD_OFFSET = 2;
+export const SQUARE_ROD_CRANK = 1;
+
+/**
+ * An offset slider-crank proportioned so that once a revolution its rod stands
+ * square to the guide — the pose where the slot line is *tangent* to the circle
+ * the rod sweeps, and the linkage's two assembly modes meet at a single point.
+ *
+ * The proportion is the whole fixture: the rod is exactly as long as the crank
+ * pin's greatest height above the guide. Nothing else about it is unusual, and
+ * it is what a user gets by drawing a connecting rod that just reaches. The
+ * crank turns through the pose rather than stopping at it — the height peaks
+ * there and falls away again, so a solution exists at every angle — and the
+ * slider passes through the foot of the perpendicular and comes out the other
+ * side, which is the root swapping places.
+ *
+ * It starts a quarter turn away from that pose, so a run has to *cross* it.
+ *
+ * One consequence is inherent rather than a defect to fix here: crossing the
+ * tangency puts the linkage in the other assembly mode, so its true period is
+ * two revolutions. The timeline stops a rotating input at one (`mechanism.ts`,
+ * `cycleIncomplete`), so this mechanism's precomputed cycle ends in the mode it
+ * did not start in. Every sample within the run is right; the loop is what
+ * jumps.
+ */
+export function squareRodSliderCrankFixture(): MechanismFixture {
+  const rod = SQUARE_ROD_OFFSET + SQUARE_ROD_CRANK;
+  const reach = Math.sqrt(rod * rod - SQUARE_ROD_OFFSET * SQUARE_ROD_OFFSET);
+  return {
+    joints: [
+      { id: 'A', x: 0, y: SQUARE_ROD_OFFSET, ground: true, input: true },
+      // Crank horizontal: a quarter turn short of standing the rod up.
+      { id: 'B', x: SQUARE_ROD_CRANK, y: SQUARE_ROD_OFFSET },
+      { id: 'C', x: SQUARE_ROD_CRANK + reach, y: 0 },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'BC' }],
+    sliders: [{ at: 'C', prisId: 'P', angleRad: 0 }],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 /** How far off the slot line the tracer arm reaches. */
 export const TRACER_OFFSET = 2;
 

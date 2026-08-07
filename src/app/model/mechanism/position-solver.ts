@@ -182,7 +182,6 @@ interface CylinderDrive {
 }
 
 export class PositionSolver {
-  static desiredIndexWithinPosAnalysisMap = new Map<string, number>();
   static jointMapPositions = new Map<string, Array<number>>();
   /** One step behind jointMapPositions; see concentricSolution. */
   private static priorJointPositions = new Map<string, Array<number>>();
@@ -253,7 +252,6 @@ export class PositionSolver {
   static forceMagnitudeMap = new Map<string, number>();
 
   static resetStaticVariables() {
-    this.desiredIndexWithinPosAnalysisMap = new Map<string, number>();
     this.jointMapPositions = new Map<string, Array<number>>();
     this.priorJointPositions = new Map<string, Array<number>>();
     this.sliderAngleMap = new Map<string, number>();
@@ -2015,8 +2013,18 @@ export class PositionSolver {
    * of the connecting link's length about an already-solved joint.
    *
    * Both roots are on the slot and both satisfy the link length, so they are
-   * the linkage's two assembly modes. The branch is chosen once, by whichever
-   * root the joint started nearest, and then held.
+   * the linkage's two assembly modes, and the choice has to follow the joint
+   * step by step — the same problem `solutionNearestCurrent` solves for the
+   * circle-circle case, and solved here by the same means.
+   *
+   * A held index is what this used to do, and it is wrong through a tangency.
+   * The two roots sit either side of the foot of the perpendicular, so the
+   * parametric ordering the intersection returns is stable — index 0 is always
+   * the one further back along the slot. When the circle touches the line the
+   * roots meet at the foot; the joint passes through it and comes out the far
+   * side, which is to say it *changes index*. Holding the old one makes the
+   * slider bounce off the tangency and run back the way it came, at full speed
+   * and in a mechanism that has no limit there.
    */
   private static circleLineIntersectionPoints(j1: Joint, j2: Joint, unknownJoint: Joint) {
     const solutions = this.slotSolutions(j1, unknownJoint);
@@ -2024,22 +2032,10 @@ export class PositionSolver {
       return false;
     }
 
-    if (!this.desiredIndexWithinPosAnalysisMap.has(unknownJoint.id)) {
-      const initial = this.initialJointPosMap.get(unknownJoint.id)!;
-      const distanceToInitial = (point: [number, number]) =>
-        Math.hypot(point[0] - initial[0], point[1] - initial[1]);
-      this.desiredIndexWithinPosAnalysisMap.set(
-        unknownJoint.id,
-        distanceToInitial(solutions[0]) <= distanceToInitial(solutions[1]) ? 0 : 1
-      );
-    }
-
-    // TODO (Phase 2): a held index is not safe through a tangency, where the two
-    // roots merge and trade places -- the same failure solutionNearestCurrent
-    // fixes for the circle-circle case. Preserved as-is here so this rewrite
-    // changes only the line representation.
-    const [x, y] = solutions[this.desiredIndexWithinPosAnalysisMap.get(unknownJoint.id)!];
-    this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
+    // At the tangency itself there is one root, not two. The old code indexed
+    // blindly and threw.
+    const [x, y] = this.solutionNearestCurrent(solutions, unknownJoint);
+    this.recordJointPosition(unknownJoint.id, x, y);
     this.jointMapPositions.set(j2.id, [roundNumber(x, 4), roundNumber(y, 4)]);
     return true;
   }
