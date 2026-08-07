@@ -225,6 +225,15 @@ export class GridUtilsService {
     ) {
       return false;
     }
+    // A weld is the statement that the bodies at this joint do not move
+    // relative to each other, and an input is the statement that they do. Both
+    // at once is not a state the model can honour, so the control that would
+    // create it is greyed -- the same rule from the other side as
+    // `describeActuator` refusing to drive a welded joint. Unwelding stays
+    // available, since that direction resolves the contradiction.
+    if (joint.input && !joint.isWelded) {
+      return false;
+    }
     return joint.isWelded || joint.links.length >= 2;
   }
 

@@ -3,6 +3,7 @@ import { PrisJoint, RealJoint, RevJoint } from '../../app/model/joint';
 import { RealLink } from '../../app/model/link';
 import { canDrive } from '../../app/model/actuator';
 import { MERGE_REFUSAL_MESSAGES, refuseJointMerge } from '../../app/model/drop-target';
+import { describeActuator } from '../../app/model/actuator';
 
 // Three gates, all guarding the same thing: an input names the freedom between
 // *two* bodies (§2.9), so a third one arriving at a driven joint takes away the
@@ -83,5 +84,24 @@ describe('dragging a joint onto a driven one', () => {
   it('leaves merges that touch no input alone', () => {
     const { source, target } = pair({ groundedTarget: true });
     expect(refuseJointMerge(source, target)).toBeUndefined();
+  });
+});
+
+describe('a weld and an input at the same joint', () => {
+  it('cannot both be true, whichever is asked for first', () => {
+    // A weld says the bodies at this joint do not move relative to each other;
+    // an input says they do. The model refuses to drive a welded joint, and the
+    // Weld control is greyed on a driven one -- the same rule from both sides,
+    // so neither surface can create a state the other forbids.
+    const pin = new RevJoint('C', 0, 0);
+    bar('AC', [new RevJoint('A', -1, 0), pin]);
+    bar('CD', [pin, new RevJoint('D', 1, 0)]);
+
+    pin.isWelded = true;
+    expect(typeof describeActuator(pin)).toBe('string');
+    expect(describeActuator(pin) as string).toContain('welded');
+
+    pin.isWelded = false;
+    expect(canDrive(pin)).toBe(true);
   });
 });

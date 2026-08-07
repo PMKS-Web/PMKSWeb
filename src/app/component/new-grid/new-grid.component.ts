@@ -93,6 +93,7 @@ import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
 import { buildCompoundPath } from '../../model/compound-link-path';
+
 import { angleReference, GROUND_BODY, resolveActuator } from '../../model/actuator';
 
 /** One thing to draw in the slider layer, and how deep in the stack it sits. */
@@ -540,11 +541,15 @@ export class NewGridComponent {
           );
         }
 
+        // A block is a body too, so adding one to a driven pin puts a third at
+        // the joint exactly as attaching a link does. Removing one is always
+        // allowed -- that direction takes a body away.
         this.cMenuItems.push(
           new cMenuItem(
             this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'Remove Slider' : 'Add Slider',
             this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-            this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider'
+            this.gridUtils.isAttachedToSlider(this.lastRightClick) ? 'remove_slider' : 'add_slider',
+            jointIsInput && !this.gridUtils.isAttachedToSlider(this.lastRightClick)
           )
         ); //Rev Joint - Always
 
@@ -2102,6 +2107,21 @@ export class NewGridComponent {
       this.channelList.filter((channel) => channel.carrierId === link.id).length +
       (this.slotCandidate?.carrier.id === link.id ? 1 : 0)
     );
+  }
+
+  /**
+   * Where the motor's turning arrow is drawn: exactly where a grounded input
+   * draws its own. The wider circle the arrow rides is in the asset, not here,
+   * so the two stay the same weight and the same placement.
+   */
+  get motorArrowBox(): { size: number; x: number; y: number } {
+    const box = this.settings.objectScale * 1.2;
+    return { size: box, x: -0.505 * box, y: -0.435 * box };
+  }
+
+  /** The motor's case in its own frame, for the black layer beneath the links. */
+  get drivenPinCase(): string {
+    return motorBodyPath(0.15 * this.settings.objectScale);
   }
 
   /** The unioned outline, per pose, so the clipping is not redone every frame. */
