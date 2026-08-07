@@ -309,7 +309,7 @@ export class Mechanism {
   determineDegreesOfFreedom() {
     const rigidBody = this.determineRigidBodies();
     /** The world: one body, however many anchored bars are drawn on top of it. */
-    const WORLD = ' world';
+    const WORLD = 'ground-body';
     const groupOf = (link: Link) => rigidBody.get(link.id) ?? link.id;
     // A group every one of whose links is pinned down at every joint *is* the
     // world. Deciding it per group rather than per link keeps a rail that has
@@ -345,7 +345,7 @@ export class Mechanism {
         // A slider with no carrier and no ground slides against nothing. It is
         // an invalid mechanism either way; naming the absent body keeps the
         // reported number the one this case has always reported.
-        bodies.add(joint.carrier ? bodyOf(joint.carrier) : ' dangling' + joint.id);
+        bodies.add(joint.carrier ? bodyOf(joint.carrier) : 'dangling-slot' + joint.id);
       }
       return bodies.size;
     };
