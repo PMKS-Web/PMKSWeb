@@ -143,7 +143,15 @@ export function wattIFixture(gravity = false): MechanismFixture {
  * coupler 3.5, rocker 3. T is a tracer on the coupler, off its line, so the
  * curve it draws is a real coupler curve rather than a circle.
  */
-export function fourBarDrivenAtFixture(drivenAt: 'A' | 'C'): MechanismFixture {
+export function fourBarDrivenAtFixture(
+  drivenAt: 'A' | 'C',
+  /**
+   * Hang a second chain off the driven pin, so three bodies meet there. An
+   * input then names no particular pair of them (§2.9), and the mechanism has
+   * to say so rather than drive one of them and hope.
+   */
+  extraChainAtC: boolean = false
+): MechanismFixture {
   return {
     joints: [
       { id: 'O', x: 0, y: 0, ground: true, input: drivenAt === 'A' },
@@ -151,8 +159,19 @@ export function fourBarDrivenAtFixture(drivenAt: 'A' | 'C'): MechanismFixture {
       { id: 'C', x: 3.3, y: 2.4, input: drivenAt === 'C' },
       { id: 'D', x: 4, y: 0, ground: true },
       { id: 'T', x: 2.1, y: 3.3 },
+      ...(extraChainAtC
+        ? [
+            { id: 'U', x: 5.2, y: 2.9 },
+            { id: 'V', x: 6.4, y: 1.4, ground: true },
+          ]
+        : []),
     ],
-    links: [{ joints: 'OA' }, { joints: 'ACT' }, { joints: 'CD' }],
+    links: [
+      { joints: 'OA' },
+      { joints: 'ACT' },
+      { joints: 'CD' },
+      ...(extraChainAtC ? [{ joints: 'CU' }, { joints: 'UV' }] : []),
+    ],
     inputAngVel: INPUT_SPEED,
   };
 }

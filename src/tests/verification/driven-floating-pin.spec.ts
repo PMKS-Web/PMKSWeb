@@ -101,6 +101,35 @@ describe('a four-bar driven at its coupler-rocker pin', () => {
   });
 });
 
+describe('a driven pin that a later edit made ambiguous', () => {
+  // Reported from the deploy preview: attach a third link to a floating driven
+  // pin and the mechanism went on claiming to be valid. The toggle refuses a
+  // three-body joint, but nothing stopped an edit *after* the toggle -- and the
+  // walk then fell through to the primitive that swings a driven joint's
+  // neighbours about it, which is only meaningful when the joint itself is
+  // held. It is not: the pin floats. The animation showed it standing still
+  // while the links reaching it tore.
+
+  it('refuses to simulate rather than driving a pin nothing holds', () => {
+    const { mechanism } = buildMechanism(fourBarDrivenAtFixture('C', true));
+    expect(mechanism.joints.length).toBeLessThan(3);
+  });
+
+  it('leaves the same mechanism working without the extra chain', () => {
+    // The refusal has to be about the ambiguity, not about the fixture.
+    const { mechanism } = buildMechanism(fourBarDrivenAtFixture('C', false));
+    expect(mechanism.joints.length).toBeGreaterThan(20);
+  });
+
+  it('says which joint is the problem and why', () => {
+    const { joints } = buildMechanism(fourBarDrivenAtFixture('C', true));
+    const pin = joints.find((joint) => joint.id === 'C')! as RevJoint;
+    const refusal = describeActuator(pin);
+    expect(typeof refusal).toBe('string');
+    expect(refusal as string).toContain('3 bodies');
+  });
+});
+
 describe('what a driven joint names', () => {
   const bar = (id: string, joints: Joint[]) => new RealLink(id, joints, 1, 1);
 

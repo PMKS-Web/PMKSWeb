@@ -348,6 +348,19 @@ export class PositionSolver {
       this.finishOrder(joints, links, orderNum, knownJointsIds);
       return;
     }
+
+    // A floating input the actuator record cannot describe -- three bodies at
+    // the joint, say, which "driven" does not say which pair of. The drive loop
+    // below would swing this joint's neighbours *about* it, which is only
+    // meaningful when the joint itself is held: for a grounded crank it is, and
+    // for a floating pin nothing holds it at all. Left to fall through, the
+    // mechanism reported itself valid and animated a pin that never moved,
+    // tearing the links that reach it. Refuse instead, and let the panel say
+    // why (§2.9).
+    if (!(inputJoint instanceof PrisJoint) && !inputJoint.ground) {
+      this.finishOrder(joints, links, orderNum, knownJointsIds);
+      return;
+    }
     inputJoint.connectedJoints.forEach((j) => {
       if (!(j instanceof RealJoint)) {
         return;

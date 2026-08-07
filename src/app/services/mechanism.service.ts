@@ -1403,6 +1403,16 @@ export class MechanismService {
     if (!this.joints.some((joint) => joint instanceof RealJoint && joint.input)) {
       return 'No joint is driven. Right-click a joint and choose Make Input to say what moves the mechanism.';
     }
+    // A driven joint the actuator record cannot describe -- most often because
+    // an edit added a third body to it long after Driven was switched on. The
+    // toggle refuses this, but nothing stops a later edit walking around it.
+    const driven = this.joints.find((joint) => joint instanceof RealJoint && joint.input);
+    if (driven) {
+      const refusal = describeActuator(driven);
+      if (typeof refusal === 'string') {
+        return refusal;
+      }
+    }
     const dof = this.mechanisms[0]?.dof;
     if (dof !== undefined && Number.isNaN(dof)) {
       return 'Nothing is holding this mechanism in place. Ground a joint, or ground a slider\u2019s guide.';
