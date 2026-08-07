@@ -10,6 +10,7 @@ import {
   cylinderBoomFixture,
   cylinderSkinFixture,
   gripperFixture,
+  pinchingGripperFixture,
   ellipticalTrammelFixture,
   invertedSliderCrankFixture,
   loadedInvertedSliderCrankFixture,
@@ -110,6 +111,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: true,
     slide: true,
     fixture: gripperFixture(),
+  },
+  {
+    name: 'Gripper the cylinder closes',
+    purpose: 'Counter-rotating jaw levers: extending the cylinder pinches them shut',
+    spec: 'pinching-gripper.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: pinchingGripperFixture(),
   },
   {
     name: 'Inverted slider-crank',

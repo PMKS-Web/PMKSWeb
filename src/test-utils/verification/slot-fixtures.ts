@@ -428,3 +428,67 @@ export function anchoredBarFixture(withRail: boolean): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/**
+ * A gripper whose cylinder actually closes the jaws (§2.7a companion).
+ *
+ * Built after the shared gripper turned out to do something else: there, each
+ * arm has two blocks riding two rails, which leaves it able to slide but
+ * barely able to turn, so the jaws travel up and down rather than pinching.
+ * Jaws pinch when the two levers *counter-rotate*, and this is the smallest
+ * arrangement that makes them:
+ *
+ * - each jaw is a lever on its own ground pivot, free to swing;
+ * - one coupler ties them together, attached on *opposite* sides of the two
+ *   pivots. That is the whole trick — with both attachments on the same side
+ *   the levers turn together, like a parallelogram, and the jaws stay parallel;
+ * - the cylinder drives the upper lever directly.
+ *
+ * The pin sits where it does so the far end of the stroke is exactly where the
+ * jaws meet: extend past that and the levers swing on and the jaws pass
+ * through each other.
+ */
+export function pinchingGripperFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  // The cylinder runs from its ground mount to the point it drives, so barrel
+  // and rod are collinear by construction rather than by careful typing.
+  const mount = { x: -10, y: 3 };
+  const driven = { x: 0.7, y: 4.2 };
+  const reach = Math.hypot(driven.x - mount.x, driven.y - mount.y);
+  const along = (distance: number) => ({
+    x: mount.x + ((driven.x - mount.x) * distance) / reach,
+    y: mount.y + ((driven.y - mount.y) * distance) / reach,
+  });
+  const barrelEnd = along(4);
+  const pin = along(2.927);
+
+  return {
+    joints: [
+      { id: 'A', ...at(mount.x, mount.y), ground: true },
+      { id: 'B', ...at(barrelEnd.x, barrelEnd.y) },
+      { id: 'C', ...at(pin.x, pin.y) },
+      { id: 'D', ...at(driven.x, driven.y) },
+      { id: 'G', ...at(4, 3), ground: true },
+      { id: 'H', ...at(5.2, 1.8) },
+      { id: 'I', ...at(11, 2) },
+      { id: 'J', ...at(4, -3), ground: true },
+      { id: 'K', ...at(2.8, -1.8) },
+      { id: 'L', ...at(11, -2) },
+    ],
+    links: [
+      { joints: 'AB' },
+      { joints: 'CD' },
+      // The upper lever: ground pivot G, driven at D, coupled at H, jaw at I.
+      { joints: 'DGHI' },
+      // The coupler, crossing between the pivots.
+      { joints: 'HK' },
+      // The lower lever: ground pivot J, coupled at K, jaw at L.
+      { joints: 'JKL' },
+    ],
+    sliders: [
+      { at: 'C', prisId: 'E', on: { carrier: 'AB', a: 'A', b: 'B' }, sealed: true, input: true },
+    ],
+    welds: ['C'],
+    inputAngVel: INPUT_SPEED * scale,
+  };
+}
