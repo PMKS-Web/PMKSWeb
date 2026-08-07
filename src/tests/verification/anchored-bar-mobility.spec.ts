@@ -4,6 +4,7 @@ import '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { anchoredBarFixture, gripperFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
+import { SettingsService } from '../../app/services/settings.service';
 
 // A bar pinned to ground at both ends cannot move, so it is part of the ground
 // rather than a body in its own right. Gruebler has no way to know that: it
@@ -26,6 +27,9 @@ describe('a bar pinned to ground at both ends', () => {
     // Shared as a URL by a user, reported -1, and refused to simulate. Two
     // rails, so two degrees of freedom subtracted from a mechanism that has
     // exactly one.
+    // objectScale is a process-wide static and a cylinder's stroke is measured
+    // against it, so pin it: otherwise the travel depends on file order.
+    SettingsService._objectScale.next(1 * MODEL_SCALE);
     expect(buildMechanism(gripperFixture(MODEL_SCALE)).mechanism.dof).toBe(1);
   });
 });

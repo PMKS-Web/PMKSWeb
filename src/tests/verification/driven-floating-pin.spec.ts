@@ -7,6 +7,7 @@ import { buildMechanism } from '../../test-utils/verification/fixture';
 import { fourBarDrivenAtFixture } from '../../test-utils/verification/fixtures';
 import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
+import { SettingsService } from '../../app/services/settings.service';
 import { describeActuator, incidentBodies, GROUND_BODY } from '../../app/model/actuator';
 
 // Gate 6 (docs/joint-types-plan.md § Phase 6): the same four-bar driven at its
@@ -153,6 +154,9 @@ describe('what a driven joint names', () => {
     // the joint still looks like two bodies meeting. Driving it would lay a
     // commanded angle on top of the weld's own constraint, and the mechanism
     // would come back unsolvable without ever saying why.
+    // objectScale is a process-wide static and a cylinder's stroke is measured
+    // against it, so pin it: otherwise the travel depends on file order.
+    SettingsService._objectScale.next(1 * MODEL_SCALE);
     const { joints } = buildMechanism(cylinderBoomFixture(MODEL_SCALE));
     const weldedPin = joints.find((joint) => joint.id === 'P')! as RevJoint;
     expect(weldedPin.isWelded).toBe(true);
