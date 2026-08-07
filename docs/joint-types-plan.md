@@ -915,6 +915,30 @@ the panel before this lands.
 > reproduces the same coupler curve as the crank-driven version, with velocities rescaled by the
 > joint-angle relationship.
 
+**What Phase 6 actually did.** Gate 6 passes, and three things about it were not obvious in advance:
+
+- **The ordering half cost almost nothing**, because §2.7a had already been built. A floating pin's
+  position is unknown when the walk starts, so the mechanism goes to the constraint set — which
+  needed one new row, the angle at a pivot from one body round to the other, written as a length so
+  one tolerance still covers the system. Grounded inputs keep their existing path deliberately.
+- **The actuator record is derived, not stored.** §2.9's ordering requirement is satisfied by
+  `joint.links` order, which *is* the serialization order, so the pairing round-trips through the
+  URL without the codec learning anything. The panel refuses Driven where three bodies meet and
+  says why; decode never refuses, so no shared URL stops opening.
+- **The gate's wording was optimistic in one respect.** The pin-driven version traces an *arc* of
+  the coupler curve, not the whole of it, because the angle at that pin is the transmission angle —
+  it oscillates between limits rather than turning through a revolution. Every point it reaches is
+  on the crank-driven curve; there are simply fewer of them. The curves also have to be compared as
+  sets of points, since equal steps of crank angle are not equal steps of joint angle.
+
+**Velocities and accelerations came with it.** Loop detection cannot see through a sealed cylinder,
+so every cylinder-driven mechanism reached the loopless path and came away with nothing — and a
+floating-pin input would have been worse than nothing, since the loop path would have handed the
+coupler the *input's* angular velocity. Rather than teach the loop formulation about variable-length
+members, the rates come from differentiating the constraints the positions came from: `J q̇ = −F_c ċ`,
+and once more for the accelerations, gated on the boom's closed form. Contained to the drives the
+loop path cannot express; a grounded crank keeps its MATLAB-verified route.
+
 An earlier draft proposed a "geared-five-bar-style" gate. That was incoherent: gears are out of
 scope (§1), and an ungeared five-bar is DOF 2, which the engine rejects. The four-bar driven at a
 floating joint is DOF 1, uses no out-of-scope features, and has an exact reference — the same
@@ -953,7 +977,7 @@ These are not mechanisms; they are the failure modes that Option A and the slot 
 | Slot joints not members of the carrier | rejected at decode |
 | Missing carrier tokens (pre-existing URL) | decodes as grounded, geometry unchanged |
 | Per-timestep cloning | carrier **and both slot joint** references point at the *copies*, not the editable objects |
-| Carrier link deleted | dependent sliders are regrounded or removed; no dangling reference |
+| Carrier link deleted | dependent sliders **dangle** — they keep their block and lose their direction. Superseded "regrounded or removed": inventing a direction nobody chose is worse than saying so (§2.4a, `dangling-slider.spec.ts`) |
 | Either slot joint deleted or merged by snap | same — a slot cannot outlive a defining joint |
 | Carrier link welded into a compound | carrier remaps; both slot joints still members |
 | Two slots on one link | independent joint pairs on the same carrier both solve |

@@ -262,21 +262,32 @@ export function scotchYokeWithTracerFixture(): MechanismFixture {
  * slides. Nothing is pinned to ground, so it is the case that proves a grounded
  * guide anchors the mechanism.
  *
- * No input joint: this exists to be counted, not solved. Two slots on one bar
- * is not a shape the position solver reduces.
+ * `driven` adds a carried point T on the bar and drives one slider along its
+ * guide, which turns the mobility fixture into a kinematic one: the point T
+ * then traces an exact ellipse, and an exact curve is worth having a mechanism
+ * checked against.
  */
-export function ellipticalTrammelFixture(): MechanismFixture {
+export function ellipticalTrammelFixture(
+  driven: boolean = false,
+  scale: number = 1
+): MechanismFixture {
+  // A driven slide advances by a step measured in internal model units, so a
+  // mechanism that is to be *solved* has to be built in them; one that is only
+  // to be counted does not care.
   return {
     joints: [
-      { id: 'A', x: 1, y: 0 },
-      { id: 'B', x: 0, y: 1 },
+      { id: 'A', x: 1 * scale, y: 0 },
+      { id: 'B', x: 0, y: 1 * scale },
+      // A third of the way along the bar from A, so its ellipse has distinct
+      // axes rather than being the circle the midpoint traces.
+      ...(driven ? [{ id: 'T', x: (2 / 3) * scale, y: (1 / 3) * scale }] : []),
     ],
-    links: [{ joints: 'AB' }],
+    links: [{ joints: driven ? 'ABT' : 'AB' }],
     sliders: [
-      { at: 'A', prisId: 'C', angleRad: 0 },
+      { at: 'A', prisId: 'C', angleRad: 0, input: driven },
       { at: 'B', prisId: 'D', angleRad: Math.PI / 2 },
     ],
-    inputAngVel: INPUT_SPEED,
+    inputAngVel: INPUT_SPEED * scale,
   };
 }
 
