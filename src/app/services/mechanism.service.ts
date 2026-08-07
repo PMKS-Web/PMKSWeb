@@ -37,6 +37,7 @@ import { GridUtilsService } from './grid-utils.service';
 import { ActiveObjService } from './active-obj.service';
 import { AnimationBarComponent } from '../component/animation-bar/animation-bar.component';
 import { NewGridComponent } from '../component/new-grid/new-grid.component';
+import { canDrive, describeActuator } from '../model/actuator';
 import { SettingsService } from './settings.service';
 import { slotHalfLength } from '../model/joint-marks';
 import { DragStateService } from './drag-state.service';
@@ -1568,6 +1569,19 @@ export class MechanismService {
           j.input = false;
         }
       });
+    }
+
+    // Turning a joint *on* has to name the two bodies it drives between
+    // (§2.9). Three bodies meet at some joints, and then "driven" says nothing
+    // about which pair moves -- every answer the solvers could pick is a guess
+    // the user never made. Refused here with the reason, rather than accepted
+    // and guessed at downstream. Turning one off is always allowed.
+    if (!jointToToggleInput.input) {
+      const refusal = describeActuator(jointToToggleInput);
+      if (typeof refusal === 'string') {
+        NewGridComponent.sendNotification(refusal);
+        return;
+      }
     }
 
     //Toggle the input joint

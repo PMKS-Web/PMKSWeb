@@ -24,6 +24,7 @@ import {
   SimultaneousSystem,
   solveSimultaneous,
 } from './simultaneous-solver';
+import { angleReference, resolveActuator } from '../actuator';
 
 /**
  * How far a driven prismatic input advances along its slot per solved sample,
@@ -205,6 +206,18 @@ export class PositionSolver {
   private static cylinderDrive?: CylinderDrive;
   /** The cylinder the input flag names, before the walk decides which end moves. */
   private static drivenCylinder?: Cylinder;
+  /**
+   * A driven *pin* (§2.9, Phase 6): the actuator's two bodies, as the three
+   * points whose angle the drive prescribes. Held in the same shape as the
+   * cylinder's record so one stepping path serves both.
+   */
+  private static pinDrive?: {
+    pivotId: string;
+    referenceId: string;
+    drivenId: string;
+    angle: number;
+    step: number;
+  };
   /** Joints no chain of dyads can place, and what they have to satisfy (§2.7a). */
   private static simultaneousSystem?: SimultaneousSystem;
   /** Poses already solved, with the length that produced them (§2.7a). */
@@ -258,6 +271,7 @@ export class PositionSolver {
     this.cylinderInteriorMap = new Map<string, CylinderInterior>();
     this.cylinderDrive = undefined;
     this.drivenCylinder = undefined;
+    this.pinDrive = undefined;
     this.simultaneousSystem = undefined;
     this.solvedPoses = [];
     this.pendingSpan = undefined;
@@ -324,7 +338,11 @@ export class PositionSolver {
     // A driven cylinder commands a length between two mounts rather than a step
     // taken by a neighbour of the input joint, so the drive loop below has
     // nothing to say about it; the deferred sweep places both mounts instead.
-    if (this.registerCylinderDrive(cylinders, inputJoint)) {
+    // A driven *pin* that is not grounded is the same situation for a different
+    // reason (§2.9): the walk starts at the input joint and swings its
+    // neighbours about it, which assumes the input's own position is known. A
+    // floating pin's is not, so it too goes to the constraint set.
+    if (this.registerCylinderDrive(cylinders, inputJoint) || this.registerPinDrive(inputJoint)) {
       orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
       this.finishOrder(joints, links, orderNum, knownJointsIds);
       return;
@@ -546,7 +564,55 @@ export class PositionSolver {
       this.cylinderDrive = drive;
       return { kind: 'driven', a: drive.drivenMountId, b: drive.anchorMountId };
     }
+    const pin = this.pinDrive;
+    if (pin) {
+      return {
+        kind: 'drivenAngle',
+        pivot: pin.pivotId,
+        reference: pin.referenceId,
+        driven: pin.drivenId,
+      };
+    }
     return undefined;
+  }
+
+  /**
+   * Take the input flag on a floating pin as a command to turn one of its two
+   * bodies relative to the other (§2.9).
+   *
+   * Grounded inputs are deliberately left alone. Their existing path works, and
+   * "the crank turns one degree per sample about a pivot that does not move" is
+   * both cheaper and better conditioned than asking a constraint set the same
+   * question.
+   */
+  private static registerPinDrive(inputJoint: RealJoint): boolean {
+    if (inputJoint instanceof PrisJoint || inputJoint.ground) {
+      return false;
+    }
+    const actuator = resolveActuator(inputJoint);
+    if (!actuator || actuator.kind !== 'angle') {
+      return false;
+    }
+    const reference = angleReference(actuator.referenceBody, inputJoint);
+    const driven = angleReference(actuator.drivenBody, inputJoint);
+    if (!reference || !driven) {
+      return false;
+    }
+    const ax = reference.x - inputJoint.x;
+    const ay = reference.y - inputJoint.y;
+    const wx = driven.x - inputJoint.x;
+    const wy = driven.y - inputJoint.y;
+    this.pinDrive = {
+      pivotId: inputJoint.id,
+      referenceId: reference.id,
+      drivenId: driven.id,
+      // The angle the mechanism was drawn at; the drive walks away from it.
+      angle: Math.atan2(ax * wy - ay * wx, ax * wx + ay * wy),
+      // One degree a sample, exactly as a crank turns, so a driven pin closes
+      // its cycle on the same 360-sample count.
+      step: Math.PI / 180,
+    };
+    return true;
   }
 
   /**
@@ -922,11 +988,14 @@ export class PositionSolver {
    */
   private static simultaneous(joints: Joint[], forward: boolean): boolean {
     const system = this.simultaneousSystem;
-    const drive = this.cylinderDrive;
+    // A cylinder commands a length and a pin commands an angle; both advance by
+    // a fixed step from where they were, so the stepping is the same either way.
+    const drive = this.cylinderDrive ?? this.pinDrive;
     if (!system || !drive) {
       return false;
     }
-    const next = drive.span + (forward ? drive.step : -drive.step);
+    const current = 'span' in drive ? drive.span : drive.angle;
+    const next = current + (forward ? drive.step : -drive.step);
     if (!this.withinStroke(next)) {
       return false;
     }
@@ -946,7 +1015,7 @@ export class PositionSolver {
     const restore = () =>
       before.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
 
-    if (!this.reachSpan(system, drive.span, next, restore)) {
+    if (!this.reachSpan(system, current, next, restore)) {
       // Leave the pose exactly as it was: a half-converged answer drawn once is
       // a mechanism that visibly tears itself apart at the limit.
       restore();
@@ -1694,8 +1763,9 @@ export class PositionSolver {
     });
     // Every step agreed, so the sample the drive proposed is now the one it is
     // extending from.
-    if (this.cylinderDrive && this.pendingSpan !== undefined) {
-      this.cylinderDrive.span = this.pendingSpan;
+    if (this.pendingSpan !== undefined) {
+      if (this.cylinderDrive) this.cylinderDrive.span = this.pendingSpan;
+      if (this.pinDrive) this.pinDrive.angle = this.pendingSpan;
       this.pendingSpan = undefined;
     }
     return true;

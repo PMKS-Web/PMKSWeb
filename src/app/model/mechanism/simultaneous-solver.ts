@@ -27,7 +27,16 @@ export type Constraint =
   /** Two directions stay parallel — what a weld says about a rider and its slot. */
   | { kind: 'parallel'; a1: string; a2: string; b1: string; b2: string }
   /** A length the drive prescribes, supplied fresh each sample. */
-  | { kind: 'driven'; a: string; b: string };
+  | { kind: 'driven'; a: string; b: string }
+  /**
+   * An *angle* the drive prescribes: the angle at `pivot`, from `reference`
+   * round to `driven`, supplied fresh each sample (§2.9).
+   *
+   * This is what driving a floating pin means. It reads as a length like every
+   * other row — the driven point's distance from where the commanded angle
+   * would put it — so one tolerance covers the whole system.
+   */
+  | { kind: 'drivenAngle'; pivot: string; reference: string; driven: string };
 
 export interface SimultaneousSystem {
   /** Joints solved together, in the order their coordinates enter the vector. */
@@ -66,7 +75,7 @@ const MAX_DAMPING_TRIES = 24;
 export function residuals(
   system: SimultaneousSystem,
   positions: PositionMap,
-  drivenLength: number
+  command: number
 ): number[] {
   const at = (id: string): number[] => positions.get(id) ?? [0, 0];
   const out: number[] = [];
@@ -76,7 +85,7 @@ export function residuals(
       case 'driven': {
         const [ax, ay] = at(c.a);
         const [bx, by] = at(c.b);
-        const want = c.kind === 'driven' ? drivenLength : c.length;
+        const want = c.kind === 'driven' ? command : c.length;
         out.push(Math.hypot(ax - bx, ay - by) - want);
         break;
       }
@@ -100,6 +109,25 @@ export function residuals(
         const [px, py] = at(c.point);
         const span = Math.hypot(c.dir[0], c.dir[1]);
         out.push(span < 1e-9 ? 0 : ((px - c.at[0]) * c.dir[1] - (py - c.at[1]) * c.dir[0]) / span);
+        break;
+      }
+      case 'drivenAngle': {
+        // r = |w| sin(phi - theta): how far the driven point is from the
+        // direction the commanded angle puts it in, as a length.
+        const [px, py] = at(c.pivot);
+        const [rx, ry] = at(c.reference);
+        const [dx, dy] = at(c.driven);
+        const ax = rx - px;
+        const ay = ry - py;
+        const wx = dx - px;
+        const wy = dy - py;
+        const arm = Math.hypot(ax, ay);
+        out.push(
+          arm < 1e-9
+            ? 0
+            : ((ax * wy - ay * wx) * Math.cos(command) - (ax * wx + ay * wy) * Math.sin(command)) /
+                arm
+        );
         break;
       }
       case 'parallel': {
@@ -135,7 +163,8 @@ export function residuals(
 export function jacobian(
   system: SimultaneousSystem,
   positions: PositionMap,
-  columnOf: Map<string, number>
+  columnOf: Map<string, number>,
+  commandedAngle: number = 0
 ): number[][] {
   const width = columnOf.size * 2;
   const at = (id: string): number[] => positions.get(id) ?? [0, 0];
@@ -200,6 +229,39 @@ export function jacobian(
         add(current, c.point, c.dir[1] / span, -c.dir[0] / span);
         break;
       }
+      case 'drivenAngle': {
+        // r = N / |a|, with N the numerator in `residuals` above. Both the
+        // numerator and the arm it is divided by move when the pivot or the
+        // reference joint does, which is the whole of why this row is longer
+        // than it looks like it should be.
+        const [px, py] = at(c.pivot);
+        const [rx, ry] = at(c.reference);
+        const [dx, dy] = at(c.driven);
+        const ax = rx - px;
+        const ay = ry - py;
+        const wx = dx - px;
+        const wy = dy - py;
+        const arm = Math.hypot(ax, ay) || 1;
+        const cos = Math.cos(commandedAngle);
+        const sin = Math.sin(commandedAngle);
+        const numerator = (ax * wy - ay * wx) * cos - (ax * wx + ay * wy) * sin;
+        // d(numerator) with respect to a = reference - pivot, and w = driven - pivot.
+        const dNdax = wy * cos - wx * sin;
+        const dNday = -wx * cos - wy * sin;
+        const dNdwx = -ay * cos - ax * sin;
+        const dNdwy = ax * cos - ay * sin;
+        // d(N/|a|) carries the quotient term only through a.
+        const dRdax = dNdax / arm - (numerator * ax) / (arm * arm * arm);
+        const dRday = dNday / arm - (numerator * ay) / (arm * arm * arm);
+        const dRdwx = dNdwx / arm;
+        const dRdwy = dNdwy / arm;
+        const current = row();
+        add(current, c.reference, dRdax, dRday);
+        add(current, c.driven, dRdwx, dRdwy);
+        // The pivot is subtracted from both, so it moves both ways at once.
+        add(current, c.pivot, -dRdax - dRdwx, -dRday - dRdwy);
+        break;
+      }
       case 'parallel': {
         const [a1x, a1y] = at(c.a1);
         const [a2x, a2y] = at(c.a2);
@@ -259,7 +321,7 @@ function solveLinear(A: number[][], b: number[]): number[] | undefined {
 export function solveSimultaneous(
   system: SimultaneousSystem,
   positions: PositionMap,
-  drivenLength: number
+  command: number
 ): boolean {
   const ids = system.unknownIds;
   const n = ids.length * 2;
@@ -271,7 +333,7 @@ export function solveSimultaneous(
   };
   const evaluate = (x: number[]): number[] => {
     write(x);
-    return residuals(system, positions, drivenLength);
+    return residuals(system, positions, command);
   };
   const worst = (f: number[]) => Math.max(...f.map(Math.abs));
   // Accepted on the sum of squares, finished on the largest single residual.
@@ -290,7 +352,7 @@ export function solveSimultaneous(
 
   for (let iteration = 0; iteration < MAX_ITERATIONS && worst(f) >= TOLERANCE; iteration++) {
     write(x);
-    const derivative = jacobian(system, positions, columnOf);
+    const derivative = jacobian(system, positions, columnOf, command);
 
     // Damp until the step actually improves matters. Accepting a step that
     // makes the residual worse is how a solve wanders off to a pose on the

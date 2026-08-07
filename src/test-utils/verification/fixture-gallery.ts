@@ -1,5 +1,6 @@
 import { MechanismFixture, BuiltMechanism, buildMechanism } from './fixture';
 import {
+  fourBarDrivenAtFixture,
   sliderCrankTracerFixture,
   stephensonIiiEx2Fixture,
   teachingLabFourBarFixture,
@@ -178,6 +179,13 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     spec: 'slot-mobility.spec.ts',
     floatingSlot: false,
     fixture: ellipticalTrammelFixture(),
+  },
+  {
+    name: 'Four-bar driven at its coupler-rocker pin',
+    purpose: 'Gate 6: a floating pin as the input \u2014 same coupler curve as driving the crank',
+    spec: 'driven-floating-pin.spec.ts',
+    floatingSlot: false,
+    fixture: fourBarDrivenAtFixture('C'),
   },
   {
     name: 'TeachingLab four-bar',

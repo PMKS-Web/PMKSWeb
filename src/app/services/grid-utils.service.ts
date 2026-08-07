@@ -182,7 +182,15 @@ export class GridUtilsService {
    * are worse than either rule on its own.
    */
   canToggleInput(joint: Joint): boolean {
-    return this.isAttachedToSlider(joint) || (joint as RealJoint).ground === true;
+    // A floating pin is drivable now (§2.9, Phase 6): driving it prescribes the
+    // relative angle between the two bodies that meet there, which is a
+    // perfectly good input as long as exactly two of them do. The control stays
+    // *enabled* where three meet, so the refusal is explained rather than
+    // hidden -- the same rule Ground and Slider follow.
+    if (this.isAttachedToSlider(joint) || (joint as RealJoint).ground === true) {
+      return true;
+    }
+    return joint instanceof RealJoint && joint.links.length >= 2;
   }
 
   /**
