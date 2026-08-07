@@ -426,6 +426,11 @@ export class Mechanism {
     const desiredJointID = PositionSolver.jointNumOrderSolverMap.get(1)?.[0];
     const desiredJointIndex = this.joints[0].findIndex((j) => j.id === desiredJointID);
     if (desiredJointIndex === -1) {
+      // The ordering emitted no steps at all, so nothing in this mechanism can
+      // move. Returning quietly left it *reporting itself valid* with a single
+      // frame: the play button enabled, nothing happening, and the panel with
+      // nothing to say about why.
+      this.setMechanismInvalid();
       return;
     }
     const desiredJoint = this.joints[0][desiredJointIndex];
