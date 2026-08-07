@@ -18,7 +18,9 @@
       <title-block
         alwaysShown
         icon="expand_more"
-        description="This linkage is not valid and cannot be analyzed. Make sure all requirements are met:"
+        description="{{
+          mechanismService.invalidReason() ?? 'This linkage is not valid and cannot be analyzed.'
+        }} Every requirement:"
       >
         Analysis Help
       </title-block>

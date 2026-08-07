@@ -1377,6 +1377,48 @@ export class MechanismService {
     return this.structuresCache.list;
   }
 
+  /**
+   * Why this mechanism will not run, in its own terms (§6).
+   *
+   * "This linkage is not valid" is true of every failure and useful for none of
+   * them. An excavator boom is three cylinders and therefore three degrees of
+   * freedom, and the plan named that as the single most likely source of
+   * disappointment once cylinders existed — so the number it actually has is
+   * the thing to say, not a checklist to read against.
+   *
+   * Returns nothing when the mechanism is fine.
+   */
+  invalidReason(): string | undefined {
+    if (this.oneValidMechanismExists()) {
+      return undefined;
+    }
+    if (this.joints.length === 0) {
+      return undefined;
+    }
+    const dangling = this.joints.filter((joint) => joint instanceof PrisJoint && joint.isDangling);
+    if (dangling.length > 0) {
+      const names = dangling.map((joint) => joint.name || joint.id).join(', ');
+      return `Slider ${names} has nothing to slide along. Drag it onto a link to cut a slot, or ground it to fix its direction.`;
+    }
+    if (!this.joints.some((joint) => joint instanceof RealJoint && joint.input)) {
+      return 'No joint is driven. Right-click a joint and choose Make Input to say what moves the mechanism.';
+    }
+    const dof = this.mechanisms[0]?.dof;
+    if (dof !== undefined && Number.isNaN(dof)) {
+      return 'Nothing is holding this mechanism in place. Ground a joint, or ground a slider\u2019s guide.';
+    }
+    if (dof !== undefined && dof !== 1) {
+      return dof > 1
+        ? `This mechanism has ${dof} degrees of freedom, and one input can only drive one. Add a constraint, or remove a body.`
+        : `This mechanism has ${dof} degrees of freedom \u2014 it is over-constrained and cannot move. Remove a constraint.`;
+    }
+    const stuck = PositionSolver.unsolvableJoints;
+    if (stuck.length > 0) {
+      return `These joints cannot be placed from the ones around them: ${stuck.join(', ')}. They may need another link, or a driven joint nearer to them.`;
+    }
+    return 'This mechanism reached a position it could not solve from the one before it \u2014 usually a toggle, where the linkage locks.';
+  }
+
   /** The sealed cylinder a joint or link belongs to, if any. */
   cylinderAt(obj: Joint | Link | undefined): Cylinder | undefined {
     if (obj instanceof Joint) return cylinderOfJointIn(this.sealedStructures(), obj);
