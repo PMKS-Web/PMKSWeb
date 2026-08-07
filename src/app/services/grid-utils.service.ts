@@ -21,6 +21,7 @@ import {
 } from '../model/cylinder';
 import { SettingsService } from './settings.service';
 import { MechanismService } from './mechanism.service';
+import { canDrive } from '../model/actuator';
 import { ToolbarComponent } from '../component/toolbar/toolbar.component';
 import { Mechanism } from '../model/mechanism/mechanism';
 import { Coord } from '../model/coord';
@@ -187,10 +188,18 @@ export class GridUtilsService {
     // perfectly good input as long as exactly two of them do. The control stays
     // *enabled* where three meet, so the refusal is explained rather than
     // hidden -- the same rule Ground and Slider follow.
-    if (this.isAttachedToSlider(joint) || (joint as RealJoint).ground === true) {
-      return true;
+    if (!(joint instanceof RealJoint)) {
+      return false;
     }
-    return joint instanceof RealJoint && joint.links.length >= 2;
+    // A slider is driven through its prismatic half, so that is the joint the
+    // question is really about.
+    const driven = this.isAttachedToSlider(joint)
+      ? (this.getSliderJoint(joint) as RealJoint)
+      : joint;
+    // Always enabled to turn *off*: the same control is how an input is removed,
+    // and a joint an edit has since made undrivable is exactly the one a user
+    // most needs to be able to un-drive.
+    return driven.input || canDrive(driven);
   }
 
   /**

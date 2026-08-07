@@ -345,6 +345,27 @@
        real hole rather than a lighter shape laid on top, so it reads as a slot
        cut through the bar and its legibility cannot depend on the random colour
        that bar happens to have. -->
+  <!-- The motor of a driven pin, *under* the links (§2.9). Its body is welded
+       to one of the two members and its shaft turns the other; drawing it in
+       that member's frame, with the internal corners filleted, says which is
+       which. Behind the links, so the member it drives passes over it — the
+       part it is bolted to reads as continuous with it, and the part it turns
+       reads as riding on top. -->
+  <g id="motorHolder" style="transform: scaleY(-1)" pointer-events="none">
+    @for (motor of drivenPinMotors; track motor.id) {
+      <g
+        [attr.transform]="
+          'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ') scale(1 -1)'
+        "
+      >
+        <path
+          [attr.d]="motor.weldedToABar ? drivenPin.body : drivenPin.plainBody"
+          fill="#000000"
+          filter="url(#elevation-1)"
+        />
+      </g>
+    }
+  </g>
   <g id="linkHolder" style="transform: scaleY(-1)">
     @for (link of mechanismSrv.getLinks(); track link) {
       <ng-container>
@@ -621,17 +642,17 @@
         <path [attr.d]="ghost.rod" fill="#9fa8da" fill-opacity="0.7" />
       </g>
     }
-    <!-- A driven floating pin has no block to put a white arrow on, so the
-         overlay brings its own dark backing rather than switching the arrow to
-         a colour that would then depend on whatever is behind it. A driven
-         grounded pin keeps today's black arrow, which already reads on the
-         white canvas. -->
-    @for (pin of drivenFloatingPins; track pin.id) {
+  </g>
+  <!-- The arrows stay above the links: they are the part that has to stay
+       legible, and the body they are read against is beneath them. -->
+  <g id="motorArrowHolder" style="transform: scaleY(-1)" pointer-events="none">
+    @for (motor of drivenPinMotors; track motor.id) {
       <g
         pointer-events="none"
-        [attr.transform]="'translate(' + pin.x + ' ' + pin.y + ') scale(1 -1)'"
+        [attr.transform]="
+          'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ') scale(1 -1)'
+        "
       >
-        <path [attr.d]="drivenPin.backing" fill="#000000" filter="url(#elevation-1)" />
         <path
           [attr.d]="drivenPin.arc"
           fill="none"

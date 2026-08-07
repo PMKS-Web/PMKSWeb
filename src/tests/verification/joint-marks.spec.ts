@@ -123,9 +123,19 @@ describe('the mark system, against the delivered SVGs', () => {
     expect(MARK.slotInset * 0.15 * objectScale).toBeGreaterThan(jointRadius * 1.5);
   });
 
-  it('sweeps the driven-pin arc the long way round', () => {
-    // A short arc reads as a wobble rather than as a revolution.
-    expect(curvedArrowPath(R).arc).toContain('A 15.5 15.5 0 1 1');
+  it('draws the motor two arrows, half a turn apart', () => {
+    // One long arc read as a stray stroke, and a member passing over it took
+    // the whole indication with it. A pair reads as rotation at a glance, and
+    // still does with half of it covered.
+    const { arc, head } = curvedArrowPath(R);
+    expect(arc.match(/A 15.5 15.5/g)?.length).toBe(2);
+    expect(head.match(/M /g)?.length).toBe(2);
+  });
+
+  it('leaves the motor a shoulder for its fillets to sit in', () => {
+    // With the case no wider than the bar there is nowhere for the blend to
+    // go, and the fillet draws as a spike off the corner instead.
+    expect(MARK.motorHalf).toBeGreaterThan(MARK.barHalf + MARK.motorFillet);
   });
 });
 

@@ -74,6 +74,7 @@ import {
   plusPath,
   rodBodyPath,
   slotHalfLength,
+  motorBodyPath,
 } from '../../model/joint-marks';
 import {
   JointDropCandidate,
@@ -92,6 +93,7 @@ import {
 import { SnapGuide, snapToAxes } from '../../model/axis-snap';
 import { drawDepths } from '../../model/draw-order';
 import { MODEL_SCALE } from '../../model/render-scale';
+import { angleReference, GROUND_BODY, resolveActuator } from '../../model/actuator';
 
 /** One thing to draw in the slider layer, and how deep in the stack it sits. */
 export interface SlotStackItem {
@@ -435,6 +437,7 @@ export class NewGridComponent {
         let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick);
         let jointIsGround = (this.lastRightClick as RealJoint).ground;
         let canToggleInput = this.gridUtils.canToggleInput(this.lastRightClick as RealJoint);
+        const jointIsInput = this.gridUtils.isVisuallyInput(this.lastRightClick as RealJoint);
 
         // A MOUNT of a sealed cylinder (the interior joints have no hitboxes,
         // so no other member can arrive here). Ground and Weld stay; Slider is
@@ -450,7 +453,12 @@ export class NewGridComponent {
             )
           );
           this.cMenuItems.push(
-            new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+            new cMenuItem(
+              'Attach Link',
+              this.startCreatingLink.bind(this),
+              'new_link',
+              jointIsInput
+            )
           );
           this.cMenuItems.push(
             new cMenuItem(
@@ -489,8 +497,11 @@ export class NewGridComponent {
           )
         );
 
+        // A third body at a driven joint is what "driven" stops being able to
+        // describe (§2.9), so the item that would add one is greyed rather
+        // than offered and then refused after the fact.
         this.cMenuItems.push(
-          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link')
+          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link', jointIsInput)
         );
 
         // Enabled whatever else the joint is, exactly as the panel's toggle is:
@@ -1842,9 +1853,58 @@ export class NewGridComponent {
       );
   }
 
-  get drivenPin(): { backing: string; arc: string; head: string } {
+  /**
+   * Each driven pin, in the frame of the body its motor is bolted to.
+   *
+   * An actuator has a reference body and a driven one (§2.9). The motor's case
+   * is fixed to the reference body and its shaft turns the other, so the mark
+   * is drawn along the reference body's direction — which is what lets the
+   * fillets meet that bar and makes the pair read as one welded piece.
+   */
+  get drivenPinMotors(): {
+    id: string;
+    x: number;
+    y: number;
+    angle: number;
+    weldedToABar: boolean;
+  }[] {
+    return this.drivenFloatingPins.map((joint) => {
+      const actuator = resolveActuator(joint);
+      const reference = actuator
+        ? angleReference(actuator.referenceBody, joint as RealJoint)
+        : undefined;
+      // With no resolvable actuator there is no side to take, and the square
+      // sits square. That joint is refused by the solver anyway.
+      // Degrees, in the same frame the joints are drawn in: the layer's own
+      // y-flip is what turns this into a screen angle, so the mark must not
+      // pre-flip it as well or it lands mirrored about the bar.
+      const angle = reference
+        ? (Math.atan2(reference.y - joint.y, reference.x - joint.x) * 180) / Math.PI
+        : 0;
+      // Only a two-joint bar has an edge at a known width for the motor's case
+      // to be filleted into; anything else is drawn as a polygon.
+      const weldedToABar =
+        actuator !== undefined &&
+        actuator.referenceBody !== GROUND_BODY &&
+        (actuator.referenceBody as Link).joints.length === 2;
+      return { id: joint.id, x: joint.x, y: joint.y, angle, weldedToABar };
+    });
+  }
+
+  get drivenPin(): {
+    backing: string;
+    body: string;
+    plainBody: string;
+    arc: string;
+    head: string;
+  } {
     const r = 0.15 * this.settings.objectScale;
-    return { backing: pinBackingPath(r), ...curvedArrowPath(r) };
+    return {
+      backing: pinBackingPath(r),
+      body: motorBodyPath(r, true),
+      plainBody: motorBodyPath(r, false),
+      ...curvedArrowPath(r),
+    };
   }
 
   /**

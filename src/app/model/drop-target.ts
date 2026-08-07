@@ -13,7 +13,8 @@ export type MergeRefusal =
   | 'not-a-real-joint'
   | 'sealed-cylinder'
   | 'welded-mount'
-  | 'own-cylinder';
+  | 'own-cylinder'
+  | 'driven-joint';
 
 /** What to tell the user when a merge is refused. */
 export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
@@ -27,6 +28,8 @@ export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
   'not-a-real-joint': 'This joint cannot be merged',
   'sealed-cylinder': 'A cylinder is one sealed part — attach at its mounts instead',
   'welded-mount': 'A welded joint cannot merge with a cylinder mount — unweld it first',
+  'driven-joint':
+    'A driven joint can only join two bodies — remove the input first, or attach somewhere else',
   'own-cylinder': 'A cylinder cannot fold onto itself',
 };
 
@@ -37,6 +40,22 @@ export const MERGE_REFUSAL_MESSAGES: Record<MergeRefusal, string> = {
  * than a bare boolean because the canvas has to tell the user which rule it
  * hit — a joint that silently refuses to snap reads as a broken drag.
  */
+
+/**
+ * Whether merging these two would leave a driven joint joining more than two
+ * bodies.
+ *
+ * Counted on the *result* rather than refusing every merge that touches an
+ * input: dropping a lone joint onto a driven crank adds no body and is
+ * perfectly reasonable.
+ */
+function drivenWouldLoseItsPair(source: RealJoint, target: RealJoint): boolean {
+  if (!source.input && !target.input) return false;
+  const bodies = new Set<string>();
+  [...source.links, ...target.links].forEach((link) => bodies.add(link.id));
+  return bodies.size + (source.ground || target.ground ? 1 : 0) > 2;
+}
+
 export function refuseJointMerge(
   source: Joint,
   target: Joint,
@@ -63,6 +82,14 @@ export function refuseJointMerge(
   // merge happens to its paired pin, which that check never sees -- so the
   // assembly stayed non-dangling and unflagged, sliding on itself.
   if (ridesOn(source, target) || ridesOn(target, source)) return 'own-carrier';
+
+  // An input prescribes the freedom between *two* bodies (§2.9), so a merge
+  // that would leave three meeting at a driven joint takes away the thing the
+  // input names. Refused at the drag, where it is one red ring and a sentence,
+  // rather than after the fact — a driven joint an edit has made ambiguous
+  // stops the whole mechanism simulating, and the edit that did it is by then
+  // several actions ago.
+  if (drivenWouldLoseItsPair(source, target)) return 'driven-joint';
 
   // Two joints on one link collapsing to one point would leave that link a
   // zero-length body — degenerate for every solver downstream.

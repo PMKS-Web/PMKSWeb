@@ -79,7 +79,18 @@ export const MARK = {
 
   /** A driven floating pin has no block, so the overlay brings its own backing. */
   pinBackingHalf: 2.2,
+  /** How far the motor body blends into the bar it is welded to. */
+  /**
+   * The motor's case, and how far it blends into the member it is bolted to.
+   * Wider than the bar by enough to leave a shoulder for the fillet to live in
+   * -- with no shoulder the fillet has nowhere to go and draws as a spike.
+   */
+  motorHalf: 2.9,
+  motorFillet: 0.62,
   pinArcRadius: 1.55,
+  /** Each of the motor's two arrows, and the gap between their tails. */
+  motorArrowSweep: (Math.PI * 2) / 3,
+  motorArrowGap: Math.PI / 8,
 
   /** The welded marker, replacing the circle at 1.47R across. */
   plusArm: 0.22,
@@ -302,6 +313,43 @@ export function blockPath(r: number): string {
 export function pinBackingPath(r: number): string {
   const h = MARK.pinBackingHalf * r;
   return roundedRect(-h, -h, 2 * h, 2 * h, MARK.blockCorner * r);
+}
+
+/**
+ * The motor's body: the backing square, welded to the bar it is bolted to.
+ *
+ * A motor at a joint has a *side*. Its body is fixed to one of the two members
+ * and its shaft turns the other, and the drawing should say which — otherwise
+ * it reads as a decoration floating over a pin rather than as a part with a
+ * job. The square is drawn in the frame of the body it is welded to, running
+ * along +x, and the two internal corners where the bar leaves the square are
+ * filleted, which is what makes the pair read as one piece rather than as a
+ * block resting on a bar.
+ *
+ * The fillets are quadratic curves pulled toward the corner rather than true
+ * circular arcs: identical at any size this is drawn at, and without the
+ * sweep-flag arithmetic that a mirrored coordinate system makes so easy to get
+ * backwards.
+ */
+export function motorBodyPath(r: number, weldedToABar: boolean = true): string {
+  const h = MARK.motorHalf * r;
+  const w = MARK.barHalf * r;
+  const f = MARK.motorFillet * r;
+  const body = roundedRect(-h, -h, 2 * h, 2 * h, MARK.blockCorner * 2 * r);
+  if (!weldedToABar) {
+    // A body of three or more joints is drawn as a polygon through them, not
+    // as a bar of known width, so there is no edge here for a fillet to meet.
+    // `weldPlateFillets` refuses the same case for the same reason: a fillet
+    // against an edge that is not on screen invents a corner.
+    return body;
+  }
+  // One fillet on each side of the bar, at the edge the bar leaves through.
+  const fillet = (side: number) => {
+    const y = side * w;
+    const out = side * (w + f);
+    return `M ${h} ${out} L ${h} ${y} L ${h + f} ${y} Q ${h} ${y} ${h} ${out} Z`;
+  };
+  return `${body} ${fillet(1)} ${fillet(-1)}`;
 }
 
 /** The welded marker: a plus, 1.47R across, in place of the free circle. */
@@ -531,11 +579,26 @@ export function straightArrowPaths(
  */
 export function curvedArrowPath(r: number): { arc: string; head: string } {
   const radius = MARK.pinArcRadius * r;
-  const start = angleOnCircle(radius, Math.PI - 0.31);
-  const end = angleOnCircle(radius, Math.PI / 2 - 0.31);
+  // Two arcs, half a turn apart, each ending in a head: a pair reads as
+  // rotation at a glance where a single long arc reads as a stray stroke, and
+  // it stays legible when a member passes over half of it.
+  const sweep = MARK.motorArrowSweep;
+  const gap = MARK.motorArrowGap;
+  const arm = (from: number) => {
+    const start = angleOnCircle(radius, from);
+    const end = angleOnCircle(radius, from + sweep);
+    return {
+      arc: `M ${start.x} ${start.y} A ${radius} ${radius} 0 0 1 ${end.x} ${end.y}`,
+      // Tangent at the end, which for a counter-clockwise arc is a quarter
+      // turn past the radius.
+      head: arrowHead(r, end.x, end.y, from + sweep + Math.PI / 2),
+    };
+  };
+  const first = arm(gap);
+  const second = arm(gap + Math.PI);
   return {
-    arc: `M ${start.x} ${start.y} A ${radius} ${radius} 0 1 1 ${end.x} ${end.y}`,
-    head: arrowHead(r, end.x, end.y, (196 * Math.PI) / 180),
+    arc: `${first.arc} ${second.arc}`,
+    head: `${first.head} ${second.head}`,
   };
 }
 
