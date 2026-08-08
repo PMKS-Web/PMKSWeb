@@ -104,7 +104,17 @@ export class KinematicsSolver {
 
   static determineKinematics(simJoints: Joint[], simLinks: Link[], initialAngularVelocity: number) {
     this.kinematicsInitializer(simJoints, simLinks, initialAngularVelocity);
+    this.solveRates(simJoints, simLinks, initialAngularVelocity);
+    // Last, because all three routes below seed a grounded guide with zero and
+    // none of them ever revisits it.
+    this.matchGuidesToRiders(simLinks);
+  }
 
+  private static solveRates(
+    simJoints: Joint[],
+    simLinks: Link[],
+    initialAngularVelocity: number
+  ): void {
     // A mechanism the constraint set solved gets its rates from the same
     // constraints, differentiated (§2.7a). Loop detection cannot see through a
     // sealed cylinder, so every cylinder-driven mechanism reached the loopless
@@ -124,6 +134,51 @@ export class KinematicsSolver {
     this.determineAng(simJoints, simLinks, 'Velocity');
     this.determineAng(simJoints, simLinks, 'Acceleration');
     this.determineLin(simJoints, simLinks);
+  }
+
+  /**
+   * Give a grounded guide the motion of the pin riding in it.
+   *
+   * `ground` reads differently on the two joint types. On a RevJoint it means
+   * the point is fixed in the world, and `kinematicsInitializer` seeds every
+   * grounded joint with zero rates on that reading. On a PrisJoint it means
+   * only that the *line* is fixed — the joint itself is the block's coordinate
+   * and travels along that line. Left with the seeded zero it reports the block
+   * stationary while the pin it is coincident with demonstrably moves, so the
+   * animation and the velocity table describe different mechanisms.
+   *
+   * The rider's rates are copied rather than rebuilt out of the slide rate for
+   * the same reason `copyCoincidentMotion` copies a floating block's: the two
+   * are one point at every timestep, so the value the loop (or the constraint
+   * set) actually solved is the only one that cannot drift from the motion
+   * being drawn. Deriving a second answer along the guide would agree only as
+   * long as nothing else changed.
+   */
+  private static matchGuidesToRiders(simLinks: Link[]): void {
+    for (const link of simLinks) {
+      if (!(link instanceof SliderBlock)) {
+        continue;
+      }
+      const guide = link.joints.find(
+        (joint): joint is PrisJoint =>
+          joint instanceof PrisJoint && joint.ground && !joint.isFloating
+      );
+      const rider = link.joints.find((joint) => !(joint instanceof PrisJoint));
+      if (!guide || !rider) {
+        continue;
+      }
+      const velocity = this.jointVelMap.get(rider.id);
+      const acceleration = this.jointAccMap.get(rider.id);
+      // A rider the walk never reached has no answer to share; leaving the
+      // guide's seed alone keeps an unsolved mechanism unsolved rather than
+      // dressing it as a still one.
+      if (velocity) {
+        this.jointVelMap.set(guide.id, [velocity[0], velocity[1]]);
+      }
+      if (acceleration) {
+        this.jointAccMap.set(guide.id, [acceleration[0], acceleration[1]]);
+      }
+    }
   }
 
   /**
