@@ -660,3 +660,40 @@ export function pivotingGripperFixture(scale: number = 1): MechanismFixture {
     inputAngVel: INPUT_SPEED * scale,
   };
 }
+
+/**
+ * The MotionGen library's "Elliptical Crank", rebuilt joint for joint.
+ *
+ * A six-bar: crank A-B turns about ground, reaches the coupler C-D-E through
+ * B-C, and the coupler's far end E rides a fixed guide lying all but along the
+ * x axis. D is held by a short grounded rocker D-F. The name comes from the
+ * ellipse the coupler traces.
+ *
+ * Captured geometry is in the PMKS_Verification repository under
+ * reference-data/motiongen-library/elliptical-crank. Coordinates are verbatim,
+ * including the guide's 0.0028 rad tilt -- it is a hand-placed mechanism, and
+ * squaring the guide up would be rebuilding a different one.
+ *
+ * MotionGen carries the guide as a grounded *bar* with the slot cut into it,
+ * and both of the bar's ends are members of the ground link. A grounded guide
+ * at that angle is the same constraint with two fewer joints, which is how
+ * PMKS+ spells it.
+ */
+export function ellipticalCrankFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  // The guide runs between the two ends of MotionGen's grounded slot bar.
+  const GUIDE = Math.atan2(0.050399 - 0.05919, 4.561923 - 1.432252);
+  return {
+    joints: [
+      { id: 'A', ...at(-2.87544, 0.032816), ground: true, input: true },
+      { id: 'B', ...at(-3.960199, 0.472074) },
+      { id: 'C', ...at(-3.340474, 1.397268) },
+      { id: 'D', ...at(-0.517497, 0.696942) },
+      { id: 'E', ...at(2.337757, 0.056553) },
+      { id: 'F', ...at(0, 0), ground: true },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'BC' }, { joints: 'CDE' }, { joints: 'DF' }],
+    slider: { at: 'E', prisId: 'P', angleRad: GUIDE },
+    inputAngVel: INPUT_SPEED,
+  };
+}
