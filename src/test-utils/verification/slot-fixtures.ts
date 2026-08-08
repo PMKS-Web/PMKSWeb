@@ -884,3 +884,45 @@ export function runningHorseFixture(): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/** Wiper proportions: a crank-rocker whose output arm sweeps about 100 degrees. */
+export const WIPER = { ground: 5, crank: 1.2, coupler: 4.6, rocker: 2.2, blade: 3.4 };
+
+/**
+ * A windshield wiper: a Grashof crank-rocker turning continuous motor rotation
+ * into the back-and-forth sweep of a blade.
+ *
+ * On the shortlist because it is the four-bar people have actually looked at,
+ * and because what a wiper is *for* -- a bounded sweep from an unbounded input
+ * -- is the crank-rocker property, asserted here as a closed form rather than
+ * against sampled data. The blade is a rigid extension of the rocker, so the
+ * arc it sweeps is the rocker's.
+ */
+export function windshieldWiperFixture(): MechanismFixture {
+  const o: [number, number] = [0, 0];
+  const h: [number, number] = [WIPER.ground, 0];
+  const a: [number, number] = [WIPER.crank, 0];
+  // The rocker pin, from the circles about the crank pin and the far ground.
+  const span = Math.hypot(h[0] - a[0], h[1] - a[1]);
+  const mid: [number, number] = [(a[0] + h[0]) / 2, (a[1] + h[1]) / 2];
+  const off = (WIPER.coupler ** 2 - WIPER.rocker ** 2) / (2 * span ** 2);
+  const base: [number, number] = [mid[0] + off * (h[0] - a[0]), mid[1] + off * (h[1] - a[1])];
+  const height = Math.sqrt(WIPER.coupler ** 2 / span ** 2 - (0.5 + off) ** 2) * span;
+  const b: [number, number] = [
+    base[0] - (height * (h[1] - a[1])) / span,
+    base[1] + (height * (h[0] - a[0])) / span,
+  ];
+  // The blade tip: on the rocker, out past the pin from its ground pivot.
+  const reach = WIPER.blade / WIPER.rocker;
+  return {
+    joints: [
+      { id: 'O', x: o[0], y: o[1], ground: true, input: true },
+      { id: 'A', x: a[0], y: a[1] },
+      { id: 'B', x: b[0], y: b[1] },
+      { id: 'T', x: h[0] + (b[0] - h[0]) * reach, y: h[1] + (b[1] - h[1]) * reach },
+      { id: 'H', x: h[0], y: h[1], ground: true },
+    ],
+    links: [{ joints: 'OA' }, { joints: 'AB' }, { joints: 'BHT' }],
+    inputAngVel: INPUT_SPEED,
+  };
+}

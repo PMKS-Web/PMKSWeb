@@ -22,6 +22,7 @@ import {
   pivotingGripperFixture,
   chebyshevStraightLineFixture,
   radialEngineFixture,
+  windshieldWiperFixture,
   slottedCouplerFixture,
   squareRodSliderCrankFixture,
   WHITWORTH_CRANK,
@@ -165,6 +166,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: false,
     slide: false,
     fixture: chebyshevStraightLineFixture(),
+  },
+  {
+    name: 'Windshield wiper',
+    purpose: 'Crank-rocker: continuous rotation into a bounded sweep, against the closed form',
+    spec: 'windshield-wiper.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: windshieldWiperFixture(),
   },
   {
     name: 'Inverted slider-crank',
