@@ -20,6 +20,7 @@ import {
   scotchYokeWithTracerFixture,
   motionGenGripperFixture,
   pivotingGripperFixture,
+  chebyshevStraightLineFixture,
   radialEngineFixture,
   slottedCouplerFixture,
   squareRodSliderCrankFixture,
@@ -156,6 +157,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: false,
     slide: false,
     fixture: radialEngineFixture(),
+  },
+  {
+    name: 'Chebyshev straight-line linkage',
+    purpose: 'Approximate straight-line generation: the coupler midpoint runs flat along the top',
+    spec: 'chebyshev-straight-line.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: chebyshevStraightLineFixture(),
   },
   {
     name: 'Inverted slider-crank',

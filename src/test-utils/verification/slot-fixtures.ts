@@ -747,3 +747,43 @@ export function radialEngineFixture(): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/** Chebyshev's classic proportions: ground 4, the two rockers 5, coupler 2. */
+export const CHEBYSHEV = { ground: 4, rocker: 5, coupler: 2 };
+
+/**
+ * Chebyshev's straight-line linkage: a symmetric double-rocker whose coupler
+ * midpoint travels very nearly in a straight line across the middle of its
+ * travel.
+ *
+ * On the shortlist because approximate straight-line generation is the reason
+ * four-bars are taught at all, and because the assertion it supports needs no
+ * reference data -- how straight the traced line is follows from the
+ * proportions, so there is nothing to drift.
+ *
+ * Grashof with the coupler as the shortest link, so neither grounded arm turns
+ * all the way over: the input rocks and the cycle closes on a reversal rather
+ * than on a revolution.
+ *
+ * The tracer sits on the coupler between its two pins, which is the one
+ * configuration the circle-circle primitive is ill-conditioned in -- the two
+ * circles that place it are internally tangent there. It solves; the tolerances
+ * below are set where that lands.
+ */
+export function chebyshevStraightLineFixture(): MechanismFixture {
+  const half = CHEBYSHEV.ground / 2;
+  const reach = CHEBYSHEV.coupler / 2;
+  // Symmetric pose: both arms leaning inwards, coupler level.
+  const rise = Math.sqrt(CHEBYSHEV.rocker ** 2 - (half - reach) ** 2);
+  return {
+    joints: [
+      { id: 'G', x: -half, y: 0, ground: true, input: true },
+      { id: 'A', x: -reach, y: rise },
+      { id: 'B', x: reach, y: rise },
+      { id: 'M', x: 0, y: rise },
+      { id: 'H', x: half, y: 0, ground: true },
+    ],
+    links: [{ joints: 'GA' }, { joints: 'ABM' }, { joints: 'BH' }],
+    inputAngVel: INPUT_SPEED,
+  };
+}
