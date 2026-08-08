@@ -944,6 +944,41 @@ scope (§1), and an ungeared five-bar is DOF 2, which the engine rejects. The fo
 floating joint is DOF 1, uses no out-of-scope features, and has an exact reference — the same
 mechanism solved the ordinary way.
 
+### Phase 7 — Mobility by rank, not by counting
+
+**Not started.** Found by rebuilding the MotionGen library's gripper
+([`motiongen-gripper.spec.ts`](../src/tests/verification/motiongen-gripper.spec.ts)): a mechanism
+that a second engine animates, that this one reports as DOF 0 and refuses.
+
+Gruebler counts joints and bodies, which is only right when every constraint says something new.
+The gripper's do not — each jaw is reached by two rods while its two rail pins already confine it to
+pure translation, so the second rod repeats the first. Four freedoms, four constraints, three of
+them independent. A door with two hinges counts the same way and opens anyway.
+
+| # | Task |
+| --- | --- |
+| 7.1 | Mobility from the **rank of the constraint Jacobian** — unknowns minus rank — instead of a joint-and-body count |
+| 7.2 | A scaled QR or SVD, because the rank tolerance *is* the problem: too tight reads a real mechanism as rigid, too loose reads a rigid frame as mobile |
+| 7.3 | Sample rank at more than the drawn pose. Rank drops at a dead centre too, so a one-pose answer changes as the user drags a joint |
+| 7.4 | Gate it: Gruebler stays the fast path, and the rank test runs only where the count comes out 0 or negative — which is where it is wrong and nowhere else |
+
+The machinery is mostly built. [`simultaneous-solver.ts`](../src/app/model/mechanism/simultaneous-solver.ts)
+already assembles every constraint row and its analytic Jacobian (§2.7a), so 7.1 is a rank call on a
+matrix that exists. As with Phase 5's numerics, a dyadically decomposable mechanism must keep the
+closed-form path bit-identically; this changes what is *reported as mobile*, never a solved position.
+
+**A second defect hides behind the first, and is not fixed by this.** A body with two pins on two
+parallel rails is both what makes the gripper over-constrained *and* a permanent tangency for the
+closed-form primitives — locating the second pin intersects a circle with a line whose distance from
+the centre is exactly the radius, at every pose rather than at one of them, so the discriminant sits
+on zero and rounding decides its sign. Counting it correctly does not make it solvable.
+[`pivoting-gripper.spec.ts`](../src/tests/verification/pivoting-gripper.spec.ts) is the same gripper
+with the rails taken off the jaws, and runs; the two are published as URLs to open side by side.
+
+> **Gate 7:** the MotionGen gripper reports one degree of freedom and traces the jaw paths captured
+> in `PMKS_Verification/reference-data/motiongen-library/gripper` — the comparison that spec already
+> holds and does not yet run. Every mechanism in §4.1 keeps the mobility it reports today.
+
 ---
 
 ## 4. Test ladder
