@@ -12,6 +12,7 @@ import { ApexAxisChartSeries } from 'apexcharts';
 import { RealJoint } from '../../model/joint';
 import { RealLink } from '../../model/link';
 import { ForceSolver } from '../../model/mechanism/force-solver';
+import { KinematicsSolver } from '../../model/mechanism/kinematic-solver';
 import { ForceUnit, LengthUnit } from '../../model/unit-enums';
 import { NumberUnitParserService } from '../../services/number-unit-parser.service';
 import { ActiveObjService } from '../../services/active-obj.service';
@@ -245,6 +246,34 @@ describe('AnalysisGraphComponent production fixtures', () => {
         (series.data as unknown as Array<{ y: number | null }>).every((point) => point.y === null)
       )
     ).toBe(true);
+  });
+
+  it('says the analysis failed rather than showing an empty series selection', () => {
+    // A solver that throws leaves chartOptions.series unassigned, and the
+    // template read that as nothing ticked -- "Please select at least one data
+    // series", above no checkboxes to tick. The user reads that as their own
+    // mistake. Two live defects presented this way before they were found.
+    const fixture = buildMechanismFixture(TEMPLATE_LINKAGES['4-Bar']);
+    const component = createComponent(fixture);
+    const joint = fixture.mechanism.joints[0].find(
+      (candidate): candidate is RealJoint => candidate instanceof RealJoint
+    )!;
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const solver = vi.spyOn(KinematicsSolver, 'determineKinematics').mockImplementation(() => {
+      throw new TypeError("Cannot read properties of undefined (reading '0')");
+    });
+
+    component.determineChart('kinematic', 'loop', 'Linear Joint Vel', joint.id);
+    component.applySeriesVisibility();
+
+    expect(component.analysisDiagnostic).toContain('could not be analyzed');
+    expect(component.numberOfSeries).toBe(0);
+    expect(component.displayedSeries).toHaveLength(0);
+    // And the failure is still recoverable in a console, not merely absorbed.
+    expect(logged).toHaveBeenCalled();
+
+    solver.mockRestore();
+    logged.mockRestore();
   });
 
   it('uses matching Newton/lbf labels and values for graph and CSV output', () => {

@@ -548,6 +548,29 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
   }
 
   determineChart(analysis: string, analysisType: string, mechProp: string, mechPart: string) {
+    try {
+      this.buildChart(analysis, analysisType, mechProp, mechPart);
+    } catch (error) {
+      // A solver that throws leaves `chartOptions.series` unassigned, and the
+      // template read that as an empty selection -- "Please select at least
+      // one data series", above no checkboxes to select. That blames the user
+      // for our failure. Say the analysis failed, and keep the stack in the
+      // console for whoever has to fix it.
+      console.error('Analysis failed for', analysis, mechProp, mechPart, error);
+      this.numberOfSeries = 0;
+      this.displayedSeries = [];
+      this.displayedColors = [];
+      this.analysisDiagnostic =
+        'This mechanism could not be analyzed, so this graph is unavailable.';
+    }
+  }
+
+  private buildChart(
+    analysis: string,
+    analysisType: string,
+    mechProp: string,
+    mechPart: string
+  ): void {
     let data1Title = '';
     let data2Title = '';
     let data3Title = '';

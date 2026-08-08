@@ -2,6 +2,8 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
+import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
+import { Loop, loopId } from '../../app/model/mechanism/loop-solver';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import {
   JANSEN,
@@ -161,5 +163,135 @@ describe("Theo Jansen's leg", () => {
     const range = (pts: { y: number }[]) =>
       Math.max(...pts.map((p) => p.y)) - Math.min(...pts.map((p) => p.y));
     expect(range(recovery) / range(stance)).toBeGreaterThan(4);
+  });
+
+  // Everything above reads positions, which is how the leg walked correctly for
+  // months while its Analyze tab drew nothing. The velocity solver has its own
+  // failure: it sizes its matrix by unknowns and indexes its rows by loop, so a
+  // loop too many throws — and the panel reported that as "Please select at
+  // least one data series", above no checkboxes to select.
+
+  /** Rates at every timestep, from whichever set of loops is handed in. */
+  const solveWith = (loops: Loop[]) => {
+    KinematicsSolver.resetVariables();
+    KinematicsSolver.requiredLoops = loops;
+    const vel: Record<string, [number, number]>[] = [];
+    const acc: Record<string, [number, number]>[] = [];
+    for (let t = 0; t < frames; t++) {
+      KinematicsSolver.determineKinematics(
+        mechanism.joints[t],
+        mechanism.links[t],
+        mechanism.inputAngularVelocities[t]
+      );
+      vel.push(Object.fromEntries(KinematicsSolver.jointVelMap));
+      acc.push(Object.fromEntries(KinematicsSolver.jointAccMap));
+    }
+    return { vel, acc };
+  };
+
+  it('keeps three independent loops out of the four walks it can find', () => {
+    // Eight bodies and ten pins leave 10 - 8 + 1 = 3 independent closures, but
+    // the two three-body pins let the walk reach ground four different ways.
+    // O-A-D-E-C-G is the sum of the three below and states nothing they do not.
+    expect(mechanism.requiredLoops.map((loop) => loop.id)).toEqual([
+      'O-A-B-G',
+      'O-A-B-C-E-D-G',
+      'O-A-D-G',
+    ]);
+  });
+
+  it('moves the foot at a rate that matches the path it draws', () => {
+    const { vel, acc } = solveWith(mechanism.requiredLoops);
+    const dt = mechanism.timeNum[1] - mechanism.timeNum[0];
+
+    for (const id of ['B', 'C', 'D', 'E', 'F']) {
+      // Every moving joint has an answer, and it is a moving one. A solver that
+      // throws leaves these maps empty, and one that gives up quietly fills
+      // them with zeros; both used to reach the graphs as a blank panel.
+      for (let t = 1; t < frames - 1; t++) {
+        const [vx, vy] = vel[t][id];
+        const [ax, ay] = acc[t][id];
+        expect(Number.isFinite(vx) && Number.isFinite(vy), `${id} velocity at ${t}`).toBe(true);
+        expect(Number.isFinite(ax) && Number.isFinite(ay), `${id} acceleration at ${t}`).toBe(true);
+      }
+      expect(Math.max(...vel.slice(1, -1).map((v) => Math.hypot(...v[id]))), id).toBeGreaterThan(1);
+      expect(Math.max(...acc.slice(1, -1).map((a) => Math.hypot(...a[id]))), id).toBeGreaterThan(1);
+
+      // And it is the right answer, not merely a number: differentiating the
+      // positions the position solver drew has to reproduce it. Errors are
+      // measured against each joint's own peak rather than against the
+      // instantaneous one, because a joint passing through a standstill divides
+      // a truncation error by nothing and reports a percentage about the
+      // denominator. Worst over all five joints and all 359 interior frames:
+      // 0.16% of peak speed and 3.6% of peak acceleration, which is the central
+      // difference's own truncation over a 1/360-turn step.
+      let worstVel = 0;
+      let worstAcc = 0;
+      let peakVel = 0;
+      let peakAcc = 0;
+      for (let t = 1; t < frames - 1; t++) {
+        const [before, here, after] = [at(t - 1, id), at(t, id), at(t + 1, id)];
+        const fdVel = [(after.x - before.x) / (2 * dt), (after.y - before.y) / (2 * dt)];
+        const fdAcc = [
+          (after.x - 2 * here.x + before.x) / (dt * dt),
+          (after.y - 2 * here.y + before.y) / (dt * dt),
+        ];
+        worstVel = Math.max(
+          worstVel,
+          Math.hypot(fdVel[0] - vel[t][id][0], fdVel[1] - vel[t][id][1])
+        );
+        worstAcc = Math.max(
+          worstAcc,
+          Math.hypot(fdAcc[0] - acc[t][id][0], fdAcc[1] - acc[t][id][1])
+        );
+        peakVel = Math.max(peakVel, Math.hypot(fdVel[0], fdVel[1]));
+        peakAcc = Math.max(peakAcc, Math.hypot(fdAcc[0], fdAcc[1]));
+      }
+      expect(worstVel / peakVel, `${id} velocity`).toBeLessThan(0.005);
+      expect(worstAcc / peakAcc, `${id} acceleration`).toBeLessThan(0.05);
+    }
+  });
+
+  it('answers the same on the loops it dropped as on the ones it kept', () => {
+    // The claim behind dropping a loop is that it carries no information. Test
+    // it rather than assert it: swap the discarded walk back in for the one it
+    // is the sum of, which is a different basis of the same cycle space, and
+    // the rates have to come out identical rather than merely close.
+    const dropped: Loop = {
+      id: '',
+      edges: [
+        { kind: 'link', fromId: 'O', toId: 'A', linkId: 'OA' },
+        { kind: 'link', fromId: 'A', toId: 'D', linkId: 'AD' },
+        { kind: 'link', fromId: 'D', toId: 'E', linkId: 'DEF' },
+        { kind: 'link', fromId: 'E', toId: 'C', linkId: 'CE' },
+        { kind: 'link', fromId: 'C', toId: 'G', linkId: 'GBC' },
+      ],
+    };
+    dropped.id = loopId(dropped.edges);
+    expect(dropped.id).toBe('O-A-D-E-C-G');
+    expect(mechanism.requiredLoops.map((loop) => loop.id)).not.toContain(dropped.id);
+
+    const kept = solveWith(mechanism.requiredLoops);
+    const swapped = solveWith([dropped, ...mechanism.requiredLoops.slice(1)]);
+
+    for (let t = 1; t < frames - 1; t++) {
+      for (const id of ['B', 'C', 'D', 'E', 'F']) {
+        const scale = Math.hypot(...kept.vel[t][id]);
+        expect(
+          Math.hypot(
+            kept.vel[t][id][0] - swapped.vel[t][id][0],
+            kept.vel[t][id][1] - swapped.vel[t][id][1]
+          ),
+          `${id} velocity at ${t}`
+        ).toBeLessThan(1e-9 * scale);
+        expect(
+          Math.hypot(
+            kept.acc[t][id][0] - swapped.acc[t][id][0],
+            kept.acc[t][id][1] - swapped.acc[t][id][1]
+          ),
+          `${id} acceleration at ${t}`
+        ).toBeLessThan(1e-9 * Math.hypot(...kept.acc[t][id]));
+      }
+    }
   });
 });
