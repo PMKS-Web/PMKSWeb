@@ -19,6 +19,8 @@ import {
   sealedCylinderStructures,
 } from '../cylinder';
 import {
+  boundaryJoints,
+  boundaryTangent,
   Constraint,
   constraintRates,
   hasFullColumnRank,
@@ -85,6 +87,38 @@ const CONCENTRIC_TOLERANCE = 0.001;
 
 /** How short a slot ray may get before its direction stops meaning anything. */
 const DEGENERATE_SLOT_TOLERANCE = 1e-9;
+
+/**
+ * How far a boundary-driven sample may be predicted to move a joint, as a
+ * fraction of the mechanism's own longest bar, before the sample is walked in
+ * halves instead of taken in one go (§2.7a).
+ *
+ * A fraction rather than a length, because the only thing "too far in one step"
+ * can mean is too far compared with the linkage it is a step of. An ordinary
+ * six-bar predicts a percent or two of its longest bar per degree of crank;
+ * this sits well above that and well below the near-fold poses, where the
+ * prediction runs to half the mechanism and the seed lands in the wrong basin.
+ */
+const BOUNDARY_STEP_FRACTION = 0.05;
+
+/**
+ * How far a solved sample may land from where the tangent said it would, before
+ * the sample is walked in halves instead.
+ *
+ * Allowed a whole prediction's worth of error, plus a fraction of the longest
+ * bar so a mechanism standing nearly still is not judged against nothing. The
+ * curvature a real step carries is a few percent of the step; an assembly mode
+ * away is most of the mechanism. Nothing in between needs deciding.
+ */
+const BOUNDARY_DRIFT_SLACK = 1;
+const BOUNDARY_DRIFT_FLOOR = 0.01;
+
+/**
+ * How many times a boundary-driven sample may be halved. Sixty-four sub-steps
+ * of one degree is far past where any real linkage stops needing them, and the
+ * cap is what stops a genuine limit being subdivided forever.
+ */
+const BOUNDARY_HALVINGS = 6;
 
 /**
  * A slot is either fixed in the world or cut along the line joining two joints
@@ -222,6 +256,18 @@ export class PositionSolver {
   /** Joints no chain of dyads can place, and what they have to satisfy (§2.7a). */
   private static simultaneousSystem?: SimultaneousSystem;
   /**
+   * A boundary-driven system's moving boundary: the joints its constraints read
+   * but do not solve for, where they stood when it was last solved, and the
+   * length its predicted steps are judged against.
+   *
+   * Only filled in for a system with no drive row of its own. A cylinder or a
+   * driven pin advances a command instead, and `reachSpan` already subdivides
+   * that; there is nothing here for it to be measured against.
+   */
+  private static boundaryIds: string[] = [];
+  private static boundaryPose?: Map<string, number[]>;
+  private static boundaryScale = 0;
+  /**
    * Whether the walk actually emitted an input step — a joint some actuator
    * places exactly, before anything is solved.
    *
@@ -285,6 +331,9 @@ export class PositionSolver {
     this.drivenCylinder = undefined;
     this.pinDrive = undefined;
     this.simultaneousSystem = undefined;
+    this.boundaryIds = [];
+    this.boundaryPose = undefined;
+    this.boundaryScale = 0;
     this.inputStepEmitted = false;
     this.solvedPoses = [];
     this.pendingSpan = undefined;
@@ -649,7 +698,46 @@ export class PositionSolver {
     if (!hasFullColumnRank(system, positions)) {
       return undefined;
     }
+    // Where the boundary starts, and how big the mechanism it bounds is. Both
+    // are wanted every sample and neither changes, so they are read once here
+    // rather than rebuilt inside the loop.
+    this.boundaryIds = boundaryJoints(system);
+    this.boundaryPose = new Map(
+      this.boundaryIds.map((id) => [id, [...(positions.get(id) ?? [0, 0])]])
+    );
+    this.boundaryScale = this.mechanismScale(system, positions);
     return system;
+  }
+
+  /**
+   * One length that stands for how big this mechanism is, so a step can be
+   * called large or small without an absolute number deciding it.
+   *
+   * The longest bar, falling back to the spread of the drawn pose for a system
+   * held together by coincidences and guides alone, which has no bar to measure.
+   */
+  private static mechanismScale(
+    system: SimultaneousSystem,
+    positions: Map<string, number[]>
+  ): number {
+    let longest = 0;
+    for (const constraint of system.constraints) {
+      if (constraint.kind === 'distance') {
+        longest = Math.max(longest, constraint.length);
+      }
+    }
+    if (longest > 0) {
+      return longest;
+    }
+    const involved = [...system.unknownIds, ...this.boundaryIds]
+      .map((id) => positions.get(id))
+      .filter((point): point is number[] => point !== undefined);
+    for (const from of involved) {
+      for (const to of involved) {
+        longest = Math.max(longest, Math.hypot(to[0] - from[0], to[1] - from[1]));
+      }
+    }
+    return longest;
   }
 
   /**
@@ -1227,6 +1315,15 @@ export class PositionSolver {
    * the whole of what picks the branch the mechanism actually moved along. A
    * solve that does not converge leaves the pose untouched, so a refused sample
    * reads as a limit rather than as a linkage torn half open.
+   *
+   * "A hair" is the part that is not free. The crank moves a whole degree
+   * between samples, and near a fold that carries the mechanism far enough that
+   * the previous pose is no longer inside the basin of the root belonging to
+   * it — the solve then converges, at full rank, to a different assembly mode,
+   * and draws a monotone revolution of a linkage nobody built. Nothing in the
+   * constraints can catch that, because both poses satisfy all of them. So the
+   * crank's own degree is what gets subdivided, for the same reason and by the
+   * same means `reachSpan` subdivides a commanded length.
    */
   private static boundaryDriven(joints: Joint[], system: SimultaneousSystem): boolean {
     for (const id of system.unknownIds) {
@@ -1238,8 +1335,23 @@ export class PositionSolver {
     const before = new Map(
       system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])
     );
-    // No driven row exists, so the command is read by nothing.
-    if (!solveSimultaneous(system, this.jointMapPositions, 0)) {
+    // Where the actuator and the grounds have just been put, which is the far
+    // end of the interval this sample has to walk.
+    const arrived = new Map(
+      this.boundaryIds.map((id) => {
+        const placed = this.jointMapPositions.get(id);
+        const joint = placed ? undefined : joints.find((candidate) => candidate.id === id);
+        return [id, placed ? [...placed] : [joint?.x ?? 0, joint?.y ?? 0]];
+      })
+    );
+    const departed = this.boundaryPose ?? arrived;
+
+    const reached = this.advanceBoundary(system, departed, arrived, 0);
+
+    // The boundary was placed by the steps that own it, whatever this one did
+    // with it in between.
+    arrived.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+    if (!reached) {
       before.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
       return false;
     }
@@ -1247,7 +1359,118 @@ export class PositionSolver {
       const solved = this.jointMapPositions.get(id)!;
       this.recordJointPosition(id, solved[0], solved[1]);
     }
+    this.boundaryPose = arrived;
     return true;
+  }
+
+  /**
+   * Follow the branch from one boundary pose to another, halving the interval
+   * until the mechanism can be trusted to have stayed on it.
+   *
+   * Two things say it has not. The tangent is the cheap one and comes before
+   * any solve: `J_q Δq = −J_b Δb` is where the branch is headed, and a
+   * prediction that runs to a sizeable fraction of the mechanism means the pose
+   * is near a fold, where a whole degree of crank is no longer a small step and
+   * the seed is no longer near its answer. The other is the solve's own result,
+   * which has to land somewhere near where the tangent pointed; a solve that
+   * converges an assembly mode away does not.
+   *
+   * A genuine limit still refuses. No subdivision of a command with no solution
+   * acquires one, so the halving bottoms out and the sample is declined exactly
+   * as it was before. A sample that converges but still looks fast at the finest
+   * subdivision is kept: past that point the mechanism really is moving quickly,
+   * and refusing it would invent a limit it does not have.
+   */
+  private static advanceBoundary(
+    system: SimultaneousSystem,
+    from: Map<string, number[]>,
+    to: Map<string, number[]>,
+    depth: number
+  ): boolean {
+    const before = new Map(
+      system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])
+    );
+    from.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+
+    const halve = (): boolean => {
+      if (depth >= BOUNDARY_HALVINGS) {
+        return false;
+      }
+      before.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+      const middle = new Map(
+        this.boundaryIds.map((id) => {
+          const start = from.get(id)!;
+          const end = to.get(id)!;
+          return [id, [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2]];
+        })
+      );
+      return (
+        this.advanceBoundary(system, from, middle, depth + 1) &&
+        this.advanceBoundary(system, middle, to, depth + 1)
+      );
+    };
+
+    const step = new Map(
+      this.boundaryIds.map((id) => {
+        const start = from.get(id)!;
+        const end = to.get(id)!;
+        return [id, [end[0] - start[0], end[1] - start[1]]];
+      })
+    );
+    const predicted = boundaryTangent(system, this.jointMapPositions, step);
+    const reach = predicted ? this.longestMove(system, predicted) : Infinity;
+    // A mechanism with no size at all — every joint of it drawn on one point —
+    // has nothing to call a step large against, so it is left to the solve.
+    const measurable = this.boundaryScale > 0;
+    if (
+      depth < BOUNDARY_HALVINGS &&
+      measurable &&
+      reach > BOUNDARY_STEP_FRACTION * this.boundaryScale
+    ) {
+      return halve();
+    }
+
+    to.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+    // No driven row exists, so the command is read by nothing.
+    if (!solveSimultaneous(system, this.jointMapPositions, 0)) {
+      return halve();
+    }
+    if (
+      depth < BOUNDARY_HALVINGS &&
+      measurable &&
+      predicted &&
+      this.strayed(system, before, predicted, reach)
+    ) {
+      return halve();
+    }
+    return true;
+  }
+
+  /** The furthest any one unknown moves, which is what a step is measured by. */
+  private static longestMove(system: SimultaneousSystem, moves: Map<string, number[]>): number {
+    let longest = 0;
+    for (const id of system.unknownIds) {
+      const move = moves.get(id) ?? [0, 0];
+      longest = Math.max(longest, Math.hypot(move[0], move[1]));
+    }
+    return longest;
+  }
+
+  /** Whether the solve landed somewhere the branch was not pointing. */
+  private static strayed(
+    system: SimultaneousSystem,
+    before: Map<string, number[]>,
+    predicted: Map<string, number[]>,
+    reach: number
+  ): boolean {
+    let off = 0;
+    for (const id of system.unknownIds) {
+      const was = before.get(id)!;
+      const now = this.jointMapPositions.get(id)!;
+      const guess = predicted.get(id)!;
+      off = Math.max(off, Math.hypot(now[0] - was[0] - guess[0], now[1] - was[1] - guess[1]));
+    }
+    return off > BOUNDARY_DRIFT_SLACK * reach + BOUNDARY_DRIFT_FLOOR * this.boundaryScale;
   }
 
   /**

@@ -698,6 +698,41 @@ export function ellipticalCrankFixture(scale: number = 1): MechanismFixture {
   };
 }
 
+/**
+ * A boundary-driven six-bar whose first one-degree sample changes assembly mode.
+ *
+ * It has the same topology as `ellipticalCrankFixture`: crank AB moves one
+ * boundary of a ternary coupler CDE, D is held by rocker DF, and E rides a fixed
+ * almost-horizontal guide. No dyad can enter CDE, so C, D, E and the guide block
+ * are the square eight-row simultaneous system admitted after AB is stepped.
+ * The drawn pose is full rank, and no moving-slot or weld row is involved.
+ *
+ * The proportions put that full-rank pose close to two isolated assembly modes.
+ * Following the positive crank direction in 0.01-degree increments moves E to
+ * the right. Solving the production one-degree sample in one LM call instead
+ * converges to the other valid root and moves E left. Both roots satisfy every
+ * modeled constraint; only continuation from the drawn pose identifies the
+ * linkage the user assembled.
+ *
+ * Coordinates are kept to six decimals to make this a normal hand-enterable
+ * fixture rather than a floating-point knife edge.
+ */
+export function boundaryBranchJumpFixture(): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: -2.87544, y: 0.032816, ground: true, input: true },
+      { id: 'B', x: -3.960199, y: 0.472074 },
+      { id: 'C', x: -8.346306, y: 3.068138 },
+      { id: 'D', x: 2.675824, y: 1.869398 },
+      { id: 'E', x: 3.903228, y: 5.228105 },
+      { id: 'F', x: 4.085514, y: -5.223341, ground: true },
+    ],
+    links: [{ joints: 'AB' }, { joints: 'BC' }, { joints: 'CDE' }, { joints: 'DF' }],
+    sliders: [{ at: 'E', prisId: 'P', angleRad: -0.002808914061466237 }],
+    inputAngVel: INPUT_SPEED,
+  };
+}
+
 /** Radial engine: crank throw, rod length, and the three cylinder axes. */
 export const RADIAL_CRANK = 1;
 export const RADIAL_ROD = 3;

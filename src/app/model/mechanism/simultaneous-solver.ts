@@ -489,6 +489,78 @@ function solveDamped(jacobian: number[][], f: number[], damping: number): number
 }
 
 /**
+ * The joints a system's constraints read but do not solve for.
+ *
+ * For a set driven by a grounded crank these are the moving boundary: the crank
+ * pin the actuator placed, and any ground the constraints mention. Listed here
+ * rather than at the caller so a new constraint kind cannot quietly acquire a
+ * reference that nothing knows to follow.
+ */
+export function boundaryJoints(system: SimultaneousSystem): string[] {
+  const known = new Set(system.unknownIds);
+  const found = new Set<string>();
+  const note = (...ids: string[]) => {
+    for (const id of ids) if (!known.has(id)) found.add(id);
+  };
+  for (const c of system.constraints) {
+    switch (c.kind) {
+      case 'distance':
+      case 'driven':
+      case 'coincident':
+        note(c.a, c.b);
+        break;
+      case 'onLine':
+        note(c.point, c.from, c.to);
+        break;
+      case 'onFixedLine':
+        note(c.point);
+        break;
+      case 'parallel':
+        note(c.a1, c.a2, c.b1, c.b2);
+        break;
+      case 'drivenAngle':
+        note(c.pivot, c.reference, c.driven);
+        break;
+    }
+  }
+  return [...found];
+}
+
+/**
+ * Where the unknowns are headed when the *boundary* moves, to first order.
+ *
+ * The same differentiation that gives velocities from a commanded rate, with
+ * the boundary joints in the command's place: `F(q, b) = 0` differentiates to
+ * `J_q Δq = −J_b Δb`, so the Jacobian that solves the positions also says which
+ * way — and how far — the solve is about to go before it is run.
+ *
+ * That is worth a linear solve because a root finder cannot tell one assembly
+ * mode from another, and this can: the answer only belongs to the branch the
+ * mechanism is on if it is near the direction the branch was pointing.
+ *
+ * Returns nothing at a pose where the constraints cannot be differentiated —
+ * a dead-centre, where the branch has no direction to predict.
+ */
+export function boundaryTangent(
+  system: SimultaneousSystem,
+  positions: PositionMap,
+  boundaryStep: PositionMap
+): PositionMap | undefined {
+  const ids = system.unknownIds;
+  const moved = [...boundaryStep.keys()];
+  const unknownColumns = new Map(ids.map((id, index) => [id, index]));
+  const boundaryColumns = new Map(moved.map((id, index) => [id, index]));
+  const byBoundary = jacobian(system, positions, boundaryColumns);
+  const step = moved.flatMap((id) => boundaryStep.get(id)!);
+  const rhs = byBoundary.map((row) => -row.reduce((sum, value, i) => sum + value * step[i], 0));
+  const predicted = leastSquares(jacobian(system, positions, unknownColumns), rhs);
+  if (!predicted || !predicted.every(Number.isFinite)) {
+    return undefined;
+  }
+  return new Map(ids.map((id, index) => [id, [predicted[index * 2], predicted[index * 2 + 1]]]));
+}
+
+/**
  * How each residual moves when the *command* moves, holding the pose still.
  *
  * Only the driven row has one, and this is the whole of what makes velocities
