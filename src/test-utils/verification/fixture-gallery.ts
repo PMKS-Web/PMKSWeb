@@ -18,6 +18,7 @@ import {
   scotchYokeFixture,
   scotchYokeGuidedAtFarEndFixture,
   scotchYokeWithTracerFixture,
+  motionGenGripperFixture,
   slottedCouplerFixture,
   squareRodSliderCrankFixture,
   WHITWORTH_CRANK,
@@ -128,6 +129,15 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     spec: 'square-rod-tangency.spec.ts',
     floatingSlot: false,
     fixture: squareRodSliderCrankFixture(),
+  },
+  {
+    name: 'MotionGen gripper',
+    purpose:
+      'A second engine\'s mechanism, rebuilt: over-constrained, so PMKS+ reports DOF 0 and refuses it',
+    spec: 'motiongen-gripper.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: motionGenGripperFixture(),
   },
   {
     name: 'Inverted slider-crank',
