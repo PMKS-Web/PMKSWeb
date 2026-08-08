@@ -787,3 +787,100 @@ export function chebyshevStraightLineFixture(): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/**
+ * The MotionGen library's "Running Horse Automata", by Ross McSweeney, rebuilt
+ * joint for joint from the model MotionGen serves as a public asset.
+ *
+ * 45 joints and 27 moving links off one grounded crank -- five times anything
+ * else in the suite, and there entirely as a scale test. No sliders, no
+ * cylinders, no welds: it exercises the pin machinery, the ordering walk and
+ * the per-timestep cloning at a width nothing else reaches.
+ *
+ * Joint ids run A-Z and then a-s, because a mechanism this size does not fit
+ * the alphabet. That is a fixture's privilege rather than the app's: PMKS+
+ * names joints with `String.fromCharCode(last + 1)`, which walks into
+ * punctuation after Z, so the editor cannot currently name a linkage this big
+ * even though the solver can hold one.
+ */
+export function runningHorseFixture(): MechanismFixture {
+  return {
+    joints: [
+      { id: 'A', x: 0.164663, y: -1.03044 },
+      { id: 'B', x: -2.486004, y: -1.345107 },
+      { id: 'C', x: -0.086004, y: 0.00956, ground: true, input: true },
+      { id: 'D', x: -0.806004, y: -0.63044 },
+      { id: 'E', x: -2.21875, y: 2.3125 },
+      { id: 'F', x: -3.20067, y: 0.516227, ground: true },
+      { id: 'G', x: -5.10467, y: 1.129559 },
+      { id: 'H', x: -4.118003, y: 1.492225, ground: true },
+      { id: 'I', x: 2.320566, y: 0.482221, ground: true },
+      { id: 'J', x: 3.768502, y: 2.92281, ground: true },
+      { id: 'K', x: 4.378338, y: 0.503138, ground: true },
+      { id: 'L', x: -9.042299, y: 2.297471 },
+      { id: 'M', x: -12.393118, y: 1.038455 },
+      { id: 'N', x: -4.367013, y: -1.391181 },
+      { id: 'O', x: -5.809429, y: -1.595915 },
+      { id: 'P', x: -6.747891, y: -0.503608 },
+      { id: 'Q', x: -7.544045, y: -2.338224 },
+      { id: 'R', x: -7.533457, y: -4.772405 },
+      { id: 'S', x: -7.099415, y: -3.717086 },
+      { id: 'T', x: -8.414308, y: -5.614958 },
+      { id: 'U', x: -8.524639, y: -6.516482 },
+      { id: 'V', x: -9.630521, y: -5.895305 },
+      { id: 'W', x: -9.38111, y: -7.198835 },
+      { id: 'X', x: 0.771199, y: 1.960702 },
+      { id: 'Y', x: 3.287655, y: 2.122728 },
+      { id: 'Z', x: 3.78125, y: -0.1875 },
+      { id: 'a', x: 2.720566, y: -0.606386 },
+      { id: 'b', x: 2.396516, y: -1.806387 },
+      { id: 'c', x: 4.811706, y: -1.254488 },
+      { id: 'd', x: 7.807846, y: 2.778548 },
+      { id: 'e', x: 8.463584, y: 5.067072 },
+      { id: 'f', x: 8.006489, y: 2.041856 },
+      { id: 'g', x: 10.806488, y: 5.394236 },
+      { id: 'h', x: 12.450933, y: 2.232332 },
+      { id: 'i', x: 11.657282, y: 1.756141 },
+      { id: 'j', x: 6.616012, y: 4.391062 },
+      { id: 'k', x: 7.828711, y: 7.140268 },
+      { id: 'l', x: 7.079504, y: 6.930744 },
+      { id: 'm', x: 5.617015, y: -1.284553 },
+      { id: 'n', x: 5.278987, y: -3.284553 },
+      { id: 'o', x: 4.670536, y: -2.490187 },
+      { id: 'p', x: 4.050817, y: -5.245117 },
+      { id: 'q', x: 3.75786, y: -4.433849 },
+      { id: 'r', x: 2.794479, y: -4.338075 },
+      { id: 's', x: 2.794479, y: -5.616948 },
+    ],
+    links: [
+      { joints: 'AB' },
+      { joints: 'CDA' },
+      { joints: 'DE' },
+      { joints: 'EFG' },
+      { joints: 'HBLM' },
+      { joints: 'DN' },
+      { joints: 'FN' },
+      { joints: 'GOP' },
+      { joints: 'PNQ' },
+      { joints: 'ORS' },
+      { joints: 'QST' },
+      { joints: 'RU' },
+      { joints: 'TUVW' },
+      { joints: 'DX' },
+      { joints: 'XIY' },
+      { joints: 'YZa' },
+      { joints: 'Ib' },
+      { joints: 'Db' },
+      { joints: 'Ac' },
+      { joints: 'Kd' },
+      { joints: 'Jefc' },
+      { joints: 'eghidjkl' },
+      { joints: 'bZm' },
+      { joints: 'ano' },
+      { joints: 'omp' },
+      { joints: 'nq' },
+      { joints: 'qprs' },
+    ],
+    inputAngVel: INPUT_SPEED,
+  };
+}
