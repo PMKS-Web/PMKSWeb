@@ -975,6 +975,32 @@ on zero and rounding decides its sign. Counting it correctly does not make it so
 [`pivoting-gripper.spec.ts`](../src/tests/verification/pivoting-gripper.spec.ts) is the same gripper
 with the rails taken off the jaws, and runs; the two are published as URLs to open side by side.
 
+### Phase 7a — Reach the simultaneous solver from an ordinary crank
+
+**Not started, and it blocks the linkage library.** Found by rebuilding the MotionGen library's
+"Elliptical Crank" ([`elliptical-crank.spec.ts`](../src/tests/verification/elliptical-crank.spec.ts)):
+a six-bar with a grounded crank and one fixed guide, counted correctly at DOF 1, that will not solve.
+
+No joint in it is locatable from two already-known ones, so it is the case §2.7a exists for. The
+fallback is reached and declines. Three things are in the way, each verified by experiment:
+
+| # | Task |
+| --- | --- |
+| 7a.1 | `buildSimultaneousSystem` requires a **drive among its own unknowns** (`if (!drive) return undefined`). A cylinder or floating pin is one; a grounded crank is not — the walk swings its pin first and hands the system an anchor. The drive has to become optional |
+| 7a.2 | Opening that gate alone lets the system swallow five deliberate refusals — a rider whose carrier is unknown, the circular case, a Slide on a moving carrier, a driven pin with three bodies. Gate a driveless system on the walk having placed something **and** on the system being square (`constraints === 2 × unknowns`), which restores all five |
+| 7a.3 | Even then the system is the wrong six equations: the walk marks the grounded block *known*, so the constraint set comes out five distances and a coincidence, with **no line constraint at all** — E is pinned to a fixed block instead of sliding along its guide. The block has to enter the system as an unknown that slides |
+
+7a.1 and 7a.2 are done and reverted rather than left in; 7a.3 is where it stands. A grounded
+prismatic joint carries `ground` because its slot is cut into the world, not because it cannot move,
+and several places treat those as the same thing.
+
+**Most of the shortlisted linkage-library candidates are this shape** — Jansen, the six-bar walkers,
+Chebyshev, the windshield wiper are all non-dyadic with an ordinary crank. Building the library
+before this lands produces a set of fixtures that all record the same refusal.
+
+> **Gate 7a:** the elliptical crank turns a full revolution with every bar rigid and its follower on
+> the guide; all five refusal specs still refuse.
+
 > **Gate 7:** the MotionGen gripper reports one degree of freedom and traces the jaw paths captured
 > in `PMKS_Verification/reference-data/motiongen-library/gripper` — the comparison that spec already
 > holds and does not yet run. Every mechanism in §4.1 keeps the mobility it reports today.
