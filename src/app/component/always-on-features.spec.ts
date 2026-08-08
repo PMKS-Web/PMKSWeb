@@ -9,7 +9,7 @@ import { EditPanelComponent } from './edit-panel/edit-panel.component';
 import { SettingsPanelComponent } from './settings-panel/settings-panel.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
 import { TemplatesComponent } from './MODALS/templates/templates.component';
-import { BUILT_IN_TEMPLATE_IDS } from './MODALS/templates/template-linkages';
+import { TEMPLATE_IDS } from './MODALS/templates/template-linkages';
 
 describe('always-on force and weld UI', () => {
   beforeEach(async () => {
@@ -83,7 +83,7 @@ describe('always-on force and weld UI', () => {
     const templates = TestBed.createComponent(TemplatesComponent);
     templates.detectChanges();
     expect(templates.nativeElement.querySelectorAll('panel-section').length).toBe(
-      BUILT_IN_TEMPLATE_IDS.length
+      TEMPLATE_IDS.length
     );
     const text = templates.nativeElement.textContent;
     expect(text).toContain('Four Bar Linkage');
@@ -91,5 +91,14 @@ describe('always-on force and weld UI', () => {
     expect(text).toContain("Watt's Linkage II");
     expect(text).toContain('Stephenson III');
     expect(text).toContain('Slider Crank');
+    expect(text).toContain('Whitworth Quick-Return');
+    expect(text).toContain('Jansen Leg');
+
+    // Every card has to reach a payload: a title with no linkage behind it is
+    // a dead tile, and the click handler is the only thing that would say so.
+    const images: string[] = Array.from(
+      templates.nativeElement.querySelectorAll('panel-section img')
+    ).map((img) => (img as HTMLImageElement).getAttribute('src') ?? '');
+    expect(images.every((src) => src.startsWith('assets/gifs/'))).toBe(true);
   });
 });

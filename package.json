@@ -9,7 +9,8 @@
     "test": "ng test",
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
-    "fixture-urls": "PMKS_WRITE_FIXTURE_URLS=1 ng test --watch=false --include=src/tests/verification/fixture-gallery.spec.ts"
+    "fixture-urls": "PMKS_WRITE_FIXTURE_URLS=1 ng test --watch=false --include=src/tests/verification/fixture-gallery.spec.ts",
+    "template-payloads": "PMKS_WRITE_TEMPLATE_PAYLOADS=1 ng test --watch=false --include=src/tests/verification/template-payloads.spec.ts"
   },
   "private": true,
   "dependencies": {

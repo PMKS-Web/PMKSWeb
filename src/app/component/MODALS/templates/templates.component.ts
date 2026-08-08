@@ -8,7 +8,7 @@ import {
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MechanismService } from 'src/app/services/mechanism.service';
 import { UrlProcessorService } from 'src/app/services/url-processor.service';
-import { BuiltInTemplateID, TEMPLATE_LINKAGES } from './template-linkages';
+import { TemplateID, TEMPLATE_LINKAGES } from './template-linkages';
 
 @Component({
   selector: 'app-templates',
@@ -29,7 +29,7 @@ export class TemplatesComponent {
     private urlProcessor: UrlProcessorService
   ) {}
 
-  openLinkage(linkage: BuiltInTemplateID) {
+  openLinkage(linkage: TemplateID) {
     const content = TEMPLATE_LINKAGES[linkage];
 
     // An empty grid has nothing to lose, so load right here instead of

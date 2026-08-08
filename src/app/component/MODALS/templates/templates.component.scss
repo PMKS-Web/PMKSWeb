@@ -12,8 +12,13 @@
   $foreground: map.get($theme, foreground);
 
   #templates {
+    // The library outgrew the five cards that used to fit on any screen, so the
+    // list scrolls instead of running off the bottom of the dialog. Material's
+    // own 65vh would leave the header floating above a short list; capping the
+    // dialog and letting the content take what is left keeps both honest.
     .mat-mdc-dialog-content {
-      max-height: none !important;
+      max-height: calc(85vh - 64px) !important;
+      overflow-y: auto;
     }
 
     title-block {

@@ -12,6 +12,7 @@ import {
   cylinderSkinFixture,
   gripperFixture,
   pinchingGripperFixture,
+  ellipticalCrankFixture,
   ellipticalTrammelFixture,
   invertedSliderCrankFixture,
   loadedInvertedSliderCrankFixture,
@@ -28,6 +29,7 @@ import {
   WHITWORTH_CRANK,
   WHITWORTH_OFFSET,
 } from './slot-fixtures';
+import { jansenLegFixture } from './library-fixtures';
 import { MechanismService } from '../../app/services/mechanism.service';
 import { SettingsService } from '../../app/services/settings.service';
 import { ActiveObjService } from '../../app/services/active-obj.service';
@@ -91,6 +93,14 @@ export interface GalleryEntry {
   floatingSlot: boolean;
   /** True when a rider is welded rigid to its block — a Slide (§2.1). */
   slide?: boolean;
+  /**
+   * How large the app should draw pins and bar widths, in model units.
+   *
+   * Omitted means the default a fresh app uses, which suits the mechanisms
+   * built at single-digit sizes — nearly all of them. Set it where the
+   * mechanism is built at a much larger scale, or it draws as hairlines.
+   */
+  objectScale?: number;
   fixture: MechanismFixture;
 }
 
@@ -174,6 +184,28 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: false,
     slide: false,
     fixture: windshieldWiperFixture(),
+  },
+  {
+    name: 'Jansen leg',
+    purpose: "One leg of a Strandbeest: eight bars on Jansen's holy numbers, and the foot walks",
+    spec: 'jansen-leg.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    // Jansen's holy numbers run to 65 units where the rest of the gallery is
+    // single-digit, and pin radius and bar width are absolute rather than
+    // relative to the linkage. At the default the leg draws as hairlines with
+    // no visible pins. Scaling the drawing rather than the fixture keeps the
+    // published numbers exactly as Jansen quotes them.
+    objectScale: 14 * MODEL_SCALE,
+    fixture: jansenLegFixture(),
+  },
+  {
+    name: 'Elliptical crank',
+    purpose: 'A six-bar no dyad reaches: the coupler and its guided end have to be solved together',
+    spec: 'elliptical-crank.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: ellipticalCrankFixture(),
   },
   {
     name: 'Inverted slider-crank',
@@ -286,12 +318,20 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
  * payload depends on what every earlier spec happened to do — the table would
  * differ between a full suite run and a single-file one, and the drift check
  * would fail for reasons with nothing to do with the mechanisms.
+ *
+ * `objectScale` is how large the app draws pins and bar widths, in model units;
+ * it is a display setting rather than geometry, and the default is what a fresh
+ * app uses. A mechanism whose bars are tens of units long needs a larger one or
+ * it renders as hairlines — see the Jansen leg in template-fixtures.ts.
  */
-export function fixturePayload(fixture: MechanismFixture): string {
+export function fixturePayload(
+  fixture: MechanismFixture,
+  objectScale: number = DEFAULT_OBJECT_SCALE
+): string {
   const previousColors = ColorService.instance;
   const previousScale = SettingsService.objectScale;
   new ColorService();
-  SettingsService._objectScale.next(DEFAULT_OBJECT_SCALE);
+  SettingsService._objectScale.next(objectScale);
   try {
     const built = buildMechanism(fixture);
     scaleBuiltToModelUnits(built);
@@ -320,7 +360,7 @@ export function fixturePayload(fixture: MechanismFixture): string {
  */
 export function galleryMarkdown(baseUrl: string): string {
   const rows = FIXTURE_GALLERY.map((entry) => {
-    const link = `${baseUrl}/?${fixturePayload(entry.fixture)}`;
+    const link = `${baseUrl}/?${fixturePayload(entry.fixture, entry.objectScale)}`;
     const slot = entry.floatingSlot ? 'yes' : '—';
     const slide = entry.slide ? 'yes' : '—';
     return `| [${entry.name}](${link}) | ${entry.purpose} | ${slot} | ${slide} | \`${entry.spec}\` |`;
