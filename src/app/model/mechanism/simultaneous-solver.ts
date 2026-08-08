@@ -286,6 +286,83 @@ export function jacobian(
   return rows;
 }
 
+/**
+ * How small a column may get, once the ones before it have been projected out,
+ * before the constraints stop being independent.
+ *
+ * Compared against columns already scaled to unit length, so it is a ratio
+ * rather than a length and means the same thing whatever the mechanism is
+ * measured in. Set well above the 1e-16 where float noise lives and well below
+ * anything a real linkage produces away from a dead-centre.
+ */
+const RANK_TOLERANCE = 1e-7;
+
+/**
+ * Whether the constraints pin the unknowns down at this pose, rather than
+ * leaving a direction they are free to drift along.
+ *
+ * Counting rows is not enough. A square system whose Jacobian loses a column is
+ * a mechanism at a dead-centre, or one whose constraints say the same thing
+ * twice — and Levenberg–Marquardt will happily return *an* answer for it, drawn
+ * from whichever direction the damping happened to favour. That answer is a
+ * picture of a linkage the user did not build, which is the one outcome worth
+ * refusing over.
+ *
+ * Pivoted Gram-Schmidt on the columns, each scaled to unit length first: the
+ * smallest pivot it reaches is a scaled singular value, and scaling is what
+ * stops a mechanism being called singular merely because one joint's residuals
+ * are numerically larger than another's.
+ */
+export function hasFullColumnRank(
+  system: SimultaneousSystem,
+  positions: PositionMap,
+  command: number = 0
+): boolean {
+  const ids = system.unknownIds;
+  const width = ids.length * 2;
+  if (width === 0) return false;
+  const columnOf = new Map(ids.map((id, index) => [id, index]));
+  const rows = jacobian(system, positions, columnOf, command);
+  if (rows.length < width) return false;
+
+  const norm = (vector: number[]) => Math.sqrt(vector.reduce((sum, v) => sum + v * v, 0));
+  const remaining: number[][] = [];
+  for (let column = 0; column < width; column++) {
+    const values = rows.map((row) => row[column]);
+    const length = norm(values);
+    // A column of zeros is an unknown no constraint mentions at all.
+    if (length < RANK_TOLERANCE) return false;
+    remaining.push(values.map((value) => value / length));
+  }
+
+  const basis: number[][] = [];
+  while (remaining.length > 0) {
+    let bestIndex = -1;
+    let bestLength = 0;
+    let best: number[] = [];
+    for (let index = 0; index < remaining.length; index++) {
+      let residual = remaining[index];
+      for (const direction of basis) {
+        const projection = residual.reduce((sum, value, i) => sum + value * direction[i], 0);
+        residual = residual.map((value, i) => value - projection * direction[i]);
+      }
+      const length = norm(residual);
+      if (length > bestLength) {
+        bestIndex = index;
+        bestLength = length;
+        best = residual;
+      }
+    }
+    // Taking the longest remaining column each time is what makes the smallest
+    // pivot meaningful: any other order can make a full-rank matrix look
+    // deficient by unlucky elimination.
+    if (bestIndex < 0 || bestLength < RANK_TOLERANCE) return false;
+    basis.push(best.map((value) => value / bestLength));
+    remaining.splice(bestIndex, 1);
+  }
+  return true;
+}
+
 /** Solve `A x = b` by Gaussian elimination with partial pivoting. */
 function solveLinear(A: number[][], b: number[]): number[] | undefined {
   const n = b.length;

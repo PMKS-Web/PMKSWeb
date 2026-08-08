@@ -21,6 +21,7 @@ import {
 import {
   Constraint,
   constraintRates,
+  hasFullColumnRank,
   residuals,
   SimultaneousSystem,
   solveSimultaneous,
@@ -220,6 +221,18 @@ export class PositionSolver {
   };
   /** Joints no chain of dyads can place, and what they have to satisfy (§2.7a). */
   private static simultaneousSystem?: SimultaneousSystem;
+  /**
+   * Whether the walk actually emitted an input step — a joint some actuator
+   * places exactly, before anything is solved.
+   *
+   * Recorded rather than inferred. `orderNum > 1` looks like the same question
+   * and is not: several primitives raise it without an actuator having placed
+   * anything, and a driven pin the model cannot describe leaves the walk at
+   * step one deliberately (§2.9). A constraint set is allowed to go without a
+   * drive row of its own only when this is true, so reading it off a counter
+   * would hand that permission to exactly the mechanisms that were refused.
+   */
+  private static inputStepEmitted = false;
   /** Poses already solved, with the length that produced them (§2.7a). */
   private static solvedPoses: { span: number; pose: Map<string, number[]> }[] = [];
   /**
@@ -272,6 +285,7 @@ export class PositionSolver {
     this.drivenCylinder = undefined;
     this.pinDrive = undefined;
     this.simultaneousSystem = undefined;
+    this.inputStepEmitted = false;
     this.solvedPoses = [];
     this.pendingSpan = undefined;
     this.drivenSampleStep = undefined;
@@ -393,6 +407,9 @@ export class PositionSolver {
         }
       }
       knownJointsIds.push(j.id);
+      // The actuator has placed a joint exactly, so whatever is left over is
+      // being solved against a boundary that moves rather than against nothing.
+      this.inputStepEmitted = true;
       tracer_joints.push(j);
     });
     tracer_joints.forEach((j) => {
@@ -424,7 +441,10 @@ export class PositionSolver {
       .map((j) => j.id);
 
     if (pending.length > 0) {
-      const system = this.buildSimultaneousSystem(joints, links, pending);
+      const system = this.buildSimultaneousSystem(joints, links, [
+        ...pending,
+        ...this.travellingGrounds(links, pending),
+      ]);
       if (system) {
         this.simultaneousSystem = system;
         this.desiredConnectedJointIndicesMap.set(pending[0], []);
@@ -439,6 +459,43 @@ export class PositionSolver {
     this.unsolvableJoints = joints
       .filter((j) => j instanceof RealJoint && !j.ground && !known.includes(j.id))
       .map((j) => j.id);
+  }
+
+  /**
+   * Grounded sliding joints that have to be solved with their riders, not held
+   * still alongside the joints that are.
+   *
+   * `ground` means two different things depending on what carries it. On a pin
+   * it means the point does not move. On a PrisJoint it means the *slot line*
+   * is cut into the world — the joint itself travels along that line, sitting
+   * on top of the pin it carries (§2.10 item 2), which is what
+   * `orderSlideAssembly` already says in as many words.
+   *
+   * Reading it the first way here does more than omit the line: the block's
+   * coincidence then ties the rider to a point that never moves, so the missing
+   * fixed-line constraint is replaced by the far stronger and quite wrong
+   * "the rider stays where it was drawn". The joint is left seeded in the known
+   * set regardless, because every closed-form primitive that reads a slot
+   * expects to find it there and the walk's existing orderings are verified.
+   */
+  private static travellingGrounds(links: Link[], pending: string[]): string[] {
+    const riders = new Set(pending);
+    // Being seeded as known says nothing about a grounded slot -- every one of
+    // them is -- so what has to be checked is whether a step already writes it.
+    // Solving the same joint twice in one timestep would leave whichever step
+    // ran last holding the answer, silently.
+    const ordered = new Set([...this.jointNumOrderSolverMap.values()].flat());
+    const travelling: string[] = [];
+    for (const link of links) {
+      // The zero-length block, and only it: two joints, one of them the slot.
+      if (!(link instanceof SliderBlock) || link.joints.length !== 2) continue;
+      const slot = link.joints.find((member) => member instanceof PrisJoint);
+      const rider = link.joints.find((member) => !(member instanceof PrisJoint));
+      if (!(slot instanceof PrisJoint) || !rider) continue;
+      if (!slot.ground || ordered.has(slot.id) || !riders.has(rider.id)) continue;
+      travelling.push(slot.id);
+    }
+    return travelling;
   }
 
   /**
@@ -543,10 +600,56 @@ export class PositionSolver {
     }
 
     const drive = this.drivenConstraint(joints, unknown);
-    if (!drive) return undefined;
-    constraints.push(drive);
+    if (drive) {
+      constraints.push(drive);
+      return { unknownIds, constraints };
+    }
+    return this.boundaryDrivenSystem(joints, { unknownIds, constraints });
+  }
 
-    return { unknownIds, constraints };
+  /**
+   * Admit a constraint set that owns no part of the actuator (§2.7a).
+   *
+   * The path above assumes the drive is one of the unknowns, which is true of a
+   * cylinder floating between two moving bodies and of a driven floating pin.
+   * It is not true of a grounded crank: `incrementRevInput` has already put the
+   * crank pin exactly where the commanded angle wants it, so by the time these
+   * joints are reached the input is a *moving boundary condition* and there is
+   * no command left to prescribe. Refusing for want of a drive row there threw
+   * away every ordinary six-bar whose middle the dyadic walk cannot enter.
+   *
+   * Which is also why the gate below is so much stricter than a solver needs.
+   * Levenberg–Marquardt returns something for an underdetermined system, and
+   * something is a plausible drawing of a mechanism nobody built. So: the rows
+   * have to number exactly the unknown coordinates — counted as *residuals*,
+   * since a coincidence is two rows and reads as one constraint — and the
+   * Jacobian has to keep every column at the pose the mechanism was drawn in.
+   * A linkage drawn at a dead-centre is refused by that and is meant to be.
+   */
+  private static boundaryDrivenSystem(
+    joints: Joint[],
+    system: SimultaneousSystem
+  ): SimultaneousSystem | undefined {
+    if (!this.inputStepEmitted) {
+      return undefined;
+    }
+    // A slot cut into a moving link stays out of scope (§4), square or not. The
+    // walk refuses those deliberately -- the rider's angle tracks a carrier that
+    // is itself unknown -- and letting the count alone decide would quietly
+    // reverse that refusal for whichever of them happens to come out square.
+    if (system.constraints.some((c) => c.kind === 'onLine' || c.kind === 'parallel')) {
+      return undefined;
+    }
+    const positions = new Map<string, number[]>(
+      joints.map((joint) => [joint.id, [joint.x, joint.y]])
+    );
+    if (residuals(system, positions, 0).length !== system.unknownIds.length * 2) {
+      return undefined;
+    }
+    if (!hasFullColumnRank(system, positions)) {
+      return undefined;
+    }
+    return system;
   }
 
   /**
@@ -1064,11 +1167,14 @@ export class PositionSolver {
    */
   private static simultaneous(joints: Joint[], forward: boolean): boolean {
     const system = this.simultaneousSystem;
+    if (!system) {
+      return false;
+    }
     // A cylinder commands a length and a pin commands an angle; both advance by
     // a fixed step from where they were, so the stepping is the same either way.
     const drive = this.cylinderDrive ?? this.pinDrive;
-    if (!system || !drive) {
-      return false;
+    if (!drive) {
+      return this.boundaryDriven(joints, system);
     }
     const current = 'span' in drive ? drive.span : drive.angle;
     const next = current + (forward ? drive.step : -drive.step);
@@ -1103,6 +1209,44 @@ export class PositionSolver {
       this.recordJointPosition(id, solved[0], solved[1]);
     }
     this.pendingSpan = next;
+    return true;
+  }
+
+  /**
+   * Settle a system the actuator has already stepped for us.
+   *
+   * The crank step ran first and moved the input's own body to this sample's
+   * pose; everything here follows from that. So there is no command to advance,
+   * no stroke to stay inside and no pose to recall — those all belong to a
+   * drive this system holds a row for, and reaching for them when it does not
+   * would be reading a limit off a quantity nothing is commanding.
+   *
+   * What remains is the seed, which still matters as much as it ever did: the
+   * same constraints are satisfied by the mirror assembly and by the far branch
+   * of every dyad in the set, and starting a hair from last sample's answer is
+   * the whole of what picks the branch the mechanism actually moved along. A
+   * solve that does not converge leaves the pose untouched, so a refused sample
+   * reads as a limit rather than as a linkage torn half open.
+   */
+  private static boundaryDriven(joints: Joint[], system: SimultaneousSystem): boolean {
+    for (const id of system.unknownIds) {
+      if (!this.jointMapPositions.has(id)) {
+        const joint = joints.find((candidate) => candidate.id === id);
+        if (joint) this.jointMapPositions.set(id, [joint.x, joint.y]);
+      }
+    }
+    const before = new Map(
+      system.unknownIds.map((id) => [id, [...this.jointMapPositions.get(id)!]])
+    );
+    // No driven row exists, so the command is read by nothing.
+    if (!solveSimultaneous(system, this.jointMapPositions, 0)) {
+      before.forEach((position, id) => this.jointMapPositions.set(id, [...position]));
+      return false;
+    }
+    for (const id of system.unknownIds) {
+      const solved = this.jointMapPositions.get(id)!;
+      this.recordJointPosition(id, solved[0], solved[1]);
+    }
     return true;
   }
 
