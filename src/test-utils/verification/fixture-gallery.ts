@@ -19,6 +19,7 @@ import {
   scotchYokeGuidedAtFarEndFixture,
   scotchYokeWithTracerFixture,
   motionGenGripperFixture,
+  pivotingGripperFixture,
   slottedCouplerFixture,
   squareRodSliderCrankFixture,
   WHITWORTH_CRANK,
@@ -133,11 +134,19 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
   {
     name: 'MotionGen gripper',
     purpose:
-      'A second engine\'s mechanism, rebuilt: over-constrained, so PMKS+ reports DOF 0 and refuses it',
+      "A second engine's mechanism, rebuilt: over-constrained, so PMKS+ reports DOF 0 and refuses it",
     spec: 'motiongen-gripper.spec.ts',
     floatingSlot: false,
     slide: false,
     fixture: motionGenGripperFixture(),
+  },
+  {
+    name: 'Gripper with the redundancy removed',
+    purpose: 'The same gripper, jaws pivoting instead of railed: DOF 1, and it runs',
+    spec: 'pivoting-gripper.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: pivotingGripperFixture(),
   },
   {
     name: 'Inverted slider-crank',

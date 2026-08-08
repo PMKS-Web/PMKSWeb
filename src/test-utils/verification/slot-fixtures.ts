@@ -606,3 +606,57 @@ export function motionGenGripperFixture(scale: number = 1): MechanismFixture {
     inputAngVel: INPUT_SPEED * scale,
   };
 }
+
+/**
+ * The same gripper with the redundancy designed out: jaws that pivot rather
+ * than slide.
+ *
+ * The original is over-constrained because each jaw is reached by *two* rods
+ * while its two rail pins already confine it to pure vertical travel, so the
+ * second rod repeats the first. The interesting part is that simply deleting
+ * the surplus rods does not fix it. A body with two pins on two parallel rails
+ * is exactly what makes the mechanism over-constrained, and it is also a
+ * permanent tangency for the closed-form primitives: locating the second pin
+ * means intersecting a circle with a line whose distance from the centre is the
+ * radius, at every pose. The mobility count comes out at one and the solver
+ * still reverses on the first step, because the discriminant sits on zero and
+ * rounding decides the sign.
+ *
+ * So the rails come off the jaws and each jaw pivots on ground instead. Plate
+ * translates (two pins on one rail, which is two *distinct* roots and not a
+ * tangency), each jaw turns about its own ground pin, and one rod drives each.
+ * Three freedoms, two rods, one degree of freedom -- and every step is an
+ * ordinary dyad.
+ *
+ * Coordinates are the MotionGen gripper's wherever a joint survives, so the two
+ * can be opened side by side.
+ */
+export function pivotingGripperFixture(scale: number = 1): MechanismFixture {
+  const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  return {
+    joints: [
+      { id: 'A', ...at(-1.924786, 0) },
+      { id: 'M', ...at(0.866655, 0) },
+      { id: 'B', ...at(-1.133345, 1.004752) },
+      { id: 'C', ...at(-1.133345, -0.995248) },
+      { id: 'F', ...at(-1.989728, 2.121085), ground: true },
+      { id: 'G', ...at(0.010272, 2.121085) },
+      { id: 'K', ...at(4.017962, 1.051501) },
+      { id: 'H', ...at(-1.98973, -2.11158), ground: true },
+      { id: 'I', ...at(0.01027, -2.11158) },
+      { id: 'J', ...at(4.007358, -0.753037) },
+    ],
+    links: [
+      { joints: 'AMBC' },
+      { joints: 'BG' },
+      { joints: 'CI' },
+      { joints: 'FGK' },
+      { joints: 'HIJ' },
+    ],
+    sliders: [
+      { at: 'A', prisId: 'P', angleRad: 0, input: true },
+      { at: 'M', prisId: 'N', angleRad: 0 },
+    ],
+    inputAngVel: INPUT_SPEED * scale,
+  };
+}
