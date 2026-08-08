@@ -697,3 +697,53 @@ export function ellipticalCrankFixture(scale: number = 1): MechanismFixture {
     inputAngVel: INPUT_SPEED,
   };
 }
+
+/** Radial engine: crank throw, rod length, and the three cylinder axes. */
+export const RADIAL_CRANK = 1;
+export const RADIAL_ROD = 3;
+export const RADIAL_AXES = [Math.PI / 2, (7 * Math.PI) / 6, (11 * Math.PI) / 6];
+
+/**
+ * A three-cylinder radial engine: one crank pin, three connecting rods, three
+ * pistons on three fixed guides 120 degrees apart.
+ *
+ * On the shortlist for the linkage library because it is the case that puts
+ * *several* sliders on one crank -- nothing else in the suite has more than two
+ * -- and because it stays entirely dyadic while doing it: the crank pin swings
+ * about ground, and each piston is then a circle about that pin meeting its own
+ * guide. It is a scale test for the closed-form path rather than for the
+ * simultaneous one.
+ *
+ * All three rods share a single crank pin, which is what makes it radial rather
+ * than three separate slider-cranks.
+ */
+export function radialEngineFixture(): MechanismFixture {
+  const pin: [number, number] = [RADIAL_CRANK, 0];
+  // Where each piston sits at t = 0: along its own guide, a rod's length from
+  // the pin. Solving s^2 - 2 s (pin . dir) + |pin|^2 - rod^2 = 0 for the far
+  // root keeps every rod on the same side of the crank it is drawn on.
+  const piston = (axis: number): { x: number; y: number } => {
+    const dir: [number, number] = [Math.cos(axis), Math.sin(axis)];
+    const b = pin[0] * dir[0] + pin[1] * dir[1];
+    const c = pin[0] * pin[0] + pin[1] * pin[1] - RADIAL_ROD * RADIAL_ROD;
+    const s = b + Math.sqrt(b * b - c);
+    return { x: s * dir[0], y: s * dir[1] };
+  };
+  const [b, c, d] = RADIAL_AXES.map(piston);
+  return {
+    joints: [
+      { id: 'O', x: 0, y: 0, ground: true, input: true },
+      { id: 'A', x: pin[0], y: pin[1] },
+      { id: 'B', ...b },
+      { id: 'C', ...c },
+      { id: 'D', ...d },
+    ],
+    links: [{ joints: 'OA' }, { joints: 'AB' }, { joints: 'AC' }, { joints: 'AD' }],
+    sliders: [
+      { at: 'B', prisId: 'P', angleRad: RADIAL_AXES[0] },
+      { at: 'C', prisId: 'Q', angleRad: RADIAL_AXES[1] },
+      { at: 'D', prisId: 'R', angleRad: RADIAL_AXES[2] },
+    ],
+    inputAngVel: INPUT_SPEED,
+  };
+}

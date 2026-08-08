@@ -20,6 +20,7 @@ import {
   scotchYokeWithTracerFixture,
   motionGenGripperFixture,
   pivotingGripperFixture,
+  radialEngineFixture,
   slottedCouplerFixture,
   squareRodSliderCrankFixture,
   WHITWORTH_CRANK,
@@ -147,6 +148,14 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: false,
     slide: false,
     fixture: pivotingGripperFixture(),
+  },
+  {
+    name: 'Radial engine, three cylinders',
+    purpose: 'Three sliders on one crank pin; piston stroke is exactly twice the throw',
+    spec: 'radial-engine.spec.ts',
+    floatingSlot: false,
+    slide: false,
+    fixture: radialEngineFixture(),
   },
   {
     name: 'Inverted slider-crank',
