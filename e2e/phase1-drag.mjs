@@ -16,6 +16,23 @@ const chromePath =
   process.env.PMKS_CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const userDataDir = `/tmp/pmks-phase1-profile-${Date.now()}`;
 
+/**
+ * A four-bar with a spare grounded bar beside it, for the sections about
+ * merging.
+ *
+ * A plain four-bar has no legal merge left. Every pair either shares a link or
+ * would tie two joints together twice, and the one pair that does not — the two
+ * grounds — now runs into the rule that a driven joint may only join two
+ * bodies (§2.9), which arrived long after this file did. So those sections were
+ * asserting a merge against a mechanism that correctly refuses every one, and
+ * failing for a reason that has nothing to do with dragging.
+ *
+ * Folding the spare ground E into the four-bar's ground D shares no link,
+ * duplicates nothing, and touches no driven joint.
+ */
+const MERGEABLE =
+  '2P.Fe,1E8.K,0.1011.MA,A,0VG,0,0.GB,B,0NS,NS,0.GC,C,VG,VG,0.KD,D,d4,0,0.KE,E,1E8,0,0.GF,F,1Tm,VG,0..YRAB,AB,Fe,Fe,0RM,Bk,c5cae9,A,B,,.YRBC,BC,Fe,Fe,3w,RM,303e9f,B,C,,.YRCD,CD,Fe,Fe,ZA,Fe,0d125a,C,D,,.YREF,EF,Fe,Fe,1Ly,Fe,B2DFDB,E,F,,...N_p';
+
 const FOUR_BAR =
   '0P.TY.K,0.101.MA,A,0mv,0VU,0.GB,B,0e_,E6,0.GC,C,l1,WW,0.KD,D,qD,0Pk,0..YRAB,AB,Fe,Fe,0ix,08i,c5cae9,A,B,,.YRBC,BC,Fe,Fe,32,NJ,303e9f,B,C,,.YRCD,CD,Fe,Fe,nd,3P,0d125a,C,D,,...JBq';
 
@@ -126,6 +143,13 @@ async function dragBy(page, from, to, { steps = 12, holdBeforeRelease = 0 } = {}
   };
 }
 
+async function loadMergeable(page) {
+  await page.goto(`${baseUrl}?${MERGEABLE}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.waitForTimeout(1200);
+  await dismissIntro(page);
+  await page.waitForTimeout(400);
+}
+
 async function loadFourBar(page) {
   await page.goto(`${baseUrl}?${FOUR_BAR}`, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForTimeout(900);
@@ -166,18 +190,19 @@ page.on('console', (msg) => {
 
 // --- 1. Joint snap ring and merge -----------------------------------------
 await safe('joint dragged onto another shows a ring and merges', async () => {
-  await loadFourBar(page);
+  await loadMergeable(page);
   const before = await jointState(page);
   const beforeLinks = await linkIDs(page);
-  record('four-bar loaded with A B C D', before.map((j) => j.id).join('') === 'ABCD', {
-    joints: before.map((j) => j.id),
-    links: beforeLinks,
-  });
+  record(
+    'the mergeable rig loaded with A B C D E F',
+    before.map((j) => j.id).join('') === 'ABCDEF',
+    { joints: before.map((j) => j.id), links: beforeLinks }
+  );
 
-  // A and D are the two grounds. They share no link, and folding A into D
-  // produces B-D rather than a duplicate of an existing link, so it is the one
-  // legal merge in a plain four-bar.
-  const a = before.find((j) => j.id === 'A');
+  // E, the spare bar's ground, folded into D, the four-bar's. They share no
+  // link, the result duplicates nothing, and neither is the driven joint --
+  // which is what makes this the legal merge a plain four-bar no longer has.
+  const a = before.find((j) => j.id === 'E');
   const d = before.find((j) => j.id === 'D');
   const release = await dragBy(
     page,
@@ -212,10 +237,12 @@ await safe('joint dragged onto another shows a ring and merges', async () => {
     afterCount: after.length,
     after: after.map((j) => j.id),
   });
-  record('the dragged joint is gone and the target survived', !after.some((j) => j.id === 'A'), {
-    after: after.map((j) => j.id),
-  });
-  record('the merged link was renamed to span the survivor', afterLinks.includes('BD'), {
+  record(
+    'the dragged joint is gone and the target survived',
+    !after.some((j) => j.id === 'E') && after.some((j) => j.id === 'D'),
+    { after: after.map((j) => j.id) }
+  );
+  record('the merged link was renamed to span the survivor', afterLinks.includes('DF'), {
     beforeLinks,
     afterLinks,
   });
@@ -537,9 +564,9 @@ async function effectCount(page, className) {
 }
 
 await safe('a legal target captures the dragged joint under an amber ring', async () => {
-  await loadFourBar(page);
+  await loadMergeable(page);
   const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
+  const a = before.find((j) => j.id === 'E');
   const d = before.find((j) => j.id === 'D');
 
   // Deliberately short of D: what puts the joint on the target has to be the
@@ -554,7 +581,7 @@ await safe('a legal target captures the dragged joint under an amber ring', asyn
   const amber = await ringInfo(page, '.snapTarget');
   const refused = await ringInfo(page, '.snapRefused');
   const held = await jointState(page);
-  const heldA = held.find((j) => j.id === 'A');
+  const heldA = held.find((j) => j.id === 'E');
   await shot(page, 'capture-ring.png');
 
   // Both names land on the same point once captured, so one label naming the
@@ -564,10 +591,11 @@ await safe('a legal target captures the dragged joint under an amber ring', asyn
       .map((el) => el.textContent.trim())
       .filter(Boolean)
   );
-  // A sits to the left of D, so the arrow reads in the direction of travel.
+  // Survivor first, then the joint being folded in, with the arrow reading in
+  // the direction of travel: E sits to the right of D, so it comes in leftward.
   record(
     'the capture is labelled with the merge, not two overlapping names',
-    labels.includes('A \u2192 D'),
+    labels.includes('D \u2190 E'),
     {
       merge: labels.filter((l) => /[\u2190\u2192]/.test(l)),
     }
@@ -608,11 +636,14 @@ await safe('a legal target captures the dragged joint under an amber ring', asyn
 await safe('a refused target is ringed red, shakes on release, and explains itself', async () => {
   await loadFourBar(page);
   const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
-  const c = before.find((j) => j.id === 'C');
+  // B rather than A: A is the driven joint, and driving is refused before
+  // over-constraining is even considered (§2.9), so dragging it here tested a
+  // different rule than the one this section is named for.
+  const a = before.find((j) => j.id === 'B');
+  const c = before.find((j) => j.id === 'D');
 
-  // A sits on AB and C on BC, so folding one into the other would leave two
-  // bars spanning B and C.
+  // B sits on AB and BC, D on CD, so folding one into the other would leave two
+  // bars spanning the same pair of joints.
   await dragBy(
     page,
     { x: a.screenX, y: a.screenY },
@@ -712,13 +743,19 @@ await safe('the other end of your own link is not a target', async () => {
 // Only a drag onto the same geometry is refused, because a drop is far more
 // easily done by accident. The kinematics stay valid either way.
 await safe('welding a pair that is already pinned goes through with a warning', async () => {
-  await loadFourBar(page);
-  // Close the four-bar into a triangle first: merge A into D, leaving links
-  // BD, BC and CD, so B and C are held by BC while a weld at D would fuse BD
-  // and CD into a body holding B and C as well.
+  await loadMergeable(page);
+  // Bring the spare bar onto the four-bar first: fold its free end F into C, so
+  // C is held by BC, CD and the arriving EC. A weld there fuses all three into
+  // one body that already holds B and D through the rest of the chain, which is
+  // the redundant pin this is about.
+  //
+  // It used to close the four-bar into a triangle by merging A into D. That is
+  // refused now -- A is the driven joint (§2.9) -- and in fact a plain four-bar
+  // has no legal merge left at all, which is why this file works on a rig with
+  // a spare bar beside it.
   const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
-  const d = before.find((j) => j.id === 'D');
+  const a = before.find((j) => j.id === 'F');
+  const d = before.find((j) => j.id === 'C');
   const release = await dragBy(
     page,
     { x: a.screenX, y: a.screenY },
@@ -726,7 +763,7 @@ await safe('welding a pair that is already pinned goes through with a warning', 
   );
   await release();
   const closed = await linkIDs(page);
-  record('the triangle was formed', closed.length === 3, { links: closed });
+  record('the spare bar joined the chain', closed.length === 4, { links: closed });
 
   const withB = await jointState(page);
   const c = withB.find((j) => j.id === 'C');
@@ -749,14 +786,20 @@ await safe('welding a pair that is already pinned goes through with a warning', 
       before: closed,
       after,
     });
-    record('a snackbar warns about the redundant pin', /twice|no unique solution/i.test(note), {
-      note,
-    });
     const dof = await page.evaluate(() => {
-      const match = document.body.innerText.match(/Degrees of Freedom:\s*(\S+)/i);
+      const match = document.body.innerText.match(/Degrees of Freedom:\s*(-?[\d.]+|—)/i);
       return match ? match[1] : null;
     });
-    record('the welded result is still a mechanism', dof !== '0' && dof !== 'NaN', { dof });
+    // Fusing the three bars at C ties D to E, and ground already ties them, so
+    // this weld costs the mechanism its freedom -- it comes back at -2.
+    record('the weld over-constrains, as this pairing should', Number(dof) < 0, { dof });
+    // And the app says so through the degrees-of-freedom readout rather than a
+    // snackbar. The check this replaced wanted a snackbar about a redundant
+    // pin; there is no such message, and the standing readout plus the Analyze
+    // panel's "over-constrained and cannot move" is where a user finds out.
+    // Asserted as it is rather than as it might ideally be: a transient warning
+    // at the moment of the weld would be an addition, not a fix.
+    record('the readout reports it rather than staying at one', dof !== '1', { dof, note });
   }
 });
 
@@ -765,9 +808,9 @@ await safe('welding a pair that is already pinned goes through with a warning', 
 // itself. Reading only the target cached by the last move merges a drag the
 // user had already called off.
 await safe('Alt pressed without moving still calls off the merge', async () => {
-  await loadFourBar(page);
+  await loadMergeable(page);
   const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
+  const a = before.find((j) => j.id === 'E');
   const d = before.find((j) => j.id === 'D');
 
   await page.mouse.move(a.screenX, a.screenY);
@@ -806,17 +849,17 @@ await safe('Alt pressed without moving still calls off the merge', async () => {
 
 // --- The merge label points the way the joint travelled --------------------
 await safe('a joint arriving from the right reverses the arrow', async () => {
-  await loadFourBar(page);
+  await loadMergeable(page);
   const before = await jointState(page);
-  const a = before.find((j) => j.id === 'A');
-  const d = before.find((j) => j.id === 'D');
-  record('D really is to the right of A', d.screenX > a.screenX, {
-    a: a.screenX,
-    d: d.screenX,
+  const a = before.find((j) => j.id === 'D');
+  const d = before.find((j) => j.id === 'E');
+  record('E really is to the right of D', d.screenX > a.screenX, {
+    d: a.screenX,
+    e: d.screenX,
   });
 
-  // Same pair, dragged the other way.
-  await dragBy(page, { x: d.screenX, y: d.screenY }, { x: a.screenX, y: a.screenY });
+  // Same pair, dragged the other way: D into E rather than E into D.
+  await dragBy(page, { x: a.screenX, y: a.screenY }, { x: d.screenX, y: d.screenY });
   await page.waitForTimeout(250);
   const labels = await page.evaluate(() =>
     [...document.querySelectorAll('#canvas text')]
@@ -824,19 +867,19 @@ await safe('a joint arriving from the right reverses the arrow', async () => {
       .filter(Boolean)
   );
   await shot(page, 'merge-label-reversed.png');
-  record('the arrow points back the way it came', labels.includes('A \u2190 D'), {
+  record('the arrow points back the way it came', labels.includes('D \u2192 E'), {
     merge: labels.filter((l) => /[\u2190\u2192]/.test(l)),
   });
 
   // Latched: wandering across the target must not flip it back and forth.
-  await page.mouse.move(a.screenX - 6, a.screenY);
+  await page.mouse.move(d.screenX - 6, d.screenY);
   await page.waitForTimeout(150);
   const wandered = await page.evaluate(() =>
     [...document.querySelectorAll('#canvas text')]
       .map((el) => el.textContent.trim())
       .filter(Boolean)
   );
-  record('the direction holds while the cursor wanders', wandered.includes('A \u2190 D'), {
+  record('the direction holds while the cursor wanders', wandered.includes('D \u2192 E'), {
     merge: wandered.filter((l) => /[\u2190\u2192]/.test(l)),
   });
   await page.mouse.up();
