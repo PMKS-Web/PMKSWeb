@@ -1045,10 +1045,21 @@ is one size number and one position number, and its only remaining failure is be
   `invalidReason` rather than in it, because the mechanism is valid and simply cannot use the whole
   stroke. Warned about, not clamped.
 
-**Still open:** `MIN_STROKE_R` is a hard floor at 0.34 R, which is not a *readable* minimum — the
-same unresolved question as the minimum grounded rail (§7). Two pre-existing defects were found and
-filed rather than fixed here: a cylinder welded into a compound is torn by a drag, and no Edit panel
-field anywhere writes an undo entry.
+**Still open**, all found by review rather than by the suite, and filed rather than fixed here:
+
+- `MIN_STROKE_R` is a hard floor at 0.34 R, which is not a *readable* minimum — the same unresolved
+  question as the minimum grounded rail (§7).
+- **Merging two cylinder mounts destroys one of them.** The merge does not remap the prismatic
+  joint's carrier and slot endpoints onto the surviving joint, so the second ram stops being a
+  cylinder. This blocks the shared-mount arrangement `cylindersAt` exists to support — merging is
+  how a user would build one.
+- **Analyze has no cylinder branch.** Selecting the body and switching tabs analyses its *barrel*,
+  and offers force at an interior joint the canvas gives no hitbox to.
+- **The weld guard and the model disagree.** `canToggleWeld` forbids welding a cylinder mount;
+  `cylinder.ts` carries `twoJointLeaf` and its comments specifically to describe a member absorbed
+  into a compound. One of the two is wrong, and if compounds are unreachable then `applyCylinderPose`
+  moving only the cylinder's own five joints is a defect for a state that cannot exist.
+- **No Edit panel field anywhere writes an undo entry** except the cylinder's, fixed here.
 
 ---
 
