@@ -63,11 +63,21 @@ describe('a slot losing what defines it', () => {
     expect(s.slot.slotAngle).toBeCloseTo(wasPointing, 9);
   });
 
-  it('dangles when a defining joint is merged away by a snap', () => {
+  it('follows a defining joint that is merged away, rather than stranding the slot', () => {
+    // This used to strand it. The reasoning was that merging a joint the slot
+    // is measured from is a strange thing to do, so let the slot dangle and let
+    // the user see it -- which was defensible while nothing depended on it.
+    //
+    // Something does now: dragging a cylinder's mount onto another joint is how
+    // a ram is attached to the rest of a linkage, and the mount is one of the
+    // two joints its barrel's slot is measured from. Stranding the slot there
+    // deleted the cylinder, silently, in the gesture that exists to connect it.
+    //
+    // A merge says the two joints are one. Link membership already follows that
+    // -- `replaceJointInLink` rewrites every link -- and a slot's endpoints are
+    // the same kind of reference, so they follow it too. Where that leaves no
+    // line to measure, the next test shows it still dangles.
     const s = slottedLever();
-    // Somewhere unrelated to the assembly, so the merge is legal: D snapping
-    // onto the block's own pin is refused outright now (see below), which
-    // closes that route rather than repairing after it.
     const spare = new RevJoint('Z', 5, 5);
     const bar = new RealLink('AZ', [s.a, spare], 1, 1, new Coord(2.5, 2.5));
     s.service.joints.push(spare);
@@ -76,8 +86,31 @@ describe('a slot losing what defines it', () => {
 
     expect(s.service.mergeJoints(s.d, spare)).toBeUndefined();
 
-    expect(s.slot.isFloating).toBe(false);
-    expect(s.slot.isDangling).toBe(true);
+    expect(s.slot.isFloating).toBe(true);
+    expect(s.slot.isDangling).toBe(false);
+    expect(s.slot.isSlotWellFormed).toBe(true);
+    // The carrier kept both its ends; one of them is now the joint that survived.
+    expect([s.slot.slotJointA!.id, s.slot.slotJointB!.id]).toContain('Z');
+  });
+
+  it('cannot be asked to collapse a slot onto a single point', () => {
+    // The repair above only ever moves an endpoint to another joint; it cannot
+    // put both ends on the same one, because merging one end of a carrier into
+    // the other end of that same carrier is refused before any of this runs.
+    // So the case where a slot would be left with no direction to measure is
+    // closed at the gesture rather than repaired after it.
+    const s = slottedLever();
+    const spare = new RevJoint('Z', 5, 5);
+    const bar = new RealLink('AZ', [s.a, spare], 1, 1, new Coord(2.5, 2.5));
+    s.service.joints.push(spare);
+    s.service.links.push(bar);
+    wireGraph(s.service);
+
+    expect(s.service.mergeJoints(s.d, spare)).toBeUndefined();
+    const other = s.slot.slotJointA!.id === 'Z' ? s.slot.slotJointB! : s.slot.slotJointA!;
+
+    expect(s.service.mergeJoints(other as RevJoint, spare)).toBeDefined();
+    expect(s.slot.isSlotWellFormed, 'left exactly as it was').toBe(true);
   });
 
   it('refuses to merge a defining joint into the block riding its own slot', () => {

@@ -391,3 +391,33 @@ function shrunkBoom(barrel: number): MechanismFixture {
     }),
   };
 }
+
+describe('merging a cylinder mount onto another joint', () => {
+  it('keeps the cylinder a cylinder', () => {
+    // How a ram is attached to the rest of a linkage, and it was silently
+    // deleting the part: the merge moves the mount out of every link it was in
+    // and rebuilds connectivity, but the slot on the barrel still named the
+    // joint that no longer exists — so the slider stopped being well formed,
+    // stopped resolving, and the skin vanished with no message at all.
+    TestBed.configureTestingModule({ imports: [AppModule] });
+    const mechanism = TestBed.inject(MechanismService);
+    const urls = TestBed.inject(UrlProcessorService);
+    urls.updateFromURL(fixturePayload(cylinderBoomFixture()), false, true, false);
+
+    expect(mechanism.sealedStructures().length).toBe(1);
+    const cylinder = mechanism.sealedStructures()[0];
+    const mount = mechanism.joints.find((joint) => joint.id === cylinder.barrelFar.id)!;
+    // The boom's own ground pivot: an ordinary joint on an unrelated link.
+    const target = mechanism.joints.find((joint) => joint.id === 'O')!;
+
+    const refusal = mechanism.mergeJoints(mount as RealJoint, target as RealJoint);
+    expect(refusal, 'a mount is a legal merge target').toBeUndefined();
+
+    const after = mechanism.sealedStructures();
+    expect(after.length, 'the cylinder survives its mount being merged').toBe(1);
+    expect(after[0].slider.isSlotWellFormed).toBe(true);
+    expect(after[0].slider.isFloating).toBe(true);
+    // And the slot now names the joint that survived.
+    expect([after[0].slider.slotJointA!.id, after[0].slider.slotJointB!.id]).toContain(target.id);
+  });
+});

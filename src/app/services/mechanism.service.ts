@@ -753,6 +753,27 @@ export class MechanismService {
     target.input = target.input || source.input;
 
     this.links.forEach((link) => this.replaceJointInLink(link, source, target));
+
+    // A slot names two joints on its carrier, and those names are references
+    // rather than lookups — so a slot whose endpoint was just merged away still
+    // pointed at a joint that no longer exists in any link. `isSlotWellFormed`
+    // then answered no, and everything downstream agreed: the slider stopped
+    // being floating, its cylinder stopped resolving, and the skin disappeared
+    // with nothing said. Attaching a ram to the rest of a linkage is exactly
+    // what this gesture is for, so it was deleting the part in the one case it
+    // most needed to survive.
+    this.joints.forEach((joint) => {
+      if (!(joint instanceof PrisJoint) || !joint.isFloating) return;
+      const a = joint.slotJointA!;
+      const b = joint.slotJointB!;
+      if (a.id !== source.id && b.id !== source.id) return;
+      joint.slideOn(
+        joint.carrier!,
+        a.id === source.id ? target : a,
+        b.id === source.id ? target : b
+      );
+    });
+
     this.joints = this.joints.filter((joint) => joint.id !== source.id);
 
     // Only link membership has moved so far. Everything below reads joint.links
