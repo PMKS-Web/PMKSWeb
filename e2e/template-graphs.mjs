@@ -133,7 +133,7 @@ const quantile = (values, q) => {
  * loosening; at a corner it credits the plotted value for matching the slope on
  * the side of the corner it actually belongs to.
  */
-function compareDerivative(plotted, source, dt) {
+function compareDerivative(plotted, source, dt, sharedKinks = []) {
   const scale = Math.max(peak(plotted), 1e-9);
   const noise = (NOISE_GAIN * ROUND_HALF) / dt;
   const n = Math.min(plotted.length, source.length);
@@ -160,7 +160,15 @@ function compareDerivative(plotted, source, dt) {
     if (finite(bwd[i]) && finite(fwd[i]) && Math.abs(fwd[i] - bwd[i]) > kinkThreshold)
       kinks.push(i);
   }
-  const nearKink = (i) => kinks.some((k) => Math.abs(k - i) <= KINK_REACH);
+  // A reversal belongs to the mechanism, not to one series: every joint's
+  // velocity is discontinuous at the same instant. Deciding that per series
+  // made the harness contradict itself -- on the Chebyshev linkage it called
+  // joint A non-differentiable at sample 80 and joint M differentiable at the
+  // same sample, because the threshold is scaled by each series' own typical
+  // slope and M happens to be moving slowly right where it turns around. So a
+  // sample any series of this mechanism kinks at counts for all of them.
+  const allKinks = [...new Set([...kinks, ...sharedKinks])];
+  const nearKink = (i) => allKinks.some((k) => Math.abs(k - i) <= KINK_REACH);
 
   const offenders = [];
   let compared = 0;
@@ -530,13 +538,19 @@ for (const id of IDS) {
       const ax = acc.series.find((s) => s.name === 'X')?.data ?? [];
       const ay = acc.series.find((s) => s.name === 'Y')?.data ?? [];
 
-      for (const [what, plotted, source] of [
+      const derivatives = [
         ['velocity X', vx, px],
         ['velocity Y', vy, py],
         ['acceleration X', ax, vx],
         ['acceleration Y', ay, vy],
-      ]) {
-        const cmp = compareDerivative(plotted, source, dt);
+      ];
+      // First pass finds where this mechanism turns around, in any of its
+      // series; the second judges every series against that shared answer.
+      const sharedKinks = [
+        ...new Set(derivatives.flatMap(([, p, src]) => compareDerivative(p, src, dt).kinks)),
+      ];
+      for (const [what, plotted, source] of derivatives) {
+        const cmp = compareDerivative(plotted, source, dt, sharedKinks);
         if (cmp.worstClean > worstClean) {
           worstClean = cmp.worstClean;
           worstCleanWhere = `${heading} ${what} @ sample ${cmp.worstCleanAt}`;
