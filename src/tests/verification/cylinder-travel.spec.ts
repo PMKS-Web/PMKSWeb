@@ -11,10 +11,7 @@ import { PositionSolver } from '../../app/model/mechanism/position-solver';
 import { BORE_R, cylinderStrokeAlong } from '../../app/model/cylinder';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { fixturePayload } from '../../test-utils/verification/fixture-gallery';
-import {
-  cylinderBetween,
-  cylinderBoomFixture,
-} from '../../test-utils/verification/slot-fixtures';
+import { cylinderBetween, cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MechanismFixture } from '../../test-utils/verification/fixture';
 import { GridUtilsService } from '../../app/services/grid-utils.service';
 import { RealJoint } from '../../app/model/joint';
@@ -228,6 +225,42 @@ describe('a mount two rams share', () => {
   });
 });
 
+describe('two rams a single link carries', () => {
+  it('takes both along rigidly when that link is dragged', () => {
+    // Not the same case as a shared mount: here the two rams have separate
+    // mounts that happen to sit on one bar, so a drag of the bar carries both
+    // and each has to be re-posed about the mount that did not ride along.
+    TestBed.configureTestingModule({ imports: [AppModule] });
+    const mechanism = TestBed.inject(MechanismService);
+    const urls = TestBed.inject(UrlProcessorService);
+    const grid = TestBed.inject(GridUtilsService);
+    urls.updateFromURL(fixturePayload(twoRamsOneCarrier()), false, true, false);
+
+    const cylinders = mechanism.sealedStructures();
+    expect(cylinders.length).toBe(2);
+    const measure = () =>
+      cylinders.map((cylinder) => ({
+        barrel: Math.hypot(
+          cylinder.barrelNear.x - cylinder.barrelFar.x,
+          cylinder.barrelNear.y - cylinder.barrelFar.y
+        ),
+        rod: Math.hypot(cylinder.rodFar.x - cylinder.pin.x, cylinder.rodFar.y - cylinder.pin.y),
+      }));
+    const before = measure();
+
+    const carrier = mechanism.links.find((link) => link.id.includes('D') && link.id.includes('H'))!;
+    grid.dragLink(carrier, 0.4 * MODEL_SCALE, 0.3 * MODEL_SCALE);
+    mechanism.updateMechanism(false);
+
+    const after = measure();
+    for (let i = 0; i < 2; i++) {
+      // Rigid bodies stay rigid, and barrel and rod stay equal to each other.
+      expect(after[i].barrel).toBeCloseTo(before[i].barrel, 3);
+      expect(after[i].rod).toBeCloseTo(after[i].barrel, 3);
+    }
+  });
+});
+
 describe('a ram bigger than the machine it drives', () => {
   it('says how much of its stroke the linkage can actually use', () => {
     TestBed.configureTestingModule({ imports: [AppModule] });
@@ -248,6 +281,41 @@ describe('a ram bigger than the machine it drives', () => {
     expect(mechanism.oneValidMechanismExists()).toBe(true);
   });
 });
+
+/** Two rams whose rod mounts both sit on one moving bar. */
+function twoRamsOneCarrier(): MechanismFixture {
+  const leftMount = { x: -8, y: 0 };
+  const rightMount = { x: 8, y: 0 };
+  const carrierLeft = { x: -2, y: 7 };
+  const carrierRight = { x: 2, y: 7 };
+  const a = cylinderBetween(leftMount, carrierLeft, 0.5);
+  const b = cylinderBetween(rightMount, carrierRight, 0.5);
+  return {
+    joints: [
+      { id: 'A', ...leftMount, ground: true },
+      { id: 'B', ...a.barrelEnd },
+      { id: 'C', ...a.pin },
+      { id: 'D', ...carrierLeft },
+      { id: 'H', ...carrierRight },
+      { id: 'E', ...rightMount, ground: true },
+      { id: 'F', ...b.barrelEnd },
+      { id: 'G', ...b.pin },
+    ],
+    links: [
+      { joints: 'AB' },
+      { joints: 'CD' },
+      { joints: 'DH' },
+      { joints: 'EF' },
+      { joints: 'GH' },
+    ],
+    sliders: [
+      { at: 'C', prisId: 'P', on: { carrier: 'AB', a: 'A', b: 'B' }, sealed: true },
+      { at: 'G', prisId: 'Q', on: { carrier: 'EF', a: 'E', b: 'F' }, sealed: true },
+    ],
+    welds: ['C', 'G'],
+    inputAngVel: 1,
+  };
+}
 
 /** Two rams reaching the same moving point from two ground anchors. */
 function twoRamsOneMount(): MechanismFixture {
