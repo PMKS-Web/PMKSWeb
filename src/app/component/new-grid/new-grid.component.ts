@@ -87,6 +87,7 @@ import { mergedChannels, transformRigidPath } from '../../model/compound-link-pa
 import {
   Cylinder,
   cylinderCreationLayout,
+  cylinderMinimumSpan,
   cylinderJoints,
   isCylinderInterior as isCylinderInteriorOf,
 } from '../../model/cylinder';
@@ -862,15 +863,19 @@ export class NewGridComponent {
           const wanted = this.snapTargetJoint
             ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
             : this.mountAxisSnap(draggedCylinders[0], mousePosInSvg);
-          let atMinimum = false;
-          for (const draggedCylinder of draggedCylinders) {
-            atMinimum =
-              this.gridUtils.dragCylinderMount(
-                draggedCylinder,
-                this.activeObjService.selectedJoint,
-                wanted
-              ) || atMinimum;
-          }
+          // Through dragJoint rather than straight at dragCylinderMount, so a
+          // mount two rams share is agreed between them before either moves.
+          this.gridUtils.dragJoint(this.activeObjService.selectedJoint, wanted);
+          const atMinimum = draggedCylinders.some(
+            (draggedCylinder) =>
+              this.gridUtils.getPointDistance(
+                draggedCylinder.barrelFar.x,
+                draggedCylinder.barrelFar.y,
+                draggedCylinder.rodFar.x,
+                draggedCylinder.rodFar.y
+              ) <=
+              cylinderMinimumSpan(0.15 * this.settings.objectScale) + 1e-6
+          );
           // The mount stops following the cursor at the shortest ram there is,
           // and a gesture that stops should say why. Once per drag: this runs
           // on every pointermove, and a message repeated sixty times a second

@@ -27,7 +27,13 @@ import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
 import { NewGridComponent } from '../new-grid/new-grid.component';
-import { BORE_R, Cylinder, MIN_STROKE_R, cylinderSizeOf } from '../../model/cylinder';
+import {
+  BORE_R,
+  Cylinder,
+  MIN_STROKE_R,
+  cylinderMinimumSpan,
+  cylinderSizeOf,
+} from '../../model/cylinder';
 
 /**
  * Input Settings unit choices, in the order the picker shows them. The labels
@@ -358,7 +364,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   cylinderStartLabel(sealed: Cylinder): string {
     const { start, span } = this.cylinderSize(sealed);
     if (this.cylinderForm.controls['startUnit'].value === 'pct') {
-      return `${Math.round(start * 100)}`;
+      // One decimal, not a whole number. Rounded to an integer the field said
+      // 34 for a ram positioned at 33.7%, and on a long ram that gap is a real
+      // distance -- the panel would be quietly disagreeing with the drawing.
+      return `${Math.round(start * 1000) / 10}`;
     }
     return this.nup.formatModelLength(span, this.settingsService.lengthUnit.getValue());
   }
@@ -418,6 +427,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       new Coord(a.x + s * Math.cos(ang), a.y + s * Math.sin(ang))
     );
     this.mechanismService.onMechUpdateState.next(2);
+    // One committed edit, one undo step. A canvas drag saves on release and a
+    // panel edit did not, so typing a ram's size and then pressing Undo took
+    // back whatever the *previous* gesture was -- on a freshly opened template,
+    // the template itself.
+    this.mechanismService.save();
     this.patchCylinderForm();
   }
 
@@ -437,6 +451,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         : '';
     this.gridUtils.resizeCylinder(sealed, held, start);
     this.mechanismService.onMechUpdateState.next(2);
+    // One committed edit, one undo step. A canvas drag saves on release and a
+    // panel edit did not, so typing a ram's size and then pressing Undo took
+    // back whatever the *previous* gesture was -- on a freshly opened template,
+    // the template itself.
+    this.mechanismService.save();
     this.patchCylinderForm();
   }
 
@@ -875,12 +894,15 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         const sealed = this.selectedCylinder;
         if (!sealed) return this.patchCylinderForm();
         if (this.cylinderForm.controls['startUnit'].value === 'pct') {
-          const asked = Number(
-            String(val ?? '')
-              .replace('%', '')
-              .trim()
-          );
-          if (!Number.isFinite(asked)) return this.patchCylinderForm();
+          // A blank field is not 0%. `Number('')` is zero, and choosing a
+          // different unit blurs and commits the text first -- so emptying the
+          // field and then changing the picker retracted the ram to its stop,
+          // which is the picker moving the part it promises never to move.
+          const typed = String(val ?? '')
+            .replace('%', '')
+            .trim();
+          const asked = Number(typed);
+          if (typed === '' || !Number.isFinite(asked)) return this.patchCylinderForm();
           const held = Math.min(Math.max(asked / 100, 0), 1);
           this.cylinderClamped =
             held !== asked / 100 ? `Start held at ${Math.round(held * 100)}%.` : '';
@@ -895,7 +917,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           this.settingsService.lengthUnit.getValue()
         );
         if (!success || !(value > 0)) return this.patchCylinderForm();
-        this.cylinderClamped = '';
+        // A length the ram cannot reach shrinks it, exactly as dragging there
+        // does -- and has to say so for the same reason the drag does.
+        const floor = cylinderMinimumSpan(0.15 * this.settingsService.objectScale);
+        this.cylinderClamped =
+          value < floor
+            ? 'Held at the shortest ram there is: any less and the barrel is all piston.'
+            : '';
         this.reposeCylinder(value, undefined);
       })
     );

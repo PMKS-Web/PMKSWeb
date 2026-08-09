@@ -252,10 +252,29 @@ export class GridUtilsService {
     // the only thing it can -- its interior -- so it quietly changes size.
     const sealedHere = this.mechanismSrv.cylindersAt(selectedJoint);
     if (sealedHere.length > 0) {
-      for (const sealed of sealedHere) {
-        if (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id) {
-          this.dragCylinderMount(sealed, selectedJoint, trueCoord);
-        }
+      const mounted = sealedHere.filter(
+        (sealed) =>
+          selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id
+      );
+      // Where the mount can actually go, agreed between every ram on it before
+      // any of them moves.
+      //
+      // Each ram clamps the mount at its own minimum span, along its own axis,
+      // so asked one at a time they write different positions to the one joint
+      // and the last to run wins -- which makes the result depend on the order
+      // the cylinders happen to be in. Taking the most restrictive answer first
+      // and then posing all of them to it is order-independent, and it is also
+      // the right answer: a mount two rams hold can only go where both allow.
+      const agreed = mounted.reduce((furthest, sealed) => {
+        const landed = this.cylinderMountLanding(sealed, selectedJoint, trueCoord);
+        if (!landed) return furthest;
+        return this.getPointDistance(landed.x, landed.y, trueCoord.x, trueCoord.y) >
+          this.getPointDistance(furthest.x, furthest.y, trueCoord.x, trueCoord.y)
+          ? landed
+          : furthest;
+      }, trueCoord);
+      for (const sealed of mounted) {
+        this.dragCylinderMount(sealed, selectedJoint, agreed);
       }
       // An interior joint (pin, buried barrel end) takes no free move at all:
       // nothing selects one, so a call here is a stray path, and moving it
@@ -500,7 +519,23 @@ export class GridUtilsService {
    * to the slot ends. Collinearity holds by construction, so no drag can bend
    * a cylinder.
    */
-  dragCylinderMount(sealed: Cylinder, mount: RealJoint, wanted: Coord): boolean {
+  /** Where this ram would put the mount, without moving anything. */
+  private cylinderMountLanding(
+    sealed: Cylinder,
+    mount: RealJoint,
+    wanted: Coord
+  ): Coord | undefined {
+    const pose = this.cylinderMountPose(sealed, mount, wanted);
+    if (!pose) return undefined;
+    const landed = mount.id === sealed.barrelFar.id ? pose.barrelFar : pose.rodFar;
+    return new Coord(landed.x, landed.y);
+  }
+
+  private cylinderMountPose(
+    sealed: Cylinder,
+    mount: RealJoint,
+    wanted: Coord
+  ): CylinderPose | undefined {
     const draggingBarrelMount = mount.id === sealed.barrelFar.id;
     const barrelLength = this.getPointDistance(
       sealed.barrelFar.x,
@@ -508,7 +543,7 @@ export class GridUtilsService {
       sealed.barrelNear.x,
       sealed.barrelNear.y
     );
-    const pose = layoutCylinder(
+    return layoutCylinder(
       draggingBarrelMount ? wanted : sealed.barrelFar,
       draggingBarrelMount ? sealed.rodFar : wanted,
       barrelLength,
@@ -523,6 +558,10 @@ export class GridUtilsService {
         y: sealed.rodFar.y - sealed.barrelFar.y,
       }
     );
+  }
+
+  dragCylinderMount(sealed: Cylinder, mount: RealJoint, wanted: Coord): boolean {
+    const pose = this.cylinderMountPose(sealed, mount, wanted);
     if (!pose) return false;
     this.applyCylinderPose(sealed, pose);
     return pose.atMinimum === true;

@@ -7,7 +7,7 @@
 //
 //   PMKS_PLAYWRIGHT_DIR=<dir> node e2e/phase4-gestures.mjs
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
@@ -453,8 +453,17 @@ console.log('\nonly a sealed cylinder is skinned, and the skin never reveals');
 // character; the checksum covers length only, so it is unchanged).
 const UNSEALED_SLIDE =
   '?2P.Fe.K,0.1011.KA,A,0_W,0,0.GB,B,0Fe,0,0.OC,C,0,0,0.GD,D,_W,0,0.ME,E,_W,ku,0.HP,P,0,0,0,AB,A,B..YRAB,AB,Fe,Fe,0d4,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,VG,0,303e9f,C,D,,.YRDE,DE,Fe,Fe,_W,NS,0d125a,D,E,,.YPCP,CP,Fe,0,0,0,,C,P,,...N_a';
+// Read from the generated template rather than typed here. A hand-written
+// payload for a part with an invariant in it goes stale the moment the
+// invariant moves: this one was a barrel one unit long with its piston two
+// units outside it, which stopped being a cylinder the day barrel and rod had
+// to match, and the check then failed for a reason that had nothing to do with
+// what it was testing.
 const SEALED_CYLINDER =
-  '?2P.Fe.K,0.1011.KA,A,0_W,0,0.GB,B,0Fe,0,0.OC,C,0,0,0.GD,D,_W,0,0.ME,E,_W,ku,0.nP,P,0,0,0,AB,A,B..YRAB,AB,Fe,Fe,0d4,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,VG,0,303e9f,C,D,,.YRDE,DE,Fe,Fe,_W,NS,0d125a,D,E,,.YPCP,CP,Fe,0,0,0,,C,P,,...N_a';
+  '?' +
+  readFileSync('src/app/component/MODALS/templates/template-linkages.ts', 'utf8').match(
+    /Cylinder_Boom:\s*\n\s*'([^']+)'/
+  )[1];
 
 // A hand-built (unsealed) welded slide never wears the skin any more, and the
 // Auto/Cylinder/Slotted picker is gone from the app entirely.
@@ -479,11 +488,15 @@ for (const [part, selector] of [
 ]) {
   await load(SEALED_CYLINDER);
   const collapsed = await page.locator('.cylinder-mark').count();
+  // A point actually ON the path, not a fraction into its bounding box: the
+  // template's ram is diagonal, and a quarter across the box of a diagonal bar
+  // is beside the bar rather than on it.
   const at = await page.evaluate((sel) => {
     const node = document.querySelector(sel);
     if (!node) return null;
-    const box = node.getBoundingClientRect();
-    return { x: box.x + box.width * 0.25, y: box.y + box.height / 2 };
+    const local = node.getPointAtLength(node.getTotalLength() * 0.3);
+    const point = new DOMPoint(local.x, local.y).matrixTransform(node.getScreenCTM());
+    return { x: point.x, y: point.y };
   }, selector);
   if (!checkThat(`the sealed ${part} is there to click`, collapsed === 1 && !!at)) continue;
   await page.mouse.click(at.x, at.y);

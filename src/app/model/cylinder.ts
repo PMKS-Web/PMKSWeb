@@ -407,6 +407,11 @@ export function cylinderStroke(
   return Math.max(0, barrelLength - BORE_R * r);
 }
 
+/** The shortest mount-to-mount span a ram can have: fully retracted, at the floor. */
+export function cylinderMinimumSpan(r: number): number {
+  return (MIN_STROKE_R + 1.5 * BORE_R) * r;
+}
+
 /** Mount-to-mount span at each end of the travel, for a given stroke. */
 export function cylinderSpanRange(
   stroke: number,
