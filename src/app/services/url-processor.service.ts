@@ -61,6 +61,21 @@ export class UrlProcessorService {
     // different by them, so nothing remembered per joint may carry across.
     if (!continuingHistory) mechanismSrv.forgetSessionPreferences();
 
+    // Rewind before the incoming mechanism takes the joints array over.
+    //
+    // `updateMechanism` puts the editable joints back on sample 0 before it
+    // rebuilds, because they are simultaneously what the grid draws and what
+    // the rebuild reads as t = 0. That works everywhere except here: by the
+    // time it runs, the joints it is putting back belong to the mechanism that
+    // has just arrived while the solved samples it reads them from still belong
+    // to the one being replaced. Paired off by index, a template opened over a
+    // running animation came up wearing the old linkage's start pose — and,
+    // where the new linkage had more joints than the old, indexed past the end
+    // of the samples and got NaN. Rewinding here, while frames and joints still
+    // belong to each other, leaves that call with nothing left to do.
+    const heldStep = mechanismSrv.mechanismTimeStep;
+    mechanismSrv.rewindToStart();
+
     // the transcoder is responsible for decoding the url into a mechanism
     const decoder = new StringTranscoder();
 
@@ -93,10 +108,12 @@ export class UrlProcessorService {
 
     mechanismSrv.updateMechanism(save);
 
-    // animate the mechanism
-    if (mechanismSrv.mechanismTimeStep > 0) {
+    // A step within one mechanism's own history goes back to the time it was
+    // taken at; a different mechanism arriving starts at the beginning of its
+    // own cycle, which is the only time in it that means anything yet.
+    if (continuingHistory && heldStep > 0) {
       setTimeout(() => {
-        mechanismSrv.animate(mechanismSrv.mechanismTimeStep, false);
+        mechanismSrv.animate(heldStep, false);
       }, 0);
     }
 

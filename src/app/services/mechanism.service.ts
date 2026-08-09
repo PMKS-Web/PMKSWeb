@@ -2116,11 +2116,28 @@ export class MechanismService {
   private restoreStartPose() {
     // While playing, the drawn pose is blended past its sample, so step 0 alone
     // does not mean the joints hold the start pose — only paused-at-0 does.
-    const atStartPose = this.mechanismTimeStep === 0 && !AnimationBarComponent.animate;
-    if (atStartPose || !this.mechanisms[0]?.joints[0]?.length) {
+    if (this.atStartPose() || !this.mechanisms[0]?.joints[0]?.length) {
       return;
     }
     this.applyPose(0, 0);
+  }
+
+  private atStartPose(): boolean {
+    return this.mechanismTimeStep === 0 && !AnimationBarComponent.animate;
+  }
+
+  /**
+   * Stop playback and draw the start of the cycle.
+   *
+   * For callers about to replace the mechanism wholesale. `restoreStartPose`
+   * does the same job as part of a rebuild, but a rebuild that swaps in a
+   * different linkage is too late for it: the joints and the solved samples it
+   * pairs off by index no longer describe the same mechanism by then. This runs
+   * while they still do, and leaves that call nothing to undo.
+   */
+  rewindToStart(): void {
+    if (this.atStartPose()) return;
+    this.animate(0, false);
   }
 
   /**
