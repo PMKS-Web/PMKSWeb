@@ -83,7 +83,10 @@ export class LinkageTableComponent implements OnInit {
         jointProp === 'x' ? value : joint.x,
         jointProp === 'y' ? value : joint.y
       );
-      this.mechanismService.gridUtils.dragCylinderMount(sealed, joint, wanted);
+      // Through dragJoint, so a mount two rams share is agreed between them --
+      // and saved, so one edit here is one undo step, as it is in the panel.
+      this.mechanismService.gridUtils.dragJoint(joint, wanted);
+      this.mechanismService.save();
       return;
     }
     switch (jointProp) {

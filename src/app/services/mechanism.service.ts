@@ -1428,7 +1428,7 @@ export class MechanismService {
     if (noTravel) {
       const cylinder = this.sealedStructures().find((found) => found.slider.id === noTravel);
       const name = cylinder ? this.cylinderName(cylinder) : noTravel;
-      return `Cylinder ${name} has no travel: its barrel is too short to hold the piston and any stroke as well. Lengthen it, or make the drawing bigger under Object Scale.`;
+      return `Cylinder ${name} has no travel: its barrel is too short to hold the piston and any stroke as well. Lengthen the ram, or reduce Object Scale — a larger scale makes the piston bigger, not the barrel.`;
     }
     const stuck = PositionSolver.unsolvableJoints;
     if (stuck.length > 0) {

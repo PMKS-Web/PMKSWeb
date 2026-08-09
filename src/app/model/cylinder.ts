@@ -667,7 +667,12 @@ export function cylinderSizeOf(
     cylinder.rodFar.x - cylinder.barrelFar.x,
     cylinder.rodFar.y - cylinder.barrelFar.y
   );
-  const stroke = cylinderStroke(barrelLength, r);
+  // Through the travel interval, not the raw subtraction: a barrel can be long
+  // enough to leave a sliver over the bore and still have no *usable* stroke,
+  // and reporting that sliver put the panel at odds with the solver -- Travel
+  // saying 0.05 cm beside a mechanism saying the ram has no travel at all.
+  const travel = cylinderStrokeAlong(barrelLength, r);
+  const stroke = travel.usable ? travel.max - travel.min : 0;
   const { retracted } = cylinderSpanRange(stroke, r);
   return {
     stroke,

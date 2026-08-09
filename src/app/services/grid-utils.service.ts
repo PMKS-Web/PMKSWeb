@@ -265,14 +265,27 @@ export class GridUtilsService {
       // the cylinders happen to be in. Taking the most restrictive answer first
       // and then posing all of them to it is order-independent, and it is also
       // the right answer: a mount two rams hold can only go where both allow.
-      const agreed = mounted.reduce((furthest, sealed) => {
-        const landed = this.cylinderMountLanding(sealed, selectedJoint, trueCoord);
-        if (!landed) return furthest;
-        return this.getPointDistance(landed.x, landed.y, trueCoord.x, trueCoord.y) >
-          this.getPointDistance(furthest.x, furthest.y, trueCoord.x, trueCoord.y)
-          ? landed
-          : furthest;
-      }, trueCoord);
+      // Iterated to a fixed point, not decided in one pass. Each ram clamps
+      // along its own axis, so the landing that satisfies the most restrictive
+      // one may still violate another's minimum -- in two dimensions "furthest
+      // from where the cursor asked" is not a proof of feasibility. Re-clamping
+      // the agreed point against every ram until it stops moving is, and it
+      // terminates because a clamp only ever pushes the point further from the
+      // request. The cap is a backstop against a pathological arrangement, not
+      // an expected exit.
+      let agreed = trueCoord;
+      for (let pass = 0; pass < 8; pass++) {
+        let moved = false;
+        for (const sealed of mounted) {
+          const landed = this.cylinderMountLanding(sealed, selectedJoint, agreed);
+          if (!landed) continue;
+          if (this.getPointDistance(landed.x, landed.y, agreed.x, agreed.y) > 1e-6) {
+            agreed = landed;
+            moved = true;
+          }
+        }
+        if (!moved) break;
+      }
       for (const sealed of mounted) {
         this.dragCylinderMount(sealed, selectedJoint, agreed);
       }
@@ -483,6 +496,9 @@ export class GridUtilsService {
     // cylinder about its other mount, so the part follows its mount instead
     // of bending (§ cylinder 6). A cylinder whose own pin moved was dragged
     // as a body — every member translated together, nothing to repair.
+    // Sequentially, and that is safe here in a way it is not for a shared mount:
+    // a link drag moves whole bodies, so each ram is re-posed about its own
+    // untouched mount and no two of them are writing to the same joint.
     carriedCylinders.forEach(({ sealed, barrelLength }) => {
       if (movedJointIDs.has(sealed.pin.id)) return;
       const movedBarrelMount = movedJointIDs.has(sealed.barrelFar.id);

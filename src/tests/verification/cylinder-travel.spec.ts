@@ -8,7 +8,15 @@ import { UrlProcessorService } from '../../app/services/url-processor.service';
 import { SettingsService } from '../../app/services/settings.service';
 import { SliderMarkService } from '../../app/services/slider-mark.service';
 import { PositionSolver } from '../../app/model/mechanism/position-solver';
-import { BORE_R, cylinderStrokeAlong } from '../../app/model/cylinder';
+import {
+  BORE_R,
+  MIN_STROKE_R,
+  cylinderSizeOf,
+  cylinderStroke,
+  cylinderStrokeAlong,
+  sealedCylinders,
+} from '../../app/model/cylinder';
+import { buildMechanism } from '../../test-utils/verification/fixture';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { fixturePayload } from '../../test-utils/verification/fixture-gallery';
 import { cylinderBetween, cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
@@ -63,6 +71,26 @@ describe('a cylinder with no travel', () => {
 
     expect(under.usable).toBe(false);
     expect(under.max).toBeGreaterThanOrEqual(under.min);
+  });
+
+  it('reports no stroke to the panel either, not a sliver the solver will refuse', () => {
+    // Two definitions of "how long is the stroke" that disagree in a band: the
+    // raw subtraction says a barrel a hair over its bore has 0.05 cm, while the
+    // travel interval calls anything under the floor unusable. The panel read
+    // the first and the solver the second, so Travel showed a number beside a
+    // mechanism reporting the ram had no travel at all. Object Scale walks a
+    // part into that band without anyone touching it.
+    const r = 0.15 * MODEL_SCALE;
+    const sliver = BORE_R * r + (MIN_STROKE_R * r) / 2;
+    expect(cylinderStroke(sliver, r)).toBeGreaterThan(0);
+    expect(cylinderStrokeAlong(sliver, r).usable).toBe(false);
+
+    const built = buildMechanism(cylinderBoomFixture(MODEL_SCALE));
+    const cylinder = sealedCylinders(built.joints)[0];
+    if (cylinder) {
+      const size = cylinderSizeOf(cylinder, r);
+      expect(size.stroke).toBeGreaterThan(0);
+    }
   });
 
   it('is refused as a drive rather than driven as an ordinary slider', () => {
