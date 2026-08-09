@@ -17,26 +17,51 @@ const { chromium } = await import(
 );
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
-const payload = readFileSync('src/app/component/MODALS/templates/template-linkages.ts', 'utf8').match(/Cylinder_Boom:\s*\n\s*'([^']+)'/)[1];
-const ctx = await chromium.launchPersistentContext('/tmp/pmks-chrome-reg', { headless: true, viewport: { width: 1600, height: 1000 } });
+const payload = readFileSync(
+  'src/app/component/MODALS/templates/template-linkages.ts',
+  'utf8'
+).match(/Cylinder_Boom:\s*\n\s*'([^']+)'/)[1];
+const ctx = await chromium.launchPersistentContext('/tmp/pmks-chrome-reg', {
+  headless: true,
+  viewport: { width: 1600, height: 1000 },
+});
 const page = await ctx.newPage();
-const errs = []; page.on('pageerror', e => errs.push(String(e)));
+const errs = [];
+page.on('pageerror', (e) => errs.push(String(e)));
 const load = async () => {
   await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
   await page.waitForTimeout(5000);
-  const b = await page.$('.cylinder-barrel'); const box = await b.boundingBox();
+  const b = await page.$('.cylinder-barrel');
+  const box = await b.boundingBox();
   await page.mouse.click(box.x + box.width * 0.62, box.y + box.height * 0.62);
   await page.waitForTimeout(700);
 };
-const rows = () => page.evaluate(() => {
-  const all = [...document.querySelectorAll('#input-block')];
-  const v = (l) => all.find(r => r.querySelector('.label')?.textContent?.trim() === l)?.querySelector('input')?.value ?? null;
-  const sel = (l) => all.find(r => r.querySelector('.label')?.textContent?.trim() === l)?.querySelector('select')?.value ?? null;
-  return { travel: v('Travel'), travelUnit: sel('Travel'), start: v('Starts at'), startUnit: sel('Starts at'),
-           echo: document.querySelector('.cylinder-echo')?.textContent?.trim() ?? null,
-           clamped: document.querySelector('.cylinder-clamped')?.textContent?.trim() ?? null };
-});
-const field = async (label) => (await page.$$('#input-block')).find ? (await page.$$eval('#input-block', (bs, l) => bs.findIndex(b => b.querySelector('.label')?.textContent?.trim() === l), label)) : -1;
+const rows = () =>
+  page.evaluate(() => {
+    const all = [...document.querySelectorAll('#input-block')];
+    const v = (l) =>
+      all.find((r) => r.querySelector('.label')?.textContent?.trim() === l)?.querySelector('input')
+        ?.value ?? null;
+    const sel = (l) =>
+      all.find((r) => r.querySelector('.label')?.textContent?.trim() === l)?.querySelector('select')
+        ?.value ?? null;
+    return {
+      travel: v('Travel'),
+      travelUnit: sel('Travel'),
+      start: v('Starts at'),
+      startUnit: sel('Starts at'),
+      echo: document.querySelector('.cylinder-echo')?.textContent?.trim() ?? null,
+      clamped: document.querySelector('.cylinder-clamped')?.textContent?.trim() ?? null,
+    };
+  });
+const field = async (label) =>
+  (await page.$$('#input-block')).find
+    ? await page.$$eval(
+        '#input-block',
+        (bs, l) => bs.findIndex((b) => b.querySelector('.label')?.textContent?.trim() === l),
+        label
+      )
+    : -1;
 const setField = async (label, text) => {
   const i = await field(label);
   const inputs = await page.$$('#input-block input');
@@ -62,24 +87,32 @@ out.after1 = await rows();
 // 4 · a fractional percentage must survive the round trip
 await load();
 await setField('Starts at', '33.7');
-await page.keyboard.press('Enter'); await page.waitForTimeout(700);
+await page.keyboard.press('Enter');
+await page.waitForTimeout(700);
 out.fractional = await rows();
 
 // 3 · an unreachable typed length must say it was held
 await load();
 await setUnit('Starts at', 'len');
 await setField('Starts at', '1');
-await page.keyboard.press('Enter'); await page.waitForTimeout(700);
+await page.keyboard.press('Enter');
+await page.waitForTimeout(700);
 out.tooShort = await rows();
 
 // 2 · a panel edit must be one undo step
 await load();
 await setField('Travel', '2');
-await page.keyboard.press('Enter'); await page.waitForTimeout(800);
+await page.keyboard.press('Enter');
+await page.waitForTimeout(800);
 out.beforeUndo = await rows();
-await page.click('text=Undo'); await page.waitForTimeout(900);
+await page.click('text=Undo');
+await page.waitForTimeout(900);
 const b2 = await page.$('.cylinder-barrel');
-if (b2) { const bb = await b2.boundingBox(); await page.mouse.click(bb.x + bb.width*0.62, bb.y + bb.height*0.62); await page.waitForTimeout(600); }
+if (b2) {
+  const bb = await b2.boundingBox();
+  await page.mouse.click(bb.x + bb.width * 0.62, bb.y + bb.height * 0.62);
+  await page.waitForTimeout(600);
+}
 out.afterUndo = { ...(await rows()), stillThere: !!b2 };
 
 out.errs = errs;
