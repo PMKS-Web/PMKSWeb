@@ -5,12 +5,13 @@
     src="assets/PMKS_logo.png"
     onClick="window.location.reload()"
   />
+  <!-- A real handler rather than an onclick attribute. In a DOM attribute
+       `this` is the button and `logEvent` is a global that does not exist, so
+       every click on New threw an uncaught ReferenceError -- after opening the
+       tab, which is why the button looked like it worked. -->
   <button
     mat-button
-    onclick="
-      window.open(window.location.origin, '_blank');
-      logEvent(this.analytics, 'new_file');
-    "
+    (click)="newProject()"
     matTooltip="Open a new tab with a blank project"
     matTooltipShowDelay="1000"
   >

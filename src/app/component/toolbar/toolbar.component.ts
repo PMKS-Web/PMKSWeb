@@ -168,6 +168,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
   //   this.analytics.logEvent('open_templates');
   // }
 
+  /** Open a blank project in a new tab, leaving this one as it is. */
+  newProject(): void {
+    this.analytics.logEvent('new_file');
+    window.open(window.location.origin, '_blank');
+  }
+
   upload($event: any) {
     console.log('upload');
     this.analytics.logEvent('upload_file');
