@@ -27,9 +27,10 @@ describe("Chebyshev's straight-line linkage", () => {
   it('keeps every bar rigid, tracer included', () => {
     for (let t = 0; t < frames; t++) {
       for (const [a, b, want] of [
-        ['G', 'A', CHEBYSHEV.rocker],
+        // Crossed: the left pivot holds the right-hand coupler pin.
+        ['G', 'B', CHEBYSHEV.rocker],
         ['A', 'B', CHEBYSHEV.coupler],
-        ['B', 'H', CHEBYSHEV.rocker],
+        ['A', 'H', CHEBYSHEV.rocker],
         ['A', 'M', CHEBYSHEV.coupler / 2],
         ['B', 'M', CHEBYSHEV.coupler / 2],
       ] as const) {
@@ -40,17 +41,20 @@ describe("Chebyshev's straight-line linkage", () => {
   });
 
   it('draws a straight line along the middle of its stroke', () => {
-    // The straight part is the *central* portion of the top: the tracer curves
-    // away at both ends, and including those measures the turn-around rather
-    // than the line. So take the upper half, keep the middle half of it by x,
-    // fit a line, and ask how far the tracer strays from it.
-    const mid = (Math.max(...path.map((p) => p.y)) + Math.min(...path.map((p) => p.y))) / 2;
-    const top = path.filter((p) => p.y > mid);
-    expect(top.length).toBeGreaterThan(frames / 4);
-    const xs = top.map((p) => p.x).sort((a, b) => a - b);
-    const lo = xs[Math.floor(xs.length * 0.25)];
-    const hi = xs[Math.floor(xs.length * 0.75)];
-    const band = top.filter((p) => p.x >= lo && p.x <= hi);
+    // The tracer curves away at each end of its travel, so measuring the whole
+    // path measures the turn-around rather than the line. Take the central 70%
+    // by x, fit a line, and ask how far the tracer strays from it.
+    //
+    // The band is taken by x and not, as it once was, by "the upper half by y":
+    // that filter only means anything on a path with a pronounced top, and on
+    // the linkage this is supposed to be there isn't one -- the path is flat,
+    // the y-half split lands inside the noise, and the band it returns is a few
+    // thousandths of a unit wide. It quietly stopped measuring anything.
+    const allX = path.map((p) => p.x);
+    const span = Math.max(...allX) - Math.min(...allX);
+    const band = path.filter(
+      (p) => p.x >= Math.min(...allX) + span * 0.15 && p.x <= Math.max(...allX) - span * 0.15
+    );
     expect(band.length).toBeGreaterThan(20);
 
     const n = band.length;
@@ -62,17 +66,30 @@ describe("Chebyshev's straight-line linkage", () => {
     const stray = Math.max(
       ...band.map((p) => Math.abs(p.y - (my + slope * (p.x - mx))) / Math.sqrt(1 + slope * slope))
     );
-    const run = hi - lo;
-    expect(run).toBeGreaterThan(CHEBYSHEV.coupler / 2);
-    // It strays 3.6% of the distance travelled, which is what "approximate
+    const run = Math.max(...band.map((p) => p.x)) - Math.min(...band.map((p) => p.x));
+
+    // A line longer than the coupler that produced it, and level: the linkage is
+    // symmetric about the middle of the ground link, so the line it draws runs
+    // flat. Level is necessary and nowhere near sufficient, which is the whole
+    // lesson of the bound below.
+    expect(run).toBeGreaterThan(CHEBYSHEV.coupler);
+    expect(Math.abs(slope)).toBeLessThan(0.02);
+    // It strays 0.38% of the distance travelled, which is what "approximate
     // straight-line linkage" means: near enough to teach with, and not exact.
-    // The bound is where the mechanism lands rather than a round number, so it
-    // discriminates -- the wrong proportions, tried first, gave 48%.
-    expect(stray / run).toBeLessThan(0.05);
+    // The bound is close to where the mechanism lands rather than a round
+    // number, because this is the only assertion in the file that can tell the
+    // linkage from its own wrong assembly: built uncrossed it is rigid, one
+    // degree of freedom, symmetric, traces a level line of much the same
+    // length -- and strays 6.4% instead of 0.38%.
+    expect(stray / run).toBeLessThan(0.006);
   });
 
-  it('is genuinely a curve, not a mechanism that barely moves', () => {
-    const rise = Math.max(...path.map((p) => p.y)) - Math.min(...path.map((p) => p.y));
-    expect(rise).toBeGreaterThan(CHEBYSHEV.coupler / 4);
+  it('travels, rather than barely moving', () => {
+    // Measured along the line and not across it. This asked for a rise of half
+    // the coupler, which the linkage the file was written against duly gave --
+    // by sweeping an arc. A straight-line generator's whole point is that it has
+    // no rise, so on the real thing the demand for one was a demand to be wrong.
+    const travel = Math.max(...path.map((p) => p.x)) - Math.min(...path.map((p) => p.x));
+    expect(travel).toBeGreaterThan(CHEBYSHEV.coupler);
   });
 });

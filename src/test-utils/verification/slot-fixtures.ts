@@ -800,6 +800,15 @@ export const CHEBYSHEV = { ground: 4, rocker: 5, coupler: 2 };
  * all the way over: the input rocks and the cycle closes on a reversal rather
  * than on a revolution.
  *
+ * **The arms cross.** Each ground pivot holds the coupler pin on the far side,
+ * which is what puts the pair in the assembly mode the straight line belongs
+ * to. Built uncrossed -- each pivot to its own side, which is the arrangement
+ * that first looks symmetric and right -- the same five bars at the same five
+ * lengths are still rigid, still one degree of freedom, still symmetric, and
+ * trace an arc: the tracer climbs 0.89 across its travel where crossed it
+ * climbs 0.13, straying 6.4% from a straight line instead of 0.38%. Only one
+ * of the two is Chebyshev's linkage.
+ *
  * The tracer sits on the coupler between its two pins, which is the one
  * configuration the circle-circle primitive is ill-conditioned in -- the two
  * circles that place it are internally tangent there. It solves; the tolerances
@@ -808,8 +817,9 @@ export const CHEBYSHEV = { ground: 4, rocker: 5, coupler: 2 };
 export function chebyshevStraightLineFixture(): MechanismFixture {
   const half = CHEBYSHEV.ground / 2;
   const reach = CHEBYSHEV.coupler / 2;
-  // Symmetric pose: both arms leaning inwards, coupler level.
-  const rise = Math.sqrt(CHEBYSHEV.rocker ** 2 - (half - reach) ** 2);
+  // Crossed, so each arm spans the whole of the ground plus its own half of the
+  // coupler rather than the difference between them.
+  const rise = Math.sqrt(CHEBYSHEV.rocker ** 2 - (half + reach) ** 2);
   return {
     joints: [
       { id: 'G', x: -half, y: 0, ground: true, input: true },
@@ -818,7 +828,7 @@ export function chebyshevStraightLineFixture(): MechanismFixture {
       { id: 'M', x: 0, y: rise },
       { id: 'H', x: half, y: 0, ground: true },
     ],
-    links: [{ joints: 'GA' }, { joints: 'ABM' }, { joints: 'BH' }],
+    links: [{ joints: 'GB' }, { joints: 'ABM' }, { joints: 'AH' }],
     inputAngVel: INPUT_SPEED,
   };
 }

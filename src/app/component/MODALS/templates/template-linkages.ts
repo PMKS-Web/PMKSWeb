@@ -81,7 +81,7 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
   Radial_Engine:
     '2P.Fe,1E8.K,0.1011.MO,O,0,0,0.GA,A,Fe,0,0.GB,B,0,iC,0.GC,C,0SK,0GM,0.GD,D,pm,0Tu,0.LP,P,0,iC,OZ.LQ,Q,0SK,0GM,vH.LR,R,pm,0Tu,1Q0..YROA,OA,Fe,Fe,7q,0,c5cae9,O,A,,.YRAB,AB,Fe,Fe,7q,M6,303e9f,A,B,,.YRAC,AC,Fe,Fe,06M,08B,0d125a,A,C,,.YRAD,AD,Fe,Fe,Xi,0Ey,B2DFDB,A,D,,.YPBP,BP,Fe,0,0,0,,B,P,,.YPCQ,CQ,Fe,0,0,0,,C,Q,,.YPDR,DR,Fe,0,0,0,,D,R,,...N_T',
   Chebyshev_Straight_Line:
-    '2P.Fe,1E8.K,0.1011.MG,G,0VG,0,0.GA,A,0Fe,1CZ,0.GB,B,Fe,1CZ,0.GM,M,0,1CZ,0.KH,H,VG,0,0..YRGA,GA,Fe,Fe,0NS,cH,c5cae9,G,A,,.YRABM,ABM,Fe,Fe,0,1CZ,303e9f,A,B,M,,.YRBH,BH,Fe,Fe,NS,cH,0d125a,B,H,,...N_9',
+    '2P.Fe,1E8.K,0.1011.MG,G,0VG,0,0.GA,A,0Fe,_W,0.GB,B,Fe,_W,0.GM,M,0,_W,0.KH,H,VG,0,0..YRGB,GB,Fe,Fe,07q,VG,c5cae9,G,B,,.YRABM,ABM,Fe,Fe,0,_W,303e9f,A,B,M,,.YRAH,AH,Fe,Fe,7q,VG,0d125a,A,H,,...N_5',
   Windshield_Wiper:
     '2P.Fe,1E8.K,0.1011.MO,O,0,0,0.GA,A,Im,0,0.GB,B,1H-,YA,0.GT,T,1K6,qo,0.KH,H,1E8,0,0..YROA,OA,Fe,Fe,9O,0,c5cae9,O,A,,.YRAB,AB,Fe,Fe,oO,H5,303e9f,A,B,,.YRBHT,BHT,Fe,Fe,1HQ,S-,0d125a,B,H,T,,...N_5',
   Elliptical_Crank:
