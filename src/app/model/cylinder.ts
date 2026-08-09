@@ -89,9 +89,18 @@ export function cylinderCollinearTolerance(): number {
 /**
  * The two-joint leaf of a possibly-compound link that satisfies `keep`.
  *
- * A mount welded into a neighbouring link absorbs the barrel (or rod) into a
- * compound; the member bar still exists as a subset leaf, and the skin has to
+ * A mount welded into a neighbouring link would absorb the barrel (or rod) into
+ * a compound; the member bar still exists as a subset leaf, and the skin has to
  * keep describing that bar rather than the whole compound.
+ *
+ * **Nothing in the app can currently produce that**, and this is defence rather
+ * than a supported shape. Two rules close it: `canToggleWeld` greys the Weld
+ * control on a mount, and `refuseJointMerge` answers `welded-mount` to a merge
+ * that would carry a weld onto one. `cylinder-weld-guards.spec.ts` pins both,
+ * because if either is relaxed this path starts running for real — and it is
+ * not fully built. `applyCylinderPose` moves the cylinder's own five joints and
+ * no others, so a compound's remaining joints would be left behind and the
+ * body recomputed as though it had deformed.
  */
 function twoJointLeaf(root: Link, keep: (leaf: Link) => boolean): Link | undefined {
   if (root.joints.length === 2 && keep(root)) return root;
