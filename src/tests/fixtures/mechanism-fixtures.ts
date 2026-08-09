@@ -3,6 +3,13 @@ import { Mechanism } from '../../app/model/mechanism/mechanism';
 import { LengthUnit } from '../../app/model/unit-enums';
 import { ActiveObjService } from '../../app/services/active-obj.service';
 import { MechanismService } from '../../app/services/mechanism.service';
+import { Joint } from '../../app/model/joint';
+import { Link } from '../../app/model/link';
+import {
+  cylinderOfJointIn,
+  cylinderOfLinkIn,
+  sealedCylinderStructures,
+} from '../../app/model/cylinder';
 import { SettingsService } from '../../app/services/settings.service';
 import { MechanismBuilder } from '../../app/services/transcoding/mechanism-builder';
 import { StringTranscoder } from '../../app/services/transcoding/string-transcoder';
@@ -61,6 +68,14 @@ export function buildMechanismFixture(payload: string): MechanismFixture {
     // are all well-proportioned, so the default answer is "nothing to say".
     // A spec that wants the warning rendered overrides it.
     cylinderReachWarning: () => undefined,
+    // This one is not stubbed but implemented, because a panel that changes
+    // what it shows for a cylinder has to be tested against a real one. It is
+    // the same resolution the service does, over the same joints.
+    cylinderAt: (obj: Joint | Link | undefined) => {
+      const structures = sealedCylinderStructures(service.joints);
+      if (obj instanceof Joint) return cylinderOfJointIn(structures, obj);
+      return cylinderOfLinkIn(structures, obj as Link | undefined);
+    },
   } as unknown as MechanismService;
   new MechanismBuilder(service, decoder, settings, active).build(true);
 

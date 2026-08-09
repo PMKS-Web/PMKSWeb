@@ -204,3 +204,41 @@ describe('AnalysisPanelComponent welded mechanism regression', () => {
     fixture.destroy();
   });
 });
+
+describe('AnalysisPanelComponent with a cylinder selected', () => {
+  beforeEach(() => vi.spyOn(console, 'log').mockImplementation(() => undefined));
+  afterEach(() => {
+    vi.restoreAllMocks();
+    TestBed.resetTestingModule();
+  });
+
+  it('names the cylinder rather than its barrel link', async () => {
+    // The canvas outlines the whole ram as selected while this panel headed
+    // itself "Analysis for Link GN" -- the two disagreeing about what is
+    // selected, for a part the rest of the app treats as one body.
+    const { fixture } = await createPanel(TEMPLATE_LINKAGES['Cylinder_Boom'], 'GN');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Analysis for Cylinder');
+    expect(fixture.nativeElement.textContent).not.toContain('Analysis for Link GN');
+    fixture.destroy();
+  });
+
+  it('offers no force row at a joint buried inside the part', async () => {
+    // The buried barrel end and the slider in the bore have no hitbox on the
+    // canvas and no row in the Edit panel; a pin reaction there is internal to
+    // a body the user is being shown as one piece.
+    const { fixture, fixtureData } = await createPanel(TEMPLATE_LINKAGES['Cylinder_Boom'], 'GN');
+    fixture.detectChanges();
+
+    const cylinder = fixtureData.service.cylinderAt(
+      fixtureData.service.links.find((link) => link.id === 'GN')
+    );
+    expect(cylinder, 'the fixture really is a cylinder').toBeDefined();
+    const interior = [cylinder!.barrelNear.id, cylinder!.pin.id, cylinder!.slider.id];
+    for (const row of fixture.componentInstance.linkForceRows()) {
+      expect(interior).not.toContain(row.jointId);
+    }
+    fixture.destroy();
+  });
+});

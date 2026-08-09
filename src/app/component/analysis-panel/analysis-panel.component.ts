@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ForceAnalysisMode, ForceReactionIndex } from 'src/app/model/mechanism/force-solver';
 import { PrisJoint, RealJoint } from 'src/app/model/joint';
+import { Cylinder, isCylinderInterior } from 'src/app/model/cylinder';
 import { LengthUnit } from 'src/app/model/unit-enums';
 import { ActiveObjService } from 'src/app/services/active-obj.service';
 import { FormBuilder } from '@angular/forms';
@@ -186,7 +187,41 @@ export class AnalysisPanelComponent {
 
   /** One row per external joint of the selected link. */
   linkForceRows(): ForceAnalysisRow[] {
-    return this.cachedRows('link', this.activeSrv.selectedLink?.id ?? '');
+    const rows = this.cachedRows('link', this.activeSrv.selectedLink?.id ?? '');
+    const sealed = this.selectedCylinder;
+    if (!sealed) return rows;
+    // A cylinder's interior joints are not attachment points. The canvas gives
+    // them no hitbox, the Edit panel does not list them, and a pin reaction at
+    // the buried barrel end or the slider inside the bore is not a force
+    // anything in the world applies -- it is internal to a part the user is
+    // being shown as one body.
+    return rows.filter((row) => !isCylinderInterior(sealed, this.jointById(row.jointId)!));
+  }
+
+  private jointById(id: string) {
+    return this.mechanismService.joints.find((joint) => joint.id === id);
+  }
+
+  /** The sealed cylinder the selected link is a member of, if any. */
+  get selectedCylinder(): Cylinder | undefined {
+    if (this.activeSrv.objType !== 'Link') return undefined;
+    return this.mechanismService.cylinderAt(this.activeSrv.selectedLink);
+  }
+
+  /**
+   * What to call the selected body.
+   *
+   * A cylinder is drawn, selected and edited as one part, so analysing it under
+   * the name of its barrel link contradicts everything else the app says about
+   * it -- the canvas outlines the whole ram while the panel headed itself
+   * "Analysis for Link GN".
+   */
+  get selectedBodyLabel(): string {
+    const sealed = this.selectedCylinder;
+    if (!sealed) return `Link ${this.activeSrv.selectedLink.name}`;
+    return `Cylinder ${sealed.barrelFar.name || sealed.barrelFar.id}${
+      sealed.rodFar.name || sealed.rodFar.id
+    }`;
   }
 
   inputEffortLabel(): string {
