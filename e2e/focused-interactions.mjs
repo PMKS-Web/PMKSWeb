@@ -286,13 +286,39 @@ await runCase('template-new-tab', async (page, context) => {
   await card.hover();
   await page.waitForTimeout(700);
   await shot(page, 'template-hover.png');
-  const popup = context.waitForEvent('page', { timeout: 5000 }).catch(() => null);
+  // What a card does depends on what is already on the grid: an empty one has
+  // nothing to lose, so it loads in place, and a full one asks first — replace
+  // what is there, or open a new tab. This used to open a tab unconditionally,
+  // so the click alone was enough and the wait for a popup now times out on the
+  // in-place path.
+  const gridWasEmpty = (await page.locator('#jointHolder [id^="joint_"]').count()) === 0;
+  const popup = context.waitForEvent('page', { timeout: 8000 }).catch(() => null);
   await card.click();
-  const newPage = await popup;
-  if (!newPage) {
-    issue('Template card click did not open a new page/tab', { severity: 'high' });
-    return;
+  await page.waitForTimeout(700);
+
+  let newPage = null;
+  if (gridWasEmpty) {
+    const loaded = await page.locator('#jointHolder [id^="joint_"]').count();
+    if (loaded === 0) {
+      issue('A template card on an empty grid loaded nothing', { severity: 'high' });
+      return;
+    }
+  } else {
+    const openInTab = page.locator('button:has-text("Open in a new tab")');
+    if (!(await openInTab.count())) {
+      issue('A template card on a full grid offered no replace / new tab choice', {
+        severity: 'high',
+      });
+      return;
+    }
+    await openInTab.first().click();
+    newPage = await popup;
+    if (!newPage) {
+      issue('Choosing "Open in a new tab" did not open one', { severity: 'high' });
+      return;
+    }
   }
+  if (!newPage) return;
   await newPage.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
   await newPage.waitForTimeout(1000);
   await dismissIntro(newPage);
