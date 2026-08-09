@@ -465,6 +465,8 @@ export function normalizedCylinderPose(
 
 /** Where each joint of a re-posed cylinder lands. */
 export interface CylinderPose {
+  /** True when the layout had to hold the ram at its shortest. */
+  atMinimum?: boolean;
   barrelFar: { x: number; y: number };
   barrelNear: { x: number; y: number };
   /** The pin and its coincident slider both go here. */
@@ -489,17 +491,34 @@ export interface CylinderPose {
 const SPAN_MIN_R = MIN_STROKE_R + 1.5 * BORE_R;
 
 /** Barrel, rod and pin for a given size and position. The one place they are built. */
-export function cylinderMembers(
-  stroke: number,
-  start: number,
-  r: number
-): { span: number; barrel: number; pinAlong: number; rod: number; stroke: number; start: number } {
+export function cylinderMembers(stroke: number, start: number, r: number): CylinderMembers {
   const held = Math.max(stroke, MIN_STROKE_R * r);
   const at = Math.min(Math.max(start, 0), 1);
   // Equal by construction. Everything below is addition along the axis.
   const barrel = held + BORE_R * r;
   const pinAlong = (BORE_R * r) / 2 + held * at;
-  return { span: pinAlong + barrel, barrel, pinAlong, rod: barrel, stroke: held, start: at };
+  return {
+    span: pinAlong + barrel,
+    barrel,
+    pinAlong,
+    rod: barrel,
+    stroke: held,
+    start: at,
+    // Reported rather than merely applied: a gesture that has stopped following
+    // the cursor should be able to say why, and only the layout knows.
+    atMinimum: held > stroke,
+  };
+}
+
+/** A ram's members, and whether making it took the floor. */
+export interface CylinderMembers {
+  span: number;
+  barrel: number;
+  pinAlong: number;
+  rod: number;
+  stroke: number;
+  start: number;
+  atMinimum: boolean;
 }
 
 /**
@@ -522,7 +541,7 @@ export function cylinderSpanLayout(
   span: number,
   currentStroke: number,
   r: number
-): { span: number; barrel: number; pinAlong: number; rod: number; stroke: number; start: number } {
+): CylinderMembers {
   const stroke = Math.max(currentStroke, MIN_STROKE_R * r);
   const lock = 1.5 * BORE_R * r;
   const { retracted, extended } = cylinderSpanRange(stroke, r);
@@ -590,6 +609,7 @@ export function layoutCylinder(
     barrelNear: { x: a.x + flex.barrel * ux, y: a.y + flex.barrel * uy },
     pin: { x: a.x + flex.pinAlong * ux, y: a.y + flex.pinAlong * uy },
     rodFar: c,
+    atMinimum: flex.atMinimum,
   };
 }
 

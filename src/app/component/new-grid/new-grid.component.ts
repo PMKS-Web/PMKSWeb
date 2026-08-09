@@ -159,6 +159,11 @@ export class NewGridComponent {
    * Read by the template to draw the snap indicator.
    */
   public snapTargetJoint?: RevJoint;
+  /**
+   * Whether this gesture has already said it reached the ram's floor. Reset
+   * when a drag begins, so the message is per-gesture and not per-frame.
+   */
+  private cylinderFloorReported = false;
 
   /**
    * A joint in range that will not take the merge, kept with its reason so the
@@ -857,11 +862,23 @@ export class NewGridComponent {
           const wanted = this.snapTargetJoint
             ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
             : this.mountAxisSnap(draggedCylinders[0], mousePosInSvg);
+          let atMinimum = false;
           for (const draggedCylinder of draggedCylinders) {
-            this.gridUtils.dragCylinderMount(
-              draggedCylinder,
-              this.activeObjService.selectedJoint,
-              wanted
+            atMinimum =
+              this.gridUtils.dragCylinderMount(
+                draggedCylinder,
+                this.activeObjService.selectedJoint,
+                wanted
+              ) || atMinimum;
+          }
+          // The mount stops following the cursor at the shortest ram there is,
+          // and a gesture that stops should say why. Once per drag: this runs
+          // on every pointermove, and a message repeated sixty times a second
+          // is noise rather than an explanation.
+          if (atMinimum && !this.cylinderFloorReported) {
+            this.cylinderFloorReported = true;
+            this.sendNotification(
+              'That is the shortest cylinder there is — any less and the barrel is all piston.'
             );
           }
           this.dragState.noteMechanismModified();
@@ -1315,6 +1332,8 @@ export class NewGridComponent {
     this.synthesisClickMode = SynthesisClickMode.NORMAL;
     // The alignment guides belong to the drag that made them.
     this.axisSnapGuides = [];
+    // As does the floor message: the next gesture gets to say it again.
+    this.cylinderFloorReported = false;
 
     // Resolve the drop before releasing: the snap target is only meaningful
     // while the drag it belongs to is still in flight.

@@ -235,7 +235,10 @@
           tooltip="How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it."
           >Travel
         </input-block>
-        <subtitle-block [description]="cylinderSizeEcho(cyl)"></subtitle-block>
+        <!-- The other two spellings, moving as one is typed. The claim of this
+             panel is that they are one number, and showing them agree is the
+             cheapest way to make that true rather than merely stated. -->
+        <div class="cylinder-echo">{{ cylinderSizeEcho(cyl) }}</div>
         <input-block
           [formGroup]="cylinderForm"
           _formControl="start"
@@ -251,7 +254,7 @@
           >Angle
         </input-block>
         @if (cylinderClamped) {
-          <subtitle-block [description]="cylinderClamped"></subtitle-block>
+          <div class="cylinder-clamped">{{ cylinderClamped }}</div>
         }
         <button-block
           [customIcon]="cyl.slider.input ? 'remove_input' : 'add_input'"

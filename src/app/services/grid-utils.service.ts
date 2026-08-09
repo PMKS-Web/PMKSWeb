@@ -500,7 +500,7 @@ export class GridUtilsService {
    * to the slot ends. Collinearity holds by construction, so no drag can bend
    * a cylinder.
    */
-  dragCylinderMount(sealed: Cylinder, mount: RealJoint, wanted: Coord): void {
+  dragCylinderMount(sealed: Cylinder, mount: RealJoint, wanted: Coord): boolean {
     const draggingBarrelMount = mount.id === sealed.barrelFar.id;
     const barrelLength = this.getPointDistance(
       sealed.barrelFar.x,
@@ -523,8 +523,9 @@ export class GridUtilsService {
         y: sealed.rodFar.y - sealed.barrelFar.y,
       }
     );
-    if (!pose) return;
+    if (!pose) return false;
     this.applyCylinderPose(sealed, pose);
+    return pose.atMinimum === true;
   }
 
   /** Drag the body: the whole assembly translates rigidly. */
