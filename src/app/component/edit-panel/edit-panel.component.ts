@@ -619,6 +619,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             { emitEvent: false }
           );
           this.mechanismService.onMechUpdateState.next(2);
+          // One committed edit, one undo step. Some fields in this panel
+          // reached `updateMechanism(true)` and entered the history; the ones
+          // that re-pose through a drag did not, so typing a coordinate and
+          // pressing Undo took back the gesture before it -- on a freshly
+          // opened template, the template.
+          this.mechanismService.save();
         }
       })
     );
@@ -650,6 +656,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
             { emitEvent: false }
           );
           this.mechanismService.onMechUpdateState.next(2);
+          // One committed edit, one undo step. Some fields in this panel
+          // reached `updateMechanism(true)` and entered the history; the ones
+          // that re-pose through a drag did not, so typing a coordinate and
+          // pressing Undo took back the gesture before it -- on a freshly
+          // opened template, the template.
+          this.mechanismService.save();
         }
       })
     );
@@ -846,6 +858,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           this.activeSrv.selectedLink.length = value;
           this.resolveNewLink();
           this.mechanismService.onMechUpdateState.next(2);
+          // One committed edit, one undo step. Some fields in this panel
+          // reached `updateMechanism(true)` and entered the history; the ones
+          // that re-pose through a drag did not, so typing a coordinate and
+          // pressing Undo took back the gesture before it -- on a freshly
+          // opened template, the template.
+          this.mechanismService.save();
           this.linkForm.patchValue(
             {
               length: this.nup.formatModelLength(value, this.settingsService.lengthUnit.getValue()),
@@ -972,6 +990,12 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           );
           this.resolveNewLink();
           this.mechanismService.onMechUpdateState.next(2);
+          // One committed edit, one undo step. Some fields in this panel
+          // reached `updateMechanism(true)` and entered the history; the ones
+          // that re-pose through a drag did not, so typing a coordinate and
+          // pressing Undo took back the gesture before it -- on a freshly
+          // opened template, the template.
+          this.mechanismService.save();
           this.linkForm.patchValue(
             {
               angle: this.nup.formatValueAndUnit(value, this.settingsService.angleUnit.getValue()),

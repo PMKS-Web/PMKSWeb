@@ -151,7 +151,10 @@ export class LinkageTableComponent implements OnInit {
         }
         joint.angle_rad = (Number($event.target.value) * Math.PI) / 180;
     }
-    this.mechanismService.updateMechanism();
+    // `true`, because a value typed into a cell is a discrete edit and should
+    // be one undo step -- the same rule the panel follows. Without it, Undo
+    // after a table edit took back whichever gesture came before it.
+    this.mechanismService.updateMechanism(true);
   }
 
   changeLinkProp($event: any, link: Link, linkProp: string) {
@@ -184,7 +187,7 @@ export class LinkageTableComponent implements OnInit {
         link.CoM.y = Number($event.target.value) * MODEL_SCALE;
         break;
     }
-    this.mechanismService.updateMechanism();
+    this.mechanismService.updateMechanism(true);
   }
 
   showForceAngle(force: Force) {
