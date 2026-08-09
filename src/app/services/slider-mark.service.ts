@@ -8,6 +8,7 @@ import {
   borePath,
   cylinderArrowPaths,
   cylinderBlockPath,
+  collinearGuides,
   MARK,
   orientedCapsulePath,
   GuideBand,
@@ -208,7 +209,7 @@ export class SliderMarkService {
           joints,
           claimed,
           driveForward,
-          [...bands.entries()].filter(([id]) => id !== slider.id).map(([, band]) => band)
+          this.crossingsFor(slider.id, bands, r)
         )
       )
       .filter((mark): mark is SliderMark => mark !== undefined);
@@ -593,6 +594,28 @@ export class SliderMarkService {
       halfLength,
       halfWidth: MARK.railOffset * r,
     };
+  }
+
+  /**
+   * The other guides one guide has to draw around.
+   *
+   * Two guides on the same line are not two members crossing — they are one
+   * line, and breaking either of them for the other draws a dashed gap through
+   * a rail that is perfectly continuous. So one of the pair is chosen to hatch
+   * the span they share (by id, which is stable and does not depend on the
+   * order joints happen to be in) and the other simply stays off it; both draw
+   * their rails solid end to end, over each other, as the one line they are.
+   */
+  private crossingsFor(id: string, bands: Map<string, GuideBand>, r: number): GuideBand[] {
+    const own = bands.get(id);
+    const slack = MARK.railMergeSlack * r;
+    const found: GuideBand[] = [];
+    for (const [other, band] of bands) {
+      if (other === id) continue;
+      if (!own || !collinearGuides(own, band, slack)) found.push(band);
+      else if (other < id) found.push({ ...band, coincident: true });
+    }
+    return found;
   }
 
   /** Every grounded guide's strip, keyed by its slider, for crossing tests. */

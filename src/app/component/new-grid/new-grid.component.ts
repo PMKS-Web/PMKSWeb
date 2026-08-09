@@ -67,6 +67,7 @@ import {
 import {
   barrelCollapsedPath,
   cylinderBlockPath,
+  GROUND_STROKE,
   MARK,
   orientedCapsulePath,
   plusPath,
@@ -2018,14 +2019,19 @@ export class NewGridComponent {
    * range a rail went from half the hatch's weight to twelve times it. The two
    * marks say the same thing about the same world, so they have to be drawn the
    * same way, and the asset is the one that cannot change.
+   *
+   * Stated in R by `GROUND_STROKE` rather than here, because the hatch geometry
+   * needs the same two numbers to sit its ticks against the rail, and a stroke
+   * the drawing and the geometry each carry their own copy of is a stroke they
+   * can disagree about.
    */
   get groundLineWidth(): number {
-    return (1.2 * 4 * this.settings.objectScale) / 157;
+    return GROUND_STROKE.rail * 0.15 * this.settings.objectScale;
   }
 
   /** The hatch bars of that same symbol, drawn at 5/157 of its width. */
   get groundHatchWidth(): number {
-    return (1.2 * 5 * this.settings.objectScale) / 157;
+    return GROUND_STROKE.hatch * 0.15 * this.settings.objectScale;
   }
 
   /**

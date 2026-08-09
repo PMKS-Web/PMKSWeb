@@ -1,5 +1,5 @@
 import { mergedChannels } from '../../app/model/compound-link-path';
-import { orientedCapsulePath, railGeometry } from '../../app/model/joint-marks';
+import { collinearGuides, orientedCapsulePath, railGeometry } from '../../app/model/joint-marks';
 
 /**
  * Two slots that cross, drawn two ways.
@@ -87,5 +87,44 @@ describe('a grounded guide crossed by another', () => {
     expect(clear.dashedRails.length).toBe(0);
     expect(clear.rails.length).toBe(2);
     expect(clear.ticks.length).toBe(railGeometry(0.15, 3).ticks.length);
+  });
+});
+
+/**
+ * Two grounded guides on one line are not two members crossing. Broken through
+ * each other they draw a dashed gap across a rail that is perfectly continuous,
+ * which reads as a join that is not there.
+ */
+describe('a grounded guide sharing a line with another', () => {
+  const shared = { x: 0, y: 0, angle: 0, halfLength: 1.5, halfWidth: 0.3, coincident: true };
+
+  it('stays solid instead of breaking for it', () => {
+    const merged = railGeometry(0.15, 3, [shared]);
+
+    expect(merged.dashedRails.length).toBe(0);
+    expect(merged.rails.length).toBe(2);
+    // End to end, so the two together draw one unbroken line.
+    expect(merged.rails.map((rail) => [rail.x1, rail.x2])).toEqual([
+      [-3, 3],
+      [-3, 3],
+    ]);
+  });
+
+  it('leaves the span the other one hatches to the other one', () => {
+    const merged = railGeometry(0.15, 3, [shared]);
+
+    expect(merged.ticks.length).toBeLessThan(railGeometry(0.15, 3).ticks.length);
+    for (const tick of merged.ticks) {
+      expect(Math.abs(tick.x1)).toBeGreaterThan(shared.halfLength);
+    }
+  });
+
+  it('recognises the same line however far along it the other guide sits', () => {
+    const own = { x: 0, y: 0, angle: 0, halfLength: 3, halfWidth: 0.3 };
+
+    expect(collinearGuides(own, { ...own, x: 40 }, 0.01)).toBe(true);
+    // A guide beside it, and a guide turned away from it, are both crossings.
+    expect(collinearGuides(own, { ...own, y: 1 }, 0.01)).toBe(false);
+    expect(collinearGuides(own, { ...own, angle: 0.5 }, 0.01)).toBe(false);
   });
 });

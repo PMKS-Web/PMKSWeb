@@ -5,6 +5,7 @@ import {
   CYLINDER,
   cylinderArrowPaths,
   cylinderBlockPath,
+  GROUND_STROKE,
   MARK,
   railGeometry,
   rodBodyPath,
@@ -72,14 +73,43 @@ describe('the mark system, against the delivered SVGs', () => {
     expect(slotHalfLength(R, 10)).toBe(MARK.blockAlongHalf * R);
   });
 
-  it('offsets the grounded rails 1.975R and hangs ticks off both', () => {
+  it('offsets the grounded rails 1.85R and hangs ticks off both', () => {
     const { rails, ticks } = railGeometry(R, 96);
 
-    expect(rails.map((rail) => rail.y1)).toEqual([-19.75, 19.75]);
+    expect(rails.map((rail) => rail.y1)).toEqual([-18.5, 18.5]);
     expect(rails[0].x1).toBe(-96);
-    // slot-grounded.svg starts its ticks at x = -88 and steps by 13.
-    expect(ticks[0]).toEqual({ x1: -88, y1: -19.75, x2: -96, y2: -27.75 });
     expect(ticks[2].x1 - ticks[0].x1).toBeCloseTo(13, 9);
+  });
+
+  it('overlaps every tick into the rail without piercing it', () => {
+    // A round cap is centred on its own point, so where the tick's line ends is
+    // not where its ink does. Rooted on the rail's centreline it hung half the
+    // hatch's width over the block's side and read as piercing its own rail;
+    // held far enough out to be tangent to the edge it read as floating clear.
+    // Ground.svg does neither -- its hatch starts on the far edge of the
+    // baseline and its cap reaches back past the middle.
+    const { ticks } = railGeometry(R, 96);
+    const outer = MARK.railOffset * R + (GROUND_STROKE.rail * R) / 2;
+    const inner = MARK.railOffset * R - (GROUND_STROKE.rail * R) / 2;
+    const capReach = (GROUND_STROKE.hatch * R) / 2;
+
+    for (const tick of ticks) {
+      const reaches = Math.abs(tick.y1) - capReach;
+      expect(reaches).toBeLessThan(outer);
+      expect(reaches).toBeGreaterThan(inner);
+    }
+  });
+
+  it('keeps the whole hatch inside the length the rail runs', () => {
+    // The tick roots moved outward along their own 45 degrees, which moves them
+    // along the rail as well -- so a first tick placed the old way now hangs
+    // its tip off the end of the line it is hatching.
+    const { ticks } = railGeometry(R, 96);
+
+    for (const tick of ticks) {
+      expect(Math.min(tick.x1, tick.x2)).toBeGreaterThanOrEqual(-96);
+      expect(Math.max(tick.x1, tick.x2)).toBeLessThanOrEqual(96);
+    }
   });
 
   it('leans every tick the same way, whatever the rail length', () => {

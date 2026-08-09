@@ -16,8 +16,9 @@
  * width on screen; a hairline that scaled with the geometry would disappear when
  * zoomed out and turn into a slab when zoomed in. The R rule is about how big
  * things are, and how thick you draw their edges is a question the app already
- * answered. There are deliberately no stroke constants below, so nothing here
- * implies a rule the drawing does not follow.
+ * answered. `GROUND_STROKE` is the single exception, and only because the ground
+ * marks are the one place a stroke *is* in model units: the hatch has to know
+ * how thick its own line is to sit flush against the rail.
  */
 
 /** Every dimension of the mark system, in multiples of R. */
@@ -48,11 +49,25 @@ export const MARK = {
    */
   plateFillet: 5 / 3,
 
-  /** Grounded rails and their ground ticks. */
-  railOffset: 1.975,
+  /**
+   * Grounded rails and their ground ticks.
+   *
+   * The rails sit 0.325R clear of the block's own 1.525R half-height. It was
+   * 0.45R, which read as a block floating between its rails rather than one
+   * held by them — the guide is a close fit, and the drawing should say so.
+   */
+  railOffset: 1.85,
   railHalfLengthMin: 9.6,
   tickLeg: 0.8,
   tickPitch: 1.3,
+
+  /**
+   * How far apart two grounded guides may be and still be drawn as one line.
+   *
+   * Half a rail's own stroke: closer than that and the two rails cannot be told
+   * apart on screen, so drawing them as two crossing members is a fiction.
+   */
+  railMergeSlack: 0.1,
 
   /** The plate that welds a rider to its block — visual only. */
   fillet: 1.25,
@@ -91,6 +106,22 @@ export const MARK = {
   /** The welded marker, replacing the circle at 1.47R across. */
   plusArm: 0.22,
   plusExtent: 0.735,
+} as const;
+
+/**
+ * The two strokes of a grounded mark, in R.
+ *
+ * `Ground.svg` is placed at 1.2 objectScale and draws its baseline 4/157 of its
+ * own width and its hatch 5/157, and R is 0.15 objectScale — so both are fixed
+ * multiples of R, and the rail marks are the one place in the app where a
+ * stroke is in model units rather than screen pixels. They are stated here, not
+ * only in the template, because the hatch geometry has to know its own weight:
+ * a round cap is centred on the point it caps, so a tick whose root sits on the
+ * rail's centreline puts half its width on the far side of the line.
+ */
+export const GROUND_STROKE = {
+  rail: (1.2 * 4) / 157 / 0.15,
+  hatch: (1.2 * 5) / 157 / 0.15,
 } as const;
 
 /**
@@ -377,6 +408,30 @@ export interface GuideBand {
   angle: number;
   halfLength: number;
   halfWidth: number;
+  /**
+   * Set when this guide lies on the same line as the one being drawn, and is
+   * the one of the pair that draws the shared span. Its rails are not something
+   * to break for — they are the same rails — so the guide reading it keeps its
+   * own solid and only stands out of the way of its hatch.
+   */
+  coincident?: boolean;
+}
+
+/**
+ * Whether two guides are the same line, within `slack`.
+ *
+ * Both of `b`'s ends are measured against `a`'s line, so this is one test for
+ * two ways of being apart: a guide offset from `a` fails on both ends, and one
+ * turned away from it fails on at least one.
+ */
+export function collinearGuides(a: GuideBand, b: GuideBand, slack: number): boolean {
+  const nx = -Math.sin(a.angle);
+  const ny = Math.cos(a.angle);
+  const ends = [b.halfLength, -b.halfLength].map((along) => ({
+    x: b.x + along * Math.cos(b.angle),
+    y: b.y + along * Math.sin(b.angle),
+  }));
+  return ends.every((end) => Math.abs((end.x - a.x) * nx + (end.y - a.y) * ny) <= slack);
 }
 
 /**
@@ -392,6 +447,9 @@ export interface GuideBand {
  * the ticks in that strip are dropped: two guides drawn solid straight through
  * each other paint an X-shaped knot with no reading at all, whereas a broken
  * line is the drawing convention for the member that passes behind.
+ *
+ * A guide marked `coincident` is not crossed at all — it is the same line seen
+ * twice — so nothing breaks for it and the two draw as one continuous rail.
  */
 export function railGeometry(
   r: number,
@@ -402,6 +460,18 @@ export function railGeometry(
   const offset = MARK.railOffset * r;
   const leg = MARK.tickLeg * r;
   const pitch = MARK.tickPitch * r;
+  // Where the tick meets the rail: on the rail's far edge, so its round cap
+  // reaches back into the line and stops short of the near edge.
+  //
+  // This is what `Ground.svg` draws, and the two marks say the same thing about
+  // the same world, so they have to look the same. There a hatch stroke starts
+  // on the far edge of the baseline and its cap projects back to just past the
+  // baseline's middle — hatch and line overlap, with no daylight between them.
+  // Rooted on the centreline instead, as this was, the cap hangs half the
+  // hatch's width over the block's side and the hatching reads as piercing its
+  // own rail; backed off far enough to be tangent to the edge, it reads as
+  // floating clear of it. Neither is what a ground symbol looks like.
+  const clear = (GROUND_STROKE.rail / 2) * r;
   const whole: Segment[] = [
     { x1: -halfLength, y1: -offset, x2: halfLength, y2: -offset },
     { x1: -halfLength, y1: offset, x2: halfLength, y2: offset },
@@ -411,28 +481,73 @@ export function railGeometry(
   const dashedRails: Segment[] = [];
   for (const rail of whole) {
     const inside = mergeIntervals(
-      crossings.flatMap((band) => segmentInsideBand(rail, band, place))
+      crossings
+        .filter((band) => !band.coincident)
+        .flatMap((band) => segmentInsideBand(rail, band, place))
     );
     rails.push(...outsideIntervals(rail, inside));
     dashedRails.push(...inside.map(([from, to]) => sliceSegment(rail, from, to)));
   }
 
+  // Ticks step along a lattice fixed to the world rather than to this guide's
+  // own midpoint, so two guides sharing a line hatch the same set of stations
+  // and one can take over from the other at any point without the pitch
+  // stuttering. Hatching says the world is on this side, and it is the world
+  // the spacing belongs to.
+  const start = -halfLength + leg + clear;
+  const phase = worldPhase(place, pitch);
   const ticks: Segment[] = [];
-  for (let x = -halfLength + leg; x <= halfLength; x += pitch) {
+  for (let x = Math.ceil((start + phase) / pitch) * pitch - phase; x <= halfLength; x += pitch) {
+    // The station on the guide's own centreline, which is what a coincident
+    // guide's reach has to be measured against: compared at the tick's root
+    // instead, the two guides' claims overlap by the root's own offset and
+    // leave a station hatched by neither.
+    const station = place({ x, y: 0 });
     for (const side of [-1, 1]) {
-      const tick = { x1: x, y1: side * offset, x2: x - leg, y2: side * (offset + leg) };
+      const tick = {
+        x1: x - clear,
+        y1: side * (offset + clear),
+        x2: x - clear - leg,
+        y2: side * (offset + clear + leg),
+      };
       // Both ends, not just the root: a tick whose leg reaches into the other
       // guide draws an X across its rail, which is the knot this is avoiding.
-      const touches = crossings.some(
-        (band) =>
-          pointInBand(place({ x: tick.x1, y: tick.y1 }), band) ||
-          pointInBand(place({ x: tick.x2, y: tick.y2 }), band)
+      const touches = crossings.some((band) =>
+        // A guide on the same line has no strip to fall inside — its rails and
+        // this one's are the same two lines — so what has to be avoided is
+        // hatching the span it already hatches, twice and out of step.
+        band.coincident
+          ? withinReach(station, band)
+          : pointInBand(place({ x: tick.x1, y: tick.y1 }), band) ||
+            pointInBand(place({ x: tick.x2, y: tick.y2 }), band)
       );
       if (touches) continue;
       ticks.push(tick);
     }
   }
   return { rails, dashedRails, ticks };
+}
+
+/**
+ * Where this guide's midpoint falls between two stations of the world lattice,
+ * read off `place` rather than passed in, so the frame the caller is drawing
+ * through stays the single source of where the guide is.
+ */
+function worldPhase(
+  place: (point: { x: number; y: number }) => { x: number; y: number },
+  pitch: number
+): number {
+  const origin = place({ x: 0, y: 0 });
+  const ahead = place({ x: 1, y: 0 });
+  const along = origin.x * (ahead.x - origin.x) + origin.y * (ahead.y - origin.y);
+  return ((along % pitch) + pitch) % pitch;
+}
+
+/** Within the length a guide runs, whichever side of it the point is on. */
+function withinReach(point: { x: number; y: number }, band: GuideBand): boolean {
+  const dx = point.x - band.x;
+  const dy = point.y - band.y;
+  return Math.abs(dx * Math.cos(band.angle) + dy * Math.sin(band.angle)) <= band.halfLength;
 }
 
 function pointInBand(point: { x: number; y: number }, band: GuideBand): boolean {
