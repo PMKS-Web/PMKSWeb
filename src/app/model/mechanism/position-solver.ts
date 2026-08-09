@@ -234,6 +234,15 @@ export class PositionSolver {
   static stepCount = 0;
   /** Joints no primitive could order; empty means the walk completed. */
   static unsolvableJoints: string[] = [];
+  /**
+   * A driven cylinder with no travel left to give, by slider id.
+   *
+   * Its own failure rather than a generic one, because the fix is specific and
+   * nothing else in the mechanism is wrong: the barrel is shorter than the bore
+   * its own piston needs, so there is no stroke to command. Object Scale can
+   * put a part here without anyone touching it.
+   */
+  static unusableCylinderDrive: string | undefined;
   private static inverseSlotMap = new Map<string, InverseSlotStep>();
   private static slideAssemblyMap = new Map<string, SlideAssemblyStep>();
   /** Every sealed cylinder, keyed by the buried barrel end its step targets. */
@@ -340,6 +349,7 @@ export class PositionSolver {
     this.drivenSampleStep = undefined;
     this.stepCount = 0;
     this.unsolvableJoints = [];
+    this.unusableCylinderDrive = undefined;
   }
 
   static determineJointOrder(joints: Joint[], links: Link[]) {
@@ -407,6 +417,21 @@ export class PositionSolver {
     if (this.registerCylinderDrive(cylinders, inputJoint) || this.registerPinDrive(inputJoint)) {
       orderNum = this.orderDeferredJoints(joints, links, orderNum, knownJointsIds);
       this.finishOrder(joints, links, orderNum, knownJointsIds);
+      return;
+    }
+
+    // A sealed cylinder that could not register as a drive has no travel to
+    // give, and it must stop here rather than fall through.
+    //
+    // `false` from the registration above means "not handled", not "invalid",
+    // and the ordinary prismatic drive below is waiting to handle any driven
+    // PrisJoint at all. It would take this one and command its pin along the
+    // slot with no stroke bound — animating a cylinder by telescoping the rod
+    // out of its own barrel, which is precisely the thing sealing it is meant
+    // to make impossible. Emitting no steps is how an ordering says the
+    // mechanism will not run, and that is the honest answer here.
+    if (inputJoint instanceof PrisJoint && inputJoint.isSealed) {
+      this.unusableCylinderDrive = inputJoint.id;
       return;
     }
 

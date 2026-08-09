@@ -381,6 +381,16 @@ export class SvgGridService {
   scaleToFitLinkage() {
     this.settingsService.tempGridDisable = true;
     setTimeout(() => {
+      // Nothing to fit if the canvas has gone. This runs a tick later than the
+      // thing that asked for it, and the asker can be gone by then: a shared
+      // URL is decoded in UrlProcessorService's own constructor, before any
+      // grid exists to fit it to. Left unguarded that throws out of a timer,
+      // where nothing is waiting to catch it, and the flag below stays stuck on
+      // — which disables the grid for the rest of the session.
+      if (!this.panZoomObject || !NewGridComponent.instance) {
+        this.settingsService.tempGridDisable = false;
+        return;
+      }
       this.panZoomObject.updateBBox(); // Update viewport bounding box
       this.settingsService.tempGridDisable = false;
       NewGridComponent.instance.enableGridAnimationForThisAction();

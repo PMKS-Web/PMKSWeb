@@ -1,8 +1,58 @@
 import { MechanismFixture } from './fixture';
+import { BORE_R } from '../../app/model/cylinder';
 
 // The Phase 2 mechanisms, in one place so the specs that assert on them and the
 // gallery that publishes them as URLs cannot drift apart. See
 // docs/joint-types-plan.md §4.1 for what each case is meant to isolate.
+
+/**
+ * The bore, in a fixture's own units.
+ *
+ * A fixture is written in objectScale units — that is what makes the same
+ * numbers work both as a direct model build at `scale = MODEL_SCALE` and as a
+ * URL at `scale = 1`, since one objectScale is one user unit. R is
+ * 0.15 objectScale, so the bore is just `BORE_R` at that R.
+ */
+const CYLINDER_BORE = BORE_R * 0.15;
+
+/**
+ * The interior of a cylinder spanning two fixed mounts.
+ *
+ * Barrel and rod are the same length, always, so a cylinder is one size number
+ * and one position number and its two interior joints are not free — given the
+ * mounts and where in its travel the part sits, there is exactly one place each
+ * can be. Deriving them here rather than typing them means a fixture cannot
+ * drift out of the invariant, and that changing the bore re-derives every
+ * mechanism in this file instead of silently invalidating it.
+ *
+ * `start` is where the piston sits in its own travel: 0 fully retracted, 1
+ * fully extended. It sets how much of the span is stroke and how much is body,
+ * and therefore how far the part can move either way — but not the pose. The
+ * mounts do not move, so the mechanism at t = 0 is exactly the one that was
+ * drawn whatever `start` is chosen.
+ */
+export function cylinderBetween(
+  mount: { x: number; y: number },
+  driven: { x: number; y: number },
+  start: number
+): {
+  barrelEnd: { x: number; y: number };
+  pin: { x: number; y: number };
+  stroke: number;
+  barrel: number;
+  /** The pin's distance from the barrel's mount, which is what a slot bounds. */
+  pinAlong: number;
+} {
+  const span = Math.hypot(driven.x - mount.x, driven.y - mount.y);
+  const stroke = (span - 1.5 * CYLINDER_BORE) / (1 + start);
+  const barrel = stroke + CYLINDER_BORE;
+  const pinAlong = CYLINDER_BORE / 2 + stroke * start;
+  const at = (distance: number) => ({
+    x: mount.x + ((driven.x - mount.x) * distance) / span,
+    y: mount.y + ((driven.y - mount.y) * distance) / span,
+  });
+  return { barrelEnd: at(barrel), pin: at(pinAlong), stroke, barrel, pinAlong };
+}
 
 export const CRANK = 1;
 /** Ground offset between the crank pivot and the lever pivot. */
@@ -344,13 +394,18 @@ export function ellipticalTrammelFixture(
  * rendering question rather than a kinematic one.
  */
 export function cylinderSkinFixture(): MechanismFixture {
+  const mount = { x: -4, y: 0 };
+  const driven = { x: 1.988, y: 0 };
+  // Mid-travel: a drawing fixture, so it should show the part with rod both
+  // inside and outside the barrel rather than at either stop.
+  const { barrelEnd, pin } = cylinderBetween(mount, driven, 0.5);
   return {
     joints: [
-      { id: 'A', x: -4, y: 0, ground: true },
-      { id: 'B', x: -1, y: 0 },
-      { id: 'C', x: 0, y: 0 },
-      { id: 'D', x: 4, y: 0 },
-      { id: 'E', x: 4, y: 3, ground: true, input: true },
+      { id: 'A', ...mount, ground: true },
+      { id: 'B', ...barrelEnd },
+      { id: 'C', ...pin },
+      { id: 'D', ...driven },
+      { id: 'E', x: driven.x, y: 3, ground: true, input: true },
     ],
     links: [{ joints: 'AB' }, { joints: 'CD' }, { joints: 'DE' }],
     sliders: [{ at: 'C', prisId: 'P', on: { carrier: 'AB', a: 'A', b: 'B' }, sealed: true }],
@@ -373,13 +428,17 @@ export function cylinderSkinFixture(): MechanismFixture {
  */
 export function cylinderBoomFixture(scale: number = 1): MechanismFixture {
   const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  const mount = { x: 3, y: 0 };
+  const boomTip = { x: 0, y: 4 };
+  // Mid-travel, so the boom has as much lift left in it as it has already used.
+  const { barrelEnd, pin } = cylinderBetween(mount, boomTip, 0.5);
   return {
     joints: [
       { id: 'O', ...at(0, 0), ground: true },
-      { id: 'C', ...at(0, 4) },
-      { id: 'G', ...at(3, 0), ground: true },
-      { id: 'N', ...at(1.5, 2) },
-      { id: 'P', ...at(1.8, 1.6) },
+      { id: 'C', ...at(boomTip.x, boomTip.y) },
+      { id: 'G', ...at(mount.x, mount.y), ground: true },
+      { id: 'N', ...at(barrelEnd.x, barrelEnd.y) },
+      { id: 'P', ...at(pin.x, pin.y) },
     ],
     links: [{ joints: 'OC' }, { joints: 'GN' }, { joints: 'PC' }],
     slider: {
@@ -411,12 +470,18 @@ export function cylinderBoomFixture(scale: number = 1): MechanismFixture {
  */
 export function gripperFixture(scale: number = 1): MechanismFixture {
   const at = (x: number, y: number) => ({ x: x * scale, y: y * scale });
+  // The two mounts are exactly as the user drew them; the barrel's buried end
+  // and the pin are wherever the invariant puts them, so the plate starts in
+  // the pose that was shared and only the travel either side of it is new.
+  const mount = { x: -4.684, y: 0.747 };
+  const driven = { x: 2.902, y: 0.745 };
+  const { barrelEnd, pin } = cylinderBetween(mount, driven, 0.5);
   return {
     joints: [
-      { id: 'A', ...at(-4.684, 0.747), ground: true },
-      { id: 'B', ...at(-0.693, 0.746) },
-      { id: 'C', ...at(-1.531, 0.746) },
-      { id: 'D', ...at(2.902, 0.745) },
+      { id: 'A', ...at(mount.x, mount.y), ground: true },
+      { id: 'B', ...at(barrelEnd.x, barrelEnd.y) },
+      { id: 'C', ...at(pin.x, pin.y) },
+      { id: 'D', ...at(driven.x, driven.y) },
       { id: 'G', ...at(4.311, 3.004) },
       { id: 'H', ...at(8.246, 3.004) },
       { id: 'I', ...at(4.311, -1.011) },
@@ -508,12 +573,31 @@ export function pinchingGripperFixture(scale: number = 1): MechanismFixture {
   const mount = { x: -10, y: 3 };
   const driven = { x: 0.7, y: 4.2 };
   const reach = Math.hypot(driven.x - mount.x, driven.y - mount.y);
-  const along = (distance: number) => ({
-    x: mount.x + ((driven.x - mount.x) * distance) / reach,
-    y: mount.y + ((driven.y - mount.y) * distance) / reach,
-  });
-  const barrelEnd = along(4);
-  const pin = along(2.927);
+  /**
+   * Mount-to-mount span at which the two jaw tips come level — a property of
+   * the four levers, found from their own geometry and written down because
+   * there is no shorter way to say it.
+   */
+  const JAWS_MEET = 11.4174;
+  // The ram's extended stop is put exactly there. Barrel and rod are equal now,
+  // so the pin is no longer free to be placed anywhere on the axis: the drawn
+  // pose is fixed by the mounts, and the only handle left on the travel is
+  // where in it that pose sits. This is the value that stops the ram where the
+  // jaws meet — extend past it and the levers swing on and the jaws pass
+  // through each other.
+  //
+  // The retracted stop then lands at 7.20, and the linkage comes apart at
+  // 10.49: a ram whose barrel and rod are the same length has a stroke two
+  // thirds of its own span, and no `start` fits both stops inside a window a
+  // single unit wide. So the mechanism binds on the way back and reverses
+  // there, which is the ordinary a-cylinder-outruns-its-linkage case rather
+  // than a fixture that needs different mounts.
+  const stroke = (JAWS_MEET - 1.5 * CYLINDER_BORE) / 2;
+  const { barrelEnd, pin } = cylinderBetween(
+    mount,
+    driven,
+    (reach - 1.5 * CYLINDER_BORE) / stroke - 1
+  );
 
   return {
     joints: [

@@ -1,26 +1,31 @@
 import './joint';
-import { layoutCylinder } from './cylinder';
-import { MARK } from './joint-marks';
+import {
+  BORE_R,
+  MIN_STROKE_R,
+  cylinderMembers,
+  cylinderSpanLayout,
+  cylinderSpanRange,
+  cylinderStroke,
+  cylinderStrokeAlong,
+  layoutCylinder,
+  poseFromStrokeAndStart,
+} from './cylinder';
 
-// The parametric drag (§ cylinder 6), flexbox semantics: the span between the
-// mounts drives everything. The barrel absorbs the change first — bounded by
-// its minimum and maximum — and the rod only grows once the barrel is full,
-// with no maximum. Collinearity holds by construction, the anchor mount never
-// moves, and the same span always draws the same part.
+// The parametric drag: pose first, then size. Inside the ram's own travel only
+// the piston moves and the ram keeps the size it was given; push past a stop and
+// the ram resizes with barrel and rod staying equal. Collinearity holds by
+// construction, the anchor mount never moves.
+//
+// This replaces the flexbox rule, where the barrel absorbed a span change first
+// up to a ceiling and the rod then grew without bound. Nothing about that
+// survives — under barrel = rod there is no split left to negotiate — so those
+// tests are gone rather than adapted.
 
 const R = 0.15;
-// The spec restates the flex constants from their R definitions, so a change
-// to either side is a visible diff here.
-const BARREL_MIN = 1.3;
-const BARREL_MAX = 2;
-const ROD_MIN = 1.7 * MARK.blockAlongHalf * R;
-const INSET = MARK.slotInset * R;
-const SPAN_MIN = BARREL_MIN - INSET + ROD_MIN;
-
-// Legacy member-length arguments: accepted for the callers' convenience,
-// ignored by the flex solve.
-const BARREL_ARG = 3;
-const ROD_ARG = 4;
+const BORE = BORE_R * R;
+const LOCK = 1.5 * BORE;
+const MIN_STROKE = MIN_STROKE_R * R;
+const SPAN_MIN = MIN_STROKE + LOCK;
 
 const dist = (p: { x: number; y: number }, q: { x: number; y: number }) =>
   Math.hypot(q.x - p.x, q.y - p.y);
@@ -31,90 +36,164 @@ const cross = (
   p: { x: number; y: number }
 ) => (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
 
-const at = (span: number) =>
-  layoutCylinder({ x: 0, y: 0 }, { x: span, y: 0 }, BARREL_ARG, ROD_ARG, R, 'barrel')!;
+/** A cylinder of this stroke, laid along +x from the origin, dragged to `span`. */
+const drag = (stroke: number, span: number) =>
+  layoutCylinder({ x: 0, y: 0 }, { x: span, y: 0 }, stroke + BORE, R, 'barrel')!;
 
-describe('layoutCylinder (flex)', () => {
+describe('the cylinder is one size number and one position number', () => {
+  it('makes barrel and rod equal at every size', () => {
+    for (const stroke of [MIN_STROKE, 0.5, 3, 40]) {
+      const members = cylinderMembers(stroke, 0.5, R);
+      expect(members.barrel).toBeCloseTo(members.rod, 12);
+      expect(members.barrel).toBeCloseTo(stroke + BORE, 12);
+    }
+  });
+
+  it('spends exactly the bore on the head and its clearances', () => {
+    // Two slot insets plus the whole piston head, which is what "the head stays
+    // inside the bore" costs and the only reason the stroke is not the barrel.
+    expect(cylinderStroke(5 + BORE, R)).toBeCloseTo(5, 12);
+    expect(cylinderStroke(BORE, R)).toBe(0);
+    expect(cylinderStroke(BORE / 2, R)).toBe(0);
+  });
+
+  it('reads retracted and extended off the stroke alone', () => {
+    const { retracted, extended } = cylinderSpanRange(4, R);
+    expect(retracted).toBeCloseTo(4 + LOCK, 12);
+    expect(extended).toBeCloseTo(8 + LOCK, 12);
+    // Extension approaches 2x for a long ram and is much less for a short one:
+    // the ceiling the equality buys, and the reason more reach means a link.
+    expect(extended / retracted).toBeLessThan(2);
+  });
+
+  it('lands the span exactly where the size and position say', () => {
+    for (const start of [0, 0.25, 1]) {
+      const members = cylinderMembers(6, start, R);
+      expect(members.span).toBeCloseTo(6 * (1 + start) + LOCK, 12);
+    }
+  });
+});
+
+describe('the stroke interval', () => {
+  it('keeps the whole head inside the bore', () => {
+    const { min, max, usable } = cylinderStrokeAlong(9 + BORE, R);
+    expect(usable).toBe(true);
+    expect(min).toBeCloseTo(BORE / 2, 12);
+    expect(max - min).toBeCloseTo(9, 12);
+  });
+
+  it('collapses to one point rather than inverting when the barrel is under its bore', () => {
+    // Object Scale can walk a legal barrel under the bore at any moment, and
+    // every caller clamps or samples against this interval -- handed max < min
+    // they would each silently do something different.
+    const under = cylinderStrokeAlong(BORE / 2, R);
+    expect(under.usable).toBe(false);
+    expect(under.min).toBe(under.max);
+    expect(under.min).toBeCloseTo(BORE / 4, 12);
+  });
+
+  it('calls a barrel with less than the floor stroke unusable too', () => {
+    expect(cylinderStrokeAlong(BORE + MIN_STROKE / 2, R).usable).toBe(false);
+    expect(cylinderStrokeAlong(BORE + MIN_STROKE * 1.01, R).usable).toBe(true);
+  });
+});
+
+describe('dragging a mount: pose first, then size', () => {
+  it('moves only the piston while the span is inside the travel', () => {
+    const stroke = 5;
+    const { retracted, extended } = cylinderSpanRange(stroke, R);
+    for (const span of [retracted, (retracted + extended) / 2, extended]) {
+      const pose = drag(stroke, span);
+      // The size the ram was given, untouched.
+      expect(dist(pose.barrelFar, pose.barrelNear)).toBeCloseTo(stroke + BORE, 9);
+      // And the mount exactly where the cursor put it.
+      expect(pose.rodFar.x).toBeCloseTo(span, 9);
+    }
+  });
+
+  it('grows the ram past fully extended, at half the speed of the mount', () => {
+    const stroke = 5;
+    const { extended } = cylinderSpanRange(stroke, R);
+    const pulled = 3;
+    const pose = drag(stroke, extended + pulled);
+
+    // Both halves grow, so the mount travels twice as far as the stroke does.
+    expect(cylinderStroke(dist(pose.barrelFar, pose.barrelNear), R)).toBeCloseTo(
+      stroke + pulled / 2,
+      9
+    );
+    expect(pose.rodFar.x).toBeCloseTo(extended + pulled, 9);
+  });
+
+  it('shrinks the ram past fully retracted, one for one with the mount', () => {
+    const stroke = 5;
+    const { retracted } = cylinderSpanRange(stroke, R);
+    const pushed = 2;
+    const pose = drag(stroke, retracted - pushed);
+
+    expect(cylinderStroke(dist(pose.barrelFar, pose.barrelNear), R)).toBeCloseTo(
+      stroke - pushed,
+      9
+    );
+    expect(pose.rodFar.x).toBeCloseTo(retracted - pushed, 9);
+  });
+
+  it('stops at the floor rather than making a degenerate part', () => {
+    const pose = drag(5, 0.001);
+
+    expect(cylinderStroke(dist(pose.barrelFar, pose.barrelNear), R)).toBeCloseTo(MIN_STROKE, 9);
+    expect(dist(pose.barrelFar, pose.rodFar)).toBeCloseTo(SPAN_MIN, 9);
+  });
+
+  it('is non-destructive for any drag that stays inside the travel', () => {
+    // The whole argument for pose-before-size: a ram you sized cannot be
+    // resized by accident, only by deliberately pushing past its own stop.
+    const stroke = 7;
+    const { retracted, extended } = cylinderSpanRange(stroke, R);
+    for (let i = 0; i <= 20; i++) {
+      const span = retracted + ((extended - retracted) * i) / 20;
+      expect(cylinderSpanLayout(span, stroke, R).stroke).toBeCloseTo(stroke, 9);
+    }
+  });
+
+  it('round-trips: the span it reports is the span it was asked for', () => {
+    for (const span of [SPAN_MIN, 4, 9, 30]) {
+      expect(cylinderSpanLayout(span, 5, R).span).toBeCloseTo(Math.max(span, SPAN_MIN), 9);
+    }
+  });
+});
+
+describe('layoutCylinder, in the plane', () => {
   it('puts every joint exactly on the mount-to-mount axis', () => {
-    const pose = layoutCylinder(
-      { x: 1, y: 2 },
-      { x: 5.3, y: 6.1 },
-      BARREL_ARG,
-      ROD_ARG,
-      R,
-      'barrel'
-    )!;
+    const pose = layoutCylinder({ x: 1, y: 2 }, { x: 5.3, y: 6.1 }, 3 + BORE, R, 'barrel')!;
 
     for (const point of [pose.barrelNear, pose.pin]) {
       expect(Math.abs(cross(pose.barrelFar, pose.rodFar, point))).toBeLessThan(1e-9);
     }
   });
 
-  it('grows the barrel first, holding the rod at its minimum', () => {
-    const span = (BARREL_MIN + BARREL_MAX) / 2 - INSET + ROD_MIN; // barrel mid-range
-    const pose = at(span);
-
-    expect(dist(pose.barrelFar, pose.barrelNear)).toBeCloseTo(span + INSET - ROD_MIN, 9);
-    expect(dist(pose.pin, pose.rodFar)).toBeCloseTo(ROD_MIN, 9);
-  });
-
-  it('grows the rod only after the barrel is at full length', () => {
-    const span = BARREL_MAX - INSET + ROD_MIN + 5; // 5 past the barrel's ceiling
-    const pose = at(span);
-
-    expect(dist(pose.barrelFar, pose.barrelNear)).toBeCloseTo(BARREL_MAX, 9);
-    expect(dist(pose.pin, pose.rodFar)).toBeCloseTo(ROD_MIN + 5, 9);
-    expect(pose.rodFar.x).toBeCloseTo(span, 9);
-  });
-
-  it('floors the span at the compact pose, holding the anchor still', () => {
-    const rodMount = { x: 10, y: 0 };
-    const pose = layoutCylinder({ x: 9.999, y: 0 }, rodMount, BARREL_ARG, ROD_ARG, R, 'rod')!;
-
-    expect(pose.rodFar).toEqual(rodMount);
-    expect(dist(pose.barrelFar, pose.rodFar)).toBeCloseTo(SPAN_MIN, 9);
-    expect(dist(pose.barrelFar, pose.barrelNear)).toBeCloseTo(BARREL_MIN, 9);
-    expect(dist(pose.pin, pose.rodFar)).toBeCloseTo(ROD_MIN, 9);
-  });
-
-  it('draws the same part at the same span from either anchor', () => {
-    const aAnchored = layoutCylinder({ x: 0, y: 0 }, { x: 6, y: 0 }, 1, 9, R, 'barrel')!;
-    const cAnchored = layoutCylinder({ x: 0, y: 0 }, { x: 6, y: 0 }, 9, 1, R, 'rod')!;
-
-    expect(dist(aAnchored.barrelFar, aAnchored.barrelNear)).toBeCloseTo(
-      dist(cAnchored.barrelFar, cAnchored.barrelNear),
-      9
-    );
-    expect(dist(aAnchored.pin, aAnchored.rodFar)).toBeCloseTo(
-      dist(cAnchored.pin, cAnchored.rodFar),
-      9
-    );
-  });
-
   it('holds the anchor mount exactly still', () => {
     const barrelMount = { x: 1.25, y: -0.75 };
     const rodMount = { x: 7, y: 3 };
 
-    const aboutBarrel = layoutCylinder(barrelMount, rodMount, BARREL_ARG, ROD_ARG, R, 'barrel')!;
-    expect(aboutBarrel.barrelFar).toEqual(barrelMount);
-
-    const aboutRod = layoutCylinder(barrelMount, rodMount, BARREL_ARG, ROD_ARG, R, 'rod')!;
-    expect(aboutRod.rodFar).toEqual(rodMount);
+    expect(layoutCylinder(barrelMount, rodMount, 2 + BORE, R, 'barrel')!.barrelFar).toEqual(
+      barrelMount
+    );
+    expect(layoutCylinder(barrelMount, rodMount, 2 + BORE, R, 'rod')!.rodFar).toEqual(rodMount);
   });
 
   it('rotates rigidly about the anchor as the dragged mount swings', () => {
     const anchor = { x: 2, y: 1 };
-    const flat = layoutCylinder(anchor, { x: 8, y: 1 }, BARREL_ARG, ROD_ARG, R, 'barrel')!;
-    const swung = layoutCylinder(anchor, { x: 2, y: 7 }, BARREL_ARG, ROD_ARG, R, 'barrel')!;
+    const flat = layoutCylinder(anchor, { x: 8, y: 1 }, 3 + BORE, R, 'barrel')!;
+    const swung = layoutCylinder(anchor, { x: 2, y: 7 }, 3 + BORE, R, 'barrel')!;
 
-    // Same span both ways, so the same part at a different angle.
     expect(dist(swung.barrelFar, swung.rodFar)).toBeCloseTo(dist(flat.barrelFar, flat.rodFar), 9);
     expect(dist(swung.barrelNear, swung.pin)).toBeCloseTo(dist(flat.barrelNear, flat.pin), 9);
     expect(swung.barrelFar).toEqual(anchor);
   });
 
   it('holds the axis instead of flipping when a drag crosses the anchor', () => {
-    const pose = layoutCylinder({ x: 0, y: 0 }, { x: -5, y: 0 }, BARREL_ARG, ROD_ARG, R, 'barrel', {
+    const pose = layoutCylinder({ x: 0, y: 0 }, { x: -5, y: 0 }, 3 + BORE, R, 'barrel', {
       x: 1,
       y: 0,
     })!;
@@ -124,8 +203,37 @@ describe('layoutCylinder (flex)', () => {
   });
 
   it('declines coincident mounts with no axis hint', () => {
-    expect(
-      layoutCylinder({ x: 1, y: 1 }, { x: 1, y: 1 }, BARREL_ARG, ROD_ARG, R, 'barrel')
-    ).toBeUndefined();
+    expect(layoutCylinder({ x: 1, y: 1 }, { x: 1, y: 1 }, 3 + BORE, R, 'barrel')).toBeUndefined();
+  });
+});
+
+describe('poseFromStrokeAndStart: the edit the span rule cannot express', () => {
+  it('changes the size while holding the position', () => {
+    // The bug this exists to prevent: at start 0.5 a stroke of 12 spans
+    // 18 + LOCK, which lies inside the *old* stroke-10 travel [10, 20] + LOCK.
+    // Routed through the span rule, a field labelled Travel would have held the
+    // size at 10 and moved the piston to 80% instead.
+    const asked = poseFromStrokeAndStart({ x: 0, y: 0 }, 0, 12, 0.5, R);
+    expect(cylinderStroke(dist(asked.barrelFar, asked.barrelNear), R)).toBeCloseTo(12, 9);
+
+    const viaSpan = cylinderSpanLayout(dist(asked.barrelFar, asked.rodFar), 10, R);
+    expect(viaSpan.stroke).toBeCloseTo(10, 9);
+    expect(viaSpan.start).toBeCloseTo(0.8, 9);
+  });
+
+  it('holds the barrel mount and moves the rod mount', () => {
+    const mount = { x: 3, y: -2 };
+    const pose = poseFromStrokeAndStart(mount, Math.PI / 3, 6, 0.25, R);
+
+    expect(pose.barrelFar).toEqual(mount);
+    expect(dist(pose.barrelFar, pose.rodFar)).toBeCloseTo(6 * 1.25 + LOCK, 9);
+  });
+
+  it('clamps a start outside the travel and a stroke under the floor', () => {
+    const over = poseFromStrokeAndStart({ x: 0, y: 0 }, 0, 4, 3, R);
+    expect(dist(over.barrelFar, over.rodFar)).toBeCloseTo(cylinderSpanRange(4, R).extended, 9);
+
+    const tiny = poseFromStrokeAndStart({ x: 0, y: 0 }, 0, -1, 0.5, R);
+    expect(cylinderStroke(dist(tiny.barrelFar, tiny.barrelNear), R)).toBeCloseTo(MIN_STROKE, 9);
   });
 });

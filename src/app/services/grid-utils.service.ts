@@ -17,6 +17,7 @@ import {
   Cylinder,
   CylinderPose,
   layoutCylinder,
+  poseFromStrokeAndStart,
   sealedCylinderStructures,
 } from '../model/cylinder';
 import { SettingsService } from './settings.service';
@@ -245,10 +246,16 @@ export class GridUtilsService {
     // panel's X/Y fields, the distance-to-joint fields, the linkage table.
     // Every route lands on the same parametric re-pose, so no surface can
     // bend the part (§ cylinder 6).
-    const sealed = this.mechanismSrv.cylinderAt(selectedJoint);
-    if (sealed) {
-      if (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id) {
-        this.dragCylinderMount(sealed, selectedJoint, trueCoord);
+    // Every cylinder on this joint, not just the first: two rams can share a
+    // mount, and each has to be told about the move in its own terms. Left to
+    // the normalizer afterwards, the second one holds its mounts and repairs
+    // the only thing it can -- its interior -- so it quietly changes size.
+    const sealedHere = this.mechanismSrv.cylindersAt(selectedJoint);
+    if (sealedHere.length > 0) {
+      for (const sealed of sealedHere) {
+        if (selectedJoint.id === sealed.barrelFar.id || selectedJoint.id === sealed.rodFar.id) {
+          this.dragCylinderMount(sealed, selectedJoint, trueCoord);
+        }
       }
       // An interior joint (pin, buried barrel end) takes no free move at all:
       // nothing selects one, so a call here is a stray path, and moving it
@@ -401,12 +408,6 @@ export class GridUtilsService {
         sealed.barrelNear.x,
         sealed.barrelNear.y
       ),
-      rodLength: this.getPointDistance(
-        sealed.pin.x,
-        sealed.pin.y,
-        sealed.rodFar.x,
-        sealed.rodFar.y
-      ),
     }));
 
     const movedJointIDs = new Set<string>();
@@ -463,7 +464,7 @@ export class GridUtilsService {
     // cylinder about its other mount, so the part follows its mount instead
     // of bending (§ cylinder 6). A cylinder whose own pin moved was dragged
     // as a body — every member translated together, nothing to repair.
-    carriedCylinders.forEach(({ sealed, barrelLength, rodLength }) => {
+    carriedCylinders.forEach(({ sealed, barrelLength }) => {
       if (movedJointIDs.has(sealed.pin.id)) return;
       const movedBarrelMount = movedJointIDs.has(sealed.barrelFar.id);
       const movedRodMount = movedJointIDs.has(sealed.rodFar.id);
@@ -472,7 +473,6 @@ export class GridUtilsService {
         { x: sealed.barrelFar.x, y: sealed.barrelFar.y },
         { x: sealed.rodFar.x, y: sealed.rodFar.y },
         barrelLength,
-        rodLength,
         0.15 * SettingsService.objectScale,
         // Anchor on the mount that did NOT ride along; if both did, the whole
         // axis translated and either anchor reproduces it.
@@ -508,17 +508,10 @@ export class GridUtilsService {
       sealed.barrelNear.x,
       sealed.barrelNear.y
     );
-    const rodLength = this.getPointDistance(
-      sealed.pin.x,
-      sealed.pin.y,
-      sealed.rodFar.x,
-      sealed.rodFar.y
-    );
     const pose = layoutCylinder(
       draggingBarrelMount ? wanted : sealed.barrelFar,
       draggingBarrelMount ? sealed.rodFar : wanted,
       barrelLength,
-      rodLength,
       0.15 * SettingsService.objectScale,
       // The anchor is the mount NOT being dragged: it stays exactly still,
       // and the dragged mount is what the span floor stops.
@@ -551,6 +544,29 @@ export class GridUtilsService {
    * neighbours, and their forces, by the same frame-carrying rule dragLink
    * applies.
    */
+  /**
+   * Resize a cylinder to a stroke and a position in it, holding its barrel
+   * mount and its axis — what the panel's Travel and Starts-at fields write.
+   *
+   * Deliberately not routed through the mount drag like the other panel edits.
+   * A drag says "put this mount here" and the layout answers with a size; this
+   * says "be this size" and the mount goes wherever that puts it. Sent through
+   * the drag instead, a longer stroke at the same position asks for a span that
+   * usually still lies inside the *old* stroke's travel — so the layout would
+   * dutifully keep the old size and slide the piston, and a field labelled
+   * Travel would change the position and not the travel.
+   */
+  resizeCylinder(sealed: Cylinder, stroke: number, start: number): void {
+    const pose = poseFromStrokeAndStart(
+      { x: sealed.barrelFar.x, y: sealed.barrelFar.y },
+      Math.atan2(sealed.rodFar.y - sealed.barrelFar.y, sealed.rodFar.x - sealed.barrelFar.x),
+      stroke,
+      start,
+      0.15 * SettingsService.objectScale
+    );
+    this.applyCylinderPose(sealed, pose);
+  }
+
   private applyCylinderPose(sealed: Cylinder, pose: CylinderPose): void {
     const placements: [Joint, { x: number; y: number }][] = [
       [sealed.barrelFar, pose.barrelFar],

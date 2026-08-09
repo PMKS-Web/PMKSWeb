@@ -57,6 +57,10 @@ export function buildMechanismFixture(payload: string): MechanismFixture {
     mechanismTimeStep: 0,
     onMechUpdateState: new BehaviorSubject(0),
     onMechPositionChange: new BehaviorSubject(0),
+    // A stub, not the real thing: the panel renders this and the fixtures here
+    // are all well-proportioned, so the default answer is "nothing to say".
+    // A spec that wants the warning rendered overrides it.
+    cylinderReachWarning: () => undefined,
   } as unknown as MechanismService;
   new MechanismBuilder(service, decoder, settings, active).build(true);
 

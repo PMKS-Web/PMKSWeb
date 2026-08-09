@@ -3,7 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
-import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
+import { cylinderBetween, cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
 import { SAMPLES_PER_STROKE } from '../../app/model/mechanism/position-solver';
@@ -40,12 +40,17 @@ const S = MODEL_SCALE;
 const BOOM = 4; // |OC|, the raised member
 const BASE = 3; // |OG|, ground pivot to barrel mount
 
-// The cylinder, laid along G -> C at the start pose: barrel 2.5 from G, pin at
-// 2.0, rod 3.0 out to C. Deliberately not at either end of its travel, so the
+// The cylinder, laid along G -> C at the start pose. Barrel and rod are the
+// same length by construction, so the only thing left to choose is where in the
+// travel the part is drawn, and the fixture draws it at mid-stroke — so the
 // cycle has to extend, reverse, retract the whole way, and reverse again.
-const BARREL_LENGTH = 2.5;
-const PIN_FROM_MOUNT = 2.0;
-const ROD_LENGTH = 3.0;
+//
+// Read back off the same helper that builds the fixture rather than typed: the
+// two lengths follow from the mounts and the bore, and a file asserting its own
+// copy of them would go on describing whichever part it was written against.
+const CYLINDER = cylinderBetween({ x: BASE, y: 0 }, { x: 0, y: BOOM }, 0.5);
+const BARREL_LENGTH = CYLINDER.barrel;
+const ROD_LENGTH = CYLINDER.barrel;
 
 /** Linear input speed, in user length units per second. */
 const EXTENSION_SPEED = 2;
@@ -222,21 +227,19 @@ describe('a boom driven by its cylinder', () => {
 // barrel carries the slot, the rod carries the pin.
 describe('a boom driven by a cylinder mounted the other way round', () => {
   const reversedFixture = (): MechanismFixture => {
-    // Axis C -> G: barrel out from the boom tip, rod back to ground.
+    // Axis C -> G: barrel out from the boom tip, rod back to ground. Same two
+    // mounts as the boom above and the same mid-stroke pose, so the only thing
+    // this case changes is which end of the ram the mechanism already holds.
     const c = { x: 0, y: BOOM };
     const g = { x: BASE, y: 0 };
-    const span = Math.hypot(g.x - c.x, g.y - c.y);
-    const along = (d: number) => ({
-      x: (c.x + ((g.x - c.x) * d) / span) * S,
-      y: (c.y + ((g.y - c.y) * d) / span) * S,
-    });
+    const { barrelEnd, pin } = cylinderBetween(c, g, 0.5);
     return {
       joints: [
         { id: 'O', x: 0, y: 0, ground: true },
         { id: 'C', x: c.x * S, y: c.y * S },
         { id: 'G', x: g.x * S, y: g.y * S, ground: true },
-        { id: 'N', ...along(BARREL_LENGTH) },
-        { id: 'P', ...along(PIN_FROM_MOUNT) },
+        { id: 'N', x: barrelEnd.x * S, y: barrelEnd.y * S },
+        { id: 'P', x: pin.x * S, y: pin.y * S },
       ],
       links: [{ joints: 'OC' }, { joints: 'CN' }, { joints: 'PG' }],
       slider: {

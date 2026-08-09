@@ -5,6 +5,8 @@ import { isSlideCandidate, slideAssemblyAt } from '../model/slide-assembly';
 import {
   Cylinder,
   cylinderCreationLayout,
+  cylinderJoints,
+  cylinderStrokeAlong,
   cylinderOfJoint,
   cylinderOfJointIn,
   cylinderOfLink,
@@ -45,7 +47,7 @@ import { Coord } from '../model/coord';
 import { Line } from '../model/line';
 import { SaveHistoryService } from './save-history.service';
 import { NumberUnitParserService } from './number-unit-parser.service';
-import { PositionSolver } from '../model/mechanism/position-solver';
+import { PositionSolver, SAMPLES_PER_STROKE } from '../model/mechanism/position-solver';
 import { ColorService } from './color.service';
 import { siUnitFactorsForLength } from '../model/unit-conversions';
 import { transformRigidCoord, transformRigidPath } from '../model/compound-link-path';
@@ -1422,6 +1424,12 @@ export class MechanismService {
         ? `This mechanism has ${dof} degrees of freedom, and one input can only drive one. Add a constraint, or remove a body.`
         : `This mechanism has ${dof} degrees of freedom \u2014 it is over-constrained and cannot move. Remove a constraint.`;
     }
+    const noTravel = PositionSolver.unusableCylinderDrive;
+    if (noTravel) {
+      const cylinder = this.sealedStructures().find((found) => found.slider.id === noTravel);
+      const name = cylinder ? this.cylinderName(cylinder) : noTravel;
+      return `Cylinder ${name} has no travel: its barrel is too short to hold the piston and any stroke as well. Lengthen it, or make the drawing bigger under Object Scale.`;
+    }
     const stuck = PositionSolver.unsolvableJoints;
     if (stuck.length > 0) {
       return `These joints cannot be placed from the ones around them: ${stuck.join(', ')}. They may need another link, or a driven joint nearer to them.`;
@@ -1429,11 +1437,110 @@ export class MechanismService {
     return 'This mechanism reached a position it could not solve from the one before it \u2014 usually a toggle, where the linkage locks.';
   }
 
+  /**
+   * What a mechanism that *does* run still cannot do, in its own terms.
+   *
+   * Separate from `invalidReason` because the mechanism is not invalid: it
+   * solves, it animates, and every number it reports is right. It simply cannot
+   * use the whole of a cylinder it contains, because the linkage binds \u2014 or
+   * reaches a toggle \u2014 before the ram runs out of barrel. The stroke is the
+   * cylinder's own property and nothing constrains it to what the mechanism
+   * around it can follow, so this can only be found by running the thing.
+   *
+   * Warned about rather than clamped, deliberately. Clamping would silently
+   * resize a part the user sized, and the interesting information \u2014 *this ram
+   * is bigger than this machine needs* \u2014 is exactly what clamping would hide.
+   */
+  cylinderReachWarning(): string | undefined {
+    // A template getter, so this is asked on every change-detection pass while
+    // the answer only changes when the mechanism is rebuilt. `cylinderRevision`
+    // is bumped exactly once per rebuild and never by an animation frame, which
+    // is the difference that matters: keyed on the pose instead, the sweep
+    // below would run against all 360 samples on every frame of playback.
+    if (this.reachWarningRevision === this.cylinderRevision) {
+      return this.reachWarningCache;
+    }
+    this.reachWarningRevision = this.cylinderRevision;
+    this.reachWarningCache = this.computeCylinderReachWarning();
+    return this.reachWarningCache;
+  }
+
+  private reachWarningRevision = -1;
+  private reachWarningCache: string | undefined;
+
+  private computeCylinderReachWarning(): string | undefined {
+    const solved = this.mechanisms[0];
+    if (!solved || !this.oneValidMechanismExists()) return undefined;
+    const frames = solved.joints.length;
+    if (frames < 2) return undefined;
+
+    for (const cylinder of this.sealedStructures()) {
+      const r = 0.15 * SettingsService.objectScale;
+      const barrelLength = getDistance(cylinder.barrelFar, cylinder.barrelNear);
+      const travel = cylinderStrokeAlong(barrelLength, r);
+      if (!travel.usable) continue;
+      const stroke = travel.max - travel.min;
+
+      const indexOf = (id: string) => solved.joints[0].findIndex((joint) => joint.id === id);
+      const anchor = indexOf(cylinder.barrelFar.id);
+      const pin = indexOf(cylinder.pin.id);
+      if (anchor < 0 || pin < 0) continue;
+
+      let low = Infinity;
+      let high = -Infinity;
+      for (let t = 0; t < frames; t++) {
+        const along = getDistance(solved.joints[t][anchor], solved.joints[t][pin]);
+        low = Math.min(low, along);
+        high = Math.max(high, along);
+      }
+      const used = high - low;
+      // A clean reversal touches both stops, so anything short of the whole
+      // stroke by more than the solver's own tolerance is the linkage stopping
+      // the ram rather than the ram stopping itself.
+      // Three sample steps of slack, and the number comes from the sampling
+      // rather than from taste. A reversing drive turns round at whichever
+      // sample first fails, not at the limit itself, so even a ram the linkage
+      // follows perfectly comes up about one step short at each end -- a fixed
+      // tolerance in model units either cried wolf on every cylinder or went
+      // deaf on small ones, because the shortfall scales with the stroke.
+      if (used >= stroke - (3 * stroke) / SAMPLES_PER_STROKE) continue;
+      const percent = Math.round((used / stroke) * 100);
+      return `Cylinder ${this.cylinderName(cylinder)} can only use ${percent}% of its stroke \u2014 the linkage binds before the ram does. Shorten its travel, or give the mechanism more room.`;
+    }
+    return undefined;
+  }
+
+  /** What to call a cylinder in a message: its two mounts, as the panel titles it. */
+  private cylinderName(cylinder: Cylinder): string {
+    return (
+      (cylinder.barrelFar.name || cylinder.barrelFar.id) +
+      (cylinder.rodFar.name || cylinder.rodFar.id)
+    );
+  }
+
   /** The sealed cylinder a joint or link belongs to, if any. */
   cylinderAt(obj: Joint | Link | undefined): Cylinder | undefined {
     if (obj instanceof Joint) return cylinderOfJointIn(this.sealedStructures(), obj);
     if (obj instanceof Link) return cylinderOfLinkIn(this.sealedStructures(), obj);
     return undefined;
+  }
+
+  /**
+   * Every sealed cylinder a joint belongs to, not just the first.
+   *
+   * Two rams can share a mount — an excavator's boom and stick meet that way,
+   * and it is the natural thing to draw. `cylinderAt` answers with whichever
+   * one happens to come first, which is right for "what am I looking at" and
+   * wrong for "what has to move": dragging a shared mount re-posed one ram
+   * parametrically and left the other to be straightened afterwards by the
+   * normalizer, which holds the mounts and can only move the interior — so the
+   * second ram silently changed size to absorb a drag meant for the first.
+   */
+  cylindersAt(joint: Joint | undefined): Cylinder[] {
+    if (!joint) return [];
+    return this.sealedStructures().filter((cylinder) =>
+      cylinderJoints(cylinder).some((member) => member.id === joint.id)
+    );
   }
 
   /**

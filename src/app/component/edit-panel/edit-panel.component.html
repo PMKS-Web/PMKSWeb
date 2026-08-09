@@ -222,19 +222,37 @@
         (opened)="sectionExpanded['LBasic'] = true"
         (closed)="sectionExpanded['LBasic'] = false"
       >
-        <dual-input-block
-          label1="L"
-          label2="⊾"
-          formControl1="length"
-          formControl2="angle"
+        <!-- One size number and one position number. Barrel and rod are the
+             same length by construction, so stroke, closed and open are three
+             ways of saying the size and there is nothing for a second field to
+             disagree with — the picker changes which one you are typing, never
+             the ram. -->
+        <input-block
           [formGroup]="cylinderForm"
-          tooltip="Mount-to-mount length and axis angle. Edits re-pose the whole part about the barrel mount; the rod resizes to serve any length."
-          (field1Entry)="setShowLinkLengthOverlay($event)"
-          (field2Entry)="setShowLinkAngleOverlay($event)"
-          [emitterOutputID]="-1"
-        >
-          Cylinder Length and Angle
-        </dual-input-block>
+          _formControl="travel"
+          [unitOptions]="travelUnitOptions"
+          unitFormControl="travelUnit"
+          tooltip="How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it."
+          >Travel
+        </input-block>
+        <subtitle-block [description]="cylinderSizeEcho(cyl)"></subtitle-block>
+        <input-block
+          [formGroup]="cylinderForm"
+          _formControl="start"
+          [unitOptions]="startUnitOptions"
+          unitFormControl="startUnit"
+          tooltip="Where the piston sits at the start of the cycle: as a percentage of the stroke, or as the length the ram is at. A length outside the travel resizes the ram to reach it, exactly as dragging the mount does."
+          >Starts at
+        </input-block>
+        <input-block
+          [formGroup]="cylinderForm"
+          _formControl="angle"
+          tooltip="The axis the ram points along, barrel mount to rod mount."
+          >Angle
+        </input-block>
+        @if (cylinderClamped) {
+          <subtitle-block [description]="cylinderClamped"></subtitle-block>
+        }
         <button-block
           [customIcon]="cyl.slider.input ? 'remove_input' : 'add_input'"
           [click]="toggleCylinderInput.bind(this)"

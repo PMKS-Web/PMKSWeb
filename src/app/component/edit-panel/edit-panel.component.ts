@@ -27,7 +27,7 @@ import { MechanismService } from '../../services/mechanism.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
 import { NewGridComponent } from '../new-grid/new-grid.component';
-import { Cylinder } from '../../model/cylinder';
+import { BORE_R, Cylinder, MIN_STROKE_R, cylinderSizeOf } from '../../model/cylinder';
 
 /**
  * Input Settings unit choices, in the order the picker shows them. The labels
@@ -186,16 +186,50 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     },
     { updateOn: 'blur' }
   );
-  // The cylinder body edits like a binary link: length is mount-to-mount,
-  // angle runs barrel mount → rod mount. Writes re-pose the part by dragging
-  // the rod mount through the parametric pipeline, so collinearity holds.
+  /**
+   * A cylinder is one size number and one position number, so the panel offers
+   * exactly those two — plus the axis, which is where the part points rather
+   * than anything about the ram.
+   *
+   * Both carry a unit picker instead of a second field, because stroke, closed
+   * and open are three ways of saying one number and % and a length are two
+   * ways of saying one position. Changing the picker re-expresses the value; it
+   * never alters the part. That is the same contract the repo's Input Speed
+   * field already has, which is why it is the same control.
+   *
+   * The pickers commit on change and the numbers on blur, as everywhere else.
+   */
   cylinderForm = this.fb.group(
     {
-      length: [''],
+      travel: [''],
+      travelUnit: ['stroke', { updateOn: 'change' }],
+      start: [''],
+      startUnit: ['pct', { updateOn: 'change' }],
       angle: [''],
     },
     { updateOn: 'blur' }
   );
+
+  /**
+   * Stroke, closed and open: one ram said three ways.
+   *
+   * "closed" and "open" rather than "retracted" and "extended" because the
+   * picker shares the field's fill with the number, and the longer words do not
+   * fit beside one.
+   */
+  readonly travelUnitOptions = [
+    { value: 'stroke', label: 'stroke' },
+    { value: 'ret', label: 'closed' },
+    { value: 'ext', label: 'open' },
+  ];
+
+  /** Where in its travel the ram starts: a share of the stroke, or a length. */
+  get startUnitOptions() {
+    return [
+      { value: 'pct', label: '%' },
+      { value: 'len', label: this.nup.unitLabel(this.settingsService.lengthUnit.getValue()) },
+    ];
+  }
   forceForm = this.fb.group(
     {
       magnitude: [''],
@@ -297,13 +331,61 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return this.mechanismService.cylinderAt(this.activeSrv.selectedLink);
   }
 
-  /** Mount-to-mount length, in the user's length unit (cm at the edge). */
-  cylinderLengthLabel(sealed: Cylinder): string {
-    return this.nup.formatModelLength(
-      getDistance(sealed.barrelFar, sealed.rodFar),
-      this.settingsService.lengthUnit.getValue()
-    );
+  /** The ram's own size and position, read back off its joints. */
+  private cylinderSize(sealed: Cylinder) {
+    return cylinderSizeOf(sealed, 0.15 * this.settingsService.objectScale);
   }
+
+  /** Half a bore and half again: the body length every span carries. */
+  private get cylinderLock(): number {
+    return 1.5 * BORE_R * 0.15 * this.settingsService.objectScale;
+  }
+
+  /** The Travel field's value, in whichever of its three spellings is selected. */
+  cylinderTravelLabel(sealed: Cylinder): string {
+    const { stroke } = this.cylinderSize(sealed);
+    const unit = this.cylinderForm.controls['travelUnit'].value;
+    const shown =
+      unit === 'ret'
+        ? stroke + this.cylinderLock
+        : unit === 'ext'
+          ? 2 * stroke + this.cylinderLock
+          : stroke;
+    return this.nup.formatModelLength(shown, this.settingsService.lengthUnit.getValue());
+  }
+
+  /** The Starts-at field's value: a percentage of the stroke, or the length it puts the ram at. */
+  cylinderStartLabel(sealed: Cylinder): string {
+    const { start, span } = this.cylinderSize(sealed);
+    if (this.cylinderForm.controls['startUnit'].value === 'pct') {
+      return `${Math.round(start * 100)}`;
+    }
+    return this.nup.formatModelLength(span, this.settingsService.lengthUnit.getValue());
+  }
+
+  /**
+   * The two spellings of the size the field is not currently showing, plus the
+   * member length they imply.
+   *
+   * Worth the row: the whole claim of this panel is that these are one number,
+   * and the cheapest way to make that true rather than merely stated is to show
+   * the others moving together as one is typed.
+   */
+  cylinderSizeEcho(sealed: Cylinder): string {
+    const { stroke } = this.cylinderSize(sealed);
+    const unit = this.cylinderForm.controls['travelUnit'].value;
+    const length = (value: number) =>
+      this.nup.formatModelLength(value, this.settingsService.lengthUnit.getValue());
+    const parts: string[] = [];
+    if (unit !== 'stroke') parts.push(`stroke ${length(stroke)}`);
+    if (unit !== 'ret') parts.push(`closed ${length(stroke + this.cylinderLock)}`);
+    if (unit !== 'ext') parts.push(`open ${length(2 * stroke + this.cylinderLock)}`);
+    parts.push(`barrel = rod ${length(stroke + BORE_R * 0.15 * this.settingsService.objectScale)}`);
+    return parts.join(' · ');
+  }
+
+  /** Set when the last edit had to be held at the ram's minimum, so the panel can say so. */
+  cylinderClamped = '';
 
   /** Mount-to-mount axis angle, in the user's angle unit. */
   cylinderAngleLabel(sealed: Cylinder): string {
@@ -339,13 +421,33 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     this.patchCylinderForm();
   }
 
+  /**
+   * Write a size and a position to the ram, saying so when the minimum bit.
+   *
+   * The floor is the one failure a cylinder has left: barrel and rod cannot
+   * disagree with the stroke any more, so an impossible ram can no longer be
+   * described and there is nothing else to refuse.
+   */
+  private resizeCylinderTo(sealed: Cylinder, stroke: number, start: number): void {
+    const floor = MIN_STROKE_R * 0.15 * this.settingsService.objectScale;
+    const held = Math.max(stroke, floor);
+    this.cylinderClamped =
+      held !== stroke
+        ? `Held at the shortest ram there is: any less and the barrel is all piston.`
+        : '';
+    this.gridUtils.resizeCylinder(sealed, held, start);
+    this.mechanismService.onMechUpdateState.next(2);
+    this.patchCylinderForm();
+  }
+
   /** Refresh the cylinder form's fields from the part, without re-firing them. */
   patchCylinderForm(): void {
     const sealed = this.selectedCylinder;
     if (!sealed) return;
     this.cylinderForm.patchValue(
       {
-        length: this.cylinderLengthLabel(sealed),
+        travel: this.cylinderTravelLabel(sealed),
+        start: this.cylinderStartLabel(sealed),
         angle: this.cylinderAngleLabel(sealed),
       },
       { emitEvent: false }
@@ -736,13 +838,65 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     );
 
     this.onDestroySubscriptions.push(
-      this.cylinderForm.controls['length'].valueChanges.subscribe((val) => {
+      this.cylinderForm.controls['travel'].valueChanges.subscribe((val) => {
+        const sealed = this.selectedCylinder;
         const [success, value] = this.nup.parseModelLengthString(
           val!,
           this.settingsService.lengthUnit.getValue()
         );
-        if (!success || !(value > 0)) this.patchCylinderForm();
-        else this.reposeCylinder(value, undefined);
+        if (!sealed || !success) return this.patchCylinderForm();
+        // Three spellings, one number. Whichever is typed sets the stroke and
+        // nothing negotiates -- which is the whole of what holding barrel and
+        // rod equal bought, and why there is no resolution table here.
+        const unit = this.cylinderForm.controls['travelUnit'].value;
+        const asked =
+          unit === 'ret'
+            ? value - this.cylinderLock
+            : unit === 'ext'
+              ? (value - this.cylinderLock) / 2
+              : value;
+        this.resizeCylinderTo(sealed, asked, this.cylinderSize(sealed).start);
+      })
+    );
+
+    // Re-expressing the value, never altering the part: the number in the field
+    // changes because the unit did, and the ram does not move.
+    this.onDestroySubscriptions.push(
+      this.cylinderForm.controls['travelUnit'].valueChanges.subscribe(() =>
+        this.patchCylinderForm()
+      )
+    );
+    this.onDestroySubscriptions.push(
+      this.cylinderForm.controls['startUnit'].valueChanges.subscribe(() => this.patchCylinderForm())
+    );
+
+    this.onDestroySubscriptions.push(
+      this.cylinderForm.controls['start'].valueChanges.subscribe((val) => {
+        const sealed = this.selectedCylinder;
+        if (!sealed) return this.patchCylinderForm();
+        if (this.cylinderForm.controls['startUnit'].value === 'pct') {
+          const asked = Number(
+            String(val ?? '')
+              .replace('%', '')
+              .trim()
+          );
+          if (!Number.isFinite(asked)) return this.patchCylinderForm();
+          const held = Math.min(Math.max(asked / 100, 0), 1);
+          this.cylinderClamped =
+            held !== asked / 100 ? `Start held at ${Math.round(held * 100)}%.` : '';
+          this.resizeCylinderTo(sealed, this.cylinderSize(sealed).stroke, held);
+          return;
+        }
+        // A typed length is the mount-to-mount span, which is exactly what a
+        // drag of that mount asks for -- so it takes the same road, and outside
+        // the ram's own travel it resizes it in the same way.
+        const [success, value] = this.nup.parseModelLengthString(
+          val!,
+          this.settingsService.lengthUnit.getValue()
+        );
+        if (!success || !(value > 0)) return this.patchCylinderForm();
+        this.cylinderClamped = '';
+        this.reposeCylinder(value, undefined);
       })
     );
 

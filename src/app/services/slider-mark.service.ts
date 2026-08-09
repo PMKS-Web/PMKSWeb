@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Joint, PrisJoint, RealJoint } from '../model/joint';
 import { Link, RealLink, SliderBlock } from '../model/link';
-import { Cylinder, sealedCylinders } from '../model/cylinder';
+import { Cylinder, cylinderStrokeAlong, sealedCylinders } from '../model/cylinder';
 import {
-  barrelCollapsedPath,
+  barrelPath,
   blockPath,
-  borePath,
   cylinderArrowPaths,
+  cylinderStopMarks,
   cylinderBlockPath,
   collinearGuides,
   MARK,
@@ -142,6 +142,12 @@ export interface CylinderMark {
   contour: string;
   /** The dotted linear-motion cue inside the barrel. */
   dash: { x1: number; x2: number; width: number; dashArray: string };
+  /**
+   * Where the piston head bottoms out at each end of its travel, on the
+   * barrel's own edges. Part of the object rather than an annotation, so they
+   * turn and scale with it.
+   */
+  stops: Segment[];
   driven: boolean;
   arrows: { line: Segment; head: string; emphasised: boolean }[];
 }
@@ -303,7 +309,19 @@ export class SliderMarkService {
     const { pin, rodFar, barrelNear } = found;
     const angle = Math.atan2(rodFar.y - pin.y, rodFar.x - pin.x);
     const rodReach = Math.hypot(rodFar.x - pin.x, rodFar.y - pin.y);
-    const barrelReach = -Math.hypot(found.barrelFar.x - pin.x, found.barrelFar.y - pin.y);
+    // Both ends of the barrel, not just the one behind the piston. The barrel
+    // is a rigid bar and it straddles the piston: its anchor is behind, its
+    // mouth ahead, and the piston slides between them. Measuring only back to
+    // the anchor drew the barrel *to* the piston, so the rigid part visibly
+    // changed length every frame.
+    const anchor = -Math.hypot(found.barrelFar.x - pin.x, found.barrelFar.y - pin.y);
+    const mouth = Math.hypot(barrelNear.x - pin.x, barrelNear.y - pin.y);
+    const barrelLength = mouth - anchor;
+    // Where the head bottoms out at each end, in the same frame: the one
+    // definition of the travel, so the stops cannot disagree with the stroke
+    // the simulation runs or the slot the drawing cuts.
+    const travel = cylinderStrokeAlong(barrelLength, r);
+    const stops: [number, number] = [travel.min + anchor, travel.max + anchor];
     const driven = found.slider.input || pin.input;
     // The mark's frame runs +x toward the rod; the drive direction is declared
     // along the slot, which may point either way along the same line.
@@ -326,14 +344,15 @@ export class SliderMarkService {
       barrelId: found.barrel.id,
       rodId: found.rod.id,
       hiddenJointId: barrelNear.id,
-      barrel: barrelCollapsedPath(r, barrelReach),
+      barrel: barrelPath(r, anchor, mouth),
       barrelFill: (found.barrel as RealLink).fill ?? '#000000',
       rod: rodBodyPath(r, rodReach),
       // One part, one colour: the rod wears the barrel's fill, always.
       rodFill: (found.barrel as RealLink).fill ?? '#000000',
       block: cylinderBlockPath(r),
-      contour: cylinderContourPath(r, barrelReach, rodReach),
-      dash: cylinderMotionDash(r, barrelReach),
+      contour: cylinderContourPath(r, anchor, mouth, rodReach),
+      dash: cylinderMotionDash(r, anchor),
+      stops: cylinderStopMarks(r, stops),
       driven,
       arrows: driven ? cylinderArrowPaths(r, leading) : [],
     };

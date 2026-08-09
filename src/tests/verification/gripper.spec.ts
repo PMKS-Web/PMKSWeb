@@ -58,9 +58,9 @@ describe('a cylinder-driven gripper', () => {
     // It reported "Degrees of Freedom: -1" and refused, and even once counted
     // correctly the walk emitted zero steps.
     //
-    // The cycle is short because the travel is: the part is drawn at a limit of
-    // its own motion — a toggle clamp is drawn clamped — so the cylinder can
-    // only extend, and it meets the end of its stroke after two dozen samples.
+    // The linkage is drawn at a limit of its own motion — a toggle clamp is
+    // drawn clamped — so the cylinder can only extend from here, and the run is
+    // that one-way travel out to the ram's stop and back.
     expect(solved.length).toBeGreaterThan(20);
   });
 
@@ -139,10 +139,19 @@ describe('a cylinder-driven gripper', () => {
     expect(travel).toBeGreaterThan(0.2);
 
     const jumps = gaps.slice(1).map((gap, i) => Math.abs(gap - gaps[i]));
-    // No sample moves the jaws more than a few times the average step: a
-    // Newton solve that fell to the mirror assembly would show up right here.
-    const mean = jumps.reduce((sum, jump) => sum + jump, 0) / jumps.length;
-    expect(Math.max(...jumps)).toBeLessThan(Math.max(mean * 8, 1e-3));
+    // Smoothness measured against the neighbouring steps rather than against
+    // the average of them all. The linkage has a genuine knee — it is drawn on
+    // its own toggle, and just off it the jaws move some seven times faster
+    // than they do out at full extension — so the mean step over the run is not
+    // the scale any single step should be judged by, and the ram now travels
+    // far enough to reach that knee. What a Newton solve falling to the mirror
+    // assembly looks like is a step with no relation to the ones either side of
+    // it, so that is the comparison: the steepest part of the knee grows by
+    // under 1.8x from one sample to the next, and a branch jump is orders of
+    // magnitude, not a factor of three.
+    for (let i = 1; i < jumps.length; i++) {
+      expect(jumps[i]).toBeLessThan(Math.max(jumps[i - 1] * 3, 1e-3));
+    }
   });
 
   it('drives both arms from the one cylinder', () => {

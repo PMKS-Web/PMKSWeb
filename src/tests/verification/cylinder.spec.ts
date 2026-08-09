@@ -19,9 +19,13 @@ const S = MODEL_SCALE;
 /**
  * Barrel M--N along the x axis with a bore, a block welded at P, and a rod
  * reaching out to T on the far side of P from N.
+ *
+ * The rod defaults to the barrel's own 7 units, because barrel and rod are the
+ * same length in every cylinder that can exist — a hand-built part where they
+ * differ is what the invariant tripwire is for, and it has its own case below.
  */
 function piston(options: { rodAt?: [number, number]; barrelFarAt?: [number, number] } = {}) {
-  const [rodX, rodY] = options.rodAt ?? [6 * S, 0];
+  const [rodX, rodY] = options.rodAt ?? [7 * S, 0];
   const [barX, barY] = options.barrelFarAt ?? [-8 * S, 0];
 
   const m = new RevJoint('M', barX, barY);
@@ -117,8 +121,19 @@ describe('recognising a cylinder', () => {
     const outside = MARK.blockAcrossHalf * 0.15 * SettingsService.objectScale * 1.1;
 
     // `inside`/`outside` are objectScale-derived and so already model units.
-    expect(resolveCylinder(piston({ rodAt: [6 * S, inside] }).p)).toBeDefined();
-    expect(resolveCylinder(piston({ rodAt: [6 * S, outside] }).p)).toBeUndefined();
+    expect(resolveCylinder(piston({ rodAt: [7 * S, inside] }).p)).toBeDefined();
+    expect(resolveCylinder(piston({ rodAt: [7 * S, outside] }).p)).toBeUndefined();
+  });
+
+  it('declines a barrel and a rod that are not the same length', () => {
+    // The invariant, as a tripwire. Nothing in the app can build such a part —
+    // every constructive path lays barrel and rod out equal — so this is here
+    // for the assembly nobody went through: a fixture, or a hand-written URL,
+    // which would otherwise be drawn and solved as a ram it is not.
+    const stubby = describeCylinder(piston({ rodAt: [4 * S, 0] }).p);
+
+    expect(typeof stubby).toBe('string');
+    expect(stubby).toContain('the same length');
   });
 
   it('says what is missing when the shape does not qualify', () => {
@@ -134,7 +149,7 @@ describe('recognising a cylinder', () => {
     // Positions come out of a numeric solve, so exact collinearity never
     // survives to the renderer. A test at machine epsilon would make the skin
     // flicker on and off between timesteps.
-    const scene = piston({ rodAt: [6 * S, 1e-9] });
+    const scene = piston({ rodAt: [7 * S, 1e-9] });
 
     expect(resolveCylinder(scene.p, 1e-6)).toBeDefined();
   });

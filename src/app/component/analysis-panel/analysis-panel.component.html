@@ -64,6 +64,22 @@
     </panel-section-collapsible>
   }
 
+  <!--
+    A mechanism that runs but cannot use all of a cylinder it contains. Not the
+    same thing as invalid, and deliberately not in the block above: everything
+    here solves and every number is right, so the reading is "this ram is
+    bigger than this machine needs", not "fix this before you can analyse".
+    Warned about rather than clamped, because clamping would quietly resize a
+    part the user sized and hide the very thing worth knowing.
+  -->
+  @if (mechanismService.cylinderReachWarning(); as reach) {
+    <panel-section-collapsible [warning]="true" [expanded]="false" id="cylinderReachContainer">
+      <title-block alwaysShown icon="expand_more" description="{{ reach }}">
+        Cylinder travel
+      </title-block>
+    </panel-section-collapsible>
+  }
+
   <!-- Valid Mech but Nothing Selected -->
 
   @if (

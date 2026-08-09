@@ -65,7 +65,7 @@ import {
   WeldPlate,
 } from '../../services/slider-mark.service';
 import {
-  barrelCollapsedPath,
+  barrelPath,
   cylinderBlockPath,
   GROUND_STROKE,
   MARK,
@@ -637,7 +637,9 @@ export class NewGridComponent {
       x: creation.pin.x,
       y: creation.pin.y,
       rotation: (creation.angleRad * 180) / Math.PI,
-      barrel: barrelCollapsedPath(r, -creation.pinFromMount),
+      // The preview is the part it will become: the barrel at its own length,
+      // straddling the piston, with the rod telescoping out of its mouth.
+      barrel: barrelPath(r, -creation.pinFromMount, creation.barrelLength - creation.pinFromMount),
       rod: rodBodyPath(r, creation.rodLength),
       block: cylinderBlockPath(r),
     };
@@ -844,19 +846,24 @@ export class NewGridComponent {
         // that is how a cylinder attaches — with the refusal rules keeping
         // welded targets and the part's own joints out. Slot drops stay off
         // the table: a mount never rides a slot.
-        const draggedCylinder = this.mechanismSrv.cylinderAt(this.activeObjService.selectedJoint);
-        if (draggedCylinder) {
+        const draggedCylinders = this.mechanismSrv.cylindersAt(this.activeObjService.selectedJoint);
+        if (draggedCylinders.length > 0) {
           this.updateDropCandidate(mousePosInSvg, $event.altKey);
           this.slotCandidate = undefined;
           this.axisSnapGuides = [];
+          // Snap to the axis of the ram the gesture is most obviously about --
+          // the first -- but re-pose all of them, so a mount two rams share
+          // does not drag one and deform the other.
           const wanted = this.snapTargetJoint
             ? new Coord(this.snapTargetJoint.x, this.snapTargetJoint.y)
-            : this.mountAxisSnap(draggedCylinder, mousePosInSvg);
-          this.gridUtils.dragCylinderMount(
-            draggedCylinder,
-            this.activeObjService.selectedJoint,
-            wanted
-          );
+            : this.mountAxisSnap(draggedCylinders[0], mousePosInSvg);
+          for (const draggedCylinder of draggedCylinders) {
+            this.gridUtils.dragCylinderMount(
+              draggedCylinder,
+              this.activeObjService.selectedJoint,
+              wanted
+            );
+          }
           this.dragState.noteMechanismModified();
           this.activeObjService.updateSelectedObj(this.activeObjService.selectedJoint);
           this.showPathWhileDragging();

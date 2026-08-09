@@ -14,7 +14,7 @@
 import { Joint, PrisJoint, RealJoint } from './joint';
 import { Link, RealLink, SliderBlock } from './link';
 import { slideAssemblyAt } from './slide-assembly';
-import { MARK, slotHalfLength } from './joint-marks';
+import { MARK } from './joint-marks';
 import { SettingsService } from '../services/settings.service';
 
 export interface Cylinder {
@@ -36,6 +36,43 @@ export interface Cylinder {
   /** The rod's outer end — mount C, the other attachment point. */
   rodFar: Joint;
 }
+
+/**
+ * The bore: how much of the barrel the piston head and its clearances eat.
+ *
+ * The head is `blockAlongHalf` each way from the pin and the slot is inset
+ * `slotInset` from each end of the barrel, so a head that stays wholly inside
+ * the bore costs twice their sum — 13.28 R — whatever the barrel measures.
+ * Everything else about the part is this number and the stroke:
+ *
+ *     barrel = rod = stroke + BORE          (equal by construction)
+ *     along  = BORE/2 + stroke × start      (the pin, from the barrel's mount)
+ *     span   = stroke × (1 + start) + 1.5 × BORE
+ *
+ * `1.5 × BORE` is not a second constant; it falls out of barrel = rod, which
+ * is the point of holding them equal. A cylinder is one size number and one
+ * position number, and retracted and extended stop being free to disagree
+ * with the stroke — there is no longer any such thing as an impossible
+ * cylinder, only one that is too small.
+ *
+ * The design package derived this from a 1.8 R inset. This repo draws its
+ * slots at 2.8 R (`MARK.slotInset`) — a channel inset 1.8 R reached the joint
+ * circle and read as a bar cut through rather than slotted — so the number is
+ * taken from the constant rather than copied from the page.
+ */
+export const BORE_R = 2 * (MARK.slotInset + MARK.blockAlongHalf);
+
+/**
+ * The shortest stroke a cylinder may have.
+ *
+ * A hard floor, not a usable size: at this stroke the barrel is all piston
+ * head and the two stops sit on top of each other. It exists so a drag pushed
+ * hard against the retracted end produces a very small ram rather than a
+ * degenerate one, and it is deliberately far below anything worth building —
+ * choosing a *readable* minimum is a separate question, and answering it here
+ * would stop a drag mid-gesture at a size the user can still see.
+ */
+export const MIN_STROKE_R = 0.34;
 
 /**
  * How far off the slot line a joint may sit and still read as in line with it.
@@ -161,6 +198,16 @@ export function describeCylinder(joint: Joint, tolerance?: number): Cylinder | s
     return 'The rod and the barrel have to reach out from opposite sides of the block.';
   }
 
+  // Barrel and rod are the same length, always. Every path that builds or moves
+  // a cylinder goes through the layout, which makes them equal by construction,
+  // so this is a tripwire rather than a rule anyone can break from the app: it
+  // catches a part assembled joint-by-joint — a fixture, a hand-written URL —
+  // that would otherwise be drawn and solved as a ram it is not.
+  const barrelLength = Math.abs(along(structure.barrelNear) - along(barrelFar));
+  if (Math.abs(Math.abs(along(rodFar)) - barrelLength) > allowed) {
+    return 'A cylinder’s barrel and rod are the same length; this one’s are not.';
+  }
+
   return structure;
 }
 
@@ -260,13 +307,9 @@ export function isCylinderInterior(cylinder: Cylinder, joint: Joint): boolean {
   return [cylinder.barrelNear.id, cylinder.pin.id, cylinder.slider.id].includes(joint.id);
 }
 
-/**
- * The proportions of a freshly drawn cylinder, mirroring the fixture
- * gallery's hydraulic cylinder (barrel 3 : rod 4 over a span of 6 from the
- * barrel mount to the rod's end, pin at 2 — i.e. barrel = span/2, pin at
- * span/3, rod = 2·span/3, which keeps the pin inside the slot's span at any
- * size).
- */
+/** A freshly drawn cylinder opens at mid-travel, so it has room to go either way. */
+export const CYLINDER_CREATION_START = 0.5;
+
 export interface CylinderCreation extends CylinderPose {
   angleRad: number;
   /** Mount-to-mount distance actually used, after the minimum is applied. */
@@ -277,20 +320,24 @@ export interface CylinderCreation extends CylinderPose {
 }
 
 /**
- * The smallest cylinder any gesture will draw, in objectScale: the flex
- * solve's minimum span (barrel at its minimum, rod at its minimum), converted
- * from R at R = 0.15 · objectScale.
+ * The smallest cylinder a creation gesture will draw, in objectScale.
+ *
+ * Larger than the smallest cylinder that can *exist* (`SPAN_MIN_R`, which is
+ * the fully-retracted floor) because a new ram opens at mid-travel: a span at
+ * the retracted floor would give it two thirds of the floor stroke and land
+ * under the minimum. Drawn at this span it gets exactly the floor stroke with
+ * half of it already used.
  */
-export const CYLINDER_MIN_SPAN_SCALE =
-  1.3 - 0.15 * MARK.slotInset + 0.15 * 1.7 * MARK.blockAlongHalf;
+export const CYLINDER_MIN_SPAN_SCALE = 0.15 * (1.5 * MIN_STROKE_R + 1.5 * BORE_R);
 
 /**
  * Lay out a new cylinder from the two points of the creation gesture: the
  * start point is the barrel-side mount, `end` is where the rod finishes.
- * The drawn span runs through the same flex solve every mount drag uses, so
- * creating at a span and dragging to that span draw the identical part; a
- * span below the minimum clamps (a zero-length click cannot make a
- * degenerate part), keeping the drawn direction — or +x when there is none.
+ *
+ * The ram opens at mid-travel, so the drawn span is `1.5 × stroke + 1.5 × BORE`
+ * and the stroke is two thirds of what is left after the bore. A span below the
+ * minimum clamps (a zero-length click cannot make a degenerate part), keeping
+ * the drawn direction — or +x when there is none.
  */
 export function cylinderCreationLayout(
   start: { x: number; y: number },
@@ -301,7 +348,8 @@ export function cylinderCreationLayout(
   const dy = end.y - start.y;
   const drawn = Math.hypot(dx, dy);
   const angleRad = drawn < 1e-9 ? 0 : Math.atan2(dy, dx);
-  const flex = flexLayout(drawn, 0.15 * objectScale);
+  const r = 0.15 * objectScale;
+  const flex = cylinderMembers(((drawn - 1.5 * BORE_R * r) * 2) / 3, CYLINDER_CREATION_START, r);
   const ux = Math.cos(angleRad);
   const uy = Math.sin(angleRad);
   const at = (along: number) => ({ x: start.x + along * ux, y: start.y + along * uy });
@@ -319,21 +367,53 @@ export function cylinderCreationLayout(
 }
 
 /**
- * How far along the barrel the pin may sit: the slot's own travel.
+ * How far along the barrel the pin may sit: the head's own travel in the bore.
  *
- * One definition, read by three things that would otherwise disagree — the
- * pose normalizer clamps a stray pin into it, the drawing cuts the slot to it,
- * and the simulation treats it as the cylinder's stroke. A driven cylinder can
- * therefore only reach poses the part can actually be drawn in, and it reverses
- * at the ends of its own travel rather than telescoping out of its barrel.
+ * One definition, read by everything that would otherwise disagree — the pose
+ * normalizer clamps a stray pin into it, the drawing cuts the slot and places
+ * the stops by it, and the simulation treats it as the cylinder's stroke. A
+ * driven cylinder can therefore only reach poses the part can actually be
+ * drawn in, and it reverses at the ends of its own travel rather than
+ * telescoping out of its barrel.
+ *
+ * `usable` is the answer to "is there anywhere to go", and it is a flag rather
+ * than an inverted interval on purpose. A barrel shorter than its own bore has
+ * no travel, and every caller here clamps or samples against `[min, max]` —
+ * handed `max < min` they would silently do something. Object Scale can walk a
+ * legal barrel under the bore at any moment (it changes R and rebuilds), so
+ * this is a state the app reaches, not a defensive branch: the interval
+ * collapses to the one point the head can occupy and the flag says so out
+ * loud.
  */
 export function cylinderStrokeAlong(
   barrelLength: number,
   r: number = 0.15 * SettingsService.objectScale
-): { min: number; max: number } {
-  const half = slotHalfLength(r, barrelLength);
-  const mid = barrelLength / 2;
-  return { min: Math.max(mid - half, 0), max: mid + half };
+): { min: number; max: number; usable: boolean } {
+  const half = (BORE_R * r) / 2;
+  const min = half;
+  const max = barrelLength - half;
+  if (!(max - min >= MIN_STROKE_R * r)) {
+    const collapsed = barrelLength / 2;
+    return { min: collapsed, max: collapsed, usable: false };
+  }
+  return { min, max, usable: true };
+}
+
+/** The stroke a barrel of this length has, floored at nothing rather than going negative. */
+export function cylinderStroke(
+  barrelLength: number,
+  r: number = 0.15 * SettingsService.objectScale
+): number {
+  return Math.max(0, barrelLength - BORE_R * r);
+}
+
+/** Mount-to-mount span at each end of the travel, for a given stroke. */
+export function cylinderSpanRange(
+  stroke: number,
+  r: number
+): { retracted: number; extended: number } {
+  const lock = 1.5 * BORE_R * r;
+  return { retracted: stroke + lock, extended: 2 * stroke + lock };
 }
 
 /**
@@ -365,7 +445,15 @@ export function normalizedCylinderPose(
 
   const stroke = cylinderStrokeAlong(barrelLength, r);
   const projection = (pinPoint.x - barrelMount.x) * ux + (pinPoint.y - barrelMount.y) * uy;
-  const along = Math.min(Math.max(projection, stroke.min), stroke.max);
+  // Straighten always; clamp only where there is somewhere to clamp into.
+  //
+  // A barrel shorter than its own bore has no travel, and the interval has
+  // collapsed to a single point — snapping the piston onto it would move a
+  // joint the user never touched, with no undo entry, and destroy the geometry
+  // that scaling back would otherwise restore. Object Scale walks a part into
+  // this state without anyone touching the mechanism at all, so the honest
+  // response is to leave the part as drawn and let the solver refuse to run it.
+  const along = stroke.usable ? Math.min(Math.max(projection, stroke.min), stroke.max) : projection;
 
   return {
     barrelFar: { x: barrelMount.x, y: barrelMount.y },
@@ -387,51 +475,71 @@ export interface CylinderPose {
 /**
  * Re-pose a cylinder from its two mounts — the parametric drag (§ cylinder 6).
  *
- * The span between the mounts drives the flex solve above: the barrel absorbs
- * the change first between its minimum and maximum, then the rod grows without
- * bound. The `anchor` mount stays exactly where it is in every case, and
- * collinearity holds by construction: every returned point is on the axis.
- * `barrelLength`/`rodLength` are accepted for the callers' convenience but the
- * flex solve owns the member lengths — the same span always draws the same
- * part, whichever mount was dragged and whatever the part measured before.
+ * The span between the mounts drives the layout: inside the ram's own travel
+ * only the pin moves, and past either end of it the ram resizes. The `anchor`
+ * mount stays exactly where it is in every case, and collinearity holds by
+ * construction: every returned point is on the axis. `barrelLength` is read —
+ * it is what the current stroke is measured from, and the whole point of the
+ * rule is that a span inside the travel does *not* change it.
  */
 /**
- * The flexbox of the part (the user's own metaphor): as the span between the
- * mounts changes, the BARREL absorbs it first — high flex-grow, but with a
- * hard minimum and maximum — and the ROD only starts growing once the barrel
- * is at full length, with no maximum of its own. The pin rides the slot's
- * outer end, so the numbers compose by simple addition along the axis.
- *
- * All in R. The barrel's minimum is the shortest barrel whose slot still fits
- * inside it (`slotHalfLength` floors the slot at one block-length, so any
- * shorter barrel would wear a slot longer than itself); the rod's minimum
- * clears the block with room for its mount's pin.
+ * The smallest span the model can express: fully retracted at the floor stroke.
+ * A drag pushed past it clamps here rather than making a degenerate part.
  */
-// 1.3 and 2 objectScale, by review: the barrel's working range.
-const BARREL_MIN_R = 1.3 / 0.15;
-const BARREL_MAX_R = 2 / 0.15;
-const ROD_MIN_R = 1.7 * MARK.blockAlongHalf;
-const SPAN_MIN_R = BARREL_MIN_R - MARK.slotInset + ROD_MIN_R;
+const SPAN_MIN_R = MIN_STROKE_R + 1.5 * BORE_R;
 
-/** The flex solve: member lengths and pin position for a mount-to-mount span. */
-function flexLayout(
-  span: number,
+/** Barrel, rod and pin for a given size and position. The one place they are built. */
+export function cylinderMembers(
+  stroke: number,
+  start: number,
   r: number
-): { span: number; barrel: number; pinAlong: number; rod: number } {
-  const clamped = Math.max(span, SPAN_MIN_R * r);
-  const barrel = Math.min(
-    Math.max(clamped - ROD_MIN_R * r + MARK.slotInset * r, BARREL_MIN_R * r),
-    BARREL_MAX_R * r
-  );
-  const pinAlong = barrel - MARK.slotInset * r;
-  return { span: clamped, barrel, pinAlong, rod: clamped - pinAlong };
+): { span: number; barrel: number; pinAlong: number; rod: number; stroke: number; start: number } {
+  const held = Math.max(stroke, MIN_STROKE_R * r);
+  const at = Math.min(Math.max(start, 0), 1);
+  // Equal by construction. Everything below is addition along the axis.
+  const barrel = held + BORE_R * r;
+  const pinAlong = (BORE_R * r) / 2 + held * at;
+  return { span: pinAlong + barrel, barrel, pinAlong, rod: barrel, stroke: held, start: at };
+}
+
+/**
+ * Pose first, then size — the rule a mount drag follows, and the one the panel
+ * follows when a length is typed into *Starts at*.
+ *
+ * Inside the ram's own travel the size is untouched and the piston simply
+ * slides to where it was asked for. Push past a stop and the ram resizes, with
+ * barrel and rod staying equal: pulling past fully-extended grows it, and
+ * because *both* halves grow the mount travels twice as fast as the stroke
+ * does; pushing past fully-retracted shrinks it one-for-one until the floor.
+ *
+ * The ordering is the point. Posing is the common intent and resizing the rare
+ * one, so the cheap half of the gesture does the common thing and you have to
+ * push through a detent — the ram's own stop — to reach the expensive one. A
+ * drag that stays inside the travel is therefore guaranteed non-destructive:
+ * the ram you sized cannot be resized by accident.
+ */
+export function cylinderSpanLayout(
+  span: number,
+  currentStroke: number,
+  r: number
+): { span: number; barrel: number; pinAlong: number; rod: number; stroke: number; start: number } {
+  const stroke = Math.max(currentStroke, MIN_STROKE_R * r);
+  const lock = 1.5 * BORE_R * r;
+  const { retracted, extended } = cylinderSpanRange(stroke, r);
+  if (span >= retracted && span <= extended) {
+    return cylinderMembers(stroke, (span - retracted) / stroke, r);
+  }
+  if (span > extended) {
+    return cylinderMembers((span - lock) / 2, 1, r);
+  }
+  return cylinderMembers(span - lock, 0, r);
 }
 
 export function layoutCylinder(
   barrelMount: { x: number; y: number },
   rodMount: { x: number; y: number },
+  /** The barrel as it stands, which is what the current stroke is read from. */
   barrelLength: number,
-  rodLength: number,
   r: number,
   anchor: 'barrel' | 'rod',
   /**
@@ -466,7 +574,7 @@ export function layoutCylinder(
     }
   }
 
-  const flex = flexLayout(distance, r);
+  const flex = cylinderSpanLayout(distance, cylinderStroke(barrelLength, r), r);
 
   const a =
     anchor === 'barrel'
@@ -482,5 +590,64 @@ export function layoutCylinder(
     barrelNear: { x: a.x + flex.barrel * ux, y: a.y + flex.barrel * uy },
     pin: { x: a.x + flex.pinAlong * ux, y: a.y + flex.pinAlong * uy },
     rodFar: c,
+  };
+}
+
+/**
+ * Re-pose a cylinder from the size and position themselves — what the panel
+ * writes, and the one thing the span rule above cannot express.
+ *
+ * Size and pose are two different edits. Asked for a longer stroke at the same
+ * start, the resulting span usually still lies *inside* the old stroke's own
+ * travel — so the span rule, doing exactly what it is meant to, would hold the
+ * old size and slide the piston instead. A field labelled Travel would then
+ * quietly change the position and not the travel.
+ *
+ * The barrel mount is held and the rod mount moves, because the barrel mount is
+ * the end a ram is anchored by; `angleRad` keeps the part on the axis the panel
+ * shows rather than re-deriving it from mounts that are about to move.
+ */
+export function poseFromStrokeAndStart(
+  barrelMount: { x: number; y: number },
+  angleRad: number,
+  stroke: number,
+  start: number,
+  r: number
+): CylinderPose {
+  const members = cylinderMembers(stroke, start, r);
+  const ux = Math.cos(angleRad);
+  const uy = Math.sin(angleRad);
+  const at = (along: number) => ({
+    x: barrelMount.x + along * ux,
+    y: barrelMount.y + along * uy,
+  });
+  return {
+    barrelFar: at(0),
+    barrelNear: at(members.barrel),
+    pin: at(members.pinAlong),
+    rodFar: at(members.span),
+  };
+}
+
+/** The size and position a built cylinder currently has, read back off its joints. */
+export function cylinderSizeOf(
+  cylinder: Cylinder,
+  r: number = 0.15 * SettingsService.objectScale
+): { stroke: number; start: number; span: number; barrelLength: number } {
+  const barrelLength = Math.hypot(
+    cylinder.barrelNear.x - cylinder.barrelFar.x,
+    cylinder.barrelNear.y - cylinder.barrelFar.y
+  );
+  const span = Math.hypot(
+    cylinder.rodFar.x - cylinder.barrelFar.x,
+    cylinder.rodFar.y - cylinder.barrelFar.y
+  );
+  const stroke = cylinderStroke(barrelLength, r);
+  const { retracted } = cylinderSpanRange(stroke, r);
+  return {
+    stroke,
+    start: stroke > 0 ? Math.min(Math.max((span - retracted) / stroke, 0), 1) : 0,
+    span,
+    barrelLength,
   };
 }

@@ -75,7 +75,7 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
   Scotch_Yoke:
     '2P.Fe,1E8.K,0.1011.MA,A,0,0,0.GB,B,Fe,0,0.OC,C,Fe,0VG,0.GD,D,Fe,Fe,0.HE,E,Fe,0,0,CD,C,D.LF,F,Fe,0VG,0..YRAB,AB,Fe,Fe,7q,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,Fe,07q,303e9f,C,D,,.YPBE,BE,Fe,0,0,0,,B,E,,.YPCF,CF,Fe,0,0,0,,C,F,,...N_Z',
   Cylinder_Boom:
-    '2P.Fe,1E8.K,0.1011.KO,O,0,0,0.GC,C,0,_W,0.KG,G,ku,0,0.GN,N,NS,VG,0.OP,P,S8,P0,0.pS,S,S8,P0,0,GN,G,N..YROC,OC,Fe,Fe,0,VG,c5cae9,O,C,,.YRGN,GN,Fe,Fe,ZA,Fe,303e9f,G,N,,.YRPC,PC,Fe,Fe,E4,hm,0d125a,P,C,,.YPPS,PS,Fe,0,0,0,,P,S,,...N_f',
+    '2P.Fe,1E8.K,0.1011.KO,O,0,0,0.GC,C,0,_W,0.KG,G,ku,0,0.GN,N,Fe,fh,0.OP,P,VG,Kr,0.pS,S,VG,Kr,0,GN,G,N..YROC,OC,Fe,Fe,0,VG,c5cae9,O,C,,.YRGN,GN,Fe,Fe,VG,Kr,303e9f,G,N,,.YRPC,PC,Fe,Fe,Fe,fh,0d125a,P,C,,.YPPS,PS,Fe,0,0,0,,P,S,,...N_f',
   Pivoting_Gripper:
     '2P.Fe,1E8.K,0.1011.GA,A,0U5,0,0.GM,M,DZ,0,0.GB,B,0Hj,Fj,0.GC,C,0Hj,0FZ,0.KF,F,0V6,X9,0.GG,G,A,X9,0.GK,K,_o,GS,0.KH,H,0V6,0X0,0.GI,I,A,0X0,0.GJ,J,_d,0Bn,0.NP,P,0U5,0,0.LN,N,DZ,0,0..YRAMBC,AMBC,Fe,Fe,0C-,2,c5cae9,A,M,B,C,,.YRBG,BG,Fe,Fe,08o,OR,303e9f,B,G,,.YRCI,CI,Fe,Fe,08o,0OH,0d125a,C,I,,.YRFGK,FGK,Fe,Fe,Ae,Rb,B2DFDB,F,G,K,,.YRHIJ,HIJ,Fe,Fe,Aa,0Px,26A69A,H,I,J,,.YPAP,AP,Fe,0,0,0,,A,P,,.YPMN,MN,Fe,0,0,0,,M,N,,...N_j',
   Radial_Engine:

@@ -82,7 +82,11 @@ describe('creating a cylinder from the two-point gesture', () => {
 
     const sealed = resolve(harness);
     expect(sealed).toBeDefined();
-    // Minimum span is the flex solve's floor (CYLINDER_MIN_SPAN_SCALE), along +x.
+    // The floor a *drawing* gesture clamps at, which is not the floor a
+    // cylinder can exist at: a new ram opens at mid-travel, so it needs half a
+    // stroke of span on top of a fully-retracted one to reach the minimum
+    // stroke. That is what CYLINDER_MIN_SPAN_SCALE now means. Along +x, since
+    // a zero-length gesture names no direction.
     const span = Math.hypot(
       sealed.rodFar.x - sealed.barrelFar.x,
       sealed.rodFar.y - sealed.barrelFar.y
@@ -222,18 +226,53 @@ describe('the invariant: no write can leave a sealed cylinder bent', () => {
     const h = harnessWithCylinder();
     const mountA = { x: h.sealed.barrelFar.x, y: h.sealed.barrelFar.y };
     const mountC = { x: h.sealed.rodFar.x, y: h.sealed.rodFar.y };
-    h.sealed.barrelNear.y += 220;
+    // A write that bypassed every gesture: the buried end swung 45 degrees off
+    // the axis about its own mount. It keeps the barrel's *length*, because
+    // that length is now the part's size — barrel and rod are equal by
+    // construction, so a write that changed it is asking for a different ram
+    // rather than a bent one, which is the case below. Swung much further it
+    // would also end up further from the rod's mount than the barrel's own
+    // mount is, and the resolver would name the two barrel ends the other way
+    // round: a different failure, and not the one this is about.
+    const offset = { x: h.sealed.barrelNear.x - mountA.x, y: h.sealed.barrelNear.y - mountA.y };
+    const swing = Math.PI / 4;
+    const barrelLength = Math.hypot(offset.x, offset.y);
+    h.sealed.barrelNear.x = mountA.x + offset.x * Math.cos(swing) - offset.y * Math.sin(swing);
+    h.sealed.barrelNear.y = mountA.y + offset.x * Math.sin(swing) + offset.y * Math.cos(swing);
 
     h.service.updateMechanism();
 
     const restored = resolve(h);
     expect(restored).toBeDefined();
     expect(offAxis(restored.barrelFar, restored.rodFar, restored.barrelNear)).toBeLessThan(1e-3);
+    expect(
+      Math.hypot(restored.barrelNear.x - mountA.x, restored.barrelNear.y - mountA.y)
+    ).toBeCloseTo(barrelLength, 3);
     // The mounts are the user's handles; normalization never moves them.
     expect(restored.barrelFar.x).toBeCloseTo(mountA.x, 6);
     expect(restored.barrelFar.y).toBeCloseTo(mountA.y, 6);
     expect(restored.rodFar.x).toBeCloseTo(mountC.x, 6);
     expect(restored.rodFar.y).toBeCloseTo(mountC.y, 6);
+  });
+
+  it('refuses to draw a part whose barrel a stray write lengthened', () => {
+    // The normalizer is a straightener, not a resizer: it holds the mounts and
+    // the barrel it finds, so a write that changed the barrel's length asks for
+    // a ram whose rod no longer matches it. The invariant is enforced where
+    // cylinders are *built* — creation, drag, panel — and the geometric test is
+    // the tripwire for everything else, so what has to happen here is that the
+    // part stops being recognised rather than being drawn as a cylinder it is
+    // not. It stays a cylinder structurally, which is what keeps the guards on
+    // it while it is wrong.
+    const h = harnessWithCylinder();
+    const mountA = { x: h.sealed.barrelFar.x, y: h.sealed.barrelFar.y };
+    h.sealed.barrelNear.x = mountA.x + 2 * (h.sealed.barrelNear.x - mountA.x);
+    h.sealed.barrelNear.y = mountA.y + 2 * (h.sealed.barrelNear.y - mountA.y);
+
+    h.service.updateMechanism();
+
+    expect(resolve(h)).toBeUndefined();
+    expect(h.service.cylinderAt(h.sealed.rodFar)).toBeDefined();
   });
 
   it('is the identity for an assembly that is already valid', () => {

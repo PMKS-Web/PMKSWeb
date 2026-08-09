@@ -131,11 +131,19 @@ export const GROUND_STROKE = {
  */
 export const CYLINDER = {
   /**
-   * Was 2.95 — nearly twice the block. The redesign reads the barrel as a
-   * sleeve just proud of the block rather than a fat body: a quarter over the
-   * block's half-height keeps the step visible without the bulk.
+   * The barrel is a body the rod lives inside, so it has to be visibly fatter
+   * than the rod along its whole length.
+   *
+   * This was cut to 1.9 — a quarter over the block's half-height — when the
+   * barrel was drawn only as far as the piston. As a short stub behind the
+   * block that read as a sleeve; as the full-length bar it now is, at 1.9 the
+   * rod's 1.525 sits so close inside it that the two merge into one uniform
+   * capsule and the mouth, where one rigid body ends and the other continues,
+   * disappears. 2.6 leaves a clear margin of barrel above and below the rod
+   * for the whole of the inserted length, which is the cue the whole drawing
+   * rests on, without going back to the 2.95 slab.
    */
-  barrelHalf: 1.9,
+  barrelHalf: 2.6,
   /**
    * Exactly the block's own half-height, so block and rod form one uniform bar.
    * It was 1.84 — the same mockup rounding `barHalf` documents — and the extra
@@ -153,33 +161,66 @@ export const CYLINDER = {
 } as const;
 
 /**
- * The barrel, collapsed: rounded on its own far joint and cut flat inside the
- * block, so the rod disappears into it instead of stopping against it.
+ * The barrel: its own bar, at its own length, rounded on the mount it pivots
+ * about and cut square at the mouth the rod slides through.
  *
- * `reach` is how far the barrel's far joint sits from the block, measured
- * against the slot with the rod in the +x direction — so the barrel runs the
- * other way and `reach` is negative.
+ * `anchor` and `mouth` are the barrel's two ends in the mark's frame, which is
+ * centred on the *pin* with +x toward the rod — so the anchor is behind the
+ * piston (negative) and the mouth ahead of it (positive), and the barrel
+ * straddles the piston rather than stopping at it.
+ *
+ * That straddling is the whole point, and it is what this used to get wrong.
+ * The barrel was drawn from the piston back to the anchor, so it grew and
+ * shrank as the ram cycled: the one part of the assembly that is rigid was the
+ * one part visibly changing length, and the stroke was invisible because
+ * nothing marked where the bore ended. Drawn at its member length instead, only
+ * the *exposed* rod changes, which is what a ram actually does — and how much
+ * rod is still inside is the stroke, legible without any annotation.
  */
-export function barrelCollapsedPath(r: number, reach: number): string {
+export function barrelPath(r: number, anchor: number, mouth: number): string {
   const h = CYLINDER.barrelHalf * r;
-  const cut = CYLINDER.flatCut * MARK.blockAlongHalf * r * Math.sign(reach || -1) * -1;
-  const cap = reach;
-  const sweep = reach < 0 ? 1 : 0;
   return (
-    `M ${cap} ${-h} L ${cut} ${-h} L ${cut} ${h} L ${cap} ${h} ` +
-    `A ${h} ${h} 0 0 ${sweep} ${cap} ${-h} Z`
+    `M ${mouth} ${-h} L ${anchor} ${-h} ` +
+    `A ${h} ${h} 0 0 0 ${anchor} ${h} ` +
+    `L ${mouth} ${h} Z`
   );
 }
 
 /**
- * Rod and block as one body: square where it slides inside the barrel — it is a
- * cut plane, not a free end — and rounded only on the joint it reaches.
+ * Rod and block as one body: square where it disappears into the barrel — it is
+ * a cut plane, not a free end — and rounded only on the joint it reaches.
+ *
+ * Drawn over the barrel at the fill alpha every link uses, so the length of it
+ * still inside the bore reads as a darker band. One cue, no callout, and it is
+ * the cue that carries the whole structure.
  */
 export function rodBodyPath(r: number, reach: number): string {
   const h = CYLINDER.rodHalf * r;
   const inner = -MARK.blockAlongHalf * r * Math.sign(reach || 1);
   const sweep = reach > 0 ? 1 : 0;
   return `M ${inner} ${-h} L ${reach} ${-h} A ${h} ${h} 0 0 ${sweep} ${reach} ${h} L ${inner} ${h} Z`;
+}
+
+/**
+ * The two stops: where the piston head bottoms out at each end of its travel,
+ * marked on the barrel's own edges.
+ *
+ * Geometry, not annotation. They belong to the part, so they turn and scale
+ * with it and stay true whatever the mechanism is doing — which a dimension
+ * line drawn beside the barrel would not. The reading is "the head lives
+ * between these", and it needs no number to say it.
+ *
+ * `limits` are the head's extreme positions in the mark's frame. At the floor
+ * stroke the two coincide, which is honest: a ram with no travel should look
+ * like one.
+ */
+export function cylinderStopMarks(r: number, limits: [number, number]): Segment[] {
+  const h = CYLINDER.barrelHalf * r;
+  const leg = 0.42 * r;
+  return limits.flatMap((x) => [
+    { x1: x, y1: -h + leg * 0.5, x2: x, y2: -h - leg },
+    { x1: x, y1: h - leg * 0.5, x2: x, y2: h + leg },
+  ]);
 }
 
 /**
@@ -198,23 +239,18 @@ export function cylinderBlockPath(r: number): string {
   );
 }
 
-/** The bore, for the revealed state: the barrel's own slot, cut through it. */
-export function borePath(r: number, halfLength: number): string {
-  return capsulePath(-halfLength, halfLength, CYLINDER.boreHalf * r);
-}
-
 /**
- * The dotted line inside the barrel that says "this part translates": from
- * just clear of the barrel mount's pin to just short of the block. Drawn
- * white at half opacity over the barrel fill, sized in R so it scales with
- * the part like every other mark.
+ * The dotted line inside the barrel that says "this part translates": along the
+ * blind end of the bore, from just clear of the anchor to just short of the
+ * piston. Drawn white at half opacity over the barrel fill, sized in R so it
+ * scales with the part like every other mark.
  */
 export function cylinderMotionDash(
   r: number,
-  barrelReach: number
+  anchor: number
 ): { x1: number; x2: number; width: number; dashArray: string } {
   return {
-    x1: barrelReach + 2.3 * r,
+    x1: anchor + 2.3 * r,
     x2: -MARK.blockAlongHalf * r - 0.55 * r,
     width: 0.2 * r,
     dashArray: `${0.55 * r} ${0.42 * r}`,
@@ -223,18 +259,25 @@ export function cylinderMotionDash(
 
 /**
  * The exact outline of the assembled part, for the selection stroke: the
- * barrel's profile to its flat cut, a sharp step down to the block-and-rod
- * bar, and on to the rod's end. The only curves are the two end caps — a
- * selection is a crisp trace of the silhouette, not a softened echo of it.
+ * barrel's profile from its anchor to its mouth, a sharp step down to the rod,
+ * and on to the rod's end. The only curves are the two end caps — a selection
+ * is a crisp trace of the silhouette, not a softened echo of it.
+ *
+ * A step, not a fade: the mouth is where one rigid body ends and another
+ * continues, and the outline should say so.
  */
-export function cylinderContourPath(r: number, barrelReach: number, rodReach: number): string {
+export function cylinderContourPath(
+  r: number,
+  anchor: number,
+  mouth: number,
+  rodReach: number
+): string {
   const hB = CYLINDER.barrelHalf * r;
   const hR = CYLINDER.rodHalf * r;
-  const cut = CYLINDER.flatCut * MARK.blockAlongHalf * r;
   return (
-    `M ${cut} ${-hB} L ${barrelReach} ${-hB} A ${hB} ${hB} 0 0 0 ${barrelReach} ${hB} ` +
-    `L ${cut} ${hB} L ${cut} ${hR} L ${rodReach} ${hR} ` +
-    `A ${hR} ${hR} 0 0 0 ${rodReach} ${-hR} L ${cut} ${-hR} Z`
+    `M ${mouth} ${-hB} L ${anchor} ${-hB} A ${hB} ${hB} 0 0 0 ${anchor} ${hB} ` +
+    `L ${mouth} ${hB} L ${mouth} ${hR} L ${rodReach} ${hR} ` +
+    `A ${hR} ${hR} 0 0 0 ${rodReach} ${-hR} L ${mouth} ${-hR} Z`
   );
 }
 
