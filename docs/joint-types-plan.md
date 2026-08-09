@@ -1005,6 +1005,51 @@ before this lands produces a set of fixtures that all record the same refusal.
 > in `PMKS_Verification/reference-data/motiongen-library/gripper` — the comparison that spec already
 > holds and does not yet run. Every mechanism in §4.1 keeps the mobility it reports today.
 
+### The cylinder, re-parameterised
+
+Shipped after Phase 7a, from a design package rather than from this plan, and worth recording here
+because it changes what §2.7 means.
+
+**Barrel and rod are now the same length, always.** Everything else follows: retracted and extended
+stop being free to disagree with the stroke, an impossible cylinder can no longer be described, and
+the resolution table for which number gives way is gone because nothing is left to negotiate. A ram
+is one size number and one position number, and its only remaining failure is being too small.
+
+- **Nothing is stored for it.** Barrel and rod are still joint positions, so the codec is untouched;
+  stroke and start are derived views the panel reads and writes. The alternative — two fields on the
+  joint — is the same two knobs with a second place that can disagree about one geometry.
+- **The invariant lives at the constructive paths, not in `normalizedCylinderPose`.** That function
+  holds both mounts by contract, and the shortest span the new model can express (20.3 R) is longer
+  than the shortest cylinder the old one could draw (12.4 R) — asked to equalise an under-length
+  part it has no answer. It also runs on every rebuild, where its repair path resets link CoM
+  without carrying forces through the new frame; that was only ever safe because it was the
+  identity, and it still is.
+- **The three-phase drag and the layout function turned out to be the same function.** Inside the
+  ram's travel a span moves only the piston; past a stop it resizes with both halves equal. So
+  `flexLayout` was replaced rather than supplemented, and the behaviour applies to both mounts and
+  to a mount a neighbour carries.
+- **Size and pose needed separate entry points.** Asked for a longer stroke at the same position,
+  the resulting span usually still lies inside the *old* stroke's travel, so the span rule would
+  hold the size and slide the piston instead — a field labelled Travel changing the position.
+- **The bore is 13.28 R, not the design package's 11.28 R.** That number came from a 1.8 R slot
+  inset; this repo draws slots at 2.8 R (§2.8), because at 1.8 R a channel reached the joint circle
+  and the bar read as cut through. Keeping the whole piston head inside the bore — which the old
+  rule did not — costs another 7.68 R. Every cylinder's stroke is shorter than it was, and that is
+  the change rather than a side effect of it.
+- **§2.7's "collapsed skin" was drawing the barrel to the piston**, so the one rigid part of the
+  assembly was the one part visibly changing length. It is drawn at its member length now, with two
+  stops on its edges where the head bottoms out. No numbers on the canvas: the panel has those.
+- **Two failures the app reaches on its own now say so.** A sealed input with no travel is refused
+  rather than falling through to the ordinary prismatic drive, which would have telescoped the rod
+  out of its own barrel; and a ram bigger than the machine it drives gets a warning beside
+  `invalidReason` rather than in it, because the mechanism is valid and simply cannot use the whole
+  stroke. Warned about, not clamped.
+
+**Still open:** `MIN_STROKE_R` is a hard floor at 0.34 R, which is not a *readable* minimum — the
+same unresolved question as the minimum grounded rail (§7). Two pre-existing defects were found and
+filed rather than fixed here: a cylinder welded into a compound is torn by a drag, and no Edit panel
+field anywhere writes an undo entry.
+
 ---
 
 ## 4. Test ladder
