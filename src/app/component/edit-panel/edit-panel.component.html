@@ -123,7 +123,7 @@
           [disabled]="!canToggleInput(activeSrv.selectedJoint)"
           [click]="mechanismService.adjustInput.bind(mechanismService)"
         >
-          {{ gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Make Input' }}
+          {{ gridUtils.isVisuallyInput(activeSrv.selectedJoint) ? 'Remove Input' : 'Add Input' }}
         </button-block>
       </collapsible-subseciton>
       @if (gridUtils.isVisuallyInput(activeSrv.selectedJoint)) {
@@ -145,7 +145,7 @@
                 [formGroup]="jointForm"
                 _formControl="inputSpeed"
                 [unit]="linearSpeedUnitLabel"
-                tooltip="How fast this block travels along its slot. A negative value flips the direction. Drives the animation and dynamic force analysis."
+                tooltip="How fast this block slides. Negative reverses it."
                 >Input Speed
               </input-block>
             } @else {
@@ -154,7 +154,7 @@
                 _formControl="inputSpeed"
                 [unitOptions]="speedUnitOptions"
                 unitFormControl="inputSpeedUnit"
-                tooltip="How fast this input joint turns, in the unit picked beside the value. A negative value flips the direction. Drives the animation and dynamic force analysis."
+                tooltip="How fast this joint turns. Negative reverses it."
                 >Input Speed
               </input-block>
             }
@@ -176,7 +176,7 @@
         <color-picker type="joint"> Joint Color</color-picker>
       </collapsible-subseciton>
       <collapsible-subseciton
-        titleLabel="Distance To Joints"
+        titleLabel="Distance to Joints"
         [expanded]="sectionExpanded['JDistToJ']"
         (opened)="sectionExpanded['JDistToJ'] = true"
         (closed)="sectionExpanded['JDistToJ'] = false"
@@ -187,7 +187,7 @@
             <dual-input-block
               label1="D"
               label2="⊾"
-              tooltip="TODO"
+              tooltip="How far this joint is from that one, and in what direction. Editing either moves that joint."
               [formGroup]="jointForm"
               formSubGroup="otherJoints"
               [formControl1]="(i * 2).toString()"
@@ -237,7 +237,7 @@
           unitFormControl="travelUnit"
           (fieldEntry)="setCylinderRangeOverlay($event === -2 ? undefined : 'travel')"
           [emitterOutputID]="-1"
-          tooltip="How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it."
+          tooltip="How far the rod moves. The picker switches between the stroke itself and the closed and open lengths — one number, three ways of saying it."
           >Travel
         </input-block>
         <input-block
@@ -247,7 +247,7 @@
           unitFormControl="startUnit"
           (fieldEntry)="setCylinderRangeOverlay($event === -2 ? undefined : 'start')"
           [emitterOutputID]="-1"
-          tooltip="Where the piston sits at the start of the cycle: as a percentage of the stroke, or as the length the ram is at. A length outside the travel resizes the ram to reach it, exactly as dragging the mount does."
+          tooltip="Where the rod begins its cycle: a share of the travel, or a length. Outside the travel, the cylinder resizes to reach it."
           >Starts at
         </input-block>
         <!-- Same on-canvas overlay a link's angle field draws: the ram's axis is
@@ -257,7 +257,7 @@
           _formControl="angle"
           (fieldEntry)="setShowLinkAngleOverlay($event)"
           [emitterOutputID]="-1"
-          tooltip="The axis the ram points along, barrel mount to rod mount."
+          tooltip="The direction the cylinder points, mount to mount."
           >Angle
         </input-block>
         @if (cylinderClamped) {
@@ -267,7 +267,7 @@
           [customIcon]="cyl.slider.input ? 'remove_input' : 'add_input'"
           [click]="toggleCylinderInput.bind(this)"
         >
-          {{ cyl.slider.input ? 'Remove Input' : 'Make Input' }}
+          {{ cyl.slider.input ? 'Remove Input' : 'Add Input' }}
         </button-block>
       </collapsible-subseciton>
       @if (cyl.slider.input) {
@@ -288,7 +288,7 @@
               [formGroup]="jointForm"
               _formControl="inputSpeed"
               [unit]="linearSpeedUnitLabel"
-              tooltip="How fast the rod extends along the cylinder's axis. A negative value flips the direction. Drives the animation and dynamic force analysis."
+              tooltip="How fast the rod extends. Negative retracts it."
               >Expansion Speed
             </input-block>
           </collapsible-subseciton>
@@ -423,7 +423,7 @@
           formControl1="xComp"
           formControl2="yComp"
           [formGroup]="forceForm"
-          tooltip="The x and y components of the force in Newtons | lbf."
+          tooltip="The x and y components of this force, in {{ forceUnitLabel }}."
         >
           Force Components
         </dual-input-block>

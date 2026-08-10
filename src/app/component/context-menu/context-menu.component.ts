@@ -2,6 +2,7 @@ import { Component, Inject, Input, ChangeDetectionStrategy } from '@angular/core
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
+import { CANNOT_EDIT } from '../../ui-text';
 
 export class cMenuItem {
   public label: string = 'none';
@@ -20,7 +21,7 @@ export class cMenuItem {
 
   actionWrapper() {
     if (NewGridComponent.instance.mechanismSrv.mechanismTimeStep !== 0) {
-      NewGridComponent.sendNotification('Context menu cannot be used while simulation is running');
+      NewGridComponent.sendNotification(CANNOT_EDIT.animating);
       return;
     }
     this.action();

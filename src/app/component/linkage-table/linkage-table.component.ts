@@ -17,6 +17,7 @@ import { ToolbarComponent } from '../toolbar/toolbar.component';
 import { MechanismService } from '../../services/mechanism.service';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import { MODEL_SCALE } from '../../model/render-scale';
+import { NOT_A } from '../../ui-text';
 
 @Component({
   selector: 'app-linkage-table',
@@ -76,7 +77,7 @@ export class LinkageTableComponent implements OnInit {
     const sealed = this.mechanismService.cylinderAt(joint);
     if (sealed && (jointProp === 'x' || jointProp === 'y')) {
       if (isNaN(Number($event.target.value))) {
-        return NewGridComponent.sendNotification('Check Joint Value');
+        return NewGridComponent.sendNotification(NOT_A.length);
       }
       const value = Number($event.target.value) * MODEL_SCALE;
       const wanted = new Coord(
@@ -93,7 +94,7 @@ export class LinkageTableComponent implements OnInit {
       // TODO: When changing the joint positions, be sure to also change the ('d') path of the link
       case 'x':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Joint X Value');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         joint.x = Number($event.target.value) * MODEL_SCALE;
         joint.links.forEach((l) => {
@@ -115,7 +116,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'y':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Joint Y Value');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         joint.y = Number($event.target.value) * MODEL_SCALE;
         joint.links.forEach((l) => {
@@ -135,7 +136,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'id':
         if (!(typeof $event.target.value === 'string')) {
-          return NewGridComponent.sendNotification('Check Joint ID');
+          return NewGridComponent.sendNotification(NOT_A.name);
         }
         joint.links.forEach((l) => {
           l.id = l.id.replace(joint.id, $event.target.value);
@@ -144,7 +145,7 @@ export class LinkageTableComponent implements OnInit {
         break;
       case 'angle':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Angle Value');
+          return NewGridComponent.sendNotification(NOT_A.angle);
         }
         if (!(joint instanceof PrisJoint)) {
           return;
@@ -164,25 +165,25 @@ export class LinkageTableComponent implements OnInit {
     switch (linkProp) {
       case 'mass':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Link Mass');
+          return NewGridComponent.sendNotification(NOT_A.mass);
         }
         link.mass = Number($event.target.value);
         break;
       case 'massMoI':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Link Mass MoI');
+          return NewGridComponent.sendNotification(NOT_A.momentOfInertia);
         }
         link.massMoI = Number($event.target.value);
         break;
       case 'CoMX':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Link CoM Y');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         link.CoM.x = Number($event.target.value) * MODEL_SCALE;
         break;
       case 'CoMY':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Link CoM Y');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         link.CoM.y = Number($event.target.value) * MODEL_SCALE;
         break;
@@ -198,31 +199,31 @@ export class LinkageTableComponent implements OnInit {
     switch (forceProp) {
       case 'id':
         if (!(typeof $event.target.value === 'string')) {
-          return NewGridComponent.sendNotification('Check Force ID');
+          return NewGridComponent.sendNotification(NOT_A.name);
         }
         force.id = $event.target.value;
         break;
       case 'xPos':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Force X Position');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         force.moveAnchor(new Coord(Number($event.target.value) * MODEL_SCALE, force.startCoord.y));
         break;
       case 'yPos':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Force Y Position');
+          return NewGridComponent.sendNotification(NOT_A.length);
         }
         force.moveAnchor(new Coord(force.startCoord.x, Number($event.target.value) * MODEL_SCALE));
         break;
       case 'mag':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Force Magnitude');
+          return NewGridComponent.sendNotification(NOT_A.force);
         }
         force.setMagnitude(Number($event.target.value));
         break;
       case 'angle':
         if (isNaN(Number($event.target.value))) {
-          return NewGridComponent.sendNotification('Check Force Angle');
+          return NewGridComponent.sendNotification(NOT_A.angle);
         }
         force.setDirectionRadians(Number($event.target.value) * (Math.PI / 180));
         break;

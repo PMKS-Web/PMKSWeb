@@ -47,7 +47,7 @@
           </span>
         </mat-list-item>
         <mat-list-item lines="3">
-          <span matListItemTitle>Degress of freedom must be one</span>
+          <span matListItemTitle>Degrees of freedom must be one</span>
           <span
             >DOF = 3*(#_of_Links-1) - 2*(#_of_joints). Count both revolute joints and slider
             joints.</span
@@ -123,7 +123,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The X and Y position of the selected joint graphed over time"
+                matTooltip="Where this joint is, through the cycle"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -150,7 +150,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The velocity of the selected joint graphed"
+                matTooltip="How fast this joint moves, and which way"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -177,7 +177,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The acceleration of the selected joint graphed"
+                matTooltip="How this joint’s velocity changes"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -201,7 +201,7 @@
         (closed)="graphExpanded['JForceAna'] = false"
       >
         <radio-block
-          tooltip="Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set on the input joint in the Edit panel."
+          tooltip="Static holds the mechanism still; In-motion includes the forces of movement."
           option1="Static (Equilibrium)"
           option2="In-motion (Dynamic)"
           [formGroup]="this.forceAnalysisFormGroup"
@@ -224,7 +224,7 @@
               <mat-panel-title> Force on Link {{ row.linkName }} </mat-panel-title>
               <mat-panel-description>
                 <mat-icon
-                  matTooltip="The reaction force that link carries at the selected joint, graphed over time"
+                  matTooltip="The reaction that link carries at this joint"
                   [matTooltipShowDelay]="1000"
                   id="graph-help"
                   >help_outline
@@ -254,7 +254,7 @@
               </mat-panel-title>
               <mat-panel-description>
                 <mat-icon
-                  matTooltip="The torque or axial force applied by the selected input joint, graphed over time."
+                  matTooltip="The effort the input has to supply to drive the mechanism"
                   [matTooltipShowDelay]="1000"
                   id="graph-help"
                   >help_outline
@@ -311,7 +311,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The angle of the selected above the horizontal of the link graphed over time"
+                matTooltip="The angle of this link above the horizontal"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -338,7 +338,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The angular velocity of the selected link graphed"
+                matTooltip="How fast this link turns, and which way"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -365,7 +365,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The angular acceleration of the selected link graphed"
+                matTooltip="How this link’s turning rate changes"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -395,7 +395,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The position of the selected link's COM graphed"
+                matTooltip="Where this link’s centre of mass is"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -422,7 +422,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The velocity of the selected link's COM graphed"
+                matTooltip="How fast this link’s centre of mass moves"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -449,7 +449,7 @@
             </mat-panel-title>
             <mat-panel-description>
               <mat-icon
-                matTooltip="The acceleration of the selected link's COM graphed"
+                matTooltip="How this link’s centre of mass changes speed"
                 [matTooltipShowDelay]="1000"
                 id="graph-help"
                 >help_outline
@@ -473,7 +473,7 @@
         (closed)="graphExpanded['LForceAna'] = false"
       >
         <radio-block
-          tooltip="Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set on the input joint in the Edit panel."
+          tooltip="Static holds the mechanism still; In-motion includes the forces of movement."
           option1="Static (Equilibrium)"
           option2="In-motion (Dynamic)"
           [formGroup]="this.forceAnalysisFormGroup"
@@ -496,7 +496,7 @@
               <mat-panel-title> Force at Joint {{ row.jointName }} </mat-panel-title>
               <mat-panel-description>
                 <mat-icon
-                  matTooltip="The force this link experiences at that joint, graphed over time"
+                  matTooltip="The reaction this link carries at that joint"
                   [matTooltipShowDelay]="1000"
                   id="graph-help"
                   >help_outline

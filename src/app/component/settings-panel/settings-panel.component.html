@@ -47,7 +47,7 @@
         type="number"
         [formGroup]="this.settingsForm"
         _formControl="objectScale"
-        tooltip="Scales all links, joints, and forces. A save and reload is for changes to take effect. (Default: 1)"
+        tooltip="How big joints, blocks and cylinders are drawn, relative to the links. Takes effect immediately. (Default: 0.7)"
         >Object Scale
       </input-block>
       <button-block icon="auto_fix_normal" [click]="updateObjectScale.bind(this)"

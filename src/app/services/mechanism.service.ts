@@ -1506,7 +1506,7 @@ export class MechanismService {
       return `Slider ${names} has nothing to slide along. Drag it onto a link to cut a slot, or ground it to fix its direction.`;
     }
     if (!this.joints.some((joint) => joint instanceof RealJoint && joint.input)) {
-      return 'No joint is driven. Right-click a joint and choose Make Input to say what moves the mechanism.';
+      return 'No joint is driven. Right-click a joint and choose Add Input to say what moves the mechanism.';
     }
     // A driven joint the actuator record cannot describe -- most often because
     // an edit added a third body to it long after Driven was switched on. The

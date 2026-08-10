@@ -530,6 +530,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return [{ value: '0', label: this.linearSpeedUnitLabel }];
   }
 
+  /** Whichever force unit the mechanism is currently in — N or lbf, not both. */
+  get forceUnitLabel(): string {
+    return this.nup.unitLabel(this.settingsService.forceUnit.value);
+  }
+
   /** A translation's speed has exactly one unit — shown as plain text, no picker. */
   get linearSpeedUnitLabel(): string {
     const unit = this.settingsService.lengthUnit.value;

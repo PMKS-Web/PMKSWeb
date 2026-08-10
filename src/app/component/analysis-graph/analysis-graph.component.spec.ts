@@ -473,8 +473,8 @@ describe('AnalysisGraphComponent rendered controls', () => {
     fixture.detectChanges();
 
     const loader = TestbedHarnessEnvironment.loader(fixture);
-    const xCheckbox = await loader.getHarness(MatCheckboxHarness.with({ label: 'X-Comp' }));
-    const yCheckbox = await loader.getHarness(MatCheckboxHarness.with({ label: 'Y-Comp' }));
+    const xCheckbox = await loader.getHarness(MatCheckboxHarness.with({ label: 'X' }));
+    const yCheckbox = await loader.getHarness(MatCheckboxHarness.with({ label: 'Y' }));
     expect(await xCheckbox.isChecked()).toBe(true);
     expect(await yCheckbox.isChecked()).toBe(true);
 

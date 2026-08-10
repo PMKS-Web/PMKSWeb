@@ -50,9 +50,15 @@ export class SettingsService {
   tempGridDisable: boolean = false; //This is to hide the grid lines to fit only to the linkage when doing a svg fit
 
   isGridDebugOn: boolean = false;
-  // 1 in user units; the internal world is MODEL_SCALE times larger, and every
+  // In user units; the internal world is MODEL_SCALE times larger, and every
   // visual size in the mark system is a multiple of this number.
-  static _objectScale = new BehaviorSubject(1 * MODEL_SCALE);
+  //
+  // 0.7 rather than 1: joints, blocks and cylinder heads at full size crowd a
+  // linkage of ordinary proportions, and the first thing most people did was
+  // turn it down. A mechanism arriving from a URL carries its own scale, so
+  // this is what a new project starts at and what an older URL without the
+  // setting falls back to.
+  static _objectScale = new BehaviorSubject(0.7 * MODEL_SCALE);
 
   static get objectScale(): number {
     return SettingsService._objectScale.value;

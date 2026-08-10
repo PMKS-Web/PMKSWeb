@@ -204,21 +204,66 @@ Travel and Starts at than a third clause ever did.
 | Expansion Speed | `How fast the rod extends. Negative retracts it.` |
 | Force Analysis Type | `Static holds the mechanism still; In-motion includes the forces of movement.` |
 
-**Vocabulary.** The cylinder tooltips introduce eleven terms in four fields —
-*rod, stroke, travel, closed, open, mount-to-mount, piston, ram, mount, barrel
-mount, rod mount* — and use two names for the part itself:
+**Vocabulary — open, and the one thing here still to decide.**
 
-- **ram** in `Starts at` and `Angle`
-- **cylinder** in `Expansion Speed`, in the panel title, in the menus, and in
-  every message
+Six words are in play for one part and its pieces:
 
-`ram` should go. It is the right word and the wrong one for this app: nothing
-else on screen says it, so a reader meets it exactly once and has to work out
-that it is the thing they already selected.
+| Word | Names | Appears in |
+| --- | --- | --- |
+| **cylinder** | the whole part | panel title, menus, every message, one tooltip |
+| **ram** | the whole part | two tooltips, two clamp messages |
+| **barrel** | the fat outer body | code, one tooltip (`barrel mount`) |
+| **rod** | the thin bar that slides out | panel tooltips, messages |
+| **piston** | the black block on the rod | one tooltip, one clamp message |
+| **mount** | either end joint | tooltips, messages |
 
-*piston* has the same problem in reverse — it appears in one tooltip and one
-clamp message, and it names the black block, which no label anywhere else
-names at all. Either give the block a visible name or stop using it in prose.
+Two of them name the same whole part, and *piston* names something that has no
+label anywhere on screen.
+
+### The options
+
+**A — One name for the whole part, keep the pieces.** *cylinder* everywhere for
+the assembly; *barrel*, *rod*, *mount* stay for the pieces; *ram* and *piston*
+go. The block loses its prose name and is only ever described by what it does
+("where the rod begins its cycle").
+
+- Fewest words, and the one the menus and title already use.
+- Cheapest: it is a find-and-replace over four tooltips and two messages.
+- Loses the ability to say anything specific about the black block.
+
+**B — One name for the whole part, and give the block a label.** As A, but the
+block gets a visible name on the canvas or in the panel — *piston*, most
+naturally — so the word is earned before it is used in prose.
+
+- Every term a reader meets is one they can point at.
+- Costs a label on the drawing, which is the thing this skin has spent the most
+  effort *removing* (the notches, the dotted line, the numeric callouts).
+
+**C — Keep *ram* for the whole part, drop *cylinder*.** The engineering-correct
+choice: a hydraulic *ram* is the actuator; the *cylinder* is strictly its outer
+tube, which the app calls the barrel.
+
+- Most accurate to the domain, and this is a teaching tool.
+- Most expensive: renames the menus, the panel title, the class, the messages
+  and the docs, and every existing URL's shared vocabulary with them.
+- "Add Ram" will read as a typo to most of the students using it.
+
+**D — Leave it.** Both words stay in circulation.
+
+- Free.
+- The reader who meets *ram* once has to work out it is the thing they already
+  selected, which is exactly the paper cut this whole audit is about.
+
+### My recommendation
+
+**A.** *cylinder* is already the name in every control and every message, and
+the audit's own principle is one thing, one name — so the word that has to give
+way is the one appearing in four tooltips rather than the one appearing
+everywhere else. B is right if the block ever needs to be discussed on its own,
+and that can be added later without taking anything back. C is the correct
+engineering answer and the wrong product answer.
+
+Nothing here has been applied — the vocabulary guide records it as open.
 
 **Also here**
 

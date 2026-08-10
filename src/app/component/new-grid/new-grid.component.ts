@@ -114,6 +114,7 @@ export interface SlotStackItem {
   plate?: WeldPlate;
 }
 import introJs from 'intro.js';
+import { CANNOT_EDIT } from '../../ui-text';
 
 @Component({
   selector: 'app-new-grid',
@@ -399,7 +400,7 @@ export class NewGridComponent {
           );
           this.cMenuItems.push(
             new cMenuItem(
-              bodyCylinder.slider.input ? 'Remove Input' : 'Make Input',
+              bodyCylinder.slider.input ? 'Remove Input' : 'Add Input',
               () => this.mechanismSrv.toggleCylinderInput(bodyCylinder),
               bodyCylinder.slider.input ? 'remove_input' : 'add_input'
             )
@@ -492,7 +493,7 @@ export class NewGridComponent {
           );
           this.cMenuItems.push(
             new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Add Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
               !canToggleInput
@@ -544,7 +545,7 @@ export class NewGridComponent {
             new cMenuItem(
               (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
                 ? 'Remove Input'
-                : 'Make Input',
+                : 'Add Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
                 ? 'remove_input'
@@ -555,7 +556,7 @@ export class NewGridComponent {
         } else {
           this.cMenuItems.push(
             new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Make Input',
+              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Add Input',
               this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
               (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
               !canToggleInput
@@ -605,7 +606,7 @@ export class NewGridComponent {
           new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
         );
         this.cMenuItems.push(
-          new cMenuItem('Create Cylinder', this.startCreatingCylinder.bind(this), 'add_cylinder')
+          new cMenuItem('Add Cylinder', this.startCreatingCylinder.bind(this), 'add_cylinder')
         );
     }
   }
@@ -1043,22 +1044,22 @@ export class NewGridComponent {
    */
   private canEditNow(): boolean {
     if (AnimationBarComponent.animate) {
-      this.sendNotification('Cannot edit while animation is running');
+      this.sendNotification(CANNOT_EDIT.animating);
       return false;
     }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
-      this.sendNotification('Stop animation (or reset to 0 position) to edit');
+      this.sendNotification(CANNOT_EDIT.awayFromStart);
       return false;
     }
     if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
-      this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+      this.sendNotification(CANNOT_EDIT.synthesizeMode);
       return false;
     }
     // Analyze already refuses to open an edit context menu (see onContextMenu),
     // but dragging bypassed that: the mode was read-only by menu only. Whole-link
     // drag would have widened the hole, so the guard covers every drag instead.
     if (this.tabService.getCurrentTab() === TabID.ANALYZE) {
-      this.sendNotification('Analysis mode is read-only. Switch to Edit mode to edit');
+      this.sendNotification(CANNOT_EDIT.analyzeMode);
       return false;
     }
     return true;
@@ -1326,7 +1327,7 @@ export class NewGridComponent {
 
   onContextMenu($event: MouseEvent) {
     if (this.tabService.getCurrentTab() === TabID.SYNTHESIZE) {
-      this.sendNotification('Cannot edit while in Synthesis mode. Switch to Edit mode to edit');
+      this.sendNotification(CANNOT_EDIT.synthesizeMode);
       this.cMenuItems = [];
       return;
     }
@@ -1339,12 +1340,12 @@ export class NewGridComponent {
     }
 
     if (AnimationBarComponent.animate == true) {
-      this.sendNotification('Cannot open context menu while animating. Stop animation to edit');
+      this.sendNotification(CANNOT_EDIT.animating);
       this.cMenuItems = [];
       return;
     }
     if (this.mechanismSrv.mechanismTimeStep !== 0) {
-      this.sendNotification('Reset to T=0 (or push stop button) to edit');
+      this.sendNotification(CANNOT_EDIT.awayFromStart);
       this.cMenuItems = [];
       //Close the MatContextMenu
       // console.log(this.contextMenu);
@@ -1655,7 +1656,7 @@ export class NewGridComponent {
                 if (commonLinkCheck) {
                   this.dragState.finishCreating();
                   this.jointTempHolderSVG.style.display = 'none';
-                  this.sendNotification("Don't link to a joint on the same link");
+                  this.sendNotification('Those two joints are already on one link.');
                   return;
                 }
                 this.activeObjService.prevSelectedJoint.connectedJoints.push(joint2);
@@ -1745,7 +1746,7 @@ export class NewGridComponent {
           case 'JointTemp':
             this.dragState.cancel();
             this.jointTempHolderSVG.style.display = 'none';
-            this.sendNotification("Don't link a joint to itself");
+            this.sendNotification('A link needs two different joints.');
         }
         break;
       // TODO: Be sure all things reset
@@ -2485,7 +2486,9 @@ export class NewGridComponent {
       if (true) {
         //TODO: Sorry jacob you need to fix this it used to say: if(GridComponent.canDelete)
         if (this.activeObjService.objType === 'Grid') {
-          NewGridComponent.sendNotification('Select an object to delete.');
+          NewGridComponent.sendNotification(
+            'Select something first — Delete removes whatever is selected.'
+          );
           return;
         }
         if (this.activeObjService.objType === 'Joint') {
@@ -2494,7 +2497,6 @@ export class NewGridComponent {
           this.mechanismSrv.deleteLink();
         }
         this.activeObjService.updateSelectedObj(undefined);
-        NewGridComponent.sendNotification('Deleted Selected Object.');
       } else {
         return;
       }
