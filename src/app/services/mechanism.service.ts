@@ -419,22 +419,33 @@ export class MechanismService {
     }
   }
 
+  /**
+   * The traced path of one joint across every solved sample.
+   *
+   * Every lookup here is guarded, and none of the guards is theoretical. This
+   * runs from a template binding, so a throw does not fail one path — it aborts
+   * the whole change-detection pass, and the frame that would have drawn the
+   * rest of the mechanism never renders. Asked for a joint that has just been
+   * added, or during the window where a structural edit has emptied the solved
+   * frames, it dereferenced `undefined` and took the canvas down with it.
+   * Nothing to draw yet is an ordinary state; the honest answer is no path.
+   */
   getJointPath(joint: Joint) {
-    if (this.mechanisms[0].joints[0].length === 0) {
+    const solved = this.mechanisms[0];
+    if (!solved || solved.joints.length === 0 || solved.joints[0].length === 0) {
       return '';
     }
-    let string = 'M';
     const jointIndex = this.joints.findIndex((j) => j.id === joint.id);
-    string +=
-      this.mechanisms[0].joints[0][jointIndex].x.toString() +
-      ' , ' +
-      this.mechanisms[0].joints[0][jointIndex].y.toString();
-    for (let j_index = 1; j_index < this.mechanisms[0].joints.length; j_index++) {
-      string +=
-        'L' +
-        this.mechanisms[0].joints[j_index][jointIndex].x.toString() +
-        ' , ' +
-        this.mechanisms[0].joints[j_index][jointIndex].y.toString();
+    if (jointIndex < 0 || !solved.joints[0][jointIndex]) {
+      return '';
+    }
+    const at = (step: number) => {
+      const sample = solved.joints[step][jointIndex];
+      return `${sample.x} , ${sample.y}`;
+    };
+    let string = 'M' + at(0);
+    for (let j_index = 1; j_index < solved.joints.length; j_index++) {
+      string += 'L' + at(j_index);
     }
     return string;
   }
@@ -2163,7 +2174,18 @@ export class MechanismService {
     // the service, so it has to be current by the time they are notified.
     this.mechanismTimeStep = progress;
     this.onMechPositionChange.next(progress);
-    this.showPathHolder = !(this.mechanismTimeStep === 0 && !animationState);
+    // Tracer paths are hidden only when the mechanism is *parked* at its start
+    // pose: nothing has been traced yet, so a path there would be a claim about
+    // motion that has not happened.
+    //
+    // `animationState` is an instruction to start or stop, and omitting it means
+    // "leave that alone" — not "stopped". Read as a stop, it hid the paths on
+    // every frame the playback loop happened to land on step 0, which is once
+    // per cycle, every cycle: the traces blinked out at the wrap and at the far
+    // end of a reversing machine's out-and-back. The playback loop is exactly
+    // the caller that omits it.
+    const playing = animationState ?? AnimationBarComponent.animate;
+    this.showPathHolder = !(this.mechanismTimeStep === 0 && !playing);
     if (animationState !== undefined) {
       AnimationBarComponent.animate = animationState;
     }
