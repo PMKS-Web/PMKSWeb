@@ -216,6 +216,26 @@ interface CylinderDrive {
   step: number;
 }
 
+/**
+ * Whether a joint's coordinates are something the rate system has to solve for.
+ *
+ * `ground` means two different things, and reading it as one of them is what
+ * made a machine with both a cylinder and a plain slider report nonsense. On a
+ * RevJoint it pins the point: the coordinates are known and constant. On a
+ * PrisJoint it pins only the *line* — the joint is the block's coordinate and
+ * slides along that line, which is exactly what `onFixedLine` is there to say.
+ *
+ * Left out of the unknowns, a grounded guide became a fixed anchor that its
+ * block was told to stay coincident with, and the guide's own `onFixedLine`
+ * row was dropped for having no unknown to constrain. The system came out one
+ * row longer than it had columns, least squares split the difference across
+ * every joint, and a toggle press's ram graphed a sideways velocity it cannot
+ * physically have.
+ */
+function isRateUnknown(joint: Joint): joint is RealJoint {
+  return joint instanceof RealJoint && (!joint.ground || joint instanceof PrisJoint);
+}
+
 export class PositionSolver {
   static jointMapPositions = new Map<string, Array<number>>();
   /** One step behind jointMapPositions; see concentricSolution. */
@@ -616,8 +636,29 @@ export class PositionSolver {
         });
       }
       for (const member of rest) {
-        for (const anchor of [first, second]) {
-          if (!touches(member.id, anchor.id)) continue;
+        const anchors = [first, second].filter((anchor) => touches(member.id, anchor.id));
+        // Both distances would have been written, so write the same two rows as
+        // a position in the body's own frame instead: see `rigidOffset`, which
+        // exists because two distances to collinear anchors are only one
+        // constraint. One anchor alone still reads as a plain distance — a
+        // single row cannot be degenerate, and the count has to stay what it was.
+        if (anchors.length === 2) {
+          const ex = second.x - first.x;
+          const ey = second.y - first.y;
+          const span = Math.hypot(ex, ey);
+          const wx = member.x - first.x;
+          const wy = member.y - first.y;
+          constraints.push({
+            kind: 'rigidOffset',
+            point: member.id,
+            from: first.id,
+            to: second.id,
+            along: span < 1e-9 ? 0 : (wx * ex + wy * ey) / span,
+            across: span < 1e-9 ? 0 : (ex * wy - ey * wx) / span,
+          });
+          continue;
+        }
+        for (const anchor of anchors) {
           constraints.push({
             kind: 'distance',
             a: member.id,
@@ -1234,9 +1275,7 @@ export class PositionSolver {
       this.buildSimultaneousSystem(
         joints,
         links,
-        joints
-          .filter((joint): joint is RealJoint => joint instanceof RealJoint && !joint.ground)
-          .map((joint) => joint.id)
+        joints.filter(isRateUnknown).map((joint) => joint.id)
       );
     if (!system) {
       return undefined;
@@ -2042,7 +2081,18 @@ export class PositionSolver {
           prev_joint_index,
           known_joint_index,
         ]);
-        this.desiredAnalysisJointMap.set(cur_joint.id, 'twoCircleIntersectionPoints');
+        // Two circles centred on two joints of the *same* body as this one are
+        // that body's own two sides, and they meet at a shallow angle -- exactly
+        // tangentially where the three joints are in line, as they are on every
+        // straight bar with a pin part way along it. Carrying the joint in the
+        // body's frame instead states the same rigidity and is exact at any
+        // shape. Only the two-body case is a genuine dyad the circles are for.
+        this.desiredAnalysisJointMap.set(
+          cur_joint.id,
+          this.shareOneBody(cur_joint, prevJoint, known_joint)
+            ? 'determineTracerJoint'
+            : 'twoCircleIntersectionPoints'
+        );
         this.jointNumOrderSolverMap.set(orderNum++, [cur_joint.id]);
         this.jointDistMap.set(
           cur_joint.id + ',' + prevJoint.id,
@@ -2192,16 +2242,17 @@ export class PositionSolver {
           possible = this.simultaneous(joints, angVelDir);
           break;
         case 'determineTracerJoint':
-          this.twoCircleIntersectionPoints(
+          // A third joint of one rigid link, so it is carried by the other two
+          // rather than found where two circles meet. The circles are the same
+          // statement, but on a straight body they are internally tangent and
+          // meeting them is the worst-conditioned way to ask the question: a
+          // scissor lift's arm placed that way bends by 4e-3 of a unit, which
+          // is nothing to look at and 8% of the arm's velocity once differenced.
+          this.determineTracerJoint(
             joints[connected_joint_indices[0]],
             joints[connected_joint_indices[1]],
             joint
           );
-          // this.determineTracerJoint(
-          //   joints[connected_joint_indices[0]],
-          //   joints[connected_joint_indices[1]],
-          //   joint
-          // );
           possible = true;
           break;
         default:
@@ -2567,56 +2618,76 @@ export class PositionSolver {
   }
 
   // https://www.mathsisfun.com/algebra/trig-solving-sss-triangles.html
+  /** Whether all three joints belong to one and the same rigid link. */
+  private static shareOneBody(first: Joint, second: Joint, third: Joint): boolean {
+    const bodies = [first, second, third].map((joint) =>
+      joint instanceof RealJoint ? joint.links.filter((link) => link instanceof RealLink) : []
+    );
+    return bodies[0].some(
+      (link) =>
+        bodies[1].some((other) => other.id === link.id) &&
+        bodies[2].some((other) => other.id === link.id)
+    );
+  }
+
+  /**
+   * A third joint of a rigid body, carried by the two of it already placed.
+   *
+   * The offset is read once in the body's own frame — how far along the line
+   * joining the two known joints, and how far to the left of it — and then
+   * replayed at every pose. That is the same statement as "this triangle keeps
+   * its shape", but it survives the triangle being flat.
+   *
+   * It used to be a law of cosines: two side lengths, an `acos` for the angle
+   * between them, and the nearer of the two mirror roots. `acos` loses half its
+   * significant digits where its argument approaches ±1, which is exactly where
+   * a *straight* body sits — a scissor lift's arm, pinned at its middle, has
+   * every joint on one line. The 1e-4 rounding on the two known joints came out
+   * as 2.4e-4 radians of arm, which is invisible in a drawing and is 8% of the
+   * velocity once the positions are differenced.
+   */
   private static determineTracerJoint(
     lastJoint: Joint,
     joint_with_neighboring_ground: Joint,
     unknown_joint: Joint
   ) {
-    let r1, r2, r3, internal_angle: number;
-    if (
-      !this.internalTriangleValuesMap.has(
-        lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id
-      )
-    ) {
-      // TODO: Have map for determining r1, r2, r3
-      r1 = this.jointDistMap.get(unknown_joint.id + ',' + lastJoint.id)!;
-      r2 = this.jointDistMap.get(unknown_joint.id + ',' + joint_with_neighboring_ground.id)!;
-      r3 = this.jointDistMap.get(joint_with_neighboring_ground.id + ',' + lastJoint.id)!;
-      internal_angle = Math.acos(
-        (Math.pow(r1, 2) + Math.pow(r3, 2) - Math.pow(r2, 2)) / (2 * r1 * r3)
-      );
-      this.internalTriangleValuesMap.set(
-        lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id,
-        [r1, internal_angle]
-      );
+    const key = lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id;
+    if (!this.internalTriangleValuesMap.has(key)) {
+      const anchor = this.initialJointPosMap.get(lastJoint.id);
+      const toward = this.initialJointPosMap.get(joint_with_neighboring_ground.id);
+      const tracer = this.initialJointPosMap.get(unknown_joint.id);
+      if (!anchor || !toward || !tracer) {
+        return;
+      }
+      const ex = toward[0] - anchor[0];
+      const ey = toward[1] - anchor[1];
+      const span = Math.hypot(ex, ey);
+      if (span < DEGENERATE_SLOT_TOLERANCE) {
+        return;
+      }
+      const wx = tracer[0] - anchor[0];
+      const wy = tracer[1] - anchor[1];
+      this.internalTriangleValuesMap.set(key, [
+        (wx * ex + wy * ey) / span,
+        (ex * wy - ey * wx) / span,
+      ]);
     }
 
-    r1 = this.internalTriangleValuesMap.get(
-      lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id
-    )![0];
-    internal_angle = this.internalTriangleValuesMap.get(
-      lastJoint.id + joint_with_neighboring_ground.id + unknown_joint.id
-    )![1];
-    const x1 = this.jointMapPositions.get(lastJoint.id)![0];
-    const y1 = this.jointMapPositions.get(lastJoint.id)![1];
-    const x2 = this.jointMapPositions.get(joint_with_neighboring_ground.id)![0];
-    const y2 = this.jointMapPositions.get(joint_with_neighboring_ground.id)![1];
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-
-    const prevJoint_x = unknown_joint.x;
-    const prevJoint_y = unknown_joint.y;
-    let [x_calc, y_calc] = determineUnknownJointUsingTriangulation(
-      x1,
-      y1,
-      x2,
-      y2,
-      r1,
-      prevJoint_x,
-      prevJoint_y,
-      angle,
-      internal_angle
-    );
-    this.jointMapPositions.set(unknown_joint.id, [roundNumber(x_calc, 4), roundNumber(y_calc, 4)]);
+    const [along, across] = this.internalTriangleValuesMap.get(key)!;
+    const [x1, y1] = this.jointMapPositions.get(lastJoint.id)!;
+    const [x2, y2] = this.jointMapPositions.get(joint_with_neighboring_ground.id)!;
+    const span = Math.hypot(x2 - x1, y2 - y1);
+    // Two joints on top of each other carry no direction, so the body they
+    // belong to says nothing about where the third one is.
+    if (span < DEGENERATE_SLOT_TOLERANCE) {
+      return;
+    }
+    const ux = (x2 - x1) / span;
+    const uy = (y2 - y1) / span;
+    this.jointMapPositions.set(unknown_joint.id, [
+      roundNumber(x1 + along * ux - across * uy, 4),
+      roundNumber(y1 + along * uy + across * ux, 4),
+    ]);
   }
 
   static setUpSolvingForces(forces: Force[]) {

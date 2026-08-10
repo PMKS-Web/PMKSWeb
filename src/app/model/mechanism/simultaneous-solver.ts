@@ -20,6 +20,31 @@ export type Constraint =
   | { kind: 'distance'; a: string; b: string; length: number }
   /** A zero-length block: its two joints are one point (§2.10 item 1). */
   | { kind: 'coincident'; a: string; b: string }
+  /**
+   * `point` held at fixed coordinates in the frame `from` -> `to` carries.
+   *
+   * A rigid body's extra joints used to be pinned by a distance to each of two
+   * anchors, which is the right count of constraints and the wrong two. Where
+   * the three points are collinear both gradients lie along the same line, the
+   * two rows collapse to one, and the body is left free to bend sideways. A
+   * scissor lift is nothing but collinear bodies — a straight arm pinned at its
+   * middle — so its rate system came out rank 19 of 22 and least squares spread
+   * the missing three directions over every joint in the machine.
+   *
+   * Resolving the offset along and across the anchor line instead keeps the
+   * same two rows independent at every pose, and picks the side of the line the
+   * body is actually on rather than leaving the mirror pose an equal answer.
+   */
+  | {
+      kind: 'rigidOffset';
+      point: string;
+      from: string;
+      to: string;
+      /** Offset along the unit vector from `from` to `to`. */
+      along: number;
+      /** Offset across it, positive to the left of that vector. */
+      across: number;
+    }
   /** `point` lies on the line through `from` and `to`, wherever those end up. */
   | { kind: 'onLine'; point: string; from: string; to: string }
   /** `point` lies on a line fixed in the world. */
@@ -103,6 +128,22 @@ export function residuals(
         const ey = ty - fy;
         const span = Math.hypot(ex, ey);
         out.push(span < 1e-9 ? 0 : ((px - fx) * ey - (py - fy) * ex) / span);
+        break;
+      }
+      case 'rigidOffset': {
+        const [px, py] = at(c.point);
+        const [fx, fy] = at(c.from);
+        const [tx, ty] = at(c.to);
+        const ex = tx - fx;
+        const ey = ty - fy;
+        const wx = px - fx;
+        const wy = py - fy;
+        const span = Math.hypot(ex, ey);
+        if (span < 1e-9) {
+          out.push(0, 0);
+          break;
+        }
+        out.push((wx * ex + wy * ey) / span - c.along, (ex * wy - ey * wx) / span - c.across);
         break;
       }
       case 'onFixedLine': {
@@ -221,6 +262,42 @@ export function jacobian(
         add(current, c.point, ey / span, -ex / span);
         add(current, c.from, (-ey + wy) / span + scaled * ex, (-wx + ex) / span + scaled * ey);
         add(current, c.to, -wy / span - scaled * ex, wx / span - scaled * ey);
+        break;
+      }
+      case 'rigidOffset': {
+        // r1 = (w.e)/L, r2 = (e x w)/L, with e = to - from and w = point - from.
+        // Both are differentiated through w and through e, and `from` moves
+        // both at once because it is subtracted from each.
+        const [px, py] = at(c.point);
+        const [fx, fy] = at(c.from);
+        const [tx, ty] = at(c.to);
+        const ex = tx - fx;
+        const ey = ty - fy;
+        const wx = px - fx;
+        const wy = py - fy;
+        const span = Math.hypot(ex, ey) || 1;
+        const alongNumerator = wx * ex + wy * ey;
+        const acrossNumerator = ex * wy - ey * wx;
+        const cubed = span * span * span;
+        const alongByW = [ex / span, ey / span];
+        const alongByE = [
+          wx / span - (alongNumerator * ex) / cubed,
+          wy / span - (alongNumerator * ey) / cubed,
+        ];
+        const acrossByW = [-ey / span, ex / span];
+        const acrossByE = [
+          wy / span - (acrossNumerator * ex) / cubed,
+          -wx / span - (acrossNumerator * ey) / cubed,
+        ];
+        for (const [byW, byE] of [
+          [alongByW, alongByE],
+          [acrossByW, acrossByE],
+        ]) {
+          const current = row();
+          add(current, c.point, byW[0], byW[1]);
+          add(current, c.to, byE[0], byE[1]);
+          add(current, c.from, -byW[0] - byE[0], -byW[1] - byE[1]);
+        }
         break;
       }
       case 'onFixedLine': {
@@ -594,7 +671,11 @@ export function commandDerivative(
         out.push((-cross * Math.sin(command) - dot * Math.cos(command)) / arm);
         break;
       }
+      // Two-row constraints, neither of which the command appears in. The
+      // count is what matters: this vector is indexed by residual row, so a
+      // single zero here would shift every row after it against the Jacobian.
       case 'coincident':
+      case 'rigidOffset':
         out.push(0, 0);
         break;
       default:

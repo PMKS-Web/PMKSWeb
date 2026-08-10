@@ -66,6 +66,14 @@ export class LoopSolver {
    * `Link` joins two ground joints and no consumer ever asked for one — the old
    * letter format appended the starting letter back on and then every walk
    * stopped one short of it.
+   *
+   * Every pair of ground joints is walked, not only the pairs containing the
+   * input. A closure that touches no ground pivot the input sits on is still a
+   * closure: a shaper's output stage — lever tip, connecting link, ram on its
+   * own guide — runs between the lever's pivot and the ram's guide, and both
+   * are ground. Enumerating only the input's own chains left that stage in no
+   * loop at all, so the velocity walk never reached the ram and the graph drew
+   * a joint that travels three units as standing still.
    */
   static determineLoops(joints: Joint[], links: Link[]): Loop[] {
     const loops: Loop[] = [];
@@ -99,7 +107,6 @@ export class LoopSolver {
             { jointId: next.joint.id, viaSliderId: next.viaSliderId },
           ],
           loops,
-          desiredGround.input,
           links,
           slotNeighbours
         );
@@ -283,7 +290,6 @@ export class LoopSolver {
     visited: string[],
     path: PathStep[],
     loops: Loop[],
-    storeJointPath: boolean,
     links: Link[],
     slotNeighbours: Map<string, Neighbour[]>
   ): void {
@@ -297,7 +303,7 @@ export class LoopSolver {
       }
       const step: PathStep = { jointId: j.id, viaSliderId: next.viaSliderId };
       if (j.ground) {
-        if (groundJoints.indexOf(j) === -1 || !storeJointPath) {
+        if (groundJoints.indexOf(j) === -1) {
           continue;
         }
         const edges = this.edgesAlong([...path, step], links);
@@ -311,7 +317,6 @@ export class LoopSolver {
           [...visited, j.id],
           [...path, step],
           loops,
-          storeJointPath,
           links,
           slotNeighbours
         );
