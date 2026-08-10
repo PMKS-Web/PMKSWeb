@@ -29,7 +29,13 @@ import {
   WHITWORTH_CRANK,
   WHITWORTH_OFFSET,
 } from './slot-fixtures';
-import { jansenLegFixture } from './library-fixtures';
+import {
+  excavatorBucketFixture,
+  jansenLegFixture,
+  scissorLiftFixture,
+  shaperQuickReturnFixture,
+  togglePressFixture,
+} from './library-fixtures';
 import { MechanismService } from '../../app/services/mechanism.service';
 import { SettingsService } from '../../app/services/settings.service';
 import { ActiveObjService } from '../../app/services/active-obj.service';
@@ -136,6 +142,40 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     floatingSlot: true,
     slide: true,
     fixture: pinchingGripperFixture(),
+  },
+  {
+    name: 'Backhoe bucket',
+    purpose: 'A driven ram feeding an ordinary four-bar: bell crank, link, and the bucket curls',
+    spec: 'excavator-bucket.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: excavatorBucketFixture(),
+  },
+  {
+    name: 'Toggle press',
+    purpose:
+      'A ram closing a toggle onto a block: travel traded for force as it approaches straight',
+    spec: 'toggle-press.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: togglePressFixture(),
+  },
+  {
+    name: 'Scissor lift',
+    purpose:
+      'Ram, supporting block and a slot in the moving platform — all three parts, three jobs',
+    spec: 'scissor-lift.spec.ts',
+    floatingSlot: true,
+    slide: true,
+    fixture: scissorLiftFixture(),
+  },
+  {
+    name: "Shaper's quick-return drive",
+    purpose: 'A floating slot handing off to a grounded one: the ram cuts slow and returns fast',
+    spec: 'shaper-quick-return.spec.ts',
+    floatingSlot: true,
+    slide: false,
+    fixture: shaperQuickReturnFixture(),
   },
   {
     name: 'Slider-crank whose rod comes square to the guide',

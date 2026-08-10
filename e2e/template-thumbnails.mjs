@@ -40,6 +40,10 @@ const FILENAMES = {
   Windshield_Wiper: 'windshield-wiper',
   Elliptical_Crank: 'elliptical-crank',
   Jansen_Leg: 'jansen-leg',
+  Backhoe_Bucket: 'backhoe-bucket',
+  Toggle_Press: 'toggle-press',
+  Scissor_Lift: 'scissor-lift',
+  Shaper_Quick_Return: 'shaper-quick-return',
 };
 
 /** The generated block of template-linkages.ts, read as id/payload pairs. */

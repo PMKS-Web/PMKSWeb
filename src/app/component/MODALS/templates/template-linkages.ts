@@ -33,6 +33,10 @@ export const LIBRARY_TEMPLATE_IDS = [
   'Windshield_Wiper',
   'Elliptical_Crank',
   'Jansen_Leg',
+  'Backhoe_Bucket',
+  'Toggle_Press',
+  'Scissor_Lift',
+  'Shaper_Quick_Return',
 ] as const;
 
 export type LibraryTemplateID = (typeof LIBRARY_TEMPLATE_IDS)[number];
@@ -88,5 +92,13 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
     '2P.Fe,1E8.K,0.1011.MA,A,0ix,X,0.GB,B,0zu,7O,0.GC,C,0qC,Lr,0.GD,D,085,Av,0.GE,E,aY,v,0.KF,F,0,0,0.LP,P,aY,v,03..YRAB,AB,Fe,Fe,0rQ,3y,c5cae9,A,B,,.YRBC,BC,Fe,Fe,0v2,Ed,303e9f,B,C,,.YRCDE,CDE,Fe,Fe,07x,BD,0d125a,C,D,E,,.YRDF,DF,Fe,Fe,043,5S,B2DFDB,D,F,,.YPEP,EP,Fe,0,0,0,,E,P,,...N_V',
   Jansen_Leg:
     '2P.3Qm,1E8.K,0.1011.MO,O,0,0,0.GA,A,3gO,0,0.KG,G,09Hm,01vu,0.GB,B,05tE,7ee,0.GC,C,0IGg,1-F,0.GD,D,06b8,0B7B,0.GE,E,0ETW,06sL,0.GF,F,0AYO,0MPj,0..YROA,OA,Fe,Fe,1rC,0,c5cae9,O,A,,.YRAB,AB,Fe,Fe,016R,3qK,303e9f,A,B,,.YRGBC,GBC,Fe,Fe,0B8Z,2ag,0d125a,G,B,C,,.YRAD,AD,Fe,Fe,01TO,05Zc,B2DFDB,A,D,,.YRGD,GD,Fe,Fe,07xS,06WY,26A69A,G,D,,.YRCE,CE,Fe,Fe,0GN5,02RZ,00695C,C,E,,.YRDEF,DEF,Fe,Fe,0AXh,0DT4,c5cae9,D,E,F,,...N_c',
+  Backhoe_Bucket:
+    '2P.Fe,1E8.K,0.1011.KA,A,01jO,0,0.GB,B,0vJ,NJ,0.OC,C,01JL,Bf,0.GD,D,0VG,Yy,0.KG,G,0,0,0.GH,H,VG,Im,0.KJ,J,o0,0P0,0.GK,K,13C,2M,0.GT,T,1NW,0ee,0.pE,E,01JL,Bf,0,AB,A,B..YRAB,AB,Fe,Fe,01JL,Bf,c5cae9,A,B,,.YRCD,CD,Fe,Fe,0vJ,NJ,303e9f,C,D,,.YRDGH,DGH,Fe,Fe,0,Hv,0d125a,D,G,H,,.YRHK,HK,Fe,Fe,nE,AZ,B2DFDB,H,K,,.YRJKT,JKT,Fe,Fe,14F,0L6,26A69A,J,K,T,,.YPCE,CE,Fe,0,0,0,,C,E,,...N_z',
+  Toggle_Press:
+    '2P.Fe,1E8.K,0.1011.KA,A,01z0,0,0.GB,B,0wd,0c4,0.OC,C,01Rq,0J2,0.GD,D,0PR,0v6,0.KG,G,0,0,0.GR,R,0,01oC,0.pE,E,01Rq,0J2,0,AB,A,B.LF,F,0,01oC,OZ..YRAB,AB,Fe,Fe,01Rq,0J2,c5cae9,A,B,,.YRCD,CD,Fe,Fe,0wd,0c4,303e9f,C,D,,.YRGD,GD,Fe,Fe,0Cj,0SZ,0d125a,G,D,,.YRDR,DR,Fe,Fe,0Cj,01Lf,B2DFDB,D,R,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPRF,RF,Fe,0,0,0,,R,F,,...N_R',
+  Scissor_Lift:
+    '2P.Fe,1E8.K,0.1011.KA,A,2SG,0,0.GB,B,1Z_,eB,0.OC,C,207,K6,0.GD,D,17q,yH,0.KG,G,0,0,0.GM,M,1Vm,1GM,0.GK,K,2-X,2Wj,0.GS,S,2-X,0,0.GT,T,0,2Wj,0.GU,U,3Un,2Wj,0.pE,E,207,K6,0,AB,A,B.LN,N,2-X,0,0.HP,P,2-X,2Wj,0,TU,T,U..YRAB,AB,Fe,Fe,207,K6,c5cae9,A,B,,.YRCD,CD,Fe,Fe,1Z_,eB,303e9f,C,D,,.YRGDMK,GDMK,Fe,Fe,1Pn,1BL,0d125a,G,D,M,K,,.YRSMT,SMT,Fe,Fe,1Vm,1GM,B2DFDB,S,M,T,,.YRTU,TU,Fe,Fe,1lO,2Wj,26A69A,T,U,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPSN,SN,Fe,0,0,0,,S,N,,.YPKP,KP,Fe,0,0,0,,K,P,,...N_e',
+  Shaper_Quick_Return:
+    '2P.Fe,1E8.K,0.1011.MA,A,0,0,0.GB,B,Fe,0,0.KC,C,0,0ku,0.GD,D,Oj,RF,0.GR,R,qW,si,0.HP,P,Fe,0,0,CD,C,D.LQ,Q,qW,si,0..YRAB,AB,Fe,Fe,7q,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,CN,09q,303e9f,C,D,,.YRDR,DR,Fe,Fe,cd,e_,0d125a,D,R,,.YPBP,BP,Fe,0,0,0,,B,P,,.YPRQ,RQ,Fe,0,0,0,,R,Q,,...N_H',
   // </generated>
 };

@@ -19,6 +19,10 @@ export const LIBRARY_TEMPLATE_SOURCES: Record<LibraryTemplateID, string> = {
   Windshield_Wiper: 'Windshield wiper',
   Elliptical_Crank: 'Elliptical crank',
   Jansen_Leg: 'Jansen leg',
+  Backhoe_Bucket: 'Backhoe bucket',
+  Toggle_Press: 'Toggle press',
+  Scissor_Lift: 'Scissor lift',
+  Shaper_Quick_Return: "Shaper's quick-return drive",
 };
 
 export function libraryTemplateEntry(id: LibraryTemplateID): GalleryEntry {
