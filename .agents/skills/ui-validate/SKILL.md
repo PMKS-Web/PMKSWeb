@@ -39,10 +39,12 @@ reports yourself, and return a compact PASS/FAIL summary.
 
 - `e2e/full-tour.mjs` — broad tour: panels, templates, settings, share URL,
   mobile viewport
-- `e2e/deep-interactions.mjs` — grid interactions: drag joints, context menus,
-  templates
-- `e2e/focused-interactions.mjs` — focused workflows; run with
-  `RUN_PREFIX=focused node e2e/focused-interactions.mjs`
+- `e2e/interaction-sweep.mjs` — every context-menu action on every kind of
+  object; narrow it with `ONLY=4-Bar node e2e/interaction-sweep.mjs`
+- `e2e/phase1-drag.mjs` — drag gestures, snapping, merging, one undo per gesture
+
+`e2e/README.md` lists the rest. Prefer a suite that asserts and exits non-zero
+over one that only takes screenshots: the point is to fail, not to look.
 
 The PMKS+ canvas places joints from tracked mouse movement rather than click
 coordinates. Move to the target before the finalizing click, and prefer the

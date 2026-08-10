@@ -13,9 +13,13 @@ their source. Everything browser-driven lives here.
 
 ## E2E scripts
 
-- `full-tour.mjs` — broad tour: panels, templates, settings, share URL, help, mobile viewport
-- `deep-interactions.mjs` — deep grid interaction: add links, drag joints, right-click menus
-- `focused-interactions.mjs` — focused workflows (four-bar build, animation, analysis)
+- `full-tour.mjs` — broad tour: panels, templates, settings, share URL, help, and a fresh load at
+  phone size. Looks for a NaN degrees-of-freedom, a page wider than its viewport, a Save that starts
+  no download and a template dialog that will not close; exits non-zero on any of them
+- `interaction-sweep.mjs` — every context-menu action on every kind of object (joint, link, force,
+  bare grid) across several mechanisms: each enabled item is clicked, the model and drawing are read
+  back, and it is undone. Catches the silent click — enabled, pressed, and nothing happened and
+  nothing was said. `ONLY=4-Bar,Cylinder_Boom` narrows it
 - `phase1-drag.mjs` — drag gestures: joint snap ring and merge, merging onto a slider's pin,
   refusing an over-constraining merge, whole-link drag, one undo entry per gesture,
   click-without-nudge, the canvas staying put after a merge, and Analyze mode refusing drags.
@@ -38,7 +42,7 @@ deploy installs. Run these scripts directly for local validation; they are not
 part of CI (see `SKILLS.md` and `.claude/skills/ui-validate/SKILL.md`).
 
 ```bash
-node e2e/focused-interactions.mjs
+node e2e/interaction-sweep.mjs
 ```
 
 Environment overrides:

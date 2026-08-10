@@ -218,6 +218,10 @@ page.on('pageerror', (error) =>
   recordIssue('Uncaught page error', { severity: 'high', error: error.stack || error.message })
 );
 page.on('requestfailed', (request) => {
+  // Only the app's own requests. Analytics is blocked in a clean profile and
+  // aborts every run; counting that as a finding meant the count was never
+  // zero, which is a good way to stop anyone reading it.
+  if (!request.url().startsWith(baseUrl)) return;
   const failure = request.failure();
   recordIssue(`Request failed: ${request.url()}`, {
     severity: 'medium',
@@ -349,8 +353,14 @@ await safeStep('animation controls', async () => {
 });
 
 await safeStep('mobile viewport smoke', async () => {
+  // Loaded at phone size, not resized down to it. A desktop session narrowed
+  // to 390px leaves the left panel at its desktop width and reports an overflow
+  // no phone user can reach — which is what this step used to report, run after
+  // run, into a file with no exit code behind it.
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(1000);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
+  await dismissIntro(page);
   await shot(page, '08-mobile-load.png');
   await checkLayout(page, 'mobile');
   snapshots.push(await appSnapshot(page, 'mobile'));
@@ -375,3 +385,9 @@ console.log(
     2
   )
 );
+
+// A tour that always exits 0 is a screenshot generator. This one has looked for
+// a NaN degrees-of-freedom, a page wider than its viewport, a Save that starts
+// no download and a template dialog that will not close — all worth knowing,
+// and all of it went into a JSON file that nothing read.
+process.exit(issues.length === 0 ? 0 : 1);
