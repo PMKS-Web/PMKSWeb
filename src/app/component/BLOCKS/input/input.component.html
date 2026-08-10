@@ -11,6 +11,10 @@
       [class.wide]="wide"
       [class.has-unit-select]="hasUnitSelect"
       (click)="field.select()"
+      (mouseenter)="setMouseOver(true)"
+      (mouseleave)="setMouseOver(false)"
+      (focusin)="setFocused(true)"
+      (focusout)="setFocused(false)"
     >
       <input
         matInput

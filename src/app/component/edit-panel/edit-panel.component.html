@@ -235,10 +235,6 @@
           tooltip="How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it."
           >Travel
         </input-block>
-        <!-- The other two spellings, moving as one is typed. The claim of this
-             panel is that they are one number, and showing them agree is the
-             cheapest way to make that true rather than merely stated. -->
-        <div class="cylinder-echo">{{ cylinderSizeEcho(cyl) }}</div>
         <input-block
           [formGroup]="cylinderForm"
           _formControl="start"
@@ -247,9 +243,13 @@
           tooltip="Where the piston sits at the start of the cycle: as a percentage of the stroke, or as the length the ram is at. A length outside the travel resizes the ram to reach it, exactly as dragging the mount does."
           >Starts at
         </input-block>
+        <!-- Same on-canvas overlay a link's angle field draws: the ram's axis is
+             mount to mount, which is exactly what the angle names. -->
         <input-block
           [formGroup]="cylinderForm"
           _formControl="angle"
+          (fieldEntry)="setShowLinkAngleOverlay($event)"
+          [emitterOutputID]="-1"
           tooltip="The axis the ram points along, barrel mount to rod mount."
           >Angle
         </input-block>
@@ -263,14 +263,6 @@
           {{ cyl.slider.input ? 'Remove Input' : 'Make Input' }}
         </button-block>
       </collapsible-subseciton>
-      <collapsible-subseciton
-        titleLabel="Visual Settings"
-        [expanded]="sectionExpanded['LVisual']"
-        (opened)="sectionExpanded['LVisual'] = true"
-        (closed)="sectionExpanded['LVisual'] = false"
-      >
-        <color-picker type="link" [link]="cylinderBodyLink(cyl)">Cylinder Color</color-picker>
-      </collapsible-subseciton>
       @if (cyl.slider.input) {
         <div class="inputSettings">
           <collapsible-subseciton
@@ -279,7 +271,10 @@
             (opened)="sectionExpanded['JInput'] = true"
             (closed)="sectionExpanded['JInput'] = false"
           >
-            <button-block [icon]="inputDirectionIcon" [click]="flipInputDirection.bind(this)"
+            <button-block
+              [icon]="inputDirectionIcon"
+              [disabled]="cylinderDirectionForced"
+              [click]="flipInputDirection.bind(this)"
               >{{ inputDirectionLabel }}
             </button-block>
             <input-block
@@ -292,6 +287,14 @@
           </collapsible-subseciton>
         </div>
       }
+      <collapsible-subseciton
+        titleLabel="Visual Settings"
+        [expanded]="sectionExpanded['LVisual']"
+        (opened)="sectionExpanded['LVisual'] = true"
+        (closed)="sectionExpanded['LVisual'] = false"
+      >
+        <color-picker type="link" [link]="cylinderBodyLink(cyl)">Cylinder Color</color-picker>
+      </collapsible-subseciton>
     </panel-section>
   }
 

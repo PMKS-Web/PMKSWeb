@@ -121,19 +121,6 @@
   }
 }
 
-// The cylinder's size, said the other two ways. A caption under the field it
-// belongs to, deliberately quieter than a label: it is there to be glanced at
-// while typing, not read as another control.
-.cylinder-echo {
-  margin: -2px 0 10px;
-  padding: 7px 9px;
-  border-radius: 4px;
-  background: #f0f1f5;
-  font-size: 12px;
-  line-height: 17px;
-  color: rgba(0, 0, 0, 0.55);
-}
-
 // Shown only when a value had to be held at the ram's minimum, in the same
 // amber the app uses everywhere for "this was adjusted for you".
 .cylinder-clamped {

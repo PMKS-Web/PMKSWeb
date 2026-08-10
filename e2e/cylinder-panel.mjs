@@ -50,7 +50,7 @@ const rows = () =>
       travelUnit: sel('Travel'),
       start: v('Starts at'),
       startUnit: sel('Starts at'),
-      echo: document.querySelector('.cylinder-echo')?.textContent?.trim() ?? null,
+      angle: v('Angle'),
       clamped: document.querySelector('.cylinder-clamped')?.textContent?.trim() ?? null,
     };
   });
@@ -94,7 +94,7 @@ out.fractional = await rows();
 // 3 · an unreachable typed length must say it was held
 await load();
 await setUnit('Starts at', 'len');
-await setField('Starts at', '1');
+await setField('Starts at', '0.4');
 await page.keyboard.press('Enter');
 await page.waitForTimeout(700);
 out.tooShort = await rows();
@@ -120,8 +120,10 @@ console.log(JSON.stringify(out, null, 2));
 
 const checks = [
   [
+    // The picker re-expresses the value, so `start` legitimately changes from a
+    // percentage to a length; the ram's own size and axis are what must not.
     'emptying the percentage and then changing its unit does not move the ram',
-    out.after1.travel === out.before1.travel && out.after1.echo === out.before1.echo,
+    out.after1.travel === out.before1.travel && out.after1.angle === out.before1.angle,
   ],
   ['a fractional percentage survives the round trip', out.fractional.start === '33.7'],
   [
@@ -131,7 +133,7 @@ const checks = [
   [
     'one panel edit is one undo step',
     out.beforeUndo.travel === '2.00 cm' &&
-      out.afterUndo.travel === '1.34 cm' &&
+      out.afterUndo.travel === '2.67 cm' &&
       out.afterUndo.stillThere,
   ],
   ['nothing threw', errs.length === 0],

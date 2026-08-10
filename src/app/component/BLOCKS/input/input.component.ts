@@ -1,4 +1,11 @@
-import { booleanAttribute, Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import {
+  booleanAttribute,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 @Component({
@@ -24,5 +31,40 @@ export class InputComponent {
 
   get hasUnitSelect(): boolean {
     return !!this.unitOptions?.length && !!this.unitFormControl;
+  }
+
+  /**
+   * Hovering or focusing this field asks the canvas to draw what it measures,
+   * exactly as `dual-input-block` already does for link length and angle.
+   *
+   * Lifted here because a cylinder's axis is a single field, not half of a
+   * pair: the ram's length and its angle are two unrelated numbers — the size
+   * of the part and where it points — so they cannot share a row, and the
+   * overlay is the whole reason the link's angle field is legible without one.
+   * Silent unless a caller supplies an id, so every other `input-block` in the
+   * app is untouched.
+   */
+  @Output() fieldEntry: EventEmitter<number> = new EventEmitter();
+  @Input() emitterOutputID: number = -2;
+
+  private mouseOver = false;
+  private focused = false;
+  private showing = false;
+
+  updateOverlay(): void {
+    const wants = this.mouseOver || this.focused;
+    if (wants === this.showing) return;
+    this.showing = wants;
+    this.fieldEntry.emit(wants ? this.emitterOutputID : -2);
+  }
+
+  setMouseOver(over: boolean): void {
+    this.mouseOver = over;
+    this.updateOverlay();
+  }
+
+  setFocused(focused: boolean): void {
+    this.focused = focused;
+    this.updateOverlay();
   }
 }

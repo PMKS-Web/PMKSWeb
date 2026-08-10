@@ -1939,6 +1939,7 @@ export class NewGridComponent {
     pose: number;
     scale: number;
     forward: boolean;
+    paint: string;
     list: CylinderMark[];
   };
 
@@ -1952,25 +1953,30 @@ export class NewGridComponent {
    * Keyed on the pose as well as the structure. A mark is a drawing of where
    * the joints *are*, and against the structure revision alone the skin stayed
    * painted where the mechanism was built while the linkage under it animated.
+   * And on the paint, because a skin wears its barrel's colour: without it the
+   * Visual Settings picker moved its own swatch and repainted nothing.
    */
   get cylinderList(): CylinderMark[] {
     const revision = this.mechanismSrv.cylinderRevision;
     const pose = this.mechanismSrv.poseRevision;
     const scale = this.settings.objectScale;
     const forward = !this.settings.isInputCW.value;
+    const paint = this.linkPaint();
     const cache = this.cylinderListCache;
     if (
       !cache ||
       cache.revision !== revision ||
       cache.pose !== pose ||
       cache.scale !== scale ||
-      cache.forward !== forward
+      cache.forward !== forward ||
+      cache.paint !== paint
     ) {
       this.cylinderListCache = {
         revision,
         pose,
         scale,
         forward,
+        paint,
         list: this.sliderMarks.cylinderMarks(this.mechanismSrv.getJoints(), 0.15 * scale, forward),
       };
     }
@@ -2277,18 +2283,28 @@ export class NewGridComponent {
     return plusPath(0.15 * this.settings.objectScale);
   }
 
-  private freshMarks(): { marks: SliderMark[]; channels: Channel[] } {
-    const joints = this.mechanismSrv.getJoints();
-    const r = 0.15 * this.settings.objectScale;
-    // A Slide's weld plate is painted in its rider's own colour, so recolouring
-    // a link changes a mark while moving nothing. Same failure as the grounded
-    // angle: the panel shows the new colour and the canvas keeps the old.
-    const paint = this.mechanismSrv
+  /**
+   * Every link's colour, as one string.
+   *
+   * A mark can be painted in a link's own colour — a Slide's weld plate is its
+   * rider's, a cylinder's skin is its barrel's — so recolouring changes a mark
+   * while moving nothing at all. Every cache down here is keyed on where things
+   * *are*, and a colour is the one edit that changes what is drawn without
+   * changing that, so it has to be in the key or the panel shows the new colour
+   * beside a canvas still wearing the old one.
+   */
+  private linkPaint(): string {
+    return this.mechanismSrv
       .getLinks()
       .map((link) => `${link.id}:${(link as RealLink).fill}`)
       .join(',');
+  }
+
+  private freshMarks(): { marks: SliderMark[]; channels: Channel[] } {
+    const joints = this.mechanismSrv.getJoints();
+    const r = 0.15 * this.settings.objectScale;
     const key =
-      `${r}|${paint}|${this.settings.isInputCW.value}|` +
+      `${r}|${this.linkPaint()}|${this.settings.isInputCW.value}|` +
       joints
         .map((joint) => {
           const real = joint as RealJoint;

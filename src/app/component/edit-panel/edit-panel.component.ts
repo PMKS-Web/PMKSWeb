@@ -28,7 +28,8 @@ import { GridUtilsService } from '../../services/grid-utils.service';
 import { RealLink } from '../../model/link';
 import { NewGridComponent } from '../new-grid/new-grid.component';
 import {
-  BORE_R,
+  cylinderSpanLayoutFrom,
+  cylinderSpanRange,
   Cylinder,
   MIN_STROKE_R,
   cylinderMinimumSpan,
@@ -342,21 +343,17 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return cylinderSizeOf(sealed, 0.15 * this.settingsService.objectScale);
   }
 
-  /** Half a bore and half again: the body length every span carries. */
-  private get cylinderLock(): number {
-    return 1.5 * BORE_R * 0.15 * this.settingsService.objectScale;
+  /** Mount-to-mount length at each end of a ram of this stroke. */
+  private cylinderEnds(stroke: number): { retracted: number; extended: number } {
+    return cylinderSpanRange(stroke, 0.15 * this.settingsService.objectScale);
   }
 
   /** The Travel field's value, in whichever of its three spellings is selected. */
   cylinderTravelLabel(sealed: Cylinder): string {
     const { stroke } = this.cylinderSize(sealed);
     const unit = this.cylinderForm.controls['travelUnit'].value;
-    const shown =
-      unit === 'ret'
-        ? stroke + this.cylinderLock
-        : unit === 'ext'
-          ? 2 * stroke + this.cylinderLock
-          : stroke;
+    const ends = this.cylinderEnds(stroke);
+    const shown = unit === 'ret' ? ends.retracted : unit === 'ext' ? ends.extended : stroke;
     return this.nup.formatModelLength(shown, this.settingsService.lengthUnit.getValue());
   }
 
@@ -373,24 +370,42 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   }
 
   /**
-   * The two spellings of the size the field is not currently showing, plus the
-   * member length they imply.
+   * A ram parked at one end of its travel: 0 fully closed, 1 fully open.
    *
-   * Worth the row: the whole claim of this panel is that these are one number,
-   * and the cheapest way to make that true rather than merely stated is to show
-   * the others moving together as one is typed.
+   * The bound is the panel's own resolution — *Starts at* shows one decimal, so
+   * anything that reads 0.0% or 100.0% counts as parked. A tighter test would
+   * leave the field saying 100.0 beside a control still offering both
+   * directions, which is the disagreement this exists to prevent.
    */
-  cylinderSizeEcho(sealed: Cylinder): string {
-    const { stroke } = this.cylinderSize(sealed);
-    const unit = this.cylinderForm.controls['travelUnit'].value;
-    const length = (value: number) =>
-      this.nup.formatModelLength(value, this.settingsService.lengthUnit.getValue());
-    const parts: string[] = [];
-    if (unit !== 'stroke') parts.push(`stroke ${length(stroke)}`);
-    if (unit !== 'ret') parts.push(`closed ${length(stroke + this.cylinderLock)}`);
-    if (unit !== 'ext') parts.push(`open ${length(2 * stroke + this.cylinderLock)}`);
-    parts.push(`barrel = rod ${length(stroke + BORE_R * 0.15 * this.settingsService.objectScale)}`);
-    return parts.join(' · ');
+  private cylinderTravelEnd(sealed: Cylinder): 0 | 1 | undefined {
+    const { start } = this.cylinderSize(sealed);
+    if (start < 5e-4) return 0;
+    if (start > 1 - 5e-4) return 1;
+    return undefined;
+  }
+
+  /**
+   * A ram at a stop has one way to go, so its direction stops being a choice.
+   *
+   * Not a refusal — the control is greyed rather than left to be pressed and
+   * silently undone. The solver already reverses a drive commanded past a stop
+   * on its first sample, so pressing it changed nothing about the animation
+   * while the label, the arrows and the Analyze text all claimed otherwise.
+   */
+  get cylinderDirectionForced(): boolean {
+    const sealed = this.selectedCylinder;
+    return !!sealed && !!sealed.slider.input && this.cylinderTravelEnd(sealed) !== undefined;
+  }
+
+  /** Point a driven ram the only way it can go, when its start leaves only one. */
+  private syncCylinderDirection(sealed: Cylinder): void {
+    if (!sealed.slider.input) return;
+    const end = this.cylinderTravelEnd(sealed);
+    if (end === undefined) return;
+    const wantsRetract = end === 1;
+    if (this.settingsService.isInputCW.value === wantsRetract) return;
+    this.settingsService.isInputCW.next(wantsRetract);
+    this.mechanismService.updateMechanism(false);
   }
 
   /** Set when the last edit had to be held at the ram's minimum, so the panel can say so. */
@@ -426,6 +441,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       c as RealJoint,
       new Coord(a.x + s * Math.cos(ang), a.y + s * Math.sin(ang))
     );
+    this.syncCylinderDirection(sealed);
     this.mechanismService.onMechUpdateState.next(2);
     // One committed edit, one undo step. A canvas drag saves on release and a
     // panel edit did not, so typing a ram's size and then pressing Undo took
@@ -450,6 +466,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         ? `Held at the shortest ram there is: any less and the barrel is all piston.`
         : '';
     this.gridUtils.resizeCylinder(sealed, held, start);
+    this.syncCylinderDirection(sealed);
     this.mechanismService.onMechUpdateState.next(2);
     // One committed edit, one undo step. A canvas drag saves on release and a
     // panel edit did not, so typing a ram's size and then pressing Undo took
@@ -885,12 +902,16 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         // Three spellings, one number. Whichever is typed sets the stroke and
         // nothing negotiates -- which is the whole of what holding barrel and
         // rod equal bought, and why there is no resolution table here.
+        // Closed and open are spans, so they are inverted through the same span
+        // rule a mount drag uses rather than by subtracting a constant: the body
+        // length a span carries depends on the stroke it is carrying.
         const unit = this.cylinderForm.controls['travelUnit'].value;
+        const r = 0.15 * this.settingsService.objectScale;
         const asked =
           unit === 'ret'
-            ? value - this.cylinderLock
+            ? cylinderSpanLayoutFrom(value, 0, r).stroke
             : unit === 'ext'
-              ? (value - this.cylinderLock) / 2
+              ? cylinderSpanLayoutFrom(value, 1, r).stroke
               : value;
         this.resizeCylinderTo(sealed, asked, this.cylinderSize(sealed).start);
       })
