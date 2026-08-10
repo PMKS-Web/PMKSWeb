@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
+import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { SCISSOR, scissorLiftFixture } from '../../test-utils/verification/library-fixtures';
 import { sealedCylinders } from '../../app/model/cylinder';
 import { MODEL_SCALE } from '../../app/model/render-scale';
@@ -153,5 +154,19 @@ describe('a scissor lift raised by its ram', () => {
     // thousandth short, because the platform's pose is the residual of a slot
     // solve rather than a length that was handed to it.
     expect(samples[samples.length - 1].height).toBeCloseTo(drawn.height, 2);
+  });
+
+  it('moves every joint at the rate its own motion implies', () => {
+    // The check no assertion about positions can make. The crossing pin, the
+    // foot block and the platform once graphed a flat zero while the lift
+    // visibly rose. Positions and rates leave the solver by different routes,
+    // so differencing one against the other is a real cross-check; the arms are
+    // straight bars, so this is also what holds the collinear cases honest.
+    // RATE_TOLERANCE carries why one percent.
+    const agreement = velocityAgreesWithPositions(buildMechanism(scissorLiftFixture(S)));
+    expect(agreement.unsolved).toEqual([]);
+    expect(agreement.stationary).toEqual([]);
+    expect(agreement.compared).toBeGreaterThan(1000);
+    expect(agreement.worst).toBeLessThan(RATE_TOLERANCE);
   });
 });

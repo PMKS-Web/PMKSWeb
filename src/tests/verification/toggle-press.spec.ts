@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
+import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { TOGGLE, togglePressFixture } from '../../test-utils/verification/library-fixtures';
 import { sealedCylinders } from '../../app/model/cylinder';
 import { MODEL_SCALE } from '../../app/model/render-scale';
@@ -147,5 +148,19 @@ describe('a toggle press closed by a hydraulic ram', () => {
     // And the last five degrees, which is where a press is actually working,
     // are worth almost nothing at all in travel.
     expect(depthAt(shut - 5) - depthAt(shut)).toBeLessThan(0.1);
+  });
+
+  it('moves every joint at the rate its own motion implies', () => {
+    // The check no assertion about positions can make. The slider on its guide
+    // once graphed 1.18 where its own travel says 7.43, and also reported an X
+    // velocity on a guide that only runs in Y, while the press animated
+    // perfectly throughout. Positions and rates leave the solver by different
+    // routes, so differencing one against the other is a real cross-check;
+    // RATE_TOLERANCE carries why one percent.
+    const agreement = velocityAgreesWithPositions(buildMechanism(togglePressFixture(S)));
+    expect(agreement.unsolved).toEqual([]);
+    expect(agreement.stationary).toEqual([]);
+    expect(agreement.compared).toBeGreaterThan(1000);
+    expect(agreement.worst).toBeLessThan(RATE_TOLERANCE);
   });
 });

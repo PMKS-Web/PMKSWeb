@@ -1,6 +1,7 @@
 import {
   Constraint,
   SimultaneousSystem,
+  commandDerivative,
   jacobian,
   residuals,
   solveSimultaneous,
@@ -145,31 +146,88 @@ describe('the simultaneous solver', () => {
     // needs it stops solving. Checked against central differences, which are
     // accurate enough to catch a wrong term even where they are not accurate
     // enough to solve with.
-    const system = trammel();
-    const positions = seededTrammel();
-    const ids = system.unknownIds;
-    const columnOf = new Map(ids.map((id, index) => [id, index]));
-    const drive = 6;
+    expectDerivedJacobian(trammel(), seededTrammel(), 6);
+  });
 
-    const analytic = jacobian(system, positions, columnOf);
-    const step = 1e-6;
-    ids.forEach((id, index) => {
-      for (const axis of [0, 1]) {
-        const original = [...positions.get(id)!];
-        const moved = [...original];
-        moved[axis] = original[axis] + step;
-        positions.set(id, moved);
-        const forward = residuals(system, positions, drive);
-        moved[axis] = original[axis] - step;
-        positions.set(id, moved);
-        const backward = residuals(system, positions, drive);
-        positions.set(id, original);
+  it('derives the same Jacobian for a rigid offset, in line and out of it', () => {
+    // The constraint that exists for bodies whose joints are collinear, where
+    // two distances would say one thing twice. Checked both flat and bent,
+    // because the flat case is the one whose terms could silently be zero.
+    const straight: SimultaneousSystem = {
+      unknownIds: ['A', 'B', 'C'],
+      constraints: [
+        { kind: 'distance', a: 'A', b: 'B', length: 4 },
+        { kind: 'rigidOffset', point: 'C', from: 'A', to: 'B', along: 10, across: 0 },
+        { kind: 'driven', a: 'A', b: 'ORIGIN' },
+      ],
+    };
+    // A on a circle about the origin, B four away from it, C ten along the same
+    // ray. Nothing axis-aligned, so no term drops out by accident.
+    const along = (from: number[], distance: number) => [
+      from[0] + distance * 0.6,
+      from[1] + distance * 0.8,
+    ];
+    const a = [3, 1];
+    const flat = new Map<string, number[]>([
+      ['ORIGIN', [0, 0]],
+      ['A', a],
+      ['B', along(a, 4)],
+      ['C', along(a, 10)],
+    ]);
+    expectDerivedJacobian(straight, flat, Math.hypot(a[0], a[1]));
 
-        forward.forEach((_, row) => {
-          const numeric = (forward[row] - backward[row]) / (2 * step);
-          expect(analytic[row][index * 2 + axis]).toBeCloseTo(numeric, 5);
-        });
-      }
-    });
+    const bent: SimultaneousSystem = {
+      ...straight,
+      constraints: straight.constraints.map((c) =>
+        c.kind === 'rigidOffset' ? { ...c, across: 2.5 } : c
+      ),
+    };
+    const offLine = new Map(flat);
+    offLine.set('C', [along(a, 10)[0] - 2.5 * 0.8, along(a, 10)[1] + 2.5 * 0.6]);
+    expectDerivedJacobian(bent, offLine, Math.hypot(a[0], a[1]));
   });
 });
+
+/**
+ * Every analytic row checked against a central difference of the residual it
+ * claims to be the derivative of.
+ *
+ * The analytic rows are the reason this solver converges at all near a toggle,
+ * and an error in one of them is invisible until a mechanism that needs it
+ * stops solving. Central differences are accurate enough to catch a wrong term
+ * even where they are not accurate enough to solve with.
+ */
+function expectDerivedJacobian(
+  system: SimultaneousSystem,
+  positions: Map<string, number[]>,
+  drive: number
+): void {
+  const ids = system.unknownIds;
+  const columnOf = new Map(ids.map((id, index) => [id, index]));
+  const analytic = jacobian(system, positions, columnOf, drive);
+  const step = 1e-6;
+  // Three vectors indexed by the same residual row. A constraint that forgets
+  // it contributes two rows rather than one shifts every row after it against
+  // the other two, and the rates come out of a system silently misaligned.
+  const rows = residuals(system, positions, drive).length;
+  expect(analytic.length).toBe(rows);
+  expect(commandDerivative(system, positions, drive).length).toBe(rows);
+  ids.forEach((id, index) => {
+    for (const axis of [0, 1]) {
+      const original = [...positions.get(id)!];
+      const moved = [...original];
+      moved[axis] = original[axis] + step;
+      positions.set(id, moved);
+      const forward = residuals(system, positions, drive);
+      moved[axis] = original[axis] - step;
+      positions.set(id, moved);
+      const backward = residuals(system, positions, drive);
+      positions.set(id, original);
+
+      forward.forEach((_, row) => {
+        const numeric = (forward[row] - backward[row]) / (2 * step);
+        expect(analytic[row][index * 2 + axis]).toBeCloseTo(numeric, 5);
+      });
+    }
+  });
+}

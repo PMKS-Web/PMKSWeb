@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
+import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { SHAPER, shaperQuickReturnFixture } from '../../test-utils/verification/library-fixtures';
 
 // A shaper's drive, ram included: a crank pin riding in a slot cut into a
@@ -143,5 +144,19 @@ describe("a shaper's quick-return drive", () => {
     const fast = Math.min(between, around);
     expect(slow / fast).toBeGreaterThan(1.5);
     expect(slow / fast).toBeLessThan(1.65);
+  });
+
+  it('moves every joint at the rate its own motion implies', () => {
+    // The check no assertion about positions can make. The ram travels 3.33
+    // units and was once graphed as standing still, because no loop ran between
+    // the lever's pivot and the ram's guide and the velocity walk never reached
+    // the output stage at all. Positions and rates leave the solver by
+    // different routes, so differencing one against the other is a real
+    // cross-check; RATE_TOLERANCE carries why one percent.
+    const agreement = velocityAgreesWithPositions(buildMechanism(shaperQuickReturnFixture()));
+    expect(agreement.unsolved).toEqual([]);
+    expect(agreement.stationary).toEqual([]);
+    expect(agreement.compared).toBeGreaterThan(1000);
+    expect(agreement.worst).toBeLessThan(RATE_TOLERANCE);
   });
 });

@@ -3,6 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
+import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { BUCKET, excavatorBucketFixture } from '../../test-utils/verification/library-fixtures';
 import { sealedCylinders } from '../../app/model/cylinder';
 import { MODEL_SCALE } from '../../app/model/render-scale';
@@ -165,5 +166,19 @@ describe('a backhoe bucket curled by its cylinder', () => {
     }
     const heights = samples.map((sample) => sample.tip.y);
     expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(1.3);
+  });
+
+  it('moves every joint at the rate its own motion implies', () => {
+    // The check no assertion about positions can make. A bucket that curls
+    // correctly and graphs a flat zero looks perfect in the animation, and the
+    // Analyze tab is where a student would notice. Positions and rates leave
+    // the solver by different routes, so differencing one against the other is
+    // a real cross-check rather than a restatement; RATE_TOLERANCE carries why
+    // one percent, and what the quotient's own truncation error costs.
+    const agreement = velocityAgreesWithPositions(buildMechanism(excavatorBucketFixture(S)));
+    expect(agreement.unsolved).toEqual([]);
+    expect(agreement.stationary).toEqual([]);
+    expect(agreement.compared).toBeGreaterThan(1000);
+    expect(agreement.worst).toBeLessThan(RATE_TOLERANCE);
   });
 });
