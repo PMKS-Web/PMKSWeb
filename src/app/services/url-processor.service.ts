@@ -74,6 +74,20 @@ export class UrlProcessorService {
     // of the samples and got NaN. Rewinding here, while frames and joints still
     // belong to each other, leaves that call with nothing left to do.
     const heldStep = mechanismSrv.mechanismTimeStep;
+    // What is selected right now, so a step through history can put it back.
+    //
+    // Selection rides along in the same URL the history is made of, so undo
+    // restored whatever happened to be selected when the *earlier* state was
+    // written — and the panel silently re-pointed at another object. Undoing an
+    // edit to joint B left you reading joint N's panel, which looks for all the
+    // world like B's own switches turning themselves off.
+    //
+    // Selecting something is not an edit. It earns no history entry, so it
+    // should not be undone by one.
+    const heldSelection =
+      continuingHistory && this.activeObj.objType !== 'Nothing' && this.activeObj.objType !== 'Grid'
+        ? { type: this.activeObj.objType, id: this.activeObj.getSelectedObj()?.id }
+        : undefined;
     mechanismSrv.rewindToStart();
 
     // the transcoder is responsible for decoding the url into a mechanism
@@ -106,7 +120,33 @@ export class UrlProcessorService {
       }
     }
 
-    mechanismSrv.updateMechanism(save);
+    // Put the selection back before the mechanism is rebuilt, so everything
+    // downstream — the panel, the canvas highlight, the analysis graphs — is
+    // built once, against the object the user is actually looking at.
+    //
+    // By id rather than by reference: the decode replaces every joint and link
+    // with a new object, so the one held above no longer exists. If its id does
+    // not either, the edit really did remove it and the URL's own selection is
+    // the honest answer.
+    if (heldSelection?.id) {
+      const restored =
+        heldSelection.type === 'Joint'
+          ? mechanismSrv.joints.find((joint) => joint.id === heldSelection.id)
+          : heldSelection.type === 'Link'
+            ? mechanismSrv.links.find((link) => link.id === heldSelection.id)
+            : mechanismSrv.forces.find((force) => force.id === heldSelection.id);
+      if (restored) this.activeObj.updateSelectedObj(restored);
+    }
+
+    // Through the structural seam rather than straight to `updateMechanism`.
+    //
+    // Decoding a URL builds a whole mechanism, which is as structural as an
+    // edit gets — but it was the one path that skipped the reconcilers, so a
+    // mechanism could arrive carrying a state the app itself would not build
+    // and nothing looked at it. A URL is a compatibility surface: whatever an
+    // older version wrote has to keep opening, and has to open as something
+    // coherent.
+    mechanismSrv.finishStructuralEdit(save);
 
     // A step within one mechanism's own history goes back to the time it was
     // taken at; a different mechanism arriving starts at the beginning of its

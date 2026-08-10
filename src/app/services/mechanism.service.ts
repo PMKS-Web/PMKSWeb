@@ -716,7 +716,38 @@ export class MechanismService {
         }
         return;
       }
-      if (!this.compoundAt(joint)) joint.isWelded = false;
+      if (!this.compoundAt(joint)) {
+        joint.isWelded = false;
+        return;
+      }
+
+      // A weld that only got half way. A welded joint is rigid, so every body
+      // meeting it belongs to one compound; here it is in two, or in one with a
+      // loose bar beside it. The joint then draws its weld marker while one of
+      // the links through it is still free to turn — welded and pinned at the
+      // same time, which is not a state the model has an answer for and not one
+      // a user can see the shape of.
+      //
+      // Repaired the same way the branch above repairs a Slide: take the flag
+      // off (both weld guards refuse an already-welded joint, since they exist
+      // to stop a *second* weld) and let the ordinary weld run, which fuses
+      // everything at the joint into one body. Restore the flag if it will not.
+      //
+      // Nothing in the app builds this any more — welding a joint already in a
+      // compound absorbs that compound — but a URL can carry it in, and a URL
+      // is a compatibility surface: mechanisms saved by earlier versions have
+      // to keep opening, and they have to open as something coherent.
+      const bodiesAtJoint = this.links.filter(
+        (link): link is RealLink => link instanceof RealLink && link.joints.includes(joint)
+      );
+      if (bodiesAtJoint.length > 1) {
+        joint.isWelded = false;
+        if (this.weldJointTopology(joint)) {
+          this.rebuildJointGraph();
+        } else {
+          joint.isWelded = true;
+        }
+      }
     });
   }
 
@@ -887,12 +918,27 @@ export class MechanismService {
   }
 
   deleteJoint() {
-    // Deleting a mount (or, defensively, any member joint) of a sealed
-    // cylinder deletes the whole assembly in one step (§ cylinder 5).
+    // Deleting a mount (or, defensively, any member joint) of a sealed cylinder
+    // takes the whole assembly with it (§ cylinder 5) — and then goes on to
+    // delete the joint itself.
+    //
+    // It used to stop at the cylinder. A mount held by some other link survived
+    // its own deletion, and so did that link: asked to delete joint K, the app
+    // removed the ram and left K sitting on the bar it shared with M. "Delete
+    // Cylinder" on the joint's own menu still means only the cylinder, and says
+    // so; this is the generic Delete, which has one meaning everywhere else —
+    // the joint goes, and so does any link that cannot stand without it.
     const sealed = this.cylinderAt(this.activeObjService.selectedJoint);
     if (sealed) {
-      this.deleteCylinder(sealed);
-      return;
+      const doomed = this.activeObjService.selectedJoint;
+      this.deleteCylinderTopology(sealed);
+      // The cascade may already have taken it: a mount no other link holds is
+      // removed as orphaned, and there is nothing left to delete.
+      if (!this.joints.some((joint) => joint.id === doomed.id)) {
+        this.activeObjService.updateSelectedObj(undefined);
+        this.finishStructuralEdit(true);
+        return;
+      }
     }
     // Deleting a joint of a NEIGHBOUR welded to a mount must not take the
     // cylinder with it: dismantling the compound through the generic path
@@ -1143,23 +1189,42 @@ export class MechanismService {
             l_subset_index = l_subset_index - 1;
           }
         }
-        // Now that all subsets have been gone over, do the final check
+        // Now that all subsets have been gone over, do the final check.
+        //
+        // A compound down to one leaf stops being a compound: the leaf takes
+        // its place as an ordinary link.
+        //
+        // Both branches used to look the surviving link up *after* reassigning
+        // `l` to the leaf, so they searched `links` for the leaf's id and got
+        // -1 whenever the leaf was not already top-level — and `splice(-1, 1)`
+        // does not do nothing. It removes the *last* link in the mechanism.
+        // Deleting one joint quietly deleted an unrelated body somewhere else
+        // on the grid, and left the emptied compound standing beside the leaf
+        // it was supposed to become. It only ever went unnoticed because the
+        // id rewriting above usually leaves the compound and its last leaf
+        // sharing a name, and then the wrong lookup happens to find the right
+        // link.
+        const removeLink = (id: string) => {
+          const at = this.links.findIndex((li) => li.id === id);
+          if (at >= 0) this.links.splice(at, 1);
+        };
         if (l.subset.length === 1) {
-          l = l.subset[0];
-          const delLinkIndex = this.links.findIndex((li) => li.id === l.id);
-          this.links.splice(delLinkIndex, 1);
-          this.links.push(l);
-          l.joints.forEach((jt) => {
+          const compoundId = l.id;
+          const survivor = l.subset[0];
+          removeLink(compoundId);
+          removeLink(survivor.id);
+          this.links.push(survivor);
+          survivor.joints.forEach((jt) => {
             if (!(jt instanceof RealJoint)) {
               return;
             }
             jt.isWelded = false;
             jt.links = [];
-            jt.links.push(l);
+            jt.links.push(survivor);
           });
+          l = survivor;
         } else if (l.subset.length === 0) {
-          const sliceIndex = this.links.findIndex((li) => li.id === l.id);
-          this.links.splice(sliceIndex, 1);
+          removeLink(l.id);
         }
       }
 
@@ -1651,6 +1716,22 @@ export class MechanismService {
       this.cylinderAt(this.activeObjService.selectedJoint) ??
       this.cylinderAt(this.activeObjService.selectedLink);
     if (!sealed) return;
+    this.deleteCylinderTopology(sealed);
+    this.activeObjService.updateSelectedObj(undefined);
+    this.finishStructuralEdit(true);
+  }
+
+  /**
+   * Take a cylinder out of the mechanism. Pure topology — no rebuild, no save,
+   * and the selection is left alone.
+   *
+   * Split from `deleteCylinder` for the same reason `weldTopology` is split
+   * from `weldJoint`: two callers want the same removal and different endings.
+   * Deleting the *cylinder* ends here; deleting a *joint* that happens to be
+   * one of its mounts carries on to remove the joint too, and wants one undo
+   * entry covering both.
+   */
+  private deleteCylinderTopology(sealed: Cylinder): void {
     // A gesture in flight targets objects about to stop existing.
     this.injector.get(DragStateService).cancel();
 
@@ -1678,8 +1759,22 @@ export class MechanismService {
         this.links.some((candidate) => candidate.joints.includes(joint))
     );
 
-    this.activeObjService.updateSelectedObj(undefined);
-    this.finishStructuralEdit(true);
+    // Scrub what survived of what did not.
+    //
+    // A surviving mount keeps its own `links` and `connectedJoints` arrays, and
+    // they still name the ram's links and its interior joints. Nothing noticed
+    // while this was the last step of a deletion — the rebuild reads the link
+    // list, not the joint's copy of it — but any code that walks a joint's own
+    // neighbours afterwards is walking to objects that no longer exist. The
+    // generic joint deletion does exactly that, and looked up a joint that had
+    // been removed a moment earlier.
+    const liveLinks = new Set(this.links.map((link) => link.id));
+    const liveJoints = new Set(this.joints.map((joint) => joint.id));
+    this.joints.forEach((joint) => {
+      if (!(joint instanceof RealJoint)) return;
+      joint.links = joint.links.filter((link) => liveLinks.has(link.id));
+      joint.connectedJoints = joint.connectedJoints.filter((other) => liveJoints.has(other.id));
+    });
   }
 
   /**
@@ -2603,12 +2698,32 @@ export class MechanismService {
     if (joint instanceof RealJoint) this.unWeldJoint(joint);
   }
 
-  public unweldAll(): void {
+  /**
+   * Take one compound apart: every weld holding *this* body together, and no
+   * others.
+   *
+   * The control that calls this lives inside a selected link's own Compound
+   * Link Settings, so "all" has always meant "all of this one". It was reading
+   * as "all in the mechanism": pressing it on a two-leaf compound dissolved
+   * every other compound on the grid, which is a large, silent, and entirely
+   * unrelated edit.
+   *
+   * With no link it still means the whole mechanism, because that is what a
+   * caller with nothing selected can only mean.
+   */
+  public unweldAll(link: Link | undefined = this.activeObjService.selectedLink): void {
+    const scope =
+      link instanceof RealLink && link.subset.length > 0
+        ? this.joints.filter(
+            (joint): joint is RealJoint =>
+              joint instanceof RealJoint && joint.isWelded && link.joints.includes(joint)
+          )
+        : this.joints.filter(
+            (joint): joint is RealJoint => joint instanceof RealJoint && joint.isWelded
+          );
+
     let changed = false;
-    const weldedJoints = this.joints.filter(
-      (joint): joint is RealJoint => joint instanceof RealJoint && joint.isWelded
-    );
-    weldedJoints.forEach((joint) => {
+    scope.forEach((joint) => {
       changed = this.unweldTopology(joint) || changed;
     });
     if (changed) this.finishStructuralEdit(true);

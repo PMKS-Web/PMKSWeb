@@ -153,25 +153,52 @@ describe('permanence of a sealed cylinder', () => {
 });
 
 describe('deleting a cylinder cascades to the whole assembly', () => {
-  it('from a mount, keeping the mount only while a neighbour still holds it', () => {
+  /** The ram, plus a bar hanging off its rod mount. */
+  function cylinderWithNeighbour() {
     const h = harnessWithCylinder();
-    // A neighbour link attached at the rod mount.
     const e = new RevJoint('Z', h.sealed.rodFar.x + 100, h.sealed.rodFar.y);
     const neighbour = new RealLink(h.sealed.rodFar.id + 'Z', [h.sealed.rodFar, e]);
     h.service.joints.push(e);
     h.service.links.push(neighbour);
     wireGraph(h.service);
+    return { ...h, neighbour };
+  }
+
+  // Two different asks, two different answers, and the labels say which is
+  // which: a mount's own menu offers "Delete Cylinder", while the panel's
+  // Delete acts on whatever is selected — here, the joint.
+  it('from a mount via Delete Cylinder, keeping the mount while a neighbour holds it', () => {
+    const h = cylinderWithNeighbour();
     const savesBefore = h.saveCount();
+
+    h.active.updateSelectedObj(h.sealed.rodFar);
+    h.service.deleteCylinder();
+
+    expect(sealedCylinders(h.service.joints)).toHaveLength(0);
+    expect(h.service.links.map((link) => link.id)).toEqual([h.neighbour.id]);
+    // The rod mount survives on the neighbour; every other member is gone.
+    const ids = h.service.joints.map((joint) => joint.id).sort();
+    expect(ids).toEqual([h.sealed.rodFar.id, 'Z'].sort());
+    expect(h.saveCount()).toBe(savesBefore + 1);
+  });
+
+  it('from a mount via Delete Joint, taking the joint and what cannot stand without it', () => {
+    // Asked to delete the *joint*, the app used to delete only the ram and
+    // leave the joint sitting on its neighbour — so the thing that was selected
+    // was the one thing still there afterwards.
+    const h = cylinderWithNeighbour();
 
     h.active.updateSelectedObj(h.sealed.rodFar);
     h.service.deleteJoint();
 
     expect(sealedCylinders(h.service.joints)).toHaveLength(0);
-    expect(h.service.links.map((link) => link.id)).toEqual([neighbour.id]);
-    // The rod mount survives on the neighbour; every other member is gone.
-    const ids = h.service.joints.map((joint) => joint.id).sort();
-    expect(ids).toEqual([h.sealed.rodFar.id, 'Z'].sort());
-    expect(h.saveCount()).toBe(savesBefore + 1);
+    // The joint itself goes, and so does the bar that lost an end to it.
+    expect(h.service.joints.map((joint) => joint.id)).not.toContain(h.sealed.rodFar.id);
+    expect(h.service.links).toHaveLength(0);
+    // Z is left behind holding nothing. That is what deleting a joint does
+    // everywhere in this app — only `deleteLink` sweeps up orphans — so it is
+    // recorded here rather than asserted away.
+    expect(h.service.joints.map((joint) => joint.id)).toEqual(['Z']);
   });
 
   it('from the body, removing everything including orphaned mounts', () => {
