@@ -169,16 +169,33 @@ const note = (finding) => {
   console.log(`!! ${finding.what}  [${finding.where}]`);
 };
 
+/**
+ * Everything a user could actually right-click.
+ *
+ * Joints with no hitbox are skipped, and skipping them is the point rather than
+ * a convenience: a sealed cylinder's interior — the buried barrel end, the pin,
+ * the slider — is deliberately unreachable, so the guards that refuse to unweld
+ * or unpick it are refusing something nobody can ask for. Walking them anyway
+ * reports a silent refusal on a menu that never opens, which is a red result
+ * nobody can act on. They are counted and named instead.
+ */
 const everySubject = () =>
   page.evaluate(() => {
     const grid = ng.getComponent(document.querySelector('app-new-grid'));
     const mech = grid.mechanismSrv;
-    return [
-      { kind: 'grid', id: 'grid' },
-      ...mech.joints.map((j) => ({ kind: 'joint', id: j.id })),
-      ...mech.links.map((l) => ({ kind: 'link', id: l.id })),
-      ...mech.forces.map((f) => ({ kind: 'force', id: f.id ?? f.name })),
-    ];
+    const drawn = new Set(
+      [...document.querySelectorAll('[id^="joint_"]')].map((node) => node.id.slice(6))
+    );
+    const hidden = mech.joints.filter((j) => !drawn.has(j.id)).map((j) => j.id);
+    return {
+      hidden,
+      subjects: [
+        { kind: 'grid', id: 'grid' },
+        ...mech.joints.filter((j) => drawn.has(j.id)).map((j) => ({ kind: 'joint', id: j.id })),
+        ...mech.links.map((l) => ({ kind: 'link', id: l.id })),
+        ...mech.forces.map((f) => ({ kind: 'force', id: f.id ?? f.name })),
+      ],
+    };
   });
 
 // Actions that begin a two-click gesture rather than finishing an edit: they are
@@ -189,9 +206,12 @@ const GESTURES =
 let clicked = 0;
 for (const id of MECHANISMS) {
   await load(id);
-  const subjects = await everySubject();
+  const { subjects, hidden } = await everySubject();
   const start = await signature();
-  console.log(`\n=== ${id}: ${subjects.length} subjects, ${start.joints} joints ===`);
+  console.log(
+    `\n=== ${id}: ${subjects.length} subjects, ${start.joints} joints` +
+      `${hidden.length ? `, skipping ${hidden.join(',')} (no hitbox)` : ''} ===`
+  );
 
   for (const subject of subjects) {
     const menu = await menuFor(subject.kind, subject.id);
