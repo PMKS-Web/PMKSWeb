@@ -334,6 +334,35 @@ export class RealLink extends Link {
     return !hullContainsPoint;
   }
 
+  /**
+   * The outline of a bar whose joints have all landed on one point, or nothing
+   * when they have not.
+   *
+   * Every edge of such a bar is zero length, so the slope it is offset from is
+   * 0/0 and the whole path comes out `M NaN NaN` — which the browser rejects
+   * outright, once per frame, and which then propagates into every solved
+   * timestep that copies this geometry. It is a state the app can reach: drop a
+   * joint exactly on another joint of its own link and the merge is refused,
+   * correctly, leaving the two coincident.
+   *
+   * Drawn as the disc the bar's own end cap already is, so a mechanism that has
+   * been dragged into this stays visible and can be dragged back out of it. The
+   * link is degenerate either way — this is about not making it unreadable as
+   * well.
+   */
+  private static collapsedOutline(points: number[][]): string | undefined {
+    const xs = points.map((point) => point[0]);
+    const ys = points.map((point) => point[1]);
+    const spread = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    if (spread > 1e-9) return undefined;
+    const radius = SettingsService.objectScale / 4;
+    const [x, y] = points[0];
+    return (
+      `M ${x - radius} ${y} A ${radius} ${radius} 0 0 1 ${x + radius} ${y} ` +
+      `A ${radius} ${radius} 0 0 1 ${x - radius} ${y} Z `
+    );
+  }
+
   getSimplePathString(): string {
     this.externalLines = [];
     let l = this;
@@ -342,6 +371,12 @@ export class RealLink extends Link {
 
     //Convert joints to simple x, y array
     const points = allJoints.map((j) => [j.x, j.y]);
+    const collapsed = RealLink.collapsedOutline(points);
+    if (collapsed) {
+      this.externalLines = [];
+      this.initialExternalLines = [];
+      return collapsed;
+    }
     const hullPoints = hull(points, Infinity) as number[][]; //Hull points find the convex hull (largest fence)
 
     //Match resuling x,y points to joints

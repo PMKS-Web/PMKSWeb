@@ -1,5 +1,6 @@
 import { Mechanism } from './mechanism/mechanism';
 import { RealLink } from './link';
+import { RevJoint } from './joint';
 import { SettingsService } from '../services/settings.service';
 import {
   buildMechanismFixture,
@@ -153,5 +154,33 @@ describe('welded link SVG geometry', () => {
     expect(mechanism.links.length).toBeGreaterThan(100);
     expect(compoundBuild).toHaveBeenCalledTimes(1);
     compoundBuild.mockRestore();
+  });
+});
+
+describe('a bar whose joints have all landed on one point', () => {
+  beforeEach(() => {
+    SettingsService._objectScale.next(1);
+  });
+
+  it('draws its end cap instead of a path full of NaN', () => {
+    // Reachable: drop a joint exactly onto another joint of its own link and the
+    // merge is correctly refused, leaving the two coincident. Every edge of the
+    // bar is then zero length, its offset slope is 0/0, and the path came out
+    // `M NaN NaN` — which the browser rejects on every frame, and which the
+    // solved timesteps then copy from. A cylinder mount drag is what reaches
+    // this in practice, because the ram re-poses to follow the cursor all the
+    // way in.
+    const a = new RevJoint('A', 4, 7);
+    const b = new RevJoint('B', 4, 7);
+    const link = new RealLink('AB', [a, b]);
+
+    expect(link.d).not.toMatch(/NaN|Infinity/);
+    expect(link.d).toMatch(/^M /);
+    // Centred on the point the joints collapsed onto, at the bar's own width.
+    const numbers = (link.d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    expect(Math.max(...numbers.filter((_, index) => index % 2 === 0))).toBeGreaterThan(4);
+    // Nothing to hover: an outline with no length has no edges to offer.
+    expect(link.externalLines).toEqual([]);
+    expect(link.initialExternalLines).toEqual([]);
   });
 });
