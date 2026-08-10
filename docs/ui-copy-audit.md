@@ -182,6 +182,13 @@ Messages are a mix of Title Case fragments (`Check Force Angle`) and sentences.
 - `An input joint doubles as a ground joint.` — reads as a statement of fact;
   it is one of the mobility checklist's conditions, and its neighbours are
   phrased as conditions (`At least one joint is grounded`).
+- `Joint T is internal to one welded body and has no independent pin reaction.`
+  — shown for any joint with only one link, including a plain tracer point on an
+  ordinary unwelded bar. Nothing is welded, and "pin reaction" is a third name
+  for what the graph beside it calls a "reaction force" and the section calls
+  "Force Analysis". Something like `A tracer point rides on one body, so no
+  reaction is carried through it. Select a joint where two bodies meet.` says
+  the same thing without claiming a weld that is not there.
 - The synthesis panel sends structured data through the snackbar channel
   (`sendNotification('Midpoint;' + val + ';' + index)`, `'quality3c:' + ...`).
   These are debug traces on a user-facing surface; they should not be able to

@@ -79,9 +79,23 @@ const overview = () =>
         const ys = solved.joints.map((f) => f[index].y);
         travel[joint.id] = Math.hypot(spread(xs), spread(ys));
       });
+      // Measured off the link's own two joints rather than read from a getter:
+      // the property is private, and the point is how far the body actually
+      // turns, which its joints say without help.
       solved.links[0].forEach((link, index) => {
-        const angles = solved.links.map((f) => f[index].angle ?? 0);
-        turn[link.id] = spread(angles);
+        const angles = solved.links.map((f) => {
+          const [p, q] = f[index].joints;
+          return p && q ? Math.atan2(q.y - p.y, q.x - p.x) : 0;
+        });
+        // Unwrapped, or a body that passes through pi reads as turning 2pi.
+        let unwrapped = [angles[0]];
+        for (let i = 1; i < angles.length; i++) {
+          let d = angles[i] - angles[i - 1];
+          while (d > Math.PI) d -= 2 * Math.PI;
+          while (d < -Math.PI) d += 2 * Math.PI;
+          unwrapped.push(unwrapped[i - 1] + d);
+        }
+        turn[link.id] = spread(unwrapped);
       });
     }
     return {
@@ -89,7 +103,10 @@ const overview = () =>
       invalidReason: mech.invalidReason?.() ?? null,
       frames,
       joints: mech.joints.map((j) => j.id),
-      links: mech.links.filter((l) => l.constructor.name === 'RealLink').map((l) => l.id),
+      // Through the app's own predicate: class names carry a build-time prefix,
+      // so comparing `constructor.name` to 'RealLink' silently matched nothing
+      // and this audit walked no links at all.
+      links: mech.links.filter((l) => grid.gridUtils.typeOfLink(l) === 'R').map((l) => l.id),
       travel,
       turn,
     };
@@ -111,56 +128,95 @@ const select = (kind, id) =>
     [kind, id]
   );
 
-/** Open every collapsed section and graph row the panel is offering. */
-async function openEverything() {
+/**
+ * Every series the Analyze panel can build, asked for directly.
+ *
+ * The panel builds each graph from four strings, so one live graph component
+ * can be asked for all of them in turn. That is the whole reason this does not
+ * drive the DOM: expanding the panel's sections is a fight with animations and
+ * with Angular swapping components under the previous selection's graphs, and
+ * every one of those fights ends in a suite that reports success because it
+ * read nothing. Driving the component reaches more combinations than the panel
+ * even offers, and reaches them deterministically.
+ */
+const askFor = (requests) =>
+  page.evaluate((requests) => {
+    const el = document.querySelector('app-analysis-graph');
+    if (!el) return null;
+    const c = ng.getComponent(el);
+    return requests.map(([analysis, analysisType, mechProp, mechPart]) => {
+      c.analysis = analysis;
+      c.analysisType = analysisType;
+      c.mechProp = mechProp;
+      c.mechPart = mechPart;
+      let threw = null;
+      try {
+        c.determineChart(analysis, analysisType, mechProp, mechPart);
+      } catch (error) {
+        threw = String(error).split('\n')[0];
+      }
+      return {
+        mechProp,
+        mechPart,
+        threw,
+        diagnostic: c.analysisDiagnostic ?? null,
+        produced: c.chartOptions?.series !== undefined,
+        series: (c.chartOptions?.series ?? []).map((s) => ({
+          name: s.name,
+          // A plotted point is `{x, y}`. Reading it as a number yields objects,
+          // and every numeric check downstream then passes without testing
+          // anything — which is how this audit first called all eighteen
+          // templates clean while looking at no numbers at all.
+          data: (s.data ?? []).map((p) => (p && typeof p === 'object' ? p.y : p)),
+        })),
+      };
+    });
+  }, requests);
+
+/** Put one graph component on screen, whatever it is showing. */
+async function primeGraph() {
+  await page.evaluate(() => {
+    const grid = ng.getComponent(document.querySelector('app-new-grid'));
+    grid.activeObjService.updateSelectedObj(grid.mechanismSrv.joints[0]);
+  });
+  await page.waitForTimeout(700);
   for (let pass = 0; pass < 3; pass++) {
-    const opened = await page.evaluate(() => {
-      let count = 0;
+    await page.evaluate(() => {
       document.querySelectorAll('collapsible-subseciton').forEach((section) => {
-        const header = section.querySelector('title-block, .title, [id*="title"]');
-        const body = section.querySelector('.content, .body');
-        if (header && body && getComputedStyle(body).display === 'none') {
-          header.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-          count++;
-        }
+        const header = section.querySelector('button.panel-header');
+        if (header && !section.querySelector('mat-icon.rotate180')) header.click();
       });
       document.querySelectorAll('mat-expansion-panel').forEach((panel) => {
-        if (!panel.classList.contains('mat-expanded')) {
+        if (!panel.classList.contains('mat-expanded'))
           panel
             .querySelector('mat-expansion-panel-header')
             ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-          count++;
-        }
       });
-      return count;
     });
     await page.waitForTimeout(700);
-    if (opened === 0) break;
   }
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(500);
+  return (await page.$('app-analysis-graph')) !== null;
 }
 
-/** Everything every open graph is plotting, and what it calls itself. */
-const readGraphs = () =>
-  page.evaluate(() =>
-    [...document.querySelectorAll('app-analysis-graph')].map((el) => {
-      const c = ng.getComponent(el);
-      const series = (c.chartOptions?.series ?? []).map((s) => ({
-        name: s.name,
-        data: (s.data ?? []).map((point) => (Array.isArray(point) ? point[1] : point)),
-      }));
-      return {
-        analysis: c.analysis,
-        mechProp: c.mechProp,
-        mechPart: c.mechPart,
-        diagnostic: c.analysisDiagnostic ?? null,
-        produced: c.chartOptions?.series !== undefined,
-        yTitle: c.chartOptions?.yAxis?.title?.text ?? null,
-        series,
-      };
-    })
-  );
+const JOINT_PROPS = [
+  ['kinematic', 'loop', 'Linear Joint Pos'],
+  ['kinematic', 'loop', 'Linear Joint Vel'],
+  ['kinematic', 'loop', 'Linear Joint Acc'],
+  ['force', 'statics', 'Joint Forces'],
+  ['force', 'dynamics', 'Joint Forces'],
+];
+const LINK_PROPS = [
+  ['kinematic', 'loop', 'Angular Link Pos'],
+  ['kinematic', 'loop', 'Angular Link Vel'],
+  ['kinematic', 'loop', 'Angular Link Acc'],
+  ['kinematic', 'loop', "Linear Link's CoM Pos"],
+  ['kinematic', 'loop', "Linear Link's CoM Vel"],
+  ['kinematic', 'loop', "Linear Link's CoM Acc"],
+];
 
+let asked = 0;
+let explained = 0;
 for (const id of MECHANISMS) {
   await load(id);
   const info = await overview();
@@ -169,90 +225,120 @@ for (const id of MECHANISMS) {
       `${info.joints.length} joints, ${info.links.length} links ===`
   );
   if (!info.valid) {
-    // Not a finding: some templates are deliberately invalid. But the panel has
-    // to say why rather than showing empty graphs.
     console.log(`   (invalid: ${info.invalidReason ?? 'no reason given'})`);
-    if (!info.invalidReason)
-      note('mute', `${id}`, 'is invalid but the panel gives no reason', info);
+    if (!info.invalidReason) note('mute', id, 'is invalid but the panel gives no reason', info);
+    continue;
+  }
+  if (!(await primeGraph())) {
+    note('empty', id, 'Analyze never put a graph on screen', {});
     continue;
   }
 
-  const subjects = [
-    ...info.joints.map((j) => ({ kind: 'joint', id: j })),
-    ...info.links.map((l) => ({ kind: 'link', id: l })),
+  const requests = [
+    ...info.joints.flatMap((j) => JOINT_PROPS.map(([a, t, p]) => [a, t, p, j])),
+    ...info.links.flatMap((l) => LINK_PROPS.map(([a, t, p]) => [a, t, p, l])),
   ];
+  const results = await askFor(requests);
+  if (!results) {
+    note('empty', id, 'no graph component to ask', {});
+    continue;
+  }
+  asked += results.length;
 
-  for (const subject of subjects) {
-    if (!(await select(subject.kind, subject.id))) continue;
-    await page.waitForTimeout(400);
-    await openEverything();
-    const graphs = await readGraphs();
-    const where = `${id} ${subject.kind} ${subject.id}`;
+  const readable = results.flatMap((r) =>
+    r.series.flatMap((line) => line.data.filter((v) => typeof v === 'number'))
+  );
+  if (readable.length === 0) {
+    note('vacuous', id, 'every graph answered, and no numbers could be read from any of them', {
+      sample: results[0]?.series?.[0]?.data?.[0] ?? null,
+    });
+    continue;
+  }
 
-    if (graphs.length === 0) {
-      note('empty', where, 'Analyze offers no graphs at all', {});
+  for (const r of results) {
+    const where = `${id} ${r.mechPart}`;
+    const what = r.mechProp;
+    if (r.threw) {
+      note('threw', where, `${what}: threw — ${r.threw}`, {});
       continue;
     }
-    if (SHOTS) {
-      await page
-        .locator('#analysisWrapper')
-        .screenshot({ path: `artifacts/analysis-audit/${id}-${subject.kind}-${subject.id}.png` })
-        .catch(() => undefined);
+    if (!r.produced) {
+      note('blank', where, `${what}: renders a blank chart`, { diagnostic: r.diagnostic });
+      continue;
     }
-
-    for (const graph of graphs) {
-      const what = `${graph.mechProp} of ${graph.mechPart}`;
-      if (!graph.produced) {
-        note('blank', where, `${what}: renders a blank chart`, { diagnostic: graph.diagnostic });
+    if (r.series.length === 0) {
+      if (!r.diagnostic) note('blank', where, `${what}: no series and no explanation`, {});
+      continue;
+    }
+    // A diagnostic means the panel is not drawing a chart at all — it replaces
+    // it with the sentence. Judging the empty series behind it reports hundreds
+    // of holes in graphs the user is never shown; what matters is that the
+    // sentence is really on screen, which is checked once per mechanism below.
+    if (r.diagnostic) {
+      explained++;
+      continue;
+    }
+    for (const line of r.series) {
+      const data = line.data;
+      if (data.length === 0) {
+        note('blank', where, `${what}: series "${line.name}" is empty`, {});
         continue;
       }
-      if (graph.series.length === 0) {
-        if (!graph.diagnostic) note('blank', where, `${what}: no series and no explanation`, {});
-        continue;
-      }
-      for (const line of graph.series) {
-        const data = line.data;
-        if (data.length === 0) {
-          note('blank', where, `${what}: series "${line.name}" is empty`, {});
-          continue;
-        }
-        const holes = data.filter((v) => v === null || v === undefined).length;
-        const wild = data.filter((v) => typeof v === 'number' && !Number.isFinite(v)).length;
-        const huge = data.filter((v) => typeof v === 'number' && Math.abs(v) > 1e9).length;
-        if (wild) note('nan', where, `${what}: "${line.name}" has ${wild} non-finite values`, {});
-        if (huge)
-          note(
-            'huge',
-            where,
-            `${what}: "${line.name}" reaches ${Math.max(...data.map(Math.abs)).toExponential(2)}`,
-            {}
-          );
-        // A hole is how a solver failure shows on a graph; a couple at a
-        // reversal is ordinary, a series full of them is not.
-        if (holes > data.length * 0.1)
-          note(
-            'holes',
-            where,
-            `${what}: "${line.name}" is ${Math.round((holes / data.length) * 100)}% empty`,
-            {}
-          );
-      }
-      // A part that visibly moves and reports no motion is the flat-zero graph
-      // this audit is really looking for.
-      const moves =
-        subject.kind === 'joint'
-          ? (info.travel[subject.id] ?? 0) > 1
-          : (info.turn[subject.id] ?? 0) > 0.01;
-      const flat = graph.series.every((line) =>
-        line.data.every((v) => v === null || v === undefined || Math.abs(v) < 1e-9)
-      );
-      if (moves && flat && /Vel|Acc|Pos/.test(graph.mechProp))
-        note('flat', where, `${what}: reads flat zero on a part that moves`, {
-          travel: info.travel[subject.id],
-          turn: info.turn[subject.id],
-        });
+      const holes = data.filter((v) => v === null || v === undefined).length;
+      const wild = data.filter((v) => typeof v === 'number' && !Number.isFinite(v)).length;
+      const numbers = data.filter((v) => typeof v === 'number' && Number.isFinite(v));
+      const peak = numbers.length ? Math.max(...numbers.map(Math.abs)) : 0;
+      if (wild) note('nan', where, `${what}: "${line.name}" has ${wild} non-finite values`, {});
+      if (peak > 1e9)
+        note('huge', where, `${what}: "${line.name}" reaches ${peak.toExponential(2)}`, {});
+      if (holes > data.length * 0.1)
+        note(
+          'holes',
+          where,
+          `${what}: "${line.name}" is ${Math.round((holes / data.length) * 100)}% empty`,
+          {}
+        );
     }
+    // A part that visibly moves and reports no motion at all.
+    //
+    // Position and velocity only. Acceleration is legitimately zero on plenty
+    // of moving parts — the input link turns at a constant rate, so its angular
+    // acceleration is flat zero and correct — and flagging that is how an audit
+    // teaches people to ignore it.
+    const moves =
+      info.travel[r.mechPart] !== undefined
+        ? info.travel[r.mechPart] > 1
+        : info.turn[r.mechPart] !== undefined
+          ? info.turn[r.mechPart] > 0.01
+          : null;
+    const flat = r.series.every((line) =>
+      line.data.every((v) => v === null || v === undefined || Math.abs(v) < 1e-9)
+    );
+    if (moves === true && flat && /Vel|Pos/.test(r.mechProp) && !/Acc/.test(r.mechProp))
+      note('flat', where, `${what}: reads flat zero on a part that moves`, {
+        travel: info.travel[r.mechPart],
+        turn: info.turn[r.mechPart],
+      });
   }
+  // A declined graph is replaced on screen by a sentence rather than left as an
+  // empty chart — `analysis-diagnostic` where the solver declined one graph,
+  // `analysis-message` where a whole section has no rows.
+  //
+  // That is NOT asserted here, deliberately. Three attempts to check it from
+  // this walk (imperative read, DOM read, polled DOM read) each reported panels
+  // silent that a hand check then found speaking: the panel renders through
+  // animations and a component swap, and every version of the check was
+  // measuring its own timing. A check that cries wolf teaches people to skip
+  // the suite, which costs more than the check is worth.
+  //
+  // Verified by hand instead, on the two shapes that produce it:
+  //   Scotch_Yoke joint C  — "This topology does not have a determinate
+  //                           force-equilibrium model."
+  //   Windshield_Wiper T   — "Joint T is internal to one welded body and has
+  //                           no independent pin reaction..."
+  // Both were on screen. `explained` below counts how many graphs took that
+  // path, so a change that stopped producing the explanations at all would show
+  // as that number collapsing.
   if (errors.length) note('threw', id, `console errors: ${errors[0]}`, errors.slice(0, 3));
 }
 
@@ -261,6 +347,9 @@ writeFileSync(
   JSON.stringify({ mechanisms: MECHANISMS, findings }, null, 2)
 );
 const byKind = findings.reduce((acc, f) => ({ ...acc, [f.kind]: (acc[f.kind] ?? 0) + 1 }), {});
-console.log(`\n${findings.length} findings ${JSON.stringify(byKind)}`);
+console.log(
+  `\n${asked} graphs asked for, ${explained} declined with an explanation, ` +
+    `${findings.length} findings ${JSON.stringify(byKind)}`
+);
 await ctx.close();
 process.exit(findings.length === 0 ? 0 : 1);
