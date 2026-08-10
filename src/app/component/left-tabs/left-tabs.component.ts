@@ -19,7 +19,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { SynthesisWarningComponent } from '../MODALS/synthesis-warning/synthesis-warning.component';
 import { MechanismService } from 'src/app/services/mechanism.service';
 import { SaveHistoryService } from 'src/app/services/save-history.service';
-import { NewGridComponent } from '../new-grid/new-grid.component';
 
 @Component({
   selector: 'app-left-tabs',
@@ -147,8 +146,13 @@ export class LeftTabsComponent implements AfterViewInit, OnDestroy {
     return this.tabs.isTabVisible() && this.tabs.getCurrentTab() === tabID;
   }
 
+  // No snackbar on either of these. "Undo Called!" was a developer's breadcrumb
+  // from when undo was being built, and it survived into a shipped app: it says
+  // nothing a user does not already know, it says it in the voice of a stack
+  // trace, and it takes over the one channel the app has for telling them
+  // something they could not see for themselves. The canvas moving is the
+  // feedback.
   handleUndo() {
-    NewGridComponent.sendNotification('Undo Called!', 0);
     this.saveHistoryService.undo();
   }
 
@@ -158,7 +162,6 @@ export class LeftTabsComponent implements AfterViewInit, OnDestroy {
   }
 
   handleRedo() {
-    NewGridComponent.sendNotification('Redo Called!', 0);
     this.saveHistoryService.redo();
   }
 
