@@ -254,16 +254,23 @@ tube, which the app calls the barrel.
 - The reader who meets *ram* once has to work out it is the thing they already
   selected, which is exactly the paper cut this whole audit is about.
 
-### My recommendation
+### Decided: A, with *mount* becoming *joint*
 
-**A.** *cylinder* is already the name in every control and every message, and
-the audit's own principle is one thing, one name — so the word that has to give
-way is the one appearing in four tooltips rather than the one appearing
-everywhere else. B is right if the block ever needs to be discussed on its own,
-and that can be added later without taking anything back. C is the correct
-engineering answer and the wrong product answer.
+**Applied.** *cylinder* everywhere for the whole part; *barrel*, *rod*, *stroke*
+stay for the pieces; *ram* and *piston* are out of the UI.
 
-Nothing here has been applied — the vocabulary guide records it as open.
+And *mount* becomes **joint**, which was the right call and not one I had
+proposed. A cylinder's two ends genuinely *are* joints — RevJoints with id
+letters, selectable, draggable, groundable, and the panel already titles itself
+`Edit Cylinder GC` after them. The objection would be ambiguity, since the part
+has five joints; but the other three have no hitbox and no name a user ever
+sees, so from the user's side a cylinder has exactly two joints and there is
+nothing to be ambiguous with. It takes the last special word out of the
+cylinder's user vocabulary, which is what option A was for.
+
+`mount` stays in the *code*, where it usefully separates the two reachable
+joints from the three interior ones — the same split this guide already makes
+for `playback` and `actuator`. See `docs/ui-vocabulary.md`.
 
 **Also here**
 

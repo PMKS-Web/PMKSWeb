@@ -909,7 +909,7 @@ export class NewGridComponent {
           if (atMinimum && !this.cylinderFloorReported) {
             this.cylinderFloorReported = true;
             this.sendNotification(
-              'That is the shortest cylinder there is — any less and the barrel is all piston.'
+              'That is the shortest cylinder there is — any less and the barrel has no room to slide in.'
             );
           }
           this.dragState.noteMechanismModified();

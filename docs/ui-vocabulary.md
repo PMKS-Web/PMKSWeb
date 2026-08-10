@@ -60,9 +60,9 @@ the canvas needs to show it.
 absence of one. Do not reach for it anywhere else.
 
 **Delete means the thing you named goes**, along with anything that cannot
-stand without it. `Delete Cylinder` on a mount deletes the cylinder and leaves
-the joint if another link still holds it; `Delete` on the joint deletes the
-joint. If those two want different outcomes, they need different labels — which
+stand without it. `Delete Cylinder` on one of a cylinder's joints deletes the
+cylinder and leaves the joint if another link still holds it; `Delete` on that
+joint deletes the joint. If those two want different outcomes, they need different labels — which
 is why they have them.
 
 ### The mechanism
@@ -104,7 +104,27 @@ Spell it **centre of mass** in prose and **CoM** in a label. Not `COM`, not
 
 ## The cylinder
 
-**Open — see `docs/ui-copy-audit.md` §5 for the options.** Until it is settled,
-do not introduce another word for any part of it. The terms currently in use
-are: *cylinder, barrel, rod, piston, ram, stroke, travel, mount, closed, open*.
-Two of those name the same whole part and one names a part with no label.
+| Use | For | Not |
+| --- | --- | --- |
+| **cylinder** | the whole part | ~~ram~~ |
+| **barrel** | the fat outer body it slides in | ~~cylinder~~ (that is the whole part here) |
+| **rod** | the thin bar that slides out | — |
+| **joint** | either end, where it attaches | ~~mount~~ |
+| **stroke** / **travel** | how far the rod moves | — |
+| **closed** / **open** | the two ends of the travel | ~~retracted~~, ~~extended~~ |
+
+The black block on the rod has **no user-facing name**. Describe what it does —
+"where the rod begins its cycle" — rather than calling it a piston. If it ever
+needs discussing on its own it should get a label on the drawing first, and then
+the word is earned.
+
+**`mount` is a code word, not a user word.** `barrelFar`, `rodFar`,
+`dragCylinderMount` keep it, because in code it usefully separates the two
+joints a user can reach from the three interior ones that have no hitbox. A user
+never sees those three, so from their side a cylinder has exactly two joints and
+"joint" is unambiguous. Same treatment as `playback` and `actuator`.
+
+**`ram` survives in code comments** — 113 of them — and was left there
+deliberately. This guide governs what the app *says*; rewriting a hundred
+explanations to change a synonym would churn a lot of carefully-worded prose for
+no reader's benefit. Do not use it in new comments, and never in the UI.

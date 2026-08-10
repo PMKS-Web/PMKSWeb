@@ -1531,7 +1531,7 @@ export class MechanismService {
     if (noTravel) {
       const cylinder = this.sealedStructures().find((found) => found.slider.id === noTravel);
       const name = cylinder ? this.cylinderName(cylinder) : noTravel;
-      return `Cylinder ${name} has no travel: its barrel is too short to hold the piston and any stroke as well. Lengthen the ram, or reduce Object Scale — a larger scale makes the piston bigger, not the barrel.`;
+      return `Cylinder ${name} has no travel: its barrel is too short to slide in at all. Lengthen the cylinder, or reduce Object Scale — a larger scale draws everything on the rod bigger without lengthening the barrel.`;
     }
     const stuck = PositionSolver.unsolvableJoints;
     if (stuck.length > 0) {
@@ -1608,7 +1608,7 @@ export class MechanismService {
       // deaf on small ones, because the shortfall scales with the stroke.
       if (used >= stroke - (3 * stroke) / SAMPLES_PER_STROKE) continue;
       const percent = Math.round((used / stroke) * 100);
-      return `Cylinder ${this.cylinderName(cylinder)} can only use ${percent}% of its stroke \u2014 the linkage binds before the ram does. Shorten its travel, or give the mechanism more room.`;
+      return `Cylinder ${this.cylinderName(cylinder)} can only use ${percent}% of its stroke \u2014 the linkage binds before the cylinder does. Shorten its travel, or give the mechanism more room.`;
     }
     return undefined;
   }

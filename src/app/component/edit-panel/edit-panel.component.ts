@@ -463,7 +463,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     const held = Math.max(stroke, floor);
     this.cylinderClamped =
       held !== stroke
-        ? `Held at the shortest ram there is: any less and the barrel is all piston.`
+        ? `Held at the shortest cylinder there is: any less and the barrel has no room to slide in.`
         : '';
     this.gridUtils.resizeCylinder(sealed, held, start);
     this.syncCylinderDirection(sealed);
@@ -966,7 +966,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         const floor = cylinderMinimumSpan(0.15 * this.settingsService.objectScale);
         this.cylinderClamped =
           value < floor
-            ? 'Held at the shortest ram there is: any less and the barrel is all piston.'
+            ? 'Held at the shortest cylinder there is: any less and the barrel has no room to slide in.'
             : '';
         this.reposeCylinder(value, undefined);
       })
