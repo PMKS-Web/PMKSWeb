@@ -14,6 +14,7 @@ import {
   motorBodyAt,
   motorBodyPath,
 } from '../../app/model/joint-marks';
+import { cylinderHeadHalf } from '../../app/model/cylinder';
 
 // The design package authors every mark at R = 10, so the shipped SVGs are a
 // numeric reference this module has to reproduce rather than approximate.
@@ -156,43 +157,62 @@ describe('the mark system, against the delivered SVGs', () => {
 });
 
 describe('the cylinder skin (§2.7)', () => {
+  /** A head on a barrel with room for the whole block, which is the usual case. */
+  const FULL_HEAD = cylinderHeadHalf(40 * R, R);
+
   it('draws the rod exactly as tall as the block, so the two are one bar', () => {
     // At 1.84 the rod stood proud of the block by 0.315R above and below the
     // place they meet.
     expect(CYLINDER.rodHalf).toBe(MARK.blockAcrossHalf);
-    const ys = numbers(rodBodyPath(R, 80)).filter((v) => Math.abs(v) === CYLINDER.rodHalf * R);
+    const ys = numbers(rodBodyPath(R, 80, FULL_HEAD)).filter(
+      (v) => Math.abs(v) === CYLINDER.rodHalf * R
+    );
     expect(ys.length).toBeGreaterThan(0);
   });
 
-  it('squares the block against the barrel and rounds only the rod side', () => {
-    const path = cylinderBlockPath(R);
+  it('squares the head against the barrel and rounds only the rod side', () => {
+    const path = cylinderBlockPath(R, FULL_HEAD);
     const values = numbers(path);
 
-    // Full §2.8 block proportions...
+    // Full §2.8 block proportions: on any ram with room for it the head is
+    // exactly the block a bare slider wears.
     expect(Math.max(...values.map(Math.abs))).toBeCloseTo(MARK.blockAlongHalf * R, 6);
     expect(values).toContain(MARK.blockAcrossHalf * R);
     // ...but only the two rod-side corners carry the radius: two arcs, and the
     // barrel-side (-x) corners land exactly on the block's own corner points.
     expect(path.match(/A /g)).toHaveLength(2);
-    const a = MARK.blockAlongHalf * R;
+    const a = FULL_HEAD;
     const c = MARK.blockAcrossHalf * R;
     expect(path.startsWith(`M ${-a} ${-c}`)).toBe(true);
     expect(path.endsWith(`H ${-a} Z`)).toBe(true);
   });
 
-  it('emphasises the set-off arrow without breaking out of the block', () => {
+  it('grows the head back to full size the moment the barrel has room', () => {
+    // The head is a function of the barrel only because it has to fit inside it
+    // at full retraction. Anywhere above that it is the block, unchanged.
+    expect(cylinderHeadHalf(40 * R, R)).toBeCloseTo(MARK.blockAlongHalf * R, 9);
+    // Halfway down it follows the barrel...
+    expect(cylinderHeadHalf(4 * R, R)).toBeCloseTo(2 * R, 9);
+    // ...and stops when it would be shorter than it is wide.
+    expect(cylinderHeadHalf(0.2 * R, R)).toBeCloseTo(MARK.blockAcrossHalf * R, 9);
+  });
+
+  it('emphasises the set-off arrow without breaking out of the head', () => {
     // §4.2b: two matched arrows say only "this translates"; the heavier, longer
     // one is what says which way it goes first. Same rule as the unskinned mark.
-    const [forward, backward] = cylinderArrowPaths(R, 1);
+    const [forward, backward] = cylinderArrowPaths(R, FULL_HEAD, 1);
     expect(forward.emphasised).toBe(true);
     expect(backward.emphasised).toBe(false);
     expect(Math.abs(forward.line.x2)).toBeGreaterThan(Math.abs(backward.line.x2));
-    // The grown tip still lands inside the block, where white is guaranteed.
-    expect(numbers(forward.head)[0]).toBeLessThanOrEqual(MARK.blockAlongHalf * R);
-    expect(numbers(backward.head)[0]).toBeCloseTo(-CYLINDER.arrowTip * R, 6);
+    // The grown tip still lands inside the head, where white is guaranteed --
+    // and the pair is scaled together, so the quiet arrow shrinks with it
+    // rather than overtaking the loud one.
+    expect(numbers(forward.head)[0]).toBeLessThanOrEqual(FULL_HEAD);
+    expect(numbers(backward.head)[0]).toBeCloseTo(-MARK.arrowTip * R, 6);
+    expect(Math.abs(numbers(forward.head)[0])).toBeGreaterThan(Math.abs(numbers(backward.head)[0]));
 
     // With no known direction the two stay matched.
-    const neutral = cylinderArrowPaths(R);
+    const neutral = cylinderArrowPaths(R, FULL_HEAD);
     expect(neutral.every((arrow) => !arrow.emphasised)).toBe(true);
     expect(neutral[0].line.x2).toBeCloseTo(-neutral[1].line.x2, 9);
   });

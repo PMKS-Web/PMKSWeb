@@ -3,7 +3,9 @@ import { Coord } from '../../model/coord';
 import { PrisJoint, RevJoint } from '../../model/joint';
 import { RealLink, SliderBlock } from '../../model/link';
 import {
-  BORE_R,
+  cylinderHeadHalf,
+  cylinderSpanLayoutFrom,
+  HEAD_CLEARANCE_R,
   cylinderCollinearTolerance,
   sealedCylinderAt,
   sealedCylinders,
@@ -44,17 +46,20 @@ function sealedSource(options: { sealed?: boolean; angle?: number } = {}) {
   const angle = options.angle ?? 0.31; // radians, deliberately irrational-ish
   const at = (along: number) => new Coord(along * Math.cos(angle) * S, along * Math.sin(angle) * S);
 
-  // The bore in user units: R is 0.15 objectScale and one objectScale is one
-  // user unit, so `BORE_R` at that R is just the constant scaled by 0.15.
-  const BORE = BORE_R * 0.15;
+  // In user units: R is 0.15 objectScale and one objectScale is one user unit,
+  // so each constant at that R is just itself scaled by 0.15.
+  const CLEARANCE = HEAD_CLEARANCE_R * 0.15;
   const MOUNT_A = -4;
   const MOUNT_D = 4;
-  const stroke = (MOUNT_D - MOUNT_A - 1.5 * BORE) / 1.5;
-  const buried = MOUNT_A + stroke + BORE;
+  // Through the model's own span rule rather than by hand: the body length a
+  // span carries is not a constant, because the head shrinks on a short ram.
+  const { stroke } = cylinderSpanLayoutFrom(MOUNT_D - MOUNT_A, 0.5, 0.15);
+  const HEAD_HALF = cylinderHeadHalf(stroke + CLEARANCE, 0.15);
+  const buried = MOUNT_A + stroke + CLEARANCE;
 
   const a = new RevJoint('A', at(MOUNT_A).x, at(MOUNT_A).y, false, true);
   const b = new RevJoint('B', at(buried).x, at(buried).y);
-  const pinAlong = MOUNT_A + BORE / 2 + stroke * 0.5;
+  const pinAlong = MOUNT_A + CLEARANCE + HEAD_HALF + stroke * 0.5;
   const c = new RevJoint('C', at(pinAlong).x, at(pinAlong).y);
   const d = new RevJoint('D', at(MOUNT_D).x, at(MOUNT_D).y);
   const slider = new PrisJoint('P', c.x, c.y);

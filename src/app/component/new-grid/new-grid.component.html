@@ -579,36 +579,9 @@
           [attr.stroke]="cyl.barrelFill"
           [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
         />
-        <!-- The stops: where the piston head bottoms out at each end of its
-             travel. Part of the object, not an annotation — they turn and zoom
-             with the barrel and stay true whatever the mechanism is doing. No
-             numbers beside them: the panel carries those, and the proportions
-             of the part say the rest. -->
-        @for (stop of cyl.stops; track $index) {
-          <line
-            pointer-events="none"
-            [attr.x1]="stop.x1"
-            [attr.y1]="stop.y1"
-            [attr.x2]="stop.x2"
-            [attr.y2]="stop.y2"
-            stroke="#000000"
-            stroke-linecap="round"
-            [attr.stroke-width]="svgGrid.scaleWithZoom(2.5)"
-          />
-        }
-        <!-- The linear-motion cue, under the block: a dotted line inside the
-             barrel that never draws over the part sliding through it. -->
-        <line
-          pointer-events="none"
-          [attr.x1]="cyl.dash.x1"
-          y1="0"
-          [attr.x2]="cyl.dash.x2"
-          y2="0"
-          stroke="#ffffff"
-          stroke-opacity="0.5"
-          [attr.stroke-width]="cyl.dash.width"
-          [attr.stroke-dasharray]="cyl.dash.dashArray"
-        />
+        <!-- No stop notches and no dotted motion line. The bore is the head's
+             own length, so the head bottoms out flush with the barrel's ends
+             and the silhouette says where the travel ends by itself. -->
         <path
           cursor="move"
           (pointerdown)="setLastLeftClick(cyl.body, $event)"

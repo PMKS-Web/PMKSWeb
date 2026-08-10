@@ -49,7 +49,6 @@ const readPanel = () =>
     return {
       travel: value('Travel'),
       startsAt: value('Starts at'),
-      echo: document.querySelector('.cylinder-echo')?.textContent?.trim() ?? null,
       clamped: document.querySelector('.cylinder-clamped')?.textContent?.trim() ?? null,
     };
   });
@@ -103,8 +102,29 @@ const posed = await drag(40, 30, 'inside-travel');
 const shrunk = await drag(150, 240, 'past-retracted');
 // 3 · and pulled away again, past the extended stop, where it grows.
 const grown = await drag(-330, -180, 'past-extended');
+// 4 · from a fresh template, the rod mount pushed almost the whole way onto the
+//     barrel's own, which is well past the floor whatever the ram measures.
+//     Aimed at the mount by name rather than moved by a count of pixels: how
+//     far "past the floor" is depends on the ram's size, and the size is what
+//     the drags above have spent the run changing.
+await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
+await page.waitForTimeout(5000);
+const centreOf = (id) =>
+  page.evaluate((jointId) => {
+    const node = document.querySelector(`#joint_${jointId}`);
+    if (!node) return null;
+    const box = node.getBoundingClientRect();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }, id);
+const rodMount = await centreOf('C');
+const barrelMount = await centreOf('G');
+const floored = await drag(
+  (barrelMount.x - rodMount.x) * 0.95,
+  (barrelMount.y - rodMount.y) * 0.95,
+  'onto-the-floor'
+);
 
-const report = { resting, posed, shrunk, grown, errors };
+const report = { resting, posed, shrunk, grown, floored, errors };
 writeFileSync('artifacts/cylinder-drag/report.json', JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
 
@@ -113,7 +133,7 @@ const checks = [
   ['a drag inside the travel leaves the size alone', strokeOf(posed) === strokeOf(resting)],
   ['pushing past the retracted stop shrinks the ram', strokeOf(shrunk) < strokeOf(resting)],
   ['pulling past the extended stop grows it again', strokeOf(grown) > strokeOf(shrunk)],
-  ['the drag says so when it stops at the shortest ram', /shortest cylinder/.test(shrunk.notice ?? '')],
+  ['the drag says so when it stops at the shortest ram', /shortest cylinder/.test(floored.notice ?? '')],
   ['nothing threw', errors.length === 0],
 ];
 for (const [what, ok] of checks) console.log(`${ok ? 'PASS' : 'FAIL'}  ${what}`);

@@ -1,6 +1,9 @@
 import './joint';
 import {
-  BORE_R,
+  cylinderHeadHalf,
+  cylinderLock,
+  cylinderMinimumSpan,
+  HEAD_CLEARANCE_R,
   MIN_STROKE_R,
   cylinderMembers,
   cylinderSpanLayout,
@@ -10,6 +13,7 @@ import {
   layoutCylinder,
   poseFromStrokeAndStart,
 } from './cylinder';
+import { CYLINDER } from './joint-marks';
 
 // The parametric drag: pose first, then size. Inside the ram's own travel only
 // the piston moves and the ram keeps the size it was given; push past a stop and
@@ -22,10 +26,15 @@ import {
 // tests are gone rather than adapted.
 
 const R = 0.15;
-const BORE = BORE_R * R;
-const LOCK = 1.5 * BORE;
+// barrel = stroke + CLEARANCE, span = stroke(1 + start) + LOCK, and
+// LOCK = 2 * CLEARANCE + the head's half-length.
+const BORE = HEAD_CLEARANCE_R * R;
+/** The lock at any stroke long enough for a full-size head, which all of these are. */
+const LOCK = cylinderLock(40, R);
+const HEAD_HALF = CYLINDER.headAlongHalfMax * R;
 const MIN_STROKE = MIN_STROKE_R * R;
-const SPAN_MIN = MIN_STROKE + LOCK;
+/** The floor ram's span. Its head has shrunk to fit, so it carries its own lock. */
+const SPAN_MIN = cylinderMinimumSpan(R);
 
 const dist = (p: { x: number; y: number }, q: { x: number; y: number }) =>
   Math.hypot(q.x - p.x, q.y - p.y);
@@ -42,16 +51,17 @@ const drag = (stroke: number, span: number) =>
 
 describe('the cylinder is one size number and one position number', () => {
   it('makes barrel and rod equal at every size', () => {
-    for (const stroke of [MIN_STROKE, 0.5, 3, 40]) {
+    for (const stroke of [MIN_STROKE, 1, 3, 40]) {
       const members = cylinderMembers(stroke, 0.5, R);
       expect(members.barrel).toBeCloseTo(members.rod, 12);
       expect(members.barrel).toBeCloseTo(stroke + BORE, 12);
     }
   });
 
-  it('spends exactly the bore on the head and its clearances', () => {
-    // Two slot insets plus the whole piston head, which is what "the head stays
-    // inside the bore" costs and the only reason the stroke is not the barrel.
+  it('spends exactly the clearance, and nothing else, out of the barrel', () => {
+    // The head runs from a clearance off the mount to the mouth, so the barrel
+    // is the stroke plus that one gap -- the only reason the stroke is not the
+    // whole barrel.
     expect(cylinderStroke(5 + BORE, R)).toBeCloseTo(5, 12);
     expect(cylinderStroke(BORE, R)).toBe(0);
     expect(cylinderStroke(BORE / 2, R)).toBe(0);
@@ -75,21 +85,25 @@ describe('the cylinder is one size number and one position number', () => {
 });
 
 describe('the stroke interval', () => {
-  it('keeps the whole head inside the bore', () => {
+  it('runs the head from a clearance off the mount to clean outside the mouth', () => {
+    // Both bounds are the pin, so both carry the head's half-length: the low
+    // one is the clearance plus it, and the high one runs *past* the barrel by
+    // it, because fully open the head has left the barrel entirely.
     const { min, max, usable } = cylinderStrokeAlong(9 + BORE, R);
     expect(usable).toBe(true);
-    expect(min).toBeCloseTo(BORE / 2, 12);
+    expect(min - HEAD_HALF).toBeCloseTo(BORE, 12);
+    expect(max - HEAD_HALF).toBeCloseTo(9 + BORE, 12);
     expect(max - min).toBeCloseTo(9, 12);
   });
 
-  it('collapses to one point rather than inverting when the barrel is under its bore', () => {
-    // Object Scale can walk a legal barrel under the bore at any moment, and
-    // every caller clamps or samples against this interval -- handed max < min
-    // they would each silently do something different.
+  it('collapses to one point rather than inverting when the barrel is under its clearance', () => {
+    // Object Scale can walk a legal barrel under the clearance at any moment,
+    // and every caller clamps or samples against this interval -- handed
+    // max < min they would each silently do something different.
     const under = cylinderStrokeAlong(BORE / 2, R);
     expect(under.usable).toBe(false);
     expect(under.min).toBe(under.max);
-    expect(under.min).toBeCloseTo(BORE / 4, 12);
+    expect(under.min).toBeCloseTo(BORE / 4 + cylinderHeadHalf(BORE / 2, R), 12);
   });
 
   it('calls a barrel with less than the floor stroke unusable too', () => {

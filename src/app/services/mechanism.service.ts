@@ -263,7 +263,6 @@ export class MechanismService {
         sealed.barrelFar,
         sealed.rodFar,
         barrelLength,
-        sealed.pin,
         0.15 * this.settingsService.objectScale
       );
       if (!pose) continue;

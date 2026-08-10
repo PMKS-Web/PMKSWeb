@@ -87,6 +87,7 @@ import { mergedChannels, transformRigidPath } from '../../model/compound-link-pa
 import {
   Cylinder,
   cylinderCreationLayout,
+  cylinderHeadHalf,
   cylinderMinimumSpan,
   cylinderJoints,
   isCylinderInterior as isCylinderInteriorOf,
@@ -646,8 +647,8 @@ export class NewGridComponent {
       // The preview is the part it will become: the barrel at its own length,
       // straddling the piston, with the rod telescoping out of its mouth.
       barrel: barrelPath(r, -creation.pinFromMount, creation.barrelLength - creation.pinFromMount),
-      rod: rodBodyPath(r, creation.rodLength),
-      block: cylinderBlockPath(r),
+      rod: rodBodyPath(r, creation.rodLength, cylinderHeadHalf(creation.barrelLength, r)),
+      block: cylinderBlockPath(r, cylinderHeadHalf(creation.barrelLength, r)),
     };
   }
 

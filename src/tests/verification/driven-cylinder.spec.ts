@@ -7,6 +7,7 @@ import { cylinderBetween, cylinderBoomFixture } from '../../test-utils/verificat
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
 import { SAMPLES_PER_STROKE } from '../../app/model/mechanism/position-solver';
+import { HEAD_CLEARANCE_R, cylinderHeadHalf } from '../../app/model/cylinder';
 
 // Gate 5 (docs/joint-types-plan.md § Phase 5): a boom raised by a hydraulic
 // cylinder, checked against the closed form.
@@ -190,12 +191,19 @@ describe('a boom driven by its cylinder', () => {
     expect(last.theta).toBeCloseTo(first.theta, 9);
   });
 
-  it('keeps the pin inside the slot at both ends of the travel', () => {
-    // Past the end of the slot the rod has left the barrel: the picture comes
-    // apart, and the mechanism is claiming a stroke the part does not have.
+  it('keeps the head within its own travel at both ends', () => {
+    // Past either stop the part comes apart, and the mechanism is claiming a
+    // stroke it does not have. The bounds are the head's edges rather than the
+    // pin's: closed, its back edge stops a clearance off the mount; open, that
+    // back edge reaches the mouth and the head stands clean outside the barrel,
+    // so the *pin* legitimately runs a half-head past the barrel's own length.
+    // User units, like every other length this spec samples: R is
+    // 0.15 objectScale and one objectScale is one user unit.
+    const head = cylinderHeadHalf(BARREL_LENGTH, 0.15);
+    const clearance = HEAD_CLEARANCE_R * 0.15;
     const alongs = samples.map((sample) => sample.pinAlong);
-    expect(Math.min(...alongs)).toBeGreaterThan(0);
-    expect(Math.max(...alongs)).toBeLessThan(BARREL_LENGTH);
+    expect(Math.min(...alongs) - head).toBeGreaterThanOrEqual(clearance - 1e-6);
+    expect(Math.max(...alongs) - head).toBeLessThanOrEqual(BARREL_LENGTH + 1e-6);
   });
 
   it('raises and lowers the boom without flipping it under the ground', () => {

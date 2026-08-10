@@ -1,19 +1,14 @@
 import { MechanismFixture } from './fixture';
-import { BORE_R } from '../../app/model/cylinder';
+import { cylinderSpanLayoutFrom } from '../../app/model/cylinder';
 
 // The Phase 2 mechanisms, in one place so the specs that assert on them and the
 // gallery that publishes them as URLs cannot drift apart. See
 // docs/joint-types-plan.md §4.1 for what each case is meant to isolate.
 
-/**
- * The bore, in a fixture's own units.
- *
- * A fixture is written in objectScale units — that is what makes the same
- * numbers work both as a direct model build at `scale = MODEL_SCALE` and as a
- * URL at `scale = 1`, since one objectScale is one user unit. R is
- * 0.15 objectScale, so the bore is just `BORE_R` at that R.
- */
-const CYLINDER_BORE = BORE_R * 0.15;
+// A fixture is written in objectScale units — that is what makes the same
+// numbers work both as a direct model build at `scale = MODEL_SCALE` and as a
+// URL at `scale = 1`, since one objectScale is one user unit. R is
+// 0.15 objectScale, so every model helper below is called at that R.
 
 /**
  * The interior of a cylinder spanning two fixed mounts.
@@ -44,9 +39,9 @@ export function cylinderBetween(
   pinAlong: number;
 } {
   const span = Math.hypot(driven.x - mount.x, driven.y - mount.y);
-  const stroke = (span - 1.5 * CYLINDER_BORE) / (1 + start);
-  const barrel = stroke + CYLINDER_BORE;
-  const pinAlong = CYLINDER_BORE / 2 + stroke * start;
+  // Inverted through the model's own span rule: the body length a span carries
+  // is not a constant, because the head shrinks on a ram too short to hold it.
+  const { stroke, barrel, pinAlong } = cylinderSpanLayoutFrom(span, start, 0.15);
   const at = (distance: number) => ({
     x: mount.x + ((driven.x - mount.x) * distance) / span,
     y: mount.y + ((driven.y - mount.y) * distance) / span,
@@ -592,12 +587,9 @@ export function pinchingGripperFixture(scale: number = 1): MechanismFixture {
   // single unit wide. So the mechanism binds on the way back and reverses
   // there, which is the ordinary a-cylinder-outruns-its-linkage case rather
   // than a fixture that needs different mounts.
-  const stroke = (JAWS_MEET - 1.5 * CYLINDER_BORE) / 2;
-  const { barrelEnd, pin } = cylinderBetween(
-    mount,
-    driven,
-    (reach - 1.5 * CYLINDER_BORE) / stroke - 1
-  );
+  const stroke = cylinderSpanLayoutFrom(JAWS_MEET, 1, 0.15).stroke;
+  const lock = JAWS_MEET - 2 * stroke;
+  const { barrelEnd, pin } = cylinderBetween(mount, driven, (reach - lock) / stroke - 1);
 
   return {
     joints: [

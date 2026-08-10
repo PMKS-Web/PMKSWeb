@@ -9,13 +9,16 @@ import { SettingsService } from '../../app/services/settings.service';
 import { SliderMarkService } from '../../app/services/slider-mark.service';
 import { PositionSolver } from '../../app/model/mechanism/position-solver';
 import {
-  BORE_R,
+  HEAD_CLEARANCE_R,
   MIN_STROKE_R,
+  cylinderHeadHalf,
+  cylinderMembers,
   cylinderSizeOf,
   cylinderStroke,
   cylinderStrokeAlong,
   sealedCylinders,
 } from '../../app/model/cylinder';
+import { CYLINDER, rodBodyPath } from '../../app/model/joint-marks';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { fixturePayload } from '../../test-utils/verification/fixture-gallery';
@@ -28,19 +31,25 @@ import { Coord } from '../../app/model/coord';
 /**
  * The boom, with its ram given a stroke the boom cannot follow to the end.
  *
- * The ground anchor moves out so the boom's own reach narrows while the ram
- * keeps a full stroke: extended, the ram asks for a span the linkage cannot
- * assemble, and it turns back before its own stop.
+ * Same mounts as the plain boom — the ram is simply drawn fully retracted
+ * rather than at mid-stroke, which spends the whole mount-to-mount span on
+ * stroke instead of half of it. Extended, it asks for a span the linkage cannot
+ * assemble and turns back before its own stop.
+ *
+ * The anchor used to be moved out to 3.6 as well, narrowing the boom's reach on
+ * top of the longer stroke. That was tuned against a ram whose bore ate 13 R of
+ * its own barrel; with the clearance at 1.4 R the retracted draw alone is
+ * enough, and both together lock the linkage outright — the mechanism reports a
+ * toggle rather than a ram that outruns it, which is a different case.
  */
 function overRammedBoom(): MechanismFixture {
   const base = cylinderBoomFixture();
-  const mount = { x: 3.6, y: 0 };
+  const mount = base.joints.find((joint) => joint.id === 'G')!;
   const tip = base.joints.find((joint) => joint.id === 'C')!;
-  const { barrelEnd, pin } = cylinderBetween(mount, { x: tip.x, y: tip.y }, 0);
+  const { barrelEnd, pin } = cylinderBetween({ x: mount.x, y: mount.y }, { x: tip.x, y: tip.y }, 0);
   return {
     ...base,
     joints: base.joints.map((joint) => {
-      if (joint.id === 'G') return { ...joint, ...mount };
       if (joint.id === 'N') return { ...joint, ...barrelEnd };
       if (joint.id === 'P') return { ...joint, ...pin };
       return joint;
@@ -67,7 +76,7 @@ describe('a cylinder with no travel', () => {
   it('collapses its interval rather than inverting it', () => {
     // Every consumer clamps or samples against [min, max]. Handed max < min
     // they would each quietly do something, and something different.
-    const under = cylinderStrokeAlong(BORE_R * r * 0.5, r);
+    const under = cylinderStrokeAlong(HEAD_CLEARANCE_R * r * 0.5, r);
 
     expect(under.usable).toBe(false);
     expect(under.max).toBeGreaterThanOrEqual(under.min);
@@ -81,7 +90,7 @@ describe('a cylinder with no travel', () => {
     // mechanism reporting the ram had no travel at all. Object Scale walks a
     // part into that band without anyone touching it.
     const r = 0.15 * MODEL_SCALE;
-    const sliver = BORE_R * r + (MIN_STROKE_R * r) / 2;
+    const sliver = HEAD_CLEARANCE_R * r + (MIN_STROKE_R * r) / 2;
     expect(cylinderStroke(sliver, r)).toBeGreaterThan(0);
     expect(cylinderStrokeAlong(sliver, r).usable).toBe(false);
 
@@ -104,7 +113,7 @@ describe('a cylinder with no travel', () => {
     const urls = TestBed.inject(UrlProcessorService);
 
     // Bore-sized barrel, so there is nothing left over to be stroke.
-    const starved: MechanismFixture = shrunkBoom(BORE_R * 0.15 * 0.6);
+    const starved: MechanismFixture = shrunkBoom(HEAD_CLEARANCE_R * 0.15 * 0.6);
     urls.updateFromURL(fixturePayload(starved), false, true, false);
 
     expect(mechanism.oneValidMechanismExists()).toBe(false);
@@ -157,28 +166,38 @@ describe('the drawn barrel', () => {
     expect(Math.max(...exposed) - Math.min(...exposed)).toBeGreaterThan(r);
   });
 
-  it('marks both stops, and puts them where the head actually bottoms out', () => {
-    TestBed.configureTestingModule({ imports: [AppModule] });
-    const mechanism = TestBed.inject(MechanismService);
-    const urls = TestBed.inject(UrlProcessorService);
-    const marks = new SliderMarkService();
-    urls.updateFromURL(fixturePayload(cylinderBoomFixture()), false, true, false);
-
-    const r = 0.15 * SettingsService.objectScale;
-    const [mark] = marks.cylinderMarks(mechanism.joints, r, true);
-    // Two stops, two edges each.
-    expect(mark.stops.length).toBe(4);
-
-    const at = [...new Set(mark.stops.map((stop) => Math.round(stop.x1 * 1e6) / 1e6))].sort(
-      (a, b) => a - b
-    );
-    expect(at.length).toBe(2);
-    // The gap between them is the stroke itself -- one definition, so the mark
-    // on the barrel cannot disagree with the travel the simulation runs.
-    const xs = numbers(mark.barrel).filter((_, i) => i % 2 === 0);
-    const barrelLength = Math.max(...xs) - Math.min(...xs);
+  it('stops the head clear of the mount at one end and clean outside at the other', () => {
+    // What replaced the two stop notches, and it is the head's own edges that
+    // say it. Closed, the head's back edge stands a clearance off the barrel's
+    // mount, so the two never collide on screen; open, that same back edge has
+    // reached the mouth and the head is entirely out of the barrel. Both are
+    // visible in the silhouette, which is why nothing is drawn to mark them.
+    const r = 0.15 * MODEL_SCALE;
+    const barrelLength = 40 * r;
     const travel = cylinderStrokeAlong(barrelLength, r);
-    expect(at[1] - at[0]).toBeCloseTo(travel.max - travel.min, 4);
+    const head = cylinderHeadHalf(barrelLength, r);
+    expect(travel.usable).toBe(true);
+    // Both bounds are the pin, so both carry the head's half-length.
+    expect(travel.min - head).toBeCloseTo(HEAD_CLEARANCE_R * r, 9);
+    expect(travel.max - head).toBeCloseTo(barrelLength, 9);
+
+    // And the drawing measures the head the same way the travel does: the rod
+    // body starts at the head's back edge, so the two constants agreeing is
+    // what puts the head where the model says on screen.
+    const inner = Math.min(...numbers(rodBodyPath(r, 12 * r, head)));
+    expect(inner).toBeCloseTo(-head, 9);
+  });
+
+  it('is shortest when its barrel is exactly its own head', () => {
+    // The floor, and why it is where it is: any shorter and the head hangs out
+    // of both ends of a barrel shorter than itself.
+    const r = 0.15 * MODEL_SCALE;
+    const shortest = cylinderMembers(0, 0, r);
+    expect(shortest.atMinimum).toBe(true);
+    expect(shortest.barrel).toBeCloseTo(2 * CYLINDER.headAlongHalfMin * r, 9);
+    expect(shortest.rod).toBeCloseTo(shortest.barrel, 9);
+    // And the head it shrank to is exactly that barrel.
+    expect(2 * cylinderHeadHalf(shortest.barrel, r)).toBeCloseTo(shortest.barrel, 9);
   });
 });
 

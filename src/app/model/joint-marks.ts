@@ -145,19 +145,35 @@ export const CYLINDER = {
    */
   barrelHalf: 2.6,
   /**
+   * The piston head along the axis, at full size: exactly the block a bare
+   * slider wears, because on any ram with room for it that is what it is.
+   *
+   * It is not always this. The head is what sets the floor on how short a ram
+   * can be — it has to fit inside the barrel at full retraction — so on a ram
+   * too short to hold the whole block it shrinks to half the barrel instead,
+   * and grows back to this the moment there is room. `cylinderHeadHalf` is the
+   * one place that choice is made.
+   */
+  headAlongHalfMax: MARK.blockAlongHalf,
+  /**
+   * The shortest the head is ever drawn: square, as long as it is across.
+   *
+   * The real floor on the whole part, and it is a drawing judgement rather than
+   * a mechanical one — a head shorter than it is wide stops reading as a head
+   * at all, and there is nothing else left holding the size up.
+   */
+  headAlongHalfMin: MARK.blockAcrossHalf,
+  /**
    * Exactly the block's own half-height, so block and rod form one uniform bar.
    * It was 1.84 — the same mockup rounding `barHalf` documents — and the extra
    * 0.315R showed as the rod standing proud of the block above and below where
    * the two meet.
    */
   rodHalf: MARK.blockAcrossHalf,
-  /** Where the barrel stops: inside the block, so the rod visibly enters it. */
-  flatCut: 0.56,
-  boreHalf: 1.39,
-  arrowTail: 1.55,
-  arrowHeadBase: 2.75,
-  arrowTip: 3.3,
-  arrowHeadHalf: 0.62,
+  // The skin carries no arrow dimensions of its own any more. It had a larger
+  // set, sized for the full 3.84 R block it used to draw; the head is shorter
+  // than that now, and the honest answer is the block's own arrows scaled by
+  // the head — same mark, same proportions, one place to change either.
 } as const;
 
 /**
@@ -194,43 +210,26 @@ export function barrelPath(r: number, anchor: number, mouth: number): string {
  * still inside the bore reads as a darker band. One cue, no callout, and it is
  * the cue that carries the whole structure.
  */
-export function rodBodyPath(r: number, reach: number): string {
+export function rodBodyPath(r: number, reach: number, headHalf: number): string {
   const h = CYLINDER.rodHalf * r;
-  const inner = -MARK.blockAlongHalf * r * Math.sign(reach || 1);
+  const inner = -headHalf * Math.sign(reach || 1);
   const sweep = reach > 0 ? 1 : 0;
   return `M ${inner} ${-h} L ${reach} ${-h} A ${h} ${h} 0 0 ${sweep} ${reach} ${h} L ${inner} ${h} Z`;
 }
 
-/**
- * The two stops: where the piston head bottoms out at each end of its travel,
- * marked on the barrel's own edges.
- *
- * Geometry, not annotation. They belong to the part, so they turn and scale
- * with it and stay true whatever the mechanism is doing — which a dimension
- * line drawn beside the barrel would not. The reading is "the head lives
- * between these", and it needs no number to say it.
- *
- * `limits` are the head's extreme positions in the mark's frame. At the floor
- * stroke the two coincide, which is honest: a ram with no travel should look
- * like one.
- */
-export function cylinderStopMarks(r: number, limits: [number, number]): Segment[] {
-  const h = CYLINDER.barrelHalf * r;
-  const leg = 0.42 * r;
-  return limits.flatMap((x) => [
-    { x1: x, y1: -h + leg * 0.5, x2: x, y2: -h - leg },
-    { x1: x, y1: h - leg * 0.5, x2: x, y2: h + leg },
-  ]);
-}
+// The skin used to carry two stop notches on the barrel's edges, marking where
+// the head bottoms out. The head now stops a visible clearance off the mount at
+// one end and clean outside the mouth at the other, so the silhouette says
+// where the travel ends and the notches were annotating it twice.
 
 /**
- * The block of the collapsed skin: §2.8 block proportions, but square on the
- * side facing the barrel (-x) and rounded only where it reaches toward the rod.
- * The barrel's flat cut ends underneath it, and a rounded corner there drew a
- * sliver of daylight between two parts that are supposed to be flush.
+ * The piston head: §2.8 block proportions at the cylinder's own length, square
+ * on the side facing the barrel (-x) and rounded only where it reaches toward
+ * the rod. The barrel's flat cut ends underneath it, and a rounded corner there
+ * drew a sliver of daylight between two parts that are supposed to be flush.
  */
-export function cylinderBlockPath(r: number): string {
-  const a = MARK.blockAlongHalf * r;
+export function cylinderBlockPath(r: number, headHalf: number): string {
+  const a = headHalf;
   const c = MARK.blockAcrossHalf * r;
   const k = MARK.blockCorner * r;
   return (
@@ -239,23 +238,11 @@ export function cylinderBlockPath(r: number): string {
   );
 }
 
-/**
- * The dotted line inside the barrel that says "this part translates": along the
- * blind end of the bore, from just clear of the anchor to just short of the
- * piston. Drawn white at half opacity over the barrel fill, sized in R so it
- * scales with the part like every other mark.
- */
-export function cylinderMotionDash(
-  r: number,
-  anchor: number
-): { x1: number; x2: number; width: number; dashArray: string } {
-  return {
-    x1: anchor + 2.3 * r,
-    x2: -MARK.blockAlongHalf * r - 0.55 * r,
-    width: 0.2 * r,
-    dashArray: `${0.55 * r} ${0.42 * r}`,
-  };
-}
+// A dotted white line used to run along the blind end of the bore to say "this
+// part translates". With the head bottoming out on the barrel's own ends there
+// is no blind end left to draw it in at full retraction, and at every other
+// position it was a second mark competing with the one that carries the
+// structure — how much rod is still inside.
 
 /**
  * The exact outline of the assembled part, for the selection stroke: the
@@ -286,37 +273,45 @@ export function cylinderContourPath(
 // is gone and the block reads as the block.
 
 /**
- * The driven arrows of a cylinder, flanking its marker.
+ * The driven arrows of a cylinder, on its piston head.
  *
- * `leading` is the way the block sets off, and that arrow is drawn larger and
+ * `leading` is the way the head sets off, and that arrow is drawn larger and
  * heavier — the same §4.2b emphasis the unskinned driven mark carries, because
  * the skin changes the drawing, not what the mark has to say.
+ *
+ * The same arrows a driven block wears, at the size this head has room for.
+ * `fit` is the whole difference: on a ram short enough that the head has
+ * shrunk, the pair is scaled by the same ratio and keeps the margin the
+ * straight arrows already have — at the emphasis factor the larger tip still
+ * lands inside the black, which is the only place white is guaranteed to read.
+ * On a full-size head it is 1 and these are exactly the block's own arrows.
+ *
+ * Scaled as a pair, never the emphasised one alone. Bounding only the big
+ * arrow is the obvious move and it inverts the emphasis: clamped to the head it
+ * came out *smaller* than the arrow it is supposed to be shouting over.
  */
 export function cylinderArrowPaths(
   r: number,
+  headHalf: number,
   leading?: 1 | -1
 ): { line: Segment; head: string; emphasised: boolean }[] {
+  const fit = headHalf / (MARK.blockAlongHalf * r);
   return [1, -1].map((side) => {
     const emphasised = side === leading;
-    // Bounded by the block, like the straight arrows: the cylinder's arrows are
-    // already larger, so the full 1.25 would push the tip past blockAlongHalf
-    // and out onto the rod, where white is no longer guaranteed to read.
-    const grow = emphasised
-      ? Math.min(MARK.arrowEmphasis, (MARK.blockAlongHalf * 0.97) / CYLINDER.arrowTip)
-      : 1;
+    const grow = (emphasised ? MARK.arrowEmphasis : 1) * fit;
     return {
       line: {
-        x1: side * CYLINDER.arrowTail * r,
+        x1: side * MARK.arrowTail * r * fit,
         y1: 0,
-        x2: side * CYLINDER.arrowHeadBase * r * grow,
+        x2: side * MARK.arrowHeadBase * r * grow,
         y2: 0,
       },
       head: arrowHeadAt(
-        side * CYLINDER.arrowTip * r * grow,
+        side * MARK.arrowTip * r * grow,
         0,
         side > 0 ? 0 : Math.PI,
         MARK.arrowHeadLength * r * grow,
-        CYLINDER.arrowHeadHalf * r * grow
+        MARK.arrowHeadHalf * r * grow
       ),
       emphasised,
     };
