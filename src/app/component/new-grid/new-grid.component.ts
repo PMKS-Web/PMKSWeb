@@ -75,6 +75,7 @@ import {
   slotHalfLength,
   motorBodyPath,
   motorBodyAt,
+  Segment,
 } from '../../model/joint-marks';
 import {
   JointDropCandidate,
@@ -88,6 +89,8 @@ import {
   Cylinder,
   cylinderCreationLayout,
   cylinderHeadHalf,
+  cylinderSizeOf,
+  cylinderSpanRange,
   cylinderMinimumSpan,
   cylinderJoints,
   isCylinderInterior as isCylinderInteriorOf,
@@ -2002,6 +2005,86 @@ export class NewGridComponent {
       };
     }
     return this.cylinderListCache!.list;
+  }
+
+  /**
+   * Which of the cylinder panel's two size fields is being pointed at, if any.
+   * 'travel' is how far the rod goes; 'start' is where in that it sits now.
+   */
+  cylinderRangeOverlay?: 'travel' | 'start';
+
+  setCylinderRangeOverlay(which: 'travel' | 'start' | undefined): void {
+    this.cylinderRangeOverlay = which;
+  }
+
+  /**
+   * The stretch of ground the rod's mount covers, drawn on the canvas.
+   *
+   * One picture for both fields, because they are two readings of one line:
+   * *Travel* is how long it is, and *Starts at* is how far along it the ram is
+   * standing. Drawn as the mount's own path rather than as a bar beside the
+   * barrel — what a user wants to see when typing a stroke is where the end of
+   * the ram will get to, and that is a place on the grid rather than a length
+   * in the abstract.
+   *
+   * Nothing is drawn for a ram with no usable travel: the line would be a point
+   * and the number beside it a zero, which says less than the panel already does.
+   */
+  get cylinderRange():
+    { from: Coord; to: Coord; at: Coord; showsPosition: boolean; label: string } | undefined {
+    if (!this.cylinderRangeOverlay) return undefined;
+    const sealed = this.mechanismSrv.cylinderAt(this.activeObjService.selectedLink);
+    if (!sealed) return undefined;
+    const r = 0.15 * this.settings.objectScale;
+    const size = cylinderSizeOf(sealed, r);
+    if (!(size.stroke > 0)) return undefined;
+
+    const { barrelFar, rodFar } = sealed;
+    const span = Math.hypot(rodFar.x - barrelFar.x, rodFar.y - barrelFar.y);
+    if (!(span > 1e-9)) return undefined;
+    const ux = (rodFar.x - barrelFar.x) / span;
+    const uy = (rodFar.y - barrelFar.y) / span;
+    const at = (along: number) => new Coord(barrelFar.x + along * ux, barrelFar.y + along * uy);
+
+    const ends = cylinderSpanRange(size.stroke, r);
+    const showsPosition = this.cylinderRangeOverlay === 'start';
+    return {
+      from: at(ends.retracted),
+      to: at(ends.extended),
+      at: at(span),
+      showsPosition,
+      label: showsPosition
+        ? `${Math.round(size.start * 1000) / 10}%`
+        : this.nup.formatModelLength(size.stroke, this.settings.lengthUnit.getValue()),
+    };
+  }
+
+  /** End ticks across the travel line, so its two ends read as limits. */
+  cylinderRangeCaps(range: { from: Coord; to: Coord }): Segment[] {
+    const dx = range.to.x - range.from.x;
+    const dy = range.to.y - range.from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const half = 0.12 * this.settings.objectScale;
+    const nx = (-dy / length) * half;
+    const ny = (dx / length) * half;
+    return [range.from, range.to].map((end) => ({
+      x1: end.x - nx,
+      y1: end.y - ny,
+      x2: end.x + nx,
+      y2: end.y + ny,
+    }));
+  }
+
+  /** The label sits clear of the line, on the side away from the barrel. */
+  cylinderRangeLabelPos(range: { from: Coord; to: Coord }): Coord {
+    const dx = range.to.x - range.from.x;
+    const dy = range.to.y - range.from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const off = 0.28 * this.settings.objectScale;
+    return new Coord(
+      (range.from.x + range.to.x) / 2 - (dy / length) * off,
+      (range.from.y + range.to.y) / 2 + (dx / length) * off
+    );
   }
 
   /** Whether the selection is this cylinder's body, however it was selected. */

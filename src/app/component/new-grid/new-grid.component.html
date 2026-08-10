@@ -1329,6 +1329,56 @@
       </text>
     </g>
   }
+  <!-- The ram's travel, as the stretch of ground its rod mount covers. One
+       picture for both size fields: Travel is how long this line is, Starts at
+       is how far along it the ram is standing right now. -->
+  @if (cylinderRange; as range) {
+    <g style="pointer-events: none; transform: scaleY(-1)">
+      <line
+        [attr.x1]="range.from.x"
+        [attr.y1]="range.from.y"
+        [attr.x2]="range.to.x"
+        [attr.y2]="range.to.y"
+        stroke="#000000"
+        stroke-linecap="round"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke-dasharray]="0.08 * settings.objectScale"
+      />
+      <!-- Solid as far as the ram has gone, dashed for what is left of the
+           travel: the split *is* the percentage, without a second mark. -->
+      @if (range.showsPosition) {
+        <line
+          [attr.x1]="range.from.x"
+          [attr.y1]="range.from.y"
+          [attr.x2]="range.at.x"
+          [attr.y2]="range.at.y"
+          stroke="#000000"
+          stroke-linecap="round"
+          [attr.stroke-width]="0.04 * settings.objectScale"
+        />
+      }
+      @for (cap of cylinderRangeCaps(range); track $index) {
+        <line
+          [attr.x1]="cap.x1"
+          [attr.y1]="cap.y1"
+          [attr.x2]="cap.x2"
+          [attr.y2]="cap.y2"
+          stroke="#000000"
+          [attr.stroke-width]="0.02 * settings.objectScale"
+        />
+      }
+      <text
+        text-anchor="middle"
+        style="transform: scaleY(-1)"
+        [attr.x]="cylinderRangeLabelPos(range).x"
+        [attr.y]="-cylinderRangeLabelPos(range).y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+        [attr.font-size]="svgGrid.scaleWithZoom(20)"
+      >
+        {{ range.label }}
+      </text>
+    </g>
+  }
 </svg>
 @if (settings.isGridDebugOn) {
   <div id="mouseLocation">

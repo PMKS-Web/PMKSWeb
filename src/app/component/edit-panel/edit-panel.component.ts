@@ -1481,6 +1481,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     NewGridComponent.instance.showLinkAngleOverlay = $event;
   }
 
+  /** Show the ram's travel on the canvas while one of its size fields is pointed at. */
+  setCylinderRangeOverlay(which: 'travel' | 'start' | undefined) {
+    NewGridComponent.instance.setCylinderRangeOverlay(which);
+  }
+
   getOtherJointsInLink(selectedJoint: RealJoint): RealJoint[] {
     //Get the other joint in the link, don't include the selected joint
     //First find all the links that contain this joint

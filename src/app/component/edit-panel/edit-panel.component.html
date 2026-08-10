@@ -227,11 +227,16 @@
              ways of saying the size and there is nothing for a second field to
              disagree with — the picker changes which one you are typing, never
              the ram. -->
+        <!-- Pointing at either size field draws the stretch of ground the rod's
+             mount covers: Travel is how long that line is, Starts at is how far
+             along it the ram is standing. -->
         <input-block
           [formGroup]="cylinderForm"
           _formControl="travel"
           [unitOptions]="travelUnitOptions"
           unitFormControl="travelUnit"
+          (fieldEntry)="setCylinderRangeOverlay($event === -2 ? undefined : 'travel')"
+          [emitterOutputID]="-1"
           tooltip="How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it."
           >Travel
         </input-block>
@@ -240,6 +245,8 @@
           _formControl="start"
           [unitOptions]="startUnitOptions"
           unitFormControl="startUnit"
+          (fieldEntry)="setCylinderRangeOverlay($event === -2 ? undefined : 'start')"
+          [emitterOutputID]="-1"
           tooltip="Where the piston sits at the start of the cycle: as a percentage of the stroke, or as the length the ram is at. A length outside the travel resizes the ram to reach it, exactly as dragging the mount does."
           >Starts at
         </input-block>
