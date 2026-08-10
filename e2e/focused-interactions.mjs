@@ -3,6 +3,7 @@ const { chromium } = await import(
 );
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { waitForReady } from './app-ready.mjs';
 
 const screenshotDir = path.resolve('artifacts/screenshots');
 await fs.mkdir(screenshotDir, { recursive: true });
@@ -180,7 +181,11 @@ async function runCase(name, fn) {
 }
 
 await runCase('link-context', async (page) => {
-  await page.goto(`${baseUrl}?${mechanisms.fourBar}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}?${mechanisms.fourBar}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+  await waitForReady(page);
   await dismissIntro(page);
   await shot(page, 'link-context-loaded.png');
   const s = await snap(page, 'link context loaded');
@@ -204,7 +209,11 @@ await runCase('link-context', async (page) => {
 });
 
 await runCase('force-load-context-drag', async (page) => {
-  await page.goto(`${baseUrl}?${mechanisms.force}`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}?${mechanisms.force}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(800);
   await shot(page, 'force-loaded.png');
@@ -235,9 +244,10 @@ await runCase('force-load-context-drag', async (page) => {
 
 await runCase('pan-zoom-slider', async (page) => {
   await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded',
     timeout: 60000,
   });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(700);
   await shot(page, 'panzoom-loaded.png');
@@ -278,7 +288,8 @@ await runCase('pan-zoom-slider', async (page) => {
 });
 
 await runCase('template-new-tab', async (page, context) => {
-  await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.locator('button:has-text("Templates")').click();
   await page.waitForTimeout(600);
@@ -331,9 +342,10 @@ await runCase('template-new-tab', async (page, context) => {
 await runCase('mobile-layout', async (page) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${baseUrl}?${mechanisms.sliderCrank}`, {
-    waitUntil: 'networkidle',
+    waitUntil: 'domcontentloaded',
     timeout: 60000,
   });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(800);
   await shot(page, 'mobile-slidercrank.png');

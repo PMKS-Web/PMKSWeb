@@ -21,8 +21,8 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 
 const load = async (q) => {
-  await page.goto(`${BASE}/${q}`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1200);
+  await page.goto(`${BASE}/${q}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
 };
 const screenOf = (x, y) =>
   page.evaluate(
@@ -64,6 +64,7 @@ const order = await page.evaluate(() =>
     n.id ? 'rider:' + n.id : n.getAttribute('class').includes('block') ? 'block' : 'plate'
   )
 );
+import { waitForReady } from './app-ready.mjs';
 check(
   'a carrier that is also a rider draws under the block riding it',
   order.indexOf('plate') < order.lastIndexOf('block') &&

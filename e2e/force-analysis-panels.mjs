@@ -38,6 +38,7 @@ page.setDefaultTimeout(10000);
 page.on('pageerror', (error) =>
   issue('Uncaught page error', { severity: 'high', error: error.stack || error.message })
 );
+import { waitForReady } from './app-ready.mjs';
 page.on('console', (msg) => {
   const text = msg.text();
   if (msg.type() === 'error' && !/favicon|google-analytics/i.test(text)) {
@@ -108,8 +109,8 @@ async function expandRow(text) {
 }
 
 try {
-  await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1200);
+  await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro();
 
   // --- Joint panel: joint B connects links AB and BC. ---

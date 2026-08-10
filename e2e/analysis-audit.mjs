@@ -27,6 +27,7 @@ const source = readFileSync('src/app/component/MODALS/templates/template-linkage
 const payloads = Object.fromEntries(
   [...source.matchAll(/^ {2}'?([\w-]+)'?:\n {4}'([^']+)',$/gm)].map(([, id, p]) => [id, p])
 );
+import { waitForReady } from './app-ready.mjs';
 const ids = readFileSync('src/app/component/MODALS/templates/template-linkages.ts', 'utf8')
   .match(/export const (?:BUILT_IN|LIBRARY)_TEMPLATE_IDS = \[([^\]]*)\]/g)
   .flatMap((block) => [...block.matchAll(/'([\w-]+)'/g)].map((m) => m[1]));
@@ -53,8 +54,8 @@ const note = (kind, where, what, detail) => {
 };
 
 const load = async (id) => {
-  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'load' });
-  await page.waitForTimeout(4200);
+  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   errors = [];
   // Analyze is where the panels live.
   await page.click('text=Analyze').catch(() => undefined);

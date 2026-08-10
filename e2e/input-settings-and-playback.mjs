@@ -8,6 +8,7 @@ const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_URL ?? 'http://127.0.0.1:4200/';
 // Same encoded four-bar the other e2e scripts use — loading by URL avoids the
@@ -28,7 +29,8 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 950 } });
 const consoleErrors = [];
 page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
 
-await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 
 // The first-run tour overlay swallows clicks until it is dismissed.
 if (

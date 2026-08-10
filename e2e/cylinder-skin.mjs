@@ -22,6 +22,7 @@ const src = readFileSync('src/app/component/MODALS/templates/template-linkages.t
 const payloads = Object.fromEntries(
   [...src.matchAll(/^ {2}'?([\w-]+)'?:\n {4}'([^']+)',$/gm)].map(([, id, p]) => [id, p])
 );
+import { waitForReady } from './app-ready.mjs';
 
 const ctx = await chromium.launchPersistentContext('/tmp/pmks-chrome-cylskin', {
   headless: true,
@@ -31,8 +32,8 @@ const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (error) => errors.push(String(error)));
 
-await page.goto(`${BASE}/?${payloads['Cylinder_Boom']}`, { waitUntil: 'load' });
-await page.waitForTimeout(4200);
+await page.goto(`${BASE}/?${payloads['Cylinder_Boom']}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 
 const barrel = await page.$('.cylinder-barrel');
 const box = await barrel.boundingBox();

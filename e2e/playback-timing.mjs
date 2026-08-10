@@ -37,6 +37,7 @@ page.setDefaultTimeout(15000);
 page.on('pageerror', (error) =>
   issues.push({ name: 'Uncaught page error', severity: 'high', error: error.message })
 );
+import { waitForReady } from './app-ready.mjs';
 page.on('console', (msg) => {
   if (msg.type() === 'error' && !/favicon|google-analytics/i.test(msg.text())) {
     issues.push({ name: `Console error: ${msg.text().slice(0, 160)}`, severity: 'medium' });
@@ -133,8 +134,8 @@ async function measureRevolution() {
 }
 
 try {
-  await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1500);
+  await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
 
   // --- Wall-clock revolution time --------------------------------------------
   await setInputSpeed(20); // 3 s per revolution

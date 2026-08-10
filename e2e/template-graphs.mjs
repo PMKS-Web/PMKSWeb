@@ -48,6 +48,7 @@ const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_URL ?? 'http://127.0.0.1:4200/';
 const OUT = 'artifacts/template-graphs';
@@ -382,10 +383,10 @@ for (const id of IDS) {
 
   try {
     await page.goto(`${BASE}?${TEMPLATE_LINKAGES[id]}`, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
-    await page.waitForTimeout(1200);
+    await waitForReady(page);
     await dismissOverlays();
 
     const mech = await readMechanism();

@@ -51,6 +51,7 @@ const browser = await chromium.launch({
 execSync(
   `open -a "${process.env.PW_CHROME ?? '/Users/kohmei358/Library/Caches/ms-playwright/chromium-1234/chrome-mac-arm64/Google Chrome for Testing.app'}"`
 );
+import { waitForReady } from './app-ready.mjs';
 await new Promise((r) => setTimeout(r, 1200));
 
 const page = await browser.newPage({ viewport: null });
@@ -153,7 +154,8 @@ const jointsOnScreen = () =>
   );
 
 async function fresh() {
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   await pause(1200);
   await page.evaluate(() => {
     document.querySelector('.introjs-skipbutton')?.click();
@@ -270,7 +272,8 @@ for (const [tag, name] of FROM_GALLERY) {
   const row = gallery.find((l) => l.startsWith(`| [${name}]`));
   if (!checkThat(`${tag}: published in the gallery`, !!row)) continue;
   const query = row.match(/\(https:\/\/[^)?]+(\?[^)]*)\)/)[1];
-  await page.goto(BASE + '/' + query, { waitUntil: 'networkidle' });
+  await page.goto(BASE + '/' + query, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   await pause(1100);
   await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
   await pause(300);

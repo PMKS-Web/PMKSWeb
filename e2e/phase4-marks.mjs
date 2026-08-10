@@ -14,6 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const OUT = 'artifacts/phase4-marks';
@@ -69,7 +70,8 @@ mkdirSync(OUT, { recursive: true });
 
 for (const mechanism of MECHANISMS) {
   console.log(`\n${mechanism.name} — ${mechanism.note}`);
-  await page.goto(BASE + mechanism.query, { waitUntil: 'networkidle' });
+  await page.goto(BASE + mechanism.query, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   await page.waitForSelector('#sliderHolder', { timeout: 15000 });
   await page.waitForTimeout(600);
 
@@ -136,7 +138,8 @@ console.log('\nrecolouring a rider repaints its weld plate');
 // mechanism by which it reads as the same body. Recolouring a link changes a
 // mark while moving nothing, so a glyph cache keyed only on positions leaves
 // the plate showing a colour the link no longer has.
-await page.goto(BASE + MECHANISMS[0].query, { waitUntil: 'networkidle' });
+await page.goto(BASE + MECHANISMS[0].query, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 await page.waitForSelector('#sliderHolder', { state: 'attached', timeout: 15000 });
 await page.waitForTimeout(600);
 

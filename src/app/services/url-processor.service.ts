@@ -160,6 +160,8 @@ export class UrlProcessorService {
     if (resetSvgScale) {
       //After the mechanism is built, scale the mechanism to fit the screen
       //Do this after a 1 sec timeout to allow the mechanism to be built first.
+      // e2e/app-ready.mjs mirrors this delay: until it fires, canvas coordinates
+      // are not final, so a test that clicks earlier clicks the wrong place.
       setTimeout(() => {
         this.svgGrid.scaleToFitLinkage();
       }, 1000);

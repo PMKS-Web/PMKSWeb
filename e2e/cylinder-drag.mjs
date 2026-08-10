@@ -18,6 +18,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const SOURCE = 'src/app/component/MODALS/templates/template-linkages.ts';
@@ -36,8 +37,8 @@ page.on('console', (message) => {
   if (message.type() === 'error') errors.push(message.text());
 });
 
-await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
-await page.waitForTimeout(5000);
+await page.goto(`${BASE}/?${payload}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 
 /** The panel's own numbers, which is the point: this is what a user reads. */
 const readPanel = () =>
@@ -107,8 +108,8 @@ const grown = await drag(-330, -180, 'past-extended');
 //     Aimed at the mount by name rather than moved by a count of pixels: how
 //     far "past the floor" is depends on the ram's size, and the size is what
 //     the drags above have spent the run changing.
-await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
-await page.waitForTimeout(5000);
+await page.goto(`${BASE}/?${payload}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 const centreOf = (id) =>
   page.evaluate((jointId) => {
     const node = document.querySelector(`#joint_${jointId}`);
@@ -133,7 +134,10 @@ const checks = [
   ['a drag inside the travel leaves the size alone', strokeOf(posed) === strokeOf(resting)],
   ['pushing past the retracted stop shrinks the ram', strokeOf(shrunk) < strokeOf(resting)],
   ['pulling past the extended stop grows it again', strokeOf(grown) > strokeOf(shrunk)],
-  ['the drag says so when it stops at the shortest ram', /shortest cylinder/.test(floored.notice ?? '')],
+  [
+    'the drag says so when it stops at the shortest cylinder',
+    /shortest cylinder/.test(floored.notice ?? ''),
+  ],
   ['nothing threw', errors.length === 0],
 ];
 for (const [what, ok] of checks) console.log(`${ok ? 'PASS' : 'FAIL'}  ${what}`);

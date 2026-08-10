@@ -28,6 +28,7 @@ const source = readFileSync('src/app/component/MODALS/templates/template-linkage
 const payloads = Object.fromEntries(
   [...source.matchAll(/^ {2}'?([\w-]+)'?:\n {4}'([^']+)',$/gm)].map(([, id, p]) => [id, p])
 );
+import { waitForReady } from './app-ready.mjs';
 
 /**
  * Enough mechanisms to reach every kind of object at least once, and no more —
@@ -109,8 +110,8 @@ const dismiss = async () => {
 };
 
 const load = async (id) => {
-  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'load' });
-  await page.waitForTimeout(4200);
+  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   errors = [];
 };
 

@@ -17,6 +17,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const payload = readFileSync(
@@ -71,8 +72,8 @@ async function dragJointOnto(from, to, name) {
 }
 
 const load = async () => {
-  await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
-  await page.waitForTimeout(5000);
+  await page.goto(`${BASE}/?${payload}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   return state();
 };
 

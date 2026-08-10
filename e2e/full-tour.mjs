@@ -3,6 +3,7 @@ const { chromium } = await import(
 );
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { waitForReady } from './app-ready.mjs';
 
 const screenshotDir = path.resolve('artifacts/screenshots');
 await fs.mkdir(screenshotDir, { recursive: true });
@@ -225,8 +226,8 @@ page.on('requestfailed', (request) => {
 });
 
 await safeStep('initial load', async () => {
-  await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1000);
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await shot(page, '01-initial-load.png');
   await checkLayout(page, 'first load with intro');
   await dismissIntro(page);
@@ -290,8 +291,11 @@ await safeStep('toolbar controls and project actions', async () => {
 });
 
 await safeStep('load verification mechanism from shared URL', async () => {
-  await page.goto(`${baseUrl}?${verificationQuery}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1500);
+  await page.goto(`${baseUrl}?${verificationQuery}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
+  await waitForReady(page);
   await dismissIntro(page);
   await shot(page, '03b-verification-mechanism.png');
   await checkLayout(page, 'verification mechanism');

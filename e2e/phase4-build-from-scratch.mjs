@@ -13,6 +13,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const OUT = 'artifacts/phase4-scratch';
@@ -34,8 +35,8 @@ page.on('console', (m) => {
 page.on('pageerror', (e) => consoleErrors.push(String(e)));
 mkdirSync(OUT, { recursive: true });
 
-await page.goto(BASE, { waitUntil: 'networkidle' });
-await page.waitForTimeout(1000);
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 
 // The welcome tour covers the canvas on a first visit and silently swallows the
 // right-click that opens the creation menu.

@@ -5,6 +5,7 @@
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 
@@ -88,8 +89,8 @@ for (const [name, query] of Object.entries(MECHS)) {
       [0.7, -1.7],
       [-1.2, -1.4],
     ]) {
-      await page.goto(`${BASE}/${query}`, { waitUntil: 'networkidle' });
-      await page.waitForTimeout(900);
+      await page.goto(`${BASE}/${query}`, { waitUntil: 'domcontentloaded' });
+      await waitForReady(page);
       const from = await jointAt(id);
       if (!from) continue;
       const a = await screenOf(from.x, from.y);

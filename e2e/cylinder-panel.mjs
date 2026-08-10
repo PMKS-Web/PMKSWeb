@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const payload = readFileSync(
@@ -29,8 +30,8 @@ const page = await ctx.newPage();
 const errs = [];
 page.on('pageerror', (e) => errs.push(String(e)));
 const load = async () => {
-  await page.goto(`${BASE}/?${payload}`, { waitUntil: 'load' });
-  await page.waitForTimeout(5000);
+  await page.goto(`${BASE}/?${payload}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
   const b = await page.$('.cylinder-barrel');
   const box = await b.boundingBox();
   await page.mouse.click(box.x + box.width * 0.62, box.y + box.height * 0.62);
@@ -128,7 +129,7 @@ const checks = [
   ['a fractional percentage survives the round trip', out.fractional.start === '33.7'],
   [
     'a length the ram cannot reach says it was held',
-    /shortest ram/.test(out.tooShort.clamped ?? ''),
+    /shortest cylinder/.test(out.tooShort.clamped ?? ''),
   ],
   [
     'one panel edit is one undo step',

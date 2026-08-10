@@ -9,6 +9,7 @@ const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { waitForReady } from './app-ready.mjs';
 const OUT = 'artifacts/template-open';
 mkdirSync(OUT, { recursive: true });
 const FOUR_BAR =
@@ -52,7 +53,8 @@ const page = await context.newPage();
 page.setDefaultTimeout(15000);
 newPages = 0; // ignore the page we created ourselves
 const BASE = process.env.PMKS_URL ?? 'http://127.0.0.1:4200/';
-await page.goto(BASE, { waitUntil: 'networkidle' });
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 await dismissIntro(page);
 await page.waitForTimeout(600);
 // The library opens by itself on a blank start; open it from the toolbar if not.
@@ -83,7 +85,8 @@ check(
 );
 
 // --- Case 2: existing work brings up the choice dialog -----------------------
-await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 await dismissIntro(page);
 await page.waitForTimeout(800);
 await page.locator('button:has-text("Templates")').first().click();

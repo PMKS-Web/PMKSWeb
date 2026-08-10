@@ -3,6 +3,7 @@ const { chromium } = await import(
 );
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { waitForReady } from './app-ready.mjs';
 
 const screenshotDir = path.resolve('artifacts/screenshots');
 await fs.mkdir(screenshotDir, { recursive: true });
@@ -178,8 +179,8 @@ async function rightClickAt(page, x, y, label) {
 }
 
 async function loadMechanism(page, name, query) {
-  await page.goto(`${baseUrl}?${query}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(900);
+  await page.goto(`${baseUrl}?${query}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(500);
   await shot(page, `mechanism-${name}-loaded.png`);
@@ -237,7 +238,8 @@ page.on('requestfailed', (request) => {
 });
 
 await safe('empty grid right-click creates link', async () => {
-  await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   const box = await canvasBox(page);
   const x1 = box.x + box.width * 0.45;
@@ -385,7 +387,8 @@ await safe('pan, wheel zoom, buttons, and animation slider', async () => {
 });
 
 await safe('template hover and new-tab behavior', async () => {
-  await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.locator('button:has-text("Templates")').click();
   await page.waitForTimeout(500);

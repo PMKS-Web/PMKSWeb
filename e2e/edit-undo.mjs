@@ -22,6 +22,7 @@ const src = readFileSync('src/app/component/MODALS/templates/template-linkages.t
 const payloads = Object.fromEntries(
   [...src.matchAll(/^ {2}'?([\w-]+)'?:\n {4}'([^']+)',$/gm)].map(([, id, p]) => [id, p])
 );
+import { waitForReady } from './app-ready.mjs';
 
 const ctx = await chromium.launchPersistentContext('/tmp/pmks-chrome-undo', {
   headless: true,
@@ -32,8 +33,8 @@ const errors = [];
 page.on('pageerror', (error) => errors.push(String(error)));
 
 const load = async (id) => {
-  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'load' });
-  await page.waitForTimeout(4200);
+  await page.goto(`${BASE}/?${payloads[id]}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
 };
 
 /** Every joint's drawn centre, which is what an edit is supposed to move. */

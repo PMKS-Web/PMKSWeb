@@ -2,6 +2,7 @@
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 
@@ -21,8 +22,8 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
 
 const load = async (query) => {
-  await page.goto(`${BASE}/${query}`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1200);
+  await page.goto(`${BASE}/${query}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
 };
 const screenOf = (x, y) =>
   page.evaluate(

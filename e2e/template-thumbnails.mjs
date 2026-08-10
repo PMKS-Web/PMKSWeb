@@ -20,6 +20,7 @@ import { join } from 'node:path';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const SOURCE = 'src/app/component/MODALS/templates/template-linkages.ts';
@@ -59,7 +60,8 @@ function libraryTemplates() {
 async function open(url) {
   for (let attempt = 0; ; attempt++) {
     try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await waitForReady(page);
       break;
     } catch (error) {
       if (attempt >= 2) throw error;

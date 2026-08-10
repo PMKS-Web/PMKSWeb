@@ -10,6 +10,7 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 const { chromium } = await import(
   (process.env.PMKS_PLAYWRIGHT_DIR ?? '/tmp/pmks-playwright') + '/node_modules/playwright/index.mjs'
 );
+import { waitForReady } from './app-ready.mjs';
 
 const BASE = process.env.PMKS_BASE_URL ?? 'http://127.0.0.1:4200';
 const OUT = 'artifacts/phase5-driven-cylinder';
@@ -40,8 +41,8 @@ page.on('console', (m) => {
 page.on('pageerror', (e) => consoleErrors.push(String(e)));
 mkdirSync(OUT, { recursive: true });
 
-await page.goto(BASE + '/' + boomQuery(), { waitUntil: 'networkidle' });
-await page.waitForTimeout(1000);
+await page.goto(BASE + '/' + boomQuery(), { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
 await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
 await page.waitForTimeout(300);
 

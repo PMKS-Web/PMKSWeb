@@ -6,6 +6,7 @@ const { chromium } = await import(
 );
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { waitForReady } from './app-ready.mjs';
 
 const screenshotDir = path.resolve('artifacts/screenshots');
 await fs.mkdir(screenshotDir, { recursive: true });
@@ -144,15 +145,15 @@ async function dragBy(page, from, to, { steps = 12, holdBeforeRelease = 0 } = {}
 }
 
 async function loadMergeable(page) {
-  await page.goto(`${baseUrl}?${MERGEABLE}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1200);
+  await page.goto(`${baseUrl}?${MERGEABLE}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(400);
 }
 
 async function loadFourBar(page) {
-  await page.goto(`${baseUrl}?${FOUR_BAR}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(900);
+  await page.goto(`${baseUrl}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(400);
 }
@@ -476,8 +477,8 @@ await safe('a merge that would double an existing pair is refused', async () => 
 
 // --- 8. Merging onto the pin of a slider ---------------------------------
 await safe('a joint can be dropped onto the pin of a slider', async () => {
-  await page.goto(`${baseUrl}?${SLIDER_CRANK}`, { waitUntil: 'networkidle', timeout: 60000 });
-  await page.waitForTimeout(1000);
+  await page.goto(`${baseUrl}?${SLIDER_CRANK}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
   await dismissIntro(page);
   await page.waitForTimeout(400);
 
