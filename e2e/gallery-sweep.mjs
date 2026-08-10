@@ -3,9 +3,13 @@
 // The unit suite asserts on fixtures, which are TypeScript objects; the app
 // only ever sees URLs. This closes that gap: each row of docs/fixture-urls.md
 // is loaded, and has to decode, report the mobility its spec says it has,
-// precompute a cycle, animate, and come back out as a URL that decodes to the
-// same thing. It is what an outside reviewer does by clicking the gallery, so
-// it should fail here first.
+// precompute a cycle, and animate when a user presses play. It is what an
+// outside reviewer does by clicking the gallery, so it should fail here first.
+//
+// What it deliberately does *not* check is the share URL. That is a codec
+// question rather than a browser one, and `fixture-gallery.spec.ts` answers it
+// over the same list in about a second — where asking it here meant loading
+// every mechanism twice, which was most of what this suite cost.
 //
 //   PMKS_PLAYWRIGHT_DIR=<dir> PMKS_BASE_URL=<origin> node e2e/gallery-sweep.mjs
 
@@ -22,11 +26,17 @@ const OUT = 'artifacts/gallery-sweep';
 /**
  * Mechanisms the gallery publishes that are *meant* not to solve. The trammel
  * is published in its undriven form, which is a mobility case: nothing drives
- * it, so there is nothing to animate. The hydraulic cylinder used to belong
+ * it, so there is nothing to animate. The MotionGen gripper is published
+ * over-constrained on purpose — its whole point is that PMKS+ reports DOF 0 and
+ * refuses it, which its own spec asserts. The hydraulic cylinder used to belong
  * here too -- a Slide on a moving carrier was out of scope until Phase 5 --
  * and now solves like the rest.
+ *
+ * This list is kept by hand and the gallery is not, which is how the gripper
+ * came to be reported as a failure for as long as it has been published. A
+ * fixture that is meant not to solve should say so where it is defined.
  */
-const EXPECTED_INVALID = new Set(['Elliptical trammel']);
+const EXPECTED_INVALID = new Set(['Elliptical trammel', 'MotionGen gripper']);
 
 function galleryRows() {
   return readFileSync('docs/fixture-urls.md', 'utf8')
@@ -109,27 +119,13 @@ for (const { name, query } of galleryRows()) {
     checkThat(`${name}: precomputes a cycle`, model.frames > 20, `${model.frames} frames`);
   }
 
-  // The URL the app hands back has to mean the same mechanism. This is the
-  // share button's output, and the undo stack's storage.
-  // The right panel is where the app itself keeps a handle on the encoder.
-  const roundTrip = await page
-    .evaluate(() =>
-      ng
-        .getComponent(document.querySelector('app-right-panel'))
-        ?.urlGenerationService?.generateUrlQuery()
-    )
-    .catch(() => null);
-  let pose = model.pose;
-  if (roundTrip) {
-    await open(BASE + '/?' + roundTrip.replace(/^\?/, ''));
-    const again = await readModel();
-    pose = again.pose;
-    checkThat(
-      `${name}: survives its own share URL`,
-      again.joints === model.joints && again.links === model.links && again.dof === model.dof,
-      `${again.joints}/${again.links} joints/links, dof ${again.dof}`
-    );
-  }
+  // The share round trip used to be checked here, by re-opening each mechanism
+  // under the URL the app handed back — which doubled the loads, and loading is
+  // all this suite does. `fixture-gallery.spec.ts` now does the same round trip
+  // over the same list, from decoded state through the encoder and back, and
+  // compares every joint's position, ground, input, seal and slot rather than
+  // counting joints and links. It runs in about a second.
+  const pose = model.pose;
 
   await page.screenshot({
     path: `${OUT}/${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`,
