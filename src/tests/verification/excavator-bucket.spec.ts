@@ -5,6 +5,7 @@ import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { BUCKET, excavatorBucketFixture } from '../../test-utils/verification/library-fixtures';
+import { turningPoints } from '../../test-utils/verification/compare';
 import { sealedCylinders } from '../../app/model/cylinder';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
@@ -133,28 +134,36 @@ describe('a backhoe bucket curled by its cylinder', () => {
     expect(samples[samples.length - 1].ram).toBeCloseTo(drawn.ram, 6);
   });
 
-  it('curls the bucket through 32 degrees, and only ever one way at a time', () => {
+  it('curls the bucket through 54 degrees, and only ever one way at a time', () => {
     const angles = samples.map((sample) => sample.bucket);
     const swept = Math.max(...angles) - Math.min(...angles);
-    expect(swept).toBeGreaterThan(32);
-    expect(swept).toBeLessThan(33);
+    expect(swept).toBeGreaterThan(54);
+    expect(swept).toBeLessThan(55);
 
     // The bucket follows the ram: two reversals in the drive, two in the
     // output, and no third one from a dyad changing its mind.
-    const reversals = angles
-      .slice(1)
-      .map((angle, i) => Math.sign(angle - angles[i]))
-      .filter((direction, i, all) => i > 0 && direction !== all[i - 1]).length;
-    expect(reversals).toBe(2);
+    //
+    // The deadband is a fifth of a degree rather than a rounding quantum
+    // because the sample at each of the ram's own stops overshoots the stop by
+    // about a tenth of a degree of bucket: the grid is anchored where the part
+    // was drawn rather than at a limit, so the last step into a stop is a whole
+    // one and lands slightly past it. Counting that as two more reversals would
+    // be counting the sampling, not the mechanism.
+    expect(turningPoints(angles, 0.2).length).toBe(2);
   });
 
-  it('never lets the link and the bucket ear reach a tangency', () => {
+  it('never lets either dyad reach a tangency', () => {
     // The one way this mechanism could quietly become a different one: the two
     // circles that place the bucket's ear meeting at a single point, where the
     // root the solver returns is decided by rounding.
     for (const sample of samples) {
-      expect(sample.link + sample.bucketEar - sample.armToHinge).toBeGreaterThan(0.8);
-      expect(sample.armToHinge - Math.abs(sample.link - sample.bucketEar)).toBeGreaterThan(1.9);
+      // The ram triangle flattens at 0 and at 180 degrees; it stays between 30
+      // and 106, which is where the ram's own stops leave it. Drawn as it once
+      // was, this reached 6 degrees.
+      expect(Math.abs(sample.crank)).toBeGreaterThan(25);
+      expect(Math.abs(sample.crank)).toBeLessThan(115);
+      expect(sample.link + sample.bucketEar - sample.armToHinge).toBeGreaterThan(0.9);
+      expect(sample.armToHinge - Math.abs(sample.link - sample.bucketEar)).toBeGreaterThan(0.9);
     }
   });
 
@@ -165,7 +174,7 @@ describe('a backhoe bucket curled by its cylinder', () => {
       expect(sample.tip.x).toBeGreaterThan(BUCKET.hinge.x);
     }
     const heights = samples.map((sample) => sample.tip.y);
-    expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(1.3);
+    expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(2);
   });
 
   it('moves every joint at the rate its own motion implies', () => {

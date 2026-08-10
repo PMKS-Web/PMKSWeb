@@ -5,6 +5,7 @@ import { Joint } from '../../app/model/joint';
 import { buildMechanism } from '../../test-utils/verification/fixture';
 import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { SHAPER, shaperQuickReturnFixture } from '../../test-utils/verification/library-fixtures';
+import { turningPoints } from '../../test-utils/verification/compare';
 
 // A shaper's drive, ram included: a crank pin riding in a slot cut into a
 // rocking lever, and the lever pushing a block along a fixed guide.
@@ -19,29 +20,6 @@ import { SHAPER, shaperQuickReturnFixture } from '../../test-utils/verification/
 // quick return follows from where those two poses fall on the revolution.
 
 const DEG = 180 / Math.PI;
-
-/**
- * Where a sampled path turns round, ignoring wobble below `noise`.
- *
- * Joint positions are rounded, so a smooth extremum is a run of samples that
- * differ in the last digit and a plain sign-change count reads three reversals
- * in a path that has two. Stepping from the last confirmed point rather than
- * from the previous sample takes the rounding out.
- */
-function turningPoints(values: number[], noise: number): number[] {
-  const turns: number[] = [];
-  let direction = 0;
-  let anchor = 0;
-  for (let i = 1; i < values.length; i++) {
-    const step = values[i] - values[anchor];
-    if (Math.abs(step) < noise) continue;
-    const now = Math.sign(step);
-    if (direction !== 0 && now !== direction) turns.push(anchor);
-    direction = now;
-    anchor = i;
-  }
-  return turns;
-}
 
 /** The rounding the solver leaves on a coordinate, with room to spare. */
 const NOISE = 1e-3;

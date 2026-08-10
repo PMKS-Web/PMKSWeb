@@ -189,3 +189,26 @@ export function alignToDataset(
     expectedDirections
   );
 }
+
+/**
+ * Where a sampled path turns round, ignoring wobble below `noise`.
+ *
+ * Joint positions are rounded, so a smooth extremum is a run of samples that
+ * differ in the last digit and a plain sign-change count reads three reversals
+ * in a path that has two. Stepping from the last confirmed point rather than
+ * from the previous sample takes the rounding out.
+ */
+export function turningPoints(values: number[], noise: number): number[] {
+  const turns: number[] = [];
+  let direction = 0;
+  let anchor = 0;
+  for (let i = 1; i < values.length; i++) {
+    const step = values[i] - values[anchor];
+    if (Math.abs(step) < noise) continue;
+    const now = Math.sign(step);
+    if (direction !== 0 && now !== direction) turns.push(anchor);
+    direction = now;
+    anchor = i;
+  }
+  return turns;
+}

@@ -110,7 +110,8 @@ describe('a toggle press closed by a hydraulic ram', () => {
     // ram's stops are placed so it never gets there -- and never quite reaches
     // the singular depth either.
     const knees = samples.map((sample) => sample.knee);
-    expect(Math.min(...knees)).toBeGreaterThan(224);
+    expect(Math.min(...knees)).toBeGreaterThan(200);
+    expect(Math.max(...knees)).toBeLessThan(265);
     expect(Math.max(...knees)).toBeLessThan(270);
     for (const sample of samples) {
       expect(sample.slider.y).toBeGreaterThan(DEAD_POINT_DEPTH);
@@ -143,11 +144,12 @@ describe('a toggle press closed by a hydraulic ram', () => {
 
     const first = depthAt(open) - depthAt(middle);
     const second = depthAt(middle) - depthAt(shut);
-    expect(first).toBeGreaterThan(2 * second);
+    expect(first).toBeGreaterThan(1.8 * second);
 
     // And the last five degrees, which is where a press is actually working,
-    // are worth almost nothing at all in travel.
-    expect(depthAt(shut - 5) - depthAt(shut)).toBeLessThan(0.1);
+    // are worth a few per cent of the travel and nearly all of the force.
+    const travel = depthAt(open) - depthAt(shut);
+    expect(depthAt(shut - 5) - depthAt(shut)).toBeLessThan(0.05 * travel);
   });
 
   it('moves every joint at the rate its own motion implies', () => {

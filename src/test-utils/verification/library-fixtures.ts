@@ -130,11 +130,23 @@ export const JANSEN_BARS: readonly [string, string, number][] = [
  * end of a backhoe is a four-bar and not a lever.
  *
  * Coordinates are the drawn pose. The bell crank's ear sits 3 from its pivot
- * and 5.48 from the ram's mount, which puts the ram at mid-travel; its stops
- * then fall at 4.65 and 6.31, sweeping the bell crank through 34 degrees and
- * the bucket through 32. Nothing comes near a dyad's tangency: the link and the
- * bucket ear span 4.60 between them, against a gap that never opens past 3.76
- * and never closes below 2.39.
+ * and 6.50 from the ram's mount, which puts the ram at mid-travel; its stops
+ * then fall at 4.67 and 8.34, sweeping the bell crank through 75 degrees and
+ * the bucket through 54.
+ *
+ * The proportions are what keep both dyads clear of a tangency: the ear stays
+ * between 30 and 106 degrees off the line to the ram's mount, so the triangle
+ * that places it never flattens, and the link and the bucket ear span 5.40
+ * between them against a gap that never opens past 4.44 and never closes below
+ * 1.59.
+ *
+ * Both margins depend on how far the ram travels, and that is not a property of
+ * these coordinates — it is set by `cylinderBetween`, and through it by the
+ * model's own rule for how much barrel the head costs. When that rule last
+ * changed, every stroke here roughly doubled: this mechanism went to within
+ * 0.02 of a tangency at the bucket and flattened its ram triangle to 6 degrees.
+ * If it changes again, re-measure rather than assuming the sweeps quoted above
+ * still hold.
  */
 export const BUCKET = {
   /** Bell-crank pivot on the stick. */
@@ -142,13 +154,13 @@ export const BUCKET = {
   /** The ram's barrel mount, back along the stick. */
   mount: { x: -7, y: 0 },
   /** The bell crank's rod ear — the point the ram actually moves. */
-  ear: { x: -2, y: 2.236 },
+  ear: { x: -1.124, y: 2.781 },
   /** Its other arm, which pushes the link. */
   arm: { x: 2, y: 1.2 },
   /** The bucket's hinge at the end of the stick. */
   hinge: { x: 3.2, y: -1.6 },
   /** Where the link reaches the bucket, and the cutting edge. */
-  bucketEar: { x: 4.3, y: 0.15 },
+  bucketEar: { x: 4.818, y: 0.172 },
   tip: { x: 5.6, y: -2.6 },
 } as const;
 
@@ -205,8 +217,18 @@ export const TOGGLE = {
   link: 4,
   /** The ram's barrel mount, out to one side. */
   mount: { x: -8, y: 0 },
-  /** Knee angle at the drawn pose, measured from the pivot. */
-  kneeRad: (246 * Math.PI) / 180,
+  /**
+   * Knee angle at the drawn pose, measured from the pivot.
+   *
+   * This is the number that bounds the travel. The ram is drawn at mid-stroke
+   * like every other one here, so the span between the mounts fixes how much
+   * ram there is, and how much ram there is fixes how far past the drawn pose
+   * the knee can be pushed. Drawn much straighter than this and the extension
+   * carries the knee through the dead point at 270 and out the far side, where
+   * the press opens again — honest as motion, but a poor first look at what a
+   * toggle is for.
+   */
+  kneeRad: (235 * Math.PI) / 180,
 } as const;
 
 /**
@@ -219,13 +241,16 @@ export const TOGGLE = {
  * the force it can exert goes the other way. The press closes slowly and
  * enormously hard, which is the whole reason toggle presses exist.
  *
- * The mounts are placed so the ram's stops bracket that behaviour without
- * reaching it. The knee sweeps 225.0 to 267.7 degrees, where 270 is the dead
- * point, and the slider descends from -5.66 to -7.99 against a dead-point depth
- * of exactly -8: the last 2.3 degrees of knee travel are worth 6 thousandths of
- * slider travel. The press closes almost to the singularity and stops short of
- * it, which is both what the machine does and what keeps this a mechanism
- * rather than a fixture balanced on a knife edge.
+ * The mounts and the drawn knee angle are placed so the ram's stops bracket
+ * that behaviour without reaching it. The knee sweeps 205.6 to 262.1 degrees,
+ * where 270 is the dead point, and the slider descends from -3.45 to -7.93
+ * against a dead-point depth of exactly -8. The last five degrees of that
+ * 56-degree sweep are worth under 3% of the slider's travel, and the first half
+ * of the sweep is worth twice the second. The press closes almost to the
+ * singularity and stops short of it, which is both what the machine does and
+ * what keeps this a mechanism rather than a fixture balanced on a knife edge —
+ * drawn straighter, as it once was, the ram's own extension carried the knee
+ * 8.6 degrees past the dead point and the slider through its singular depth.
  */
 export function togglePressFixture(scale: number = 1): MechanismFixture {
   const at = (point: { x: number; y: number }) => ({ x: point.x * scale, y: point.y * scale });

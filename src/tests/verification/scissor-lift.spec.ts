@@ -129,14 +129,27 @@ describe('a scissor lift raised by its ram', () => {
     }
   });
 
+  it('keeps the arms clear of both of their own stops', () => {
+    // Pinned as an angle, not inferred from the height: a scissor flat on its
+    // base and a scissor stood upright are both singular — the first because
+    // the foot's circle meets the rail tangentially, the second because the
+    // arms have nowhere further to go — and the ram's travel is what decides
+    // how near either the mechanism comes. That travel is set by the model's
+    // own rule for how much barrel a ram's head costs, so it moves when that
+    // rule moves, and the margin has to be asserted rather than assumed.
+    const arms = samples.map((sample) => sample.arm);
+    expect(Math.min(...arms)).toBeGreaterThan(15);
+    expect(Math.max(...arms)).toBeLessThan(70);
+  });
+
   it('lifts, and draws the feet in as it does', () => {
     const heights = samples.map((sample) => sample.height);
     const feet = samples.map((sample) => sample.foot);
-    expect(Math.min(...heights)).toBeGreaterThan(7);
-    expect(Math.max(...heights)).toBeGreaterThan(12.5);
+    expect(Math.min(...heights)).toBeGreaterThan(5);
+    expect(Math.max(...heights)).toBeGreaterThan(13);
     // Rising and closing are the same motion: the span the arms stand on is
     // what the height is bought with.
-    expect(Math.max(...feet) - Math.min(...feet)).toBeGreaterThan(4);
+    expect(Math.max(...feet) - Math.min(...feet)).toBeGreaterThan(6);
     samples.forEach((sample) => {
       expect(sample.height).toBeCloseTo(2 * SCISSOR.half * Math.sin(sample.arm / DEG), 2);
       expect(sample.foot).toBeCloseTo(2 * SCISSOR.half * Math.cos(sample.arm / DEG), 2);
