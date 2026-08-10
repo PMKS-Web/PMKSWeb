@@ -195,3 +195,51 @@ describe('slider on a grounded joint', () => {
     expect(slider.isDangling).toBe(true);
   });
 });
+
+describe('weld on a grounded joint', () => {
+  it('is offered, and takes effect', () => {
+    // It used to be offered and then quietly refused a layer down: the control
+    // is enabled whenever there are two links to fuse, and `canBeWelded`
+    // separately excluded any grounded joint. Pressed, nothing happened and
+    // nothing was said.
+    const s = twoBars();
+    s.b.ground = true;
+
+    expect(s.service.gridUtils.canToggleWeld(s.b)).toBe(true);
+    s.service.weldJoint(s.b);
+
+    expect(s.b.isWelded).toBe(true);
+    const compound = s.service.links.find((link) => (link as RealLink).subset.length > 0);
+    expect(compound, 'the two bars fused into one body').toBeDefined();
+  });
+
+  it('reaches the same place as welding first and grounding after', () => {
+    // The argument for allowing it at all. The forbidden state was reachable by
+    // doing the two edits in the other order, with no refusal anywhere, so the
+    // rule was an accident of ordering rather than a claim about the model.
+    const groundedFirst = twoBars();
+    groundedFirst.b.ground = true;
+    groundedFirst.service.weldJoint(groundedFirst.b);
+
+    const weldedFirst = twoBars();
+    weldedFirst.service.weldJoint(weldedFirst.b);
+    weldedFirst.b.ground = true;
+
+    const shape = (harness: ReturnType<typeof twoBars>) =>
+      harness.service.links
+        .map((link) => `${link.id}:${(link as RealLink).subset.map((leaf) => leaf.id).join('+')}`)
+        .sort()
+        .join('|');
+    expect(shape(groundedFirst)).toBe(shape(weldedFirst));
+    expect(groundedFirst.b.isWelded).toBe(weldedFirst.b.isWelded);
+  });
+
+  it('still refuses a driven joint, which is a real contradiction', () => {
+    // Unlike ground: a weld says the bodies here do not move relative to each
+    // other and an input says they do. That one is greyed, not silent.
+    const s = twoBars();
+    s.b.input = true;
+    expect(s.service.gridUtils.canToggleWeld(s.b)).toBe(false);
+    expect(s.b.canBeWelded()).toBe(false);
+  });
+});

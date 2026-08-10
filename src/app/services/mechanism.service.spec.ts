@@ -518,10 +518,13 @@ describe('MechanismService merging onto sliders and welds', () => {
     expect(compound.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'C', 'Y']);
   });
 
-  // A weld cannot form on a grounded joint, so a merge that grounds the
-  // survivor takes the weld away. Losing it silently would leave the user with
-  // a different linkage than the one they dropped.
-  it('leaves the survivor unwelded when the merge makes it unweldable', () => {
+  // Dropping a grounded joint onto a welded one used to take the weld away,
+  // because a weld could not form on a grounded joint at all. That rule is
+  // gone -- two bars fused at a grounded pin are a bell crank on its pivot, and
+  // the same state was reachable anyway by welding first and grounding after --
+  // so the compound now survives the merge and the user keeps the linkage they
+  // dropped.
+  it('keeps the survivor welded when a grounded joint is merged onto it', () => {
     const s = scene();
     s.service.weldJoint(s.b);
     expect(s.b.isWelded).toBe(true);
@@ -529,9 +532,12 @@ describe('MechanismService merging onto sliders and welds', () => {
     expect(s.service.mergeJoints(s.z, s.b)).toBeUndefined();
 
     expect(s.b.ground).toBe(true);
-    expect(s.b.isWelded).toBe(false);
-    expect(s.service.links.map((link) => link.id).sort()).toEqual(['AB', 'BC', 'BW', 'XY']);
-    expect(s.service.links.every((link) => (link as RealLink).subset.length === 0)).toBe(true);
+    expect(s.b.isWelded).toBe(true);
+    const compound = s.service.links.find(
+      (link) => (link as RealLink).subset.length > 0
+    ) as RealLink;
+    expect(compound, 'the compound survives being grounded').toBeDefined();
+    expect(compound.joints.map((joint) => joint.id).sort()).toEqual(['A', 'B', 'C', 'W']);
   });
 
   // The defect the exact-duplicate test missed: B and C are already fixed
