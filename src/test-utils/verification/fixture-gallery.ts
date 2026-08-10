@@ -32,6 +32,9 @@ import {
 import {
   excavatorBucketFixture,
   jansenLegFixture,
+  oscillatingFanFixture,
+  pedalingLegFixture,
+  pumpjackFixture,
   scissorLiftFixture,
   shaperQuickReturnFixture,
   togglePressFixture,
@@ -312,6 +315,28 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     spec: 'driven-floating-pin.spec.ts',
     floatingSlot: false,
     fixture: fourBarDrivenAtFixture('C'),
+  },
+  {
+    name: 'Leg on a bicycle crank',
+    purpose: 'A driven knee, carried by the thigh: one leg can only rock the crank half a turn',
+    spec: 'pedaling-leg.spec.ts',
+    floatingSlot: false,
+    fixture: pedalingLegFixture(),
+  },
+  {
+    name: 'Oscillating fan',
+    purpose:
+      'The motor rides the head it sweeps: the driven pin turns right round, the head does not',
+    spec: 'oscillating-fan.spec.ts',
+    floatingSlot: false,
+    fixture: oscillatingFanFixture(),
+  },
+  {
+    name: 'Walking-beam pumping unit',
+    purpose: 'Driven where the pitman meets the beam, and the output is a straight-line stroke',
+    spec: 'pumpjack.spec.ts',
+    floatingSlot: false,
+    fixture: pumpjackFixture(),
   },
   {
     name: 'TeachingLab four-bar',

@@ -44,6 +44,9 @@ const FILENAMES = {
   Toggle_Press: 'toggle-press',
   Scissor_Lift: 'scissor-lift',
   Shaper_Quick_Return: 'shaper-quick-return',
+  Pedaling_Leg: 'pedaling-leg',
+  Oscillating_Fan: 'oscillating-fan',
+  Pumpjack: 'pumpjack',
 };
 
 /** The generated block of template-linkages.ts, read as id/payload pairs. */
@@ -124,6 +127,12 @@ for (const { id, payload } of libraryTemplates()) {
   // Angular schedules no change detection. A real pointer event does, because
   // zone.js patches the listener.
   await page.mouse.move(750, 500);
+  // ...but a pointer resting on a link highlights it, and a highlighted link
+  // draws its name. The oscillating fan's head is a wide triangle across the
+  // middle of the canvas, so its card came out with "ACN" printed on it. Move
+  // off into the corner: the second move schedules change detection just as
+  // well and leaves nothing under the cursor.
+  await page.mouse.move(4, 4);
   // The panels float over the canvas, so a clip centred on the mechanism can
   // still catch a corner of one. They are overlays and hiding them moves
   // nothing.

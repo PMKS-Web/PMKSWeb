@@ -23,6 +23,9 @@ export const LIBRARY_TEMPLATE_SOURCES: Record<LibraryTemplateID, string> = {
   Toggle_Press: 'Toggle press',
   Scissor_Lift: 'Scissor lift',
   Shaper_Quick_Return: "Shaper's quick-return drive",
+  Pedaling_Leg: 'Leg on a bicycle crank',
+  Oscillating_Fan: 'Oscillating fan',
+  Pumpjack: 'Walking-beam pumping unit',
 };
 
 export function libraryTemplateEntry(id: LibraryTemplateID): GalleryEntry {

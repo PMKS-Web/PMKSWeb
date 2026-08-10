@@ -37,6 +37,9 @@ export const LIBRARY_TEMPLATE_IDS = [
   'Toggle_Press',
   'Scissor_Lift',
   'Shaper_Quick_Return',
+  'Pedaling_Leg',
+  'Oscillating_Fan',
+  'Pumpjack',
 ] as const;
 
 export type LibraryTemplateID = (typeof LIBRARY_TEMPLATE_IDS)[number];
@@ -100,5 +103,11 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
     '2P.Fe,1E8.K,0.1011.KA,A,2SG,0,0.GB,B,1fl,a3,0.OC,C,1wL,OD,0.GD,D,17q,yH,0.KG,G,0,0,0.GM,M,1Vm,1GM,0.GK,K,2-X,2Wj,0.GS,S,2-X,0,0.GT,T,0,2Wj,0.GU,U,3Un,2Wj,0.pE,E,1wL,OD,0,AB,A,B.LN,N,2-X,0,0.HP,P,2-X,2Wj,0,TU,T,U..YRAB,AB,Fe,Fe,230,I2,c5cae9,A,B,,.YRCD,CD,Fe,Fe,1X5,gF,303e9f,C,D,,.YRGDMK,GDMK,Fe,Fe,1Pn,1BL,0d125a,G,D,M,K,,.YRSMT,SMT,Fe,Fe,1Vm,1GM,B2DFDB,S,M,T,,.YRTU,TU,Fe,Fe,1lO,2Wj,26A69A,T,U,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPSN,SN,Fe,0,0,0,,S,N,,.YPKP,KP,Fe,0,0,0,,K,P,,...N_e',
   Shaper_Quick_Return:
     '2P.Fe,1E8.K,0.1011.MA,A,0,0,0.GB,B,Fe,0,0.KC,C,0,0ku,0.GD,D,Oj,RF,0.GR,R,qW,si,0.HP,P,Fe,0,0,CD,C,D.LQ,Q,qW,si,0..YRAB,AB,Fe,Fe,7q,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,CN,09q,303e9f,C,D,,.YRDR,DR,Fe,Fe,cd,e_,0d125a,D,R,,.YPBP,BP,Fe,0,0,0,,B,P,,.YPRQ,RQ,Fe,0,0,0,,R,Q,,...N_H',
+  Pedaling_Leg:
+    '2P.Fe,1E8.K,0.1011.KB,B,0,0,0.GP,P,Qa,0,0.KH,H,0NS,1Qe,0.IK,K,c5,13o,0..YRHK,HK,Fe,Fe,7L,1FD,c5cae9,H,K,,.YRKP,KP,Fe,Fe,WL,Xv,303e9f,K,P,,.YRBP,BP,Fe,Fe,DI,0,0d125a,B,P,,...N_p',
+  Oscillating_Fan:
+    '2P.Fe,1E8.K,0.1011.KA,A,0,0,0.IC,C,s8,0VG,0.GD,D,k_,0j9,0.KB,B,0GY,0In,0.GN,N,1NW,0,0..YRACN,ACN,Fe,Fe,lD,0AR,c5cae9,A,C,N,,.YRCD,CD,Fe,Fe,oZ,0cC,303e9f,C,D,,.YRDB,DB,Fe,Fe,FE,0Vz,0d125a,D,B,,...N_B',
+  Pumpjack:
+    '2P.Fe,1E8.K,0.1011.KA,A,0gB,0oI,0.GM,M,0QZ,0o1,0.IP,P,0d4,0,0.KS,S,0,0,0.GH,H,o0,0,0.GR,R,r8,0eW,0.LW,W,r8,0eW,OZ..YRAM,AM,Fe,Fe,0YN,0oA,c5cae9,A,M,,.YRMP,MP,Fe,Fe,0Wq,0P1,303e9f,M,P,,.YRPSH,PSH,Fe,Fe,3f,0,0d125a,P,S,H,,.YRHR,HR,Fe,Fe,pa,0KG,B2DFDB,H,R,,.YPRW,RW,Fe,0,0,0,,R,W,,...N_Z',
   // </generated>
 };
