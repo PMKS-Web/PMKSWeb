@@ -13,43 +13,35 @@
  *   1. the mechanism is built — joints exist and are drawn;
  *   2. it has been solved, if it is solvable at all — several suites read the
  *      solved frames immediately;
- *   3. **nothing on screen is still moving.** Two separate things move after the
- *      decode. `scaleToFitLinkage` is scheduled a full second later and
- *      re-frames the whole canvas; and the joints themselves land in their
- *      final places later still — measured a moment too early, a joint that
- *      ends up at (660, 177) reads as (-13500, -393775). Either one lands a
- *      drag somewhere the suite never meant to click.
+ *   3. **nothing on screen is still moving.** The canvas is re-framed to fit
+ *      whatever arrived, and the joints land in their final places a moment
+ *      after that — measured too early, a joint that ends up at (660, 177)
+ *      reads as (-13500, -393775). Either one lands a drag somewhere the suite
+ *      never meant to click.
  *
  * So readiness is polled on all three, and the third is what usually decides it.
  * A mechanism that cannot be solved is still ready — some templates are
  * deliberately invalid — so the solve is given a short grace period and then
  * stops being waited for.
  *
- * The third one cannot be watched for, only waited out. The canvas is perfectly
- * still for most of the second before the re-frame fires, so "has not moved
- * lately" is true well before the view is final — the first cut of this helper
- * believed it, and five drag suites started clicking at coordinates that were
- * about to move out from under them. The re-frame is on a fixed timer, so the
- * honest wait is that timer.
+ * "Has not moved lately" is not enough on its own, and the first cut of this
+ * helper learned that the hard way: five drag suites began clicking at
+ * coordinates that were about to move out from under them, and failed in ways
+ * that looked like app bugs. The canvas holds perfectly still between a decode
+ * and the fit that follows it, and a joint can hold a wrong pose for longer
+ * than any stillness window. So the settled picture includes where the joints
+ * are, and a joint hundreds of thousands of pixels off-screen is not accepted
+ * as settled however long it has sat there.
  *
- * It is timed from the **decode**, not from the navigation. Under the dev server
- * the bundle takes a second or more to boot, so a wait measured from `goto` is
- * spent before the app has even read the URL, and expires long before the
- * re-frame. The first sight of a built mechanism is the closest observable
- * moment to the decode, so the wait is anchored there.
+ * The re-frame used to be on a fixed one-second timer, which this had to mirror
+ * and wait out. It now happens as soon as Angular has drawn the thing being
+ * fitted, so there is nothing left to wait out.
  */
 
 const READY_TIMEOUT_MS = 12000;
 const POLL_MS = 40;
 /** How long the picture must hold still to count as settled. */
 const STILL_MS = 160;
-/**
- * The delay in `UrlProcessorService`'s `scaleToFitLinkage` call — the app's own
- * "let it build first" pause. Mirrored, not imported, because the app is
- * TypeScript compiled by the dev server and this is plain Node. If that timeout
- * ever changes, this has to change with it; the call site says so too.
- */
-const REFRAME_MS = 1000;
 
 /**
  * Load a mechanism and return when the app is ready to be measured or clicked.
@@ -69,7 +61,7 @@ export async function waitForReady(page, { timeout = READY_TIMEOUT_MS } = {}) {
   const deadline = Date.now() + timeout;
   let stillSince = null;
   let lastFrame = null;
-  /** When a mechanism first appeared — the app's re-frame timer is near this. */
+  /** When a mechanism first appeared, for the give-up below to measure from. */
   let builtSince = null;
 
   while (Date.now() < deadline) {
@@ -128,13 +120,10 @@ export async function waitForReady(page, { timeout = READY_TIMEOUT_MS } = {}) {
         // gets frames; do not wait for ones that will never arrive.
         const solvedOrGivenUp =
           !state.built || state.solvedFrames > 1 || Date.now() - stillSince >= 900;
-        // An empty grid decodes nothing, so nothing re-frames it.
-        const reframed = builtSince === null || Date.now() - builtSince >= REFRAME_MS;
         // A mechanism can legitimately sit off-screen — an invalid one is never
         // fitted to the view — so this is given up on rather than waited for.
-        const placed =
-          !state.built || state.onScreen || Date.now() - builtSince >= REFRAME_MS + 1500;
-        if (settled && solvedOrGivenUp && reframed && placed) return;
+        const placed = !state.built || state.onScreen || Date.now() - builtSince >= 2500;
+        if (settled && solvedOrGivenUp && placed) return;
       } else {
         stillSince = null;
       }

@@ -35,7 +35,7 @@ export function createMechanismHarness(): MechanismHarness {
   if (!ColorService.instance) new ColorService();
   const settings = new SettingsService();
   const parser = new NumberUnitParserService();
-  const svg = new SvgGridService(settings, new DragStateService());
+  const svg = new SvgGridService(settings, new DragStateService(), {} as unknown as Injector);
   const synthesis = new SynthesisBuilderService(parser, settings);
   let service!: MechanismService;
   const grid = new GridUtilsService(synthesis, svg, {

@@ -31,7 +31,7 @@ function createHarness(): Harness {
   if (!ColorService.instance) new ColorService();
   const settings = new SettingsService();
   const parser = new NumberUnitParserService();
-  const svg = new SvgGridService(settings, new DragStateService());
+  const svg = new SvgGridService(settings, new DragStateService(), {} as unknown as Injector);
   const synthesis = new SynthesisBuilderService(parser, settings);
   // GridUtilsService resolves MechanismService at call time, so it has to be
   // handed an injector that reads the binding below rather than a finished one.

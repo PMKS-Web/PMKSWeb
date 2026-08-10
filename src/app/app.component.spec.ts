@@ -30,7 +30,8 @@ describe('SixbarService', () => {
   const nup: NumberUnitParserService = new NumberUnitParserService();
   const svgGridService: SvgGridService = new SvgGridService(
     settingsService,
-    new DragStateService()
+    new DragStateService(),
+    {} as unknown as Injector
   );
   const synthesisBuilder: SynthesisBuilderService = new SynthesisBuilderService(
     nup,

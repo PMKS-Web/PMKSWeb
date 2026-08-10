@@ -39,7 +39,7 @@ function loadMechanism(payload: string) {
   let service!: MechanismService;
   const grid = new GridUtilsService(
     new SynthesisBuilderService(parser, settings),
-    new SvgGridService(settings, new DragStateService()),
+    new SvgGridService(settings, new DragStateService(), {} as unknown as Injector),
     { get: () => service } as unknown as Injector
   );
   const active = new ActiveObjService();

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { afterNextRender, Injectable, Injector } from '@angular/core';
 // TS 6 no longer allows calling/constructing `import * as` namespaces of
 // CommonJS (export =) modules - use default imports for these two.
 import svgPanZoom from 'svg-pan-zoom';
@@ -39,7 +39,8 @@ export class SvgGridService {
 
   constructor(
     private settingsService: SettingsService,
-    private dragState: DragStateService
+    private dragState: DragStateService,
+    private injector: Injector
   ) {}
 
   setNewElement(root: HTMLElement) {
@@ -142,7 +143,7 @@ export class SvgGridService {
       customEventsHandler: eventsHandler,
     });
     this.guardAgainstStuckPan(root);
-    this.scaleToFitLinkage();
+    this.scaleToFitLinkage(false);
   }
 
   screenToSVG(screenPos: Coord): Coord {
@@ -378,26 +379,47 @@ export class SvgGridService {
     return value / this.getZoom();
   }
 
-  scaleToFitLinkage() {
+  /**
+   * Frame the whole mechanism.
+   *
+   * Deferred to after the next render, because whatever asked for a fit is
+   * usually the thing that just changed what there is to fit, and the bounding
+   * box this measures does not exist until Angular has drawn it. That is a
+   * thing Angular can be asked directly; it used to be guessed at with a timer,
+   * and guessed generously, because a shared URL is decoded in
+   * UrlProcessorService's own constructor — before there is any grid at all.
+   *
+   * `animate` is for a fit the user asked for by pressing the button: the
+   * canvas glides so they can see what moved. A fit that merely follows a
+   * mechanism arriving passes false, because there is nothing to show them yet
+   * — animating that is a zoom-in on every single load.
+   */
+  scaleToFitLinkage(animate = true) {
     this.settingsService.tempGridDisable = true;
-    setTimeout(() => {
-      // Nothing to fit if the canvas has gone. This runs a tick later than the
-      // thing that asked for it, and the asker can be gone by then: a shared
-      // URL is decoded in UrlProcessorService's own constructor, before any
-      // grid exists to fit it to. Left unguarded that throws out of a timer,
-      // where nothing is waiting to catch it, and the flag below stays stuck on
-      // — which disables the grid for the rest of the session.
-      if (!this.panZoomObject || !NewGridComponent.instance) {
-        this.settingsService.tempGridDisable = false;
-        return;
-      }
-      this.panZoomObject.updateBBox(); // Update viewport bounding box
+    // Rendered first, then fitted a task later. Fitting changes the zoom, and
+    // the zoom is read by bindings that the render being waited on has already
+    // checked — done inside it, Angular rightly calls that a value that changed
+    // after it was checked. A zero-delay timer is a fresh change-detection
+    // cycle, which is all that was ever wanted from the old one-second wait.
+    afterNextRender(() => setTimeout(() => this.fitToLinkage(animate), 0), {
+      injector: this.injector,
+    });
+  }
+
+  private fitToLinkage(animate: boolean) {
+    // Nothing to fit if the canvas has gone. Left unguarded this throws where
+    // nothing is waiting to catch it, and the flag below stays stuck on — which
+    // disables the grid for the rest of the session.
+    if (!this.panZoomObject || !NewGridComponent.instance) {
       this.settingsService.tempGridDisable = false;
-      NewGridComponent.instance.enableGridAnimationForThisAction();
-      this.panZoomObject.fit();
-      this.panZoomObject.center();
-      this.zoomOut();
-    }, 1);
+      return;
+    }
+    this.panZoomObject.updateBBox(); // Update viewport bounding box
+    this.settingsService.tempGridDisable = false;
+    if (animate) NewGridComponent.instance.enableGridAnimationForThisAction();
+    this.panZoomObject.fit();
+    this.panZoomObject.center();
+    this.zoomOut();
   }
 
   updateObjectScale() {

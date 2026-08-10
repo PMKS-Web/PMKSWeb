@@ -24,7 +24,9 @@ function createLoadedService(payload: string = TEMPLATE_LINKAGES['4-Bar']) {
   let service!: MechanismService;
   const grid = new GridUtilsService(
     new SynthesisBuilderService(parser, settings),
-    new SvgGridService(settings, new DragStateService()),
+    // The injector is only reached when something asks the canvas to re-frame
+    // itself, which nothing here does — there is no canvas in this test.
+    new SvgGridService(settings, new DragStateService(), {} as unknown as Injector),
     { get: () => service } as unknown as Injector
   );
   const active = new ActiveObjService();

@@ -42,6 +42,10 @@ async function configureGridTestBed() {
     screenToSVGfromXY: (x: number, y: number) => ({ x, y }),
     SVGtoScreen: (coord: { x: number; y: number }) => coord,
     setNewElement: (element: HTMLElement) => element.classList.add('svg-pan-zoom_viewport'),
+    // Decoding a URL asks for a fit. The stub has always been missing this; the
+    // call used to be a second behind a timer, so it threw after the test had
+    // finished, into nothing. It happens inline now.
+    scaleToFitLinkage: vi.fn(),
   };
   await TestBed.configureTestingModule({ imports: [AppModule] })
     .overrideProvider(SvgGridService, { useValue: svgGridStub })
