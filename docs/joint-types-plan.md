@@ -1018,12 +1018,14 @@ is one size number and one position number, and its only remaining failure is be
 - **Nothing is stored for it.** Barrel and rod are still joint positions, so the codec is untouched;
   stroke and start are derived views the panel reads and writes. The alternative — two fields on the
   joint — is the same two knobs with a second place that can disagree about one geometry.
-- **The invariant lives at the constructive paths, not in `normalizedCylinderPose`.** That function
-  holds both mounts by contract, and the shortest span the new model can express (20.3 R) is longer
-  than the shortest cylinder the old one could draw (12.4 R) — asked to equalise an under-length
-  part it has no answer. It also runs on every rebuild, where its repair path resets link CoM
-  without carrying forces through the new frame; that was only ever safe because it was the
-  identity, and it still is.
+- **The invariant lives at the constructive paths, and `normalizedCylinderPose` derives rather than
+  clamps.** It holds both mounts by contract, so the pin can only be at `span - barrel` — barrel and
+  rod are equal, and there is nothing to choose. It used to project a stray pin onto the axis and
+  clamp it into the travel, which only resembled the right answer while the bore left almost nothing
+  to clamp into; straightened that way a flung pin produced exactly the mismatch the equality
+  tripwire rejects, so the repair hid the skin instead of fixing it. It also runs on every rebuild,
+  where its repair path resets link CoM without carrying forces through the new frame; that was only
+  ever safe because it was the identity, and it still is.
 - **The three-phase drag and the layout function turned out to be the same function.** Inside the
   ram's travel a span moves only the piston; past a stop it resizes with both halves equal. So
   `flexLayout` was replaced rather than supplemented, and the behaviour applies to both mounts and
@@ -1031,35 +1033,52 @@ is one size number and one position number, and its only remaining failure is be
 - **Size and pose needed separate entry points.** Asked for a longer stroke at the same position,
   the resulting span usually still lies inside the *old* stroke's travel, so the span rule would
   hold the size and slide the piston instead — a field labelled Travel changing the position.
-- **The bore is 13.28 R, not the design package's 11.28 R.** That number came from a 1.8 R slot
-  inset; this repo draws slots at 2.8 R (§2.8), because at 1.8 R a channel reached the joint circle
-  and the bar read as cut through. Keeping the whole piston head inside the bore — which the old
-  rule did not — costs another 7.68 R. Every cylinder's stroke is shorter than it was, and that is
-  the change rather than a side effect of it.
+- **There is no bore any more, only a clearance.** It was 13.28 R — twice a slot inset plus the whole
+  piston head — on the reading that a channel needs a margin at each end and the head never leaves
+  it. Neither holds for a sealed part: the barrel is a closed body and no slot is ever drawn, and a
+  head that stays inside gives full extension no silhouette of its own. What is left is
+  `HEAD_CLEARANCE_R`, 1.4 R, the gap the head stops at when the ram is shut. Closed, it stands clear
+  of the barrel's mount joint; open, its back edge has reached the mouth and the head is entirely
+  outside, riding the exposed rod. `barrel = rod = stroke + CLEARANCE`, and
+  `span = stroke × (1 + start) + lock`.
+- **The head is full size whenever it fits, and it is the floor when it does not.** Exactly the block
+  a bare slider wears, on any ram with room for it. It is a function of the barrel only because it
+  has to fit inside one at full retraction, so below that it follows the barrel down to half its
+  length and grows straight back. `lock` is therefore a function of the stroke rather than a
+  constant, and `cylinderSpanLayoutFrom` inverts the span rule by bisection — the closed form needs
+  a case per regime and a test for which one lands, three chances to be subtly wrong at the seams on
+  the path a drag runs every pointermove.
 - **§2.7's "collapsed skin" was drawing the barrel to the piston**, so the one rigid part of the
-  assembly was the one part visibly changing length. It is drawn at its member length now, with two
-  stops on its edges where the head bottoms out. No numbers on the canvas: the panel has those.
+  assembly was the one part visibly changing length. It is drawn at its member length now. The two
+  stop notches and the dotted motion line it briefly carried are gone: the head's own two stops are
+  in the silhouette, and the notches were annotating what the drawing already says.
 - **Two failures the app reaches on its own now say so.** A sealed input with no travel is refused
   rather than falling through to the ordinary prismatic drive, which would have telescoped the rod
   out of its own barrel; and a ram bigger than the machine it drives gets a warning beside
   `invalidReason` rather than in it, because the mechanism is valid and simply cannot use the whole
   stroke. Warned about, not clamped.
 
-**Still open**, all found by review rather than by the suite, and filed rather than fixed here:
+**Found by review rather than by the suite, and since fixed:**
 
-- `MIN_STROKE_R` is a hard floor at 0.34 R, which is not a *readable* minimum — the same unresolved
-  question as the minimum grounded rail (§7).
-- **Merging two cylinder mounts destroys one of them.** The merge does not remap the prismatic
-  joint's carrier and slot endpoints onto the surviving joint, so the second ram stops being a
-  cylinder. This blocks the shared-mount arrangement `cylindersAt` exists to support — merging is
-  how a user would build one.
-- **Analyze has no cylinder branch.** Selecting the body and switching tabs analyses its *barrel*,
-  and offers force at an interior joint the canvas gives no hitbox to.
-- **The weld guard and the model disagree.** `canToggleWeld` forbids welding a cylinder mount;
-  `cylinder.ts` carries `twoJointLeaf` and its comments specifically to describe a member absorbed
-  into a compound. One of the two is wrong, and if compounds are unreachable then `applyCylinderPose`
-  moving only the cylinder's own five joints is a defect for a state that cannot exist.
-- **No Edit panel field anywhere writes an undo entry** except the cylinder's, fixed here.
+- `MIN_STROKE_R` was a hard floor at 0.34 R, which is not a *readable* minimum. It is derived now:
+  the shortest ram is the one whose barrel is exactly a square head, 1.65 R of stroke and 5.98 R of
+  span against the 20.3 R the bore model could manage.
+- **Merging a cylinder mount destroyed the ram.** The merge rebuilt every link the joint was in but
+  left the slot cut into the barrel naming a joint that no longer existed. General to every floating
+  slot, not to cylinders — it was only invisible because no gesture depended on it.
+- **Analyze had no cylinder branch**, so selecting the body analysed its *barrel* and offered force
+  at an interior joint the canvas gives no hitbox to.
+- **The weld guard and the model disagreed.** Both guards were probed: a cylinder cannot reach a
+  welded compound by any route, so `twoJointLeaf` is defence rather than a supported shape, and
+  `cylinder-weld-guards.spec.ts` pins both so the comments cannot drift again.
+- **No Edit panel field anywhere wrote an undo entry.** Every typed edit is one undo step now,
+  wherever it was typed.
+
+**Still open:**
+
+- Welding a cylinder mount's neighbour can take the mechanism to −2 degrees of freedom with no
+  snackbar at the moment of the weld. The DOF readout and Analyze both say so, so the user is told;
+  a warning at the gesture is an addition rather than a fix.
 
 ---
 
