@@ -424,6 +424,17 @@ export class NewGridComponent {
             weldedLinkFilletSelected
           )
         );
+        // Beside Attach Link, because it is the same gesture with a different
+        // member on the end of it: this link is what the ram is bolted to, and
+        // the next click is where its rod finishes.
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Cylinder',
+            this.startCreatingCylinder.bind(this),
+            'add_cylinder',
+            weldedLinkFilletSelected
+          )
+        );
         this.cMenuItems.push(
           new cMenuItem(
             'Attach Tracer Point',
@@ -598,6 +609,8 @@ export class NewGridComponent {
 
   /** Where the two-point cylinder gesture started: the barrel-side mount. */
   private cylinderCreateStart?: Coord;
+  /** The link the gesture started on, when it started on one rather than the grid. */
+  private cylinderCreateOn?: RealLink;
 
   /**
    * Begin the two-point cylinder gesture (§ cylinder 2), mirroring Add Link:
@@ -605,6 +618,10 @@ export class NewGridComponent {
    * tracks the cursor (which is where the ROD will finish), and the next
    * left-click commits. Right- or middle-click cancels, exactly as link
    * creation does.
+   *
+   * Started from a link's own menu, that link is what the ram is bolted to and
+   * the mount joins its body — the same difference Attach Link has from Add
+   * Link, and the reason both live on both menus.
    */
   startCreatingCylinder() {
     // Same first-object rule as link creation: fit the object scale to the
@@ -613,6 +630,8 @@ export class NewGridComponent {
       this.svgGrid.updateObjectScale();
     }
     this.cylinderCreateStart = this.svgGrid.screenToSVG(this.lastRightClickCoord);
+    this.cylinderCreateOn =
+      this.lastRightClick instanceof RealLink ? this.lastRightClick : undefined;
     this.dragState.beginCreatingCylinder();
   }
 
@@ -655,10 +674,12 @@ export class NewGridComponent {
   /** The left-click that ends the gesture: build the part, one undo entry. */
   private commitCylinderCreation(end: Coord) {
     const start = this.cylinderCreateStart;
+    const mountOn = this.cylinderCreateOn;
     this.cylinderCreateStart = undefined;
+    this.cylinderCreateOn = undefined;
     this.dragState.finishCreating();
     if (!start) return;
-    this.mechanismSrv.createCylinderFrom(start, end);
+    this.mechanismSrv.createCylinderFrom(start, end, mountOn);
   }
 
   setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {

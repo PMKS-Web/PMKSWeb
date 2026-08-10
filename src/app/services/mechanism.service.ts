@@ -1308,32 +1308,39 @@ export class MechanismService {
   addJointAt(coord: Coord) {
     const newId = this.determineNextLetter();
     const newJoint = new RevJoint(newId, coord.x, coord.y);
-    this.activeObjService.selectedLink.joints.forEach((j) => {
-      if (!(j instanceof RealJoint)) {
-        return;
-      }
-      j.connectedJoints.push(newJoint);
-      newJoint.connectedJoints.push(j);
-    });
-    if (
-      this.activeObjService.selectedLink.isWelded &&
-      this.activeObjService.selectedLink.lastSelectedSublink
-    ) {
-      this.activeObjService.selectedLink.lastSelectedSublink.id =
-        this.activeObjService.selectedLink.lastSelectedSublink?.id.concat(newJoint.id);
-      this.activeObjService.selectedLink.lastSelectedSublink.fixedLocations.push({
-        id: newJoint.id,
-        label: newJoint.id,
-      });
-      this.activeObjService.selectedLink.lastSelectedSublink.joints.push(newJoint);
-    }
-    newJoint.links.push(this.activeObjService.selectedLink);
-    this.activeObjService.selectedLink.joints.push(newJoint);
-    this.activeObjService.selectedLink.id += newJoint.id;
-    this.activeObjService.selectedLink.d = this.activeObjService.selectedLink.getPathString();
+    this.graftJointOnto(newJoint, this.activeObjService.selectedLink);
     this.joints.push(newJoint);
     this.onMechUpdateState.next(3);
     this.updateMechanism(true);
+  }
+
+  /**
+   * Make an existing joint a member of `link`: the body grows to include it and
+   * turns as one rigid piece from then on.
+   *
+   * Lifted out of `addJointAt` so a cylinder's mount can arrive the same way a
+   * tracer point does. Neither pushes the joint onto `this.joints` or saves —
+   * a mount is created as part of a larger assembly that has its own single
+   * undo entry, and grafting is one step of building it rather than an edit of
+   * its own.
+   */
+  private graftJointOnto(joint: RealJoint, link: RealLink): void {
+    link.joints.forEach((member) => {
+      if (!(member instanceof RealJoint)) return;
+      member.connectedJoints.push(joint);
+      joint.connectedJoints.push(member);
+    });
+    // A welded compound is drawn from its leaves, so the leaf the user actually
+    // clicked has to grow too or the new joint belongs to a body nothing draws.
+    if (link.isWelded && link.lastSelectedSublink) {
+      link.lastSelectedSublink.id = link.lastSelectedSublink.id.concat(joint.id);
+      link.lastSelectedSublink.fixedLocations.push({ id: joint.id, label: joint.id });
+      link.lastSelectedSublink.joints.push(joint);
+    }
+    joint.links.push(link);
+    link.joints.push(joint);
+    link.id += joint.id;
+    link.d = link.getPathString();
   }
 
   deleteLink() {
@@ -1574,7 +1581,7 @@ export class MechanismService {
    *
    * One `finishStructuralEdit(true)` at the end makes creation one undo entry.
    */
-  createCylinderFrom(start: Coord, end: Coord): void {
+  createCylinderFrom(start: Coord, end: Coord, mountOn?: RealLink): void {
     const creation = cylinderCreationLayout(start, end, this.settingsService.objectScale);
 
     const aId = this.determineNextLetter();
@@ -1605,6 +1612,13 @@ export class MechanismService {
     pin.links.push(rod, block);
     rodFar.links.push(rod);
     slider.links.push(block);
+
+    // Anchored on a link, when the gesture started from one: the barrel's mount
+    // joins that body and the ram swings with it, which is what a ram bolted to
+    // a boom or a frame does. The rod's far end is left free for the user to
+    // attach to whatever it drives — a ram fixed at both ends before it exists
+    // would be a ram with nowhere to go.
+    if (mountOn) this.graftJointOnto(barrelFar, mountOn);
 
     this.joints.push(barrelFar, barrelNear, pin, rodFar, slider);
     this.links.push(barrel, rod, block);
