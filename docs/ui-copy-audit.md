@@ -171,7 +171,74 @@ Messages are a mix of Title Case fragments (`Check Force Angle`) and sentences.
 
 ---
 
-## 5. Smaller things
+## 5. The help tooltips
+
+Two different populations live behind the `?` icons, and they read as two
+different products.
+
+**Length.** The median panel tooltip is about 45 characters. Six are over 100,
+and the two longest are both new, both on the cylinder:
+
+| Chars | Field | Now |
+| --- | --- | --- |
+| 204 | Starts at | `Where the piston sits at the start of the cycle: as a percentage of the stroke, or as the length the ram is at. A length outside the travel resizes the ram to reach it, exactly as dragging the mount does.` |
+| 183 | Force Analysis Type | `Determines whether the force analysis is done at static equilibrium or under dynamics conditions. The input speed for the dynamic analysis is set on the input joint in the Edit panel.` |
+| 156 | Input Speed | `How fast this input joint turns, in the unit picked beside the value...` |
+| 155 | Travel | `How far the rod travels. Stroke is the travel itself; closed and open are the mount-to-mount length at each end of it. One number, three ways of saying it.` |
+| 138 | Expansion Speed | `How fast the rod extends along the cylinder's axis...` |
+| 130 | Input Speed (slider) | `How fast this block travels along its slot...` |
+
+A tooltip is read standing up, one-handed, while the pointer is being held
+still. Two sentences is the ceiling; the second sentence of each of these is
+doing documentation's job.
+
+**Proposed** — first sentence says what the number is, second says what it
+affects, and anything else goes. The overlays now on the canvas do more for
+Travel and Starts at than a third clause ever did.
+
+| Field | Proposed |
+| --- | --- |
+| Travel | `How far the rod moves. The picker switches between the stroke itself and the closed and open lengths — one number, three ways of saying it.` |
+| Starts at | `Where the rod begins its cycle: a share of the travel, or a length. Outside the travel, the cylinder resizes to reach it.` |
+| Input Speed | `How fast this joint turns. Negative reverses it.` |
+| Expansion Speed | `How fast the rod extends. Negative retracts it.` |
+| Force Analysis Type | `Static holds the mechanism still; In-motion includes the forces of movement.` |
+
+**Vocabulary.** The cylinder tooltips introduce eleven terms in four fields —
+*rod, stroke, travel, closed, open, mount-to-mount, piston, ram, mount, barrel
+mount, rod mount* — and use two names for the part itself:
+
+- **ram** in `Starts at` and `Angle`
+- **cylinder** in `Expansion Speed`, in the panel title, in the menus, and in
+  every message
+
+`ram` should go. It is the right word and the wrong one for this app: nothing
+else on screen says it, so a reader meets it exactly once and has to work out
+that it is the thing they already selected.
+
+*piston* has the same problem in reverse — it appears in one tooltip and one
+clamp message, and it names the black block, which no label anywhere else
+names at all. Either give the block a visible name or stop using it in prose.
+
+**Also here**
+
+- `tooltip="TODO"` on the Synthesis pose table ships to users.
+- Three tooltips describe the *graph* rather than the value —
+  `The velocity of the selected joint graphed`, `...graphed over time`,
+  `...graphed`. Three phrasings of one idea, and the fact that it is a graph is
+  not in question by the time you are hovering its help icon.
+- `The angle of the selected above the horizontal of the link graphed over time`
+  has lost a word and cannot be parsed.
+- `Copy a URL to clipboard that contains your linakge` — *linakge*.
+- `Scales all links, joints, and forces. A save and reload is for changes to
+  take effect. (Default: 1)` — the middle sentence is missing a word and, as far
+  as I can tell, is no longer true: Object Scale takes effect immediately.
+- `end-effector` / `end effector` / `COM` / `CoM` / `center of mass` all appear
+  in tooltips within two panels of each other.
+
+---
+
+## 6. Smaller things
 
 - `tooltip="TODO"` ships to users. It is on the Synthesis panel's pose table.
 - `Scales all links, joints, and forces. A save and reload is for changes to
@@ -203,4 +270,7 @@ Messages are a mix of Title Case fragments (`Check Force Angle`) and sentences.
    as another program.
 2. `Create Cylinder` → `Add Cylinder`, `Make Input` → `Add Input`. Two words,
    and the menus stop contradicting themselves.
-3. `tooltip="TODO"`, `Degress`, and the synthesis debug traces. Small, and each is visibly unfinished work rather than a choice.
+3. The two cylinder tooltips, which are the longest strings in the app and
+   introduce a second name for a part that already has one.
+4. `tooltip="TODO"`, `Degress`, *linakge*, the unparseable angle tooltip, and
+   the synthesis debug traces. Small, and each is visibly unfinished work rather than a choice.
