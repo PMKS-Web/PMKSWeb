@@ -688,6 +688,43 @@ export class GridUtilsService {
     return joints.findIndex((j) => j.id === id);
   }
 
+  /**
+   * Where a force's anchor may sit on its link, given where the pointer is.
+   *
+   * Two joints are two different answers. A pin shared by more than one link is
+   * refused outright: a force applied *there* does not say which of the bodies
+   * meeting there it acts on, and every answer the force solver could pick is a
+   * guess the user never made — the same rule a driven joint follows. A joint on
+   * exactly one link has no such ambiguity, so the anchor snaps onto it, which
+   * is how a load is put on a tracer point at the end of a boom.
+   *
+   * `undefined` means the anchor may not go there at all. The caller keeps its
+   * own "inside the bar" test, because that one needs the drawn path.
+   */
+  forceAnchorAt(
+    link: RealLink,
+    point: Coord,
+    objectScale: number
+  ): { at: Coord; snappedTo?: RealJoint } | undefined {
+    // Generous enough to catch by hand: a joint is 0.15 object scales across.
+    const snapRadius = 0.3 * objectScale;
+    let nearest: RealJoint | undefined;
+    let nearestGap = Infinity;
+    for (const joint of link.joints) {
+      if (!(joint instanceof RealJoint)) continue;
+      const gap = Math.hypot(joint.x - point.x, joint.y - point.y);
+      if (gap < nearestGap) {
+        nearest = joint;
+        nearestGap = gap;
+      }
+    }
+    if (nearest && nearestGap <= snapRadius) {
+      if (nearest.links.length > 1) return undefined;
+      return { at: new Coord(nearest.x, nearest.y), snappedTo: nearest };
+    }
+    return { at: point };
+  }
+
   dragForce(selectedForce: Force, trueCoord: Coord, isStartSelected: boolean) {
     if (isStartSelected) {
       if (selectedForce.link.joints.length !== 2) {

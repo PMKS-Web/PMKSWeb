@@ -66,7 +66,8 @@ export class DragStateService {
       this._joint === jointStates.dragging ||
       this._link === linkStates.dragging ||
       this._force === forceStates.draggingStart ||
-      this._force === forceStates.draggingEnd
+      this._force === forceStates.draggingEnd ||
+      this._force === forceStates.draggingBody
     );
   }
 
@@ -124,6 +125,10 @@ export class DragStateService {
 
   beginDraggingForceEnd(): void {
     this._force = forceStates.draggingEnd;
+  }
+
+  beginDraggingForceBody(): void {
+    this._force = forceStates.draggingBody;
   }
 
   // --- Gesture ----------------------------------------------------------

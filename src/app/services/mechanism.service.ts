@@ -1663,6 +1663,18 @@ export class MechanismService {
    * One `finishStructuralEdit(true)` at the end makes creation one undo entry.
    */
   createCylinderFrom(start: Coord, end: Coord, mountOn?: RealLink, mountAt?: RealJoint): void {
+    // A weld says everything meeting here is one rigid body. A ram's mount
+    // arriving would be a third body inside that statement without being part
+    // of it, and the reconcilers then disagree about what the compound is —
+    // which is a broken mechanism rather than a refused edit. The menu greys
+    // the item out; this is the same rule where the edit actually happens, so
+    // no other caller can get round it.
+    if (mountAt?.isWelded) {
+      NewGridComponent.sendNotification(
+        'This joint is welded, so a cylinder mounted on it would be a third body inside one rigid one. Unweld it, or attach the cylinder to the link instead.'
+      );
+      return;
+    }
     const creation = cylinderCreationLayout(start, end, this.settingsService.objectScale);
 
     const taken = mountAt ? [mountAt.id] : [];

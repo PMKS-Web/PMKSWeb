@@ -189,7 +189,6 @@ export class NewGridComponent {
   private linkDragAnchor: Coord = new Coord(0, 0);
 
   private jointTempHolderSVG!: SVGElement;
-  private forceTempHolderSVG!: SVGElement;
 
   //This is terrible but:
   // -2 => hidden
@@ -303,7 +302,6 @@ export class NewGridComponent {
 
   ngAfterViewInit() {
     this.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
-    this.forceTempHolderSVG = document.getElementById('forceTempHolder') as unknown as SVGElement;
     this.svgGridElement = document.getElementsByClassName(
       'svg-pan-zoom_viewport'
     )[0] as HTMLElement;
@@ -531,12 +529,18 @@ export class NewGridComponent {
         // on a body: the two are one gesture with a different member on the end
         // of it. This joint becomes the ram's own mount, so it swings with
         // whatever already meets here.
+        //
+        // Not on a welded joint. A weld is the statement that everything
+        // meeting here is one rigid body, and a ram's mount arriving would be a
+        // third body joining that statement without being part of it — the
+        // reconcilers then disagree about what the compound is, which is a
+        // broken mechanism rather than a refused edit.
         this.cMenuItems.push(
           new cMenuItem(
             'Attach Cylinder',
             this.startCreatingCylinder.bind(this),
             'add_cylinder',
-            jointIsInput
+            jointIsInput || (this.lastRightClick as RealJoint).isWelded
           )
         );
 
@@ -794,24 +798,92 @@ export class NewGridComponent {
 
   createForce() {
     this.dragState.beginCreatingForce();
-    this.forceTempHolderSVG.style.display = 'block';
+    // A real Force, built on the link the gesture started from, so the preview
+    // is drawn by the same code as the finished arrow rather than by a line
+    // that only resembles one. Same reason the cylinder gesture previews its
+    // actual members: what is shown is what the next click will make.
+    const at = this.svgGrid.screenToSVG(this.lastRightClickCoord);
+    this.forceGhost =
+      this.lastRightClick instanceof RealLink
+        ? new Force('ghost', this.lastRightClick, at, new Coord(at.x, at.y))
+        : undefined;
     this.mechanismSrv.onMechUpdateState.next(3);
   }
 
+  /** The force being drawn, tracking the cursor. Undefined when not drawing. */
+  forceGhost?: Force;
+
+  /** Where inside the arrow a body drag picked it up, so it does not jump. */
+  private forceGrabOffset = new Coord(0, 0);
+
+  beginDraggingForceBody(force: Force, event: PointerEvent): void {
+    const at = this.svgGrid.screenToSVGfromXY(event.clientX, event.clientY);
+    this.forceGrabOffset = new Coord(at.x - force.startCoord.x, at.y - force.startCoord.y);
+  }
+
+  /**
+   * Put a force's anchor where the pointer asks, if it may go there.
+   *
+   * Two rules, and the joint one is checked first because a joint is on the
+   * link whether or not the point lands inside the drawn bar: the anchor snaps
+   * onto a joint that belongs to one link only, and is refused at a pin where
+   * several meet — a force there does not say which body it acts on. Anywhere
+   * else it has to be inside the bar.
+   */
+  private moveForceAnchor(wanted: Coord): void {
+    const force = this.activeObjService.selectedForce;
+    // The force's own link, not whatever the panel last selected: a force knows
+    // what it acts on, and the two can disagree after a click on the body.
+    const link = force.link;
+    const anchor = this.gridUtils.forceAnchorAt(link, wanted, this.settings.objectScale);
+    if (!anchor) {
+      this.sendNotification(
+        'Several links meet at that joint, so a force there would not say which one it acts on.',
+        1500
+      );
+      return;
+    }
+    if (anchor.snappedTo || this.pointIsInsideLink(link, anchor.at)) {
+      this.gridUtils.dragForce(force, anchor.at, true);
+    }
+    // So that the panel values update continuously.
+    this.activeObjService.fakeUpdateSelectedObj();
+    this.dragState.noteMechanismModified();
+  }
+
+  /** Whether a point lands on the drawn body of a link. */
+  private pointIsInsideLink(link: RealLink, point: Coord): boolean {
+    const drawn = document.getElementById(link.id) as unknown as SVGGeometryElement | null;
+    if (!drawn) return false;
+    if (drawn.isPointInFill) {
+      const scratch = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      const svgPoint = scratch.createSVGPoint();
+      svgPoint.x = point.x;
+      svgPoint.y = point.y;
+      return drawn.isPointInFill(svgPoint);
+    }
+    return isInside([point.x, point.y], drawn.getAttribute('d'));
+  }
+
+  /**
+   * The joint a force's anchor is sitting on, if it is sitting on one.
+   *
+   * Derived rather than stored, so a force that arrived in a URL already on a
+   * tracer point reads the same as one just dragged there.
+   */
+  forceSnappedJoint(force: Force): RealJoint | undefined {
+    for (const joint of force.link.joints) {
+      if (!(joint instanceof RealJoint) || joint.links.length > 1) continue;
+      if (Math.hypot(joint.x - force.startCoord.x, joint.y - force.startCoord.y) < 1e-6) {
+        return joint;
+      }
+    }
+    return undefined;
+  }
+
   creatingForce($event: MouseEvent) {
-    const startCoord = this.svgGrid.screenToSVGfromXY(
-      this.lastRightClickCoord.x,
-      this.lastRightClickCoord.y
-    );
     const mousePos = this.svgGrid.screenToSVGfromXY($event.clientX, $event.clientY);
-    this.forceTempHolderSVG.children[0].setAttribute(
-      'd',
-      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
-    );
-    this.forceTempHolderSVG.children[1].setAttribute(
-      'd',
-      'M ' + startCoord.x + ' ' + startCoord.y + ' L ' + mousePos.x + ' ' + mousePos.y
-    );
+    this.forceGhost?.moveDirectionHandle(mousePos);
   }
 
   startCreatingLink() {
@@ -1018,45 +1090,21 @@ export class NewGridComponent {
         if (!this.canEditNow()) {
           return;
         }
-
-        //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
-        const fake_link = document.getElementById(this.activeObjService.selectedLink.id) as unknown;
-        const link_svg = fake_link as SVGElement;
-        const geo = fake_link as SVGGeometryElement;
-        let isIn = false;
-        if (geo.isPointInFill) {
-          const fakeGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          const svgp = fakeGrid.createSVGPoint();
-          svgp.x = mousePosInSvg.x;
-          svgp.y = mousePosInSvg.y;
-          isIn = geo.isPointInFill(svgp);
-        } else {
-          isIn = isInside([mousePosInSvg.x, mousePosInSvg.y], geo.getAttribute('d')); //1634 in SVGFuncs.ts
+        this.moveForceAnchor(mousePosInSvg);
+        break;
+      // Grabbing the arrow itself carries the whole force. `moveAnchor` already
+      // translates both ends, so this is the same move as dragging the start —
+      // less the jump, because where inside the arrow it was picked up is kept.
+      case forceStates.draggingBody:
+        if (!this.canEditNow()) {
+          return;
         }
-        // force is in link. Check to make sure that the force is not on top of a joint
-        if (isIn) {
-          this.activeObjService.selectedLink.joints.forEach((j) => {
-            if (!(j instanceof RealJoint)) {
-              return;
-            }
-            const x = j.x;
-            const y = j.y;
-            const r = this.settings.objectScale * j.r * 2;
-            let dx = x - mousePosInSvg.x;
-            let dy = y - mousePosInSvg.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance <= r) {
-              isIn = false;
-            }
-          });
-        }
-        if (isIn) {
-          //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
-          this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, true);
-        }
-        //So that the panel values update continously
-        this.activeObjService.fakeUpdateSelectedObj();
-        this.dragState.noteMechanismModified();
+        this.moveForceAnchor(
+          new Coord(
+            mousePosInSvg.x - this.forceGrabOffset.x,
+            mousePosInSvg.y - this.forceGrabOffset.y
+          )
+        );
         break;
     }
   }
@@ -1623,7 +1671,7 @@ export class NewGridComponent {
                 );
                 this.mechanismSrv.createForce(startCoord, endCoord);
                 this.dragState.finishCreating();
-                this.forceTempHolderSVG.style.display = 'none';
+                this.forceGhost = undefined;
                 break;
             }
             break;
@@ -1759,11 +1807,15 @@ export class NewGridComponent {
             console.log('force is last left click');
             switch (this.dragState.force) {
               case forceStates.waiting:
-                console.log(this.activeObjService.selectedForce);
                 if (this.activeObjService.selectedForce.isStartSelected) {
                   this.dragState.beginDraggingForceStart();
                 } else if (this.activeObjService.selectedForce.isEndSelected) {
                   this.dragState.beginDraggingForceEnd();
+                } else {
+                  // Neither handle: the arrow itself was grabbed, so the whole
+                  // force moves. This is the ordinary way to pick one up —
+                  // reaching for the little square at its tail is not.
+                  this.dragState.beginDraggingForceBody();
                 }
             }
             break;

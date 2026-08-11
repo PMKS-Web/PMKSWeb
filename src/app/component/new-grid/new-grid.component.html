@@ -374,7 +374,9 @@
            rather than as part of it: the case swung round with the bar it is
            bolted to and the arrow inside it did not, which is the one thing a
            mark meant to say "this is bolted here" must not do. -->
-      <g [attr.transform]="'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ')'">
+      <g
+        [attr.transform]="'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ')'"
+      >
         <image
           [attr.xlink:href]="
             settings.isInputCW.value
@@ -1002,22 +1004,38 @@
   @for (force of mechanismSrv.getForces(); track force) {
     <g
       id="forcesHolder"
-      style="transform: scaleY(-1)"
+      style="transform: scaleY(-1); cursor: move"
       (contextmenu)="setLastRightClick(force)"
-      (pointerdown)="setLastLeftClick(force)"
+      (pointerdown)="beginDraggingForceBody(force, $event); setLastLeftClick(force)"
       (pointerover)="force.showHighlight = true"
       (pointerout)="force.showHighlight = false"
     >
+      <!-- A ring where the anchor sits on a tracer point, drawn open so the
+           joint underneath still reads: without it the arrow's own disc covers
+           the joint completely and the two look like one object. -->
+      @if (forceSnappedJoint(force); as snapped) {
+        <circle
+          [attr.cx]="snapped.x"
+          [attr.cy]="snapped.y"
+          [attr.r]="0.26 * settings.objectScale"
+          fill="none"
+          [attr.stroke]="force.fill"
+          [attr.stroke-width]="0.035 * settings.objectScale"
+          pointer-events="none"
+        ></circle>
+      }
       <g [attr.id]="force.id">
         <svg
           [attr.x]="force.startCoord.x"
           [attr.y]="force.startCoord.y"
           style="pointer-events: none; overflow: visible"
         >
-          @if (!force.local) {
+          <!-- Hidden where the ring above has taken over, so the joint it is
+               sitting on is not painted out by the force's own disc. -->
+          @if (!force.local && !forceSnappedJoint(force)) {
             <circle [attr.r]="settings.objectScale * 0.15" class="forceAnchor"></circle>
           }
-          @if (force.local) {
+          @if (force.local && !forceSnappedJoint(force)) {
             <rect
               [attr.width]="settings.objectScale * 0.25"
               [attr.height]="settings.objectScale * 0.25"
@@ -1245,14 +1263,24 @@
       ></circle>
     </svg>
   </g>
-  <g
-    id="forceTempHolder"
-    opacity="0.5"
-    style="display: none; pointer-events: none; transform: scaleY(-1)"
-  >
-    <path stroke-width="0.04" stroke="black" d=""></path>
-    <path fill="black" d=""></path>
-  </g>
+  <!-- The force being drawn. Same two paths the finished arrow is made of, so
+       what is previewed is exactly what the next click will create. -->
+  @if (forceGhost; as ghost) {
+    <g id="forceTempHolder" opacity="0.5" style="pointer-events: none; transform: scaleY(-1)">
+      <circle
+        [attr.cx]="ghost.startCoord.x"
+        [attr.cy]="ghost.startCoord.y"
+        [attr.r]="settings.objectScale * 0.15"
+        class="forceAnchor"
+      ></circle>
+      <path
+        [attr.d]="ghost.forceLine"
+        class="forceLine"
+        [attr.stroke-width]="ghost.visualWidth * settings.objectScale"
+      ></path>
+      <path [attr.d]="ghost.forceArrow" class="forceArrow" [attr.fill]="ghost.fill"></path>
+    </g>
+  }
 
   @if (
     (activeObjService.objType == 'Link' || activeObjService.objType == 'Joint') &&

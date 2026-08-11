@@ -40,6 +40,8 @@ export enum forceStates {
   creating,
   draggingStart,
   draggingEnd,
+  /** The arrow itself grabbed, carrying the whole force. */
+  draggingBody,
 }
 
 export enum shapeEditModes {
