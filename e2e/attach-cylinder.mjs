@@ -148,6 +148,80 @@ record(
   { before, undone }
 );
 
+// ---------------------------------------------------------------------------
+// The same gesture from a *joint's* menu. The difference worth checking is what
+// the mount turns out to be: attaching to a joint has to use that joint, not
+// build a second one on top of it. Two joints at one point look like one and
+// behave like neither — and a body whose joints are coincident has no angle,
+// which is its own class of bug (see driven-slider-block.spec.ts).
+// ---------------------------------------------------------------------------
+
+const jointBefore = await state();
+const onJoint = await page.evaluate(() => {
+  const box = document.querySelector('#joint_B').getBoundingClientRect();
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+});
+await page.mouse.move(onJoint.x, onJoint.y);
+await page.mouse.click(onJoint.x, onJoint.y, { button: 'right' });
+await page.waitForTimeout(600);
+
+const jointMenu = await page.evaluate(() =>
+  [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => ({
+    label: item.textContent.trim().replace(/\s+/g, ' '),
+    disabled: item.classList.contains('disabledItem'),
+  }))
+);
+const jointEntry = jointMenu.find((item) => item.label === 'Attach Cylinder');
+record('a joint offers Attach Cylinder too', !!jointEntry && !jointEntry.disabled, jointMenu);
+record(
+  'and offers it beside Attach Link there as well',
+  jointMenu.findIndex((item) => item.label === 'Attach Cylinder') ===
+    jointMenu.findIndex((item) => item.label === 'Attach Link') + 1,
+  jointMenu.map((item) => item.label)
+);
+
+await page.evaluate(() => {
+  const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
+    /Attach Cylinder/.test(node.textContent)
+  );
+  item.querySelector('button').click();
+});
+await page.waitForTimeout(400);
+await page.mouse.move(onJoint.x + 240, onJoint.y - 160);
+await page.waitForTimeout(300);
+await page.mouse.click(onJoint.x + 240, onJoint.y - 160);
+await page.waitForTimeout(1500);
+
+const fromJoint = await state();
+record('the gesture builds one cylinder from a joint', fromJoint.skins === 1, fromJoint);
+const mount = await page.evaluate(() => {
+  const grid = ng.getComponent(document.querySelector('app-new-grid'));
+  const joint = grid.mechanismSrv.joints.find((candidate) => candidate.id === 'B');
+  return {
+    links: joint.links.map((link) => link.id),
+    coincident: grid.mechanismSrv.joints
+      .filter(
+        (other) => other.id !== 'B' && Math.hypot(other.x - joint.x, other.y - joint.y) < 1e-6
+      )
+      .map((other) => other.id),
+  };
+});
+record('the mount is the joint itself, not a twin beside it', mount.coincident.length === 0, mount);
+record('and the joint carries the barrel', mount.links.length === 3, mount);
+record('nothing is drawn NaN from a joint either', fromJoint.nan === 0, fromJoint.nan);
+
+await page.evaluate(() => {
+  const button = [...document.querySelectorAll('button')].find((n) => /Undo/.test(n.textContent));
+  if (button && !button.disabled) button.click();
+});
+await page.waitForTimeout(1200);
+const jointUndone = await state();
+record(
+  'and that ram is one undo step as well',
+  jointUndone.skins === 0 && jointUndone.joints === jointBefore.joints,
+  { jointBefore, jointUndone }
+);
+
 record('nothing threw', errors.length === 0, errors.slice(0, 2));
 await ctx.close();
 process.exit(results.every(([, ok]) => ok) ? 0 : 1);

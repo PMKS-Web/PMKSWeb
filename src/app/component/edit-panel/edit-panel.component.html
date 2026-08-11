@@ -87,12 +87,10 @@
           _formControl="slider"
           _formControlForInput="prisAngle"
           tooltip="Give this joint a sliding block. Off is a pin."
+          (fieldEntry)="setSlotAngleOverlay($event)"
         >
           Slider
         </toggle-block>
-        @if (isGroundedSlider) {
-          <div class="slotNote">Slot angle measured from the +x axis.</div>
-        }
         <!-- Read-only: the carrier comes from the drop gesture, and changing it
              is delete-and-recreate. It names the link and the joint pair so the
              reader can find the geometry it describes. -->

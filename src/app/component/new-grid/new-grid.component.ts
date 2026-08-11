@@ -527,6 +527,18 @@ export class NewGridComponent {
         this.cMenuItems.push(
           new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link', jointIsInput)
         );
+        // Beside Attach Link here for the same reason it is beside Attach Link
+        // on a body: the two are one gesture with a different member on the end
+        // of it. This joint becomes the ram's own mount, so it swings with
+        // whatever already meets here.
+        this.cMenuItems.push(
+          new cMenuItem(
+            'Attach Cylinder',
+            this.startCreatingCylinder.bind(this),
+            'add_cylinder',
+            jointIsInput
+          )
+        );
 
         // Enabled whatever else the joint is, exactly as the panel's toggle is:
         // Ground and Slider became independent axes of the 2x2 in §4.1, so
@@ -615,6 +627,8 @@ export class NewGridComponent {
   private cylinderCreateStart?: Coord;
   /** The link the gesture started on, when it started on one rather than the grid. */
   private cylinderCreateOn?: RealLink;
+  /** The joint it started on, when it started on one: the mount, already built. */
+  private cylinderCreateAt?: RealJoint;
 
   /**
    * Begin the two-point cylinder gesture (§ cylinder 2), mirroring Add Link:
@@ -633,9 +647,17 @@ export class NewGridComponent {
     if (this.mechanismSrv.links.length == 0) {
       this.svgGrid.updateObjectScale();
     }
-    this.cylinderCreateStart = this.svgGrid.screenToSVG(this.lastRightClickCoord);
     this.cylinderCreateOn =
       this.lastRightClick instanceof RealLink ? this.lastRightClick : undefined;
+    this.cylinderCreateAt =
+      this.lastRightClick instanceof RealJoint ? this.lastRightClick : undefined;
+    // From a joint, the mount is the joint itself, so the gesture starts at
+    // where it actually is rather than wherever inside its hitbox the click
+    // landed — a ram drawn a few pixels off its own mount is a ram at an angle
+    // to the one the user pointed at.
+    this.cylinderCreateStart = this.cylinderCreateAt
+      ? new Coord(this.cylinderCreateAt.x, this.cylinderCreateAt.y)
+      : this.svgGrid.screenToSVG(this.lastRightClickCoord);
     this.dragState.beginCreatingCylinder();
   }
 
@@ -679,11 +701,13 @@ export class NewGridComponent {
   private commitCylinderCreation(end: Coord) {
     const start = this.cylinderCreateStart;
     const mountOn = this.cylinderCreateOn;
+    const mountAt = this.cylinderCreateAt;
     this.cylinderCreateStart = undefined;
     this.cylinderCreateOn = undefined;
+    this.cylinderCreateAt = undefined;
     this.dragState.finishCreating();
     if (!start) return;
-    this.mechanismSrv.createCylinderFrom(start, end, mountOn);
+    this.mechanismSrv.createCylinderFrom(start, end, mountOn, mountAt);
   }
 
   setLastRightClick(clickedObj: Joint | Link | String | Force, event?: MouseEvent) {
@@ -2057,6 +2081,66 @@ export class NewGridComponent {
       label: showsPosition
         ? `${Math.round(size.start * 1000) / 10}%`
         : this.nup.formatModelLength(size.stroke, this.settings.lengthUnit.getValue()),
+    };
+  }
+
+  /** Whether the slot-angle field is being pointed at. */
+  slotAngleOverlay = false;
+
+  setSlotAngleOverlay(showing: boolean): void {
+    this.slotAngleOverlay = showing;
+  }
+
+  /**
+   * What a grounded slot's angle is measured from, drawn where the slot is.
+   *
+   * The panel used to say "Slot angle measured from the +x axis" underneath the
+   * field, which is a sentence explaining a picture. This is the picture: a ray
+   * out along +x from the block, the slot's own direction, and the arc between
+   * them carrying the number. Nothing has to be read to know which way a bigger
+   * number turns the slot, because the arc is already going that way.
+   */
+  get slotAngleGuide():
+    | { at: Coord; axis: Coord; along: Coord; arc: string; label: string; labelAt: Coord }
+    | undefined {
+    if (!this.slotAngleOverlay) return undefined;
+    const slider = this.mechanismSrv.sliderFor(this.activeObjService.selectedJoint);
+    if (!slider || !slider.ground) return undefined;
+
+    // Clear of the block, which is itself about 0.58 object scales across the
+    // joint: drawn any smaller the whole guide hides underneath the part it is
+    // describing, which is how the first cut of it looked.
+    const radius = 1.8 * this.settings.objectScale;
+    const angle = slider.slotAngle;
+    const at = new Coord(slider.x, slider.y);
+    const axis = new Coord(at.x + radius, at.y);
+    const along = new Coord(at.x + radius * Math.cos(angle), at.y + radius * Math.sin(angle));
+
+    // Swept from +x to the slot, the short way round, so the arc reads as the
+    // angle the number names rather than as its reflex twin.
+    const swept = Math.atan2(Math.sin(angle), Math.cos(angle));
+    const arcRadius = radius * 0.62;
+    const arcEnd = new Coord(
+      at.x + arcRadius * Math.cos(swept),
+      at.y + arcRadius * Math.sin(swept)
+    );
+    const sweepFlag = swept >= 0 ? 1 : 0;
+    const arc =
+      `M ${at.x + arcRadius} ${at.y} ` +
+      `A ${arcRadius} ${arcRadius} 0 0 ${sweepFlag} ${arcEnd.x} ${arcEnd.y}`;
+
+    const halfway = swept / 2;
+    const labelRadius = arcRadius + 0.16 * this.settings.objectScale;
+    return {
+      at,
+      axis,
+      along,
+      arc,
+      label: `${Math.round(((swept * 180) / Math.PI) * 10) / 10}°`,
+      labelAt: new Coord(
+        at.x + labelRadius * Math.cos(halfway),
+        at.y + labelRadius * Math.sin(halfway)
+      ),
     };
   }
 

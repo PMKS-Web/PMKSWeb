@@ -367,10 +367,14 @@
     @for (motor of drivenPinMotors; track motor.id) {
       <!-- Placed exactly as the grounded glyph is placed, because it is the
            same element with the same attributes on an asset that differs only
-           by what has been taken out of it. Upright, not turned with the case:
-           a driven joint should not look like a different kind of thing
-           depending on which body its motor is bolted to. -->
-      <g [attr.transform]="'translate(' + motor.x + ' ' + motor.y + ')'">
+           by what has been taken out of it.
+
+           Turned with the case, in the same composition order, so the two are
+           one piece. Drawn upright it read as a label hovering over the motor
+           rather than as part of it: the case swung round with the bar it is
+           bolted to and the arrow inside it did not, which is the one thing a
+           mark meant to say "this is bolted here" must not do. -->
+      <g [attr.transform]="'translate(' + motor.x + ' ' + motor.y + ') rotate(' + motor.angle + ')'">
         <image
           [attr.xlink:href]="
             settings.isInputCW.value
@@ -1376,6 +1380,48 @@
         [attr.font-size]="svgGrid.scaleWithZoom(20)"
       >
         {{ range.label }}
+      </text>
+    </g>
+  }
+  @if (slotAngleGuide; as guide) {
+    <g style="pointer-events: none; transform: scaleY(-1)">
+      <!-- The frame the number is in: +x from the block, dashed, because it is
+           a reference rather than a part of the mechanism. -->
+      <line
+        [attr.x1]="guide.at.x"
+        [attr.y1]="guide.at.y"
+        [attr.x2]="guide.axis.x"
+        [attr.y2]="guide.axis.y"
+        stroke="#000000"
+        stroke-linecap="round"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+        [attr.stroke-dasharray]="0.08 * settings.objectScale"
+      />
+      <!-- Where the slot actually points, solid, because it is. -->
+      <line
+        [attr.x1]="guide.at.x"
+        [attr.y1]="guide.at.y"
+        [attr.x2]="guide.along.x"
+        [attr.y2]="guide.along.y"
+        stroke="#000000"
+        stroke-linecap="round"
+        [attr.stroke-width]="0.03 * settings.objectScale"
+      />
+      <path
+        [attr.d]="guide.arc"
+        fill="none"
+        stroke="#000000"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+      />
+      <text
+        text-anchor="middle"
+        style="transform: scaleY(-1)"
+        [attr.x]="guide.labelAt.x"
+        [attr.y]="-guide.labelAt.y"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(5)"
+        [attr.font-size]="svgGrid.scaleWithZoom(20)"
+      >
+        {{ guide.label }}
       </text>
     </g>
   }

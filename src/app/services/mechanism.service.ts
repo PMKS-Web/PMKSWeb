@@ -1655,13 +1655,19 @@ export class MechanismService {
    * with its slot, block and welded pin, sealed slider, rod — is exactly
    * collinear along the drawn axis by construction.
    *
+   * `mountAt` is the joint version of `mountOn`: started from a joint's own
+   * menu, the barrel's mount *is* that joint rather than a new one beside it,
+   * so the ram hangs off everything already meeting there. A second joint at
+   * the same point would look identical and behave like neither.
+   *
    * One `finishStructuralEdit(true)` at the end makes creation one undo entry.
    */
-  createCylinderFrom(start: Coord, end: Coord, mountOn?: RealLink): void {
+  createCylinderFrom(start: Coord, end: Coord, mountOn?: RealLink, mountAt?: RealJoint): void {
     const creation = cylinderCreationLayout(start, end, this.settingsService.objectScale);
 
-    const aId = this.determineNextLetter();
-    const bId = this.determineNextLetter([aId]);
+    const taken = mountAt ? [mountAt.id] : [];
+    const aId = mountAt ? mountAt.id : this.determineNextLetter();
+    const bId = this.determineNextLetter(taken.concat(aId));
     const cId = this.determineNextLetter([bId]);
     const dId = this.determineNextLetter([cId]);
     const pId = this.determineNextLetter([dId]);
@@ -1670,14 +1676,19 @@ export class MechanismService {
       roundNumber(at.x, 3),
       roundNumber(at.y, 3),
     ];
-    const barrelFar = new RevJoint(aId, ...place(creation.barrelFar));
+    const barrelFar = mountAt ?? new RevJoint(aId, ...place(creation.barrelFar));
     const barrelNear = new RevJoint(bId, ...place(creation.barrelNear));
     const pin = new RevJoint(cId, ...place(creation.pin));
     const rodFar = new RevJoint(dId, ...place(creation.rodFar));
     const slider = new PrisJoint(pId, pin.x, pin.y);
     slider.isSealed = true;
 
-    const barrel = this.gridUtils.createRealLink(aId + bId, [barrelFar, barrelNear]);
+    // Link ids are their joints' letters in order, and an existing mount's
+    // letter is whatever it already was — not necessarily before the new one.
+    const barrel = this.gridUtils.createRealLink([aId, bId].sort().join(''), [
+      barrelFar,
+      barrelNear,
+    ]);
     const rod = this.gridUtils.createRealLink(cId + dId, [pin, rodFar]);
     const block = new SliderBlock(cId + pId, [pin, slider]);
     slider.slideOn(barrel, barrelFar, barrelNear);
@@ -1696,7 +1707,10 @@ export class MechanismService {
     // would be a ram with nowhere to go.
     if (mountOn) this.graftJointOnto(barrelFar, mountOn);
 
-    this.joints.push(barrelFar, barrelNear, pin, rodFar, slider);
+    // Started from a joint, that joint is already in the mechanism and already
+    // holds its own links; it has just gained one more.
+    if (!mountAt) this.joints.push(barrelFar);
+    this.joints.push(barrelNear, pin, rodFar, slider);
     this.links.push(barrel, rod, block);
     // The body is what a click on the skin selects; select it on creation so
     // the edit panel opens on the cylinder.
@@ -1857,36 +1871,37 @@ export class MechanismService {
       jointToToggleInput = this.activeObjService.selectedJoint;
     }
 
-    //If we are about to enable input, we need to check to see if there is an existing input joint
-    if (!jointToToggleInput.input) {
-      //Go through all other joints and disable input
-      this.joints.forEach((j) => {
-        if (!(j instanceof RealJoint)) {
-          return;
-        }
-        if (j.input) {
-          j.input = false;
-        }
-      });
-    }
-
     // Turning a joint *on* has to name the two bodies it drives between
     // (§2.9). Three bodies meet at some joints, and then "driven" says nothing
     // about which pair moves -- every answer the solvers could pick is a guess
     // the user never made. Refused here with the reason, rather than accepted
     // and guessed at downstream. Turning one off is always allowed.
+    //
+    // Asked *before* anything is changed. The old input used to be cleared
+    // first and the refusal returned after, which left the mechanism with no
+    // driven joint at all -- a click that was refused still took the input
+    // away, and there was no undo entry to get it back.
     if (!jointToToggleInput.input) {
       const refusal = describeActuator(jointToToggleInput);
       if (typeof refusal === 'string') {
         NewGridComponent.sendNotification(refusal);
         return;
       }
+      // One input at a time, so the joint taking the job displaces the old one.
+      this.joints.forEach((j) => {
+        if (j instanceof RealJoint && j.input) {
+          j.input = false;
+        }
+      });
     }
 
     //Toggle the input joint
     jointToToggleInput.input = !jointToToggleInput.input;
 
-    this.updateMechanism();
+    // Saved, like every other edit that changes what the mechanism is. Moving
+    // the input from one joint to another is one of the larger things a user
+    // can do to a mechanism, and it was the one edit undo could not reach.
+    this.updateMechanism(true);
     this.onMechUpdateState.next(3);
   }
 

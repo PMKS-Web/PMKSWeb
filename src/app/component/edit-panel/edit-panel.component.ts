@@ -1486,6 +1486,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     NewGridComponent.instance.showLinkAngleOverlay = $event;
   }
 
+  /** Show what a grounded slot's angle is measured from, while it is pointed at. */
+  setSlotAngleOverlay(showing: boolean) {
+    NewGridComponent.instance.setSlotAngleOverlay(showing);
+  }
+
   /** Show the ram's travel on the canvas while one of its size fields is pointed at. */
   setCylinderRangeOverlay(which: 'travel' | 'start' | undefined) {
     NewGridComponent.instance.setCylinderRangeOverlay(which);

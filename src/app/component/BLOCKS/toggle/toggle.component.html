@@ -12,13 +12,20 @@
       <span class="label angle-label {{ disableInput ? 'disabled' : '' }}">⊾</span>
     }
     @if (addInput) {
-      <mat-form-field class="customInputForm" (click)="disableInput ? null : field.select()">
+      <mat-form-field
+        class="customInputForm"
+        (click)="disableInput ? null : field.select()"
+        (mouseenter)="setMouseOver(true)"
+        (mouseleave)="setMouseOver(false)"
+      >
         <input
           class="customInput"
           matInput
           type="text"
           #field
           (keyup.enter)="field.blur()"
+          (focus)="setFocused(true)"
+          (blur)="setFocused(false)"
           [formControlName]="this._formControlForInput"
         />
       </mat-form-field>
