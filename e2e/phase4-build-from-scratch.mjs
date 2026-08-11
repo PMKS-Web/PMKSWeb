@@ -29,8 +29,18 @@ function checkThat(label, ok, detail = '') {
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+// A 404 on the app's own origin is a broken asset and worth failing on; one on
+// somebody else's is the network this happens to be running on. Google's font
+// CDN is unreachable here, and its misses arrive through the console with no
+// URL attached, so they cannot be told apart there — the response listener
+// below is what judges them.
+page.on('response', (r) => {
+  if (r.status() === 404 && r.url().startsWith(BASE)) consoleErrors.push(`404 ${r.url()}`);
+});
 page.on('console', (m) => {
-  if (m.type() === 'error') consoleErrors.push(m.text());
+  if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) {
+    consoleErrors.push(m.text());
+  }
 });
 page.on('pageerror', (e) => consoleErrors.push(String(e)));
 mkdirSync(OUT, { recursive: true });

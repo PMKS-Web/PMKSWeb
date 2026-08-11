@@ -1237,43 +1237,8 @@
         [attr.stroke]="preview.fill"
         [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
       ></path>
-      <circle
-        [attr.cx]="preview.from.x"
-        [attr.cy]="preview.from.y"
-        [attr.r]="0.15 * settings.objectScale"
-        fill="#fdfbe8"
-        stroke="black"
-        [attr.stroke-width]="0.02 * settings.objectScale"
-      ></circle>
     </g>
   }
-  <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
-    <line
-      stroke="black"
-      [attr.stroke-width]="0.02 * settings.objectScale"
-      stroke-opacity="0.5"
-      style="pointer-events: none"
-    ></line>
-    <svg height="10" width="10" style="overflow: visible" cursor="move">
-      <circle
-        [attr.r]="0.14 * settings.objectScale"
-        cx="0%"
-        cy="0%"
-        fill="black"
-        fill-opacity="0.5"
-        stroke-opacity="0.5"
-      ></circle>
-      <!--      (pointerdown)="mouseDown($event, 'jointTemp')"-->
-      <circle
-        [attr.r]="0.1 * settings.objectScale"
-        cx="0%"
-        cy="0%"
-        fill="gray"
-        stroke="#00000000"
-        stroke-width="0.2"
-      ></circle>
-    </svg>
-  </g>
   <!-- The force being drawn. Same two paths the finished arrow is made of, so
        what is previewed is exactly what the next click will create. -->
   @if (forceGhost; as ghost) {
@@ -1281,7 +1246,7 @@
       <circle
         [attr.cx]="ghost.startCoord.x"
         [attr.cy]="ghost.startCoord.y"
-        [attr.r]="settings.objectScale * 0.15"
+        [attr.r]="settings.objectScale * 0.075"
         class="forceAnchor"
       ></circle>
       <path

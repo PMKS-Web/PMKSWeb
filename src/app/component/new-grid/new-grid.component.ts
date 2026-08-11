@@ -1,6 +1,7 @@
 import { SvgGridService } from '../../services/svg-grid.service';
 import {
   AfterViewInit,
+  OnDestroy,
   Component,
   HostListener,
   ViewChild,
@@ -124,7 +125,7 @@ import { CANNOT_EDIT } from '../../ui-text';
   changeDetection: ChangeDetectionStrategy.Eager,
   standalone: false,
 })
-export class NewGridComponent {
+export class NewGridComponent implements OnDestroy {
   public static debugValue: any;
   static debugPoints: Coord[] = [];
   public static debugLines: Line[] = [];
@@ -188,8 +189,6 @@ export class NewGridComponent {
 
   /** Where the link being dragged was last placed, in SVG coordinates. */
   private linkDragAnchor: Coord = new Coord(0, 0);
-
-  private jointTempHolderSVG!: SVGElement;
 
   //This is terrible but:
   // -2 => hidden
@@ -301,8 +300,19 @@ export class NewGridComponent {
     });
   }
 
+  ngOnDestroy() {
+    // Let go of the static. It is a debug handle, but services reach the
+    // snackbar through it and it was never cleared — so a torn-down grid stayed
+    // registered, and the next thing to send a notification sent it to a
+    // component that no longer exists. In the app there is one grid for the
+    // session and it never showed; across a test run there are many, and it
+    // made unrelated specs fail depending on what had run before them.
+    if (NewGridComponent.instance === this) {
+      NewGridComponent.instance = undefined as unknown as NewGridComponent;
+    }
+  }
+
   ngAfterViewInit() {
-    this.jointTempHolderSVG = document.getElementById('jointTempHolder') as unknown as SVGElement;
     this.svgGridElement = document.getElementsByClassName(
       'svg-pan-zoom_viewport'
     )[0] as HTMLElement;
@@ -647,11 +657,7 @@ export class NewGridComponent {
    * Link, and the reason both live on both menus.
    */
   startCreatingCylinder() {
-    // Same first-object rule as link creation: fit the object scale to the
-    // current zoom before anything is sized from it.
-    if (this.mechanismSrv.links.length == 0) {
-      this.svgGrid.updateObjectScale();
-    }
+    this.fitObjectScaleToFirstPart();
     this.cylinderCreateOn =
       this.lastRightClick instanceof RealLink ? this.lastRightClick : undefined;
     this.cylinderCreateAt =
@@ -827,8 +833,35 @@ export class NewGridComponent {
    * capsule a two-joint link is drawn as, at the same half-width, so what is
    * under the cursor is the bar the click commits.
    */
+  /**
+   * Settle the object scale before the first part is drawn.
+   *
+   * On an empty grid the scale is derived from the current zoom, so whatever is
+   * built first decides how large every pin and bar is from then on. Deciding
+   * that when the gesture *starts* is what lets its ghost be the right size:
+   * done at the commit instead, the preview is drawn at the old scale and the
+   * part appears at a different one the instant it is made.
+   */
+  private fitObjectScaleToFirstPart(): void {
+    if (this.mechanismSrv.links.length === 0) {
+      this.svgGrid.updateObjectScale();
+    }
+  }
+
   /** Where the link gesture started, in model coordinates. */
   private linkCreateStart?: Coord;
+
+  /**
+   * The point the link gesture began at.
+   *
+   * The three commit paths used to read this back out of the preview's own SVG
+   * element, as two string attributes — so the drawing was load-bearing, and
+   * removing it would have quietly changed where links get built. It is kept
+   * here instead, which is also what the preview draws from.
+   */
+  private linkGestureStart(): Coord {
+    return this.linkCreateStart ?? this.mouseLocation;
+  }
 
   /**
    * The colour the next link created will wear.
@@ -961,8 +994,11 @@ export class NewGridComponent {
   }
 
   startCreatingLink() {
-    // console.log('createLink');
-    // console.log(this.lastRightClickCoord);
+    // The first part on an empty grid sets the object scale from the zoom, and
+    // everything is sized from it — so it has to be settled before anything is
+    // drawn at it. It used to be settled at the *commit*, which meant the ghost
+    // was drawn at the old scale and the bar changed size under the click.
+    this.fitObjectScaleToFirstPart();
     const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
     switch (this.objectKind(this.lastRightClick)) {
       case 'String':
@@ -990,11 +1026,6 @@ export class NewGridComponent {
     // // TODO: having to call setAttribute and have HTML update for you automatically
     // console.log(startCoord);
     this.linkCreateStart = startCoord;
-    this.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
-    this.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
-    this.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
-    this.jointTempHolderSVG.children[1].setAttribute('y', startCoord.y.toString());
-    this.jointTempHolderSVG.style.display = 'block';
     // this.onMechUpdateState.next(3);
   }
 
@@ -1030,14 +1061,8 @@ export class NewGridComponent {
       }
     }
 
-    if (this.dragState.isCreatingLink || this.dragState.grid === gridStates.createForce) {
-      this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
-      this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
-    }
     switch (this.dragState.joint) {
       case jointStates.creating:
-        this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
-        this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
         break;
       case jointStates.dragging: {
         if (!this.canEditNow() || !this.pastDragThreshold($event)) {
@@ -1113,8 +1138,6 @@ export class NewGridComponent {
     }
     switch (this.dragState.link) {
       case linkStates.creating:
-        this.jointTempHolderSVG.children[0].setAttribute('x2', mousePosInSvg.x.toString());
-        this.jointTempHolderSVG.children[0].setAttribute('y2', mousePosInSvg.y.toString());
         break;
       case linkStates.dragging: {
         if (!this.canEditNow() || !this.pastDragThreshold($event)) {
@@ -1637,24 +1660,16 @@ export class NewGridComponent {
               case gridStates.createJointFromGrid:
                 //Here's where you actaully make the link
                 joint1 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  this.linkGestureStart().x.toString(),
+                  this.linkGestureStart().y.toString()
                 );
                 joint2 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  this.mouseLocation.x.toString(),
+                  this.mouseLocation.y.toString(),
                   joint1.id
                 );
                 joint1.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(joint1);
-
-                if (this.mechanismSrv.links.length == 0) {
-                  // console.log('first link');
-                  this.svgGrid.updateObjectScale();
-                  // console.log(this.svgGrid.panZoomObject);
-                  // console.log(this.svgGrid.panZoomObject.getZoom().toFixed(2));
-                  // console.log(Number((70 / this.svgGrid.panZoomObject.getZoom()).toFixed(2)));
-                }
 
                 link = this.gridUtils.createRealLink(joint1.id + joint2.id, [joint1, joint2]);
                 joint1.links.push(link);
@@ -1663,13 +1678,12 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromJoint:
                 joint2 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y2')!
+                  this.mouseLocation.x.toString(),
+                  this.mouseLocation.y.toString()
                 );
                 this.activeObjService.prevSelectedJoint.connectedJoints.push(joint2);
                 joint2.connectedJoints.push(this.activeObjService.prevSelectedJoint);
@@ -1684,7 +1698,6 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromLink:
@@ -1694,12 +1707,12 @@ export class NewGridComponent {
                 this.startX = 9999999;
                 // TODO: set context Link as a part of joint 1 or joint 2
                 joint1 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  this.linkGestureStart().x.toString(),
+                  this.linkGestureStart().y.toString()
                 );
                 joint2 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x2')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y2')!,
+                  this.mouseLocation.x.toString(),
+                  this.mouseLocation.y.toString(),
                   joint1.id
                 );
                 // Have within constructor other joints so when you add joint, that joint's connected joints also attach
@@ -1739,7 +1752,6 @@ export class NewGridComponent {
                   this.activeObjService.selectedLink.getPathString();
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
               case gridStates.createForce:
@@ -1763,8 +1775,8 @@ export class NewGridComponent {
                 break;
               case gridStates.createJointFromGrid:
                 joint1 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  this.linkGestureStart().x.toString(),
+                  this.linkGestureStart().y.toString()
                 );
                 joint2 = this.activeObjService.selectedJoint;
                 // joint2 = this.createRevJoint(
@@ -1783,7 +1795,6 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 // PositionSolver.setUpSolvingForces(link.forces); // needed to determine force location when dragging a joint
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromJoint:
@@ -1807,7 +1818,6 @@ export class NewGridComponent {
                 });
                 if (commonLinkCheck) {
                   this.dragState.finishCreating();
-                  this.jointTempHolderSVG.style.display = 'none';
                   this.linkCreateStart = undefined;
                   this.sendNotification('Those two joints are already on one link.');
                   return;
@@ -1824,14 +1834,13 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromLink:
                 // TODO: set context Link as a part of joint 1 or joint 2
                 joint1 = this.mechanismSrv.createRevJoint(
-                  this.jointTempHolderSVG.children[0].getAttribute('x1')!,
-                  this.jointTempHolderSVG.children[0].getAttribute('y1')!
+                  this.linkGestureStart().x.toString(),
+                  this.linkGestureStart().y.toString()
                 );
                 // joint2 = this.createRevJoint(
                 //   this.jointTempHolderSVG.children[0].getAttribute('x2')!,
@@ -1862,7 +1871,6 @@ export class NewGridComponent {
                 this.mechanismSrv.mergeToLinks([link]);
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
-                this.jointTempHolderSVG.style.display = 'none';
                 this.linkCreateStart = undefined;
                 break;
             }
@@ -1879,7 +1887,6 @@ export class NewGridComponent {
                 'Cannot link to a bar. Please create and select a tracer point on the link.'
               );
               this.dragState.cancel();
-              this.jointTempHolderSVG.style.display = 'none';
               this.linkCreateStart = undefined;
               break;
             }
@@ -1903,24 +1910,22 @@ export class NewGridComponent {
                 }
             }
             break;
-          case 'JointTemp':
-            this.dragState.cancel();
-            this.jointTempHolderSVG.style.display = 'none';
-            this.linkCreateStart = undefined;
-            this.sendNotification('A link needs two different joints.');
+          // 'JointTemp' used to be here: clicking the ghost joint the old
+          // line-and-dot preview drew at the start of the gesture. Nothing sets
+          // that type any more, and a click back on the joint itself is caught
+          // where the link is actually built — with a better sentence, because
+          // by then it knows the two joints already share a bar.
         }
         break;
       // TODO: Be sure all things reset
       case 1: // Middle-Click
         this.dragState.cancel();
         this.cylinderCreateStart = undefined;
-        this.jointTempHolderSVG.style.display = 'none';
         this.linkCreateStart = undefined;
         return;
       case 2: // Right-Click
         this.dragState.cancel();
         this.cylinderCreateStart = undefined;
-        this.jointTempHolderSVG.style.display = 'none';
         this.linkCreateStart = undefined;
         break;
     }

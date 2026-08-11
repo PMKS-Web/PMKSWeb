@@ -26,7 +26,15 @@ const S = MODEL_SCALE;
  * number of ways.
  */
 
-const R = 0.15 * SettingsService.objectScale;
+/**
+ * The joint radius every mark is a multiple of, read when it is used.
+ *
+ * Frozen at import instead, it was whatever the drawing scale happened to be
+ * when this file was first loaded — which is a different number from the one
+ * the marks are actually built at, the moment anything resets the scale between
+ * the two. The assertions then compare a real geometry against a stale ruler.
+ */
+const radius = () => 0.15 * SettingsService.objectScale;
 
 /** A---B, with a slider at B riding on AB, optionally welded. `at` is in user units. */
 function slide(welded: boolean, at = { x: 3, y: 0 }) {
@@ -64,7 +72,7 @@ function slide(welded: boolean, at = { x: 3, y: 0 }) {
 
 function plateOf(welded: boolean, at?: { x: number; y: number }) {
   const harness = slide(welded, at);
-  const marks = new SliderMarkService().marks(harness.service.joints, R);
+  const marks = new SliderMarkService().marks(harness.service.joints, radius());
   return marks[0]?.plate;
 }
 
@@ -107,8 +115,8 @@ describe('the weld plate', () => {
     const plate = plateOf(true);
     const across = points(plate!.path).map(([, y]) => Math.abs(y));
 
-    expect(Math.max(...across)).toBeCloseTo(MARK.barHalf * R, 2);
-    expect(MARK.barHalf * R).toBeGreaterThan(MARK.blockAcrossHalf * R);
+    expect(Math.max(...across)).toBeCloseTo(MARK.barHalf * radius(), 2);
+    expect(MARK.barHalf * radius()).toBeGreaterThan(MARK.blockAcrossHalf * radius());
   });
 
   it('reaches the far joint of the rider it stands in for', () => {
@@ -118,9 +126,9 @@ describe('the weld plate', () => {
     const plate = plateOf(true);
     const along = points(plate!.path).map(([x]) => x);
 
-    expect(Math.min(...along)).toBeCloseTo(-(3 * S + MARK.barHalf * R), 2);
+    expect(Math.min(...along)).toBeCloseTo(-(3 * S + MARK.barHalf * radius()), 2);
     // ...and the other end is the block's, since the rider stops at the pin.
-    expect(Math.max(...along)).toBeCloseTo(MARK.blockAlongHalf * R, 2);
+    expect(Math.max(...along)).toBeCloseTo(MARK.blockAlongHalf * radius(), 2);
   });
 
   it('draws no plate for a slider that is not welded', () => {
@@ -164,7 +172,7 @@ describe('the weld plate', () => {
     }
     harness.service.finishStructuralEdit(false);
 
-    const marks = new SliderMarkService().marks(harness.service.joints, R);
+    const marks = new SliderMarkService().marks(harness.service.joints, radius());
     const plated = marks.filter((mark) => mark.plate);
 
     expect(marks.length, 'two blocks').toBe(2);
