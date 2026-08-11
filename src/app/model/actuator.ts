@@ -17,6 +17,7 @@
 
 import { Joint, PrisJoint, RealJoint } from './joint';
 import { Link } from './link';
+import { MODEL_SCALE } from './render-scale';
 
 /** The world, as a body an actuator can be measured against. */
 export const GROUND_BODY = 'ground';
@@ -92,12 +93,27 @@ export function describeActuator(joint: Joint): Actuator | string {
 
   // Ground first when it is there: a crank's angle is read from the world, not
   // the world's angle from the crank. `incidentBodies` already puts it first.
-  return {
+  const actuator: Actuator = {
     joint,
     referenceBody: bodies[0],
     drivenBody: bodies[1],
     kind: joint instanceof PrisJoint ? 'length' : 'angle',
   };
+
+  // An angle needs a direction to measure from on each side. Ground supplies
+  // one without a joint; a body with no second point of its own does not, and
+  // the only body like that is a slider's block, whose pin and prismatic joint
+  // sit on top of each other. Driving that pin used to be offered, accepted,
+  // and then quietly ignored — 360 samples of a mechanism that never moved.
+  if (actuator.kind === 'angle') {
+    const missing = [actuator.referenceBody, actuator.drivenBody].some(
+      (body) => body !== GROUND_BODY && !angleReference(body, joint)
+    );
+    if (missing) {
+      return "A slider's block is a single point, so there is no angle to turn it through. Drive the joint at the other end of the link instead.";
+    }
+  }
+  return actuator;
 }
 
 /** The actuator this joint would be, or nothing. */
@@ -119,11 +135,28 @@ export function canDrive(joint: Joint): boolean {
  * link serializes its joints. Any consistent choice works — the angle between
  * two bodies does not depend on which of their points you measure it from,
  * only on staying with the same points from one sample to the next.
+ *
+ * Any choice except one at the same place. A slider's block carries two joints
+ * that are always coincident — the pin, and the prismatic joint it rides on —
+ * so "the body's first other joint" hands back a point no distance away, and a
+ * direction cannot be read from it. Skipped here, and refused above, because a
+ * zero-length reference does not fail loudly: it makes an angle of nothing,
+ * every sample, and the mechanism sits perfectly still while claiming to run.
  */
 export function angleReference(
   body: Link | typeof GROUND_BODY,
   joint: RealJoint
 ): Joint | undefined {
   if (body === GROUND_BODY) return undefined;
-  return body.joints.find((member) => member.id !== joint.id);
+  return body.joints.find((member) => member.id !== joint.id && !coincident(member, joint));
+}
+
+/**
+ * Two joints at the same point, to within the tolerance the codec leaves.
+ *
+ * A URL stores user units to three decimals, so two joints written as
+ * coincident come back a rounding step apart rather than exactly equal.
+ */
+function coincident(a: Joint, b: Joint): boolean {
+  return Math.hypot(a.x - b.x, a.y - b.y) < 1e-6 * MODEL_SCALE;
 }
