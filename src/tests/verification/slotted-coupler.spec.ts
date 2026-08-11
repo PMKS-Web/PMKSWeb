@@ -172,9 +172,11 @@ describe('velocity through a slot whose carrier is solved first', () => {
     for (const timestep of [0, 40, 90, 140, 200, 260, 320]) {
       const { joints } = solveAt(timestep);
       const b = at(joints, 'B');
-      const c = at(joints, 'C');
+      // The far end the slot is declared against, so the direction here is the
+      // one the solver was given rather than a parallel copy of it.
+      const c = at(joints, 'X');
       const f = at(joints, 'F');
-      const couplerOmega = KinematicsSolver.linkAngVelMap.get('BC')!;
+      const couplerOmega = KinematicsSolver.linkAngVelMap.get('BCX')!;
       const riderVelocity = KinematicsSolver.jointVelMap.get('F')!;
       const pinVelocity = KinematicsSolver.jointVelMap.get('B')!;
 
@@ -204,8 +206,8 @@ describe('velocity through a slot whose carrier is solved first', () => {
       const b = at(joints, 'B');
       const c = at(joints, 'C');
       const f = at(joints, 'F');
-      const omega = KinematicsSolver.linkAngVelMap.get('BC')!;
-      const alpha = KinematicsSolver.linkAngAccMap.get('BC')!;
+      const omega = KinematicsSolver.linkAngVelMap.get('BCX')!;
+      const alpha = KinematicsSolver.linkAngAccMap.get('BCX')!;
       const rate = KinematicsSolver.slideRateMap.get('P')!;
       const riderAcc = KinematicsSolver.jointAccMap.get('F')!;
       const pinAcc = KinematicsSolver.jointAccMap.get('B')!;
@@ -238,7 +240,7 @@ describe('the forward case with its slot joints declared the other way round', (
   // carrier is the coupler and neither slot joint is grounded, so both orders
   // have to work off a joint the four-bar settled first.
   const swapped = slottedCouplerFixture();
-  swapped.sliders = [{ at: 'F', prisId: 'P', on: { carrier: 'BC', a: 'C', b: 'B' } }];
+  swapped.sliders = [{ at: 'F', prisId: 'P', on: { carrier: 'BCX', a: 'X', b: 'B' } }];
 
   function solveSwappedAt(timestep: number) {
     const { mechanism } = buildMechanism(swapped);

@@ -104,7 +104,7 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
   Toggle_Press:
     '2P.Ay,1E8.K,0.1011.4A,A,01z0,0,0.0B,B,017k,0Uc,0.8C,C,01P8,0Kc,0.0D,D,0Zs,0pD,0.4G,G,0,0,0.0R,R,0,01cP,0.ZE,E,01P8,0Kc,0,AB,A,B.5F,F,0,01cP,OZ..YRAB,AB,Fe,Fe,01YN,0FJ,c5cae9,A,B,,.YRCD,CD,Fe,Fe,0_V,0Zv,303e9f,C,D,,.YRGD,GD,Fe,Fe,0Hx,0Pc,0d125a,G,D,,.YRDR,DR,Fe,Fe,0Hx,01Cp,B2DFDB,D,R,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPRF,RF,Fe,0,0,0,,R,F,,...N_S',
   Scissor_Lift:
-    '2P.Ay,1E8.K,0.1011.4A,A,2SG,0,0.0B,B,1fl,a3,0.8C,C,1wL,OD,0.0D,D,17q,yH,0.4G,G,0,0,0.0M,M,1Vm,1GM,0.0K,K,2-X,2Wj,0.0S,S,2-X,0,0.0T,T,0,2Wj,0.0U,U,3Un,2Wj,0.ZE,E,1wL,OD,0,AB,A,B.5N,N,2-X,0,0.1P,P,2-X,2Wj,0,TU,T,U..YRAB,AB,Fe,Fe,230,I2,c5cae9,A,B,,.YRCD,CD,Fe,Fe,1X5,gF,303e9f,C,D,,.YRGDMK,GDMK,Fe,Fe,1Pn,1BL,0d125a,G,D,M,K,,.YRSMT,SMT,Fe,Fe,1Vm,1GM,B2DFDB,S,M,T,,.YRTU,TU,Fe,Fe,1lO,2Wj,26A69A,T,U,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPSN,SN,Fe,0,0,0,,S,N,,.YPKP,KP,Fe,0,0,0,,K,P,,...N_e',
+    '2P.Ay,1E8.K,0.1011.4A,A,2SG,0,0.0B,B,1fl,a3,0.8C,C,1wL,OD,0.0D,D,17q,yH,0.4G,G,0,0,0.0M,M,1Vm,1GM,0.0K,K,2-X,2Wj,0.0S,S,2-X,0,0.0T,T,0,2Wj,0.0U,U,3_1,2Wj,0.ZE,E,1wL,OD,0,AB,A,B.5N,N,2-X,0,0.1P,P,2-X,2Wj,0,TU,T,U..YRAB,AB,Fe,Fe,230,I2,c5cae9,A,B,,.YRCD,CD,Fe,Fe,1X5,gF,303e9f,C,D,,.YRGDMK,GDMK,Fe,Fe,1Pn,1BL,0d125a,G,D,M,K,,.YRSMT,SMT,Fe,Fe,1Vm,1GM,B2DFDB,S,M,T,,.YRTU,TU,Fe,Fe,1-0,2Wj,26A69A,T,U,,.YPCE,CE,Fe,0,0,0,,C,E,,.YPSN,SN,Fe,0,0,0,,S,N,,.YPKP,KP,Fe,0,0,0,,K,P,,...N_e',
   Shaper_Quick_Return:
     '2P.Ay,1E8.K,0.1011.6A,A,0,0,0.0B,B,Fe,0,0.4C,C,0,0ku,0.0D,D,Oj,RF,0.0R,R,qW,si,0.1P,P,Fe,0,0,CD,C,D.5Q,Q,qW,si,0..YRAB,AB,Fe,Fe,7q,0,c5cae9,A,B,,.YRCD,CD,Fe,Fe,CN,09q,303e9f,C,D,,.YRDR,DR,Fe,Fe,cd,e_,0d125a,D,R,,.YPBP,BP,Fe,0,0,0,,B,P,,.YPRQ,RQ,Fe,0,0,0,,R,Q,,...N_H',
   Pedaling_Leg:

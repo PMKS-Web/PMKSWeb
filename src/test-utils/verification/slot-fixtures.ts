@@ -143,8 +143,25 @@ export const START_F: [number, number] = (() => {
   return [CRANK + (along + half) * ux, (along + half) * uy];
 })();
 
+/**
+ * How far past C the coupler's slot has to reach.
+ *
+ * The rider runs to about 1.49 of the way from B to C over a revolution — the
+ * slot here is the *line* through those two pins, and the block travels well
+ * beyond the second one. A slot is a channel with ends now, so the channel has
+ * to be as long as the travel it carries: X sits on that same line, far enough
+ * out that the block is still in it at the far end of its run.
+ */
+const SLOTTED_COUPLER_REACH = 1.7;
+
 /** A four-bar whose coupler carries a slot, driving a grounded lever. */
 export function slottedCouplerFixture(): MechanismFixture {
+  // On the line through B and C, so the slot's direction is exactly what it
+  // always was and the kinematics are untouched.
+  const slotEnd: [number, number] = [
+    CRANK + (START_C[0] - CRANK) * SLOTTED_COUPLER_REACH,
+    START_C[1] * SLOTTED_COUPLER_REACH,
+  ];
   return {
     joints: [
       { id: 'A', x: 0, y: 0, ground: true, input: true },
@@ -153,9 +170,10 @@ export function slottedCouplerFixture(): MechanismFixture {
       { id: 'D', x: GROUND, y: 0, ground: true },
       { id: 'E', x: LEVER_PIVOT[0], y: LEVER_PIVOT[1], ground: true },
       { id: 'F', x: START_F[0], y: START_F[1] },
+      { id: 'X', x: slotEnd[0], y: slotEnd[1] },
     ],
-    links: [{ joints: 'AB' }, { joints: 'BC' }, { joints: 'CD' }, { joints: 'EF' }],
-    sliders: [{ at: 'F', prisId: 'P', on: { carrier: 'BC', a: 'B', b: 'C' } }],
+    links: [{ joints: 'AB' }, { joints: 'BCX' }, { joints: 'CD' }, { joints: 'EF' }],
+    sliders: [{ at: 'F', prisId: 'P', on: { carrier: 'BCX', a: 'B', b: 'X' } }],
     inputAngVel: INPUT_SPEED,
   };
 }

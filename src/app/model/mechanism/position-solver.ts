@@ -89,6 +89,16 @@ const CONCENTRIC_TOLERANCE = 0.001;
 const DEGENERATE_SLOT_TOLERANCE = 1e-9;
 
 /**
+ * How far past the end of a slot a block may measure before it counts as out.
+ *
+ * A fraction of the slot's own length, so it means the same on a long channel
+ * and a short one. Small, but not zero: a block that stops exactly on the end
+ * can round a hair past it, and refusing that would cut the travel a sample
+ * short and stop the cycle closing — the same reason the stroke has one.
+ */
+const SLOT_END_TOLERANCE = 2e-3;
+
+/**
  * How far a boundary-driven sample may be predicted to move a joint, as a
  * fraction of the mechanism's own longest bar, before the sample is walked in
  * halves instead of taken in one go (§2.7a).
@@ -2264,6 +2274,11 @@ export class PositionSolver {
       }
       counter++;
     }
+    // Every joint has a place now, so the slots can be asked whether their
+    // riders are still in them.
+    if (!this.ridersAreInTheirSlots(joints)) {
+      return false;
+    }
     forces.forEach((f) => {
       this.determineTracerForce(f.link.joints[0], f.link.joints[1], f, 'start');
       this.forceMagnitudeMap.set(f.id + 'x', f.mag);
@@ -2301,6 +2316,50 @@ export class PositionSolver {
       roundNumber(inputJoint.y, 4),
     ]);
     this.jointMapPositions.set(unknownJoint.id, [roundNumber(x, 4), roundNumber(y, 4)]);
+  }
+
+  /**
+   * Whether every block is still somewhere on the slot it rides (§ slots).
+   *
+   * A slot cut into a link is a channel between two of that link's joints, and
+   * it ends where they do. Nothing said so before, so a block could run out
+   * past the end of its own channel and keep going — drawn outside the bar it
+   * is supposed to be captive in, and reported as a mechanism that works.
+   *
+   * Refused rather than clamped, because it is the same kind of answer a
+   * cylinder gives at the end of its stroke: the mechanism runs to the limit
+   * and reverses there.
+   *
+   * Two slots are deliberately exempt:
+   *
+   *   - a **grounded guide**, which is a direction rather than a segment. Its
+   *     two ends are drawn where the picture needs them, not where the rail
+   *     stops, so there is no honest limit to enforce.
+   *   - a **sealed cylinder's** slot, which is the barrel's interior. That one
+   *     is already bounded, by the stroke, and its block legitimately travels
+   *     past the buried joint the slot is measured from.
+   */
+  private static ridersAreInTheirSlots(joints: Joint[]): boolean {
+    for (const joint of joints) {
+      if (!(joint instanceof PrisJoint)) continue;
+      if (joint.isSealed || !joint.isFloating) continue;
+      const a = joint.slotJointA;
+      const b = joint.slotJointB;
+      if (!a || !b) continue;
+      const from = this.jointMapPositions.get(a.id);
+      const to = this.jointMapPositions.get(b.id);
+      const at = this.jointMapPositions.get(joint.id);
+      if (!from || !to || !at) continue;
+      const dx = to[0] - from[0];
+      const dy = to[1] - from[1];
+      const lengthSquared = dx * dx + dy * dy;
+      if (!(lengthSquared > 0)) continue;
+      const along = ((at[0] - from[0]) * dx + (at[1] - from[1]) * dy) / lengthSquared;
+      if (along < -SLOT_END_TOLERANCE || along > 1 + SLOT_END_TOLERANCE) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static incrementPrisInput(inputJoint: Joint, unknownJoint: Joint, angVelDir: boolean) {

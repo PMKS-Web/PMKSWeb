@@ -648,7 +648,12 @@ export function scissorLiftFixture(scale: number = 1): MechanismFixture {
   const carried = { x: 0, y: 2 * cross.y };
   // The platform runs level from its pin at the far arm's top, out past the
   // near arm's top, which is the joint riding in its slot.
-  const platformEnd = { x: top.x + 2, y: top.y };
+  // Far enough out that the block riding the slot is still in it at the bottom
+  // of the lift. The arms lie flatter there, which carries the arm's top —
+  // the block — further along the platform than the drawn pose shows; at two
+  // units the platform ran out from under it, and now the solver refuses a
+  // pose where that happens rather than drawing it anyway.
+  const platformEnd = { x: top.x + 4, y: top.y };
   const { barrelEnd, pin } = cylinderBetween(SCISSOR.mount, rod, 0.5);
   return {
     joints: [
