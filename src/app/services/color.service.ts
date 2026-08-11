@@ -39,6 +39,19 @@ export class ColorService {
     return color;
   }
 
+  /**
+   * The colour the next link will be, without taking it.
+   *
+   * For the previews the creation gestures draw. A ghost is a promise about
+   * what the click will make, and a ghost in some other colour than the part
+   * turns out to be is a promise broken at the moment it is kept — but asking
+   * for the colour the ordinary way would spend it, so a cancelled gesture
+   * would silently shuffle every colour after it.
+   */
+  public peekNextLinkColor(): string {
+    return this.linkColorOptions[this.linkLastColorIndex];
+  }
+
   public getLinkColorOptions(): string[] {
     return this.linkColorOptions;
   }

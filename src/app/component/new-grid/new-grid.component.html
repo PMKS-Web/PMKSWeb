@@ -652,10 +652,12 @@
         [attr.transform]="sliderMarks.frame(ghost)"
       >
         <!-- Same per-path alphas as the committed skin, so the black block
-             reads through the rod exactly as it will once built. -->
-        <path [attr.d]="ghost.barrel" fill="#9fa8da" fill-opacity="0.7" />
+             reads through the rod exactly as it will once built — and the same
+             colour, which is the one the barrel is about to be handed rather
+             than a stand-in that changes at the moment of the click. -->
+        <path [attr.d]="ghost.barrel" [attr.fill]="ghost.fill" fill-opacity="0.7" />
         <path [attr.d]="ghost.block" fill="#000000" />
-        <path [attr.d]="ghost.rod" fill="#9fa8da" fill-opacity="0.7" />
+        <path [attr.d]="ghost.rod" [attr.fill]="ghost.fill" fill-opacity="0.7" />
       </g>
     }
   </g>
@@ -1228,7 +1230,13 @@
        become, so the preview is the part rather than a line suggesting one. -->
   @if (linkPreview; as preview) {
     <g style="pointer-events: none; transform: scaleY(-1)" opacity="0.5">
-      <path [attr.d]="preview.bar" class="link-default"></path>
+      <path
+        [attr.d]="preview.bar"
+        [attr.fill]="preview.fill"
+        [attr.fill-opacity]="0.7"
+        [attr.stroke]="preview.fill"
+        [attr.stroke-width]="svgGrid.scaleWithZoom(3)"
+      ></path>
       <circle
         [attr.cx]="preview.from.x"
         [attr.cy]="preview.from.y"

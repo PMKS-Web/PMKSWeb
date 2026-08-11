@@ -34,8 +34,21 @@ const ctx = await chromium.launchPersistentContext('/tmp/pmks-chrome-attach', {
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (error) => errors.push(String(error)));
+// A 404 on the app's own origin is a broken asset and worth failing on. One on
+// somebody else's is the network this happens to be running on: Google's font
+// CDN is unreachable here, and its four misses were being counted as four
+// things the app did wrong.
+page.on('response', (response) => {
+  if (response.status() === 404 && response.url().startsWith(BASE)) {
+    errors.push(`404 ${response.url()}`);
+  }
+});
 page.on('console', (message) => {
-  if (message.type() === 'error') errors.push(message.text());
+  // Resource failures come through here without a URL, so they cannot be told
+  // apart by origin; the listener above is what judges them.
+  if (message.type() === 'error' && !message.text().startsWith('Failed to load resource')) {
+    errors.push(message.text());
+  }
 });
 
 const state = () =>

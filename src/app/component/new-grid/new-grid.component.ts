@@ -679,6 +679,7 @@ export class NewGridComponent {
         barrel: string;
         rod: string;
         block: string;
+        fill: string;
       }
     | undefined {
     if (this.dragState.grid !== gridStates.createCylinder || !this.cylinderCreateStart) {
@@ -699,6 +700,9 @@ export class NewGridComponent {
       barrel: barrelPath(r, -creation.pinFromMount, creation.barrelLength - creation.pinFromMount),
       rod: rodBodyPath(r, creation.rodLength, cylinderHeadHalf(creation.barrelLength, r)),
       block: cylinderBlockPath(r, cylinderHeadHalf(creation.barrelLength, r)),
+      // The colour the barrel will be handed when the click builds it, which
+      // the rod then wears too.
+      fill: this.nextLinkColor,
     };
   }
 
@@ -826,7 +830,18 @@ export class NewGridComponent {
   /** Where the link gesture started, in model coordinates. */
   private linkCreateStart?: Coord;
 
-  get linkPreview(): { bar: string; from: Coord } | undefined {
+  /**
+   * The colour the next link created will wear.
+   *
+   * A cylinder's barrel is the first link its gesture builds, and its rod wears
+   * the barrel's fill — one part, one colour — so both gestures preview the
+   * same answer.
+   */
+  get nextLinkColor(): string {
+    return this.colorService.peekNextLinkColor();
+  }
+
+  get linkPreview(): { bar: string; from: Coord; fill: string } | undefined {
     const from = this.linkCreateStart;
     if (!this.dragState.isCreatingLink || !from) return undefined;
     const to = this.mouseLocation;
@@ -843,6 +858,7 @@ export class NewGridComponent {
         half
       ),
       from,
+      fill: this.nextLinkColor,
     };
   }
 
