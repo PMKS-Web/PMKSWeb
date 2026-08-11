@@ -48,6 +48,10 @@ const FILENAMES = {
   Pedaling_Leg: 'pedaling-leg',
   Oscillating_Fan: 'oscillating-fan',
   Pumpjack: 'pumpjack',
+  Punch_Press: 'punch-press',
+  Derrick_Crane: 'derrick-crane',
+  Toggle_Clamp: 'toggle-clamp',
+  Offset_Load_Rocker: 'offset-load-rocker',
 };
 
 /** The generated block of template-linkages.ts, read as id/payload pairs. */

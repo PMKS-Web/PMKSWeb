@@ -26,6 +26,10 @@ export const LIBRARY_TEMPLATE_SOURCES: Record<LibraryTemplateID, string> = {
   Pedaling_Leg: 'Leg on a bicycle crank',
   Oscillating_Fan: 'Oscillating fan',
   Pumpjack: 'Walking-beam pumping unit',
+  Punch_Press: 'Punch press',
+  Derrick_Crane: 'Derrick crane',
+  Toggle_Clamp: 'Toggle clamp',
+  Offset_Load_Rocker: 'Rocker with an offset load',
 };
 
 export function libraryTemplateEntry(id: LibraryTemplateID): GalleryEntry {

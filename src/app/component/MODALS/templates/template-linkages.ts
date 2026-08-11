@@ -40,6 +40,10 @@ export const LIBRARY_TEMPLATE_IDS = [
   'Pedaling_Leg',
   'Oscillating_Fan',
   'Pumpjack',
+  'Punch_Press',
+  'Derrick_Crane',
+  'Toggle_Clamp',
+  'Offset_Load_Rocker',
 ] as const;
 
 export type LibraryTemplateID = (typeof LIBRARY_TEMPLATE_IDS)[number];
@@ -109,5 +113,13 @@ export const TEMPLATE_LINKAGES: Record<TemplateID, string> = {
     '2P.Ay,1E8.K,0.1011.KA,A,0,0,0.IC,C,s8,0VG,0.GD,D,k_,0j9,0.KB,B,0GY,0In,0.GN,N,1NW,0,0..YRACN,ACN,Fe,Fe,lD,0AR,c5cae9,A,C,N,,.YRCD,CD,Fe,Fe,oZ,0cC,303e9f,C,D,,.YRDB,DB,Fe,Fe,FE,0Vz,0d125a,D,B,,...N_B',
   Pumpjack:
     '2P.Ay,1E8.K,0.1011.KA,A,0gB,0oI,0.GM,M,0QZ,0o1,0.IP,P,0d4,0,0.KS,S,0,0,0.GH,H,o0,0,0.GR,R,r8,0eW,0.LW,W,r8,0eW,OZ..YRAM,AM,Fe,Fe,0YN,0oA,c5cae9,A,M,,.YRMP,MP,Fe,Fe,0Wq,0P1,303e9f,M,P,,.YRPSH,PSH,Fe,Fe,3f,0,0d125a,P,S,H,,.YRHR,HR,Fe,Fe,pa,0KG,B2DFDB,H,R,,.YPRW,RW,Fe,0,0,0,,R,W,,...N_Z',
+  Punch_Press:
+    '2P.Ay,1E8.K,0.1011.MA,A,0,0,0.GB,B,0,Im,0.GC,C,0,0r8,0.LP,P,0,0r8,OZ..YRAB,Crank,VG,o,0,9O,c5cae9,A,B,,.YRBC,Connecting rod,ku,6G,0,0HC,303e9f,B,C,,.YPCP,CP,1Tm,0,0,0,,C,P,,..2F1,BC,F1,0,0r8,0,0bW,1Xg0..N_J',
+  Derrick_Crane:
+    '2P.Ay,1E8.K,0.1011.KO,O,0,0,0.GC,C,Qv,cP,0.GT,T,rn,1Cp,0.MG,G,YO,09O,0.GK,K,Mp,18,0..YRGK,Luffing crank,VG,o,Sc,048,c5cae9,G,K,,.YRCK,Luffing link,ku,6G,Os,Jn,303e9f,C,K,,.YROCT,Boom,2xW,ku,Qv,cP,0d125a,O,C,T,,..2F1,OCT,F1,rn,1Cp,rn,zB,z2G..N_v',
+  Toggle_Clamp:
+    '2P.Ay,1E8.K,0.1011.MH,H,0ee,Ti,0.GE,E,09O,NS,0.GP,P,P0,5U,0.KN,N,0Lu,09O,0..YRHE,Handle,NS,o,0P0,Qa,c5cae9,H,E,,.YREP,Toggle link,Fe,1G,7q,ET,303e9f,E,P,,.YRNP,Clamp bar,VG,38,1a,01z,0d125a,N,P,,..2F1,NP,F1,P0,5U,P0,L6,hyW..N_e',
+  Offset_Load_Rocker:
+    '2P.Ay,1E8.K,0.1011.MA,A,0,0,0.GB,B,HC,7q,0.GC,C,104,bW,0.KD,D,1E8,0,0.GL,L,1SC,jK,0..YRAB,Crank,VG,o,8c,3w,c5cae9,A,B,,.YRBC,Coupler,_W,7q,ee,Mg,303e9f,B,C,,.YRCDL,Rocker,1E8,E4,1E8,Rd,0d125a,C,D,L,,..2F1,CDL,F1,1SC,jK,1Fi,Zy,adm..N_l',
   // </generated>
 };

@@ -30,6 +30,12 @@ import {
   WHITWORTH_OFFSET,
 } from './slot-fixtures';
 import {
+  jibCraneFixture,
+  offsetLoadFourBarFixture,
+  punchPressFixture,
+  toggleClampFixture,
+} from './force-fixtures';
+import {
   excavatorBucketFixture,
   jansenLegFixture,
   oscillatingFanFixture,
@@ -133,6 +139,36 @@ export interface PublishedSpeed {
 }
 
 export const FIXTURE_GALLERY: GalleryEntry[] = [
+  {
+    name: 'Punch press',
+    purpose:
+      'A load on the ram: the crank torque spikes where the rod comes into line with the slide',
+    spec: 'force-templates.spec.ts',
+    floatingSlot: false,
+    fixture: punchPressFixture(),
+  },
+  {
+    name: 'Derrick crane',
+    purpose: 'A weight far out on a boom held close in: the link carries several times the load',
+    spec: 'force-templates.spec.ts',
+    floatingSlot: false,
+    fixture: jibCraneFixture(),
+  },
+  {
+    name: 'Toggle clamp',
+    purpose:
+      'Where mechanical advantage comes from: the clamping force runs away as the links line up',
+    spec: 'force-templates.spec.ts',
+    floatingSlot: false,
+    fixture: toggleClampFixture(),
+  },
+  {
+    name: 'Rocker with an offset load',
+    purpose: 'A load off the line of its link is a moment — the term a free-body sketch leaves out',
+    spec: 'force-templates.spec.ts',
+    floatingSlot: false,
+    fixture: offsetLoadFourBarFixture(),
+  },
   {
     name: 'Hydraulic cylinder',
     purpose: 'Cylinder skin (§2.7): a rod welded to a block sliding in a barrel, all on one line',
