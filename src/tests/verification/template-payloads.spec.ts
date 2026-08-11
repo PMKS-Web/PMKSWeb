@@ -30,7 +30,7 @@ function generatedBlock(): string {
     const entry = libraryTemplateEntry(id);
     // The same payload the published gallery links to, drawing scale included:
     // the card and the doc row are the same picture of the same mechanism.
-    return `  ${id}:\n    '${fixturePayload(entry.fixture, entry.objectScale)}',`;
+    return `  ${id}:\n    '${fixturePayload(entry.fixture, entry.objectScale, entry.speed)}',`;
   });
   return [START, ...entries, END].join('\n');
 }

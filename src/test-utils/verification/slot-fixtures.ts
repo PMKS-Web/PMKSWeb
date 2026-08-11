@@ -165,8 +165,18 @@ export function slottedCouplerFixture(): MechanismFixture {
 export const YOKE_CRANK = 1;
 /** How far below the crank pivot the yoke's horizontal guide runs. */
 export const GUIDE_DROP = 2;
-/** How far above the crank pivot the yoke's slot reaches. */
-export const SLOT_RISE = 1;
+/**
+ * How far above the crank pivot the yoke's slot reaches.
+ *
+ * The crank pin rises to exactly the crank's own radius, so a slot ending at 1
+ * ends exactly where the pin stops — and the *block* around that pin then hangs
+ * out of the end of the channel, which is drawn shorter still by its inset from
+ * the joints. Nothing was wrong with the motion; the slot was simply drawn too
+ * short to hold the part riding in it. 1.8 leaves the block inside the channel
+ * at the top of the stroke, and the line C→D is unchanged, so the kinematics
+ * are the same closed form they were.
+ */
+export const SLOT_RISE = 1.8;
 
 /**
  * Scotch yoke: crank AB drives a block riding in the yoke's vertical slot, and
@@ -809,14 +819,28 @@ export function boundaryBranchJumpFixture(): MechanismFixture {
   };
 }
 
-/** Radial engine: crank throw, rod length, and the three cylinder axes. */
+/** Radial engine: crank throw, rod length, and how many cylinders. */
 export const RADIAL_CRANK = 1;
 export const RADIAL_ROD = 3;
-export const RADIAL_AXES = [Math.PI / 2, (7 * Math.PI) / 6, (11 * Math.PI) / 6];
+/**
+ * Five, and odd on purpose. Every radial engine ever built has an odd number of
+ * cylinders — it is what lets the firing order alternate all the way round
+ * instead of doubling back — and five is the smallest that looks like the thing
+ * rather than like a demonstration of it.
+ */
+export const RADIAL_CYLINDERS = 5;
+/** The pistons' joint letters, and their blocks'. */
+export const RADIAL_PISTON_IDS = ['B', 'C', 'D', 'E', 'F'].slice(0, RADIAL_CYLINDERS);
+const RADIAL_BLOCK_IDS = ['P', 'Q', 'R', 'S', 'T'].slice(0, RADIAL_CYLINDERS);
+/** Evenly spaced, first one straight up, the way they are drawn end-on. */
+export const RADIAL_AXES = Array.from(
+  { length: RADIAL_CYLINDERS },
+  (_, index) => Math.PI / 2 + (index * 2 * Math.PI) / RADIAL_CYLINDERS
+);
 
 /**
- * A three-cylinder radial engine: one crank pin, three connecting rods, three
- * pistons on three fixed guides 120 degrees apart.
+ * A five-cylinder radial engine: one crank pin, five connecting rods, five
+ * pistons on five fixed guides evenly spaced about it.
  *
  * On the shortlist for the linkage library because it is the case that puts
  * *several* sliders on one crank -- nothing else in the suite has more than two
@@ -825,8 +849,8 @@ export const RADIAL_AXES = [Math.PI / 2, (7 * Math.PI) / 6, (11 * Math.PI) / 6];
  * guide. It is a scale test for the closed-form path rather than for the
  * simultaneous one.
  *
- * All three rods share a single crank pin, which is what makes it radial rather
- * than three separate slider-cranks.
+ * All five rods share a single crank pin, which is what makes it radial rather
+ * than five separate slider-cranks.
  */
 export function radialEngineFixture(): MechanismFixture {
   const pin: [number, number] = [RADIAL_CRANK, 0];
@@ -840,21 +864,22 @@ export function radialEngineFixture(): MechanismFixture {
     const s = b + Math.sqrt(b * b - c);
     return { x: s * dir[0], y: s * dir[1] };
   };
-  const [b, c, d] = RADIAL_AXES.map(piston);
+  // One letter per piston and one per block, taken in order, so the count is
+  // the only thing that has to change to build a seven- or nine-cylinder one.
+  const pistonIds = RADIAL_PISTON_IDS;
+  const blockIds = RADIAL_BLOCK_IDS;
   return {
     joints: [
       { id: 'O', x: 0, y: 0, ground: true, input: true },
       { id: 'A', x: pin[0], y: pin[1] },
-      { id: 'B', ...b },
-      { id: 'C', ...c },
-      { id: 'D', ...d },
+      ...RADIAL_AXES.map((axis, index) => ({ id: pistonIds[index], ...piston(axis) })),
     ],
-    links: [{ joints: 'OA' }, { joints: 'AB' }, { joints: 'AC' }, { joints: 'AD' }],
-    sliders: [
-      { at: 'B', prisId: 'P', angleRad: RADIAL_AXES[0] },
-      { at: 'C', prisId: 'Q', angleRad: RADIAL_AXES[1] },
-      { at: 'D', prisId: 'R', angleRad: RADIAL_AXES[2] },
-    ],
+    links: [{ joints: 'OA' }, ...pistonIds.map((id) => ({ joints: `A${id}` }))],
+    sliders: RADIAL_AXES.map((axis, index) => ({
+      at: pistonIds[index],
+      prisId: blockIds[index],
+      angleRad: axis,
+    })),
     inputAngVel: INPUT_SPEED,
   };
 }
@@ -1006,44 +1031,112 @@ export function runningHorseFixture(): MechanismFixture {
   };
 }
 
-/** Wiper proportions: a crank-rocker whose output arm sweeps about 100 degrees. */
-export const WIPER = { ground: 5, crank: 1.2, coupler: 4.6, rocker: 2.2, blade: 3.4 };
+/**
+ * Wiper proportions, in the ratios a car actually uses.
+ *
+ * Two spindles a blade's length apart, each blade a little longer than the gap;
+ * a motor crank a fraction of the arm it drives, so the sweep comes out near
+ * 100 degrees; and a tie rod between the two arms' cranks the same length as
+ * the gap between the spindles, which is what makes the pair a parallelogram
+ * and the two blades sweep together.
+ */
+export const WIPER = {
+  /** Centre distance between the two wiper spindles. */
+  spindles: 6,
+  /** Blade reach, spindle to tip. */
+  blade: 5,
+  /** Crank radius on each arm, below the spindle, where the tie rod pins. */
+  tie: 1.5,
+  /** The motor four-bar: crank, coupler, the arm's own crank, and the ground. */
+  crank: 1.5,
+  coupler: 4.4,
+  rocker: 2,
+  motorGround: 4.5,
+};
 
 /**
- * A windshield wiper: a Grashof crank-rocker turning continuous motor rotation
- * into the back-and-forth sweep of a blade.
+ * A pair of windshield wipers, driven the way a car drives them.
  *
- * On the shortlist because it is the four-bar people have actually looked at,
- * and because what a wiper is *for* -- a bounded sweep from an unbounded input
- * -- is the crank-rocker property, asserted here as a closed form rather than
- * against sampled data. The blade is a rigid extension of the rocker, so the
- * arc it sweeps is the rocker's.
+ * A motor turns a crank; a link off that crank rocks the first wiper arm about
+ * its spindle; and a **tie rod** carries that same motion to the second arm.
+ * The tie rod and the two arm cranks form a parallelogram with the line between
+ * the spindles, so the second blade copies the first exactly — which is why the
+ * two blades on a car stay parallel through the whole sweep instead of
+ * converging.
+ *
+ * Six bars, one freedom. It was a single crank-rocker before, with the "blade"
+ * drawn as an extension of the rocker: correct as a crank-rocker demonstration
+ * and not recognisable as a wiper. What makes this one worth having in the
+ * library is the parallel pair, which is the part of a real wiper that is
+ * actually a linkage problem.
+ *
+ * The motor four-bar is Grashof with the crank shortest (1.5 + 4.5 = 6 against
+ * 4.4 + 2 = 6.4), so the motor turns continuously and the arms rock — the whole
+ * point of a wiper — through a little under 100 degrees.
  */
 export function windshieldWiperFixture(): MechanismFixture {
-  const o: [number, number] = [0, 0];
-  const h: [number, number] = [WIPER.ground, 0];
-  const a: [number, number] = [WIPER.crank, 0];
-  // The rocker pin, from the circles about the crank pin and the far ground.
-  const span = Math.hypot(h[0] - a[0], h[1] - a[1]);
-  const mid: [number, number] = [(a[0] + h[0]) / 2, (a[1] + h[1]) / 2];
-  const off = (WIPER.coupler ** 2 - WIPER.rocker ** 2) / (2 * span ** 2);
-  const base: [number, number] = [mid[0] + off * (h[0] - a[0]), mid[1] + off * (h[1] - a[1])];
-  const height = Math.sqrt(WIPER.coupler ** 2 / span ** 2 - (0.5 + off) ** 2) * span;
-  const b: [number, number] = [
-    base[0] - (height * (h[1] - a[1])) / span,
-    base[1] + (height * (h[0] - a[0])) / span,
+  const spindle1: [number, number] = [0, 0];
+  const spindle2: [number, number] = [WIPER.spindles, 0];
+  // The motor sits below and outboard, as it does under a cowl. Its distance
+  // from the first spindle is the four-bar's ground length.
+  const motorX = -3.5;
+  const motor: [number, number] = [motorX, -Math.sqrt(WIPER.motorGround ** 2 - motorX ** 2)];
+
+  // Where the arm stands at mid-sweep. The rocker's two extremes are the poses
+  // where crank and coupler are folded and extended, so the angle at the
+  // spindle follows from the law of cosines at each.
+  const cosAt = (span: number) =>
+    (WIPER.motorGround ** 2 + WIPER.rocker ** 2 - span ** 2) /
+    (2 * WIPER.motorGround * WIPER.rocker);
+  const extreme = (span: number) => Math.acos(cosAt(span));
+  const midSwing =
+    (extreme(WIPER.coupler + WIPER.crank) + extreme(WIPER.coupler - WIPER.crank)) / 2;
+  const towardMotor = Math.atan2(motor[1] - spindle1[1], motor[0] - spindle1[0]);
+  /** Direction of each arm's crank: below the spindle, opposite its blade. */
+  const crankDir = towardMotor + midSwing;
+  /** Direction of the blades themselves. */
+  const bladeDir = crankDir + Math.PI;
+
+  const along = (from: [number, number], dir: number, reach: number): [number, number] => [
+    from[0] + reach * Math.cos(dir),
+    from[1] + reach * Math.sin(dir),
   ];
-  // The blade tip: on the rocker, out past the pin from its ground pivot.
-  const reach = WIPER.blade / WIPER.rocker;
+  const b = along(spindle1, crankDir, WIPER.rocker);
+  const c = along(spindle1, crankDir, WIPER.tie);
+  const d = along(spindle2, crankDir, WIPER.tie);
+  const tip1 = along(spindle1, bladeDir, WIPER.blade);
+  const tip2 = along(spindle2, bladeDir, WIPER.blade);
+
+  // The crank pin closes the motor four-bar: the circle of the crank about the
+  // motor meeting the circle of the coupler about the arm's pin. The root taken
+  // is the one on the motor's own side, which is the branch that turns over.
+  const span = Math.hypot(b[0] - motor[0], b[1] - motor[1]);
+  const foot = (WIPER.crank ** 2 - WIPER.coupler ** 2 + span ** 2) / (2 * span);
+  const rise = Math.sqrt(WIPER.crank ** 2 - foot ** 2);
+  const ux = (b[0] - motor[0]) / span;
+  const uy = (b[1] - motor[1]) / span;
+  const a: [number, number] = [motor[0] + foot * ux - rise * uy, motor[1] + foot * uy + rise * ux];
+
   return {
     joints: [
-      { id: 'O', x: o[0], y: o[1], ground: true, input: true },
+      { id: 'O', x: motor[0], y: motor[1], ground: true, input: true },
       { id: 'A', x: a[0], y: a[1] },
       { id: 'B', x: b[0], y: b[1] },
-      { id: 'T', x: h[0] + (b[0] - h[0]) * reach, y: h[1] + (b[1] - h[1]) * reach },
-      { id: 'H', x: h[0], y: h[1], ground: true },
+      { id: 'P', x: spindle1[0], y: spindle1[1], ground: true },
+      { id: 'C', x: c[0], y: c[1] },
+      { id: 'T', x: tip1[0], y: tip1[1] },
+      { id: 'D', x: d[0], y: d[1] },
+      { id: 'Q', x: spindle2[0], y: spindle2[1], ground: true },
+      { id: 'U', x: tip2[0], y: tip2[1] },
     ],
-    links: [{ joints: 'OA' }, { joints: 'AB' }, { joints: 'BHT' }],
+    links: [
+      { joints: 'OA', name: 'Motor crank' },
+      { joints: 'AB', name: 'Drive link' },
+      // One rigid arm: the crank below the spindle, the spindle, and the blade.
+      { joints: 'BCPT', name: 'Wiper arm' },
+      { joints: 'CD', name: 'Tie rod' },
+      { joints: 'DQU', name: 'Passenger arm' },
+    ],
     inputAngVel: INPUT_SPEED,
   };
 }

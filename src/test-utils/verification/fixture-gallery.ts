@@ -57,10 +57,14 @@ import { MODEL_SCALE } from '../../app/model/render-scale';
  * rebuilding it by hand.
  */
 /**
- * The scale a freshly opened app uses; pinned so payloads do not drift. In
- * internal units: the encoder divides by MODEL_SCALE, so the URL stores 1.
+ * The drawing scale a published mechanism opens at.
+ *
+ * 0.7, matching the app's own default: pins and bar widths large enough to grab
+ * without the parts crowding the linkage they belong to. A template that opened
+ * at a different scale from a fresh grid meant the first joint a user added
+ * arrived a visibly different size from the ones already there.
  */
-const DEFAULT_OBJECT_SCALE = 1 * MODEL_SCALE;
+const DEFAULT_OBJECT_SCALE = 0.7 * MODEL_SCALE;
 
 /**
  * Lift a fixture-built mechanism from user units into the internal model
@@ -110,7 +114,22 @@ export interface GalleryEntry {
    * mechanism is built at a much larger scale, or it draws as hairlines.
    */
   objectScale?: number;
+  /**
+   * How fast this mechanism opens running, when the shared default is wrong for
+   * it. A stroke of a few centimetres crossed at the default 5 cm/s is over
+   * before it can be watched, and a demonstration of a straight line is worth
+   * nothing at a speed nobody can follow.
+   */
+  speed?: PublishedSpeed;
   fixture: MechanismFixture;
+}
+
+/** Whichever of the two input speeds a mechanism actually uses. */
+export interface PublishedSpeed {
+  /** Turns per minute, for a mechanism driven at a pin. */
+  rpm?: number;
+  /** User length units per second, for one driven along a slot. */
+  unitsPerSecond?: number;
 }
 
 export const FIXTURE_GALLERY: GalleryEntry[] = [
@@ -128,6 +147,10 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     spec: 'driven-cylinder.spec.ts',
     floatingSlot: true,
     slide: true,
+    // A hand's pace. The shared default of 5 cm/s runs this ram end to end in
+    // well under a second, which shows a boom that jumps rather than one that
+    // lifts.
+    speed: { unitsPerSecond: 1 },
     fixture: cylinderBoomFixture(),
   },
   {
@@ -205,8 +228,8 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     fixture: pivotingGripperFixture(),
   },
   {
-    name: 'Radial engine, three cylinders',
-    purpose: 'Three sliders on one crank pin; piston stroke is exactly twice the throw',
+    name: 'Radial engine, five cylinders',
+    purpose: 'Five sliders on one crank pin; piston stroke is exactly twice the throw',
     spec: 'radial-engine.spec.ts',
     floatingSlot: false,
     slide: false,
@@ -218,6 +241,9 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     spec: 'chebyshev-straight-line.spec.ts',
     floatingSlot: false,
     slide: false,
+    // Slow, because the point of it is a straight line and a line is something
+    // to be watched being drawn.
+    speed: { rpm: 2 },
     fixture: chebyshevStraightLineFixture(),
   },
   {
@@ -239,7 +265,10 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
     // relative to the linkage. At the default the leg draws as hairlines with
     // no visible pins. Scaling the drawing rather than the fixture keeps the
     // published numbers exactly as Jansen quotes them.
-    objectScale: 14 * MODEL_SCALE,
+    // Kept at ten times the default rather than at a number of its own, so it
+    // moves with it: this is "much bigger than usual because the linkage is",
+    // not an absolute size anybody measured.
+    objectScale: 10 * DEFAULT_OBJECT_SCALE,
     fixture: jansenLegFixture(),
   },
   {
@@ -391,7 +420,8 @@ export const FIXTURE_GALLERY: GalleryEntry[] = [
  */
 export function fixturePayload(
   fixture: MechanismFixture,
-  objectScale: number = DEFAULT_OBJECT_SCALE
+  objectScale: number = DEFAULT_OBJECT_SCALE,
+  speed: PublishedSpeed = {}
 ): string {
   const previousColors = ColorService.instance;
   const previousScale = SettingsService.objectScale;
@@ -400,6 +430,12 @@ export function fixturePayload(
   try {
     const built = buildMechanism(fixture);
     scaleBuiltToModelUnits(built);
+    // The speeds ride the URL as settings rather than as anything on a joint,
+    // so they are set on the service the encoder is about to read. A fresh one
+    // per call, so nothing here leaks into the next mechanism's payload.
+    const settings = new SettingsService();
+    if (speed.rpm !== undefined) settings.inputSpeed.next(speed.rpm);
+    if (speed.unitsPerSecond !== undefined) settings.linearInputSpeed.next(speed.unitsPerSecond);
     return new UrlGenerationService(
       {
         joints: built.joints,
@@ -407,7 +443,7 @@ export function fixturePayload(
         forces: built.forces,
         mechanismTimeStep: 0,
       } as unknown as MechanismService,
-      new SettingsService(),
+      settings,
       new ActiveObjService()
     ).generateUrlQuery();
   } finally {
@@ -425,7 +461,7 @@ export function fixturePayload(
  */
 export function galleryMarkdown(baseUrl: string): string {
   const rows = FIXTURE_GALLERY.map((entry) => {
-    const link = `${baseUrl}/?${fixturePayload(entry.fixture, entry.objectScale)}`;
+    const link = `${baseUrl}/?${fixturePayload(entry.fixture, entry.objectScale, entry.speed)}`;
     const slot = entry.floatingSlot ? 'yes' : '—';
     const slide = entry.slide ? 'yes' : '—';
     return `| [${entry.name}](${link}) | ${entry.purpose} | ${slot} | ${slide} | \`${entry.spec}\` |`;

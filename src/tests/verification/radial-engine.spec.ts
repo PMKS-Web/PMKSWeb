@@ -7,10 +7,12 @@ import {
   radialEngineFixture,
   RADIAL_AXES,
   RADIAL_CRANK,
+  RADIAL_CYLINDERS,
+  RADIAL_PISTON_IDS,
   RADIAL_ROD,
 } from '../../test-utils/verification/slot-fixtures';
 
-// Three sliders on one crank. Nothing else in the suite has more than two, and
+// Five sliders on one crank. Nothing else in the suite has more than two, and
 // this one stays entirely dyadic while doing it -- the crank pin swings about
 // ground and each piston is a circle about that pin meeting its own guide -- so
 // it is a scale test for the closed-form path rather than for the simultaneous
@@ -20,11 +22,11 @@ import {
 // through the crank pivot gives a piston travel of exactly twice the crank
 // throw, whatever the rod measures. No reference data, no drift.
 
-describe('a three-cylinder radial engine', () => {
+describe('a five-cylinder radial engine', () => {
   const { mechanism } = buildMechanism(radialEngineFixture());
   const at = (t: number, id: string): Joint => mechanism.joints[t].find((j) => j.id === id)!;
   const frames = mechanism.joints.length;
-  const PISTONS = ['B', 'C', 'D'] as const;
+  const PISTONS = RADIAL_PISTON_IDS;
 
   it('is one degree of freedom and turns a full revolution', () => {
     expect((mechanism as unknown as { dof: number }).dof).toBe(1);
@@ -68,10 +70,10 @@ describe('a three-cylinder radial engine', () => {
     });
   });
 
-  it('fires the three cylinders a third of a turn apart', () => {
-    // What makes it radial rather than three engines: each piston reaches top
-    // dead centre when the crank points down its own axis, so the three peaks
-    // are a third of the cycle apart.
+  it('fires its cylinders evenly around the turn', () => {
+    // What makes it radial rather than five engines: each piston reaches top
+    // dead centre when the crank points down its own axis, so the peaks are
+    // one cylinder's share of the cycle apart.
     const peak = (piston: string, axis: number) => {
       const along = Array.from(
         { length: frames },
@@ -80,8 +82,9 @@ describe('a three-cylinder radial engine', () => {
       return along.indexOf(Math.max(...along)) / frames;
     };
     const peaks = PISTONS.map((piston, i) => peak(piston, RADIAL_AXES[i])).sort((a, b) => a - b);
+    expect(peaks).toHaveLength(RADIAL_CYLINDERS);
     for (let i = 1; i < peaks.length; i++) {
-      expect(Math.abs(peaks[i] - peaks[i - 1] - 1 / 3)).toBeLessThan(0.02);
+      expect(Math.abs(peaks[i] - peaks[i - 1] - 1 / RADIAL_CYLINDERS)).toBeLessThan(0.02);
     }
   });
 });

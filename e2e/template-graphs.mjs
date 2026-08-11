@@ -134,8 +134,13 @@ const quantile = (values, q) => {
  * loosening; at a corner it credits the plotted value for matching the slope on
  * the side of the corner it actually belongs to.
  */
-function compareDerivative(plotted, source, dt, sharedKinks = []) {
-  const scale = Math.max(peak(plotted), 1e-9);
+function compareDerivative(plotted, source, dt, sharedKinks = [], siblingPeak = 0) {
+  // Judged against how much the joint actually moves, not against how much this
+  // one channel of it does. A joint can travel a long way in y and 0.006 units
+  // in x, and then the x series peaks near zero: a tolerance relative to *that*
+  // is a tolerance on rounding, and any reversal blows through it while meaning
+  // nothing. The scissor lift's platform is exactly that joint.
+  const scale = Math.max(peak(plotted), siblingPeak, 1e-9);
   const noise = (NOISE_GAIN * ROUND_HALF) / dt;
   const n = Math.min(plotted.length, source.length);
   const y = (i) => source[i]?.y;
@@ -550,8 +555,17 @@ for (const id of IDS) {
       const sharedKinks = [
         ...new Set(derivatives.flatMap(([, p, src]) => compareDerivative(p, src, dt).kinks)),
       ];
+      // The joint's own motion, per kind: the x and y channels of one quantity
+      // are two views of one movement, so a dead one is judged against its
+      // living partner rather than against itself.
+      const peakOf = (what) =>
+        Math.max(
+          ...derivatives
+            .filter(([name]) => name.split(' ')[0] === what.split(' ')[0])
+            .map(([, series]) => peak(series))
+        );
       for (const [what, plotted, source] of derivatives) {
-        const cmp = compareDerivative(plotted, source, dt, sharedKinks);
+        const cmp = compareDerivative(plotted, source, dt, sharedKinks, peakOf(what));
         if (cmp.worstClean > worstClean) {
           worstClean = cmp.worstClean;
           worstCleanWhere = `${heading} ${what} @ sample ${cmp.worstCleanAt}`;

@@ -35,7 +35,7 @@ const FILENAMES = {
   Whitworth_Quick_Return: 'whitworth',
   Scotch_Yoke: 'scotch-yoke',
   Cylinder_Boom: 'cylinder-boom',
-  Pivoting_Gripper: 'pivoting-gripper',
+  Cylinder_Gripper: 'cylinder-gripper',
   Radial_Engine: 'radial-engine',
   Chebyshev_Straight_Line: 'chebyshev',
   Windshield_Wiper: 'windshield-wiper',
