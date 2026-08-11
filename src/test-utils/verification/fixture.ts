@@ -15,7 +15,20 @@ import { SettingsService } from '../../app/services/settings.service';
  */
 export interface MechanismFixture {
   /** Joint ids must be the single letters the dataset uses, in creation order. */
-  joints: { id: string; x: number; y: number; ground?: boolean; input?: boolean }[];
+  joints: {
+    id: string;
+    x: number;
+    y: number;
+    ground?: boolean;
+    input?: boolean;
+    /**
+     * Draw this joint's path. Off everywhere by default, as it is in the app:
+     * a mechanism that traces every joint at once hides itself behind the
+     * thicket. Set it where the path *is* the mechanism — the straight line a
+     * straight-line linkage draws, the ellipse an elliptical crank draws.
+     */
+    trace?: boolean;
+  }[];
   /**
    * `joints` is the concatenated joint letters (also the link id). List links
    * in the MATLAB free-body-chain order (input crank first): each shared
@@ -102,6 +115,7 @@ export function buildMechanism(fixture: MechanismFixture): BuiltMechanism {
   const jointById = new Map<string, RevJoint>();
   const joints: Joint[] = fixture.joints.map((spec) => {
     const joint = new RevJoint(spec.id, spec.x, spec.y, !!spec.input, !!spec.ground);
+    joint.showCurve = !!spec.trace;
     jointById.set(spec.id, joint);
     return joint;
   });

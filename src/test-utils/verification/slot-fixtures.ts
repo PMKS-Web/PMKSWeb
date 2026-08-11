@@ -774,7 +774,8 @@ export function ellipticalCrankFixture(scale: number = 1): MechanismFixture {
       { id: 'A', ...at(-2.87544, 0.032816), ground: true, input: true },
       { id: 'B', ...at(-3.960199, 0.472074) },
       { id: 'C', ...at(-3.340474, 1.397268) },
-      { id: 'D', ...at(-0.517497, 0.696942) },
+      // The ellipse the mechanism is named for.
+      { id: 'D', ...at(-0.517497, 0.696942), trace: true },
       { id: 'E', ...at(2.337757, 0.056553) },
       { id: 'F', ...at(0, 0), ground: true },
     ],
@@ -926,7 +927,8 @@ export function chebyshevStraightLineFixture(): MechanismFixture {
       { id: 'G', x: -half, y: 0, ground: true, input: true },
       { id: 'A', x: -reach, y: rise },
       { id: 'B', x: reach, y: rise },
-      { id: 'M', x: 0, y: rise },
+      // The whole point of the linkage: this is the near-straight line.
+      { id: 'M', x: 0, y: rise, trace: true },
       { id: 'H', x: half, y: 0, ground: true },
     ],
     links: [{ joints: 'GB' }, { joints: 'ABM' }, { joints: 'AH' }],
@@ -1124,10 +1126,11 @@ export function windshieldWiperFixture(): MechanismFixture {
       { id: 'B', x: b[0], y: b[1] },
       { id: 'P', x: spindle1[0], y: spindle1[1], ground: true },
       { id: 'C', x: c[0], y: c[1] },
-      { id: 'T', x: tip1[0], y: tip1[1] },
+      // The arcs the two blades sweep, and that they are the same arc.
+      { id: 'T', x: tip1[0], y: tip1[1], trace: true },
       { id: 'D', x: d[0], y: d[1] },
       { id: 'Q', x: spindle2[0], y: spindle2[1], ground: true },
-      { id: 'U', x: tip2[0], y: tip2[1] },
+      { id: 'U', x: tip2[0], y: tip2[1], trace: true },
     ],
     links: [
       { joints: 'OA', name: 'Motor crank' },

@@ -81,7 +81,8 @@ export function jansenLegFixture(): MechanismFixture {
       { id: 'C', x: -74.794365381, y: 8.143170206 },
       { id: 'D', x: -26.952107032, y: -45.51517017 },
       { id: 'E', x: -59.231514961, y: -28.052930231 },
-      { id: 'F', x: -43.160110524, y: -91.756932926 },
+      // The walking curve, which is the only reason to build this linkage.
+      { id: 'F', x: -43.160110524, y: -91.756932926, trace: true },
     ],
     links: [
       { joints: 'OA' },
@@ -420,7 +421,9 @@ export function pedalingLegFixture(): MechanismFixture {
   return {
     joints: [
       { id: 'B', x: 0, y: 0, ground: true },
-      { id: 'P', ...pedal },
+      // The circle the pedal is forced to travel, which is what the knee
+      // is working against.
+      { id: 'P', ...pedal, trace: true },
       { id: 'H', ...PEDAL.hip, ground: true },
       { id: 'K', ...knee, input: true },
     ],

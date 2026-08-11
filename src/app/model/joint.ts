@@ -68,7 +68,11 @@ export class RealJoint extends Joint {
     this._ground = ground;
     this._links = links;
     this._connectedJoints = connectedJoints;
-    this.showCurve = true;
+    // Off, and turned on per joint in Visual Settings. Every joint tracing by
+    // default draws every path at once, which on anything past a four-bar is a
+    // thicket the mechanism itself has to be picked out of — and the one path
+    // worth looking at is worth choosing.
+    this.showCurve = false;
   }
 
   //R is radius of the joint
