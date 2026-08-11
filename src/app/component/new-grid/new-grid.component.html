@@ -1022,7 +1022,7 @@
                reads around it. At the old 0.15 object scales it was the same
                size as the joint and covered it exactly. -->
           @if (!force.local) {
-            <circle [attr.r]="settings.objectScale * 0.075" class="forceAnchor"></circle>
+            <circle [attr.r]="forceAnchorRadius(force)" class="forceAnchor"></circle>
           }
           <!-- Local: the welded joint's own plus. A local force is carried by
                the body rather than fixed in the world, which is the statement a
@@ -1030,7 +1030,7 @@
                and the two cannot drift apart. -->
           @if (force.local) {
             <path
-              [attr.d]="weldMarkerPath"
+              [attr.d]="forceWeldMark(force)"
               class="forceAnchor"
               style="transform: rotateZ({{ force.angleRad }}rad)"
             ></path>
@@ -1076,14 +1076,7 @@
             width="10"
             style="overflow: visible; cursor: move"
           >
-            <rect
-              [attr.x]="-0.075 * settings.objectScale"
-              [attr.y]="-0.075 * settings.objectScale"
-              [attr.width]="0.15 * settings.objectScale"
-              [attr.height]="0.15 * settings.objectScale"
-              class="forceEndpointSquare"
-              style="transform: rotateZ({{ force.angleRad }}rad)"
-            ></rect>
+            <circle [attr.r]="0.075 * settings.objectScale" class="forceEndpointHandle"></circle>
           </svg>
           <svg
             id="endForceEndpoint"
@@ -1100,14 +1093,7 @@
             width="10"
             style="overflow: visible; cursor: move"
           >
-            <rect
-              [attr.x]="-0.075 * settings.objectScale"
-              [attr.y]="-0.075 * settings.objectScale"
-              [attr.width]="0.15 * settings.objectScale"
-              [attr.height]="0.15 * settings.objectScale"
-              class="forceEndpointSquare"
-              style="transform: rotateZ({{ force.angleRad }}rad)"
-            ></rect>
+            <circle [attr.r]="0.075 * settings.objectScale" class="forceEndpointHandle"></circle>
           </svg>
         </ng-container>
       }
@@ -1246,7 +1232,7 @@
       <circle
         [attr.cx]="ghost.startCoord.x"
         [attr.cy]="ghost.startCoord.y"
-        [attr.r]="settings.objectScale * 0.075"
+        [attr.r]="forceAnchorRadius(ghost)"
         class="forceAnchor"
       ></circle>
       <path

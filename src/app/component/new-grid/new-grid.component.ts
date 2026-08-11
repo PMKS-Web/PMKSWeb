@@ -895,6 +895,23 @@ export class NewGridComponent implements OnDestroy {
     };
   }
 
+  /**
+   * How big a force's anchor mark is drawn.
+   *
+   * Tied to the arrow's own thickness, which is how a force shows its
+   * magnitude: a heavy load draws a thick arrow, and a mark at a fixed size
+   * beside it reads as belonging to something else. Both constants are set so
+   * that a force at the default width keeps the size it had.
+   */
+  forceAnchorRadius(force: Force): number {
+    return 0.75 * force.visualWidth * this.settings.objectScale;
+  }
+
+  /** The plus a *local* force wears, at the same thickness as its arrow. */
+  forceWeldMark(force: Force): string {
+    return plusPath(1.5 * force.visualWidth * this.settings.objectScale);
+  }
+
   /** Where inside the arrow a body drag picked it up, so it does not jump. */
   private forceGrabOffset = new Coord(0, 0);
 

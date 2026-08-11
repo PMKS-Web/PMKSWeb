@@ -283,6 +283,54 @@ for (const template of ['Punch_Press', 'Derrick_Crane', 'Toggle_Clamp', 'Offset_
   );
 }
 
+// ---------------------------------------------------------------------------
+// The marks a force wears are sized from its own arrow.
+//
+// Arrow thickness is how a force shows its magnitude, so a mark drawn at a
+// fixed size beside a heavy one reads as belonging to something else.
+// ---------------------------------------------------------------------------
+
+await page.goto(`${BASE}/?${payloads['Derrick_Crane']}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
+
+const anchorAt = async (width) => {
+  await page.evaluate((visual) => {
+    ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv.forces[0].setVisualWidth(
+      visual
+    );
+  }, width);
+  // A real pointer event, so Angular runs change detection over the change.
+  await page.mouse.move(700, 500);
+  await page.mouse.move(701, 501);
+  await page.waitForTimeout(400);
+  return page.evaluate(() => {
+    const disc = document.querySelector('circle.forceAnchor');
+    return disc ? Number(disc.getAttribute('r')) : null;
+  });
+};
+const thinMark = await anchorAt(0.075);
+const thickMark = await anchorAt(0.15);
+record('the anchor mark grows with the arrow', thickMark > thinMark, { thinMark, thickMark });
+record(
+  'and in proportion to it, rather than by some amount of its own',
+  Math.abs(thickMark / thinMark - 2) < 1e-6,
+  { thinMark, thickMark }
+);
+
+// Selection handles are round, like everything else that marks a point here.
+const held = await force();
+const arrowMid = await toScreen(
+  (held.start[0] + held.end[0]) / 2,
+  (held.start[1] + held.end[1]) / 2
+);
+await page.mouse.click(arrowMid.x, arrowMid.y);
+await page.waitForTimeout(500);
+const handles = await page.evaluate(() => ({
+  circles: document.querySelectorAll('#startForceEndpoint circle, #endForceEndpoint circle').length,
+  rects: document.querySelectorAll('#startForceEndpoint rect, #endForceEndpoint rect').length,
+}));
+record('the selector ends are circles', handles.circles === 2 && handles.rects === 0, handles);
+
 record('nothing threw', errors.length === 0, errors.slice(0, 2));
 await browser.close();
 process.exit(results.every(([, ok]) => ok) ? 0 : 1);
