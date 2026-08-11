@@ -116,7 +116,8 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "buildTarget": "PMKSWeb:build:development",
-            "runner": "vitest"
+            "runner": "vitest",
+            "setupFiles": ["src/test-setup.ts"]
           }
         }
       }
