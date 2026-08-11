@@ -3,7 +3,7 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { readFileSync } from 'node:fs';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { motionGenGripperFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
@@ -80,8 +80,10 @@ const AS_PMKS: Record<string, string> = {
 describe('the MotionGen gripper, rebuilt in PMKS+', () => {
   // objectScale is a process-wide static and a driven slider's step is measured
   // against it, so pin it: otherwise the travel depends on spec file order.
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism, joints: built } = buildMechanism(motionGenGripperFixture(MODEL_SCALE));
+  const { mechanism, joints: built } = buildMechanismAtScale(
+    motionGenGripperFixture(MODEL_SCALE),
+    1 * MODEL_SCALE
+  );
   const frames = mechanism.joints.length;
 
   const reference = motionGenPoses();

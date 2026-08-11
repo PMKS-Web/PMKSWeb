@@ -84,12 +84,22 @@ const start = await force();
 record('the crane opens carrying its hook load', !!start, start);
 record('and the load reads as snapped to the hook', start?.snapped === 'T', start);
 
-// The ring that keeps the joint visible under the arrow's own anchor.
-const ringed = await page.evaluate(
-  () =>
-    document.querySelectorAll('#forceHolder circle[fill="none"], svg circle[fill="none"]').length
+// The anchor mark has to leave the joint it sits on visible, which is why it
+// is drawn at half a joint's radius rather than at the same size.
+const anchorMark = await page.evaluate(() => {
+  const disc = document.querySelector('circle.forceAnchor');
+  const joint = document.querySelector('#joint_T');
+  if (!disc || !joint) return undefined;
+  return {
+    anchor: Math.round(disc.getBoundingClientRect().width),
+    joint: Math.round(joint.getBoundingClientRect().width),
+  };
+});
+record(
+  'the anchor mark is smaller than the joint under it, so the joint still reads',
+  !!anchorMark && anchorMark.anchor < anchorMark.joint,
+  anchorMark
 );
-record('a snapped anchor draws a ring rather than covering the joint', ringed > 0, ringed);
 
 // --- the arrow itself is the handle ---------------------------------------
 const middle = await toScreen(
@@ -213,6 +223,65 @@ record(
   !cylinderItem || cylinderItem.disabled,
   weldMenu.map((item) => `${item.label}${item.disabled ? ' (off)' : ''}`)
 );
+
+// ---------------------------------------------------------------------------
+// Every template that ships a force, dragged by hand.
+//
+// Three of the four worked while the punch press did not, which is the kind of
+// difference no unit test finds: its rod's SVG path carries an empty `d`, so
+// the hit test that asked the *drawing* whether a point was on the link said no
+// everywhere, and its load could not be moved at all.
+// ---------------------------------------------------------------------------
+
+for (const template of ['Punch_Press', 'Derrick_Crane', 'Toggle_Clamp', 'Offset_Load_Rocker']) {
+  await page.goto(`${BASE}/?${payloads[template]}`, { waitUntil: 'domcontentloaded' });
+  await waitForReady(page);
+
+  const held = await force();
+  if (!held) {
+    record(`${template}: opens carrying its load`, false, held);
+    continue;
+  }
+  const arrow = await toScreen(
+    (held.start[0] + held.end[0]) / 2,
+    (held.start[1] + held.end[1]) / 2
+  );
+  await page.mouse.click(arrow.x, arrow.y);
+  await page.waitForTimeout(400);
+
+  const tail = await toScreen(held.start[0], held.start[1]);
+  // Plain numbers: a Joint carries its links, which carry their joints, and
+  // that does not cross the page boundary.
+  const ends = await page.evaluate(() => {
+    const grid = ng.getComponent(document.querySelector('app-new-grid'));
+    const joints = grid.mechanismSrv.forces[0].link.joints;
+    const first = joints[0];
+    const last = joints[joints.length - 1];
+    return { x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 };
+  });
+  const middle = await toScreen(ends.x, ends.y);
+  await page.mouse.move(tail.x, tail.y);
+  await page.mouse.down();
+  await page.mouse.move(middle.x, middle.y, { steps: 16 });
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+
+  const dragged = await force();
+  record(
+    `${template}: the load's tail can be dragged along its link`,
+    dragged.start[0] !== held.start[0] || dragged.start[1] !== held.start[1],
+    { held, dragged }
+  );
+  // The tail alone: the head is the direction, and it stays where it was put.
+  record(
+    `${template}: and the head stays where it was`,
+    dragged.end[0] === held.end[0] && dragged.end[1] === held.end[1],
+    {
+      held,
+      dragged,
+    }
+  );
+}
 
 record('nothing threw', errors.length === 0, errors.slice(0, 2));
 await browser.close();

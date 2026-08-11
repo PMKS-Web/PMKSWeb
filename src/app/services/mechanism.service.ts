@@ -2296,18 +2296,19 @@ export class MechanismService {
     // the service, so it has to be current by the time they are notified.
     this.mechanismTimeStep = progress;
     this.onMechPositionChange.next(progress);
-    // Tracer paths are hidden only when the mechanism is *parked* at its start
-    // pose: nothing has been traced yet, so a path there would be a claim about
-    // motion that has not happened.
+    // Paths are drawn whenever there is a solved cycle to draw them from,
+    // including at rest.
     //
-    // `animationState` is an instruction to start or stop, and omitting it means
-    // "leave that alone" — not "stopped". Read as a stop, it hid the paths on
-    // every frame the playback loop happened to land on step 0, which is once
-    // per cycle, every cycle: the traces blinked out at the wrap and at the far
-    // end of a reversing machine's out-and-back. The playback loop is exactly
-    // the caller that omits it.
-    const playing = animationState ?? AnimationBarComponent.animate;
-    this.showPathHolder = !(this.mechanismTimeStep === 0 && !playing);
+    // They used to be hidden while the mechanism was parked at its start pose,
+    // on the grounds that nothing had been traced yet. That reasoning belonged
+    // to a time when every joint traced by default: the path was a by-product,
+    // so showing one before anything had moved was a claim about motion that
+    // had not happened. A path is asked for a joint at a time now, and the
+    // whole cycle is precomputed the moment the mechanism is valid — so the
+    // answer to "show me where this joint goes" is available immediately, and
+    // hiding it until the user presses play is hiding the thing they just
+    // switched on.
+    this.showPathHolder = this.oneValidMechanismExists();
     if (animationState !== undefined) {
       AnimationBarComponent.animate = animationState;
     }

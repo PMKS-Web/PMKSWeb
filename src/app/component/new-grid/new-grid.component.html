@@ -1010,40 +1010,28 @@
       (pointerover)="force.showHighlight = true"
       (pointerout)="force.showHighlight = false"
     >
-      <!-- A ring where the anchor sits on a tracer point, drawn open so the
-           joint underneath still reads: without it the arrow's own disc covers
-           the joint completely and the two look like one object. -->
-      @if (forceSnappedJoint(force); as snapped) {
-        <circle
-          [attr.cx]="snapped.x"
-          [attr.cy]="snapped.y"
-          [attr.r]="0.26 * settings.objectScale"
-          fill="none"
-          [attr.stroke]="force.fill"
-          [attr.stroke-width]="0.035 * settings.objectScale"
-          pointer-events="none"
-        ></circle>
-      }
       <g [attr.id]="force.id">
         <svg
           [attr.x]="force.startCoord.x"
           [attr.y]="force.startCoord.y"
           style="pointer-events: none; overflow: visible"
         >
-          <!-- Hidden where the ring above has taken over, so the joint it is
-               sitting on is not painted out by the force's own disc. -->
-          @if (!force.local && !forceSnappedJoint(force)) {
-            <circle [attr.r]="settings.objectScale * 0.15" class="forceAnchor"></circle>
+          <!-- Global: a disc, small enough that a joint it is sitting on still
+               reads around it. At the old 0.15 object scales it was the same
+               size as the joint and covered it exactly. -->
+          @if (!force.local) {
+            <circle [attr.r]="settings.objectScale * 0.075" class="forceAnchor"></circle>
           }
-          @if (force.local && !forceSnappedJoint(force)) {
-            <rect
-              [attr.width]="settings.objectScale * 0.25"
-              [attr.height]="settings.objectScale * 0.25"
-              [attr.x]="settings.objectScale * -0.125"
-              [attr.y]="settings.objectScale * -0.125"
+          <!-- Local: the welded joint's own plus. A local force is carried by
+               the body rather than fixed in the world, which is the statement a
+               weld makes about a joint — so it is that mark, from that geometry,
+               and the two cannot drift apart. -->
+          @if (force.local) {
+            <path
+              [attr.d]="weldMarkerPath"
               class="forceAnchor"
-              style="transform: rotateZ({{ force.angleRad + 0.785 }}rad)"
-            ></rect>
+              style="transform: rotateZ({{ force.angleRad }}rad)"
+            ></path>
           }
         </svg>
         <!-- Transpent thicker force to increase hitbox for the group for highliting-->
@@ -1236,6 +1224,21 @@
       </svg>
     }
   </g>
+  <!-- The bar being drawn. Same capsule, same half-width as the link it will
+       become, so the preview is the part rather than a line suggesting one. -->
+  @if (linkPreview; as preview) {
+    <g style="pointer-events: none; transform: scaleY(-1)" opacity="0.5">
+      <path [attr.d]="preview.bar" class="link-default"></path>
+      <circle
+        [attr.cx]="preview.from.x"
+        [attr.cy]="preview.from.y"
+        [attr.r]="0.15 * settings.objectScale"
+        fill="#fdfbe8"
+        stroke="black"
+        [attr.stroke-width]="0.02 * settings.objectScale"
+      ></circle>
+    </g>
+  }
   <g id="jointTempHolder" style="display: none; transform: scaleY(-1)">
     <line
       stroke="black"

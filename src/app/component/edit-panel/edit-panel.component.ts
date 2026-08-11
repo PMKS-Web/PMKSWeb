@@ -1440,7 +1440,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
         distanceBetweenPoints
       );
 
-      this.gridUtils.dragForce(this.activeSrv.selectedForce, endCoordLocation, false);
+      this.gridUtils.dragForce(this.activeSrv.selectedForce, endCoordLocation, 'direction');
     }
   }
 
@@ -1449,7 +1449,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       const endX = this.activeSrv.selectedForce.startCoord.x + this.activeSrv.selectedForce.xComp;
       const endY = this.activeSrv.selectedForce.startCoord.y + this.activeSrv.selectedForce.yComp;
 
-      this.gridUtils.dragForce(this.activeSrv.selectedForce, new Coord(endX, endY), false);
+      this.gridUtils.dragForce(this.activeSrv.selectedForce, new Coord(endX, endY), 'direction');
     }
   }
 

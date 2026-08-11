@@ -2,7 +2,11 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
-import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import {
+  buildMechanism,
+  MechanismFixture,
+  buildMechanismAtScale,
+} from '../../test-utils/verification/fixture';
 import { cylinderBetween, cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
@@ -84,8 +88,7 @@ function sampleMotion(): { samples: Sample[]; period: number; frames: number } {
   // Pinned: objectScale is a process-wide static and the cylinder's stroke is
   // measured against it, so the travel would otherwise depend on which spec
   // file ran last.
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism } = buildMechanism(boomFixture());
+  const { mechanism } = buildMechanismAtScale(boomFixture(), 1 * MODEL_SCALE);
   const samples = mechanism.joints.map((frame) => {
     const at = (id: string): Joint => frame.find((joint) => joint.id === id)!;
     const [o, c, g, n, p] = ['O', 'C', 'G', 'N', 'P'].map(at);

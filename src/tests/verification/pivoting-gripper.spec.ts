@@ -2,7 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { pivotingGripperFixture } from '../../test-utils/verification/slot-fixtures';
 import { solveKinematics } from '../../test-utils/verification/solve';
 import { MODEL_SCALE } from '../../app/model/render-scale';
@@ -13,8 +13,7 @@ import { SettingsService } from '../../app/services/settings.service';
 // about the mechanism rather than about grippers.
 
 describe('a gripper with no redundant constraint', () => {
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const built = buildMechanism(pivotingGripperFixture(MODEL_SCALE));
+  const built = buildMechanismAtScale(pivotingGripperFixture(MODEL_SCALE), 1 * MODEL_SCALE);
   const { mechanism } = built;
   const at = (t: number, id: string): Joint => mechanism.joints[t].find((j) => j.id === id)!;
   const gap = (t: number) =>

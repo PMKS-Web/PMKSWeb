@@ -75,6 +75,24 @@ export class Force {
     this.refreshVisuals();
   }
 
+  /**
+   * Move only where the force is applied, leaving its tip where it was.
+   *
+   * The tail is the point the load acts at, and the head is the direction it
+   * acts in; dragging the tail used to carry the head with it, which meant the
+   * one handle that names the application point could not change it without
+   * also changing nothing else. Whole-force moves are what grabbing the arrow
+   * is for.
+   */
+  moveApplicationPoint(coord: Coord) {
+    this.startCoord.x = coord.x;
+    this.startCoord.y = coord.y;
+    if (this.handleLength() > 0) {
+      this._angleRad = this.updateAngle(this.startCoord, this.endCoord);
+    }
+    this.refreshVisuals();
+  }
+
   /** Move the visual direction handle while preserving physical magnitude. */
   moveDirectionHandle(coord: Coord) {
     this.endCoord.x = coord.x;

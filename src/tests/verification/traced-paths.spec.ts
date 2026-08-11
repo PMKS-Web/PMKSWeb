@@ -37,9 +37,14 @@ describe('the traced path of a joint', () => {
     AnimationBarComponent.animate = wasAnimating;
   });
 
-  it('is hidden while the mechanism is parked at its start pose', () => {
+  it('is drawn while the mechanism is parked at its start pose', () => {
+    // It used to be hidden here, on the grounds that nothing had been traced
+    // yet. That belonged to a time when every joint traced by default and the
+    // path was a by-product; a path is asked for a joint at a time now, and the
+    // whole cycle is precomputed the moment the mechanism is valid — so hiding
+    // it until the user presses play hides the thing they just switched on.
     mechanism.animate(0, false);
-    expect(mechanism.showPathHolder).toBe(false);
+    expect(mechanism.showPathHolder).toBe(true);
   });
 
   it('stays drawn through the wrap, which is where it used to blink out', () => {

@@ -31,6 +31,7 @@ import {
   AngleUnit,
   radToDeg,
   GlobalUnit,
+  point_on_line_segment_closest_to_point,
 } from '../../model/utils';
 import { Force } from '../../model/force';
 import { PositionSolver } from '../../model/mechanism/position-solver';
@@ -813,6 +814,38 @@ export class NewGridComponent {
   /** The force being drawn, tracking the cursor. Undefined when not drawing. */
   forceGhost?: Force;
 
+  /**
+   * The bar being drawn, tracking the cursor.
+   *
+   * Link creation showed a hairline and a dot, which says where the gesture
+   * started and where it will end and nothing about what it will make — the
+   * cylinder and force gestures both preview the part itself. This is the same
+   * capsule a two-joint link is drawn as, at the same half-width, so what is
+   * under the cursor is the bar the click commits.
+   */
+  /** Where the link gesture started, in model coordinates. */
+  private linkCreateStart?: Coord;
+
+  get linkPreview(): { bar: string; from: Coord } | undefined {
+    const from = this.linkCreateStart;
+    if (!this.dragState.isCreatingLink || !from) return undefined;
+    const to = this.mouseLocation;
+    const half = this.settings.objectScale / 4;
+    const span = Math.hypot(to.x - from.x, to.y - from.y);
+    // Nothing to point along yet: the first pixel of the gesture would spin a
+    // zero-length bar through every angle at once.
+    if (span < 1e-6) return undefined;
+    return {
+      bar: orientedCapsulePath(
+        { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 },
+        Math.atan2(to.y - from.y, to.x - from.x),
+        span / 2,
+        half
+      ),
+      from,
+    };
+  }
+
   /** Where inside the arrow a body drag picked it up, so it does not jump. */
   private forceGrabOffset = new Coord(0, 0);
 
@@ -830,7 +863,7 @@ export class NewGridComponent {
    * several meet — a force there does not say which body it acts on. Anywhere
    * else it has to be inside the bar.
    */
-  private moveForceAnchor(wanted: Coord): void {
+  private moveForceAnchor(wanted: Coord, how: 'anchor' | 'whole'): void {
     const force = this.activeObjService.selectedForce;
     // The force's own link, not whatever the panel last selected: a force knows
     // what it acts on, and the two can disagree after a click on the body.
@@ -844,25 +877,50 @@ export class NewGridComponent {
       return;
     }
     if (anchor.snappedTo || this.pointIsInsideLink(link, anchor.at)) {
-      this.gridUtils.dragForce(force, anchor.at, true);
+      this.gridUtils.dragForce(force, anchor.at, how);
     }
     // So that the panel values update continuously.
     this.activeObjService.fakeUpdateSelectedObj();
     this.dragState.noteMechanismModified();
   }
 
-  /** Whether a point lands on the drawn body of a link. */
+  /**
+   * Whether a point lands on the body of a link.
+   *
+   * Asked of the model rather than of the drawing. It used to hit-test the
+   * link's own SVG path, which fails silently in a way that is very hard to see:
+   * a link whose element carries an empty `d` — the punch press's rod is one —
+   * answers "not inside" for every point in it, so its force could not be moved
+   * anywhere at all while three other templates worked fine.
+   *
+   * A two-joint bar is a special case rather than an exception. Its hull is a
+   * line segment, so no point off that line is ever "inside" it — and the
+   * anchor of a force on such a bar has already been projected onto the segment
+   * by `dragForce`, which is what makes it a bar's whole reachable set.
+   */
   private pointIsInsideLink(link: RealLink, point: Coord): boolean {
-    const drawn = document.getElementById(link.id) as unknown as SVGGeometryElement | null;
-    if (!drawn) return false;
-    if (drawn.isPointInFill) {
-      const scratch = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      const svgPoint = scratch.createSVGPoint();
-      svgPoint.x = point.x;
-      svgPoint.y = point.y;
-      return drawn.isPointInFill(svgPoint);
+    const half = this.settings.objectScale / 4;
+    const joints = link.joints;
+    if (joints.length < 2) return false;
+    // Within a bar's own width of the line between any two of its joints. This
+    // is what a link is drawn as, so it covers the straight ones — including
+    // the three-joint booms, whose joints are collinear and whose hull is
+    // therefore a line with no inside at all.
+    for (let first = 0; first < joints.length; first++) {
+      for (let second = first + 1; second < joints.length; second++) {
+        const [x, y] = point_on_line_segment_closest_to_point(
+          point.x,
+          point.y,
+          joints[first].x,
+          joints[first].y,
+          joints[second].x,
+          joints[second].y
+        );
+        if (Math.hypot(point.x - x, point.y - y) <= half) return true;
+      }
     }
-    return isInside([point.x, point.y], drawn.getAttribute('d'));
+    // And anywhere in the middle of a plate, which the edges above do not cover.
+    return link.isPointInsideHull(point.x, point.y);
   }
 
   /**
@@ -915,6 +973,7 @@ export class NewGridComponent {
     // // TODO: Within future, create a tempJoint and temp Link and set those values as these values in order to avoid
     // // TODO: having to call setAttribute and have HTML update for you automatically
     // console.log(startCoord);
+    this.linkCreateStart = startCoord;
     this.jointTempHolderSVG.children[0].setAttribute('x1', startCoord.x.toString());
     this.jointTempHolderSVG.children[0].setAttribute('y1', startCoord.y.toString());
     this.jointTempHolderSVG.children[1].setAttribute('x', startCoord.x.toString());
@@ -1081,7 +1140,7 @@ export class NewGridComponent {
           return;
         }
         //The 3rd params could be this.selectedFroceEndPoint == 'startPoint'
-        this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, false);
+        this.gridUtils.dragForce(this.activeObjService.selectedForce, mousePosInSvg, 'direction');
         //So that the panel values update continously
         this.activeObjService.fakeUpdateSelectedObj();
         this.dragState.noteMechanismModified();
@@ -1090,7 +1149,7 @@ export class NewGridComponent {
         if (!this.canEditNow()) {
           return;
         }
-        this.moveForceAnchor(mousePosInSvg);
+        this.moveForceAnchor(mousePosInSvg, 'anchor');
         break;
       // Grabbing the arrow itself carries the whole force. `moveAnchor` already
       // translates both ends, so this is the same move as dragging the start —
@@ -1103,7 +1162,8 @@ export class NewGridComponent {
           new Coord(
             mousePosInSvg.x - this.forceGrabOffset.x,
             mousePosInSvg.y - this.forceGrabOffset.y
-          )
+          ),
+          'whole'
         );
         break;
     }
@@ -1588,6 +1648,7 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromJoint:
                 joint2 = this.mechanismSrv.createRevJoint(
@@ -1608,6 +1669,7 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromLink:
                 // console.warn('reset position');
@@ -1662,6 +1724,7 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
               case gridStates.createForce:
                 const startCoord = this.svgGrid.screenToSVG(this.lastRightClickCoord);
@@ -1705,6 +1768,7 @@ export class NewGridComponent {
                 // PositionSolver.setUpSolvingForces(link.forces); // needed to determine force location when dragging a joint
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromJoint:
                 // joint2 = this.createRevJoint(
@@ -1728,6 +1792,7 @@ export class NewGridComponent {
                 if (commonLinkCheck) {
                   this.dragState.finishCreating();
                   this.jointTempHolderSVG.style.display = 'none';
+                  this.linkCreateStart = undefined;
                   this.sendNotification('Those two joints are already on one link.');
                   return;
                 }
@@ -1744,6 +1809,7 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
               case gridStates.createJointFromLink:
                 // TODO: set context Link as a part of joint 1 or joint 2
@@ -1781,6 +1847,7 @@ export class NewGridComponent {
                 this.mechanismSrv.updateMechanism(true);
                 this.dragState.finishCreating();
                 this.jointTempHolderSVG.style.display = 'none';
+                this.linkCreateStart = undefined;
                 break;
             }
             switch (this.dragState.joint) {
@@ -1797,6 +1864,7 @@ export class NewGridComponent {
               );
               this.dragState.cancel();
               this.jointTempHolderSVG.style.display = 'none';
+              this.linkCreateStart = undefined;
               break;
             }
             if (this.dragState.link === linkStates.waiting) {
@@ -1822,6 +1890,7 @@ export class NewGridComponent {
           case 'JointTemp':
             this.dragState.cancel();
             this.jointTempHolderSVG.style.display = 'none';
+            this.linkCreateStart = undefined;
             this.sendNotification('A link needs two different joints.');
         }
         break;
@@ -1830,11 +1899,13 @@ export class NewGridComponent {
         this.dragState.cancel();
         this.cylinderCreateStart = undefined;
         this.jointTempHolderSVG.style.display = 'none';
+        this.linkCreateStart = undefined;
         return;
       case 2: // Right-Click
         this.dragState.cancel();
         this.cylinderCreateStart = undefined;
         this.jointTempHolderSVG.style.display = 'none';
+        this.linkCreateStart = undefined;
         break;
     }
   }

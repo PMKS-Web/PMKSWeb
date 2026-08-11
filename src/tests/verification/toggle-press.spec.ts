@@ -2,7 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { TOGGLE, togglePressFixture } from '../../test-utils/verification/library-fixtures';
 import { sealedCylinders } from '../../app/model/cylinder';
@@ -43,8 +43,7 @@ interface Sample {
 
 function sampleMotion(): { samples: Sample[]; cylinders: number; frames: number } {
   // Pinned: a ram's stroke is measured against the process-wide objectScale.
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism } = buildMechanism(togglePressFixture(S));
+  const { mechanism } = buildMechanismAtScale(togglePressFixture(S), 1 * MODEL_SCALE);
   const samples = mechanism.joints.map((frame) => {
     const at = (id: string): Joint => frame.find((joint) => joint.id === id)!;
     const [a, b, c, d, g, r] = ['A', 'B', 'C', 'D', 'G', 'R'].map(at);

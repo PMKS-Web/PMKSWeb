@@ -2,7 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { RATE_TOLERANCE, velocityAgreesWithPositions } from '../../test-utils/verification/rates';
 import { BUCKET, excavatorBucketFixture } from '../../test-utils/verification/library-fixtures';
 import { turningPoints } from '../../test-utils/verification/compare';
@@ -53,8 +53,7 @@ function sampleMotion(): { samples: Sample[]; cylinders: number; frames: number 
   // objectScale is a process-wide static and a ram's stroke is measured
   // against it, so an unpinned run would travel however far the last spec left
   // it free to.
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism } = buildMechanism(excavatorBucketFixture(S));
+  const { mechanism } = buildMechanismAtScale(excavatorBucketFixture(S), 1 * MODEL_SCALE);
   const samples = mechanism.joints.map((frame) => {
     const at = (id: string): Joint => frame.find((joint) => joint.id === id)!;
     const [a, b, c, d, g, h, j, k, t] = ['A', 'B', 'C', 'D', 'G', 'H', 'J', 'K', 'T'].map(at);

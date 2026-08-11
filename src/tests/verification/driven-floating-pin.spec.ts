@@ -3,7 +3,7 @@
 import '../../app/model/joint';
 import { Joint, RevJoint } from '../../app/model/joint';
 import { RealLink } from '../../app/model/link';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { fourBarDrivenAtFixture } from '../../test-utils/verification/fixtures';
 import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
@@ -185,8 +185,7 @@ describe('what a driven joint names', () => {
     // would come back unsolvable without ever saying why.
     // objectScale is a process-wide static and a cylinder's stroke is measured
     // against it, so pin it: otherwise the travel depends on file order.
-    SettingsService._objectScale.next(1 * MODEL_SCALE);
-    const { joints } = buildMechanism(cylinderBoomFixture(MODEL_SCALE));
+    const { joints } = buildMechanismAtScale(cylinderBoomFixture(MODEL_SCALE), 1 * MODEL_SCALE);
     const weldedPin = joints.find((joint) => joint.id === 'P')! as RevJoint;
     expect(weldedPin.isWelded).toBe(true);
     expect(incidentBodies(weldedPin).length).toBe(2);

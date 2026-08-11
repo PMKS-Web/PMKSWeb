@@ -725,26 +725,41 @@ export class GridUtilsService {
     return { at: point };
   }
 
-  dragForce(selectedForce: Force, trueCoord: Coord, isStartSelected: boolean) {
-    if (isStartSelected) {
-      if (selectedForce.link.joints.length !== 2) {
-        selectedForce.moveAnchor(trueCoord);
-      } else {
-        const joint1 = selectedForce.link.joints[0];
-        const joint2 = selectedForce.link.joints[1];
-        const [x, y] = point_on_line_segment_closest_to_point(
-          trueCoord.x,
-          trueCoord.y,
-          joint1.x,
-          joint1.y,
-          joint2.x,
-          joint2.y
-        );
-        selectedForce.moveAnchor(new Coord(x, y));
-      }
-    } else {
+  /**
+   * Move a force under a drag.
+   *
+   * `how` says which of the three things the gesture is: the tail alone (the
+   * point the load acts at), the whole arrow, or the head (its direction).
+   */
+  /**
+   * Move a force under a drag.
+   *
+   * `how` names which of the three things the gesture is: the tail alone (the
+   * point the load acts at, leaving the arrow pointing where it did *from* the
+   * new point), the whole arrow, or the head (its direction).
+   */
+  dragForce(selectedForce: Force, trueCoord: Coord, how: 'anchor' | 'whole' | 'direction') {
+    if (how === 'direction') {
       selectedForce.moveDirectionHandle(trueCoord);
+      return selectedForce;
     }
+    // On a plain two-joint bar the anchor is held to the line between them, so
+    // a load cannot end up floating beside the link it is applied to.
+    let at = trueCoord;
+    if (selectedForce.link.joints.length === 2) {
+      const [first, second] = selectedForce.link.joints;
+      const [x, y] = point_on_line_segment_closest_to_point(
+        trueCoord.x,
+        trueCoord.y,
+        first.x,
+        first.y,
+        second.x,
+        second.y
+      );
+      at = new Coord(x, y);
+    }
+    if (how === 'whole') selectedForce.moveAnchor(at);
+    else selectedForce.moveApplicationPoint(at);
     return selectedForce;
   }
 

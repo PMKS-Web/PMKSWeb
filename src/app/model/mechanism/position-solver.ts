@@ -29,6 +29,8 @@ import {
   solveSimultaneous,
 } from './simultaneous-solver';
 import { angleReference, resolveActuator } from '../actuator';
+import { MARK } from '../joint-marks';
+import { SettingsService } from '../../services/settings.service';
 
 /**
  * How far a driven prismatic input advances along its slot per solved sample,
@@ -2340,6 +2342,26 @@ export class PositionSolver {
    *     past the buried joint the slot is measured from.
    */
   private static ridersAreInTheirSlots(joints: Joint[]): boolean {
+    /**
+     * How far from the channel's midpoint a block's pin may get.
+     *
+     * The channel is inset from the joints that define it, and its ends are
+     * round: the cap centre is the last place a pin can sit with the block
+     * still wholly inside the slot, so that is the limit.
+     *
+     * The inset is an absolute number of joint radii, which only means
+     * something when the mechanism is in the same units the drawing is. A
+     * fixture built at user scale has a radius larger than the whole linkage,
+     * and there the inset says the channel has no length at all — which is a
+     * statement about the scale rather than about the geometry. So when it
+     * comes out non-positive the limit falls back to the joints themselves,
+     * which is scale-free and is where the bound sat before it was narrowed.
+     */
+    const slotReach = (separation: number): number => {
+      const inset = separation / 2 - MARK.slotInset * 0.15 * SettingsService.objectScale;
+      return inset > 0 ? inset : separation / 2;
+    };
+
     for (const joint of joints) {
       if (!(joint instanceof PrisJoint)) continue;
       if (joint.isSealed || !joint.isFloating) continue;
@@ -2352,10 +2374,18 @@ export class PositionSolver {
       if (!from || !to || !at) continue;
       const dx = to[0] - from[0];
       const dy = to[1] - from[1];
-      const lengthSquared = dx * dx + dy * dy;
-      if (!(lengthSquared > 0)) continue;
-      const along = ((at[0] - from[0]) * dx + (at[1] - from[1]) * dy) / lengthSquared;
-      if (along < -SLOT_END_TOLERANCE || along > 1 + SLOT_END_TOLERANCE) {
+      const separation = Math.hypot(dx, dy);
+      if (!(separation > 0)) continue;
+      // Measured from the channel's midpoint, and bounded by the channel's own
+      // half-length — which is where its rounded end cap is centred. So a block
+      // stops with its pin concentric with that arc: the last pose in which the
+      // block is fully inside the slot rather than hanging out of the end of it.
+      // Asking the drawing's own function is what keeps the limit and the
+      // picture from being two different numbers.
+      const midX = (from[0] + to[0]) / 2;
+      const midY = (from[1] + to[1]) / 2;
+      const along = ((at[0] - midX) * dx + (at[1] - midY) * dy) / separation;
+      if (Math.abs(along) > slotReach(separation) + SLOT_END_TOLERANCE * separation) {
         return false;
       }
     }

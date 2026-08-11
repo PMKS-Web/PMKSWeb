@@ -3,7 +3,11 @@
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
 import { KinematicsSolver } from '../../app/model/mechanism/kinematic-solver';
-import { buildMechanism, MechanismFixture } from '../../test-utils/verification/fixture';
+import {
+  buildMechanism,
+  MechanismFixture,
+  buildMechanismAtScale,
+} from '../../test-utils/verification/fixture';
 import { cylinderBoomFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
@@ -43,8 +47,7 @@ interface Sample {
 }
 
 function sampled(): Sample[] {
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism } = buildMechanism(boom());
+  const { mechanism } = buildMechanismAtScale(boom(), 1 * MODEL_SCALE);
   const out: Sample[] = [];
   KinematicsSolver.resetVariables();
   KinematicsSolver.requiredLoops = mechanism.requiredLoops;

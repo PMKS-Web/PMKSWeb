@@ -71,12 +71,19 @@ const state = () =>
 
 const before = await state();
 
-// A point actually ON the coupler: a bounding-box centre lands off a diagonal bar.
+// A point actually ON the coupler, taken from the *model*: midway between two
+// of the link's own joints is inside the bar whatever width it is drawn at.
+// Sampling a point along the drawn outline instead was fragile — it sits on the
+// edge rather than in the body, and the templates opening at 0.7 object scale
+// made the bars thin enough for that to start missing.
 const on = await page.evaluate(() => {
-  const path = document.querySelector('#linkHolder path.link-default');
-  const point = path.getPointAtLength(path.getTotalLength() * 0.35);
-  const m = path.getScreenCTM();
-  return { x: point.x * m.a + point.y * m.c + m.e, y: point.x * m.b + point.y * m.d + m.f };
+  const grid = ng.getComponent(document.querySelector('app-new-grid'));
+  const link = grid.mechanismSrv.links.find((candidate) => candidate.joints.length >= 2);
+  const [first, second] = link.joints;
+  const x = (first.x + second.x) / 2;
+  const y = (first.y + second.y) / 2;
+  const m = document.querySelector('#linkHolder').getScreenCTM();
+  return { x: x * m.a + y * m.c + m.e, y: x * m.b + y * m.d + m.f };
 });
 await page.mouse.move(on.x, on.y);
 await page.mouse.click(on.x, on.y, { button: 'right' });

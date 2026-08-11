@@ -2,7 +2,7 @@
 // initializes cleanly when entered here (see test-utils/verification/fixture.ts).
 import '../../app/model/joint';
 import { Joint } from '../../app/model/joint';
-import { buildMechanism } from '../../test-utils/verification/fixture';
+import { buildMechanism, buildMechanismAtScale } from '../../test-utils/verification/fixture';
 import { pinchingGripperFixture } from '../../test-utils/verification/slot-fixtures';
 import { MODEL_SCALE } from '../../app/model/render-scale';
 import { SettingsService } from '../../app/services/settings.service';
@@ -29,8 +29,7 @@ interface Sample {
 function motion(): Sample[] {
   // objectScale is process-wide and the cylinder's stroke is measured against
   // it; pinned so the travel does not depend on the order of the run.
-  SettingsService._objectScale.next(1 * MODEL_SCALE);
-  const { mechanism } = buildMechanism(pinchingGripperFixture(S));
+  const { mechanism } = buildMechanismAtScale(pinchingGripperFixture(S), 1 * MODEL_SCALE);
   return mechanism.joints.map((frame) => {
     const at = (id: string): Joint => frame.find((joint) => joint.id === id)!;
     const [a, d, i, l] = ['A', 'D', 'I', 'L'].map(at);

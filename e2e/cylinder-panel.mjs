@@ -133,8 +133,12 @@ const checks = [
   ],
   [
     'one panel edit is one undo step',
+    // 2.73 is this ram's travel at the 0.7 object scale the templates open at.
+    // A cylinder's stroke is measured against that scale — the head is drawn in
+    // multiples of a joint radius — so the number here moves whenever the scale
+    // does. It read 2.67 when they opened at 1.
     out.beforeUndo.travel === '2.00 cm' &&
-      out.afterUndo.travel === '2.67 cm' &&
+      out.afterUndo.travel === '2.73 cm' &&
       out.afterUndo.stillThere,
   ],
   ['nothing threw', errs.length === 0],
