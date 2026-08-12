@@ -598,6 +598,23 @@ export function boundaryJoints(system: SimultaneousSystem): string[] {
       case 'drivenAngle':
         note(c.pivot, c.reference, c.driven);
         break;
+      // Two rows in a body's own frame, and its two anchors can both be joints
+      // an earlier step already placed — a body reached at its third joint.
+      // No distance row is written between two known anchors, so if this case
+      // is missing nothing else names them, and a boundary-driven solve then
+      // interpolates a boundary that does not include the joints its own
+      // constraints are reading.
+      case 'rigidOffset':
+        note(c.point, c.from, c.to);
+        break;
+      default: {
+        // Every kind, or the compiler says so. This function exists to stop a
+        // new constraint acquiring a reference nothing knows to follow, and it
+        // only does that if forgetting one is an error rather than a silence —
+        // which is exactly how `rigidOffset` came to be missing from it.
+        const unhandled: never = c;
+        throw new Error(`boundaryJoints has no case for ${(unhandled as Constraint).kind}`);
+      }
     }
   }
   return [...found];

@@ -331,6 +331,45 @@ const handles = await page.evaluate(() => ({
 }));
 record('the selector ends are circles', handles.circles === 2 && handles.rects === 0, handles);
 
+// ---------------------------------------------------------------------------
+// A drag that moves nothing is not an edit.
+//
+// The anchor is refused off its own link, so the gesture can end with the force
+// exactly where it began — and crediting it anyway put an identical URL on the
+// undo stack. Undo then looked broken: it was enabled, and pressing it changed
+// nothing, because there was nothing between the two states to see.
+// ---------------------------------------------------------------------------
+
+await page.goto(`${BASE}/?${payloads['Derrick_Crane']}`, { waitUntil: 'domcontentloaded' });
+await waitForReady(page);
+
+const undoEnabled = () =>
+  page.evaluate(() => {
+    const undo = [...document.querySelectorAll('button')].find((n) => /Undo/.test(n.textContent));
+    return undo ? !undo.disabled : null;
+  });
+record('nothing is on the undo stack yet', (await undoEnabled()) === false);
+
+const restingForce = await force();
+const restingMid = await toScreen(
+  (restingForce.start[0] + restingForce.end[0]) / 2,
+  (restingForce.start[1] + restingForce.end[1]) / 2
+);
+await page.mouse.move(restingMid.x, restingMid.y);
+await page.mouse.down();
+// Well off the boom, where the anchor may not go.
+await page.mouse.move(restingMid.x + 380, restingMid.y + 120, { steps: 14 });
+await page.mouse.up();
+await page.waitForTimeout(700);
+
+const unmoved = await force();
+record(
+  'a drag off the link leaves the force where it was',
+  unmoved.start[0] === restingForce.start[0] && unmoved.start[1] === restingForce.start[1],
+  { restingForce, unmoved }
+);
+record('and does not arm Undo', (await undoEnabled()) === false);
+
 record('nothing threw', errors.length === 0, errors.slice(0, 2));
 await browser.close();
 process.exit(results.every(([, ok]) => ok) ? 0 : 1);

@@ -942,9 +942,14 @@ export class NewGridComponent implements OnDestroy {
       );
       return;
     }
-    if (anchor.snappedTo || this.pointIsInsideLink(link, anchor.at)) {
-      this.gridUtils.dragForce(force, anchor.at, how);
+    if (!anchor.snappedTo && !this.pointIsInsideLink(link, anchor.at)) {
+      // Nothing moved, so nothing happened. Crediting the gesture anyway put an
+      // identical URL on the undo stack: dragging the arrow off its own link
+      // armed Undo, and pressing it appeared to do nothing because there was
+      // nothing between the two states to see.
+      return;
     }
+    this.gridUtils.dragForce(force, anchor.at, how);
     // So that the panel values update continuously.
     this.activeObjService.fakeUpdateSelectedObj();
     this.dragState.noteMechanismModified();
