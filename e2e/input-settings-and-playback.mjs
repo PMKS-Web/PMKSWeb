@@ -32,22 +32,6 @@ page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
 await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
 
-// The first-run tour overlay swallows clicks until it is dismissed.
-if (
-  await page
-    .locator('.introjs-tooltip, .introjs-overlay')
-    .first()
-    .isVisible()
-    .catch(() => false)
-) {
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(async () => page.keyboard.press('Escape'));
-  await page.waitForTimeout(600);
-}
-
 await page.waitForTimeout(800);
 await page.screenshot({ path: `${OUT}/01-loaded.png` });
 

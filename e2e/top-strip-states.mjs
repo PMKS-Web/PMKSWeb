@@ -102,12 +102,6 @@ for (const [what, payload] of DRAWINGS) {
     page.on('pageerror', (error) => errors.push(String(error)));
     await page.goto(`${BASE}/${payload ? '?' + payload : ''}`, { waitUntil: 'domcontentloaded' });
     await waitForReady(page).catch(() => undefined);
-    // The tour runs on a first visit and is not what this is measuring.
-    await page.evaluate(() =>
-      document
-        .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-        .forEach((node) => node.remove())
-    );
     for (const mode of ['Synthesis', 'Edit', 'Kinematic', 'Force']) {
       await page
         .locator('.tabButton', { hasText: mode })

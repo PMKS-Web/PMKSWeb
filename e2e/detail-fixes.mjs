@@ -51,11 +51,6 @@ page.on('pageerror', (error) => errors.push(String(error)));
 const load = async (payload) => {
   await page.goto(`${BASE}/${payload ? '?' + payload : ''}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page).catch(() => undefined);
-  await page.evaluate(() =>
-    document
-      .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-      .forEach((node) => node.remove())
-  );
   await page.waitForTimeout(500);
 };
 

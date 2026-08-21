@@ -35,7 +35,6 @@ mkdirSync(OUT, { recursive: true });
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
 // Dismiss the intro tour if it came up.
-await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
 await page.waitForTimeout(300);
 
 /** The model joints, read straight out of the running app (dev-mode ng). */

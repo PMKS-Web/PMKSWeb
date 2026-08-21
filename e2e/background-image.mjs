@@ -31,14 +31,6 @@ const record = (what, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${what}${ok ? '' : ' — ' + JSON.stringify(detail)}`);
 };
 
-const closeTour = async () => {
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) {
-    await skip.click({ force: true });
-    await page.waitForTimeout(300);
-  }
-};
-
 const image = () =>
   page.evaluate(() => {
     const el = document.querySelector('#backgroundImageHolder image');
@@ -107,7 +99,6 @@ const pngBuffer = async () => {
 
 await page.goto(`${BASE}/?${FOUR_BAR}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await waitForReady(page);
-await closeTour();
 await page.waitForTimeout(400);
 
 const emptyGrid = { x: 1150, y: 720 };

@@ -34,21 +34,6 @@ async function shot(page, name) {
   await page.screenshot({ path: path.join(screenshotDir, `${runPrefix}-${name}`) });
 }
 
-async function dismissIntro(page) {
-  const visible = await page
-    .locator('.introjs-tooltip, .introjs-overlay')
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) return;
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(async () => page.keyboard.press('Escape'));
-  await page.waitForTimeout(350);
-}
-
 async function jointState(page) {
   return await page.evaluate(() =>
     [...document.querySelectorAll('#jointHolder > svg')]
@@ -77,7 +62,6 @@ page.on('pageerror', (error) => consoleErrors.push(String(error)));
 try {
   await page.goto(baseUrl + '?' + INVERTED_SLIDER_CRANK, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
-  await dismissIntro(page);
 
   const joints = await jointState(page);
   record('the floating-slot URL decodes into all five joints', joints.length === 5, {

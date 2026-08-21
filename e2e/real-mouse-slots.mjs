@@ -158,7 +158,6 @@ async function fresh() {
   await waitForReady(page);
   await pause(1200);
   await page.evaluate(() => {
-    document.querySelector('.introjs-skipbutton')?.click();
     [...document.querySelectorAll('button, span, div')]
       .find((n) => n.textContent.trim() === '×')
       ?.click();
@@ -275,7 +274,6 @@ for (const [tag, name] of FROM_GALLERY) {
   await page.goto(BASE + '/' + query, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
   await pause(1100);
-  await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
   await pause(300);
   m = await model();
   checkThat(`${tag}: opens valid at DOF 1`, m.valid && m.dof === 1, JSON.stringify(m));

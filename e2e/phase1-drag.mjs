@@ -67,21 +67,6 @@ async function flushReport() {
   );
 }
 
-async function dismissIntro(page) {
-  const visible = await page
-    .locator('.introjs-tooltip, .introjs-overlay')
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) return;
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(async () => page.keyboard.press('Escape'));
-  await page.waitForTimeout(350);
-}
-
 /**
  * Joint ids with both their model coordinates (the `x`/`y` attributes on the
  * wrapper svg are joint.x/joint.y) and their screen centres, so a drag can aim
@@ -165,14 +150,12 @@ async function dragBy(page, from, to, { steps = 12, holdBeforeRelease = 0 } = {}
 async function loadMergeable(page) {
   await page.goto(`${baseUrl}?${MERGEABLE}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await dismissIntro(page);
   await page.waitForTimeout(400);
 }
 
 async function loadFourBar(page) {
   await page.goto(`${baseUrl}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await dismissIntro(page);
   await page.waitForTimeout(400);
 }
 
@@ -499,7 +482,6 @@ await safe('a merge that would double an existing pair is refused', async () => 
 await safe('a joint can be dropped onto the pin of a slider', async () => {
   await page.goto(`${baseUrl}?${SLIDER_CRANK}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await dismissIntro(page);
   await page.waitForTimeout(400);
 
   const loaded = await jointState(page);

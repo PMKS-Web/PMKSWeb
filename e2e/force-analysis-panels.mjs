@@ -53,18 +53,6 @@ page.on('console', (msg) => {
 const shot = (name) =>
   page.screenshot({ path: path.join(screenshotDir, `${runPrefix}-${name}`), fullPage: true });
 
-async function dismissIntro() {
-  const intro = page.locator('.introjs-tooltip, .introjs-overlay').first();
-  if (await intro.isVisible().catch(() => false)) {
-    await page
-      .locator('.introjs-skipbutton')
-      .first()
-      .click({ force: true })
-      .catch(() => page.keyboard.press('Escape'));
-    await page.waitForTimeout(350);
-  }
-}
-
 /** Titles of the expansion rows under the Force Analysis subsection. */
 /**
  * The reaction rows the panel is showing.
@@ -183,7 +171,6 @@ async function expandRow(text) {
 try {
   await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await dismissIntro();
 
   await weighTheLinks();
   await attachForceToBC();

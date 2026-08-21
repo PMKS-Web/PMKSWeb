@@ -76,11 +76,6 @@ async function open(url) {
     }
   }
   await page.waitForTimeout(900);
-  // The app strips its own query string on load, which can land mid-evaluate.
-  await page
-    .evaluate(() => document.querySelector('.introjs-skipbutton')?.click())
-    .catch(() => page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click()));
-  await page.waitForTimeout(300);
 }
 
 const browser = await chromium.launch();

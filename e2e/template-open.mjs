@@ -24,22 +24,6 @@ const context = await browser.newContext({ viewport: { width: 1500, height: 950 
 let newPages = 0;
 context.on('page', () => newPages++);
 
-const dismissIntro = async (page) => {
-  if (
-    await page
-      .locator('.introjs-tooltip, .introjs-overlay')
-      .first()
-      .isVisible()
-      .catch(() => false)
-  ) {
-    await page
-      .locator('.introjs-skipbutton')
-      .first()
-      .click({ force: true })
-      .catch(() => {});
-    await page.waitForTimeout(500);
-  }
-};
 const linkCount = (page) =>
   page.evaluate(
     () =>
@@ -63,7 +47,6 @@ newPages = 0; // ignore the page we created ourselves
 const BASE = process.env.PMKS_BASE_URL ?? process.env.PMKS_URL ?? 'http://127.0.0.1:4200/';
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await dismissIntro(page);
 await page.waitForTimeout(600);
 // The library opens by itself on a blank start; open it from the menu if not.
 if (
@@ -94,7 +77,6 @@ check(
 // --- Case 2: existing work brings up the choice dialog -----------------------
 await page.goto(`${BASE}?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await dismissIntro(page);
 await page.waitForTimeout(800);
 await openTemplates(page);
 await page.locator('#templates panel-section').nth(1).click(); // Watt I

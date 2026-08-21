@@ -46,8 +46,6 @@ page.on('pageerror', (error) => errors.push(String(error)));
 const openForce = async (name) => {
   await page.goto(`${BASE}/?${payloads[name]}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
   await page.waitForTimeout(700);
   await page.evaluate(() =>
     ng.getComponent(document.querySelector('app-new-grid')).tabService.setTab(3)
