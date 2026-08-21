@@ -469,11 +469,16 @@ export class TutorialService {
   /**
    * The middle of the *clear* canvas, and how much of the model it is showing.
    *
-   * Not the whole canvas: the panels float over it. On a narrow window the left
-   * panel covers a third of the drawing area, and a four-bar centred on the
-   * canvas puts its left-hand ground joint underneath — which is the one joint
-   * this tutorial goes on to ring and name, so the student is told to
-   * right-click something they can neither see nor reach.
+   * Not the whole canvas: the panels float over it, and a joint underneath one
+   * cannot be right-clicked at all — which matters here more than anywhere,
+   * because the tutorial goes on to ring one joint and tell the student to
+   * right-click it by name.
+   *
+   * The room taken is the strip between the left panel and the drawer, and only
+   * that. Two earlier attempts were worse: the whole canvas, which is the one
+   * rectangle guaranteed to put a joint under a panel; and the largest of
+   * beside-or-below, which on a narrow window chose the space below the panel
+   * and was right until the panel grew into it a step later.
    */
   private visibleRect(): { x: number; y: number; width: number; height: number } {
     const canvas = document.getElementById('canvas');
@@ -485,29 +490,42 @@ export class TutorialService {
     }
 
     const gap = 16;
-    let left = box.left;
-    let right = box.right;
-    let top = box.top;
-    let bottom = box.bottom;
-    for (const [selector, side] of CHROME) {
-      const over = onScreen(selector);
-      if (!over) continue;
-      if (side === 'left') left = Math.max(left, over.right + gap);
-      if (side === 'right') right = Math.min(right, over.left - gap);
-      if (side === 'top') top = Math.max(top, over.bottom + gap);
-      if (side === 'bottom') bottom = Math.min(bottom, over.top - gap);
-    }
-    // A window too small to have any clear middle: fall back to the canvas
-    // rather than to a rectangle inside out.
-    if (right - left < 120 || bottom - top < 120) {
-      left = box.left;
-      right = box.right;
-      top = box.top;
-      bottom = box.bottom;
-    }
+    const leftPanel = onScreen('app-left-tabs .panel');
+    const drawer = onScreen('#rightPanel');
+    const strip = onScreen('.topStrip');
+    const underneath = [onScreen('#bottomBar'), onScreen('.playbackRow')].filter(
+      (one): one is DOMRect => one !== undefined
+    );
 
-    const from = this.svgGrid.screenToSVGfromXY(left, top);
-    const to = this.svgGrid.screenToSVGfromXY(right, bottom);
+    const ceiling = strip ? Math.max(box.top, strip.bottom + gap) : box.top;
+    const floor = underneath.reduce((low, one) => Math.min(low, one.top - gap), box.bottom);
+    const rightWall = drawer ? Math.min(box.right, drawer.left - gap) : box.right;
+
+    // Beside the left panel, never below it. The panel's right edge is fixed —
+    // it is a column of known width — but its height is not: it is a short help
+    // card on an empty grid and two and a half times that once a joint is
+    // selected, which is exactly what step three does on the way to step four.
+    // Room measured below it is room the panel takes back a moment later, and
+    // the joint the tutorial rings ends up underneath after all.
+    const beside = {
+      left: leftPanel ? Math.max(box.left, leftPanel.right + gap) : box.left,
+      right: rightWall,
+      top: ceiling,
+      bottom: floor,
+    };
+
+    // Enough to draw a four-bar whose two ground joints can be told apart and
+    // hit separately. Below this the window is narrower than the app's own
+    // chrome and there is no honest answer -- the canvas at least keeps the
+    // mechanism where the view is looking.
+    const MIN_CLEAR = 90;
+    const best =
+      beside.right - beside.left >= MIN_CLEAR && beside.bottom - beside.top >= MIN_CLEAR
+        ? beside
+        : { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+
+    const from = this.svgGrid.screenToSVGfromXY(best.left, best.top);
+    const to = this.svgGrid.screenToSVGfromXY(best.right, best.bottom);
     return {
       x: (from.x + to.x) / 2,
       y: (from.y + to.y) / 2,
@@ -641,15 +659,6 @@ function similarity(fromA: Coord, fromB: Coord, toA: Coord, toB: Coord): (point:
     return new Coord(toA.x + scaleX * dx - scaleY * dy, toA.y + scaleY * dx + scaleX * dy);
   };
 }
-
-/** The chrome that floats over the canvas, and which edge each one eats into. */
-const CHROME: [string, 'left' | 'right' | 'top' | 'bottom'][] = [
-  ['app-left-tabs .panel', 'left'],
-  ['#rightPanel', 'right'],
-  ['.topStrip', 'top'],
-  ['#bottomBar', 'bottom'],
-  ['.playbackRow', 'bottom'],
-];
 
 /** An element's box, if it is actually taking up room on screen. */
 function onScreen(selector: string): DOMRect | undefined {

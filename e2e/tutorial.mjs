@@ -284,6 +284,38 @@ check(
 );
 await page.screenshot({ path: `${OUT}/07-resume.png` });
 
+// ---- a narrow window, where the placement has gone wrong twice ----
+//
+// The mechanism is built into the strip between the left panel and the drawer.
+// Centred on the whole canvas it landed under the left panel; measured against
+// the space *below* that panel it was fine until the panel grew — which is
+// exactly what selecting a joint does on the way from step three to step four.
+{
+  const narrow = await browser.newContext({ viewport: { width: 800, height: 760 } });
+  const small = await narrow.newPage();
+  await small.goto(BASE, { waitUntil: 'networkidle' });
+  await waitForReady(small);
+  await small.locator('.offerButton').click();
+  await small.waitForTimeout(600);
+  for (let i = 0; i < 3; i++) {
+    await small.locator('.doItButton').click();
+    await small.waitForTimeout(3400);
+  }
+  const lead = await small.locator('.cardLead').innerText();
+  check('at 800px the tutorial reaches step 4', /Step 4/.test(lead), lead.replace(/\s+/g, ' '));
+  const spot = await small.locator('.tutorialRing').boundingBox();
+  const blocked = await small.evaluate(
+    ({ x, y }) =>
+      !!document
+        .elementFromPoint(x, y)
+        ?.closest('app-left-tabs, #rightPanel, .topStrip, app-playback-bar, #bottomBar'),
+    { x: spot.x + spot.width / 2, y: spot.y + spot.height / 2 }
+  );
+  check('and the ringed joint is still the thing under the pointer', !blocked);
+  await small.screenshot({ path: `${OUT}/09-narrow-ring.png` });
+  await narrow.close();
+}
+
 await browser.close();
 console.log(`\n${passed.length} passed, ${failed.length} failed`);
 if (errors.length) console.log('console errors:\n' + errors.slice(0, 10).join('\n'));
