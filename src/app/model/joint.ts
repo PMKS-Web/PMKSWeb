@@ -33,6 +33,18 @@ export class Joint extends Coord {
     this._name = value;
   }
 
+  /**
+   * A colour this one joint is drawn in, or '' for the one every joint shares.
+   *
+   * Per joint rather than per drawing because the point of it is to tell one
+   * pin apart from the fifteen around it -- the coupler point being traced, the
+   * joint a force is about, the one a reader is being asked to look at. It is
+   * only the resting colour: picked, dragged and greyed-out still say what they
+   * always said, on every joint, because those are states rather than
+   * identities.
+   */
+  public color: string = '';
+
   get showHighlight(): boolean {
     return this._showHighlight;
   }

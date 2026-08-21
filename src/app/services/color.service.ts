@@ -1,54 +1,4 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-
-/**
- * A set of joint colours, offered whole rather than one shade at a time.
- *
- * A joint is drawn in three states -- resting, pointed at, and picked -- and
- * they only read as the same object in three moods if they come from one
- * family. Picked is deliberately not part of a scheme: the amber a selection
- * wears is the app's accent, worn by the outline of a selected link and by
- * every pressed control, and a selection that meant a different colour on the
- * canvas than in the panel beside it would be a worse trade than any palette
- * is worth.
- *
- * `ink` is what is drawn *on* a joint -- the padlock a locked one carries --
- * which has to turn light when the joint underneath turns dark.
- */
-export interface JointScheme {
-  id: string;
-  name: string;
-  rest: string;
-  hover: string;
-  ink: string;
-}
-
-/**
- * Four families that sit with the link palette, which runs indigo and teal.
- *
- * All of them pale, which is not timidity: a link is drawn mid to dark and a
- * selected joint is amber, so a joint has to be lighter than the bar it sits on
- * to read as a pin at all and cooler than amber to not read as picked. A dark
- * family was tried and thrown out -- on the navy end of the link palette the
- * joints vanished into the bar, which is the one thing a joint may not do.
- * What is left to differ is temperature. Three are the pale end of a colour the
- * app already draws with -- the accent, and the neutral the greys come from;
- * the fourth is deliberately a hue the links never use, because a family that
- * echoes a link family is the one hardest to tell from the others at the size a
- * joint is actually drawn.
- *
- * Cream is first because it is what every drawing has always been drawn in:
- * this is a preference, so it starts where the reader left it, and where nobody
- * has left it is where the app already was.
- */
-export const JOINT_SCHEMES: readonly JointScheme[] = [
-  { id: 'cream', name: 'Cream', rest: '#fff8e1', hover: '#ffecb3', ink: '#263238' },
-  { id: 'steel', name: 'Steel', rest: '#eceff1', hover: '#cfd8dc', ink: '#263238' },
-  { id: 'mint', name: 'Mint', rest: '#e0f2f1', hover: '#b2dfdb', ink: '#263238' },
-  { id: 'blush', name: 'Blush', rest: '#fce4ec', hover: '#f8bbd0', ink: '#263238' },
-];
-
-const JOINT_SCHEME_KEY = 'jointScheme';
 
 @Injectable({
   providedIn: 'root',
@@ -60,7 +10,6 @@ export class ColorService {
   constructor() {
     //Create a static instance of the color service
     ColorService.instance = this;
-    this.useJointScheme(this.storedJointScheme());
   }
 
   private linkColorOptions = [
@@ -79,15 +28,26 @@ export class ColorService {
   ];
 
   /**
-   * Which family the joints are drawn in.
+   * Colours for one joint, to tell it apart from the others.
    *
-   * Kept on this machine rather than in the URL: it is how a reader likes to
-   * look at linkages, not a property of the one they are looking at, and a
-   * shared link that repainted the receiver's joints would be carrying a
-   * preference that was never theirs. Link and force colours are the other way
-   * round -- those are chosen per part and travel with the drawing.
+   * The first is the one every joint is drawn in, so the swatch that undoes a
+   * highlight is in the same row as the ones that make it -- there is no other
+   * way to take one off. The rest are saturated on purpose: these are worn by a
+   * single pin among many and have to be found at a glance, which the pale end
+   * of any palette is no good for.
+   *
+   * Four of them, spread around the wheel rather than crowded on one side, and
+   * none of them amber -- that is what a selected joint wears, and a resting
+   * joint that borrowed it would be claiming to be selected. A dark grey was
+   * tried and dropped: on the navy end of the link palette a dark pin is not a
+   * highlight, it is a joint that has gone missing.
    */
-  readonly jointScheme = new BehaviorSubject<JointScheme>(JOINT_SCHEMES[0]);
+  private jointColorOptions = ['#fff8e1', '#e53935', '#43a047', '#00acc1', '#8e24aa'];
+
+  /** The first swatch is "no colour of its own", not a colour. */
+  public isDefaultJointColor(color: string): boolean {
+    return color === '' || color === this.jointColorOptions[0];
+  }
 
   private forceColorOptions = ['#3f50b5'];
 
@@ -117,41 +77,7 @@ export class ColorService {
   }
 
   public getJointColorOptions(): string[] {
-    return JOINT_SCHEMES.map((scheme) => scheme.rest);
-  }
-
-  /**
-   * Paint the joints in one of the families.
-   *
-   * Written as custom properties on the document rather than by swapping a
-   * class, because the same three colours are wanted by rules in several
-   * stylesheets and by marks drawn on top of a joint: one place to set them,
-   * and every rule that needs one already names it.
-   */
-  public useJointScheme(id: string): void {
-    const scheme = JOINT_SCHEMES.find((option) => option.id === id) ?? JOINT_SCHEMES[0];
-    this.jointScheme.next(scheme);
-    this.paintJoints(scheme);
-    try {
-      localStorage.setItem(JOINT_SCHEME_KEY, scheme.id);
-    } catch {
-      // A preference that cannot be remembered is not worth failing over.
-    }
-  }
-
-  private paintJoints(scheme: JointScheme): void {
-    const style = document.documentElement.style;
-    style.setProperty('--joint-rest', scheme.rest);
-    style.setProperty('--joint-hover', scheme.hover);
-    style.setProperty('--joint-ink', scheme.ink);
-  }
-
-  private storedJointScheme(): string {
-    try {
-      return localStorage.getItem(JOINT_SCHEME_KEY) ?? JOINT_SCHEMES[0].id;
-    } catch {
-      return JOINT_SCHEMES[0].id;
-    }
+    return this.jointColorOptions;
   }
 
   public getForceColorOptions(): string[] {
@@ -163,7 +89,7 @@ export class ColorService {
   }
 
   getIndexFromJointColor(fill: string) {
-    return JOINT_SCHEMES.findIndex((scheme) => scheme.rest === fill);
+    return this.jointColorOptions.indexOf(fill);
   }
 
   getIndexFromForceColor(fill: string) {
@@ -175,7 +101,7 @@ export class ColorService {
   }
 
   getJointColorFromIndex(index: number) {
-    return JOINT_SCHEMES[index]?.rest ?? JOINT_SCHEMES[0].rest;
+    return this.jointColorOptions[index];
   }
 
   getForceColorFromIndex(index: number) {

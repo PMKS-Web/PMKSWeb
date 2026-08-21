@@ -880,6 +880,7 @@
                 [attr.cx]="0"
                 [attr.cy]="0"
                 [class]="mechanismSrv.getJointCSSClass(joint)"
+                [style.fill]="restingFillOf(joint)"
               />
             }
             <!--      Welded Joint. A sealed cylinder's pin never reaches here:
@@ -890,6 +891,7 @@
                 [attr.id]="'joint_' + joint.id"
                 [class]="mechanismSrv.getJointCSSClass(joint)"
                 [attr.d]="weldMarkerPath"
+                [style.fill]="restingFillOf(joint)"
               ></path>
             }
             <!-- The lock cue: a small padlock riding the joint's shoulder.
@@ -915,7 +917,12 @@
                   />
                 }
                 <g [attr.transform]="lockGlyphTransform()">
-                  <path class="lockGlyph" [attr.d]="lockGlyphPath" fill-rule="evenodd" />
+                  <path
+                    class="lockGlyph"
+                    [attr.d]="lockGlyphPath"
+                    [style.fill]="lockInkOn(joint)"
+                    fill-rule="evenodd"
+                  />
                 </g>
               </g>
             }

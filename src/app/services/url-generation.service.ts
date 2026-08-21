@@ -204,6 +204,15 @@ export class UrlGenerationService {
           )
       );
 
+      // Which joints wear a colour of their own. Only those: a drawing where
+      // nobody highlighted a pin is byte-identical to one written before this
+      // was possible.
+      encoder.setJointColors(
+        this.mechanism.joints
+          .filter((joint) => !!joint.color)
+          .map((joint) => 'K' + joint.id + '~' + joint.color.replace('#', ''))
+      );
+
       // The synthesis design, if one is being worked on. It is not part of the
       // mechanism -- nothing here is on the grid yet -- but undo and redo are a
       // stack of these strings, so a design left out of them could not be

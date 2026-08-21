@@ -252,6 +252,12 @@
           tooltip="Show / hide the path the joint takes."
           >Show Joint Path
         </toggle-block>
+        <color-picker
+          type="joint"
+          [joint]="activeSrv.selectedJoint"
+          tooltip="Draw this one joint in its own colour, to tell it apart from the others. The first swatch puts it back to the colour they all share. Travels with the drawing."
+          >Joint Color</color-picker
+        >
       </collapsible-subseciton>
       <collapsible-subseciton
         titleLabel="Distance to Joints"

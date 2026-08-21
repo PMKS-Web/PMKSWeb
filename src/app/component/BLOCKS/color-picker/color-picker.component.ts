@@ -1,13 +1,12 @@
 import { Component, OnChanges, ChangeDetectionStrategy, inject, input } from '@angular/core';
-import { ColorService, JOINT_SCHEMES } from '../../../services/color.service';
+import { ColorService } from '../../../services/color.service';
 import { RealLink } from '../../../model/link';
-import { RealJoint } from '../../../model/joint';
+import { Joint } from '../../../model/joint';
 import { Force } from '../../../model/force';
+import { MechanismService } from '../../../services/mechanism.service';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-
-/** Above this a swatch is light enough that a white tick vanishes on it. */
-const LIGHT_SWATCH = 0.55;
+import { INK_FLIPS_AT, luminanceOf } from '../../../model/contrast';
 
 @Component({
   selector: 'color-picker',
@@ -18,18 +17,17 @@ const LIGHT_SWATCH = 0.55;
 })
 export class ColorPickerComponent implements OnChanges {
   colorService = inject(ColorService);
+  private mechanism = inject(MechanismService);
 
   readonly link = input<RealLink>();
-  readonly joint = input<RealJoint>();
+  readonly joint = input<Joint>();
   readonly force = input<Force>();
   readonly tooltip = input<string>();
   readonly type = input<string>();
 
   ngOnChanges(): void {
     const link = this.link();
-    if (link) {
-      this.selectColor(this.colorService.getIndexFromLinkColor(link.fill));
-    }
+    if (link) this.selectedIndex = this.colorService.getIndexFromLinkColor(link.fill);
   }
 
   // The index of the selected color, or -1 if none is selected
@@ -38,13 +36,16 @@ export class ColorPickerComponent implements OnChanges {
   /**
    * Which swatch is showing as chosen.
    *
-   * The joint families are a document-wide setting rather than something set on
-   * one part, so the picker reads the setting instead of remembering what it
-   * was last clicked on -- reopening Settings has to find it where it was left.
+   * A joint's colour is read from the joint every time rather than remembered
+   * here: one picker serves whichever joint is selected, and clicking from one
+   * joint to the next has to move the tick with them.
    */
   chosenIndex(): number {
-    if (this.type() === 'jointScheme') {
-      return JOINT_SCHEMES.findIndex((s) => s.id === this.colorService.jointScheme.value.id);
+    const joint = this.joint();
+    if (this.type() === 'joint' && joint) {
+      return this.colorService.isDefaultJointColor(joint.color)
+        ? 0
+        : this.colorService.getIndexFromJointColor(joint.color);
     }
     return this.selectedIndex;
   }
@@ -53,14 +54,22 @@ export class ColorPickerComponent implements OnChanges {
   selectColor(index: number) {
     this.selectedIndex = index;
     const link = this.link();
+    const joint = this.joint();
     switch (this.type()) {
       case 'link':
         if (link) {
           link.fill = this.colorService.getLinkColorFromIndex(index);
         }
         break;
-      case 'jointScheme':
-        this.colorService.useJointScheme(JOINT_SCHEMES[index]?.id ?? JOINT_SCHEMES[0].id);
+      case 'joint':
+        if (!joint) break;
+        // The first swatch is the colour every joint already has, so choosing
+        // it means "stop being different" rather than "be this colour" -- and
+        // an empty colour is what the URL leaves out.
+        joint.color = index === 0 ? '' : this.colorService.getJointColorFromIndex(index);
+        // Undoable, and carried in the URL: a highlight that a shared link
+        // dropped, or that one undo wiped, would not be worth putting on.
+        this.mechanism.updateMechanism(true);
         break;
     }
   }
@@ -69,8 +78,8 @@ export class ColorPickerComponent implements OnChanges {
     switch (this.type()) {
       case 'link':
         return this.colorService.getLinkColorOptions();
-      case 'jointScheme':
-        return JOINT_SCHEMES.map((scheme) => scheme.rest);
+      case 'joint':
+        return this.colorService.getJointColorOptions();
       case 'force':
         return this.colorService.getForceColorOptions();
       default:
@@ -80,25 +89,16 @@ export class ColorPickerComponent implements OnChanges {
 
   /** What each swatch is called, for the reader who is hovering one. */
   nameOf(index: number): string {
-    return this.type() === 'jointScheme' ? JOINT_SCHEMES[index]?.name : '';
+    return this.type() === 'joint' && index === 0 ? 'Default' : '';
   }
 
   /**
    * A tick the reader can see on the swatch it is standing on.
    *
    * It used to be white on every swatch, which was invisible on the pale end of
-   * the link palette and would be invisible on all but one of the joint
-   * families.
+   * the link palette and on the first of the joint ones.
    */
   tickInk(color: string): string {
-    return luminanceOf(color) > LIGHT_SWATCH ? '#263238' : '#ffffff';
+    return luminanceOf(color) > INK_FLIPS_AT ? '#263238' : '#ffffff';
   }
-}
-
-/** Rough perceived brightness of a `#rrggbb`, enough to choose a tick colour. */
-function luminanceOf(color: string): number {
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return 1;
-  const [r, g, b] = [0, 2, 4].map((at) => parseInt(hex.slice(at, at + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }

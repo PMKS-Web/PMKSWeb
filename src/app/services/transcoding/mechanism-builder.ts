@@ -289,6 +289,16 @@ export class MechanismBuilder {
       }
     });
 
+    // Put the highlights back. Undo and redo replay URLs, so this line is what
+    // keeps a coloured joint coloured through one -- the same reason the locks
+    // above are re-armed. The transcoder has already refused any reference that
+    // does not resolve.
+    this.transcoder.getJointColors().forEach((entry) => {
+      const [id, hex] = entry.substring(1).split('~');
+      const joint = this.getJointByID(joints, id);
+      if (joint) joint.color = '#' + hex;
+    });
+
     // What each hand-placed centre of mass is held against. The offsets it
     // needs are captured from the decoded coordinate on the first update, the
     // same way the centroid anchor already works -- the URL carries where the

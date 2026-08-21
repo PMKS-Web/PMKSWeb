@@ -459,7 +459,15 @@ export class StringTranscoder extends GenericTranscoder {
     // design rather than an object the URL carries, so unlike a lock or an
     // anchor there is nothing for them to resolve against -- which is exactly
     // why they can be validated on their own numbers alone.
-    const trailing = [...this.lockedIds, ...this.comAnchors, ...this.synthesisMarks];
+    // A fourth kind of tagged reference, 'K', for a joint asked to be drawn in
+    // its own colour: 'K<joint>~<rrggbb>'. Only the joints that were asked, so
+    // a drawing where nobody highlighted anything says nothing about colour.
+    const trailing = [
+      ...this.lockedIds,
+      ...this.comAnchors,
+      ...this.synthesisMarks,
+      ...this.jointColors,
+    ];
     if (trailing.length > 0) {
       fullString += '.' + trailing.join(',');
     }
@@ -580,6 +588,7 @@ export class StringTranscoder extends GenericTranscoder {
       if (entry === '') continue;
       if (entry.charAt(0) === 'C') this.comAnchors.push(entry);
       else if (entry.charAt(0) === 'S') this.synthesisMarks.push(entry);
+      else if (entry.charAt(0) === 'K') this.jointColors.push(entry);
       else this.lockedIds.push(entry);
     }
 
@@ -617,6 +626,7 @@ export class StringTranscoder extends GenericTranscoder {
     });
     this.validateDecodedSlotCarriers();
     this.validateDecodedLocks(jointIDs, linkIDs);
+    this.validateDecodedJointColors(jointIDs);
     this.forces.forEach((force) => {
       if (
         !force.id ||
@@ -675,6 +685,21 @@ export class StringTranscoder extends GenericTranscoder {
     legacy URL has the section at all, so strictness costs nothing and catches
     hand-edits — the same bargain the sealed bit strikes.
     */
+  /*
+    Every colour must name a joint this URL carries and be six hex digits.
+    Refused rather than dropped, for the same reason a lock reference is: a URL
+    that says something this build cannot honour is a URL that would open as a
+    different drawing than the one that was shared.
+    */
+  private validateDecodedJointColors(jointIDs: Set<string>): void {
+    this.jointColors.forEach((entry) => {
+      const [id, hex] = entry.substring(1).split('~');
+      if (!jointIDs.has(id) || !/^[0-9a-fA-F]{6}$/.test(hex ?? '')) {
+        throw new Error('URL colours a joint it does not carry');
+      }
+    });
+  }
+
   private validateDecodedLocks(jointIDs: Set<string>, linkIDs: Set<string>): void {
     const forceIDs = new Set(this.forces.map((force) => force.id));
     this.lockedIds.forEach((lockedId) => {

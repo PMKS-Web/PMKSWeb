@@ -47,6 +47,16 @@ export abstract class GenericTranscoder {
    * undone, and a link shared mid-design would open on an empty panel.
    */
   protected synthesisMarks: string[] = [];
+  /**
+   * Joints drawn in a colour of their own, as tagged references sharing the
+   * same trailing section: 'K' + joint id + '~' + six hex digits.
+   *
+   * In the URL rather than kept on this machine because it is a fact about the
+   * drawing -- which pin the reader is being asked to look at -- and because
+   * undo and redo are a stack of these strings, so a highlight left out of them
+   * would be wiped by the next undo.
+   */
+  protected jointColors: string[] = [];
 
   // Initialize data dictionaries based on settings enums
   constructor() {
@@ -136,6 +146,14 @@ export abstract class GenericTranscoder {
 
   getSynthesisMarks(): string[] {
     return this.synthesisMarks;
+  }
+
+  setJointColors(colors: string[]) {
+    this.jointColors = colors;
+  }
+
+  getJointColors(): string[] {
+    return this.jointColors;
   }
 
   abstract decodeURL(url: string): void;

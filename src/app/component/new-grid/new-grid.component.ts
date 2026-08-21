@@ -109,6 +109,7 @@ export interface SlotStackItem {
 }
 import introJs from 'intro.js';
 import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-shortcuts.service';
+import { INK_FLIPS_AT, luminanceOf } from '../../model/contrast';
 
 /** Which corner of the tracing underlay a resize gesture is holding. */
 type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
@@ -3534,6 +3535,38 @@ export class NewGridComponent implements OnDestroy {
    * about something the reader cannot act on and did not ask about. It goes
    * grey with the rest of the body it marks.
    */
+  /**
+   * The colour one joint is drawn in at rest, or nothing for the shared one.
+   *
+   * Only at rest. Picked, dragged and greyed-out are states, and a state that
+   * looked different on different joints would stop being readable as a state
+   * -- so those keep the classes every joint shares, and this stands aside.
+   * Hovering is not one of them: a highlighted joint that turned amber under
+   * the cursor would look like it had been selected by being pointed at.
+   */
+  restingFillOf(joint: Joint): string | null {
+    if (!joint.color) return null;
+    const state = this.mechanismSrv.getJointCSSClass(joint);
+    const claimed =
+      state.includes('joint-selected') ||
+      state.includes('joint-dragging') ||
+      state.includes('joint-inert');
+    return claimed ? null : joint.color;
+  }
+
+  /**
+   * The padlock's ink on a given joint.
+   *
+   * The badge is drawn on the joint rather than beside it, so on a dark one the
+   * default near-black glyph disappears into the pin it is sitting on. A welded
+   * joint brings its own white chip and the glyph stands on that instead.
+   */
+  lockInkOn(joint: Joint): string | null {
+    const fill = this.restingFillOf(joint);
+    if (!fill || this.gridUtils.getWelded(joint)) return null;
+    return luminanceOf(fill) > INK_FLIPS_AT ? '#263238' : '#eceff1';
+  }
+
   get orphanMarkInk(): string {
     return this.tabService.isAnalysisMode() ? '#b6bac6' : '#F44336';
   }

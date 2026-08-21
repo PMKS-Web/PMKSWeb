@@ -17,7 +17,6 @@ import { RadioComponent } from '../BLOCKS/radio/radio.component';
 import { ToggleComponent } from '../BLOCKS/toggle/toggle.component';
 import { InputComponent } from '../BLOCKS/input/input.component';
 import { ButtonComponent } from '../BLOCKS/button/button.component';
-import { ColorPickerComponent } from '../BLOCKS/color-picker/color-picker.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -34,7 +33,6 @@ import { ColorPickerComponent } from '../BLOCKS/color-picker/color-picker.compon
     ToggleComponent,
     InputComponent,
     ButtonComponent,
-    ColorPickerComponent,
   ],
 })
 export class SettingsPanelComponent implements OnDestroy {
@@ -154,7 +152,6 @@ export class SettingsPanelComponent implements OnDestroy {
         this.settingsForm.patchValue({ objectScale: this.currentObjectScaleSetting.toString() });
       } else {
         this.currentObjectScaleSetting = parsed;
-        SettingsService.objectScaleChosen = true;
         SettingsService._objectScale.next(this.currentObjectScaleSetting * MODEL_SCALE);
       }
       this.mechanismSrv.updateMechanism();
