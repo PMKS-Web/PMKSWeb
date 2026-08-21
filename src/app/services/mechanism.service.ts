@@ -793,6 +793,63 @@ export class MechanismService {
   }
 
   /**
+   * A free-standing bar between two points — what `Add Link` on bare grid
+   * commits when the drag is released.
+   *
+   * Here rather than in the canvas because it is a creation, and every other
+   * one lives here; the canvas has the same recipe inline because it also has a
+   * ghost to draw and a drag to end. Anything that wants a bar without a
+   * gesture — the tutorial doing a step for the student — asks for one here.
+   */
+  addBar(from: Coord, to: Coord): RealLink {
+    const first = this.createRevJoint(from.x.toString(), from.y.toString());
+    const second = this.createRevJoint(to.x.toString(), to.y.toString(), first.id);
+    return this.joinWithBar(first, second, [first, second]);
+  }
+
+  /**
+   * A bar hung off a joint that is already there, as `Attach Link` makes.
+   *
+   * The anchor is not created and not re-merged: it is already in the drawing,
+   * and pushing it a second time gives it two entries and one very confusing
+   * delete.
+   */
+  addBarFrom(anchor: RealJoint, to: Coord): RealLink {
+    const far = this.createRevJoint(to.x.toString(), to.y.toString());
+    return this.joinWithBar(anchor, far, [far]);
+  }
+
+  /** The wiring both of the above share: connect, name, merge, re-solve. */
+  private joinWithBar(first: RealJoint, second: RealJoint, fresh: Joint[]): RealLink {
+    first.connectedJoints.push(second);
+    second.connectedJoints.push(first);
+    const link = this.gridUtils.createRealLink(first.id + second.id, [first, second]);
+    first.links.push(link);
+    second.links.push(link);
+    this.mergeToJoints(fresh);
+    this.mergeToLinks([link]);
+    this.updateMechanism(true);
+    return link;
+  }
+
+  /**
+   * Everything on the grid, gone, as one undo entry.
+   *
+   * The joints go one at a time because deleting a joint is what takes its
+   * links with it, but none of them saves — otherwise clearing a four-bar
+   * would cost four presses of Undo to take back.
+   */
+  deleteAll(): void {
+    if (this.joints.length === 0 && this.links.length === 0 && this.forces.length === 0) return;
+    [...this.joints].forEach((joint) => {
+      this.activeObjService.updateSelectedObj(joint);
+      this.deleteJoint(false);
+    });
+    this.activeObjService.updateSelectedObj(null);
+    this.finishStructuralEdit(true);
+  }
+
+  /**
    * The next name for a joint: A, B, C ... Z, then a, b, c ... z.
    *
    * It used to be the highest letter in use plus one in character codes, which

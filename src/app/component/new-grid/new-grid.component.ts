@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { MechanismService } from '../../services/mechanism.service';
+import { TutorialService } from '../../services/tutorial.service';
 import { UrlProcessorService } from '../../services/url-processor.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { SettingsService } from '../../services/settings.service';
@@ -109,7 +110,6 @@ export interface SlotStackItem {
   /** Set for a plate; the fused rider-and-block outline this item draws. */
   plate?: WeldPlate;
 }
-import introJs from 'intro.js';
 import { SvgArrowComponent } from '../svg-arrow/svg-arrow.component';
 import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-shortcuts.service';
 
@@ -126,6 +126,7 @@ type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
 export class NewGridComponent implements OnDestroy {
   svgGrid = inject(SvgGridService);
   mechanismSrv = inject(MechanismService);
+  private tutorial = inject(TutorialService);
   private urlParser = inject(UrlProcessorService);
   gridUtils = inject(GridUtilsService);
   settings = inject(SettingsService);
@@ -256,52 +257,6 @@ export class NewGridComponent implements OnDestroy {
       });
     }
 
-    if (this.mechanismSrv.joints.length == 0) {
-      setTimeout(() => {
-        const steps = [
-          {
-            title: '👋 Welcome',
-            intro: 'Let us show you around Planar Mechanism Kinematic Simulator Plus!',
-          },
-          {
-            // The mode strip, which is where the vertical rail this used to
-            // point at ended up. A step whose element is missing dims the
-            // whole app and shows no card at all, so these have to follow
-            // the chrome when it moves.
-            element: document.querySelector('.tabCard') as HTMLElement,
-            intro:
-              'PMKS+ has four modes: Synthesis, Edit, and the two analyses — Kinematic and Force.',
-          },
-          {
-            element: document.querySelector('#editWrapper') as HTMLElement,
-            intro:
-              'The Edit mode is active. Selecting a joint or link will show its properties here.',
-          },
-          {
-            element: document.querySelector('app-view-controls') as HTMLElement,
-            intro: 'These change what you can see: labels, centres of mass, and the zoom.',
-          },
-          {
-            // Help and Templates live inside this menu now, and pointing at
-            // something inside a closed menu spotlights nothing.
-            element: document.querySelector('.brandCard .iconButton') as HTMLElement,
-            title: "🙌 That's it!",
-            intro:
-              'Everything else is in here: open an example linkage from Templates, or find help and feedback.',
-          },
-        ];
-        introJs()
-          .setOptions({
-            // Any step whose element has gone is dropped rather than shown:
-            // intro.js dims the app for a missing element and renders no card,
-            // which reads as the tour having frozen.
-            steps: steps.filter((step) => !('element' in step) || !!step.element),
-            dontShowAgain: true,
-          })
-          .start();
-      });
-    }
-
     fromEvent(window, 'resize').subscribe((event) => {
       this.svgGrid.panZoomObject.resize();
       this.svgGrid.handlePan();
@@ -320,6 +275,17 @@ export class NewGridComponent implements OnDestroy {
         document.activeElement.blur();
       }
     });
+  }
+
+  /**
+   * Whether the tutorial's current step is about this joint.
+   *
+   * Asked per joint rather than the ring being drawn from a coordinate, so it
+   * rides the joint through a drag and cannot be left behind at an old
+   * position.
+   */
+  isTutorialTarget(joint: Joint): boolean {
+    return this.tutorial.ringJoint() === joint;
   }
 
   ngOnDestroy() {

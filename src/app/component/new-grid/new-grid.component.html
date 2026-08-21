@@ -865,6 +865,16 @@
           style="overflow: visible"
           [attr.cursor]="mechanismSrv.isJointLockedVisual(joint) ? 'not-allowed' : 'move'"
         >
+          <!-- The tutorial's ring: two amber circles round the joint the card is
+               naming, so "the ringed one" is unambiguous even on a drawing with
+               a dozen joints. Outside the effect group and unclickable, because
+               it is a pointer rather than a part. -->
+          @if (isTutorialTarget(joint)) {
+            <g class="tutorialRing" pointer-events="none">
+              <circle [attr.r]="settings.objectScale * 0.5" cx="0" cy="0" class="ringOuter" />
+              <circle [attr.r]="settings.objectScale * 0.35" cx="0" cy="0" class="ringInner" />
+            </g>
+          }
           <!-- Grouped so a refused or completed drop can animate the whole joint -->
           <g [class]="jointEffectClass(joint)">
             <!-- Hitbox -->

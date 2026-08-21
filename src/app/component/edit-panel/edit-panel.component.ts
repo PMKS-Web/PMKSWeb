@@ -52,6 +52,7 @@ import { NOT_A } from 'src/app/ui-text';
 import { PanelSectionCollapsibleComponent } from '../BLOCKS/panel-section-collapsible/panel-section-collapsible.component';
 import { TitleBlock } from '../BLOCKS/title/title.component';
 import { MatIcon } from '@angular/material/icon';
+import { TutorialService } from '../../services/tutorial.service';
 import { MechanismPanelComponent } from '../mechanism-panel/mechanism-panel.component';
 import { PanelSectionComponent } from '../BLOCKS/panel-section/panel-section.component';
 import { EditableTitleComponent } from '../BLOCKS/editable-title/editable-title.component';
@@ -109,6 +110,7 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   gridUtils = inject(GridUtilsService);
   bgImage = inject(BackgroundImageService);
   private notify = inject(NotificationService);
+  tutorial = inject(TutorialService);
 
   listOfOtherJoints: RealJoint[] = [];
   private currentlyOpenJointID: string = '';
@@ -2137,5 +2139,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       this.nup.formatValueAndUnit(angle, this.settingsService.angleUnit.getValue()),
       { emitEvent: false }
     );
+  }
+
+  /** Open the tutorial where the drawing has got to, and show the drawer. */
+  startTutorial(): void {
+    this.tutorial.start();
   }
 }

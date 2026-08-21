@@ -1,0 +1,116 @@
+<!-- Two faces of one page: the step being worked on, and the result. They are
+     never both true, so the drawer holds one card either way. -->
+@if (!tutorial.done) {
+  <div class="tutorialCard">
+    <button class="closeCard" (click)="close()" aria-label="Close" title="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+    <div class="cardTitle">Tutorial</div>
+    <p class="cardLead">{{ lead }}</p>
+
+    <!-- The progress bar is the only place the step number is drawn rather
+         than written, so it carries no words of its own. -->
+    <div class="stepBars" role="presentation">
+      @for (bar of bars; track $index) {
+        <span class="stepBar" [class.done]="bar.done" [class.here]="bar.here"></span>
+      }
+    </div>
+
+    @if (tutorial.progress().achieved; as achieved) {
+      <div class="achieved">
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ achieved }}</span>
+      </div>
+    }
+
+    <div class="stepTitle">{{ tutorial.copy().title }}</div>
+    <p class="stepBody">{{ tutorial.copy().body }}</p>
+
+    @if (tutorial.copy().hint; as hint) {
+      <div class="hint">
+        <mat-icon>{{ tutorial.copy().hintGlyph }}</mat-icon>
+        <span>{{ hint }}</span>
+      </div>
+    }
+
+    <!-- The one lesson about the app rather than about linkages, and it is a
+         quotation: the chip says this whether or not the tutorial is running,
+         so from here on it answers "why can't I?" on its own. -->
+    @if (showsChipHint) {
+      <div class="hint chipHint">
+        <span class="chip">{{ chipText }}</span>
+        <span>
+          is the Kinematic Analysis chip counting this step. Click it whenever a mode will not run
+          and it lists what is missing.
+        </span>
+      </div>
+    }
+
+    <div class="cardRule"></div>
+    <div class="cardActions">
+      <button class="doItButton" (click)="doStepForMe()">Do This Step For Me</button>
+      <button class="exitButton" (click)="exit()">Exit Tutorial</button>
+    </div>
+  </div>
+} @else {
+  <div class="tutorialCard doneCard">
+    <div class="doneHead">
+      <mat-icon class="doneMark">check_circle</mat-icon>
+      <span class="doneTitle">Tutorial complete</span>
+      <button class="closeCard flush" (click)="close()" aria-label="Close" title="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    @if (tutorial.reading; as reading) {
+      <p class="doneLine">
+        You built a four-bar and read joint {{ reading.joint }} at
+        <strong>{{ reading.magnitude }} {{ reading.unit }}</strong
+        >, {{ reading.time }} into the cycle.
+      </p>
+    }
+
+    <div class="cardRule"></div>
+    <div class="doorsHeading">What next</div>
+
+    <!-- Each row is the control it names, not a description of where to find
+         it: the tutorial ends by handing the student to the app. -->
+    <div class="doors">
+      <button class="door" (click)="openExport()">
+        <mat-icon>download</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Export Data</span>
+          <span class="doorWhy">
+            Every timestep of position, velocity and acceleration, as a file you can attach to a
+            report.
+          </span>
+        </span>
+      </button>
+      <button class="door" (click)="shareProject()">
+        <mat-icon>link</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Share Project</span>
+          <span class="doorWhy">
+            A link that opens this exact mechanism. It is how a professor hands one out, and how you
+            hand one in.
+          </span>
+        </span>
+      </button>
+      <button class="door" (click)="openTemplates()">
+        <mat-icon>apps</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Templates</span>
+          <span class="doorWhy">
+            Worked mechanisms to take apart: a Watt six-bar, a scotch yoke, a Jansen leg, a
+            pumpjack.
+          </span>
+        </span>
+      </button>
+    </div>
+
+    <div class="cardActions doneActions">
+      <button class="primaryButton" (click)="close()">Close</button>
+      <button class="exitButton" (click)="restart()">Run Tutorial Again</button>
+    </div>
+  </div>
+}

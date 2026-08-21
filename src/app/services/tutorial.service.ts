@@ -1,0 +1,482 @@
+import { Injectable, inject } from '@angular/core';
+import { Subject } from 'rxjs';
+import { Joint, RealJoint } from '../model/joint';
+import { Coord } from '../model/coord';
+import { MODEL_SCALE } from '../model/render-scale';
+import { LengthUnit, TimeUnit } from '../model/unit-enums';
+import {
+  TUTORIAL_STEP_COUNT,
+  TutorialCopy,
+  TutorialProgress,
+  copyFor,
+  endJoints,
+  linksAreChained,
+  progressFor,
+  readableJoints,
+} from '../model/tutorial-steps';
+import { MechanismService } from './mechanism.service';
+import { ActiveObjService } from './active-obj.service';
+import { SettingsService, writeStoredFlag } from './settings.service';
+import { AnalysisSampleService } from './analysis-sample.service';
+import { NumberUnitParserService } from './number-unit-parser.service';
+import { SelectedTabService, TabID } from '../selected-tab.service';
+import { SvgGridService } from './svg-grid.service';
+import { local_storage_available } from '../model/utils';
+
+/** The velocity the tutorial ends on, frozen at the moment it was read. */
+export interface TutorialReading {
+  joint: string;
+  magnitude: string;
+  unit: string;
+  /** How far into the cycle, worded and measured as the playback row words it. */
+  time: string;
+}
+
+/** Remembered on this machine so the offer stops pestering someone who has met it. */
+const SEEN_KEY = 'tutorialSeen';
+
+/**
+ * The guided first build: five moves from a bare grid to a velocity.
+ *
+ * The service holds only what the drawing cannot say for itself — whether the
+ * student asked for the tutorial, whether they walked out of it, and the
+ * reading it finished on. *Which step they are on* is never stored, because
+ * the drawing already knows: see `progressFor`. That is what lets the tutorial
+ * be started on a half-built mechanism, and what stops it insisting on a step
+ * the student has just undone.
+ */
+@Injectable({ providedIn: 'root' })
+export class TutorialService {
+  private mechanism = inject(MechanismService);
+  private activeObj = inject(ActiveObjService);
+  private settings = inject(SettingsService);
+  private samples = inject(AnalysisSampleService);
+  private nup = inject(NumberUnitParserService);
+  private tabs = inject(SelectedTabService);
+  private svgGrid = inject(SvgGridService);
+
+  /** Asked to be shown. The drawer listens rather than being reached into. */
+  readonly openRequest = new Subject<void>();
+
+  started = false;
+  exited = false;
+  done = false;
+  reading: TutorialReading | undefined;
+
+  /**
+   * Whether this drawing has been run at all.
+   *
+   * The last step is "play it and read a velocity", and a velocity read at the
+   * start pose is zero — so the step is not finished by clicking a joint on a
+   * mechanism that has never moved.
+   */
+  private hasPlayed = false;
+
+  /** Set once the student has finished or walked out, and never unset. */
+  private seen = local_storage_available() && localStorage.getItem(SEEN_KEY) === 'true';
+
+  constructor() {
+    this.settings.animating.subscribe((animating) => {
+      if (animating) this.hasPlayed = true;
+      this.checkForFinish();
+    });
+    this.activeObj.onActiveObjChange.subscribe(() => this.checkForFinish());
+    this.mechanism.onMechPositionChange.subscribe((step) => {
+      if (step > 0) this.hasPlayed = true;
+      this.checkForFinish();
+    });
+  }
+
+  // ---------- where the student is ----------
+
+  progress(): TutorialProgress {
+    return progressFor(this.mechanism.joints, this.mechanism.links);
+  }
+
+  step(): number {
+    return this.progress().step;
+  }
+
+  stepCount(): number {
+    return TUTORIAL_STEP_COUNT;
+  }
+
+  copy(): TutorialCopy {
+    return copyFor(this.progress());
+  }
+
+  /** Live, so the tutorial is never running beside a card nobody asked for. */
+  isRunning(): boolean {
+    return this.started && !this.exited;
+  }
+
+  /** The joint the grid rings: only where a step is about one joint in particular. */
+  ringJoint(): RealJoint | undefined {
+    if (!this.isRunning() || this.done) return undefined;
+    return this.progress().target;
+  }
+
+  /**
+   * The offer that hangs off the Edit panel's empty state.
+   *
+   * Gone for good once the student has finished it or walked out — from then
+   * on the way back in is the project menu, which is where a second reading of
+   * a tutorial belongs.
+   */
+  offerVisible(): boolean {
+    return !this.started && !this.seen;
+  }
+
+  /**
+   * Whether the tutorial's own card is on screen. Set by the card itself.
+   *
+   * The panel knows this and the service cannot: the drawer shows one page at
+   * a time, so opening Settings or Export puts the tutorial away without
+   * anything here being told.
+   */
+  onScreen = false;
+
+  /**
+   * The one line the Edit panel keeps while the card is not showing.
+   *
+   * Deliberately not gated on the tutorial still running: walking out is the
+   * main way of ending up here, and a student who exits at step two and then
+   * wants back in has nowhere else to go — the offer above it is spent by
+   * then, and the project menu is a thing you have to already know about.
+   */
+  resumeVisible(): boolean {
+    return this.started && !this.done && !this.onScreen;
+  }
+
+  resumeLabel(): string {
+    return `Resume Tutorial, step ${this.step()} of ${TUTORIAL_STEP_COUNT}`;
+  }
+
+  // ---------- entering and leaving ----------
+
+  start(): void {
+    this.started = true;
+    this.exited = false;
+    // The copy names joints by letter -- "right-click joint A, the ringed one"
+    // -- and the letters are off by default. A tutorial that points at a name
+    // the student cannot see on the grid is pointing at nothing.
+    this.settings.isShowID.next(true);
+    this.openRequest.next();
+  }
+
+  /**
+   * Walked out of. The drawing is left exactly as it is: a student who quits
+   * three links in has three links, not a rolled-back grid.
+   */
+  exit(): void {
+    this.exited = true;
+    this.remember();
+  }
+
+  /** Back to a bare grid and step one. The only thing that discards work. */
+  restart(): void {
+    this.mechanism.deleteAll();
+    this.started = true;
+    this.exited = false;
+    this.done = false;
+    this.reading = undefined;
+    this.hasPlayed = false;
+    this.tabs.setTab(TabID.EDIT);
+    this.openRequest.next();
+  }
+
+  private remember(): void {
+    this.seen = true;
+    writeStoredFlag(SEEN_KEY, true);
+  }
+
+  // ---------- finishing ----------
+
+  /**
+   * The last step completes on the app's own state, like every other one: the
+   * mechanism has run, and the student has clicked a joint that moves while
+   * looking at its graphs.
+   */
+  private checkForFinish(): void {
+    if (this.done || !this.isRunning()) return;
+    if (this.tabs.getCurrentTab() !== TabID.ANALYZE) return;
+    if (!this.hasPlayed || this.progress().step !== 5) return;
+    const joint = this.activeObj.selectedJoint;
+    if (!joint || this.activeObj.objType !== 'Joint' || joint.ground) return;
+    this.finishOn(joint);
+  }
+
+  private finishOn(joint: RealJoint): void {
+    const reading = this.readingFor(joint);
+    if (!reading) return;
+    this.reading = reading;
+    this.done = true;
+    this.remember();
+    this.openRequest.next();
+  }
+
+  /**
+   * The velocity of one joint, right now, in the units the graph would show.
+   *
+   * Frozen into `reading` rather than recomputed: left live it kept counting
+   * with the animation, which turns a result into a ticker.
+   */
+  private readingFor(joint: RealJoint): TutorialReading | undefined {
+    const mechanism = this.mechanism.mechanismContaining(joint);
+    if (!mechanism || !mechanism.isMechanismValid()) return undefined;
+    const at = this.mechanism.mechanisms.indexOf(mechanism);
+    const samples = mechanism.joints.length;
+    const index = Math.max(
+      0,
+      Math.min(
+        at === -1 ? this.mechanism.mechanismTimeStep : this.mechanism.currentSampleOf(at),
+        samples - 1
+      )
+    );
+    const values = this.samples.sampleAt(
+      mechanism,
+      index,
+      'kinematic',
+      'loop',
+      'Linear Joint Vel',
+      joint.id
+    );
+    if (values.length < 3 || !Number.isFinite(values[2])) return undefined;
+    return {
+      joint: joint.name || joint.id,
+      magnitude: values[2].toFixed(2),
+      unit: `${this.lengthUnit()}/s`,
+      // The elapsed time, which is what the playback row beside it reads.
+      //
+      // The phase of the cycle in degrees is the obvious alternative and it
+      // puts two different angles on screen at once: the row shows the input's
+      // *bearing*, not how far through the cycle it is, so a card saying "90
+      // degrees" beside a readout saying "360" is two right answers to
+      // questions the student did not know were different.
+      time: this.nup.formatValueAndUnit(this.mechanism.timeAtStep(index), TimeUnit.SECOND),
+    };
+  }
+
+  private lengthUnit(): string {
+    switch (this.settings.lengthUnit.value) {
+      case LengthUnit.INCH:
+        return 'in';
+      case LengthUnit.METER:
+        return 'm';
+      default:
+        return 'cm';
+    }
+  }
+
+  // ---------- doing it for them ----------
+
+  /**
+   * Make the current step's move on the student's behalf.
+   *
+   * Every branch goes through the same service call the context menu uses, so
+   * what lands is what they would have drawn, undoable in the usual way.
+   */
+  doStepForMe(): void {
+    switch (this.progress().step) {
+      case 1:
+        this.drawFirstBar();
+        break;
+      case 2:
+        this.extendChain();
+        break;
+      case 3:
+        this.groundEnds();
+        break;
+      case 4:
+        this.driveIt();
+        break;
+      default:
+        this.playAndRead();
+    }
+  }
+
+  /**
+   * The canonical four-bar, in the student's own length units.
+   *
+   * A crank-rocker rather than any four points that close: ground 4, crank 1,
+   * coupler 3.5, rocker 3 satisfies Grashof with the crank adjacent to ground,
+   * so the input turns all the way round and the mechanism actually plays. A
+   * triple rocker would stall halfway through step five.
+   */
+  private static readonly SHAPE = {
+    a: new Coord(-2, 0),
+    b: new Coord(-2, 1),
+    c: new Coord(0.99, 2.82),
+    d: new Coord(2, 0),
+  };
+
+  /**
+   * Where the canonical shape goes: inside what the student is already looking
+   * at, rather than wherever its own coordinates happen to fall.
+   *
+   * Building at fixed model coordinates and then reframing onto them is the
+   * obvious alternative, and it is wrong twice over: it moves the view out from
+   * under someone who had panned somewhere deliberately, and the zoom it lands
+   * on leaves the parts drawn far larger than the grid squares -- which the app
+   * notices and warns about. Placing it in view instead means the same thing
+   * happens as when a bar is drawn by hand: it is already where you are
+   * looking, and nothing has to move.
+   */
+  private placeInView(): (point: Coord) => Coord {
+    const { a, b, c, d } = TutorialService.SHAPE;
+    const xs = [a.x, b.x, c.x, d.x];
+    const ys = [a.y, b.y, c.y, d.y];
+    const spanX = Math.max(...xs) - Math.min(...xs);
+    const spanY = Math.max(...ys) - Math.min(...ys);
+    const middle = new Coord(
+      (Math.max(...xs) + Math.min(...xs)) / 2,
+      (Math.max(...ys) + Math.min(...ys)) / 2
+    );
+
+    const view = this.visibleRect();
+    // Half the window, so the finished four-bar has room around it and the
+    // student can see it is a drawing on a grid rather than a full-bleed
+    // diagram.
+    const scale = Math.min((view.width * 0.5) / spanX, (view.height * 0.5) / spanY);
+    return (point: Coord) =>
+      new Coord(view.x + (point.x - middle.x) * scale, view.y + (point.y - middle.y) * scale);
+  }
+
+  /** The middle of the canvas and how much of the model it is showing. */
+  private visibleRect(): { x: number; y: number; width: number; height: number } {
+    const canvas = document.getElementById('canvas');
+    const box = canvas?.getBoundingClientRect();
+    if (!box || box.width === 0 || box.height === 0) {
+      // No canvas to ask -- a test harness, or a call before the view exists.
+      // The default view is centred on the origin and about twenty units wide.
+      return { x: 0, y: 0, width: 20 * MODEL_SCALE, height: 12 * MODEL_SCALE };
+    }
+    const from = this.svgGrid.screenToSVGfromXY(box.left, box.top);
+    const to = this.svgGrid.screenToSVGfromXY(box.right, box.bottom);
+    return {
+      x: (from.x + to.x) / 2,
+      y: (from.y + to.y) / 2,
+      width: Math.abs(to.x - from.x),
+      height: Math.abs(to.y - from.y),
+    };
+  }
+
+  private drawFirstBar(): void {
+    // The app's own rule for a first part: object scale is taken from the zoom
+    // the student is at, and it has to be settled before anything is drawn,
+    // because every part is sized from it.
+    if (this.mechanism.links.length === 0) this.svgGrid.updateObjectScale();
+    const place = this.placeInView();
+    const { a, b } = TutorialService.SHAPE;
+    this.mechanism.addBar(place(a), place(b));
+  }
+
+  /**
+   * Extend whatever bar is there, rather than the one the tutorial would have
+   * drawn.
+   *
+   * The remaining two points are placed through the similarity that carries
+   * the canonical first bar onto the student's actual one, so a bar drawn
+   * longer, shorter or at an angle still finishes as the same crank-rocker.
+   */
+  private extendChain(): void {
+    const { a, b, c, d } = TutorialService.SHAPE;
+    const first = this.firstBarEnds();
+    if (!first) return;
+    const map = similarity(a, b, first.from, first.to);
+
+    // Until the step is *done*, not one bar per press: the button offers to
+    // make the move the card is asking for, and the card is asking for a chain
+    // of three. Bounded so a drawing this cannot finish -- a chain that is
+    // already branched -- stops rather than spins.
+    for (let guard = 0; guard < 2 && !linksAreChained(this.mechanism.links); guard++) {
+      const free = endJoints(this.mechanism.joints);
+      const anchor = free[free.length - 1];
+      if (!anchor) return;
+      this.mechanism.addBarFrom(anchor, map(this.mechanism.links.length === 1 ? c : d));
+    }
+  }
+
+  /** The two ends of the bar the student drew first, oldest joint first. */
+  private firstBarEnds(): { from: Coord; to: Coord } | undefined {
+    const link = this.mechanism.links[0];
+    if (!link || link.joints.length < 2) return undefined;
+    const [from, to] = link.joints;
+    return { from: new Coord(from.x, from.y), to: new Coord(to.x, to.y) };
+  }
+
+  private groundEnds(): void {
+    // One at a time and through the panel's own call, which resolves sliders
+    // and rebuilds -- so the ends come back re-read between the two.
+    for (let step = 0; step < 2; step++) {
+      const target = this.progress().target;
+      if (!target) return;
+      this.activeObj.updateSelectedObj(target);
+      this.mechanism.toggleGround();
+    }
+  }
+
+  private driveIt(): void {
+    const target = this.progress().target;
+    if (!target) return;
+    this.activeObj.updateSelectedObj(target);
+    this.mechanism.adjustInput();
+  }
+
+  private playAndRead(): void {
+    this.tabs.setTab(TabID.ANALYZE);
+    // A sample index, not a fraction of the cycle -- `animate` rounds what it
+    // is given and clamps it into the sample range, so a fraction is the start
+    // pose every time. A quarter of the way round is far enough that the
+    // mechanism has visibly moved and the reading is about something.
+    const samples = this.mechanism.masterMechanism()?.joints.length ?? 0;
+    this.mechanism.animate(Math.floor(samples / 4), false);
+    this.hasPlayed = true;
+    const joint = this.fastestJoint();
+    if (joint) this.activeObj.updateSelectedObj(joint);
+    this.checkForFinish();
+  }
+
+  /**
+   * The moving joint with the most to say, at the pose now on screen.
+   *
+   * "Read a velocity" wants one worth reading: the first non-grounded joint in
+   * the drawing is usually on the crank, whose speed is the smallest in the
+   * mechanism. On a crank-rocker the fastest is the coupler point, which is
+   * also the one the graphs are interesting for.
+   */
+  private fastestJoint(): RealJoint | undefined {
+    let best: RealJoint | undefined;
+    let fastest = -1;
+    for (const joint of readableJoints(this.mechanism.joints)) {
+      const speed = Number(this.readingFor(joint)?.magnitude ?? -1);
+      if (speed > fastest) {
+        fastest = speed;
+        best = joint;
+      }
+    }
+    return best;
+  }
+}
+
+/**
+ * The similarity taking one segment onto another: rotate, scale, translate.
+ *
+ * Angles and length ratios survive it, which is the whole reason it is used
+ * here -- the four-bar stays the four-bar whatever bar the student drew.
+ */
+function similarity(fromA: Coord, fromB: Coord, toA: Coord, toB: Coord): (point: Coord) => Coord {
+  const source = { x: fromB.x - fromA.x, y: fromB.y - fromA.y };
+  const target = { x: toB.x - toA.x, y: toB.y - toA.y };
+  const denominator = source.x * source.x + source.y * source.y;
+  if (denominator === 0) return () => new Coord(toA.x, toA.y);
+  // The complex quotient target/source: one number carrying both the rotation
+  // and the scale.
+  const scaleX = (target.x * source.x + target.y * source.y) / denominator;
+  const scaleY = (target.y * source.x - target.x * source.y) / denominator;
+  return (point: Coord) => {
+    const dx = point.x - fromA.x;
+    const dy = point.y - fromA.y;
+    return new Coord(toA.x + scaleX * dx - scaleY * dy, toA.y + scaleY * dx + scaleX * dy);
+  };
+}

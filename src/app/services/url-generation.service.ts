@@ -263,4 +263,22 @@ export class UrlGenerationService {
     const dataURL = encodeURI(dataURLString);
     return dataURL;
   }
+
+  /**
+   * Put the share link on the clipboard.
+   *
+   * Through a scratch textarea and `execCommand` rather than the clipboard
+   * API, which needs a secure context and a permission the app has never asked
+   * for. Here rather than in a panel because two of them share it now.
+   */
+  copyFullUrl(): void {
+    const url = this.generateFullUrl();
+    const scratch = document.createElement('textarea');
+    document.body.appendChild(scratch);
+    scratch.value = url;
+    scratch.textContent = url;
+    scratch.select();
+    document.execCommand('copy');
+    document.body.removeChild(scratch);
+  }
 }

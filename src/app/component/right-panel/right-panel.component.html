@@ -6,7 +6,8 @@
           getOpenTab() === 3 ||
           getOpenTab() === 5 ||
           getOpenTab() === 6 ||
-          getOpenTab() === 7
+          getOpenTab() === 7 ||
+          getOpenTab() === 8
           ? 'open'
           : 'openWide'
         : 'closed'
@@ -29,6 +30,11 @@
     @if (getOpenTab() === 7) {
       <div class="page1">
         <app-export-panel></app-export-panel>
+      </div>
+    }
+    @if (getOpenTab() === 8) {
+      <div class="page1">
+        <app-tutorial-panel></app-tutorial-panel>
       </div>
     }
     @if (getOpenTab() === 1) {

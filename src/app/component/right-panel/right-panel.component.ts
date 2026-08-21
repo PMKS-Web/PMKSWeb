@@ -11,8 +11,10 @@ import { SettingsService } from '../../services/settings.service';
 import { Arc, Line } from '../../model/line';
 import { Coord } from '../../model/coord';
 import { SvgGridService } from '../../services/svg-grid.service';
+import { TutorialService } from '../../services/tutorial.service';
 import { AnalysisSetupComponent } from '../analysis-setup/analysis-setup.component';
 import { ExportPanelComponent } from '../export-panel/export-panel.component';
+import { TutorialPanelComponent } from '../tutorial-panel/tutorial-panel.component';
 import { SettingsPanelComponent } from '../settings-panel/settings-panel.component';
 import { EquationPanelComponent } from '../equation-panel/equation-panel.component';
 import { HelpPanelComponent } from '../help-panel/help-panel.component';
@@ -61,6 +63,7 @@ import { MatIcon } from '@angular/material/icon';
   imports: [
     AnalysisSetupComponent,
     ExportPanelComponent,
+    TutorialPanelComponent,
     SettingsPanelComponent,
     EquationPanelComponent,
     HelpPanelComponent,
@@ -76,6 +79,18 @@ export class RightPanelComponent implements DoCheck {
   mechanismService = inject(MechanismService);
   settingsService = inject(SettingsService);
   svgService = inject(SvgGridService);
+  private tutorial = inject(TutorialService);
+
+  /**
+   * The tutorial asks to be shown rather than reaching in and setting the tab.
+   *
+   * A service that imported this component to open it would close the loop
+   * this component's own page has already opened -- the tutorial page injects
+   * the service -- so the request travels the other way.
+   */
+  private readonly tutorialSub = this.tutorial.openRequest.subscribe(() =>
+    RightPanelComponent.insistOn(RightPanelComponent.TUTORIAL_TAB)
+  );
 
   private analytics: AnalyticsService = inject(AnalyticsService);
 
@@ -100,6 +115,12 @@ export class RightPanelComponent implements DoCheck {
    * drawing it is a part of.
    */
   static readonly EXPORT_TAB = 7;
+  /**
+   * The tutorial, which is a drawer page for the same reason again: the student
+   * has to be able to do the thing the card is describing, on the canvas, while
+   * the card is still on screen.
+   */
+  static readonly TUTORIAL_TAB = 8;
   turnOnDebugger() {
     this.settingsService.isGridDebugOn = !this.settingsService.isGridDebugOn;
   }
@@ -147,6 +168,13 @@ export class RightPanelComponent implements DoCheck {
   private shownAttention = 0;
 
   ngDoCheck(): void {
+    // Whether the tutorial's card is the thing actually on screen. Only this
+    // component knows both halves: a closed drawer still *renders* the page it
+    // was last showing -- it parks off the edge rather than being torn down --
+    // so the card cannot tell from its own lifecycle.
+    this.tutorial.onScreen =
+      RightPanelComponent.isOpen &&
+      RightPanelComponent.openTab === RightPanelComponent.TUTORIAL_TAB;
     if (RightPanelComponent.attentionCount !== this.shownAttention && !this.attention) {
       this.shownAttention = RightPanelComponent.attentionCount;
       this.attention = true;
@@ -156,6 +184,11 @@ export class RightPanelComponent implements DoCheck {
 
   /** Shut the drawer, whichever one is open. */
   close(): void {
+    RightPanelComponent.dismiss();
+  }
+
+  /** Shut the drawer from outside it, the mirror of `insistOn`. */
+  static dismiss(): void {
     RightPanelComponent.isOpen = false;
   }
 

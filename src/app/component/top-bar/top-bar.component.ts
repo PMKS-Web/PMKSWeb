@@ -23,6 +23,7 @@ import { RightPanelComponent } from '../right-panel/right-panel.component';
 import { ExportFlowService } from '../../services/export/export-flow.service';
 import { TemplatesComponent } from '../MODALS/templates/templates.component';
 import { NotificationService } from '../../services/notification.service';
+import { TutorialService } from '../../services/tutorial.service';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
 import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-shortcuts.service';
@@ -96,6 +97,7 @@ export class TopBarComponent implements AfterViewInit, AfterViewChecked, OnDestr
   private changes = inject(ChangeDetectorRef);
   private exportFlow = inject(ExportFlowService);
   private notify = inject(NotificationService);
+  private tutorial = inject(TutorialService);
 
   TabID = TabID;
   menuOpen = false;
@@ -419,6 +421,17 @@ export class TopBarComponent implements AfterViewInit, AfterViewChecked, OnDestr
     RightPanelComponent.tabClicked(3);
   }
 
+  /**
+   * The way back to the tutorial once its offer has been dismissed for good.
+   *
+   * It opens at whichever step the drawing has not satisfied, so this works on
+   * a mechanism already on the grid as well as on a bare one.
+   */
+  openTutorial(): void {
+    this.closeMenu();
+    this.tutorial.start();
+  }
+
   openDebug(): void {
     this.closeMenu();
     RightPanelComponent.tabClicked(4);
@@ -489,14 +502,7 @@ export class TopBarComponent implements AfterViewInit, AfterViewChecked, OnDestr
   copyURL(): void {
     this.closeMenu();
     this.analytics.logEvent('copyURL');
-    const url = this.urlGeneration.generateFullUrl();
-    const scratch = document.createElement('textarea');
-    document.body.appendChild(scratch);
-    scratch.value = url;
-    scratch.textContent = url;
-    scratch.select();
-    document.execCommand('copy');
-    document.body.removeChild(scratch);
+    this.urlGeneration.copyFullUrl();
     this.notify.success('share.copied', 'Link copied. Copy again after your next change.');
   }
 }

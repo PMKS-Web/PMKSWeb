@@ -27,6 +27,7 @@
 @use 'src/app/component/analysis-graph/analysis-graph.component.scss' as analysis-graph;
 @use 'src/app/component/analysis-graph-section/analysis-graph-section.component.scss' as analysis-graph-section;
 @use 'src/app/component/export-panel/export-panel.component.scss' as export-panel;
+@use 'src/app/component/tutorial-panel/tutorial-panel.component.scss' as tutorial-panel;
 @use 'src/app/component/right-panel/right-panel.component.scss' as right-panel;
 @use 'src/app/component/settings-panel/settings-panel.component.scss' as settings-panel;
 @use 'src/app/component/help-panel/help-panel.component.scss' as help-panel;
@@ -96,6 +97,7 @@ $my-theme: mat.m2-define-light-theme(
 @include analysis-graph.css($my-theme);
 @include analysis-graph-section.css($my-theme);
 @include export-panel.css($my-theme);
+@include tutorial-panel.css($my-theme);
 @include right-panel.css($my-theme);
 @include settings-panel.css($my-theme);
 @include help-panel.css($my-theme);

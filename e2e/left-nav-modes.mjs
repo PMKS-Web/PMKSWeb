@@ -87,19 +87,11 @@ const highlighted = () =>
 try {
   await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(() => {});
-  // And take the overlay away if it outlived the click: it swallows pointer
-  // events over the whole page, so a later tab click waits for a layer that is
-  // never going anywhere.
-  await page.evaluate(() =>
-    document
-      .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-      .forEach((node) => node.remove())
-  );
+  // Nothing to dismiss any more. The intro.js overlay this used to skip past
+  // is gone, replaced by the tutorial drawer, which never covers the canvas and
+  // only opens when it is asked for -- see e2e/tutorial.mjs. The unguarded
+  // click that used to be here now waits out its full timeout on an element
+  // that will never exist.
   await page.waitForTimeout(400);
 
   // --- the rail and the file toolbar are gone, not merely restyled -----------

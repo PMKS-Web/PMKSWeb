@@ -44,6 +44,35 @@
           </span>
         </div>
       </div>
+
+      <!-- The offer hangs off the panel rather than replacing it: a student who
+           ignores it has still read the sentence about right-click, and the
+           tutorial then uses that same gesture rather than a third of its own. -->
+      @if (tutorial.offerVisible()) {
+        <div class="helpRule"></div>
+        <div class="offer">
+          <mat-icon>school</mat-icon>
+          <div class="offerText">
+            <div class="offerTitle">First time here?</div>
+            <p class="offerWhy">
+              Build a four-bar linkage on this grid and read a velocity off it. About three
+              minutes, in five steps.
+            </p>
+            <button class="offerButton" (click)="startTutorial()">Start Tutorial</button>
+          </div>
+        </div>
+      }
+
+      <!-- Closing the drawer leaves the tutorial where it was, and this is the
+           thread back to it. In the panel that is on screen in every editing
+           mode, so it cannot be lost behind whatever else the drawer shows. -->
+      @if (tutorial.resumeVisible()) {
+        <div class="helpRule"></div>
+        <button class="resumeLine" (click)="startTutorial()">
+          <mat-icon>school</mat-icon>
+          <span>{{ tutorial.resumeLabel() }}</span>
+        </button>
+      }
     </div>
   }
 

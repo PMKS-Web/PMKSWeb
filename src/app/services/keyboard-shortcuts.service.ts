@@ -255,15 +255,15 @@ export class KeyboardShortcutsService {
   }
 
   /**
-   * Whether the canvas is covered: a modal dialog, or the guided tour.
+   * Whether the canvas is covered by a conversation of its own.
    *
-   * Both take the whole screen and both are their own conversation. The tour
-   * is not a dialog and so is not in the dialog's own list -- it is asked
-   * about by the overlay it lays over the page.
+   * Only dialogs now. It used to also ask after the intro.js overlay, which
+   * dimmed the whole page; the tutorial that replaced it is a drawer page
+   * beside the canvas rather than over it, and the shortcuts stay live because
+   * the student is meant to be using them on the drawing while it is open.
    */
   private somethingIsOver(): boolean {
-    if (this.dialog.openDialogs.length > 0) return true;
-    return !!document.querySelector('.introjs-overlay, .introjs-tooltip');
+    return this.dialog.openDialogs.length > 0;
   }
 
   /** Whether the keystroke was aimed at somewhere text is being entered. */
