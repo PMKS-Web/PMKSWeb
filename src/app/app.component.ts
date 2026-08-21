@@ -8,6 +8,7 @@ import { LeftTabsComponent } from './component/left-tabs/left-tabs.component';
 import { PlaybackBarComponent } from './component/playback-bar/playback-bar.component';
 import { RightPanelComponent } from './component/right-panel/right-panel.component';
 import { NotificationComponent } from './component/notification/notification.component';
+import { ColorService } from './services/color.service';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +31,12 @@ import { NotificationComponent } from './component/notification/notification.com
 export class AppComponent {
   private matIconRegistry = inject(MatIconRegistry);
   private domSanitizer = inject(DomSanitizer);
+  /**
+   * Asked for so that it exists, not so that it is used: its constructor is
+   * what puts the reader's chosen joint colours on the document, and until
+   * something injects it the first drawing is painted before it is built.
+   */
+  private colors = inject(ColorService);
 
   constructor() {
     this.matIconRegistry.addSvgIcon(

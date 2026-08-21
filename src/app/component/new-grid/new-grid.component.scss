@@ -77,21 +77,43 @@
     stroke: mat.m2-get-color-from-palette($primary-palette, 900);
   }
 
+  // The two resting states come from whichever family the reader has picked in
+  // Visual Settings (ColorService.useJointScheme writes these). The fallback is
+  // the accent's own, so a document with nothing set is drawn exactly as it
+  // always was. Picked is not part of a family: amber is what a selection means
+  // everywhere else in the app, and it has to mean the same here.
   .joint-default {
     filter: url(#elevation-1);
-    fill: mat.m2-get-color-from-palette($accent-palette, 50);
+    fill: var(--joint-rest, #{mat.m2-get-color-from-palette($accent-palette, 50)});
   }
   .joint-highlight {
     filter: url(#elevation-2);
-    fill: mat.m2-get-color-from-palette($accent-palette, 100);
+    fill: var(--joint-hover, #{mat.m2-get-color-from-palette($accent-palette, 100)});
   }
   .joint-dragging {
     filter: url(#elevation-3);
-    fill: mat.m2-get-color-from-palette($accent-palette, 100);
+    fill: var(--joint-hover, #{mat.m2-get-color-from-palette($accent-palette, 100)});
   }
   .joint-selected {
     filter: url(#elevation-1);
     fill: mat.m2-get-color-from-palette($accent-palette, 400);
+  }
+
+  // Drawn on a joint rather than beside it, so it follows the joint's own
+  // colour: a dark family needs a light padlock or the mark disappears into
+  // the pin it is sitting on.
+  .lockBadge {
+    .lockGlyph {
+      fill: var(--joint-ink, #263238);
+    }
+
+    // Only a welded joint brings its own chip -- a plain one's circle is chip
+    // enough. It takes the joint's colour rather than white so that the one
+    // ink above is legible on it whichever family is on.
+    .lockChip {
+      fill: var(--joint-rest, #ffffff);
+      stroke: #26323855;
+    }
   }
 
   .link-selected {

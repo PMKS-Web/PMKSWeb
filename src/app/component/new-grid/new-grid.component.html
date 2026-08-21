@@ -909,14 +909,13 @@
                      brings a white chip to stand on. -->
                 @if (gridUtils.getWelded(joint)) {
                   <circle
+                    class="lockChip"
                     [attr.r]="0.13 * settings.objectScale"
-                    fill="#ffffff"
-                    stroke="#26323855"
                     [attr.stroke-width]="svgGrid.scaleWithZoom(1)"
                   />
                 }
                 <g [attr.transform]="lockGlyphTransform()">
-                  <path [attr.d]="lockGlyphPath" fill="#263238" fill-rule="evenodd" />
+                  <path class="lockGlyph" [attr.d]="lockGlyphPath" fill-rule="evenodd" />
                 </g>
               </g>
             }

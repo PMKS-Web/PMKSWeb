@@ -17,6 +17,7 @@ import { RadioComponent } from '../BLOCKS/radio/radio.component';
 import { ToggleComponent } from '../BLOCKS/toggle/toggle.component';
 import { InputComponent } from '../BLOCKS/input/input.component';
 import { ButtonComponent } from '../BLOCKS/button/button.component';
+import { ColorPickerComponent } from '../BLOCKS/color-picker/color-picker.component';
 
 @Component({
   selector: 'app-settings-panel',
@@ -33,6 +34,7 @@ import { ButtonComponent } from '../BLOCKS/button/button.component';
     ToggleComponent,
     InputComponent,
     ButtonComponent,
+    ColorPickerComponent,
   ],
 })
 export class SettingsPanelComponent implements OnDestroy {

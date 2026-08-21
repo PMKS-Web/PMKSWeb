@@ -1,20 +1,27 @@
 <div class="color-picker">
   <div class="row">
     <span class="label"><ng-content></ng-content></span>
-    <mat-icon matTooltip="{{ 'this.tooltip' }}" [matTooltipShowDelay]="1000" class="label-help"
-      >help_outline
-    </mat-icon>
+    @if (tooltip()) {
+      <mat-icon [matTooltip]="tooltip()!" [matTooltipShowDelay]="600" class="label-help"
+        >help_outline
+      </mat-icon>
+    }
     <div class="spacer"></div>
   </div>
   <div class="row color-picker">
-    <!-- Use an *ngFor directive to iterate over the colors array -->
     @for (color of getCorrectColors(); track color; let i = $index) {
       <div>
         <!-- Use a div element to represent each color swatch -->
-        <div class="swatch" [style.backgroundColor]="color" (click)="selectColor(i)">
-          <!-- Use an *ngIf directive to show a check mark if the color is selected -->
-          @if (selectedIndex === i) {
-            <mat-icon>check</mat-icon>
+        <div
+          class="swatch"
+          [style.backgroundColor]="color"
+          [matTooltip]="nameOf(i)"
+          [matTooltipDisabled]="!nameOf(i)"
+          [matTooltipShowDelay]="400"
+          (click)="selectColor(i)"
+        >
+          @if (chosenIndex() === i) {
+            <mat-icon [style.color]="tickInk(color)">check</mat-icon>
           }
         </div>
       </div>
