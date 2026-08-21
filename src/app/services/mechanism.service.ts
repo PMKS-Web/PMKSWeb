@@ -1012,6 +1012,92 @@ export class MechanismService {
     this.activeObjService.fakeUpdateSelectedObj();
   }
 
+  /**
+   * How much of the drawing is held, for the counts beside Lock All and
+   * Unlock All.
+   *
+   * A "part" here is a thing that carries a Lock mark -- every joint and every
+   * force -- because that is what Lock All actually sets. Counting links
+   * instead would let the menu say "3 locked" while five marks were down.
+   */
+  lockCounts(): { locked: number; open: number; total: number } {
+    const marks: { locked: boolean }[] = [
+      ...this.joints.filter((joint): joint is RealJoint => joint instanceof RealJoint),
+      ...this.forces,
+    ];
+    const locked = marks.filter((mark) => mark.locked).length;
+    return { locked, open: marks.length - locked, total: marks.length };
+  }
+
+  /**
+   * The joints deleting this link would sweep up with it.
+   *
+   * `deleteLink` keeps a joint only while some *other* link still holds it, so
+   * this is that rule asked in advance -- what the menu row needs to be able to
+   * name the cascade before the click rather than after it.
+   */
+  jointsOrphanedByDeleting(link: Link): RealJoint[] {
+    const doomed = new Set<Link>([link, ...(link instanceof RealLink ? link.subset : [])]);
+    return link.joints.filter(
+      (joint): joint is RealJoint =>
+        joint instanceof RealJoint &&
+        !this.links.some((other) => !doomed.has(other) && other.joints.includes(joint))
+    );
+  }
+
+  /**
+   * The links deleting this joint would take with it.
+   *
+   * `deleteJoint` removes every link the joint sits on that has fewer than
+   * three joints, because a bar with one end left is not a bar. Asked here in
+   * advance, so the row can say so before the click rather than after it.
+   */
+  linksRemovedByDeleting(joint: RealJoint): Link[] {
+    return joint.links.filter((link) => link.joints.length < 3);
+  }
+
+  /**
+   * Copy a bar and the two joints it stands on, a little to one side.
+   *
+   * Free-standing, deliberately: the copy shares no joint with the original,
+   * carries none of its forces and none of its locks, and is not welded to
+   * anything. A duplicate that arrived already attached would be a different
+   * mechanism rather than a second copy of the same bar, and there is no
+   * reading of "duplicate" that says which of the original's neighbours the
+   * copy should have inherited.
+   */
+  duplicateLink(link: RealLink): void {
+    // A two-joint bar only. A compound is several links and a set of welds; a
+    // cylinder part belongs to a sealed assembly. Neither copies as one bar,
+    // which is why the menu offers this on a plain link and nowhere else.
+    if (link.subset.length > 0 || this.cylinderAt(link)) return;
+    const ends = link.joints.filter((joint): joint is RealJoint => joint instanceof RealJoint);
+    if (ends.length !== 2) return;
+
+    // Far enough to be grabbable, near enough to read as this link's copy.
+    const step = 0.4 * this.settingsService.objectScale;
+    const made: RealJoint[] = [];
+    for (const end of ends) {
+      const id = this.determineNextLetter(made.map((joint) => joint.id));
+      const copy = new RevJoint(id, end.x + step, end.y - step);
+      made.push(copy);
+    }
+    const copy = this.gridUtils.createRealLink(
+      made
+        .map((joint) => joint.id)
+        .sort()
+        .join(''),
+      made
+    );
+    made.forEach((joint) => joint.links.push(copy));
+    made[0].connectedJoints.push(made[1]);
+    made[1].connectedJoints.push(made[0]);
+    this.joints.push(...made);
+    this.links.push(copy);
+    this.activeObjService.updateSelectedObj(copy);
+    this.finishStructuralEdit(true);
+  }
+
   /** Whether any Lock mark is set at all — what enables Unlock All. */
   anythingLocked(): boolean {
     return (
@@ -4575,8 +4661,13 @@ export class MechanismService {
     );
   }
 
-  createForce(startCoord: Coord, endCoord: Coord): Force | undefined {
-    const selectedLink = this.activeObjService.selectedLink;
+  /**
+   * `onLink` is handed in by the gesture that started this, because the force
+   * row is on a joint's menu as well as a link's and the selection there is
+   * the joint. Falls back to the selected link for the callers that have one.
+   */
+  createForce(startCoord: Coord, endCoord: Coord, onLink?: RealLink): Force | undefined {
+    const selectedLink = onLink ?? this.activeObjService.selectedLink;
     if (!(selectedLink instanceof RealLink)) return undefined;
     startCoord = new Coord(startCoord.x, startCoord.y);
     endCoord = new Coord(endCoord.x, endCoord.y);

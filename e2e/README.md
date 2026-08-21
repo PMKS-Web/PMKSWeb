@@ -34,6 +34,7 @@ their source. Everything browser-driven lives here.
 - `playback-timing.mjs` — real-time playback: a revolution takes 60/RPM wall-clock seconds, the reported cycle period scales with input speed, and simulation time is held (not the sample index) across a speed change
 - `input-settings-and-playback.mjs` — the input joint's Input Settings section (direction, unit-free speed field, RPM / deg/s / rad/s picker), its removal from global Settings, the time field's width, and that playback interpolates between samples at a slow input speed
 - `synthesis-redesign.mjs` — Synthesis end to end: the chooser, arming and dropping the three positions (wheel turns the one about to land, and does not zoom), dragging one without panning the canvas, Generate, the candidate gallery and its hover comparison, the six-bar driver, the preview transport, Insert and its Undo, and the design surviving undo and redo
+- `context-menu.mjs` — the right-click menu on every kind of part and in every mode: the fixed Attach/State/Machine ladder with Delete alone at the foot, states written as ticked switches rather than labels that flip, the model's own reason in the right-hand slot of every greyed row (a load at a shared pin, a weld with nothing to fuse, a sealed cylinder, a locked part), the deletion cascades named before the click, the counts beside Lock All and Unlock All, and the analysis modes offering the trace and the way back into Edit and nothing that edits
 
 ## Running
 

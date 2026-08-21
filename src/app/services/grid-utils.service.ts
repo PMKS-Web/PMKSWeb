@@ -225,6 +225,37 @@ export class GridUtilsService {
   }
 
   /**
+   * Why Weld is greyed on this joint, short and long.
+   *
+   * The branches of `canToggleWeld`, read back out. The control and its reason
+   * come from one place so a menu cannot grey a row it has no explanation for,
+   * or explain one it left enabled.
+   */
+  weldRefusal(joint: Joint): { short: string; long: string } | undefined {
+    if (this.canToggleWeld(joint)) return undefined;
+    if (!(joint instanceof RealJoint)) {
+      return { short: 'not a joint', long: 'Only a joint can be welded.' };
+    }
+    const sealed = this.mechanismSrv.cylinderAt(joint);
+    if (sealed && (joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id)) {
+      return {
+        short: 'part is sealed',
+        long: 'A cylinder is one sealed part, so its joints cannot be fused into a neighbouring body. Attach a link here instead.',
+      };
+    }
+    if (joint.input) {
+      return {
+        short: 'it is driven',
+        long: 'A weld says these bodies do not move relative to each other, and an input says they do. Remove the input first.',
+      };
+    }
+    return {
+      short: 'needs 2 links',
+      long: 'A weld fuses the links that meet at a joint, and only one meets here.',
+    };
+  }
+
+  /**
    * The joints the current Lock marks hold still. Derived fresh each time —
    * the mechanism is small and the closure is cheap — so every asker (the
    * drag gates, the canvas paint, the panel) reads the same answer with no

@@ -116,6 +116,27 @@ export function describeActuator(joint: Joint): Actuator | string {
   return actuator;
 }
 
+/**
+ * A driven-joint refusal in two lengths: a few words for a menu row's
+ * right-hand slot, and the model's own sentence for the hover behind it.
+ *
+ * One source, two lengths. `describeActuator` already writes the sentence the
+ * setup panel shows; the short form is derived from the same branch rather
+ * than written again somewhere else, so a menu and a panel cannot end up
+ * disagreeing about why a joint will not take an input.
+ */
+export function describeActuatorRefusal(joint: Joint): { short: string; long: string } | undefined {
+  const found = describeActuator(joint);
+  if (typeof found !== 'string') return undefined;
+  const long = found;
+  if (!(joint instanceof RealJoint)) return { short: 'not a joint', long };
+  if (joint.isWelded) return { short: 'welded, no freedom', long };
+  const bodies = incidentBodies(joint).length;
+  if (bodies < 2) return { short: 'needs 2 bodies', long };
+  if (bodies > 2) return { short: `${bodies} bodies meet`, long };
+  return { short: 'no angle here', long };
+}
+
 /** The actuator this joint would be, or nothing. */
 export function resolveActuator(joint: Joint): Actuator | undefined {
   const found = describeActuator(joint);

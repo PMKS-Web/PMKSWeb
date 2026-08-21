@@ -15,7 +15,12 @@ import { UrlProcessorService } from '../../services/url-processor.service';
 import { GridUtilsService } from '../../services/grid-utils.service';
 import { SettingsService } from '../../services/settings.service';
 import { ActiveObjService } from '../../services/active-obj.service';
-import { cMenuItem, ContextMenuComponent } from '../context-menu/context-menu.component';
+import { ContextMenuComponent } from '../context-menu/context-menu.component';
+import { ContextMenuModel, trackContextMenuPointer } from '../context-menu/menu-model';
+import {
+  ContextMenuBuilderService,
+  MenuHandlers,
+} from '../../services/context-menu-builder.service';
 import { Link, RealLink, SliderBlock } from '../../model/link';
 import { Lockable } from '../../model/lock-set';
 import { Joint, PrisJoint, RealJoint, RevJoint } from '../../model/joint';
@@ -142,6 +147,7 @@ export class NewGridComponent implements OnDestroy {
   dragState = inject(DragStateService);
   sliderMarks = inject(SliderMarkService);
   bgImage = inject(BackgroundImageService);
+  private menuBuilder = inject(ContextMenuBuilderService);
 
   public static debugValue: unknown;
   static debugPoints: Coord[] = [];
@@ -153,10 +159,13 @@ export class NewGridComponent implements OnDestroy {
   constructor() {
     //This is for debug purposes, do not make anything else static!
     NewGridComponent.instance = this;
+    // Ahead of the CDK's own contextmenu listener, so the menu card knows
+    // which corner the pointer is in before it is measured.
+    trackContextMenuPointer();
   }
 
   private svgGridElement!: HTMLElement;
-  public cMenuItems: cMenuItem[] = [];
+  public cMenu: ContextMenuModel = { groups: [] };
   public lastRightClick: Joint | Link | Force | string | SynthesisPose = '';
   public lastRightClickCoord: Coord = new Coord(0, 0);
 
@@ -347,38 +356,22 @@ export class NewGridComponent implements OnDestroy {
   }
 
   /**
-   * What can be done to the synthesis positions from here.
+   * The handlers the menu needs that only the canvas can perform.
    *
-   * The only part of this menu offered in every mode, because the positions
-   * themselves are drawn in every mode. They are a note about what the linkage
-   * was designed to do rather than a part of it, so clearing them is not an
-   * edit to the mechanism and does not have to wait for the start pose.
+   * Everything else a row does is an edit the services already own; these are
+   * gestures — the next click lands the thing — and the gesture state lives
+   * here, on the component that reads the pointer.
    */
-  private synthesisMenuItems(): cMenuItem[] {
-    if (this.synthesisBuilder.getAllPoses().length === 0) return [];
-    const items: cMenuItem[] = [];
-    if (this.objectKind(this.lastRightClick) === 'SynthesisPose') {
-      const pose = this.lastRightClick as SynthesisPose;
-      items.push(
-        new cMenuItem(
-          `Delete Position ${pose.id}`,
-          () => this.deleteSynthesisPosition(pose.id),
-          'trash',
-          false,
-          true
-        )
-      );
-    }
-    items.push(
-      new cMenuItem(
-        'Delete Synthesis Positions',
-        () => this.deleteAllSynthesisPositions(),
-        'remove',
-        false,
-        true
-      )
-    );
-    return items;
+  private menuHandlers(): MenuHandlers {
+    return {
+      attachLink: () => this.startCreatingLink(),
+      attachCylinder: () => this.startCreatingCylinder(),
+      attachTracerPoint: () => this.addJoint(),
+      attachForce: (onLink) => this.createForce(onLink),
+      backgroundImage: () => this.openBackgroundImage(),
+      deletePosition: (id) => this.deleteSynthesisPosition(id),
+      deleteAllPositions: () => this.deleteAllSynthesisPositions(),
+    };
   }
 
   /** Take one position away, or all of them, and record it as one step. */
@@ -416,326 +409,15 @@ export class NewGridComponent implements OnDestroy {
     return 'Unknown';
   }
 
+  /**
+   * Rebuild the menu for whatever was just right-clicked.
+   *
+   * The whole of the decision — which rows, which of them are switches, which
+   * are greyed and why — lives in `ContextMenuBuilderService`, which reads the
+   * answers out of the model that enforces them.
+   */
   updateContextMenuItems() {
-    //Switch case based on what type the object is
-    this.cMenuItems = [];
-    switch (this.objectKind(this.lastRightClick)) {
-      case 'Force':
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Force',
-            this.mechanismSrv.deleteForce.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
-        //Switch force direction, switch force local, delete Force
-        this.cMenuItems.push(
-          new cMenuItem(
-            (this.lastRightClick as Force).local ? 'Make Force Global' : 'Make Force Local',
-            this.mechanismSrv.changeForceLocal.bind(this.mechanismSrv),
-            (this.lastRightClick as Force).local ? 'force_global' : 'force_local'
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Switch Force Direction',
-            this.mechanismSrv.changeForceDirection.bind(this.mechanismSrv),
-            'switch_force_dir'
-          )
-        );
-        this.cMenuItems.push(this.lockMenuItem(this.lastRightClick as Force, 'Force'));
-        break;
-      case 'RealLink': {
-        // The BODY of a sealed cylinder: barrel, rod or the skin itself. Two
-        // actions only — the assembly is one part, so no attach items (a
-        // tracer on the barrel would be a third joint on a two-joint bar) and
-        // Delete takes the whole cylinder (§ cylinder 3, 5).
-        const bodyCylinder = this.mechanismSrv.cylinderAt(this.lastRightClick as RealLink);
-        if (bodyCylinder) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Delete Cylinder',
-              () => this.mechanismSrv.deleteCylinder(bodyCylinder),
-              'remove'
-            )
-          );
-          this.cMenuItems.push(
-            new cMenuItem(
-              bodyCylinder.slider.input ? 'Remove Input' : 'Add Input',
-              () => this.mechanismSrv.toggleCylinderInput(bodyCylinder),
-              bodyCylinder.slider.input ? 'remove_input' : 'add_input'
-            )
-          );
-          this.cMenuItems.push(this.lockMenuItem(this.lastRightClick as RealLink, 'Cylinder'));
-          break;
-        }
-        //Delete Link, Attach Link, Attach Tracer Point, Attach Joint
-        //Don't give options if a fillet it selected and not a primary link
-        let weldedLinkFilletSelected =
-          (this.lastRightClick as RealLink).isWelded &&
-          (this.lastRightClick as RealLink).lastSelectedSublink == null;
-
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Link',
-            this.mechanismSrv.deleteLink.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Attach Link',
-            this.startCreatingLink.bind(this),
-            'new_link',
-            weldedLinkFilletSelected
-          )
-        );
-        // Beside Attach Link, because it is the same gesture with a different
-        // member on the end of it: this link is what the ram is bolted to, and
-        // the next click is where its rod finishes.
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Attach Cylinder',
-            this.startCreatingCylinder.bind(this),
-            'add_cylinder',
-            weldedLinkFilletSelected
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Attach Tracer Point',
-            this.addJoint.bind(this),
-            'add_tracer',
-            weldedLinkFilletSelected
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Attach Force',
-            this.createForce.bind(this),
-            'add_force',
-            weldedLinkFilletSelected
-          )
-        );
-        // Offered only where there is a pin to draw the disc about — a crank.
-        // On anything else the item would have to explain why it does nothing,
-        // and a menu that lists actions it will refuse is worse than one that
-        // lists the actions it has.
-        if ((this.lastRightClick as RealLink).canBeCircular()) {
-          const drawnRound = (this.lastRightClick as RealLink).isCircle;
-          this.cMenuItems.push(
-            new cMenuItem(
-              drawnRound ? 'Make Bar' : 'Make Circular',
-              this.mechanismSrv.toggleLinkCircular.bind(this.mechanismSrv),
-              drawnRound ? 'make_bar' : 'make_circular'
-            )
-          );
-        }
-        this.cMenuItems.push(this.lockMenuItem(this.lastRightClick as RealLink, 'Link'));
-        break;
-      }
-      case 'RevJoint': {
-        let jointIsSlider = this.gridUtils.isAttachedToSlider(this.lastRightClick as RealJoint);
-        let jointIsGround = (this.lastRightClick as RealJoint).ground;
-        let canToggleInput = this.gridUtils.canToggleInput(this.lastRightClick as RealJoint);
-        const jointIsInput = this.gridUtils.isVisuallyInput(this.lastRightClick as RealJoint);
-
-        // A MOUNT of a sealed cylinder (the interior joints have no hitboxes,
-        // so no other member can arrive here). Ground and Weld stay; Slider is
-        // structurally off the table, and Delete cascades to the whole part —
-        // mirrored by the edit panel so the two surfaces cannot disagree.
-        const mountCylinder = this.mechanismSrv.cylinderAt(this.lastRightClick as RealJoint);
-        if (mountCylinder) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Delete Cylinder',
-              () => this.mechanismSrv.deleteCylinder(mountCylinder),
-              'remove'
-            )
-          );
-          this.cMenuItems.push(
-            new cMenuItem(
-              'Attach Link',
-              this.startCreatingLink.bind(this),
-              'new_link',
-              jointIsInput
-            )
-          );
-          this.cMenuItems.push(
-            new cMenuItem(
-              jointIsGround ? 'Remove Ground' : 'Add Ground',
-              this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-              jointIsGround ? 'remove_ground' : 'add_ground'
-            )
-          );
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Add Input',
-              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
-              !canToggleInput
-            )
-          );
-          this.cMenuItems.push(new cMenuItem('Add Slider', () => {}, 'add_slider', true));
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-              this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
-              !this.gridUtils.canToggleWeld(this.lastRightClick as RealJoint)
-            )
-          );
-          // The joint, not the part: a locked mount is a pinned attachment
-          // point the ram can still re-pose and swing about. Locking the
-          // whole cylinder lives on its body's menu.
-          this.cMenuItems.push(this.lockMenuItem(this.lastRightClick as RealJoint, 'Joint'));
-          break;
-        }
-
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Delete Joint',
-            this.mechanismSrv.deleteJoint.bind(this.mechanismSrv),
-            'remove'
-          )
-        );
-
-        // A third body at a driven joint is what "driven" stops being able to
-        // describe (§2.9), so the item that would add one is greyed rather
-        // than offered and then refused after the fact.
-        this.cMenuItems.push(
-          new cMenuItem('Attach Link', this.startCreatingLink.bind(this), 'new_link', jointIsInput)
-        );
-        // Beside Attach Link here for the same reason it is beside Attach Link
-        // on a body: the two are one gesture with a different member on the end
-        // of it. This joint becomes the ram's own mount, so it swings with
-        // whatever already meets here.
-        //
-        // Not on a welded joint. A weld is the statement that everything
-        // meeting here is one rigid body, and a ram's mount arriving would be a
-        // third body joining that statement without being part of it — the
-        // reconcilers then disagree about what the compound is, which is a
-        // broken mechanism rather than a refused edit.
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Attach Cylinder',
-            this.startCreatingCylinder.bind(this),
-            'add_cylinder',
-            jointIsInput || (this.lastRightClick as RealJoint).isWelded
-          )
-        );
-
-        // Enabled whatever else the joint is, exactly as the panel's toggle is:
-        // Ground and Slider became independent axes of the 2x2 in §4.1, so
-        // greying one out because of the other puts a reachable cell out of
-        // reach from this surface and not from the other.
-        this.cMenuItems.push(
-          new cMenuItem(
-            jointIsGround ? 'Remove Ground' : 'Add Ground',
-            this.mechanismSrv.toggleGround.bind(this.mechanismSrv),
-            jointIsGround ? 'remove_ground' : 'add_ground'
-          )
-        ); //Rev Joint - Ground
-
-        if (jointIsSlider) {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
-                ? 'Remove Input'
-                : 'Add Input',
-              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-              (this.gridUtils.getSliderJoint(this.lastRightClick as RealJoint) as RealJoint).input
-                ? 'remove_input'
-                : 'add_input',
-              !canToggleInput
-            )
-          ); //Rev Joint Slider
-        } else {
-          this.cMenuItems.push(
-            new cMenuItem(
-              (this.lastRightClick as RealJoint).input ? 'Remove Input' : 'Add Input',
-              this.mechanismSrv.adjustInput.bind(this.mechanismSrv),
-              (this.lastRightClick as RealJoint).input ? 'remove_input' : 'add_input',
-              !canToggleInput
-            ) //Rev Joint - Input
-          );
-        }
-
-        // A block is a body too, so adding one to a driven pin puts a third at
-        // the joint exactly as attaching a link does. Removing one is always
-        // allowed -- that direction takes a body away.
-        this.cMenuItems.push(
-          new cMenuItem(
-            this.gridUtils.isAttachedToSlider(this.lastRightClick as RealJoint)
-              ? 'Remove Slider'
-              : 'Add Slider',
-            this.mechanismSrv.toggleSlider.bind(this.mechanismSrv),
-            this.gridUtils.isAttachedToSlider(this.lastRightClick as RealJoint)
-              ? 'remove_slider'
-              : 'add_slider',
-            jointIsInput && !this.gridUtils.isAttachedToSlider(this.lastRightClick as RealJoint)
-          )
-        ); //Rev Joint - Always
-
-        this.cMenuItems.push(
-          new cMenuItem(
-            (this.lastRightClick as RealJoint).isWelded ? 'Unweld Joint' : 'Weld Joint',
-            this.mechanismSrv.toggleWeldedJoint.bind(this.mechanismSrv),
-            (this.lastRightClick as RealJoint).isWelded ? 'unweld_joint' : 'weld_joint',
-            // Greyed only when there is structurally nothing to fuse (fewer than
-            // two links); a grounded or driven joint still gets the explained
-            // refusal, exactly as the panel's toggle does.
-            !this.gridUtils.canToggleWeld(this.lastRightClick as RealJoint)
-          )
-        ); //Rev Joint - the service explains a refusal, as the panel's toggle does
-
-        this.cMenuItems.push(this.lockMenuItem(this.lastRightClick as RealJoint, 'Joint'));
-        break;
-      }
-
-      case 'SynthesisPose':
-        this.cMenuItems.push(...this.synthesisMenuItems());
-        break;
-      case 'String': //This means grid
-        // The positions stay on the grid after the linkage is inserted, in
-        // every mode, so the way to be rid of them is reachable from every mode.
-        this.cMenuItems.push(...this.synthesisMenuItems());
-        this.cMenuItems.push(
-          new cMenuItem('Add Link', this.startCreatingLink.bind(this), 'new_link')
-        );
-        this.cMenuItems.push(
-          new cMenuItem('Add Cylinder', this.startCreatingCylinder.bind(this), 'add_cylinder')
-        );
-        // Scenery rather than mechanism, so it sits below the two items that
-        // draw parts. One item for both halves: with a picture already placed
-        // there is nothing left to add, only somewhere to adjust it.
-        this.cMenuItems.push(
-          new cMenuItem(
-            this.bgImage.image() ? 'Edit background image' : 'Add background image',
-            () => this.openBackgroundImage(),
-            'background_image'
-          )
-        );
-        // Lock everything, unlock one handle, drag: the posing workflow. On
-        // the canvas menu because this is where the locking gesture lives —
-        // and greyed rather than hidden when there is nothing to act on.
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Lock All',
-            () => this.mechanismSrv.setAllLocks(true),
-            'lock',
-            this.mechanismSrv.links.length === 0 && this.mechanismSrv.forces.length === 0
-          )
-        );
-        this.cMenuItems.push(
-          new cMenuItem(
-            'Unlock All',
-            () => this.mechanismSrv.setAllLocks(false),
-            'unlock',
-            !this.mechanismSrv.anythingLocked()
-          )
-        );
-    }
+    this.cMenu = this.menuBuilder.build(this.lastRightClick, this.menuHandlers());
   }
 
   /**
@@ -969,17 +651,6 @@ export class NewGridComponent implements OnDestroy {
     }
   }
 
-  /** The Lock/Unlock item every object menu carries, phrased for its kind. */
-  private lockMenuItem(target: RealJoint | RealLink | Force, kind: string): cMenuItem {
-    const locked = this.mechanismSrv.isLockedTarget(target);
-    // The icon states, the label acts — the same rule as the panel button.
-    return new cMenuItem(
-      locked ? `Unlock ${kind}` : `Lock ${kind}`,
-      () => this.mechanismSrv.toggleLock(target),
-      locked ? 'lock' : 'unlock'
-    );
-  }
-
   /** Where the two-point cylinder gesture started: the barrel-side mount. */
   private cylinderCreateStart?: Coord;
   /** The link the gesture started on, when it started on one rather than the grid. */
@@ -1140,19 +811,28 @@ export class NewGridComponent implements OnDestroy {
     this.mechanismSrv.addJointAt(coord);
   }
 
-  createForce() {
+  /**
+   * Begin the force gesture on a named link.
+   *
+   * Named rather than inferred, because the row that starts this is on the
+   * joint's menu as well as the link's: a load at a joint belongs to the one
+   * link that meets there, and the joint is not itself a body that can carry
+   * one. Where several links meet, the menu greys the row instead of guessing.
+   */
+  createForce(onLink: RealLink) {
+    this.forceCreateOn = onLink;
     this.dragState.beginCreatingForce();
     // A real Force, built on the link the gesture started from, so the preview
     // is drawn by the same code as the finished arrow rather than by a line
     // that only resembles one. Same reason the cylinder gesture previews its
     // actual members: what is shown is what the next click will make.
     const at = this.svgGrid.screenToSVG(this.lastRightClickCoord);
-    this.forceGhost =
-      this.lastRightClick instanceof RealLink
-        ? new Force('ghost', this.lastRightClick, at, new Coord(at.x, at.y))
-        : undefined;
+    this.forceGhost = new Force('ghost', onLink, at, new Coord(at.x, at.y));
     this.mechanismSrv.onMechUpdateState.next(3);
   }
+
+  /** The link the force being drawn will be anchored to. */
+  private forceCreateOn?: RealLink;
 
   /** The force being drawn, tracking the cursor. Undefined when not drawing. */
   forceGhost?: Force;
@@ -2099,23 +1779,20 @@ export class NewGridComponent implements OnDestroy {
     this.mechanismSrv.showPathHolder = true;
   }
 
+  /**
+   * Remember where the pointer was, so the gestures a row starts land there
+   * and the card can grow from the corner nearest it.
+   *
+   * What the menu *contains* was decided by `setLastRightClick`, which the
+   * element under the pointer fired first — including whether it contains
+   * anything at all. The menu is open in every mode now: the analysis modes
+   * get the trace switch and the way back into Edit, and Edit while the
+   * mechanism is parked mid-cycle greys its editing rows with the reason
+   * rather than refusing to open.
+   */
   onContextMenu($event: MouseEvent) {
-    // Everything on this menu except the synthesis positions edits the drawing,
-    // and only Edit does that -- setLastRightClick has already declined to move
-    // the selection in the other modes. The positions are drawn in every mode
-    // though, so the way to clear them away comes with them.
-    if (this.tabService.getCurrentTab() !== TabID.EDIT) {
-      this.cMenuItems = this.synthesisMenuItems();
-      if (this.cMenuItems.length === 0) return;
-    } else if (this.mechanismSrv.isPlaying || this.mechanismSrv.mechanismTimeStep !== 0) {
-      this.cMenuItems = [];
-      //Close the MatContextMenu
-      return;
-    }
     this.lastRightClickCoord.x = $event.clientX;
     this.lastRightClickCoord.y = $event.clientY;
-    console.log('context menu');
-    console.log(this.lastRightClickCoord);
   }
 
   mouseUp($event: MouseEvent) {
@@ -2525,9 +2202,10 @@ export class NewGridComponent implements OnDestroy {
                 const endCoord = this.svgGrid.screenToSVG(
                   new Coord($event.clientX, $event.clientY)
                 );
-                this.mechanismSrv.createForce(startCoord, endCoord);
+                this.mechanismSrv.createForce(startCoord, endCoord, this.forceCreateOn);
                 this.dragState.finishCreating();
                 this.forceGhost = undefined;
+                this.forceCreateOn = undefined;
                 break;
             }
             break;
