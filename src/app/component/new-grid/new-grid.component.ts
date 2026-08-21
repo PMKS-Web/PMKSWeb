@@ -309,8 +309,14 @@ export class NewGridComponent implements OnDestroy {
     }
 
     fromEvent(window, 'resize').subscribe((event) => {
-      this.svgGrid.panZoomObject.resize();
-      this.svgGrid.handlePan();
+      // Through `ourOwnMove`: telling the library its viewport changed size,
+      // and redrawing the ruling for it, is the app keeping up with the window
+      // rather than the reader choosing a view. Read as a choice, it threw away
+      // the view the canvas was about to give back once the resize settled.
+      this.svgGrid.ourOwnMove(() => {
+        this.svgGrid.panZoomObject.resize();
+        this.svgGrid.handlePan();
+      });
     });
 
     this.activeObjService.onActiveObjChange.subscribe((obj) => {

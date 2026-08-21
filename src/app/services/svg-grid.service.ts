@@ -327,10 +327,39 @@ export class SvgGridService {
   compensateForUnitChange(fromUnit: LengthUnit, toUnit: LengthUnit): void {
     if (fromUnit === toUnit || !this.panZoomObject) return;
     const origin = this.SVGtoScreen(new Coord(0, 0));
-    this.panZoomObject.zoomAtPointBy(LENGTH_IN_CM[toUnit] / LENGTH_IN_CM[fromUnit], {
-      x: origin.x,
-      y: origin.y,
-    });
+    // Through `ourOwnMove`, because this is the app holding a view still across
+    // a change of units rather than the reader choosing a new one: read as a
+    // choice it would throw away a fit that is still perfectly fitted.
+    this.ourOwnMove(() =>
+      this.panZoomObject.zoomAtPointBy(LENGTH_IN_CM[toUnit] / LENGTH_IN_CM[fromUnit], {
+        x: origin.x,
+        y: origin.y,
+      })
+    );
+  }
+
+  /**
+   * Run a view change the app is making on the reader's behalf.
+   *
+   * The library calls back into handlePan and handleZoom while these run, and
+   * those are also how a wheel or a drag arrives. Flagged so the two can be
+   * told apart: a view the app moved is still a view nobody chose. Public,
+   * because the settings panel compensates for a unit change from its own side.
+   */
+  /** Whatever the view was is now whatever the reader just made it. */
+  private forgetChosenView(): void {
+    this.viewIsFitted = false;
+    this.chosenView = null;
+  }
+
+  ourOwnMove(change: () => void): void {
+    const was = this.movingTheViewOurselves;
+    this.movingTheViewOurselves = true;
+    try {
+      change();
+    } finally {
+      this.movingTheViewOurselves = was;
+    }
   }
 
   screenToSVGfromXY(screenX: number, screenY: number): Coord {
@@ -483,7 +512,7 @@ export class SvgGridService {
   }
 
   handlePan() {
-    if (!this.movingTheViewOurselves) this.viewIsFitted = false;
+    if (!this.movingTheViewOurselves) this.forgetChosenView();
     this.updateVisibleCoords();
     this.verticalLines = [];
     let currentLine = Math.floor(this.viewBoxMinX / this.cellSize) * this.cellSize;
@@ -553,7 +582,7 @@ export class SvgGridService {
   }
 
   handleZoom(zoomLevel: number) {
-    if (!this.movingTheViewOurselves) this.viewIsFitted = false;
+    if (!this.movingTheViewOurselves) this.forgetChosenView();
     this.cellSize = this.cellSizeFor(this.getZoom());
     this.handlePan();
     // Zooming is continuous, so these have a much longer quiet period than
@@ -799,11 +828,7 @@ export class SvgGridService {
     const center = centerOf(drawn);
 
     if (animate) NewGridComponent.instance?.enableGridAnimationForThisAction();
-    // The library calls back into handlePan and handleZoom while these run, and
-    // those are also how a wheel or a drag arrives. Flagged so the two can be
-    // told apart: a view the app moved is still a view nobody chose.
-    this.movingTheViewOurselves = true;
-    try {
+    this.ourOwnMove(() => {
       this.setZoom(targetZoom);
       // A refused zoom locks the next pan out, and the pan is the half of this
       // that must not be dropped.
@@ -812,9 +837,7 @@ export class SvgGridService {
         x: at.x - canvas.x - targetZoom * center.x,
         y: at.y - canvas.y - targetZoom * center.y,
       });
-    } finally {
-      this.movingTheViewOurselves = false;
-    }
+    });
   }
 
   /**
@@ -829,6 +852,18 @@ export class SvgGridService {
    */
   private viewIsFitted = false;
   private movingTheViewOurselves = false;
+
+  /**
+   * The view somebody drove the canvas to, held on to while the chrome is
+   * standing in front of it.
+   *
+   * A drawer opening over a drawing that was zoomed in on one joint has to move
+   * it out of the way, and sometimes draw it smaller to do so -- but that is
+   * the chrome's doing, not a new choice, so it is given back the moment there
+   * is room for it again. Cleared by the next pan or zoom the reader makes,
+   * which is a new choice and supersedes it.
+   */
+  private chosenView: { zoom: number; offset: { x: number; y: number } } | null = null;
 
   /**
    * Give the drawn marks a size to suit the mechanism, if nobody has chosen one.
@@ -938,7 +973,12 @@ export class SvgGridService {
     const drawn = this.measureDrawing();
     const shown = drawn && this.screenBoxOf(drawn);
     const matrix = this.drawnMatrix();
-    let previous = this.freeRect();
+    // A resize is heard once the window has already changed, so sampling from
+    // where the chrome is now would find it settled on the first frame and the
+    // view would never be moved at all. Started from where it was when the view
+    // was last put somewhere, so an instantaneous change is followed exactly
+    // like a panel gliding into place.
+    let previous = alreadyMoved ? (this.settledFree ?? this.freeRect()) : this.freeRect();
     // Where the drawing sits relative to the space it is being seen in. Held,
     // not corrected: somebody who has panned to look at one corner keeps that
     // corner, and the view merely follows the chrome that moved.
@@ -953,15 +993,18 @@ export class SvgGridService {
     const before = this.settledFree ?? previous;
     const wasFramed = !!(shown && before && fitsInside(shown, before, OVERHANG_SLACK));
     const stayFramed = this.viewIsFitted;
+    // The view to hold on to while the chrome moves. Whatever the reader last
+    // drove the canvas to, which may be from before an earlier squeeze -- so a
+    // drawer opening over a drawer does not lose the view under both of them.
+    if (!stayFramed && !this.chosenView && matrix && offset) {
+      this.chosenView = { zoom: matrix.a, offset };
+    }
     let stable = 0;
     // A window resize is heard once the window has already changed, so the
     // chrome has moved before this is called and there is nothing to wait for.
     // Only a mode change needs the floor below, because Angular has not begun
     // animating the panel by the time the mode says it changed.
     let everMoved = alreadyMoved;
-    // True while the drawing is being carried along at its own zoom; false once
-    // it has had to be framed again, which it stays for the rest of the move.
-    let holding = true;
 
     const step = () => {
       const now = this.freeRect();
@@ -973,22 +1016,29 @@ export class SvgGridService {
       // and then glides itself reads as two separate movements with a pause in
       // between. Moved straight, with no transition of its own, the drawing
       // travels with the panel.
-      if (!sameRect(previous, now) && now && drawn && offset && matrix) {
-        const at = { x: centerOf(now).x + offset.x, y: centerOf(now).y + offset.y };
-        const landing: Rect = {
-          x: at.x - (drawn.width * matrix.a) / 2,
-          y: at.y - (drawn.height * matrix.a) / 2,
-          width: drawn.width * matrix.a,
-          height: drawn.height * matrix.a,
-        };
+      if (!sameRect(previous, now) && now && drawn && matrix) {
         // A drawing that is being shown whole goes on being shown whole, which
-        // is what makes a drawer symmetrical: it draws smaller as the drawer
-        // takes the canvas from the right, and grows back as the drawer leaves.
-        // A zoom somebody chose is carried along untouched instead, and only
-        // given up if carrying would take the drawing out of sight.
-        holding = holding && !stayFramed && (!wasFramed || fitsInside(landing, now, OVERHANG_SLACK));
-        if (holding) {
-          this.moveViewTo(drawn, at, matrix.a, false);
+        // is what makes the drawer symmetrical: it draws smaller as the drawer
+        // takes the canvas from the right and grows back as the drawer leaves.
+        const held = stayFramed ? null : this.chosenView;
+        const at = held && {
+          x: centerOf(now).x + held.offset.x,
+          y: centerOf(now).y + held.offset.y,
+        };
+        const landing = held &&
+          at && {
+            x: at.x - (drawn.width * held.zoom) / 2,
+            y: at.y - (drawn.height * held.zoom) / 2,
+            width: drawn.width * held.zoom,
+            height: drawn.height * held.zoom,
+          };
+        // A view somebody drove to is put back exactly whenever there is room
+        // for it, and only stood aside from while there is not -- so a drawer
+        // that pushed a zoomed-in reader out of the way gives their view back
+        // on the way out, rather than leaving them at whatever it squeezed
+        // them down to.
+        if (held && at && landing && (!wasFramed || fitsInside(landing, now, OVERHANG_SLACK))) {
+          this.moveViewTo(drawn, at, held.zoom, false);
         } else {
           const target = this.clampZoom(
             Math.min((now.width * FIT_FILL) / drawn.width, (now.height * FIT_FILL) / drawn.height)
@@ -1057,11 +1107,12 @@ export class SvgGridService {
 
     // A fitted view has already been kept fitted, frame by frame, on the way
     // here; scaling it by the window's own ratio would undo that.
-    if (growth !== 1 && offset && zoom && !this.viewIsFitted) {
-      const grown = this.clampZoom(zoom * growth);
+    const held = this.chosenView;
+    if (growth !== 1 && held && !this.viewIsFitted) {
+      const grown = this.clampZoom(held.zoom * growth);
       const at = {
-        x: centerOf(free).x + offset.x * growth,
-        y: centerOf(free).y + offset.y * growth,
+        x: centerOf(free).x + held.offset.x * growth,
+        y: centerOf(free).y + held.offset.y * growth,
       };
       const landing: Rect = {
         x: at.x - (drawn.width * grown) / 2,
@@ -1074,6 +1125,9 @@ export class SvgGridService {
       // still spill out of the smaller one. Somebody who was looking at the
       // whole mechanism goes on looking at the whole mechanism.
       if (!settle.wasFramed || fitsInside(landing, free, OVERHANG_SLACK)) {
+        // The window took the view with it, so that is the view now: a later
+        // drawer has to give this back rather than the one from before.
+        this.chosenView = { zoom: grown, offset: { x: held.offset.x * growth, y: held.offset.y * growth } };
         this.moveViewTo(drawn, at, grown, true);
         return;
       }
