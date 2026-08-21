@@ -59,7 +59,7 @@ We encourage high code quality and strive for clean, readable, and maintainable 
 - Selectors for your components should always be dash-delimited, like files, and contain the appropriate app prefix. For example: `app-hero-list`
 - The name of a component class should end with `Component`. For example: `HeroListComponent`
 - The name of a directive class should end with `Directive`. For example: `HighlightDirective`
-- The name of a module class should end with `Module`. For example: `AppModule2`
+- The name of a module class should end with `Module`. For example: `AppModule2`. (In practice the app is fully standalone and no longer defines NgModules — prefer a standalone component with its own `imports`.)
 - The name of a pipe class should be in `PascalCase` and end with `Pipe`. For example: `CurrencyConverterPipe2`
 - For more details, check out [Angular's offical coding style guide](https://angular.io/guide/styleguide).
 
@@ -84,19 +84,23 @@ Landing Page: https://pmksplus.com
 
 
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.2.5.
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli), and now runs on Angular 22. It needs Node 22.22 or newer (24.x works).
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm start` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+
+## Tests
+
+Run `npm test -- --watch=false` for the Vitest suite; drop the flag for watch mode.
 
 ## Code scaffolding
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Run `ng generate component component-name` to generate a new component. The app is fully standalone — there is no `AppModule`, and a new component declares its own `imports` rather than being added to an NgModule.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `npm run build` to build the project. The build artifacts will be stored in `dist/pmksweb`.
 
 ## Additional Help Resoruces
 
@@ -108,29 +112,37 @@ PMKS+ features an intuitive interface that allows you to create, edit, and analy
 
 ### Application Interface
 
-The PMKS+ interface consists of a full-screen grid with a toolbar at the top and an animation bar at the bottom. 
+PMKS+ is a full-screen grid canvas with a strip of controls across the top, the current mode's panel in the top-left corner, and playback and view controls along the bottom.
 
-- **Toolbar**: The toolbar provides quick access to common tasks. It includes a PMKS+ logo, buttons for creating a new project, loading a project, accessing the Linkage Library, downloading the current project, and generating a shareable URL for the current project.
+- **Top strip**: On the left, a menu button (New Project, Open, Templates, Save, Share Project, Settings, Help / Feedback) beside the PMKS+ logo. In the middle, the four **mode tabs** — Synthesis, Edit, Kinematic Analysis, and Force Analysis. Each analysis tab carries a small status chip saying whether that analysis can run; clicking the chip opens a setup list explaining exactly what is missing and offering to jump to the part at fault. On the right, a card holding Undo and Redo while you are building, which becomes **Export Data** once you are in an analysis mode.
 
-- **Animation Bar**: The animation bar allows users to control the simulation of the linkage animation. It consists of buttons for controlling the playback speed, time control buttons, and buttons for controlling the grid visibility.
+- **Mode panel (top-left)**: Whichever mode is selected shows its panel here — the synthesis form, the properties of the selected joint or link, or that part's analysis graphs. With nothing selected it shows a short hint about what to do next.
 
-- **Side Panels**: On the left, there are three tabs for editing, analyzing, and synthesizing linkages. On the right, there are buttons that open panels for settings, help, and displaying equations.
+- **Playback (bottom)**: A transport card with a playback-speed button, play/pause, and a stop button that eases the mechanism back to the pose it was drawn in. Beside it, a scrubber card with **one row per mechanism** — a drawing can hold several independent machines, and each has its own input direction, angle and time readout, and scrub handle. When there is more than one, a toggle switches between running them all on a shared clock and controlling each separately.
+
+- **View controls (bottom-right)**: Show or hide centres of mass, joint IDs, and traced paths; zoom in, zoom out, and reset the view.
+
+- **Status strip (bottom)**: The current mode, what the mechanism is or is not ready for, the cursor position, and the units in use.
+
+- **Right drawer**: Slides in over the canvas for Settings, Help / Feedback, either analysis's setup list, and the Export Data flow.
 
 ### Using the Tool
 
-1. **Synthesis**: Use the synthesis tab to automatically generate a linkage based on a desired position for one of the links.
+1. **Build**: Right-click empty grid to add a link or a cylinder. Right-click a joint to attach another link, a cylinder, a tracer point or a force to it, to ground it, to make it the input, to give it a slider, or to weld it. Drag joints to move them.
 
-2. **Edit**: When the edit tab is open, you can modify the properties of the selected object (highlighted in amber color).
+2. **Edit**: With the Edit tab open, select a joint or link to change its position, length, mass, centre of mass, input speed and direction, or appearance. The linkage can only be modified while the animation is paused at the start pose.
 
-3. **Analysis**: The analysis panel allows you to view kinematics and force analysis graphs for the selected object.
+3. **Kinematic Analysis**: Select a joint for its position, velocity and acceleration; select a link for its angle, angular velocity and acceleration, and the same three for its centre of mass.
 
-4. **Settings**: The settings panel enables you to modify overall mechanism settings, such as units, input speed, enabling gravity, as well as visual settings like mechanism size and grid line visibility.
+4. **Force Analysis**: Choose Static (Equilibrium) or In-motion (Dynamic) to see the reaction forces each link carries at a joint and the torque or force the input has to supply. Gravity can be turned off in Settings.
 
-5. **Animation Control**: Use the animation bar to control the playback of the linkage simulation. You can set the playback speed, play or pause the animation, reset the animation to T=0, and seek through the simulation using the scrubber.
+5. **Synthesis**: Generate a four-bar linkage from three desired poses of the coupler.
 
-6. **File Management**: Use the toolbar buttons to create a new project, load a project, access the Linkage Library, download the current project, and generate a shareable URL for the current project.
+6. **Export**: In either analysis mode, Export Data walks you through choosing parts, choosing columns, and choosing a format — CSV, Excel, graph images, or a printable report.
 
-Remember, only one tab can be open at a time for each group (left and right), and the linkage can only be modified when the animation is paused and reset to T=0.
+7. **Share**: The entire project is encoded in the URL, so Share Project produces a link that reopens exactly what you are looking at. This is also what Undo and Redo are built on.
+
+Only one drawer can be open at a time, and the linkage can only be modified when the animation is paused and reset to the start pose.
 
 ## Licensing
 

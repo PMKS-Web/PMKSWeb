@@ -46,7 +46,9 @@ The same command is how to get a second opinion on a hard non-UI problem.
 `Model metadata for 'gpt-5.6' not found. Defaulting to fallback metadata` warning that reads like
 it worked. Verified against codex-cli 0.146.0.
 
-Tests are Vitest but written in Jasmine style (globals via `vitest/globals`). `tsconfig.spec.json` deliberately includes `src/app/app.module.ts` — without it, NgModule-declared components lose their template scope under the per-file test compile and fail with NG8001. Vitest errors on spec files containing no tests.
+Tests are Vitest but written in Jasmine style (globals via `vitest/globals`). Vitest errors on spec files containing no tests.
+
+The app is **fully standalone** — `src/main.ts` calls `bootstrapApplication`, there is no `AppModule` and no `NgModule` anywhere, and components declare their own `imports`. A component spec must therefore import the component itself rather than a declaring module. (`tsconfig.spec.json` used to include `src/app/app.module.ts` to keep NgModule-declared components' template scope under the per-file test compile; that file and that workaround are both gone.)
 
 Unit specs stay co-located in `src/**/*.spec.ts`; browser-driven E2E tests are Playwright scripts in `e2e/*.mjs` (run directly — see above), with outputs in gitignored `artifacts/`. Details in `e2e/README.md`.
 
@@ -79,11 +81,13 @@ Changing the encoding format breaks previously shared URLs — the transcoder fo
 
 ### MechanismService is the central hub
 
-`services/mechanism.service.ts` (root singleton) owns the **editable** mechanism: `joints`, `links`, `forces` arrays representing the state at timestep 0. All create/delete/weld/ground/slider/input mutations live here. `updateMechanism()` rebuilds `this.mechanisms[0]` — a `Mechanism` (`model/mechanism/mechanism.ts`) that deep-copies the current state and, if the linkage is valid (DOF = 1 with an input joint), precomputes joint/link/force positions for **all** timesteps up front. The `mechanisms` array only ever uses index 0 (multi-mechanism support was planned, never built).
+`services/mechanism.service.ts` (root singleton) owns the **editable** drawing: `joints`, `links`, `forces` arrays representing the state at timestep 0. All create/delete/weld/ground/slider/input mutations live here.
+
+`updateMechanism()` first **partitions** the drawing into independently solvable machines (`model/mechanism/mechanism-partition.ts`), then builds one `Mechanism` (`model/mechanism/mechanism.ts`) per partition — each deep-copies its own part of the state and, if that machine is valid (DOF = 1 with an input joint), precomputes joint/link/force positions for **all** its timesteps up front. `partitions[i]` and `mechanisms[i]` are the same machine seen two ways, and stay in the same order. One drawing can therefore hold several machines (M1, M2…), each with its own input, speed, direction and playback row — so **do not assume index 0**; ask `partitions`. Note `partition.joints` is everything the solver must be handed (shared frame pieces included) while `partition.ownJoints` is what that machine is actually made of — the one to ask "is this mine?".
 
 `onMechUpdateState` (BehaviorSubject<number>) broadcasts mechanism state: 0 = normal, 1 = being dragged (graphs disabled), 2 = pending graph redraw, 3 = pending analysis after add/remove.
 
-Animation (`animate()`) steps through the precomputed timesteps on a ~16 ms setTimeout loop, mutating the editable joints/links/forces in place. Editing is only allowed when the animation is paused at timestep 0.
+Animation ticks on a ~16 ms setTimeout (`FRAME_INTERVAL_MS`) but advances by **elapsed real time**, not one precomputed timestep per tick: samples are spaced a fixed amount of input travel apart (1 degree of crank rotation for a pin), so how much simulated time one sample covers depends on the input speed. That is what makes a faster input speed animate faster and one revolution take 60/RPM seconds regardless of frame rate. `animate(progress, playing)` mutates the editable joints/links/forces in place; any external call is treated as a seek. Machines run on one shared clock by default, and can be unsynced to run on their own. Editing is only allowed when the animation is paused at timestep 0 (`isPlaying || mechanismTimeStep !== 0` gates the Edit panel).
 
 ### Solvers (`src/app/model/mechanism/`)
 
@@ -92,18 +96,36 @@ Pure computation, mostly static classes: `loop-solver` (finds kinematic loops), 
 ### Model classes (`src/app/model/`)
 
 - Joints: `Joint` → `RealJoint` → `RevJoint` (revolute) / `PrisJoint` (prismatic). Code frequently narrows with `instanceof RealJoint` guards.
-- Links: `Link` → `RealLink` / `Piston`. A **welded** compound link is a `RealLink` whose `subset` holds its constituent sub-links; weld/unweld logic in MechanismService restructures joints' `links`/`connectedJoints` arrays and link IDs (link IDs are the concatenated, sorted joint letters).
+- Links: `Link` → `RealLink` / `SliderBlock` (the block that rides a slot; there is no `Piston` class any more). A **welded** compound link is a `RealLink` whose `subset` holds its constituent sub-links; weld/unweld logic in MechanismService restructures joints' `links`/`connectedJoints` arrays and link IDs (link IDs are the concatenated, sorted joint letters).
+- A driven joint carries its own speed: `Joint.driveSpeed`, signed for direction, in rpm for a pin and length/second for a slider. Zero means "use the document-wide default" — which is what every URL written before this existed says. A drawing with several machines needs one speed per machine, so it lives on the joint rather than in settings.
+- `mechanism/readiness.ts` produces the per-machine blocker/warning list the mode chips and setup drawers show; `mechanism/actuator.ts` decides what can be driven.
 - Joint IDs are single letters assigned alphabetically (`determineNextLetter`).
 - `utils.ts` is a large grab-bag: interaction state enums (`gridStates`, `jointStates`, `linkStates`, `forceStates`), unit enums (`LengthUnit`, `GlobalUnit`, ...), and geometry helpers.
 
 ### UI layer
 
+**Where things are on screen.** `app.component.html` is the whole layout, and it is worth reading before describing the UI — the arrangement below replaced an earlier one with a horizontal file toolbar and a *vertical mode rail down the left*, and stale descriptions of that older layout have outlived it in more than one place.
+
+| Region | Component | Holds |
+| --- | --- | --- |
+| Top strip | `app-top-bar` | project menu + logo · the four **mode tabs**, each with a readiness chip · a corner card that is Undo/Redo in Synthesis/Edit and swaps to **Export Data** in the analysis modes |
+| Left card (below the strip, `left: 0`) | `app-left-tabs` | the current mode's panel — Synthesis form, Edit properties, or Analysis graphs. 250px, widening to 400px in analysis |
+| Canvas (full bleed, behind everything) | `app-new-grid` | grid, right-click context menus, drag |
+| Bottom centre | `app-playback-bar` | transport card (speed · play/pause · stop-to-start) and a scrub card with **one row per machine** |
+| Bottom right | `app-view-controls` | centre of mass · joint IDs · traced paths ‖ zoom out · zoom in · reset view |
+| Bottom strip | `app-bottombar` | mode name · status · cursor coords · units |
+| Right drawer | `app-right-panel` | Settings, Help/Feedback, the two analysis setups, Export Data |
+
+The **modes are tabs in the top strip, not a left rail**, and there are four of them — Synthesis, Edit, Kinematic Analysis, Force Analysis (`TabID`) — not three. The left card is that mode's panel.
+
 - `AppComponent` is just a shell that registers SVG icons; `component/new-grid/new-grid.component.ts` is the real center — the SVG canvas handling the mouse/touch interaction state machine and context menus, with pan/zoom via `SvgGridService` (svg-pan-zoom + hammerjs).
-- Left panel tabs (Synthesis / Edit / Analyze) are coordinated by `SelectedTabService` (`TabID` enum); the Edit and Analyze panels operate on whatever `ActiveObjService` says is selected (joint, link, force, or synthesis pose).
-- `SettingsService` exposes global settings as RxJS BehaviorSubjects (units, input speed, gravity, grid visibility).
-- `component/BLOCKS/` holds the reusable form primitives (input, toggle, radio, dual-input, panel-section, ...) that the panels are composed from; `component/MODALS/` holds dialogs.
-- Components also communicate through static members (e.g. `NewGridComponent.sendNotification()`, `AnimationBarComponent.animate`) — grep for the static before assuming a service is the only channel.
-- Four-bar synthesis (generating a linkage from desired end-effector poses) lives in `services/synthesis/`.
+- `SelectedTabService` (`TabID` enum) coordinates the four modes; the Edit and analysis panels operate on whatever `ActiveObjService` says is selected (joint, link, force, mechanism, background image, or synthesis pose).
+- The right drawer is addressed by number through statics on `RightPanelComponent`: 1 Settings, 3 Help, 4 Debug (dev only), 5 `KINEMATIC_SETUP_TAB`, 6 `FORCE_SETUP_TAB`, 7 `EXPORT_TAB`. **Tab 2 (`app-equation-panel`) is unreachable** — nothing calls `tabClicked(2)` and its content is placeholder images. It is unfinished work, not a feature.
+- `SettingsService` exposes document-wide settings as RxJS BehaviorSubjects (units, gravity, grid and snap visibility, object scale). Input **speed and direction are not global** — they belong to the driven joint (`Joint.driveSpeed`), because a drawing can hold several machines; the SettingsService values are only the default a joint falls back to.
+- `component/BLOCKS/` holds the reusable form primitives (input, toggle, radio, dual-input, panel-section, ...) that the panels are composed from; `component/MODALS/` holds the two dialogs (Templates, touchscreen warning).
+- Messages to the user go through `NotificationService`, which replaced the old `NewGridComponent.sendNotification()` static. Some components still talk through statics (e.g. `RightPanelComponent.openTab` / `insistOn`) — grep for the static before assuming a service is the only channel.
+- Four-bar synthesis (generating a linkage from three desired coupler poses) lives in `services/synthesis/`.
+- The first-run tour is five hard-coded `intro.js` steps inside `new-grid.component.ts`'s `ngOnInit`, fired only when the grid loads empty and suppressed for good by its own "don't show again". There is no way to replay it and no separate onboarding component.
 
 ### Misc
 
