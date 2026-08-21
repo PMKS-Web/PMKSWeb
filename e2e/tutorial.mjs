@@ -170,6 +170,22 @@ check(
 check('three doors out', (await page.locator('.door').count()) === 3);
 await page.screenshot({ path: `${OUT}/05-done.png` });
 
+// Running it again clears the grid. That is the one destructive thing the
+// tutorial does, so it is the one thing it stops to ask about.
+await page.locator('.quietButton').click();
+await page.waitForTimeout(700);
+check('running again warns first', await page.getByText('Start the tutorial again?').isVisible());
+check(
+  'and says the mechanism goes',
+  /deleted/i.test(await page.locator('[mat-dialog-content], mat-dialog-content').innerText())
+);
+await page.getByRole('button', { name: 'Keep my mechanism' }).click();
+await page.waitForTimeout(600);
+check(
+  'declining leaves the drawing alone',
+  (await page.locator('#canvas [id^="joint_"]').count()) > 0
+);
+
 // The tutorial is pinned rather than paged, so opening Export stacks the two
 // instead of putting the tutorial away.
 await page.locator('.door').first().click();
@@ -209,14 +225,22 @@ await page.screenshot({ path: `${OUT}/06-reopened.png` });
 await page.locator('.doItButton').click();
 await page.waitForTimeout(3600);
 await page.locator('.closeCard').click();
-await page.waitForTimeout(600);
-check('the close asks first', await page.getByText('Close the tutorial?').isVisible());
+await page.waitForTimeout(700);
+// A dialog asking permission was too heavy for something that costs nothing:
+// the drawing is untouched either way. It closes, and then says where it went.
 check(
-  'and names where it can be restarted',
-  /project menu/i.test(await page.locator('[mat-dialog-content], mat-dialog-content').innerText())
+  'closing does not stop to ask',
+  (await page.locator('.mat-mdc-dialog-container').count()) === 0
 );
-await page.getByRole('button', { name: 'Close tutorial' }).click();
-await page.waitForTimeout(600);
+check(
+  'and a message names where it went',
+  /project menu/i.test(
+    await page
+      .locator('app-notification-stack')
+      .innerText()
+      .catch(() => '')
+  )
+);
 // Closed rather than removed: the drawer parks off the edge, so the card is
 // still in the document and only `isVisible` can tell the difference.
 check('exiting closes the drawer', !(await page.locator('.tutorialCard').isVisible()));

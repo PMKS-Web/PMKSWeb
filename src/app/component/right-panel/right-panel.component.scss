@@ -32,8 +32,12 @@
 
   .closeDrawer {
     position: absolute;
-    // The card starts one shadow-room inside the frame and then spends 5px on
-    // its accent bar, and stands one card-inset off the frame's right edge.
+    // Measured from the page box rather than from the frame, because the frame
+    // may be holding the tutorial's card above this one -- and a button placed
+    // against the frame then lands in the tutorial's corner rather than this
+    // page's. The page box starts at the frame's own origin when it is alone,
+    // so the numbers are unchanged: one shadow-room in, 5px of accent bar, and
+    // one card-inset off the right edge.
     top: nav.$shadow-room + 5px + $close-air;
     right: nav.$card-inset + $close-air;
     // Above the sticky heads it shares a line with, which are also 2. A tie
@@ -186,16 +190,26 @@
     min-height: 0;
   }
 
-  // The tutorial sits above the page and keeps its own height, so it is the
-  // page below that gives way when the two together are taller than the
-  // drawer. It also drops the padding it would otherwise repeat between them.
-  .tutorialSlot {
+  // The page box is what the close button is measured against.
+  #rightPanel > .drawerPage {
+    position: relative;
+  }
+
+  // The tutorial keeps its own height and the page below gives way when the two
+  // together are taller than the drawer.
+  //
+  // Between them, one $card-inset -- the same gap the drawer keeps from the top
+  // strip above it and from the view controls below it, so the column reads as
+  // evenly spaced rather than as two cards that happen to be near each other.
+  // Both need the id, or `#rightPanel > div` outweighs them and each card keeps
+  // a full $shadow-room, which is more than twice the gap.
+  #rightPanel > .tutorialSlot {
     flex: 0 0 auto;
     padding-bottom: 0;
   }
 
   #rightPanel > .tutorialSlot + div {
-    padding-top: 10px;
+    padding-top: nav.$card-inset;
   }
 
   // Hand the drawer's height down to the card, which is what scrolls -- the

@@ -172,7 +172,13 @@
     }
   }
 
+  // A row rather than an inline run, so the tick sits on the title's own centre
+  // line whatever the two are sized at. Baseline-aligning a 16px glyph against
+  // 14px text put it a third of a line high.
   .stepTitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 14px;
     font-weight: 500;
     line-height: 20px;
@@ -191,12 +197,11 @@
   // just this second finished it arrives with a beat of its own, which is the
   // whole point of holding the card there before moving on.
   .stepTick {
+    flex: 0 0 auto;
     font-size: 16px;
     width: 16px;
     height: 16px;
-    line-height: 20px;
-    vertical-align: -3px;
-    margin-left: 5px;
+    line-height: 16px;
     color: #137333;
 
     &.justNow {

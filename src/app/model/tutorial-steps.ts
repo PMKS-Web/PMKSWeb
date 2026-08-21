@@ -160,14 +160,18 @@ export function copyFor(progress: TutorialProgress): TutorialCopy {
     case 1:
       return {
         title: 'Draw the first bar',
-        body: 'Right-click anywhere on the empty grid and choose Add Link. Drag out a bar and release.',
+        // The gesture is a click, then a move, then a click -- not a drag. The
+        // bar's far end follows the pointer between the two, and describing it
+        // as "drag and release" had readers holding the button down through a
+        // move that does not want it held.
+        body: 'Right-click the empty grid and choose Add Link. One end is placed where you clicked and the other follows your pointer — move to where you want it and left-click to set it.',
         hint: 'Right-click is how everything is added in PMKS+. The panel on the left edits whatever you then select.',
         hintGlyph: 'mouse',
       };
     case 2:
       return {
         title: 'Extend it into a chain of three',
-        body: 'Right-click the joint at the far end of the bar and choose Attach Link. Do that twice, each time from the newest end, so the three links make a chain.',
+        body: 'Right-click the joint at the far end of the bar and choose Attach Link, then left-click where the new bar should end. Do that twice, each time from the newest end, so the three links make a chain.',
         hint: 'Add Link starts a new bar on its own. Attach Link joins one to a joint that is already there.',
         hintGlyph: 'link',
       };

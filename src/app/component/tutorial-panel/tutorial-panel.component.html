@@ -2,7 +2,7 @@
      never both true, so the drawer holds one card either way. -->
 @if (!tutorial.done) {
   <div class="tutorialCard" [class.settling]="tutorial.settling">
-    <button class="closeCard" (click)="askToClose()" aria-label="Close tutorial" title="Close">
+    <button class="closeCard" (click)="close()" aria-label="Close tutorial" title="Close">
       <mat-icon>close</mat-icon>
     </button>
     <div class="cardTitle">Tutorial</div>
@@ -53,7 +53,7 @@
       }
 
       <div class="stepTitle">
-        {{ tutorial.copy().title }}
+        <span>{{ tutorial.copy().title }}</span>
         @if (tutorial.viewingCompleted()) {
           <mat-icon class="stepTick" [class.justNow]="tutorial.settling">check_circle</mat-icon>
         }
@@ -161,21 +161,23 @@
   </div>
 }
 
-<!-- Leaving is worth a question: the offer in the Edit panel is spent once the
-     tutorial has been started, so an accidental × is otherwise a one-click way
-     to lose the thing and not know where it went. -->
-<ng-template #confirmClose>
+<!-- Running it again clears the grid, which is the one thing the tutorial does
+     that cannot be shrugged off. Closing it costs nothing and says so in a
+     snackbar instead; this asks, because there is work to lose. -->
+<ng-template #confirmRestart>
   <div class="modal">
-    <h1 mat-dialog-title>Close the tutorial?</h1>
+    <h1 mat-dialog-title>Start the tutorial again?</h1>
     <div mat-dialog-content>
       <p>
-        Your mechanism is kept exactly as it is. You can start the tutorial again at any time from
-        the project menu — the button at the top left of the window.
+        This clears the grid and begins from step one, so the mechanism you have built will be
+        deleted. Undo will bring it back.
       </p>
     </div>
     <div mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Keep going</button>
-      <button mat-button cdkFocusInitial [mat-dialog-close]="'close'">Close tutorial</button>
+      <button mat-button mat-dialog-close>Keep my mechanism</button>
+      <button mat-button cdkFocusInitial [mat-dialog-close]="'restart'">
+        Clear and start again
+      </button>
     </div>
   </div>
 </ng-template>

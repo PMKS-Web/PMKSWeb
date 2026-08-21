@@ -60,7 +60,7 @@ export class TutorialPanelComponent implements DoCheck {
   private exportFlow = inject(ExportFlowService);
   private dialog = inject(MatDialog);
 
-  readonly confirmClose = viewChild.required<TemplateRef<unknown>>('confirmClose');
+  readonly confirmRestart = viewChild.required<TemplateRef<unknown>>('confirmRestart');
 
   /**
    * Ask the drawing whether the step has changed, once per cycle.
@@ -111,29 +111,39 @@ export class TutorialPanelComponent implements DoCheck {
   }
 
   /**
-   * The × asks first.
+   * Closing happens, and then says where the tutorial went.
    *
-   * The offer in the Edit panel is spent once the tutorial has been started,
-   * so closing it is not obviously undoable from where the student is standing
-   * — and the way back in is a menu they have no reason to have opened.
+   * A dialog asking permission first was too heavy for a thing that costs
+   * nothing: the drawing is untouched either way, and the only real question —
+   * "how do I get it back?" — is answered better after the fact than as a
+   * question the reader has to dismiss before they can act.
    */
-  askToClose(): void {
+  close(): void {
+    this.tutorial.exit();
+    this.notify.success(
+      'tutorial.closed',
+      'Tutorial closed. It is in the project menu, at the top left, whenever you want it back.'
+    );
+  }
+
+  /**
+   * Starting again clears the grid, so it asks — but only where there is
+   * something to lose. A confirmation over an empty drawing is a question with
+   * one answer.
+   */
+  restart(): void {
+    if (!this.tutorial.restartWouldDiscard()) {
+      this.tutorial.restart();
+      return;
+    }
     this.dialog
       // Sized, because a Material dialog left to itself takes most of the
       // window and two sentences do not need it.
-      .open(this.confirmClose(), { width: '440px', autoFocus: false })
+      .open(this.confirmRestart(), { width: '440px', autoFocus: false })
       .afterClosed()
       .subscribe((choice) => {
-        if (choice === 'close') this.close();
+        if (choice === 'restart') this.tutorial.restart();
       });
-  }
-
-  close(): void {
-    this.tutorial.exit();
-  }
-
-  restart(): void {
-    this.tutorial.restart();
   }
 
   doStepForMe(): void {

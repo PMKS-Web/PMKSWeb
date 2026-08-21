@@ -283,6 +283,15 @@ export class TutorialService {
     this.remember();
   }
 
+  /** Whether restarting would throw away work the student has done. */
+  restartWouldDiscard(): boolean {
+    return (
+      this.mechanism.joints.length > 0 ||
+      this.mechanism.links.length > 0 ||
+      this.mechanism.forces.length > 0
+    );
+  }
+
   /** Back to a bare grid and step one. The only thing that discards work. */
   restart(): void {
     this.mechanism.deleteAll();
@@ -519,9 +528,15 @@ export class TutorialService {
   }
 
   private groundEnds(): void {
-    // One at a time and through the panel's own call, which resolves sliders
-    // and rebuilds -- so the ends come back re-read between the two.
-    for (let step = 0; step < 2; step++) {
+    // Until the step is satisfied, rather than a fixed two passes. `toggleGround`
+    // is a toggle: on a drawing that already had one end grounded, the first
+    // pass finished the step and the second one took the *next* step's target
+    // -- an already-grounded joint -- and un-grounded it. The two cancelled, and
+    // from the outside the button did nothing at all.
+    //
+    // One at a time and through the panel's own call, which resolves sliders and
+    // rebuilds, so the ends are re-read between passes.
+    for (let guard = 0; guard < 4 && this.step() === 3; guard++) {
       const target = this.progress().target;
       if (!target) return;
       this.activeObj.updateSelectedObj(target);
