@@ -114,6 +114,36 @@
     cursor: pointer;
   }
 
+  // The same line as a card of its own, for when the panel above it is showing
+  // a selected part rather than its empty state.
+  .resumeCard {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 10px;
+    padding: 12px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 19px;
+    text-align: left;
+    color: mat.m2-get-color-from-palette($primary-palette, 500);
+    cursor: pointer;
+
+    mat-icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+    }
+  }
+
   .resumeLine {
     display: flex;
     gap: 10px;

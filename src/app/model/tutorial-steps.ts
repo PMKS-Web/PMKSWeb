@@ -194,7 +194,10 @@ export function copyFor(progress: TutorialProgress): TutorialCopy {
     default:
       return {
         title: 'Play it and read a velocity',
-        body: 'Open Kinematic Analysis, press Play at the bottom of the window, then click a moving joint on the grid.',
+        // Named by where it is, not only by what it says: below about 900px the
+        // mode tabs give up their labels and a student is looking at four
+        // unexplained glyphs.
+        body: 'Switch to Kinematic Analysis — the third mode in the strip along the top — then press Play at the bottom of the window and click a moving joint on the grid.',
         hint: 'The reading follows the pose, so scrubbing the handle moves the number.',
         hintGlyph: 'speed',
       };

@@ -456,15 +456,25 @@ export class TutorialService {
     );
 
     const view = this.visibleRect();
-    // Half the window, so the finished four-bar has room around it and the
-    // student can see it is a drawing on a grid rather than a full-bleed
-    // diagram.
-    const scale = Math.min((view.width * 0.5) / spanX, (view.height * 0.5) / spanY);
+    // Most of the clear space, leaving a margin so the finished four-bar reads
+    // as a drawing on a grid rather than as a full-bleed diagram. Two thirds
+    // rather than a half because the clear space is what is left between the
+    // panels, and on a narrow window that is a strip a few hundred pixels wide
+    // -- half of which is a mechanism too small to right-click accurately.
+    const scale = Math.min((view.width * 0.66) / spanX, (view.height * 0.6) / spanY);
     return (point: Coord) =>
       new Coord(view.x + (point.x - middle.x) * scale, view.y + (point.y - middle.y) * scale);
   }
 
-  /** The middle of the canvas and how much of the model it is showing. */
+  /**
+   * The middle of the *clear* canvas, and how much of the model it is showing.
+   *
+   * Not the whole canvas: the panels float over it. On a narrow window the left
+   * panel covers a third of the drawing area, and a four-bar centred on the
+   * canvas puts its left-hand ground joint underneath — which is the one joint
+   * this tutorial goes on to ring and name, so the student is told to
+   * right-click something they can neither see nor reach.
+   */
   private visibleRect(): { x: number; y: number; width: number; height: number } {
     const canvas = document.getElementById('canvas');
     const box = canvas?.getBoundingClientRect();
@@ -473,8 +483,31 @@ export class TutorialService {
       // The default view is centred on the origin and about twenty units wide.
       return { x: 0, y: 0, width: 20 * MODEL_SCALE, height: 12 * MODEL_SCALE };
     }
-    const from = this.svgGrid.screenToSVGfromXY(box.left, box.top);
-    const to = this.svgGrid.screenToSVGfromXY(box.right, box.bottom);
+
+    const gap = 16;
+    let left = box.left;
+    let right = box.right;
+    let top = box.top;
+    let bottom = box.bottom;
+    for (const [selector, side] of CHROME) {
+      const over = onScreen(selector);
+      if (!over) continue;
+      if (side === 'left') left = Math.max(left, over.right + gap);
+      if (side === 'right') right = Math.min(right, over.left - gap);
+      if (side === 'top') top = Math.max(top, over.bottom + gap);
+      if (side === 'bottom') bottom = Math.min(bottom, over.top - gap);
+    }
+    // A window too small to have any clear middle: fall back to the canvas
+    // rather than to a rectangle inside out.
+    if (right - left < 120 || bottom - top < 120) {
+      left = box.left;
+      right = box.right;
+      top = box.top;
+      bottom = box.bottom;
+    }
+
+    const from = this.svgGrid.screenToSVGfromXY(left, top);
+    const to = this.svgGrid.screenToSVGfromXY(right, bottom);
     return {
       x: (from.x + to.x) / 2,
       y: (from.y + to.y) / 2,
@@ -607,4 +640,25 @@ function similarity(fromA: Coord, fromB: Coord, toA: Coord, toB: Coord): (point:
     const dy = point.y - fromA.y;
     return new Coord(toA.x + scaleX * dx - scaleY * dy, toA.y + scaleY * dx + scaleX * dy);
   };
+}
+
+/** The chrome that floats over the canvas, and which edge each one eats into. */
+const CHROME: [string, 'left' | 'right' | 'top' | 'bottom'][] = [
+  ['app-left-tabs .panel', 'left'],
+  ['#rightPanel', 'right'],
+  ['.topStrip', 'top'],
+  ['#bottomBar', 'bottom'],
+  ['.playbackRow', 'bottom'],
+];
+
+/** An element's box, if it is actually taking up room on screen. */
+function onScreen(selector: string): DOMRect | undefined {
+  const element = document.querySelector(selector);
+  if (!element) return undefined;
+  const box = element.getBoundingClientRect();
+  if (box.width === 0 || box.height === 0) return undefined;
+  // A closed drawer keeps its box and is parked off the edge with
+  // `visibility: hidden`; it is not in the way and must not be treated as if
+  // it were.
+  return getComputedStyle(element).visibility === 'hidden' ? undefined : box;
 }

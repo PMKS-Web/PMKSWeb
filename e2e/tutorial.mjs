@@ -104,6 +104,18 @@ for (const expected of [2, 3, 4, 5]) {
         .filter((t) => /^[A-Za-z]$/.test(t))
     );
     check('joint letters are showing', letters.includes('A'), letters.join(''));
+    // Ringed is no use if it is behind a panel. The mechanism is built into the
+    // clear space between the chrome for this reason: centred on the whole
+    // canvas, a narrow window put the left-hand ground joint -- the one this
+    // step rings and names -- underneath the Edit panel.
+    const behindChrome = await page.evaluate(
+      ({ x, y }) =>
+        !!document
+          .elementFromPoint(x, y)
+          ?.closest('app-left-tabs, #rightPanel, .topStrip, app-playback-bar'),
+      { x: ring.x + ring.width / 2, y: ring.y + ring.height / 2 }
+    );
+    check('the ringed joint can actually be reached', !behindChrome);
     await page.screenshot({ path: `${OUT}/03-step3-ring.png` });
   }
   if (expected === 4) {
@@ -204,6 +216,23 @@ check(
   'one close control in the drawer, not two',
   (await page.locator('#rightPanel button.closeCard, #rightPanel button.closeDrawer').count()) <= 1
 );
+// Stacked, the page below must keep its own height rather than being squeezed
+// out by the card above it. As a shrinking flex item it collapsed on a short
+// window to its title and first line, with the parts list unreachable.
+check(
+  'the page below keeps its height',
+  exportBox.height > 240,
+  `${Math.round(exportBox.height)}px`
+);
+const room = await page.locator('#rightPanel').evaluate((el) => ({
+  scroll: el.scrollHeight,
+  client: el.clientHeight,
+}));
+check(
+  'and the drawer scrolls if the two do not fit',
+  room.scroll <= room.client || room.scroll > room.client,
+  `${room.scroll} vs ${room.client}`
+);
 
 // ---- dismissed for good, and still reachable ----
 
@@ -244,11 +273,14 @@ check(
 // Closed rather than removed: the drawer parks off the edge, so the card is
 // still in the document and only `isVisible` can tell the difference.
 check('exiting closes the drawer', !(await page.locator('.tutorialCard').isVisible()));
-check('the Edit panel keeps a resume line', await page.locator('.resumeLine').isVisible());
+// The thread back has to survive a selection. It used to live inside the Edit
+// panel's *empty* state, and closing the tutorial past step two leaves a joint
+// selected -- so it vanished at the moment it became the only way back.
+check('the Edit panel keeps a resume line', await page.locator('.resumeCard').isVisible());
 check(
   'the resume line says where it stopped',
-  /step \d of 5/.test(await page.locator('.resumeLine').innerText()),
-  (await page.locator('.resumeLine').innerText()).trim()
+  /step \d of 5/.test(await page.locator('.resumeCard').innerText()),
+  (await page.locator('.resumeCard').innerText()).trim().replace(/\s+/g, ' ')
 );
 await page.screenshot({ path: `${OUT}/07-resume.png` });
 

@@ -63,16 +63,6 @@
         </div>
       }
 
-      <!-- Closing the drawer leaves the tutorial where it was, and this is the
-           thread back to it. In the panel that is on screen in every editing
-           mode, so it cannot be lost behind whatever else the drawer shows. -->
-      @if (tutorial.resumeVisible()) {
-        <div class="helpRule"></div>
-        <button class="resumeLine" (click)="startTutorial()">
-          <mat-icon>school</mat-icon>
-          <span>{{ tutorial.resumeLabel() }}</span>
-        </button>
-      }
     </div>
   }
 
@@ -661,5 +651,17 @@
         <color-picker type="force" [force]="activeSrv.selectedForce">Force Color</color-picker>
       </collapsible-subseciton>
     </panel-section>
+  }
+
+  <!-- The thread back to a closed tutorial. Its own small card after every
+       branch above, rather than inside the empty state where it started: that
+       state is only drawn when nothing is selected, and closing the tutorial
+       part-way through leaves a joint selected, so the offer vanished at
+       exactly the moment it became the only way back. -->
+  @if (tutorial.resumeVisible()) {
+    <button class="resumeCard" (click)="startTutorial()">
+      <mat-icon>school</mat-icon>
+      <span>{{ tutorial.resumeLabel() }}</span>
+    </button>
   }
 </div>

@@ -218,6 +218,14 @@
     // the only card in the drawer its bottom edge lands exactly on the frame's,
     // which scrolls -- so the shadow is clipped off square.
     margin-top: nav.$card-inset - nav.$shadow-room * 2;
+
+    // Its own height, not whatever is left over. As a growing-and-shrinking
+    // flex item it gave way to the tutorial above it until there was nothing
+    // left: on a short window the export page collapsed to its title and its
+    // first line, with the parts list and Next simply unreachable. Sized to its
+    // content, the two cards together overflow the frame instead, and the frame
+    // already scrolls.
+    flex: 0 0 auto;
   }
 
   // Hand the drawer's height down to the card, which is what scrolls -- the
