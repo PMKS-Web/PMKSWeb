@@ -15,6 +15,7 @@
           [attr.aria-label]="crossing.tip"
           [matTooltip]="crossing.refusal?.long ?? crossing.tip"
           matTooltipPosition="left"
+          [matTooltipShowDelay]="500"
           (click)="cross(crossing)"
         >
           @if (crossing.material) {
@@ -33,6 +34,8 @@
         @if (group.label) {
           <div class="cm-group__label">{{ group.label }}</div>
         }
+        <!-- The tooltip waits half a second: running the pointer down the list
+             otherwise flashes a chip per row, which is what made it jumpy. -->
         @for (row of group.rows; track row) {
           <div
             class="cm-row"
@@ -44,6 +47,7 @@
             [matTooltip]="row.hoverText"
             [matTooltipDisabled]="!row.hoverText"
             matTooltipPosition="below"
+            [matTooltipShowDelay]="500"
             (cdkMenuItemTriggered)="run(row)"
           >
             @if (row.material) {

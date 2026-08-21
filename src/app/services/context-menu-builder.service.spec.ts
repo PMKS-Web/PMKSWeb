@@ -231,6 +231,38 @@ describe('the right-click menu', () => {
     });
   });
 
+  describe('duplicating a link', () => {
+    it('copies a link of any shape, set down beside the original', () => {
+      const parts = fourBar(harness.mechanism);
+      const before = harness.mechanism.links.length;
+      // Three joints, not two: the first cut of this quietly did nothing here,
+      // which is exactly what "Duplicate does nothing" looked like.
+      harness.mechanism.duplicateLink(parts.coupler);
+      expect(harness.mechanism.links.length).toBe(before + 1);
+      const copy = harness.mechanism.links[harness.mechanism.links.length - 1];
+      expect(copy.joints.length).toBe(3);
+      // Beside it, not on it: a copy that lands under the original reads as
+      // nothing having happened.
+      const moved = copy.joints[0];
+      const from = parts.coupler.joints[0];
+      expect(Math.hypot(moved.x - from.x, moved.y - from.y)).toBeGreaterThan(0.5 * S);
+      // And free-standing: it shares no joint with what it was copied from.
+      const shared = copy.joints.filter((one) =>
+        parts.coupler.joints.some((other) => other.id === one.id)
+      );
+      expect(shared.length).toBe(0);
+    });
+
+    it('greys the row on a welded compound rather than doing nothing', () => {
+      const parts = fourBar(harness.mechanism);
+      // A compound: several links and the welds between them.
+      (parts.coupler as RealLink).subset = [parts.crank, parts.rocker];
+      const duplicate = row(harness.builder.build(parts.coupler, noHandlers), 'Duplicate Link')!;
+      expect(duplicate.disabled).toBe(true);
+      expect(duplicate.refusal!.short).toBe('welded compound');
+    });
+  });
+
   describe('cascades are named, not confirmed', () => {
     it('counts the joints deleting a link would sweep up', () => {
       const parts = fourBar(harness.mechanism);
@@ -259,6 +291,17 @@ describe('the right-click menu', () => {
       expect(
         rows(harness.builder.build(parts.t, noHandlers)).find((one) => one.destructive)!.label
       ).toBe('Delete Joint');
+    });
+  });
+
+  describe('words the reader has to live with', () => {
+    it('never writes a state as a verb that flips', () => {
+      const parts = fourBar(harness.mechanism);
+      for (const target of [parts.a, parts.o, parts.crank]) {
+        for (const one of rows(harness.builder.build(target, noHandlers))) {
+          expect(one.label).not.toMatch(/^(Add|Remove|Make|Un)[A-Z ]/);
+        }
+      }
     });
   });
 

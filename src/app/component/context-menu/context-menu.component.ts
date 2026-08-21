@@ -1,5 +1,5 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { CdkMenu, CdkMenuItem } from '@angular/cdk/menu';
+import { Component, ChangeDetectionStrategy, inject, input } from '@angular/core';
+import { CdkMenu, CdkMenuItem, MENU_STACK } from '@angular/cdk/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import {
@@ -26,6 +26,14 @@ import {
 })
 export class ContextMenuComponent {
   readonly model = input<ContextMenuModel>({ groups: [] });
+  /**
+   * The stack the CDK opened this card on.
+   *
+   * A row is a `cdkMenuItem` and closes the card by itself; the crossing icon
+   * is a plain button in the header, so it has to say so. A menu left standing
+   * over a mode it no longer belongs to is the mode change half-done.
+   */
+  private readonly stack = inject(MENU_STACK, { optional: true });
   private contextMenu!: HTMLElement;
 
   ngAfterViewInit() {
@@ -75,5 +83,6 @@ export class ContextMenuComponent {
   cross(crossing: MenuCrossing): void {
     if (crossing.refusal) return;
     crossing.action();
+    this.stack?.closeAll();
   }
 }

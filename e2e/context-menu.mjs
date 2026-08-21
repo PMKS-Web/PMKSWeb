@@ -283,6 +283,29 @@ check(
   cylinderJoint?.rows.map((one) => one.label)
 );
 
+const cylinderBody = await openOn('[id="AB"]');
+check(
+  'a cylinder is described as one part, not as how it is built',
+  /^Barrel and rod · Joints /.test(cylinderBody?.subtitle ?? '') &&
+    !/assembly|sealed/i.test(cylinderBody?.subtitle ?? ''),
+  cylinderBody?.subtitle
+);
+
+// Duplicate on a link with three joints: the case that used to accept the
+// click and silently do nothing.
+await openMechanism(page, BASE + FOURBAR);
+await clearOverlay();
+const linksBefore = await page.$$eval('path[id]', (nodes) => nodes.map((one) => one.id));
+await openOn('[id="ACT"]');
+await page.click('.cm-row:has(.cm-row__label:text-is("Duplicate Link"))');
+await page.waitForTimeout(1000);
+const linksAfter = await page.$$eval('path[id]', (nodes) => nodes.map((one) => one.id));
+check(
+  'Duplicate copies a three-joint link, and sets it down clear of the original',
+  linksAfter.length === linksBefore.length + 1,
+  { before: linksBefore, after: linksAfter }
+);
+
 // -------------------------------------------------------- synthesis positions
 
 await openMechanism(page, BASE + POSITIONS);

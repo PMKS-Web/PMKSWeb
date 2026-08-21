@@ -1067,21 +1067,25 @@ export class MechanismService {
    * copy should have inherited.
    */
   duplicateLink(link: RealLink): void {
-    // A two-joint bar only. A compound is several links and a set of welds; a
-    // cylinder part belongs to a sealed assembly. Neither copies as one bar,
-    // which is why the menu offers this on a plain link and nowhere else.
-    if (link.subset.length > 0 || this.cylinderAt(link)) return;
-    const ends = link.joints.filter((joint): joint is RealJoint => joint instanceof RealJoint);
-    if (ends.length !== 2) return;
+    // A compound is several links and the welds between them, and a cylinder
+    // part belongs to an assembly; neither copies as one link. The menu greys
+    // the row for both rather than accepting the click and doing nothing.
+    if (!this.canDuplicate(link)) return;
+    const source = link.joints.filter((joint): joint is RealJoint => joint instanceof RealJoint);
 
-    // Far enough to be grabbable, near enough to read as this link's copy.
-    const step = 0.4 * this.settingsService.objectScale;
-    const made: RealJoint[] = [];
-    for (const end of ends) {
-      const id = this.determineNextLetter(made.map((joint) => joint.id));
-      const copy = new RevJoint(id, end.x + step, end.y - step);
-      made.push(copy);
-    }
+    // Set beside the link rather than diagonally away from it: a copy that
+    // lands along the bar's own direction overlaps it and reads as nothing
+    // having happened, which is exactly how the first cut of this was
+    // reported. Across the bar, the two are plainly two.
+    const step = this.sideStepFor(source);
+    // `determineNextLetter` reads the drawing, and none of these are in it
+    // yet, so the letters handed out so far are passed back in explicitly.
+    const taken: string[] = [];
+    const made = source.map((joint) => {
+      const id = this.determineNextLetter(taken);
+      taken.push(id);
+      return new RevJoint(id, joint.x + step.x, joint.y + step.y);
+    });
     const copy = this.gridUtils.createRealLink(
       made
         .map((joint) => joint.id)
@@ -1089,13 +1093,35 @@ export class MechanismService {
         .join(''),
       made
     );
-    made.forEach((joint) => joint.links.push(copy));
-    made[0].connectedJoints.push(made[1]);
-    made[1].connectedJoints.push(made[0]);
+    made.forEach((joint) => {
+      joint.links.push(copy);
+      made.forEach((other) => {
+        if (other.id !== joint.id) joint.connectedJoints.push(other);
+      });
+    });
     this.joints.push(...made);
     this.links.push(copy);
     this.activeObjService.updateSelectedObj(copy);
     this.finishStructuralEdit(true);
+  }
+
+  /** Whether Duplicate has a single link to copy — the menu's enable rule. */
+  canDuplicate(link: Link): boolean {
+    if (!(link instanceof RealLink) || link.subset.length > 0) return false;
+    if (this.cylinderAt(link)) return false;
+    return link.joints.filter((joint) => joint instanceof RealJoint).length >= 2;
+  }
+
+  /**
+   * Where a copy is set down: one part-width to the side of the link's own
+   * direction, so the copy sits beside the original rather than along it.
+   */
+  private sideStepFor(joints: RealJoint[]): { x: number; y: number } {
+    const gap = 0.9 * this.settingsService.objectScale;
+    const span = { x: joints[1].x - joints[0].x, y: joints[1].y - joints[0].y };
+    const length = Math.hypot(span.x, span.y);
+    if (length < 1e-6) return { x: gap, y: -gap };
+    return { x: (-span.y / length) * gap, y: (span.x / length) * gap };
   }
 
   /** Whether any Lock mark is set at all — what enables Unlock All. */

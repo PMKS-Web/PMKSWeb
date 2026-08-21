@@ -578,19 +578,25 @@ export class ContextMenuBuilderService {
         refusal: fillet,
       }),
     ];
-    // A compound is several links and a set of welds rather than one bar, so
-    // there is no single thing for Duplicate to copy.
-    if (link.subset.length === 0) {
-      rows.push(
-        new MenuRow({
-          label: 'Duplicate Link',
-          icon: 'content_copy',
-          material: true,
-          action: () => this.mechanism.duplicateLink(link),
-          tip: 'Make a free-standing copy of this bar beside it.',
-        })
-      );
-    }
+    rows.push(
+      new MenuRow({
+        label: 'Duplicate Link',
+        icon: 'content_copy',
+        material: true,
+        action: () => this.mechanism.duplicateLink(link),
+        tip: 'Set a free-standing copy of this link down beside it.',
+        // A welded compound is several links and the welds between them, so
+        // there is no single link for this to copy. Greyed rather than
+        // hidden: copying one is a thing a reader can reasonably expect, and
+        // the row says which link to ask instead.
+        refusal: this.mechanism.canDuplicate(link)
+          ? undefined
+          : {
+              short: 'welded compound',
+              long: 'This is several links welded together. Copy one of the links it is made of instead.',
+            },
+      })
+    );
     return rows;
   }
 
@@ -634,7 +640,12 @@ export class ContextMenuBuilderService {
   }
 
   private linkSubtitle(link: Link, sealed: Cylinder | undefined): string {
-    if (sealed) return 'Sealed assembly · barrel and rod';
+    // Not "sealed assembly": to a reader a cylinder is one part, and how it
+    // is built out of a slider and a weld underneath is not their business.
+    if (sealed) {
+      const ends = [sealed.barrelFar, sealed.rodFar].map((joint) => this.nameOf(joint));
+      return `Barrel and rod · Joints ${ends.join(', ')}`;
+    }
     const bar = link as RealLink;
     const kind = bar.subset.length > 0 ? 'Compound' : 'Bar';
     const joints = bar.joints.map((joint) => this.nameOf(joint)).join(', ');
@@ -671,7 +682,11 @@ export class ContextMenuBuilderService {
             // used. The frame is a state, so it reads as one.
             new MenuRow({
               label: 'Global Frame',
-              icon: 'force_global',
+              // The app's own force_global glyph carries its own colours, so
+              // it stays blue on an unticked row and reads as already on --
+              // the one icon in the menu that does not take the row's colour.
+              icon: 'public',
+              material: true,
               kind: 'toggle',
               checked: !force.local,
               action: () => this.mechanism.changeForceLocal(),
