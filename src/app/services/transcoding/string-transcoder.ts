@@ -12,6 +12,7 @@ import {
   LinkData,
 } from './transcoder-data';
 import { GenericTranscoder } from './transcoder-interface';
+import { JOINT_FAMILIES } from '../../model/joint-colors';
 
 /*
  StringEncoder class is responsible for encoding various types of data,
@@ -686,15 +687,18 @@ export class StringTranscoder extends GenericTranscoder {
     hand-edits — the same bargain the sealed bit strikes.
     */
   /*
-    Every colour must name a joint this URL carries and be six hex digits.
-    Refused rather than dropped, for the same reason a lock reference is: a URL
-    that says something this build cannot honour is a URL that would open as a
-    different drawing than the one that was shared.
+    Every colour must name a joint this URL carries and a family this build
+    knows. Refused rather than dropped, for the same reason a lock reference is:
+    a URL saying something this build cannot honour would open as a different
+    drawing than the one that was shared. A family the reader does not have is
+    exactly that -- and the empty id is the default, which is never written, so
+    an entry naming it is a URL that says nothing twice.
     */
   private validateDecodedJointColors(jointIDs: Set<string>): void {
+    const known = new Set(JOINT_FAMILIES.map((family) => family.id).filter((id) => id !== ''));
     this.jointColors.forEach((entry) => {
-      const [id, hex] = entry.substring(1).split('~');
-      if (!jointIDs.has(id) || !/^[0-9a-fA-F]{6}$/.test(hex ?? '')) {
+      const [id, family] = entry.substring(1).split('~');
+      if (!jointIDs.has(id) || !known.has(family ?? '')) {
         throw new Error('URL colours a joint it does not carry');
       }
     });

@@ -294,9 +294,9 @@ export class MechanismBuilder {
     // above are re-armed. The transcoder has already refused any reference that
     // does not resolve.
     this.transcoder.getJointColors().forEach((entry) => {
-      const [id, hex] = entry.substring(1).split('~');
+      const [id, family] = entry.substring(1).split('~');
       const joint = this.getJointByID(joints, id);
-      if (joint) joint.color = '#' + hex;
+      if (joint) joint.colorFamily = family;
     });
 
     // What each hand-placed centre of mass is held against. The offsets it

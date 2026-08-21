@@ -209,8 +209,8 @@ export class UrlGenerationService {
       // was possible.
       encoder.setJointColors(
         this.mechanism.joints
-          .filter((joint) => !!joint.color)
-          .map((joint) => 'K' + joint.id + '~' + joint.color.replace('#', ''))
+          .filter((joint) => !!joint.colorFamily)
+          .map((joint) => 'K' + joint.id + '~' + joint.colorFamily)
       );
 
       // The synthesis design, if one is being worked on. It is not part of the

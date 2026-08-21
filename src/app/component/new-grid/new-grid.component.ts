@@ -110,6 +110,7 @@ export interface SlotStackItem {
 import introJs from 'intro.js';
 import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-shortcuts.service';
 import { INK_FLIPS_AT, luminanceOf } from '../../model/contrast';
+import { SELECTION_RING } from '../../model/joint-colors';
 
 /** Which corner of the tracing underlay a resize gesture is holding. */
 type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
@@ -123,6 +124,9 @@ type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
  */
 const GRID_GLIDE_MS = 380;
 
+/** How wide the ring inside a selected joint's edge is drawn, in screen pixels. */
+const SELECTION_RING_PX = 3;
+
 @Component({
   selector: 'app-new-grid',
   templateUrl: './new-grid.component.html',
@@ -135,6 +139,7 @@ export class NewGridComponent implements OnDestroy {
   mechanismSrv = inject(MechanismService);
   private urlParser = inject(UrlProcessorService);
   gridUtils = inject(GridUtilsService);
+  private colors = inject(ColorService);
   settings = inject(SettingsService);
   activeObjService = inject(ActiveObjService);
   private tabService = inject(SelectedTabService);
@@ -3542,22 +3547,45 @@ export class NewGridComponent implements OnDestroy {
    * grey with the rest of the body it marks.
    */
   /**
-   * The colour one joint is drawn in at rest, or nothing for the shared one.
+   * The colour one joint is drawn in, or nothing for the family they all share.
    *
-   * Only at rest. Picked, dragged and greyed-out are states, and a state that
-   * looked different on different joints would stop being readable as a state
-   * -- so those keep the classes every joint shares, and this stands aside.
-   * Hovering is not one of them: a highlighted joint that turned amber under
-   * the cursor would look like it had been selected by being pointed at.
+   * A family is three colours, one per state, so this follows the state rather
+   * than standing aside from it -- that is what keeps a joint reading as one
+   * object resting, pointed at and picked. Amber returns nothing at all: it is
+   * what the stylesheet already draws, so a drawing nobody has coloured is
+   * drawn by exactly the rules it always was.
+   *
+   * The greyed-out analysis state is the one exception. Scenery is scenery
+   * whatever colour it would otherwise be.
    */
-  restingFillOf(joint: Joint): string | null {
-    if (!joint.color) return null;
+  jointFillOf(joint: Joint): string | null {
+    if (!joint.colorFamily) return null;
     const state = this.mechanismSrv.getJointCSSClass(joint);
-    const claimed =
-      state.includes('joint-selected') ||
-      state.includes('joint-dragging') ||
-      state.includes('joint-inert');
-    return claimed ? null : joint.color;
+    if (state.includes('joint-inert')) return null;
+    const family = this.colors.jointFamily(joint.colorFamily);
+    if (state.includes('joint-selected')) return family.selected;
+    if (state.includes('joint-highlight') || state.includes('joint-dragging')) return family.hover;
+    return family.normal;
+  }
+
+  /**
+   * The ring a selected joint wears inside its own edge, if it needs one.
+   *
+   * Amber is what "picked" means everywhere in the app, and a joint in another
+   * family keeps its own colour rather than borrowing it -- so the fill says
+   * which joint this is and the ring says it is the selected one. A joint
+   * already drawn in amber needs no ring: its picked colour is the ring colour.
+   */
+  selectionRingOn(joint: Joint): string | null {
+    if (!joint.colorFamily) return null;
+    return this.mechanismSrv.getJointCSSClass(joint).includes('joint-selected')
+      ? SELECTION_RING
+      : null;
+  }
+
+  /** How wide that ring is drawn, in screen pixels however far this is zoomed. */
+  selectionRingWidth(): number {
+    return this.svgGrid.scaleWithZoom(SELECTION_RING_PX);
   }
 
   /**
@@ -3568,7 +3596,7 @@ export class NewGridComponent implements OnDestroy {
    * joint brings its own white chip and the glyph stands on that instead.
    */
   lockInkOn(joint: Joint): string | null {
-    const fill = this.restingFillOf(joint);
+    const fill = this.jointFillOf(joint);
     if (!fill || this.gridUtils.getWelded(joint)) return null;
     return luminanceOf(fill) > INK_FLIPS_AT ? '#263238' : '#eceff1';
   }

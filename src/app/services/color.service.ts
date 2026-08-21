@@ -1,4 +1,8 @@
 import { Injectable } from '@angular/core';
+import { JointFamily, JOINT_FAMILIES } from '../model/joint-colors';
+
+export { JOINT_FAMILIES, SELECTION_RING } from '../model/joint-colors';
+export type { JointFamily } from '../model/joint-colors';
 
 @Injectable({
   providedIn: 'root',
@@ -28,25 +32,39 @@ export class ColorService {
   ];
 
   /**
-   * Colours for one joint, to tell it apart from the others.
+   * The families a joint can be drawn in, each a set of three.
    *
-   * The first is the one every joint is drawn in, so the swatch that undoes a
-   * highlight is in the same row as the ones that make it -- there is no other
-   * way to take one off. The rest are saturated on purpose: these are worn by a
-   * single pin among many and have to be found at a glance, which the pale end
-   * of any palette is no good for.
+   * A joint is drawn resting, pointed at and picked, and those only read as one
+   * object in three moods if they come from one family -- so choosing a colour
+   * for a joint chooses all three at once, not a fill.
    *
-   * Four of them, spread around the wheel rather than crowded on one side, and
-   * none of them amber -- that is what a selected joint wears, and a resting
-   * joint that borrowed it would be claiming to be selected. A dark grey was
-   * tried and dropped: on the navy end of the link palette a dark pin is not a
-   * highlight, it is a joint that has gone missing.
+   * Amber through brown: warm, complementary to the indigo and teal the links
+   * are drawn in, and none of it competing with the link palette. Amber is
+   * first and is what every joint is drawn in until somebody says otherwise,
+   * so the same row that puts a colour on a joint takes it off again.
    */
-  private jointColorOptions = ['#fff8e1', '#e53935', '#43a047', '#00acc1', '#8e24aa'];
+  private jointFamilies: readonly JointFamily[] = JOINT_FAMILIES;
 
-  /** The first swatch is "no colour of its own", not a colour. */
-  public isDefaultJointColor(color: string): boolean {
-    return color === '' || color === this.jointColorOptions[0];
+  public getJointFamilies(): readonly JointFamily[] {
+    return this.jointFamilies;
+  }
+
+  /** The family a joint belongs to; the first for anything unrecognised. */
+  public jointFamily(id: string): JointFamily {
+    return this.jointFamilies.find((family) => family.id === id) ?? this.jointFamilies[0];
+  }
+
+  public getJointColorOptions(): string[] {
+    return this.jointFamilies.map((family) => family.normal);
+  }
+
+  public getIndexFromJointFamily(id: string): number {
+    const at = this.jointFamilies.findIndex((family) => family.id === id);
+    return at === -1 ? 0 : at;
+  }
+
+  public getJointFamilyFromIndex(index: number): string {
+    return (this.jointFamilies[index] ?? this.jointFamilies[0]).id;
   }
 
   private forceColorOptions = ['#3f50b5'];
@@ -76,10 +94,6 @@ export class ColorService {
     return this.linkColorOptions;
   }
 
-  public getJointColorOptions(): string[] {
-    return this.jointColorOptions;
-  }
-
   public getForceColorOptions(): string[] {
     return this.forceColorOptions;
   }
@@ -88,20 +102,12 @@ export class ColorService {
     return this.linkColorOptions.indexOf(fill);
   }
 
-  getIndexFromJointColor(fill: string) {
-    return this.jointColorOptions.indexOf(fill);
-  }
-
   getIndexFromForceColor(fill: string) {
     return this.forceColorOptions.indexOf(fill);
   }
 
   getLinkColorFromIndex(index: number) {
     return this.linkColorOptions[index];
-  }
-
-  getJointColorFromIndex(index: number) {
-    return this.jointColorOptions[index];
   }
 
   getForceColorFromIndex(index: number) {

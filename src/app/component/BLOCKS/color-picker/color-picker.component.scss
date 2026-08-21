@@ -21,6 +21,15 @@
       // Reads as a swatch rather than as a coloured gap: the pale end of both
       // palettes is within a shade or two of the panel behind it.
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+    }
+
+    // A joint family is three colours, and a flat swatch could only show one of
+    // them. Drawn the way the joint is instead: its resting colour, with its
+    // picked colour as a ring inside the edge.
+    .swatch.two-tone {
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+        inset 0 0 0 6px var(--swatch-ring);
       border-radius: var(--border-radius);
       //margin: 10px;
       cursor: pointer;

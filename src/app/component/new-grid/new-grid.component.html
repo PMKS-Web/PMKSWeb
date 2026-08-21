@@ -880,18 +880,38 @@
                 [attr.cx]="0"
                 [attr.cy]="0"
                 [class]="mechanismSrv.getJointCSSClass(joint)"
-                [style.fill]="restingFillOf(joint)"
+                [style.fill]="jointFillOf(joint)"
               />
+              <!-- What "picked" means, on a joint that keeps its own colour
+                   while it is picked. Drawn inside the edge rather than on it,
+                   so a selected joint is the same size as an unselected one. -->
+              @if (selectionRingOn(joint); as ring) {
+                <circle
+                  class="jointSelectionRing"
+                  [attr.r]="
+                    settings.objectScale * gridUtils.getJointR(joint) - selectionRingWidth() / 2
+                  "
+                  cx="0"
+                  cy="0"
+                  fill="none"
+                  [attr.stroke]="ring"
+                  [attr.stroke-width]="selectionRingWidth()"
+                />
+              }
             }
             <!--      Welded Joint. A sealed cylinder's pin never reaches here:
                       interior joints are filtered out above, and the skin
                       draws its own, larger marker at that point. -->
             @if (gridUtils.getWelded(joint)) {
+              <!-- A weld mark has no inside edge to ring, so it wears the same
+                   amber as an outline instead. -->
               <path
                 [attr.id]="'joint_' + joint.id"
                 [class]="mechanismSrv.getJointCSSClass(joint)"
                 [attr.d]="weldMarkerPath"
-                [style.fill]="restingFillOf(joint)"
+                [style.fill]="jointFillOf(joint)"
+                [style.stroke]="selectionRingOn(joint)"
+                [style.stroke-width]="selectionRingWidth()"
               ></path>
             }
             <!-- The lock cue: a small padlock riding the joint's shoulder.

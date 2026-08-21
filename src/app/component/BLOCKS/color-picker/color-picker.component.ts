@@ -43,11 +43,23 @@ export class ColorPickerComponent implements OnChanges {
   chosenIndex(): number {
     const joint = this.joint();
     if (this.type() === 'joint' && joint) {
-      return this.colorService.isDefaultJointColor(joint.color)
-        ? 0
-        : this.colorService.getIndexFromJointColor(joint.color);
+      return this.colorService.getIndexFromJointFamily(joint.colorFamily);
     }
     return this.selectedIndex;
+  }
+
+  /**
+   * The colour a swatch wears inside its own edge, or null for a flat one.
+   *
+   * A joint family is three colours and a flat swatch could only show one of
+   * them, which would either promise a saturation the resting joint does not
+   * have or hide the difference the reader is choosing between. So each swatch
+   * is drawn the way the joint is: its resting colour, with its picked colour
+   * as a ring inside the edge.
+   */
+  ringOf(index: number): string | null {
+    if (this.type() !== 'joint') return null;
+    return this.colorService.getJointFamilies()[index]?.selected ?? null;
   }
 
   // A method that handles the click event on a color swatch
@@ -63,10 +75,10 @@ export class ColorPickerComponent implements OnChanges {
         break;
       case 'joint':
         if (!joint) break;
-        // The first swatch is the colour every joint already has, so choosing
-        // it means "stop being different" rather than "be this colour" -- and
-        // an empty colour is what the URL leaves out.
-        joint.color = index === 0 ? '' : this.colorService.getJointColorFromIndex(index);
+        // The first swatch is the family every joint already wears, whose id is
+        // empty -- so choosing it means "stop being different", and the URL
+        // goes back to saying nothing about this joint.
+        joint.colorFamily = this.colorService.getJointFamilyFromIndex(index);
         // Undoable, and carried in the URL: a highlight that a shared link
         // dropped, or that one undo wiped, would not be worth putting on.
         this.mechanism.updateMechanism(true);
@@ -89,7 +101,9 @@ export class ColorPickerComponent implements OnChanges {
 
   /** What each swatch is called, for the reader who is hovering one. */
   nameOf(index: number): string {
-    return this.type() === 'joint' && index === 0 ? 'Default' : '';
+    if (this.type() !== 'joint') return '';
+    const family = this.colorService.getJointFamilies()[index];
+    return family ? (index === 0 ? family.name + ' (default)' : family.name) : '';
   }
 
   /**
@@ -99,6 +113,9 @@ export class ColorPickerComponent implements OnChanges {
    * the link palette and on the first of the joint ones.
    */
   tickInk(color: string): string {
+    // Against the middle of the swatch, which is what the tick is drawn over --
+    // not the ring around it, which is a different colour on every joint family
+    // and would have put a white tick on four pale centres.
     return luminanceOf(color) > INK_FLIPS_AT ? '#263238' : '#ffffff';
   }
 }
