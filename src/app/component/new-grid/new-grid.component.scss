@@ -57,8 +57,11 @@
     opacity: 0;
   }
 
+  // Switched on for one move by enableGridAnimationForThisAction, which takes
+  // it off again a moment after this ends. Out fast and in gently, so the eye
+  // follows where the drawing is going rather than watching it leave.
   .animated {
-    transition: transform 0.3s ease;
+    transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
   .my-custom-snackbar {

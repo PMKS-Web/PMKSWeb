@@ -113,6 +113,15 @@ import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-sh
 /** Which corner of the tracing underlay a resize gesture is holding. */
 type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
 
+/**
+ * How long the canvas takes to glide to a new frame.
+ *
+ * A hair longer than the CSS transition it switches on, so the class comes off
+ * after the move has landed rather than exactly as it lands -- the two used to
+ * be the same 300, which cut the last frame of every reframe.
+ */
+const GRID_GLIDE_MS = 380;
+
 @Component({
   selector: 'app-new-grid',
   templateUrl: './new-grid.component.html',
@@ -427,12 +436,48 @@ export class NewGridComponent implements OnDestroy {
     this.mechanismSrv.save();
   }
 
+  /**
+   * Let the canvas glide to wherever it is being sent, for this one move.
+   *
+   * Added and removed from the list rather than written over it: this element
+   * is svg-pan-zoom's viewport and carries the class the library found it by,
+   * so setting `class` outright stripped that name off it permanently -- the
+   * first reframe of a session left nothing on the page called
+   * `svg-pan-zoom_viewport`.
+   */
   enableGridAnimationForThisAction() {
-    this.svgGridElement.setAttribute('class', 'animated');
-    //Disable after 0.5 seconds
-    setTimeout(() => {
-      this.svgGridElement.removeAttribute('class');
-    }, 300);
+    if (!this.svgGridElement) return;
+    this.svgGridElement.classList.add('animated');
+    window.clearTimeout(this.gridAnimationOff);
+    this.glideEndsAt = performance.now() + GRID_GLIDE_MS;
+    this.gridAnimationOff = window.setTimeout(() => {
+      this.glideEndsAt = 0;
+      this.svgGridElement?.classList.remove('animated');
+    }, GRID_GLIDE_MS);
+  }
+
+  private gridAnimationOff = 0;
+  private glideEndsAt = 0;
+
+  /**
+   * Do this once the canvas has stopped gliding, or now if it is not.
+   *
+   * Anything that measures the drawing has to wait: mid-transition the
+   * transform *attribute* already reads as the destination while the picture on
+   * screen is still on its way there, so a measurement taken then divides one
+   * by the other and lands the drawing somewhere neither of them meant.
+   */
+  isGliding(): boolean {
+    return this.glideEndsAt > performance.now();
+  }
+
+  afterGlide(run: () => void): void {
+    const left = this.glideEndsAt - performance.now();
+    if (left <= 0) {
+      run();
+      return;
+    }
+    window.setTimeout(run, left + 16);
   }
 
   static getLastLeftClickType(): string {

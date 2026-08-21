@@ -10,6 +10,16 @@ import { NotificationService } from './notification.service';
 import { MechanismService } from './mechanism.service';
 import Hammer from 'hammerjs';
 import { MODEL_SCALE } from '../model/render-scale';
+import { DEFAULT_OBJECT_SCALE } from '../model/object-scale';
+import {
+  Rect,
+  centerOf,
+  drawingScreenBox,
+  fitsInside,
+  freeCanvasRect,
+  sameRect,
+} from './view-framing';
+import { SelectedTabService } from '../selected-tab.service';
 
 /**
  * Minor lines to a major cell.
@@ -28,6 +38,63 @@ const LENGTH_IN_CM: Record<LengthUnit, number> = {
   [LengthUnit.INCH]: 2.54,
   [LengthUnit.NULL]: 1,
 };
+
+/**
+ * How much of the free canvas a fit fills.
+ *
+ * A margin all round, rather than the flat 30% shrink that a `fit()` followed
+ * by a `zoomOut()` used to leave: that number was chosen to clear a toolbar
+ * that has not existed for two layouts, and it was measured against the window
+ * rather than against the part of it the drawing can be seen in.
+ */
+const FIT_FILL = 0.86;
+
+/**
+ * The layers a fit is about.
+ *
+ * The grid ruling and the axes are drawn to the viewport, so they are always
+ * exactly as big as the window: a bounding box that includes them cannot be
+ * fitted to anything. Ordered as they are drawn, which is only for reading.
+ */
+const DRAWING_LAYERS = [
+  'railHolder',
+  'jointBGHolder',
+  'motorHolder',
+  'linkHolder',
+  'sliderHolder',
+  'jointHolder',
+  'pathsHolder',
+  'forcesHolder',
+  // Synthesis is drawing too: in that mode the positions being designed for are
+  // often the only thing on the canvas, and a fit that could not see them
+  // framed an empty grid and left them off the side of it.
+  'synthesis',
+] as const;
+
+/**
+ * How big a drawn mark has to come out for the drawing to read.
+ *
+ * The band the zoom warning complains outside of, in the same units it uses
+ * (zoom times object scale, which is pixels across one unit of mark).
+ */
+const LEGIBLE_MARK_PX = { min: 5, max: 200 };
+
+/** The size in that band a mark is given when one has to be chosen for it. */
+const MARK_TARGET_PX = 60;
+
+/** How far a drawing may hang out of the free canvas before it counts as lost. */
+const OVERHANG_SLACK = 8;
+
+/**
+ * How long to watch the chrome before framing around where it ended up.
+ *
+ * A panel takes about a third of a second to glide, and the mode says it has
+ * changed before Angular has started moving it -- so a rect that looks settled
+ * in the first few frames is only one that has not begun to move.
+ */
+const SETTLE_STABLE_FRAMES = 3;
+const SETTLE_MIN_MS = 360;
+const SETTLE_MAX_MS = 900;
 
 @Injectable({
   providedIn: 'root',
@@ -69,6 +136,7 @@ export class SvgGridService {
   // can never be zoomed into again.
   private MAX_ZOOM: number = 16.5;
   private MIN_ZOOM: number = 0.0002;
+
 
   setNewElement(root: HTMLElement) {
     var eventsHandler;
@@ -168,6 +236,7 @@ export class SvgGridService {
     this.guardAgainstStuckPan(root);
     this.restoreMissingPointerDown(root);
     this.releaseGesturesOnLostPointer();
+    this.watchTheChrome();
     this.scaleToFitLinkage(false);
   }
 
@@ -556,12 +625,26 @@ export class SvgGridService {
     this.CTM = newCTM;
   }
 
+  /**
+   * The buttons zoom about the middle of the free canvas rather than the middle
+   * of the window, which is where the library puts it. Zooming about a point
+   * behind the panel walked a centred drawing sideways under it, a little
+   * further with every press.
+   */
   zoomIn() {
-    this.panZoomObject.zoomBy(1.3);
+    this.panZoomObject.zoomAtPointBy(1.3, this.zoomAnchor());
   }
 
   zoomOut() {
-    this.panZoomObject.zoomBy(0.7);
+    this.panZoomObject.zoomAtPointBy(0.7, this.zoomAnchor());
+  }
+
+  private zoomAnchor(): SvgPanZoom.Point {
+    const canvas = this.canvasBounds();
+    const free = this.freeRect();
+    if (!canvas || !free) return { x: 0, y: 0 };
+    const middle = centerOf(free);
+    return { x: middle.x - canvas.x, y: middle.y - canvas.y };
   }
 
   getZoom() {
@@ -581,7 +664,7 @@ export class SvgGridService {
   }
 
   /**
-   * Frame the whole mechanism.
+   * Frame the drawing in the part of the canvas it can actually be seen in.
    *
    * Deferred to after the next render, because whatever asked for a fit is
    * usually the thing that just changed what there is to fit, and the bounding
@@ -594,6 +677,11 @@ export class SvgGridService {
    * canvas glides so they can see what moved. A fit that merely follows a
    * mechanism arriving passes false, because there is nothing to show them yet
    * — animating that is a zoom-in on every single load.
+   *
+   * Either way it is also where the drawn marks get a size to suit the result:
+   * a Jansen leg is nearly two metres across, and joints drawn at the size a
+   * new project starts with come out as specks. Only when the author never
+   * chose a size of their own -- a drawing that carries one means it.
    */
   scaleToFitLinkage(animate = true) {
     this.settingsService.tempGridDisable = true;
@@ -607,6 +695,14 @@ export class SvgGridService {
     });
   }
 
+  /**
+   * Wait out whatever the canvas is already doing, then frame it.
+   *
+   * Anything that measures the drawing has to let a glide finish first: mid
+   * transition the transform attribute already reads as the destination while
+   * the picture is still on its way there, and a measurement taken between the
+   * two lands the drawing where neither of them meant.
+   */
   private fitToLinkage(animate: boolean) {
     // Nothing to fit if the canvas has gone. Left unguarded this throws where
     // nothing is waiting to catch it, and the flag below stays stuck on — which
@@ -615,14 +711,283 @@ export class SvgGridService {
       this.settingsService.tempGridDisable = false;
       return;
     }
-    const restoreScenery = this.hideSceneryWhileMeasuring();
-    this.panZoomObject.updateBBox(); // Update viewport bounding box
-    restoreScenery();
     this.settingsService.tempGridDisable = false;
-    if (animate) NewGridComponent.instance.enableGridAnimationForThisAction();
-    this.panZoomObject.fit();
-    this.panZoomObject.center();
-    this.zoomOut();
+    NewGridComponent.instance.afterGlide(() => this.frameDrawing(animate));
+  }
+
+  /**
+   * Put the drawing in the middle of the free canvas at the size that fills it.
+   *
+   * Nothing happens when there is nothing drawn, which is not a failure -- an
+   * empty grid has no frame to find, and the view it already has is as good as
+   * any other.
+   */
+  private frameDrawing(animate: boolean): void {
+    const free = this.freeRect();
+    const drawn = this.measureDrawing();
+    this.lastFreeRect = free;
+    if (!free) return;
+    if (!drawn || !(drawn.width > 0) || !(drawn.height > 0)) {
+      // Nothing drawn is still a view worth resetting: somebody who has panned
+      // an empty grid off into the corner pressed this to come back.
+      this.moveViewTo(
+        { x: 0, y: 0, width: 0, height: 0 },
+        centerOf(free),
+        this.clampZoom(MARK_TARGET_PX / this.settingsService.objectScale),
+        animate
+      );
+      return;
+    }
+    const target = this.clampZoom(
+      Math.min((free.width * FIT_FILL) / drawn.width, (free.height * FIT_FILL) / drawn.height)
+    );
+    if (this.adoptScaleForZoom(target)) {
+      // The marks are a different size now, so what was just measured is not
+      // what will be on screen. Frame once Angular has drawn them.
+      this.scaleToFitLinkage(animate);
+      return;
+    }
+    this.moveViewTo(drawn, centerOf(free), target, animate);
+  }
+
+  /**
+   * Send the view to a zoom, with a given model box landing on a given point.
+   *
+   * `drawn` is in model units and `at` in client pixels, which is the one
+   * conversion this file has to do. The library applies a new matrix on the
+   * next animation frame rather than on the call, so nothing here reads the
+   * canvas back after moving it -- a second fit in the same frame would
+   * otherwise measure a picture that had not moved yet and correct for a move
+   * it had already asked for. That is the whole reason the box comes in as a
+   * parameter instead of being measured again.
+   */
+  private moveViewTo(
+    drawn: Rect,
+    at: { x: number; y: number },
+    targetZoom: number,
+    animate: boolean
+  ): void {
+    const canvas = this.canvasBounds();
+    if (!canvas) return;
+    const center = centerOf(drawn);
+
+    if (animate) NewGridComponent.instance?.enableGridAnimationForThisAction();
+    this.setZoom(targetZoom);
+    // A refused zoom locks the next pan out, and the pan is the half of this
+    // that must not be dropped.
+    this.panLockOut = false;
+    this.panZoomObject.pan({
+      x: at.x - canvas.x - targetZoom * center.x,
+      y: at.y - canvas.y - targetZoom * center.y,
+    });
+  }
+
+  /**
+   * Give the drawn marks a size that reads at this zoom, if nobody has chosen
+   * one. Returns whether anything changed.
+   *
+   * The same band the zoom warning complains outside of, so the warning and
+   * this cannot disagree about what "too small" means; and the same target its
+   * own "Fit to zoom" fix aims at, so pressing that afterwards changes nothing.
+   * Only when the scale is still the one a new project starts at: a drawing
+   * that carries a scale of its own is a drawing whose author chose it.
+   */
+  private adoptScaleForZoom(atZoom: number): boolean {
+    const scale = this.settingsService.objectScale;
+    if (Math.abs(scale - DEFAULT_OBJECT_SCALE) > 0.5) return false;
+    const drawnAt = atZoom * scale;
+    if (drawnAt >= LEGIBLE_MARK_PX.min && drawnAt <= LEGIBLE_MARK_PX.max) return false;
+    // Cannot run twice: the scale it lands on draws marks at exactly the size
+    // this asks for, so the next pass finds them legible -- and the pass after
+    // that finds a scale that is no longer the default one.
+    this.updateObjectScale(atZoom);
+    return true;
+  }
+
+  /** The canvas's own top-left in client pixels, which `pan` is measured from. */
+  private canvasBounds(): Rect | null {
+    const canvas = document.getElementById('canvas');
+    if (!canvas) return null;
+    const box = canvas.getBoundingClientRect();
+    return { x: box.left, y: box.top, width: box.width, height: box.height };
+  }
+
+  private freeRect(): Rect | null {
+    const canvas = document.getElementById('canvas');
+    return canvas ? freeCanvasRect(canvas) : null;
+  }
+
+  /**
+   * The drawing's box in model units, with the scenery this fit is not about
+   * hidden.
+   *
+   * Measured on screen and divided back by the matrix that drew it, rather than
+   * asked for as a `getBBox`: a joint is a nested `<svg>` that overflows its
+   * own 20x20 box, so the bounding box the browser reports for the layers is
+   * not the ink the reader sees. The matrix is read off the canvas, not off the
+   * library, so it is the one those client rects were measured under even when
+   * the library has a newer one waiting for the next frame.
+   */
+  private measureDrawing(): Rect | null {
+    const restoreScenery = this.hideSceneryWhileMeasuring();
+    const box = drawingScreenBox(DRAWING_LAYERS);
+    restoreScenery();
+    const canvas = this.canvasBounds();
+    const drawnUnder = (
+      document.querySelector('svg#canvas > g') as SVGGElement | null
+    )?.getCTM();
+    if (!box || !canvas || !drawnUnder || !(drawnUnder.a > 0) || !(drawnUnder.d > 0)) return null;
+    return {
+      x: (box.x - canvas.x - drawnUnder.e) / drawnUnder.a,
+      y: (box.y - canvas.y - drawnUnder.f) / drawnUnder.d,
+      width: box.width / drawnUnder.a,
+      height: box.height / drawnUnder.d,
+    };
+  }
+
+  private clampZoom(zoom: number): number {
+    return Math.min(this.MAX_ZOOM, Math.max(this.MIN_ZOOM, zoom));
+  }
+
+  /** svg-pan-zoom counts zoom from the viewBox; everything here counts pixels. */
+  private setZoom(realZoom: number): void {
+    const sizes = this.panZoomObject.getSizes();
+    const perUnit = sizes.realZoom / this.panZoomObject.getZoom();
+    if (!(perUnit > 0)) return;
+    this.panZoomObject.zoom(realZoom / perUnit);
+  }
+
+  /**
+   * Keep the drawing framed when the chrome around it moves.
+   *
+   * Called for the two things that change the shape of the free canvas without
+   * anybody touching the view: the window being resized, and a mode change,
+   * which both widens the panel and brings the transport in or out. The drawer
+   * is deliberately not one of them -- it stands over the canvas for a moment
+   * and then goes, and a view that jumped away and back for it would be worse
+   * than one that let it overlap.
+   *
+   * What it does is the least it can: the drawing keeps its size and its place
+   * relative to the space it is being seen in. Only if it *was* framed and now
+   * would not fit does the zoom change, because that is the only case where
+   * holding the zoom loses part of the mechanism. Somebody who has zoomed in on
+   * a detail keeps their zoom through every panel they open.
+   */
+  notifyChromeChanged(rescale = false): void {
+    this.settleRescale = this.settleRescale || rescale;
+    if (this.settlePending) return;
+    this.settlePending = true;
+    this.settleStartedAt = performance.now();
+    let previous = this.freeRect();
+    let stable = 0;
+    // A panel glides into place, and Angular has not always started it moving
+    // by the time the mode says it changed -- so the rect that matters is the
+    // one it stops at, which means watching for longer than it takes to look
+    // unchanged once.
+    const step = () => {
+      const now = this.freeRect();
+      stable = sameRect(previous, now) ? stable + 1 : 0;
+      previous = now;
+      const waited = performance.now() - this.settleStartedAt;
+      if ((stable >= SETTLE_STABLE_FRAMES && waited > SETTLE_MIN_MS) || waited > SETTLE_MAX_MS) {
+        this.settlePending = false;
+        const rescaleNow = this.settleRescale;
+        this.settleRescale = false;
+        this.reframeForFreeRect(now, rescaleNow);
+        return;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  private lastFreeRect: Rect | null = null;
+  private settlePending = false;
+  private settleStartedAt = 0;
+  private settleRescale = false;
+
+  private reframeForFreeRect(free: Rect | null, rescale: boolean): void {
+    if (!this.panZoomObject || !NewGridComponent.instance || !free) return;
+    if (NewGridComponent.instance.isGliding()) {
+      NewGridComponent.instance.afterGlide(() => this.reframeForFreeRect(this.freeRect(), rescale));
+      return;
+    }
+    const was = this.lastFreeRect;
+    this.lastFreeRect = free;
+    if (!was || sameRect(was, free)) return;
+
+    const drawn = this.measureDrawing();
+    const shown = drawn && this.screenBoxOf(drawn);
+    const matrix = this.drawnMatrix();
+    if (!drawn || !shown || !matrix) return;
+
+    // A window that changed size takes the view with it, so the drawing keeps
+    // the share of the canvas it had and a resize is its own undo. Chrome that
+    // merely moved -- a panel widening for a mode -- leaves the zoom alone,
+    // because somebody looking closely at one joint should not be zoomed out
+    // for opening a panel.
+    // The geometric mean rather than the smaller of the two, so that shrinking
+    // a window and pulling it back out again lands on the zoom it started at:
+    // taking the smaller each way multiplies to less than one and every round
+    // trip left the drawing a little smaller than it was found.
+    const growth = rescale
+      ? Math.sqrt((free.width / was.width) * (free.height / was.height))
+      : 1;
+    const zoom = this.clampZoom(matrix.a * growth);
+    const shift = {
+      x: centerOf(free).x - centerOf(was).x,
+      y: centerOf(free).y - centerOf(was).y,
+    };
+    const carried: Rect = {
+      x: centerOf(shown).x + shift.x - (shown.width * growth) / 2,
+      y: centerOf(shown).y + shift.y - (shown.height * growth) / 2,
+      width: shown.width * growth,
+      height: shown.height * growth,
+    };
+    if (fitsInside(shown, was, OVERHANG_SLACK) && !fitsInside(carried, free, OVERHANG_SLACK)) {
+      // It was framed and would not be any more, which is the one case where
+      // holding the zoom would lose part of the mechanism.
+      this.frameDrawing(true);
+      return;
+    }
+    this.moveViewTo(drawn, centerOf(carried), zoom, true);
+  }
+
+  /** The matrix the canvas is drawn under right now, which may be a frame old. */
+  private drawnMatrix(): DOMMatrix | null {
+    const viewport = document.querySelector('svg#canvas > g') as SVGGElement | null;
+    const matrix = viewport?.getCTM();
+    return matrix && matrix.a > 0 && matrix.d > 0 ? matrix : null;
+  }
+
+  /** Where a model box currently sits on screen, in client pixels. */
+  private screenBoxOf(box: Rect): Rect | null {
+    const canvas = this.canvasBounds();
+    const matrix = this.drawnMatrix();
+    if (!canvas || !matrix) return null;
+    return {
+      x: canvas.x + matrix.e + matrix.a * box.x,
+      y: canvas.y + matrix.f + matrix.d * box.y,
+      width: matrix.a * box.width,
+      height: matrix.d * box.height,
+    };
+  }
+
+  /** Follow the chrome that moves on its own: the window, and the mode. */
+  private watchingChrome = false;
+
+  private watchTheChrome(): void {
+    // The canvas can be built more than once in a session; the service it talks
+    // to is built once, and a second set of listeners would run a second settle
+    // loop against the same view.
+    if (this.watchingChrome) return;
+    this.watchingChrome = true;
+    window.addEventListener('resize', () => this.notifyChromeChanged(true));
+    // Late, and through the injector: the tab service reaches the mechanism,
+    // which reaches back here.
+    this.injector
+      .get(SelectedTabService)
+      .tabChanged.subscribe(() => this.notifyChromeChanged());
   }
 
   /**
@@ -647,8 +1012,8 @@ export class SvgGridService {
     return () => layers.forEach((node, index) => (node.style.display = was[index]));
   }
 
-  updateObjectScale() {
-    SettingsService._objectScale.next(Number((60 / this.getZoom()).toFixed(2)));
+  updateObjectScale(atZoom: number = this.getZoom()) {
+    SettingsService._objectScale.next(Number((MARK_TARGET_PX / atZoom).toFixed(2)));
     // A link's outline is computed once and cached, and its width is a fraction
     // of this scale -- so a route that changes the scale has to say so, or the
     // bars stay the width they were while every joint, ground mark and arrow

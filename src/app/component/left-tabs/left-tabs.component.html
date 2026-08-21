@@ -1,4 +1,9 @@
+<!-- The canvas is full bleed and this card floats over it, so it says which
+     edge it takes: SvgGridService frames the linkage into what is left rather
+     than into the window. A panel animated off screen reports a rect outside
+     the canvas and so takes nothing. -->
 <div
+  data-canvas-inset="left"
   [@openClose]="
     this.tabs.isTabVisible() ? (this.tabs.isWidePanel() ? 'openWide' : 'open') : 'closed'
   "

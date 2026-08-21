@@ -15,4 +15,6 @@ import { MODEL_SCALE } from './render-scale';
  * this is what a new project starts at and what an older URL without the
  * setting falls back to.
  */
-export const OBJECT_SCALE = new BehaviorSubject(0.7 * MODEL_SCALE);
+export const DEFAULT_OBJECT_SCALE = 0.7 * MODEL_SCALE;
+
+export const OBJECT_SCALE = new BehaviorSubject(DEFAULT_OBJECT_SCALE);

@@ -58,6 +58,15 @@ export class SelectedTabService {
     this._tabVisible.next(false);
   }
 
+  /**
+   * The mode, for anything that has to follow a change rather than ask about
+   * the current one. The canvas listens: the panel beside it is a different
+   * width in every mode, and the transport comes and goes with the analyses.
+   */
+  public get tabChanged() {
+    return this._tabNum.asObservable();
+  }
+
   public getCurrentTab() {
     return this._tabNum.getValue();
   }
