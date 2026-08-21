@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Subject } from 'rxjs';
 import { Joint, RealJoint } from '../model/joint';
 import { Coord } from '../model/coord';
 import { MODEL_SCALE } from '../model/render-scale';
@@ -8,11 +7,14 @@ import {
   TUTORIAL_STEP_COUNT,
   TutorialCopy,
   TutorialProgress,
+  TutorialStepId,
   copyFor,
   endJoints,
   linksAreChained,
+  progressAt,
   progressFor,
   readableJoints,
+  stepOf,
 } from '../model/tutorial-steps';
 import { MechanismService } from './mechanism.service';
 import { ActiveObjService } from './active-obj.service';
@@ -55,9 +57,6 @@ export class TutorialService {
   private tabs = inject(SelectedTabService);
   private svgGrid = inject(SvgGridService);
 
-  /** Asked to be shown. The drawer listens rather than being reached into. */
-  readonly openRequest = new Subject<void>();
-
   started = false;
   exited = false;
   done = false;
@@ -75,6 +74,28 @@ export class TutorialService {
   /** Set once the student has finished or walked out, and never unset. */
   private seen = local_storage_available() && localStorage.getItem(SEEN_KEY) === 'true';
 
+  /**
+   * The step the card is showing, which is not always the step the drawing is
+   * on. It falls behind twice: while a finished step is being left up to read,
+   * and while the student is paging back through steps they have done.
+   */
+  viewedStep: TutorialStepId = 1;
+
+  /**
+   * A step has just been satisfied and its card is being held up to be read.
+   *
+   * Without this the card changed under the reader at the instant they finished
+   * the thing it was describing -- often mid-sentence, since the last words of
+   * a step are usually the ones explaining *why* the move mattered.
+   */
+  settling = false;
+
+  /** How long a finished step stays up before the next one arrives. */
+  private static readonly SETTLE_MS = 2600;
+
+  private settleTimer: ReturnType<typeof setTimeout> | undefined;
+  private knownStep: TutorialStepId = 1;
+
   constructor() {
     this.settings.animating.subscribe((animating) => {
       if (animating) this.hasPlayed = true;
@@ -85,6 +106,53 @@ export class TutorialService {
       if (step > 0) this.hasPlayed = true;
       this.checkForFinish();
     });
+  }
+
+  /**
+   * The drawing moved. Decide whether the card should follow it, and when.
+   *
+   * Forwards is held for a moment; backwards is immediate. Undoing the thing a
+   * step asked for has to take the card back with it, or the card sits there
+   * congratulating the student on something that is no longer true.
+   *
+   * Called from the card's own change detection rather than from a subscription
+   * on the mechanism. There is no event to subscribe to: `updateMechanism` is
+   * what every edit ends in, and it does not publish on `onMechUpdateState` --
+   * that subject carries the *analysis* state, which is why the caches
+   * elsewhere in the app key on `poseRevision` instead.
+   */
+  noticeStep(): void {
+    const now = stepOf(this.mechanism.joints, this.mechanism.links);
+    if (now === this.knownStep) return;
+    const wasOn = this.knownStep;
+    this.knownStep = now;
+
+    if (!this.isRunning() || this.done) {
+      this.landOn(now);
+      return;
+    }
+    if (now < this.viewedStep || now < wasOn) {
+      this.landOn(now);
+      return;
+    }
+    // Reading an earlier step: leave them where they are rather than yanking
+    // the card forward under them.
+    if (this.viewedStep !== wasOn) return;
+
+    this.settling = true;
+    this.clearSettle();
+    this.settleTimer = setTimeout(() => this.landOn(this.knownStep), TutorialService.SETTLE_MS);
+  }
+
+  private landOn(step: TutorialStepId): void {
+    this.clearSettle();
+    this.settling = false;
+    this.viewedStep = step;
+  }
+
+  private clearSettle(): void {
+    if (this.settleTimer !== undefined) clearTimeout(this.settleTimer);
+    this.settleTimer = undefined;
   }
 
   // ---------- where the student is ----------
@@ -101,8 +169,41 @@ export class TutorialService {
     return TUTORIAL_STEP_COUNT;
   }
 
+  /** What the card is showing, which may be a step the drawing is past. */
+  viewedProgress(): TutorialProgress {
+    return progressAt(this.mechanism.joints, this.mechanism.links, this.viewedStep);
+  }
+
   copy(): TutorialCopy {
-    return copyFor(this.progress());
+    return copyFor(this.viewedProgress());
+  }
+
+  /** Whether the step on the card is one the student has already satisfied. */
+  viewingCompleted(): boolean {
+    return this.viewedStep < this.step() || this.settling;
+  }
+
+  canGoBack(): boolean {
+    return this.viewedStep > 1;
+  }
+
+  /** Forward only as far as the drawing has got: the card never runs ahead. */
+  canGoForward(): boolean {
+    return this.viewedStep < this.step();
+  }
+
+  goBack(): void {
+    if (this.canGoBack()) this.landOn((this.viewedStep - 1) as TutorialStepId);
+  }
+
+  goForward(): void {
+    if (this.canGoForward()) this.landOn((this.viewedStep + 1) as TutorialStepId);
+  }
+
+  /** Jump straight to a step from the progress bar. */
+  goToStep(step: number): void {
+    const wanted = Math.min(Math.max(step, 1), this.step()) as TutorialStepId;
+    this.landOn(wanted);
   }
 
   /** Live, so the tutorial is never running beside a card nobody asked for. */
@@ -110,10 +211,18 @@ export class TutorialService {
     return this.started && !this.exited;
   }
 
-  /** The joint the grid rings: only where a step is about one joint in particular. */
+  /**
+   * The joint the grid rings.
+   *
+   * Only ever the step the student still has to do. Paging back to re-read a
+   * finished step used to keep ringing whatever that step was about, which
+   * pointed at a joint that wanted nothing — and while a finished step is being
+   * held up to read, the move it asked for is already made.
+   */
   ringJoint(): RealJoint | undefined {
     if (!this.isRunning() || this.done) return undefined;
-    return this.progress().target;
+    if (this.viewingCompleted()) return undefined;
+    return this.viewedProgress().target;
   }
 
   /**
@@ -157,11 +266,12 @@ export class TutorialService {
   start(): void {
     this.started = true;
     this.exited = false;
+    this.knownStep = stepOf(this.mechanism.joints, this.mechanism.links);
+    this.landOn(this.knownStep);
     // The copy names joints by letter -- "right-click joint A, the ringed one"
     // -- and the letters are off by default. A tutorial that points at a name
     // the student cannot see on the grid is pointing at nothing.
     this.settings.isShowID.next(true);
-    this.openRequest.next();
   }
 
   /**
@@ -181,8 +291,9 @@ export class TutorialService {
     this.done = false;
     this.reading = undefined;
     this.hasPlayed = false;
+    this.knownStep = 1;
+    this.landOn(1);
     this.tabs.setTab(TabID.EDIT);
-    this.openRequest.next();
   }
 
   private remember(): void {
@@ -212,7 +323,6 @@ export class TutorialService {
     this.reading = reading;
     this.done = true;
     this.remember();
-    this.openRequest.next();
   }
 
   /**
@@ -277,7 +387,10 @@ export class TutorialService {
    * what lands is what they would have drawn, undoable in the usual way.
    */
   doStepForMe(): void {
-    switch (this.progress().step) {
+    // The drawing's step, never the viewed one: the button offers to make the
+    // move that is actually outstanding, even if the card has been turned back
+    // to re-read something finished.
+    switch (this.step()) {
       case 1:
         this.drawFirstBar();
         break;

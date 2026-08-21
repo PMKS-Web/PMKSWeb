@@ -77,7 +77,9 @@ await page.screenshot({ path: `${OUT}/02-step1.png` });
 const doIt = page.locator('.doItButton');
 for (const expected of [2, 3, 4, 5]) {
   await doIt.click();
-  await page.waitForTimeout(900);
+  // Long enough for the finished step to be held up and then handed on. The
+  // hold is the point: see the settle checks below.
+  await page.waitForTimeout(3600);
   at = await stepNow();
   check(`Do This Step For Me reaches step ${expected}`, at?.step === expected, JSON.stringify(at));
 
@@ -120,6 +122,27 @@ for (const expected of [2, 3, 4, 5]) {
   }
 }
 
+// ---- paging back through what is done ----
+
+await page.locator('.stepArrow').first().click();
+await page.waitForTimeout(500);
+check('back re-reads the previous step', (await stepNow())?.step === 4);
+check('which is shown as done', (await page.locator('.stepTick').count()) === 1);
+// The ring belongs to the outstanding move. Pointing at the joint an already
+// finished step was about sends the student to a joint that wants nothing.
+check('and rings nothing', (await page.locator('.tutorialRing').count()) === 0);
+check('and offers no do-it', (await page.locator('.doItButton').count()) === 0);
+await page.screenshot({ path: `${OUT}/08-paged-back.png` });
+
+await page.locator('.stepBar').first().click();
+await page.waitForTimeout(400);
+check('the progress bar jumps to a step', (await stepNow())?.step === 1);
+while (!(await page.locator('.stepArrow').last().isDisabled())) {
+  await page.locator('.stepArrow').last().click();
+  await page.waitForTimeout(260);
+}
+check('forward stops at the outstanding step', (await stepNow())?.step === 5);
+
 // Building for the student must not trip the app's own complaint that the
 // parts are drawn far larger than the grid squares behind them.
 check(
@@ -147,12 +170,24 @@ check(
 check('three doors out', (await page.locator('.door').count()) === 3);
 await page.screenshot({ path: `${OUT}/05-done.png` });
 
-// Export takes the drawer and the tutorial steps aside, rather than the two
-// stacking: the drawer shows one page at a time everywhere else in the app.
+// The tutorial is pinned rather than paged, so opening Export stacks the two
+// instead of putting the tutorial away.
 await page.locator('.door').first().click();
 await page.waitForTimeout(900);
-check('Export Data takes the drawer', await page.locator('.exportCard').isVisible());
-check('the tutorial card steps aside', (await page.locator('.tutorialCard').count()) === 0);
+check('Export Data opens', await page.locator('.exportCard').isVisible());
+check('the tutorial stays with it', await page.locator('.tutorialCard').isVisible());
+const tutorialBox = await page.locator('.tutorialCard').boundingBox();
+const exportBox = await page.locator('.exportCard').boundingBox();
+check(
+  'and sits above it',
+  !!tutorialBox && !!exportBox && tutorialBox.y < exportBox.y,
+  `${Math.round(tutorialBox?.y ?? -1)} vs ${Math.round(exportBox?.y ?? -1)}`
+);
+// The completion card used to carry an × of its own on top of the drawer's.
+check(
+  'one close control in the drawer, not two',
+  (await page.locator('#rightPanel button.closeCard, #rightPanel button.closeDrawer').count()) <= 1
+);
 
 // ---- dismissed for good, and still reachable ----
 
@@ -168,10 +203,19 @@ await page.waitForTimeout(700);
 check('it reopens at step 1 on a bare grid', (await stepNow())?.step === 1);
 await page.screenshot({ path: `${OUT}/06-reopened.png` });
 
-// Walking out leaves the drawing alone and leaves a thread back.
+// Walking out leaves the drawing alone and leaves a thread back. The × asks
+// first: the offer in the Edit panel is spent by now, so an accidental press
+// would otherwise lose the tutorial with no visible way back.
 await page.locator('.doItButton').click();
-await page.waitForTimeout(900);
-await page.locator('.exitButton').click();
+await page.waitForTimeout(3600);
+await page.locator('.closeCard').click();
+await page.waitForTimeout(600);
+check('the close asks first', await page.getByText('Close the tutorial?').isVisible());
+check(
+  'and names where it can be restarted',
+  /project menu/i.test(await page.locator('[mat-dialog-content], mat-dialog-content').innerText())
+);
+await page.getByRole('button', { name: 'Close tutorial' }).click();
 await page.waitForTimeout(600);
 // Closed rather than removed: the drawer parks off the edge, so the card is
 // still in the document and only `isVisible` can tell the difference.

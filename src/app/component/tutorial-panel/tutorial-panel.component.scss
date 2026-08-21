@@ -72,26 +72,81 @@
     color: rgba(0, 0, 0, 0.6);
   }
 
+  // The measure and the way back through it on one line: an arrow at each end
+  // and a segment per step between them.
   .stepBars {
     display: flex;
+    align-items: center;
     gap: 4px;
-    margin: 12px 0 14px;
+    margin: 10px 0 14px;
+  }
+
+  .stepArrow {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(0, 0, 0, 0.54);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    &:disabled {
+      color: rgba(0, 0, 0, 0.18);
+      cursor: default;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
   }
 
   // Behind, here, ahead — three weights of the one colour rather than three
-  // colours, because they are one measure being read left to right.
+  // colours, because they are one measure being read left to right. Each is
+  // also the way to that step, so the bar is a control and has the hit height
+  // to be one without the line itself getting any thicker.
   .stepBar {
     flex: 1 1 0;
-    height: 3px;
-    border-radius: 2px;
-    background: #eceef5;
+    height: 14px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
 
-    &.done {
+    &::after {
+      content: '';
+      display: block;
+      height: 3px;
+      border-radius: 2px;
+      background: #eceef5;
+      transition: background 0.18s ease-in-out;
+    }
+
+    &.done::after {
       background: #c5cae9;
     }
 
-    &.here {
+    &.here::after {
       background: $indigo;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
+
+    &:hover:not(:disabled):not(.here)::after {
+      background: #aeb4d8;
     }
   }
 
@@ -124,12 +179,88 @@
     color: rgba(0, 0, 0, 0.87);
   }
 
-  .stepBody {
+  .stepText {
     margin: 4px 0 0;
     font-size: 13px;
     line-height: 19px;
     color: rgba(0, 0, 0, 0.6);
     text-wrap: pretty;
+  }
+
+  // The tick beside a step that is behind the student. On the step they have
+  // just this second finished it arrives with a beat of its own, which is the
+  // whole point of holding the card there before moving on.
+  .stepTick {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 20px;
+    vertical-align: -3px;
+    margin-left: 5px;
+    color: #137333;
+
+    &.justNow {
+      animation: tutorialTick 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  @keyframes tutorialTick {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.18);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // While a finished step is being held up to be read. A tint rather than a
+  // banner: the words have not changed, and the card is about to move on by
+  // itself, so this says "that one is done" without taking a line to say it.
+  .settling .stepTitle {
+    color: #137333;
+  }
+
+  .doneNote {
+    font-size: 13px;
+    font-weight: 500;
+    color: #137333;
+  }
+
+  .nextButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 2px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: $indigo;
+    cursor: pointer;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      line-height: 18px;
+    }
+  }
+
+  .quietButton {
+    padding: 0 2px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.45);
+    cursor: pointer;
   }
 
   .hint {

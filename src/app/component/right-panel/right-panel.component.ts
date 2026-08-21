@@ -88,9 +88,22 @@ export class RightPanelComponent implements DoCheck {
    * this component's own page has already opened -- the tutorial page injects
    * the service -- so the request travels the other way.
    */
-  private readonly tutorialSub = this.tutorial.openRequest.subscribe(() =>
-    RightPanelComponent.insistOn(RightPanelComponent.TUTORIAL_TAB)
-  );
+  /**
+   * Whether the tutorial's card is showing above whatever page is open.
+   *
+   * It is pinned rather than paged: a student following a step has to be able
+   * to open Settings or Export without the thing they are following being put
+   * away, so it is not one of the numbered pages and does not take the drawer
+   * from one.
+   */
+  tutorialShowing(): boolean {
+    return this.tutorial.started && !this.tutorial.exited;
+  }
+
+  /** The frame stands open for a page, for the tutorial, or for both. */
+  frameOpen(): boolean {
+    return RightPanelComponent.isOpen || this.tutorialShowing();
+  }
 
   private analytics: AnalyticsService = inject(AnalyticsService);
 
@@ -115,12 +128,6 @@ export class RightPanelComponent implements DoCheck {
    * drawing it is a part of.
    */
   static readonly EXPORT_TAB = 7;
-  /**
-   * The tutorial, which is a drawer page for the same reason again: the student
-   * has to be able to do the thing the card is describing, on the canvas, while
-   * the card is still on screen.
-   */
-  static readonly TUTORIAL_TAB = 8;
   turnOnDebugger() {
     this.settingsService.isGridDebugOn = !this.settingsService.isGridDebugOn;
   }
@@ -168,13 +175,11 @@ export class RightPanelComponent implements DoCheck {
   private shownAttention = 0;
 
   ngDoCheck(): void {
-    // Whether the tutorial's card is the thing actually on screen. Only this
-    // component knows both halves: a closed drawer still *renders* the page it
-    // was last showing -- it parks off the edge rather than being torn down --
-    // so the card cannot tell from its own lifecycle.
-    this.tutorial.onScreen =
-      RightPanelComponent.isOpen &&
-      RightPanelComponent.openTab === RightPanelComponent.TUTORIAL_TAB;
+    // The Edit panel's resume line is offered only when the card is not up, and
+    // a closed drawer still *renders* the page it was last showing -- it parks
+    // off the edge rather than being torn down -- so the card cannot answer
+    // this from its own lifecycle.
+    this.tutorial.onScreen = this.tutorialShowing();
     if (RightPanelComponent.attentionCount !== this.shownAttention && !this.attention) {
       this.shownAttention = RightPanelComponent.attentionCount;
       this.attention = true;

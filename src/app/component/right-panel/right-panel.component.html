@@ -1,13 +1,12 @@
 <div>
   <div
     [@openClose]="
-      getIsOpen()
+      frameOpen()
         ? getOpenTab() === 1 ||
           getOpenTab() === 3 ||
           getOpenTab() === 5 ||
           getOpenTab() === 6 ||
-          getOpenTab() === 7 ||
-          getOpenTab() === 8
+          getOpenTab() === 7
           ? 'open'
           : 'openWide'
         : 'closed'
@@ -17,6 +16,15 @@
     [class.wide]="isWidePage()"
     [class.exportPage]="isExportPage()"
   >
+    <!-- Pinned above whatever else the drawer is showing, rather than taking
+         the drawer to itself. A student is meant to be able to open Settings or
+         Export *while* following a step, and the drawer showing one page at a
+         time meant doing either put the tutorial away. -->
+    @if (tutorialShowing()) {
+      <div class="tutorialSlot">
+        <app-tutorial-panel></app-tutorial-panel>
+      </div>
+    }
     @if (getOpenTab() === 5) {
       <div class="page1">
         <app-analysis-setup mode="kinematic"></app-analysis-setup>
@@ -30,11 +38,6 @@
     @if (getOpenTab() === 7) {
       <div class="page1">
         <app-export-panel></app-export-panel>
-      </div>
-    }
-    @if (getOpenTab() === 8) {
-      <div class="page1">
-        <app-tutorial-panel></app-tutorial-panel>
       </div>
     }
     @if (getOpenTab() === 1) {
@@ -105,7 +108,7 @@
     <!-- Every drawer closes the same way, from the same corner. Last in the
          drawer so it paints over the panel it sits on: it shares a line with
          the title, and a title row drawn after it covered it up. -->
-    @if (getIsOpen()) {
+    @if (getIsOpen() && !tutorialShowing()) {
       <button class="closeDrawer" (click)="close()" aria-label="Close" matTooltip="Close">
         <mat-icon>close</mat-icon>
       </button>

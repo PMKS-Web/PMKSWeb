@@ -133,7 +133,11 @@
         #{nav.$top-strip-height} - var(--view-controls-clearance, #{nav.$view-controls-clearance}) +
         #{nav.$shadow-room}
     );
+    // A column, because the tutorial's card stacks above whichever page is
+    // open rather than replacing it. With one child this is what a row did
+    // anyway; with two, a row put them side by side in a drawer one card wide.
     display: flex;
+    flex-direction: column;
     z-index: 9;
 
     // As wide as the view controls it stands over, which the view controls
@@ -180,6 +184,18 @@
     padding: nav.$shadow-room;
     padding-right: nav.$card-inset;
     min-height: 0;
+  }
+
+  // The tutorial sits above the page and keeps its own height, so it is the
+  // page below that gives way when the two together are taller than the
+  // drawer. It also drops the padding it would otherwise repeat between them.
+  .tutorialSlot {
+    flex: 0 0 auto;
+    padding-bottom: 0;
+  }
+
+  #rightPanel > .tutorialSlot + div {
+    padding-top: 10px;
   }
 
   // Hand the drawer's height down to the card, which is what scrolls -- the

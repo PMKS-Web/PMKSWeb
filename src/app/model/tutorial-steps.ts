@@ -71,43 +71,66 @@ export function linksAreChained(links: Link[]): boolean {
 const nameOf = (joint: RealJoint): string => joint.name || joint.id;
 
 /**
- * Which step this drawing is on, and the joint the step is about.
+ * Which step this drawing is on, and the joint that step is about.
  *
  * The target is resolved from the drawing before the copy that names it: a
  * drawing that arrives with one end already grounded must ring the *other*
  * end, or the sentence sends the student to the finished one.
  */
 export function progressFor(joints: Joint[], links: Link[]): TutorialProgress {
-  if (links.length < 1) return { step: 1 };
-  if (!linksAreChained(links)) return { step: 2, achieved: 'First bar drawn' };
+  return progressAt(joints, links, stepOf(joints, links));
+}
 
+/** The first of the five moves this drawing has not made. */
+export function stepOf(joints: Joint[], links: Link[]): TutorialStepId {
+  if (links.length < 1) return 1;
+  if (!linksAreChained(links)) return 2;
+  if (real(joints).filter((joint) => joint.ground).length < 2) return 3;
+  if (!real(joints).some((joint) => joint.input)) return 4;
+  return 5;
+}
+
+/**
+ * One step's view of this drawing — including a step it is already past.
+ *
+ * The card can be turned back to re-read a step that is done, so every step has
+ * to be describable against a drawing that has moved on. Where the joint a step
+ * asks about has already been dealt with, the finished one is named instead of
+ * nothing: the sentence becomes a record of what was done rather than an
+ * instruction, and a record still has to say which joint it was about.
+ */
+export function progressAt(joints: Joint[], links: Link[], step: TutorialStepId): TutorialProgress {
   const ends = endJoints(joints);
-  const ungrounded = ends.filter((joint) => !joint.ground);
   const grounded = real(joints).filter((joint) => joint.ground);
-  if (grounded.length < 2) {
-    return {
-      step: 3,
-      target: ungrounded[0],
-      alsoTarget: ungrounded[1],
-      achieved: 'Three links chained',
-    };
-  }
+  const input = real(joints).find((joint) => joint.input);
 
-  if (!real(joints).some((joint) => joint.input)) {
-    // Only a joint that can actually be driven, so "do this step for me" and
-    // the ring never point at one the app would refuse.
-    const drivable = grounded.filter((joint) => canDrive(joint));
-    return {
-      step: 4,
-      target: drivable[0] ?? grounded[0],
-      achieved: `${grounded.length > 1 ? 'Joints' : 'Joint'} ${grounded
-        .map(nameOf)
-        .join(' and ')} grounded`,
-    };
+  switch (step) {
+    case 1:
+      return { step: 1 };
+    case 2:
+      return { step: 2, achieved: 'First bar drawn' };
+    case 3: {
+      const loose = ends.filter((joint) => !joint.ground);
+      const named = loose.length > 0 ? loose : ends;
+      return { step: 3, target: named[0], alsoTarget: named[1], achieved: 'Three links chained' };
+    }
+    case 4: {
+      const drivable = grounded.filter((joint) => canDrive(joint));
+      return {
+        step: 4,
+        target: input ?? drivable[0] ?? grounded[0],
+        achieved:
+          grounded.length > 0
+            ? `${grounded.length > 1 ? 'Joints' : 'Joint'} ${grounded.map(nameOf).join(' and ')} grounded`
+            : undefined,
+      };
+    }
+    default:
+      return {
+        step: 5,
+        achieved: input ? `Joint ${nameOf(input)} is the input` : undefined,
+      };
   }
-
-  const input = real(joints).find((joint) => joint.input)!;
-  return { step: 5, achieved: `Joint ${nameOf(input)} is the input` };
 }
 
 /** A joint worth reading a velocity off: one that moves. */
