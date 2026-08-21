@@ -154,6 +154,7 @@ export class SettingsPanelComponent implements OnDestroy {
         this.settingsForm.patchValue({ objectScale: this.currentObjectScaleSetting.toString() });
       } else {
         this.currentObjectScaleSetting = parsed;
+        SettingsService.objectScaleChosen = true;
         SettingsService._objectScale.next(this.currentObjectScaleSetting * MODEL_SCALE);
       }
       this.mechanismSrv.updateMechanism();

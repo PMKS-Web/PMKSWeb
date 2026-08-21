@@ -135,6 +135,19 @@ export class SettingsService {
   // service and closing a module cycle. This static is its public face.
   static _objectScale = OBJECT_SCALE;
 
+  /**
+   * Whether anybody has said what size the drawn marks should be.
+   *
+   * A fit will otherwise choose one to suit the zoom, which a huge mechanism
+   * needs and a scale somebody picked must not be overruled by. Comparing the
+   * value against the default cannot answer this -- 0.7 is a perfectly ordinary
+   * thing to type -- so the act of choosing is recorded instead. It is not in
+   * the URL: every URL carries a scale whether or not its author chose it, so
+   * a drawing that arrives is exactly the case this cannot tell apart, and the
+   * value comparison is all that is left to go on there.
+   */
+  static objectScaleChosen = false;
+
   static get objectScale(): number {
     return SettingsService._objectScale.value;
   }

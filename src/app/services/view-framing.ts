@@ -42,43 +42,99 @@ export function centerOf(rect: Rect): { x: number; y: number } {
  * added later is framed around without this file being touched. A card parked
  * off screen -- a closed drawer, a hidden panel -- reports a rect outside the
  * canvas and so pushes nothing.
+ *
+ * A side panel is only worth standing beside while there is room beside it. On
+ * a narrow window the mode panel can take four fifths of the width, and framing
+ * into the sliver that is left -- or, worse, giving up and framing to the whole
+ * window, which puts the drawing squarely behind the panel -- are both worse
+ * than going under it and coming out below. So the side cards are offered two
+ * ways: standing beside them, and standing clear of the edge each one is
+ * anchored to. Beside wins whenever it is roomy, which is every ordinary
+ * window; otherwise the larger of the two does.
  */
 export function freeCanvasRect(canvas: Element, doc: Document = document): Rect {
   const bounds = canvas.getBoundingClientRect();
   const full: Rect = { x: bounds.left, y: bounds.top, width: bounds.width, height: bounds.height };
-  let left = bounds.left;
-  let right = bounds.right;
-  let top = bounds.top;
-  let bottom = bounds.bottom;
-
-  doc.querySelectorAll<HTMLElement>('[data-canvas-inset]').forEach((card) => {
+  const cards = [...doc.querySelectorAll<HTMLElement>('[data-canvas-inset]')].filter((card) => {
     const box = card.getBoundingClientRect();
-    if (box.width <= 0 || box.height <= 0) return;
-    switch (card.dataset['canvasInset'] as CanvasEdge) {
+    return box.width > 0 && box.height > 0;
+  });
+  const beside = apply(full, cards, false);
+  if (roomy(beside)) return beside;
+  const under = apply(full, cards, true);
+  const best = area(under) > area(beside) ? under : beside;
+  // Neither arm exists at all -- the chrome meets in both directions, which
+  // only a window shorter than its own strips can manage. Drawing through them
+  // is the last thing left, one axis at a time.
+  return area(best) > 0 ? best : relaxed(full, beside);
+}
+
+/** Whether a rect is big enough in both directions to frame a drawing in. */
+function roomy(rect: Rect): boolean {
+  return rect.width >= MIN_FREE_SIDE && rect.height >= MIN_FREE_SIDE;
+}
+
+function area(rect: Rect): number {
+  return Math.max(0, rect.width) * Math.max(0, rect.height);
+}
+
+/**
+ * Cut the cards out of the canvas.
+ *
+ * With `sidewaysUnder`, a left or right card gives up its own edge and takes
+ * the one it hangs from instead -- which is the difference between standing
+ * beside a panel and standing below it.
+ */
+function apply(full: Rect, cards: HTMLElement[], sidewaysUnder: boolean): Rect {
+  let left = full.x;
+  let right = full.x + full.width;
+  let top = full.y;
+  let bottom = full.y + full.height;
+
+  for (const card of cards) {
+    const box = card.getBoundingClientRect();
+    let edge = card.dataset['canvasInset'] as CanvasEdge;
+    if (sidewaysUnder && (edge === 'left' || edge === 'right')) {
+      // Whichever of the canvas's own top and bottom this card is nearer to is
+      // the one it hangs from, and so the one it has to be cleared past.
+      const fromTop = box.top - full.y;
+      const fromBottom = full.y + full.height - box.bottom;
+      edge = fromTop <= fromBottom ? 'top' : 'bottom';
+    }
+    switch (edge) {
       case 'left':
-        if (box.right > left) left = Math.min(box.right, bounds.right);
+        if (box.right > left) left = Math.min(box.right, full.x + full.width);
         break;
       case 'right':
-        if (box.left < right) right = Math.max(box.left, bounds.left);
+        if (box.left < right) right = Math.max(box.left, full.x);
         break;
       case 'top':
-        if (box.bottom > top) top = Math.min(box.bottom, bounds.bottom);
+        if (box.bottom > top) top = Math.min(box.bottom, full.y + full.height);
         break;
       case 'bottom':
-        if (box.top < bottom) bottom = Math.max(box.top, bounds.top);
+        if (box.top < bottom) bottom = Math.max(box.top, full.y);
         break;
     }
-  });
-
-  if (right - left < MIN_FREE_SIDE) {
-    left = full.x;
-    right = full.x + full.width;
-  }
-  if (bottom - top < MIN_FREE_SIDE) {
-    top = full.y;
-    bottom = full.y + full.height;
   }
   return { x: left, y: top, width: right - left, height: bottom - top };
+}
+
+/**
+ * The last resort, one axis at a time.
+ *
+ * A phone-shape window has no width to spare and plenty of height; a very short
+ * one is the other way round. Giving up both because one of them ran out threw
+ * away framing that was working.
+ */
+function relaxed(full: Rect, rect: Rect): Rect {
+  const wide = rect.width >= MIN_FREE_SIDE;
+  const tall = rect.height >= MIN_FREE_SIDE;
+  return {
+    x: wide ? rect.x : full.x,
+    y: tall ? rect.y : full.y,
+    width: wide ? rect.width : full.width,
+    height: tall ? rect.height : full.height,
+  };
 }
 
 /**

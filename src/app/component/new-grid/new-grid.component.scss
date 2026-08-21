@@ -108,10 +108,11 @@
     }
 
     // Only a welded joint brings its own chip -- a plain one's circle is chip
-    // enough. It takes the joint's colour rather than white so that the one
-    // ink above is legible on it whichever family is on.
+    // enough. White in every family, which the ink above is legible on because
+    // every family is pale; it is deliberately not the joint's own colour, so
+    // that Cream draws exactly what it drew before any of these existed.
     .lockChip {
-      fill: var(--joint-rest, #ffffff);
+      fill: #ffffff;
       stroke: #26323855;
     }
   }

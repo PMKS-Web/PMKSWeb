@@ -27,7 +27,7 @@ function docWith(
   layers: Record<string, [number, number, number, number]> = {}
 ) {
   return {
-    querySelectorAll: () => ({ forEach: (fn: (c: HTMLElement) => void) => cards.forEach(fn) }),
+    querySelectorAll: () => cards,
     getElementById: (id: string) => {
       const box = layers[id];
       if (!box) return null;
@@ -70,18 +70,37 @@ describe('freeCanvasRect', () => {
     expect(free).toEqual({ x: 0, y: 0, width: 1512, height: 900 });
   });
 
-  it('gives up the axis the chrome leaves no room on, and only that one', () => {
-    // A phone-narrow window: nothing useful is left beside the panel, so the
-    // drawing goes under it -- but the strip along the top is still worth
-    // keeping clear of.
+  it('goes below a panel that leaves no room beside it', () => {
+    // A phone-shape window: the panel takes most of the width and hangs from
+    // the top, so the drawing belongs under it rather than in the sliver beside
+    // it -- and certainly rather than behind it, which is what framing to the
+    // whole window would do.
     const free = freeCanvasRect(
-      canvasOf(400, 900),
-      docWith([card('left', [0, 0, 320, 900]), card('top', [0, 0, 400, 60])])
+      canvasOf(420, 760),
+      docWith([card('left', [0, 56, 396, 192]), card('top', [0, 0, 420, 60])])
     );
-    expect(free).toEqual({ x: 0, y: 60, width: 400, height: 840 });
+    expect(free).toEqual({ x: 0, y: 248, width: 420, height: 512 });
   });
 
-  it('keeps the horizontal framing in a window too short to frame vertically', () => {
+  it('stays beside a panel whenever there is room beside it', () => {
+    // The ordinary desktop case: below the panel would be the larger rectangle
+    // by area on some windows, and beside it is still what a reader expects.
+    const free = freeCanvasRect(
+      canvasOf(1000, 900),
+      docWith([card('left', [0, 56, 428, 192]), card('top', [0, 0, 1000, 60])])
+    );
+    expect(free).toEqual({ x: 428, y: 60, width: 572, height: 840 });
+  });
+
+  it('clears the bottom of a panel that hangs from the bottom', () => {
+    const free = freeCanvasRect(canvasOf(420, 700), docWith([card('left', [0, 460, 396, 240])]));
+    expect(free).toEqual({ x: 0, y: 0, width: 420, height: 460 });
+  });
+
+  it('frames into the band between the strips in a window with almost no height', () => {
+    // Short enough that the strips nearly meet, but the band between them is
+    // still somewhere a drawing can be seen -- and the panel clearance it has
+    // plenty of room for is worth keeping either way.
     const free = freeCanvasRect(
       canvasOf(1200, 260),
       docWith([
@@ -90,7 +109,15 @@ describe('freeCanvasRect', () => {
         card('bottom', [0, 160, 1200, 100]),
       ])
     );
-    expect(free).toEqual({ x: 278, y: 0, width: 922, height: 260 });
+    expect(free).toEqual({ x: 278, y: 60, width: 922, height: 100 });
+  });
+
+  it('draws through the strips when they leave no band at all', () => {
+    const free = freeCanvasRect(
+      canvasOf(1200, 90),
+      docWith([card('top', [0, 0, 1200, 60]), card('bottom', [0, 40, 1200, 50])])
+    );
+    expect(free).toEqual({ x: 0, y: 0, width: 1200, height: 90 });
   });
 });
 

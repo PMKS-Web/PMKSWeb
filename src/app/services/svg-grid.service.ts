@@ -1,4 +1,4 @@
-import { afterNextRender, Injectable, Injector, inject } from '@angular/core';
+import { afterNextRender, DestroyRef, Injectable, Injector, inject } from '@angular/core';
 // TS 6 no longer allows calling/constructing `import * as` namespaces of
 // CommonJS (export =) modules - use default imports for these two.
 import svgPanZoom from 'svg-pan-zoom';
@@ -72,14 +72,29 @@ const DRAWING_LAYERS = [
 ] as const;
 
 /**
- * How big a drawn mark has to come out for the drawing to read.
+ * How big a drawn mark is, as a fraction of the mechanism's larger dimension.
  *
- * The band the zoom warning complains outside of, in the same units it uses
- * (zoom times object scale, which is pixels across one unit of mark).
+ * Read off the drawings rather than picked: the wiper is 12.8 units across and
+ * the scale a new project starts at draws its joints at 0.7, and the Jansen leg
+ * is 126 units across and its author chose 7 -- both a twentieth of the
+ * mechanism, from two people who never discussed it. Anything derived from the
+ * zoom instead would make the size of a joint depend on the size of the window,
+ * which is a property of the drawing depending on a property of the reader.
  */
-const LEGIBLE_MARK_PX = { min: 5, max: 200 };
+const MARK_FRACTION = 0.055;
 
-/** The size in that band a mark is given when one has to be chosen for it. */
+/**
+ * How far off that a scale has to be before it is worth overriding.
+ *
+ * Wide, because the point is to fix the drawings the default is obviously
+ * wrong for rather than to have an opinion about every one. An ordinary
+ * mechanism lands within a few per cent of the default and must keep it
+ * exactly -- both because it is right, and because a scale that drifted on
+ * every load would churn the URL.
+ */
+const SCALE_SLACK = 2.5;
+
+/** How many pixels a mark is drawn at when only the view is being fitted to. */
 const MARK_TARGET_PX = 60;
 
 /** How far a drawing may hang out of the free canvas before it counts as lost. */
@@ -104,6 +119,7 @@ export class SvgGridService {
   private dragState = inject(DragStateService);
   private injector = inject(Injector);
   private notify = inject(NotificationService);
+  private destroyRef = inject(DestroyRef);
 
   /**
    * Where the cursor last was, in model units.
@@ -712,6 +728,12 @@ export class SvgGridService {
       return;
     }
     this.settingsService.tempGridDisable = false;
+    if (this.settlePending) {
+      // Framed against a panel that is still sliding, this would land in the
+      // wrong place and be corrected a moment later.
+      this.queuedFit = animate;
+      return;
+    }
     NewGridComponent.instance.afterGlide(() => this.frameDrawing(animate));
   }
 
@@ -741,7 +763,7 @@ export class SvgGridService {
     const target = this.clampZoom(
       Math.min((free.width * FIT_FILL) / drawn.width, (free.height * FIT_FILL) / drawn.height)
     );
-    if (this.adoptScaleForZoom(target)) {
+    if (this.adoptScaleForDrawing(drawn)) {
       // The marks are a different size now, so what was just measured is not
       // what will be on screen. Frame once Angular has drawn them.
       this.scaleToFitLinkage(animate);
@@ -783,24 +805,32 @@ export class SvgGridService {
   }
 
   /**
-   * Give the drawn marks a size that reads at this zoom, if nobody has chosen
-   * one. Returns whether anything changed.
+   * Give the drawn marks a size to suit the mechanism, if nobody has chosen one.
+   * Returns whether anything changed.
    *
-   * The same band the zoom warning complains outside of, so the warning and
-   * this cannot disagree about what "too small" means; and the same target its
-   * own "Fit to zoom" fix aims at, so pressing that afterwards changes nothing.
-   * Only when the scale is still the one a new project starts at: a drawing
-   * that carries a scale of its own is a drawing whose author chose it.
+   * A Jansen leg is nearly two metres across and its joints at the size a new
+   * project starts with come out as specks -- which is what the "links are
+   * drawn far smaller than the grid" warning was firing on load to say.
+   *
+   * Only when nobody has chosen a size. Typing 0.7 into the field is a choice
+   * even though 0.7 is what the field already said, so the act of choosing is
+   * recorded rather than inferred from the number -- see
+   * SettingsService.objectScaleChosen. For a drawing that arrives from a URL
+   * the act is not recoverable, since every URL carries a scale whether or not
+   * its author picked one, and the comparison with the default is what is left.
    */
-  private adoptScaleForZoom(atZoom: number): boolean {
+  private adoptScaleForDrawing(drawn: Rect): boolean {
+    if (SettingsService.objectScaleChosen) return false;
     const scale = this.settingsService.objectScale;
     if (Math.abs(scale - DEFAULT_OBJECT_SCALE) > 0.5) return false;
-    const drawnAt = atZoom * scale;
-    if (drawnAt >= LEGIBLE_MARK_PX.min && drawnAt <= LEGIBLE_MARK_PX.max) return false;
-    // Cannot run twice: the scale it lands on draws marks at exactly the size
-    // this asks for, so the next pass finds them legible -- and the pass after
-    // that finds a scale that is no longer the default one.
-    this.updateObjectScale(atZoom);
+    const suits = MARK_FRACTION * Math.max(drawn.width, drawn.height);
+    if (!(suits > 0) || !Number.isFinite(suits)) return false;
+    const ratio = suits / scale;
+    if (ratio < SCALE_SLACK && ratio > 1 / SCALE_SLACK) return false;
+    SettingsService._objectScale.next(Number(suits.toFixed(2)));
+    // A link's outline is computed once and cached, and its width is a fraction
+    // of this scale, so a route that changes it has to say so.
+    this.injector.get(MechanismService).applyObjectScaleChange();
     return true;
   }
 
@@ -876,24 +906,54 @@ export class SvgGridService {
   notifyChromeChanged(rescale = false): void {
     this.settleRescale = this.settleRescale || rescale;
     if (this.settlePending) return;
+    if (!this.panZoomObject || !NewGridComponent.instance) return;
     this.settlePending = true;
-    this.settleStartedAt = performance.now();
+
+    const startedAt = performance.now();
+    const drawn = this.measureDrawing();
+    const shown = drawn && this.screenBoxOf(drawn);
+    const matrix = this.drawnMatrix();
     let previous = this.freeRect();
+    // Where the drawing sits relative to the space it is being seen in. Held,
+    // not corrected: somebody who has panned to look at one corner keeps that
+    // corner, and the view merely follows the chrome that moved.
+    const offset =
+      shown && previous
+        ? { x: centerOf(shown).x - centerOf(previous).x, y: centerOf(shown).y - centerOf(previous).y }
+        : null;
+    const wasFramed = !!(shown && previous && fitsInside(shown, previous, OVERHANG_SLACK));
     let stable = 0;
-    // A panel glides into place, and Angular has not always started it moving
-    // by the time the mode says it changed -- so the rect that matters is the
-    // one it stops at, which means watching for longer than it takes to look
-    // unchanged once.
+    let everMoved = false;
+
     const step = () => {
       const now = this.freeRect();
-      stable = sameRect(previous, now) ? stable + 1 : 0;
+      const held = sameRect(previous, now);
+      stable = held ? stable + 1 : 0;
+      everMoved = everMoved || !held;
+      // Followed frame by frame rather than waited out: the panel takes about a
+      // third of a second to glide, and a view that holds still for all of it
+      // and then glides itself reads as two separate movements with a pause in
+      // between. Moved straight, with no transition of its own, the drawing
+      // travels with the panel.
+      if (!sameRect(previous, now) && now && drawn && offset && matrix) {
+        this.moveViewTo(
+          drawn,
+          { x: centerOf(now).x + offset.x, y: centerOf(now).y + offset.y },
+          matrix.a,
+          false
+        );
+      }
       previous = now;
-      const waited = performance.now() - this.settleStartedAt;
-      if ((stable >= SETTLE_STABLE_FRAMES && waited > SETTLE_MIN_MS) || waited > SETTLE_MAX_MS) {
+      // Once the chrome has been seen to move, it stopping is the whole answer.
+      // The floor is only there for the wait before it starts: a mode says it
+      // has changed before Angular has begun animating the panel, and a rect
+      // that looks settled in those first frames is one that has not begun.
+      const waited = performance.now() - startedAt;
+      const done = everMoved ? stable >= SETTLE_STABLE_FRAMES : waited > SETTLE_MIN_MS;
+      if (done || waited > SETTLE_MAX_MS) {
         this.settlePending = false;
-        const rescaleNow = this.settleRescale;
-        this.settleRescale = false;
-        this.reframeForFreeRect(now, rescaleNow);
+        this.lastFreeRect = now;
+        this.finishSettle(now, drawn, wasFramed);
         return;
       }
       requestAnimationFrame(step);
@@ -903,54 +963,37 @@ export class SvgGridService {
 
   private lastFreeRect: Rect | null = null;
   private settlePending = false;
-  private settleStartedAt = 0;
   private settleRescale = false;
+  /** A fit asked for while the chrome was still moving, run once it stops. */
+  private queuedFit: boolean | null = null;
 
-  private reframeForFreeRect(free: Rect | null, rescale: boolean): void {
-    if (!this.panZoomObject || !NewGridComponent.instance || !free) return;
-    if (NewGridComponent.instance.isGliding()) {
-      NewGridComponent.instance.afterGlide(() => this.reframeForFreeRect(this.freeRect(), rescale));
+  /**
+   * Settle the view once the chrome has stopped moving.
+   *
+   * A fit somebody pressed for mid-transition wins outright -- it is a fresh
+   * instruction about where the view should be, and running it against a panel
+   * that was still sliding is what made Reset glide twice with a pause.
+   */
+  private finishSettle(free: Rect | null, drawn: Rect | null, wasFramed: boolean): void {
+    const rescale = this.settleRescale;
+    this.settleRescale = false;
+    const fit = this.queuedFit;
+    this.queuedFit = null;
+    if (fit !== null) {
+      this.frameDrawing(fit);
       return;
     }
-    const was = this.lastFreeRect;
-    this.lastFreeRect = free;
-    if (!was || sameRect(was, free)) return;
-
-    const drawn = this.measureDrawing();
-    const shown = drawn && this.screenBoxOf(drawn);
-    const matrix = this.drawnMatrix();
-    if (!drawn || !shown || !matrix) return;
-
+    if (!free || !drawn) return;
     // A window that changed size takes the view with it, so the drawing keeps
-    // the share of the canvas it had and a resize is its own undo. Chrome that
-    // merely moved -- a panel widening for a mode -- leaves the zoom alone,
-    // because somebody looking closely at one joint should not be zoomed out
-    // for opening a panel.
-    // The geometric mean rather than the smaller of the two, so that shrinking
-    // a window and pulling it back out again lands on the zoom it started at:
-    // taking the smaller each way multiplies to less than one and every round
-    // trip left the drawing a little smaller than it was found.
-    const growth = rescale
-      ? Math.sqrt((free.width / was.width) * (free.height / was.height))
-      : 1;
-    const zoom = this.clampZoom(matrix.a * growth);
-    const shift = {
-      x: centerOf(free).x - centerOf(was).x,
-      y: centerOf(free).y - centerOf(was).y,
-    };
-    const carried: Rect = {
-      x: centerOf(shown).x + shift.x - (shown.width * growth) / 2,
-      y: centerOf(shown).y + shift.y - (shown.height * growth) / 2,
-      width: shown.width * growth,
-      height: shown.height * growth,
-    };
-    if (fitsInside(shown, was, OVERHANG_SLACK) && !fitsInside(carried, free, OVERHANG_SLACK)) {
-      // It was framed and would not be any more, which is the one case where
-      // holding the zoom would lose part of the mechanism.
+    // the share of the canvas it had and a resize is its own undo. A drawing
+    // that was framed and no longer fits is reframed, because that is the one
+    // case where holding the zoom loses part of the mechanism. Nothing else
+    // touches the zoom: somebody looking closely at one joint should not be
+    // zoomed out for opening a panel.
+    const shown = this.screenBoxOf(drawn);
+    if (rescale || (wasFramed && shown && !fitsInside(shown, free, OVERHANG_SLACK))) {
       this.frameDrawing(true);
-      return;
     }
-    this.moveViewTo(drawn, centerOf(carried), zoom, true);
   }
 
   /** The matrix the canvas is drawn under right now, which may be a frame old. */
@@ -982,12 +1025,21 @@ export class SvgGridService {
     // loop against the same view.
     if (this.watchingChrome) return;
     this.watchingChrome = true;
-    window.addEventListener('resize', () => this.notifyChromeChanged(true));
+    const onResize = () => this.notifyChromeChanged(true);
+    window.addEventListener('resize', onResize);
     // Late, and through the injector: the tab service reaches the mechanism,
     // which reaches back here.
-    this.injector
+    const following = this.injector
       .get(SelectedTabService)
       .tabChanged.subscribe(() => this.notifyChromeChanged());
+    // A root service outlives everything in an ordinary session, but not a test
+    // harness or a hot reload -- and a listener that outlives its service goes
+    // on measuring a canvas that has gone.
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('resize', onResize);
+      following.unsubscribe();
+      this.watchingChrome = false;
+    });
   }
 
   /**
@@ -1012,8 +1064,11 @@ export class SvgGridService {
     return () => layers.forEach((node, index) => (node.style.display = was[index]));
   }
 
-  updateObjectScale(atZoom: number = this.getZoom()) {
-    SettingsService._objectScale.next(Number((MARK_TARGET_PX / atZoom).toFixed(2)));
+  updateObjectScale() {
+    // Only ever pressed by hand -- from Settings, or from the zoom warning that
+    // offers it -- so it is somebody saying what size they want.
+    SettingsService.objectScaleChosen = true;
+    SettingsService._objectScale.next(Number((MARK_TARGET_PX / this.getZoom()).toFixed(2)));
     // A link's outline is computed once and cached, and its width is a fraction
     // of this scale -- so a route that changes the scale has to say so, or the
     // bars stay the width they were while every joint, ground mark and arrow

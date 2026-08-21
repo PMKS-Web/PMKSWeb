@@ -31,9 +31,11 @@ export interface JointScheme {
  * to read as a pin at all and cooler than amber to not read as picked. A dark
  * family was tried and thrown out -- on the navy end of the link palette the
  * joints vanished into the bar, which is the one thing a joint may not do.
- * What is left to differ is temperature, and each of these is the pale end of a
- * colour the app already draws with: the accent, the neutral the greys come
- * from, and the two link families.
+ * What is left to differ is temperature. Three are the pale end of a colour the
+ * app already draws with -- the accent, and the neutral the greys come from;
+ * the fourth is deliberately a hue the links never use, because a family that
+ * echoes a link family is the one hardest to tell from the others at the size a
+ * joint is actually drawn.
  *
  * Cream is first because it is what every drawing has always been drawn in:
  * this is a preference, so it starts where the reader left it, and where nobody
@@ -43,7 +45,7 @@ export const JOINT_SCHEMES: readonly JointScheme[] = [
   { id: 'cream', name: 'Cream', rest: '#fff8e1', hover: '#ffecb3', ink: '#263238' },
   { id: 'steel', name: 'Steel', rest: '#eceff1', hover: '#cfd8dc', ink: '#263238' },
   { id: 'mint', name: 'Mint', rest: '#e0f2f1', hover: '#b2dfdb', ink: '#263238' },
-  { id: 'sky', name: 'Sky', rest: '#e3f2fd', hover: '#bbdefb', ink: '#263238' },
+  { id: 'blush', name: 'Blush', rest: '#fce4ec', hover: '#f8bbd0', ink: '#263238' },
 ];
 
 const JOINT_SCHEME_KEY = 'jointScheme';
