@@ -205,11 +205,19 @@
   // a full $shadow-room, which is more than twice the gap.
   #rightPanel > .tutorialSlot {
     flex: 0 0 auto;
-    padding-bottom: 0;
   }
 
   #rightPanel > .tutorialSlot + div {
-    padding-top: nav.$card-inset;
+    // Both cards keep the shadow room every card in this frame gets, and the
+    // overlap is taken back here, so what shows between them is one
+    // $card-inset -- the gap the drawer already keeps from the strip above and
+    // the view controls below.
+    //
+    // A margin rather than less padding. Taking the room away instead leaves
+    // the tutorial's bottom shadow nowhere to fall, and when the tutorial is
+    // the only card in the drawer its bottom edge lands exactly on the frame's,
+    // which scrolls -- so the shadow is clipped off square.
+    margin-top: nav.$card-inset - nav.$shadow-room * 2;
   }
 
   // Hand the drawer's height down to the card, which is what scrolls -- the

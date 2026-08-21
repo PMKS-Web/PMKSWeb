@@ -20,6 +20,21 @@
     box-shadow: var(--card-shadow);
   }
 
+  // Material sizes every icon box at 24px and hides what overflows it, from a
+  // bare `.mat-icon` -- which a bare class in here cannot outrank, whatever the
+  // source order says, because those styles are injected at runtime. So each
+  // icon below sets its font-size and got a 24px box anyway, and a 16px glyph
+  // drawn at the top of a 24px box reads as sitting high off its own line.
+  //
+  // Naming the element as well as the class is enough to take the box back, and
+  // 1em ties it to whatever size each icon was actually asked for.
+  .tutorialCard mat-icon {
+    width: 1em;
+    height: 1em;
+    line-height: 1;
+    overflow: visible;
+  }
+
   .closeCard {
     position: absolute;
     top: 8px;
