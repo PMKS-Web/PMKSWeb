@@ -6,7 +6,7 @@ import { AnalysisSampleService } from '../analysis-sample.service';
 import { MechanismService } from '../mechanism.service';
 import { SettingsService } from '../settings.service';
 import { ExportFlowService } from './export-flow.service';
-import { ExportColumn, ExportPart } from './export-model';
+import { ExportColumn, ExportPart, ExportSeries } from './export-model';
 
 /** One quantity of one part over a whole cycle: a graph, and a run of columns. */
 export interface ExportPlot {
@@ -59,6 +59,8 @@ export interface ExportPlan {
   heads: string[];
   /** How many graphs this file's columns amount to. */
   plots: number;
+  /** What each of those graphs is called, for a picture that carries its title. */
+  titles: string[];
 }
 
 /**
@@ -101,6 +103,47 @@ export class ExportTableService {
   }
 
   /**
+   * The same tables, sampled without holding the page still.
+   *
+   * `tables()` walks every selected series across every timestep in one
+   * uninterrupted loop. On the Jansen leg with everything ticked that is 361
+   * rows by 188 columns, and about half a second in which nothing on the page
+   * moves -- including the spinner put there to say the export had started,
+   * which cannot paint while the loop it is waiting on owns the thread.
+   *
+   * So the work comes apart at the series, and the thread goes back to the
+   * browser whenever a slice has run long enough to be felt. The drawer is
+   * inert while this runs (`.busy` takes its pointer events away), so the
+   * selection being read cannot change underneath it.
+   */
+  async tablesAsync(): Promise<ExportTable[]> {
+    const key = this.signature();
+    if (this.cache?.key === key) return this.cache.tables;
+    const tables: ExportTable[] = [];
+    for (const index of this.flow.mechanismIndexes()) {
+      for (const piece of this.spread(index)) {
+        const table = await this.tableAsync(index, piece);
+        if (table.heads.length > 1) tables.push(table);
+      }
+    }
+    this.cache = { key, tables };
+    return tables;
+  }
+
+  /**
+   * Hand the thread back if this slice has run long enough to drop a frame.
+   *
+   * A yield per series would be a task apiece for eighty-odd of them, most of
+   * which take under a millisecond; a yield per slice keeps the overhead where
+   * the work is.
+   */
+  private async breathe(since: number): Promise<number> {
+    if (performance.now() - since < 8) return since;
+    await yieldToBrowser();
+    return performance.now();
+  }
+
+  /**
    * Everything the numbers depend on, as one string.
    *
    * Decimals are deliberately not in it: rounding happens as a file is written,
@@ -124,9 +167,10 @@ export class ExportTableService {
       this.settings.angleUnit.value,
       this.settings.forceUnit.value,
       this.mechanism.mechanisms.map((solved) => solved.timeNum.length).join(','),
-      // Bumped by every mutation the mechanism service funnels, so a change
-      // that leaves the shape of the selection alone still re-samples.
-      this.mechanism.poseRevision,
+      // Bumped by every rebuild of the solved cycle, so a change that leaves
+      // the shape of the selection alone still re-samples -- and *not* by
+      // playback, which moves the pose without touching a single sample.
+      this.mechanism.solveRevision,
     ].join('|');
   }
 
@@ -188,7 +232,7 @@ export class ExportTableService {
         .map((piece) => {
           const solved = this.mechanism.mechanisms[index];
           const heads = ['Time (s)'];
-          let plots = 0;
+          const titles: string[] = [];
           piece.columns.forEach((column) => {
             piece.parts
               .filter((part) => column.appliesTo.includes(part.key))
@@ -202,7 +246,7 @@ export class ExportTableService {
                     .forEach((name) =>
                       heads.push(`${head}${name ? ' ' + name : ''} (${series.unit})`)
                     );
-                  plots++;
+                  titles.push(series.head || `${series.label} of ${part.label}`);
                 });
               });
           });
@@ -212,11 +256,23 @@ export class ExportTableService {
             mechanismIndex: index,
             rows: solved?.isMechanismValid() ? solved.timeNum.length : 0,
             heads,
-            plots,
+            plots: titles.length,
+            titles,
           };
         })
         .filter((piece) => piece.heads.length > 1)
     );
+  }
+
+  /** One file's table, sampled a slice at a time. See `tablesAsync`. */
+  private async tableAsync(
+    index: number,
+    piece: { name: string; suffix: string; parts: ExportPart[]; columns: ExportColumn[] }
+  ): Promise<ExportTable> {
+    const solved = this.mechanism.mechanisms[index];
+    const times = solved?.isMechanismValid() ? [...solved.timeNum] : [];
+    const plots = solved ? await this.plotsAsync(solved, index, piece.parts, piece.columns) : [];
+    return { ...this.shapeOf(piece.name, piece.suffix, index, times, plots) };
   }
 
   private table(
@@ -229,6 +285,17 @@ export class ExportTableService {
     const solved = this.mechanism.mechanisms[index];
     const times = solved?.isMechanismValid() ? [...solved.timeNum] : [];
     const plots = solved ? this.plots(solved, index, parts, columns) : [];
+    return this.shapeOf(name, suffix, index, times, plots);
+  }
+
+  /** The heads and columns a set of sampled graphs comes to, as one table. */
+  private shapeOf(
+    name: string,
+    suffix: string,
+    index: number,
+    times: number[],
+    plots: ExportPlot[]
+  ): ExportTable {
     const heads = ['Time (s)'];
     const values: number[][] = [];
     plots.forEach((plot) => {
@@ -247,49 +314,98 @@ export class ExportTableService {
     parts: ExportPart[],
     columns: ExportColumn[]
   ): ExportPlot[] {
-    if (!solved.isMechanismValid()) return [];
-    const mode = this.flow.forceMode();
+    return this.plotJobs(solved, parts, columns)
+      .map((job) => this.samplePlot(solved, index, job))
+      .filter((plot): plot is ExportPlot => plot !== undefined);
+  }
+
+  /**
+   * The same graphs, with the thread handed back between them.
+   *
+   * One series at a time is the grain the sampling comes apart at: within a
+   * series every timestep is read from the same solved cycle, so stopping
+   * partway would be no cheaper to resume.
+   */
+  private async plotsAsync(
+    solved: Mechanism,
+    index: number,
+    parts: ExportPart[],
+    columns: ExportColumn[]
+  ): Promise<ExportPlot[]> {
     const plots: ExportPlot[] = [];
-    columns.forEach((column) => {
-      const targets = parts.filter((part) => column.appliesTo.includes(part.key));
-      targets.forEach((part) => {
-        column.series.forEach((series) => {
-          const mechPart = series.mechPart || part.id;
-          // The solver hands angles out in degrees and rates in radians, so
-          // one or the other is converted on the way to whatever is labelled
-          // with the reader's unit -- the same scale the graphs apply.
-          const scale = angularScale(series.mechProp, this.settings.angleUnit.value);
-          const rows = solved.timeNum.map((_, step) =>
-            this.samples.sampleAt(
-              solved,
-              step,
-              series.analysis,
-              series.analysis === 'force' ? mode : 'loop',
-              series.mechProp,
-              mechPart,
-              series.reactionLinkId
-            )
-          );
-          const width = rows.reduce((most, row) => Math.max(most, row.length), 0);
-          if (width === 0) return;
-          const kept = width === 3 && !this.flow.withMagnitude ? 2 : width;
-          const names = this.seriesNames(width).slice(0, kept);
-          plots.push({
-            title: series.head || `${series.label} of ${part.label}`,
-            head: series.head || `${series.label} ${this.shortName(part)}`,
-            unit: series.unit,
-            columnKey: column.key,
-            partKey: part.key,
-            mechanismIndex: index,
-            series: names.map((name, at) => ({
-              name,
-              values: rows.map((row) => row[at] * scale),
-            })),
-          });
-        });
-      });
-    });
+    let since = performance.now();
+    for (const job of this.plotJobs(solved, parts, columns)) {
+      const plot = this.samplePlot(solved, index, job);
+      if (plot) plots.push(plot);
+      since = await this.breathe(since);
+    }
     return plots;
+  }
+
+  /**
+   * Which series this selection asks for, before any of them are read.
+   *
+   * Listing the work and doing it are separate so that the two ways of running
+   * it -- straight through, or in slices with the browser let back in between
+   * -- cannot disagree about what the work was.
+   */
+  private plotJobs(
+    solved: Mechanism,
+    parts: ExportPart[],
+    columns: ExportColumn[]
+  ): { part: ExportPart; column: ExportColumn; series: ExportSeries }[] {
+    if (!solved.isMechanismValid()) return [];
+    const jobs: { part: ExportPart; column: ExportColumn; series: ExportSeries }[] = [];
+    columns.forEach((column) => {
+      parts
+        .filter((part) => column.appliesTo.includes(part.key))
+        .forEach((part) => {
+          column.series.forEach((series) => jobs.push({ part, column, series }));
+        });
+    });
+    return jobs;
+  }
+
+  /** One series, read across the whole cycle. The expensive step. */
+  private samplePlot(
+    solved: Mechanism,
+    index: number,
+    job: { part: ExportPart; column: ExportColumn; series: ExportSeries }
+  ): ExportPlot | undefined {
+    const { part, column, series } = job;
+    const mode = this.flow.forceMode();
+    const mechPart = series.mechPart || part.id;
+    // The solver hands angles out in degrees and rates in radians, so one or
+    // the other is converted on the way to whatever is labelled with the
+    // reader's unit -- the same scale the graphs apply.
+    const scale = angularScale(series.mechProp, this.settings.angleUnit.value);
+    const rows = solved.timeNum.map((_, step) =>
+      this.samples.sampleAt(
+        solved,
+        step,
+        series.analysis,
+        series.analysis === 'force' ? mode : 'loop',
+        series.mechProp,
+        mechPart,
+        series.reactionLinkId
+      )
+    );
+    const width = rows.reduce((most, row) => Math.max(most, row.length), 0);
+    if (width === 0) return undefined;
+    const kept = width === 3 && !this.flow.withMagnitude ? 2 : width;
+    const names = this.seriesNames(width).slice(0, kept);
+    return {
+      title: series.head || `${series.label} of ${part.label}`,
+      head: series.head || `${series.label} ${this.shortName(part)}`,
+      unit: series.unit,
+      columnKey: column.key,
+      partKey: part.key,
+      mechanismIndex: index,
+      series: names.map((name, at) => ({
+        name,
+        values: rows.map((row) => row[at] * scale),
+      })),
+    };
   }
 
   /** The names the graphs plot these under, so the file agrees with the screen. */
@@ -310,4 +426,27 @@ export class ExportTableService {
     if (part.kind === 'joint') return (part.part as RealJoint).name || part.id;
     return part.label.replace(/^Link /, '');
   }
+}
+
+/**
+ * Hand the thread back for one turn of the event loop.
+ *
+ * `setTimeout(0)` is the obvious way and the wrong one: browsers hold a nested
+ * timer to about 4 ms, which over the sixty-odd yields a full export takes
+ * added more waiting than sampling -- 800 ms of work to avoid 465 ms of
+ * freeze. A message to oneself is delivered on the next turn with no such
+ * floor, so the page gets to paint between slices at almost no cost.
+ */
+function yieldToBrowser(): Promise<void> {
+  if (typeof MessageChannel === 'undefined') {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => {
+      channel.port1.close();
+      resolve();
+    };
+    channel.port2.postMessage(undefined);
+  });
 }

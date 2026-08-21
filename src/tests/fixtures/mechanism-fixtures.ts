@@ -135,6 +135,17 @@ export function buildMechanismFixture(payload: string): MechanismFixture {
   // here could disagree with the canvas about what "selected" means -- a
   // cylinder in particular, which answers for all of its pieces.
   (service as { activeObjService: ActiveObjService }).activeObjService = active;
+  // The slot a pin rides in, from the same lookup the service does: what a
+  // panel calls a slider, and which reactions belong to it, both hang off this.
+  (service as unknown as Record<string, unknown>)['sliderOf'] = (
+    MechanismService.prototype as unknown as Record<string, (joint: Joint | undefined) => unknown>
+  )['sliderOf'].bind(service);
+  service.sliderFor = MechanismService.prototype.sliderFor.bind(service);
+  // What a slider's reactions are called, from the same rule the panels and the
+  // export both read: a slot has no name a reader has been shown, so both name
+  // it after the pin, and a copy here could let the two drift apart.
+  service.slotReactionOf = MechanismService.prototype.slotReactionOf.bind(service);
+  service.slotName = MechanismService.prototype.slotName.bind(service);
   service.isSelectedJoint = MechanismService.prototype.isSelectedJoint.bind(service);
   service.isSelectedBody = MechanismService.prototype.isSelectedBody.bind(service);
 

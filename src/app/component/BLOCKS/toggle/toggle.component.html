@@ -3,7 +3,7 @@
     <!-- <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike" [formControlName]="this._formControl" /> -->
     <span class="label"><ng-content></ng-content></span>
     @if (!addInput()) {
-      <mat-icon matTooltip="{{ this.tooltip() }}" [matTooltipShowDelay]="1000" class="label-help"
+      <mat-icon matTooltip="{{ this.tooltip() }}" matTooltipShowDelay="400" class="label-help"
         >help_outline
       </mat-icon>
     }

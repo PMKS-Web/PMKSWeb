@@ -239,6 +239,7 @@ export class MechanismService {
     // within a revision the topology cannot have changed.
     this.cylinderRevision++;
     this.poseRevision++;
+    this.solveRevision++;
     Force.normalizeVisualWidths(this.forces);
     // Changing the input speed re-samples the same geometry onto a different time
     // axis. Hold the simulation time rather than the sample index, so t and the pose
@@ -2037,6 +2038,15 @@ export class MechanismService {
    * on every frame to answer a question whose answer cannot have changed.
    */
   poseRevision = 0;
+  /**
+   * Bumped when the *solved cycle* changes, rather than the pose being drawn.
+   *
+   * `poseRevision` moves on every frame of playback, because the pose is what
+   * playback changes. Anything cached against the numbers themselves — the
+   * export's sampled tables, for one — has to key on this instead, or watching
+   * a mechanism run rebuilds it sixty times a second.
+   */
+  solveRevision = 0;
   private structuresCache?: { revision: number; list: Cylinder[] };
 
   /**
@@ -2313,17 +2323,25 @@ export class MechanismService {
       });
     }
 
+    // Gravity off over a drawing that does have mass is the one refusal here
+    // with a one-click way out, so it gets a button as well as a sentence:
+    // everything the analysis needs is already drawn, and the only thing
+    // standing in the way is a switch in another panel.
+    const gravityWouldLoad = !this.settingsService.isGravity.value && weighted;
     requirements.push({
       met: loads.length > 0 || gravityLoads,
       title: 'A load to react against',
+      act: gravityWouldLoad ? 'gravity' : undefined,
       body:
         loads.length > 0
           ? `${loads.length} ${loads.length === 1 ? 'force is' : 'forces are'} applied.`
           : gravityLoads
             ? 'Gravity loads the links that have mass.'
-            : this.settingsService.isGravity.value
-              ? 'Nothing loads this mechanism yet: no force is applied and every link is massless. Attach a force or give a link mass.'
-              : 'Nothing loads this mechanism: gravity is off and no force is applied. Attach a force, or turn gravity on in Settings and give a link mass.',
+            : gravityWouldLoad
+              ? 'Nothing loads this mechanism: gravity is off, so the mass it has weighs nothing. Turn gravity on, or attach a force.'
+              : this.settingsService.isGravity.value
+                ? 'Nothing loads this mechanism yet: no force is applied and every link is massless. Attach a force or give a link mass.'
+                : 'Nothing loads this mechanism: gravity is off and no force is applied. Attach a force, or turn gravity on in Settings and give a link mass.',
     });
 
     return requirements;
@@ -2501,6 +2519,41 @@ export class MechanismService {
       (cylinder.barrelFar.name || cylinder.barrelFar.id) +
       (cylinder.rodFar.name || cylinder.rodFar.id)
     );
+  }
+
+  /**
+   * The one reaction a slider's block has that its pin does not.
+   *
+   * A block is a zero-length link binding a pin to a slot. It meets the world
+   * twice: at the pin, where the force is exactly the pin's own reaction
+   * negated -- the same number already carried under the name of the bar it
+   * holds -- and at the slot, where it presses on whatever the slot is cut
+   * into. The second is the force that sizes a slide, and it is here or
+   * nowhere: a slot has no marker, no hitbox and no panel.
+   */
+  slotReactionOf(pin: Joint | undefined): { slot: PrisJoint; block: Link; on: string } | undefined {
+    const slot = this.sliderFor(pin);
+    if (!slot) return undefined;
+    const block = this.links.find(
+      (link) => link instanceof SliderBlock && link.joints.some((joint) => joint.id === slot.id)
+    );
+    if (!block) return undefined;
+    const carrier = slot.isFloating && slot.isSlotWellFormed ? slot.carrier : undefined;
+    return { slot, block, on: carrier ? this.bodyLabel(carrier) : 'the ground' };
+  }
+
+  /**
+   * What to call a reaction that acts at a slot.
+   *
+   * The slider it belongs to, because that is the pin a reader can point at: a
+   * slot has no name anyone has ever been shown.
+   */
+  slotName(jointId: string): string | undefined {
+    const slot = this.joints.find((joint) => joint.id === jointId);
+    if (!(slot instanceof PrisJoint)) return undefined;
+    const pin = slot.connectedJoints.find((joint) => !(joint instanceof PrisJoint)) as
+      RealJoint | undefined;
+    return pin ? `the slider at ${pin.name || pin.id}` : 'the slider';
   }
 
   /** The sealed cylinder a joint or link belongs to, if any. */
@@ -3643,6 +3696,13 @@ export class MechanismService {
     const reversed = this.mechanisms[index]?.withReversedDrive();
     if (reversed) {
       this.mechanisms[index] = reversed;
+      // A solved cycle has been replaced without going through
+      // `updateMechanism`, so say so. The graphs notice by object identity,
+      // but the export's sampled tables are cached against this counter --
+      // without the bump an export taken after reversing served the rates it
+      // had sampled before, every angular velocity still carrying the sign it
+      // had turned round from.
+      this.solveRevision++;
       // Through the cycle the other way, from where it stands.
       this.playbackDirection[index] = this.directionOf(index) < 0 ? 1 : -1;
     } else {

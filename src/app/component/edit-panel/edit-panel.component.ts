@@ -119,6 +119,10 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   sectionExpanded: { [key: string]: boolean } = {
     JBasic: true, //This is the default (starting) state
     JInput: true, //Expanded on arrival, so a new input's settings are visible
+    // Open on arrival, like the link's own mass section: it is only there at
+    // all for a slider, so a reader who has one has come to a joint that
+    // weighs something.
+    JMass: true,
     JVisual: false,
     JDistToJ: true,
     LBasic: true,
@@ -276,6 +280,11 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
       // on blur like every other numeric field. Direction is a button, not a control.
       inputSpeed: [''],
       inputSpeedUnit: ['0', { updateOn: 'change' }],
+      // The sliding body's own mass. It lives on the block, which is a link
+      // nobody can select -- clicking one picks the pin it rides on -- so
+      // without a field here the only way to it was the mass table in the
+      // force-analysis drawer.
+      sliderMass: [''],
       otherJoints: this.fb.array([]), //Dynamic form array
     },
     { updateOn: 'blur' }
@@ -759,6 +768,52 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
   }
 
   /**
+   * The sliding body of the selected joint's slider, where it has one.
+   *
+   * Not a cylinder's: a ram's three bodies have their own fields further down
+   * this panel, and its piston head is one of them.
+   */
+  get sliderBlock(): Link | undefined {
+    if (this.selectedCylinder) return undefined;
+    return this.mechanismService.slotReactionOf(this.activeSrv.selectedJoint)?.block;
+  }
+
+  /**
+   * Write a mass to the sliding body.
+   *
+   * The same door every other mass goes through, so a slider's weight reaches
+   * the solver the way a bar's does: it is what gravity pulls on and what the
+   * guide has to take, and in an in-motion analysis it is the reciprocating
+   * mass -- on a slider-crank it moves the input torque further than either
+   * bar's does.
+   */
+  private commitSliderMass(raw: string | null): void {
+    const block = this.sliderBlock;
+    if (!block) return;
+    const units = this.massUnit();
+    const [success, value] = this.nup.parseMassString(raw ?? '', units);
+    if (!success || value < 0) {
+      this.notify.refusal('value.mass', NOT_A.mass);
+      this.patchSliderMass();
+      return;
+    }
+    this.mechanismService.assignBodyMass(block, value);
+    this.mechanismService.updateMechanism(true);
+    this.mechanismService.onMechUpdateState.next(2);
+    this.patchSliderMass();
+  }
+
+  /** Mirror the sliding body's mass into the field, without re-firing it. */
+  patchSliderMass(): void {
+    const block = this.sliderBlock;
+    if (!block) return;
+    this.jointForm.patchValue(
+      { sliderMass: this.nup.formatValueAndUnit(block.mass, this.massUnit()) },
+      { emitEvent: false }
+    );
+  }
+
+  /**
    * Whether the drive on this joint is a translation rather than a rotation.
    *
    * Everything the Input Settings section says changes with the answer. A block
@@ -820,13 +875,6 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
     return this.settingsService.isInputCW.value ? 'arrow_back' : 'arrow_forward';
   }
 
-  /** A slot cut into a moving link names the link and the pair that defines it. */
-  get slotOnLabel(): string | undefined {
-    const slider = this.selectedSlider;
-    if (!slider?.isFloating || !slider.isSlotWellFormed) return undefined;
-    return `${slider.carrier!.id} (joints ${slider.slotJointA!.id}\u2013${slider.slotJointB!.id})`;
-  }
-
   /** A slider with a block and nowhere to slide: invalid until it gets a carrier. */
   get isDanglingSlider(): boolean {
     return this.selectedSlider?.isDangling === true;
@@ -859,6 +907,13 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
           this.pendingFieldSync = undefined;
           this.disableAndEnableJointFields();
         });
+      })
+    );
+
+    this.onDestroySubscriptions.push(
+      this.jointForm.controls['sliderMass'].valueChanges.subscribe((val) => {
+        if (this.hideEditPanel()) return;
+        this.commitSliderMass(val ?? '');
       })
     );
 
@@ -1589,6 +1644,9 @@ export class EditPanelComponent implements OnInit, AfterContentInit, OnDestroy {
               slider: this.gridUtils.isAttachedToSlider(this.activeSrv.selectedJoint),
               weld: this.activeSrv.selectedJoint.isWelded,
               curve: this.activeSrv.selectedJoint.showCurve,
+              sliderMass: this.sliderBlock
+                ? this.nup.formatValueAndUnit(this.sliderBlock.mass, this.massUnit())
+                : '',
             },
             { emitEvent: false }
           );

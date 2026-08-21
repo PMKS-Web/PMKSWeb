@@ -518,7 +518,7 @@ export class SvgGridService {
   }
 
   /**
-   * Take the background image out of the box this fit is about to measure.
+   * Take everything that is not the linkage out of the box this fit measures.
    *
    * `tempGridDisable` is meant to do this in the template, but afterNextRender
    * can land before Angular has acted on the flag -- which went unnoticed while
@@ -528,10 +528,26 @@ export class SvgGridService {
    * linkage. Hidden straight on the element, so it is gone by the next
    * statement rather than by the next render.
    *
+   * Centre-of-mass marks are in the list for the same reason. A mark is a
+   * decoration a few pixels wide, but it sits wherever its link's centre of
+   * mass is, and a hand-placed one can be anywhere at all -- a URL carrying a
+   * point 90,000 units off framed that instead of the mechanism, at a zoom
+   * where the whole linkage drew as a single pixel and every joint became
+   * unclickable. What a reader wants to see is the machine, wherever its
+   * marks happen to have been put.
+   *
+   * Tracer paths deliberately stay in: a curve that runs wider than the bars
+   * is the thing being looked at.
+   *
    * Returns the undo, to be called once the measurement is taken.
    */
   private hideSceneryWhileMeasuring(): () => void {
-    const layers = ['backgroundImageHolder', 'backgroundImageHandles', 'backgroundImageGrips']
+    const layers = [
+      'backgroundImageHolder',
+      'backgroundImageHandles',
+      'backgroundImageGrips',
+      'comTagHolder',
+    ]
       .map((id) => document.getElementById(id))
       .filter((node): node is HTMLElement => node !== null);
     const was = layers.map((node) => node.style.display);

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { PrisJoint, RealJoint } from '../../model/joint';
+import { RealLink } from '../../model/link';
 import { MechanismService } from '../mechanism.service';
 import { SettingsService } from '../settings.service';
 import { ExportCatalogService } from './export-catalog.service';
@@ -38,7 +39,11 @@ export class ExportColumnsService {
   private kinematicGroups(parts: ExportPart[]): ExportColumnGroup[] {
     const groups: ExportColumnGroup[] = [];
     const joints = parts.filter((part) => part.kind === 'joint');
-    const links = parts.filter((part) => part.kind === 'link');
+    // Bars, and the rods that stand for rams — not slider blocks. The solver
+    // leaves a block out of its angular maps and gives it no centre of mass,
+    // so a block offered these four choices produced eleven columns of blanks.
+    // What a block does have is the reaction it carries, which is the other tab.
+    const links = parts.filter((part) => part.kind === 'link' && part.part instanceof RealLink);
     const length = this.catalog.unitStr(this.settings.lengthUnit.value);
     const angle = this.catalog.unitStr(this.settings.angleUnit.value);
 
@@ -128,6 +133,9 @@ export class ExportColumnsService {
     // A reaction at a joint buried inside a sealed cylinder is a force between
     // two halves of one part, named after a pin the drawing never shows.
     const hidden = this.catalog.hiddenJointIds();
+    // Which reactions a row has already claimed. Joints come before bodies in
+    // the list, so a pin owns its own force and a body offers only what is left.
+    const taken = new Set<string>();
     const groups: ExportColumnGroup[] = [];
     parts.forEach((part) => {
       const solved = this.mechanism.mechanisms[part.mechanismIndex];
@@ -135,41 +143,68 @@ export class ExportColumnsService {
       const index = solved.getForceAnalysis(mode).reactionIndex;
       const columns: ExportColumn[] =
         part.kind === 'joint'
-          ? (index.linksByJoint.get(part.id) ?? []).map((linkId) =>
-              this.force(
-                part,
-                `Force on ${this.bodyName(linkId)}`,
-                `${this.modeWord()} force at ${part.label} on ${this.bodyName(linkId)}`,
-                part.id,
-                linkId,
-                'Joint Forces'
-              )
+          ? (index.linksByJoint.get(part.id) ?? []).flatMap((linkId) =>
+              this.jointReaction(part, linkId, index)
             )
-          : (index.jointsByLink.get(part.id) ?? [])
-              .filter((jointId) => !hidden.has(jointId))
-              .map((jointId) =>
-                this.force(
-                  part,
-                  `Force at ${this.jointName(jointId)}`,
-                  `${this.modeWord()} force on ${part.label} at ${this.jointName(jointId)}`,
-                  jointId,
-                  part.id,
-                  'Joint Forces'
-                )
-              );
-      if (part.kind === 'joint' && (part.part as RealJoint).input) {
-        const effort = part.part instanceof PrisJoint ? 'Input force' : 'Input torque';
+          : // Every link the body is made of: a ram's two mounts sit on
+            // different ones, so asking about the rod alone gave the force at
+            // one end of it and nothing at the end it is pushing.
+            this.catalog.memberIdsOf(part.id).flatMap((memberId) =>
+              (index.jointsByLink.get(memberId) ?? [])
+                .filter((jointId) => !hidden.has(jointId))
+                // A reaction a chosen joint already carries. At a pin joining
+                // two bodies the solver holds one force and its negative, so a
+                // joint's view and a body's view of the same pin are the same
+                // column written twice under two names.
+                .filter((jointId) => !taken.has(`${jointId}@${memberId}`))
+                .map((jointId) => {
+                  // A slot is named after the slider it belongs to: it has no
+                  // marker of its own and no name a reader has ever seen.
+                  const where = this.mechanism.slotName(jointId) ?? this.jointName(jointId);
+                  return this.force(
+                    `Force at ${where}`,
+                    `${this.modeWord()} force on ${part.label} at ${where}`,
+                    part,
+                    jointId,
+                    memberId,
+                    'Joint Forces',
+                    false
+                  );
+                })
+            );
+
+      // The effort whatever drives this part has to supply. A joint that is an
+      // input carries its own; a cylinder is driven from a joint buried inside
+      // it, which has no row of its own anywhere in the app -- so the ram's row
+      // is the only place that number can be asked for.
+      const driven =
+        part.kind === 'joint'
+          ? // The joint itself, or the slot it rides in: a slot is never on the
+            // list, so the effort driving one has to be asked for against the
+            // pin a reader can actually point at.
+            (part.part as RealJoint).input
+            ? (part.part as RealJoint)
+            : this.catalog.drivingSlotOf(part.part as RealJoint)
+          : this.catalog.drivenJointOf(part.id);
+      if (driven) {
+        const torque = !(driven instanceof PrisJoint);
+        const effort = torque ? 'Input torque' : 'Input force';
         columns.push(
           this.force(
-            part,
             effort,
             `${this.modeWord()} ${effort.toLowerCase()} at ${part.label}`,
-            part.id,
+            part,
+            driven.id,
             '',
-            'Input Effort'
+            'Input Effort',
+            torque
           )
         );
       }
+
+      columns.forEach((column) =>
+        taken.add(`${column.series[0].mechPart}@${column.series[0].reactionLinkId}`)
+      );
       if (columns.length > 0) {
         groups.push({ key: `force:${part.key}`, title: part.label, tab: 'forces', columns });
       }
@@ -177,15 +212,58 @@ export class ExportColumnsService {
     return groups;
   }
 
-  private force(
+  /**
+   * What a joint reacts against, one column per body.
+   *
+   * A slider's block is not one of them. It is a zero-length link between the
+   * pin and its slot, so the force between the pin and the block is exactly the
+   * force between the pin and the bar, negated -- already on this row. What the
+   * block does have of its own is the force in the slot, which is what sizes a
+   * slide and is reachable from nowhere else.
+   */
+  private jointReaction(
     part: ExportPart,
+    linkId: string,
+    index: { jointsByLink: Map<string, string[]> }
+  ): ExportColumn[] {
+    const slot = this.mechanism.slotReactionOf(part.part as RealJoint);
+    if (slot && slot.block.id === linkId) {
+      return [
+        this.force(
+          `Force on ${slot.on}`,
+          `${this.modeWord()} force at ${part.label} on ${slot.on}`,
+          part,
+          slot.slot.id,
+          linkId,
+          'Joint Forces',
+          false
+        ),
+      ];
+    }
+    return [
+      this.force(
+        `Force on ${this.bodyName(linkId)}`,
+        `${this.modeWord()} force at ${part.label} on ${this.bodyName(linkId)}`,
+        part,
+        part.id,
+        linkId,
+        'Joint Forces',
+        !(part.part instanceof PrisJoint)
+      ),
+    ];
+  }
+
+  private force(
     label: string,
     head: string,
+    part: ExportPart,
     mechPart: string,
     reactionLinkId: string,
-    mechProp: string
+    mechProp: string,
+    /** Whether the effort is a moment. Decided by the driving joint, not the part. */
+    isTorque: boolean
   ): ExportColumn {
-    const torque = mechProp === 'Input Effort' && !(part.part instanceof PrisJoint);
+    const torque = mechProp === 'Input Effort' && isTorque;
     const unit = torque ? this.catalog.torqueUnit() : this.catalog.forceUnit();
     const series: ExportSeries = {
       label,

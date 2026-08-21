@@ -23,6 +23,22 @@ import { plotSvg } from './graph-svg';
 import { reportHtml, reportPages } from './report-html';
 import { crc32 } from './zip';
 
+/**
+ * Every reaction the solver has for a machine, as `joint@body` pairs.
+ *
+ * What the drawer offers is checked against this rather than against a list
+ * written out by hand: the point of leaving a part off is that nothing is lost
+ * by it, and only the solver knows what there was to lose.
+ */
+function fixtureMechanismOf(flow: ExportFlowService, at: number): string[] | undefined {
+  const solved = (flow as unknown as { mechanism: MechanismService }).mechanism.mechanisms[at];
+  if (!solved?.isMechanismValid()) return undefined;
+  const index = solved.getForceAnalysis(flow.forceMode()).reactionIndex;
+  return [...index.linksByJoint].flatMap(([joint, bodies]) =>
+    bodies.map((body) => `${joint}@${body}`)
+  );
+}
+
 /** The drawer's three services, over one fixture's mechanism. */
 interface Flow {
   flow: ExportFlowService;
@@ -44,7 +60,6 @@ function flowFor(payload: string, options: { forces?: boolean } = {}): Flow {
         facts: [{ label: 'Input speed', value: '20.00 RPM CW' }],
       },
     ],
-    sliderFor: () => undefined,
     forceAnalysisReady: () => options.forces === true,
   });
 
@@ -233,16 +248,6 @@ describe('the export drawer', () => {
     );
   });
 
-  it('offers a slider block, which the solver weighs like any other body', () => {
-    const { flow } = flowFor(TEMPLATE_LINKAGES['Slider_Crank']);
-    const labels = flow
-      .partGroups()
-      .flatMap((group) => group.parts)
-      .filter((part) => part.kind === 'link')
-      .map((part) => part.note);
-    expect(labels).toContain('slider block');
-  });
-
   it('keys a part by its machine, so a shared joint is two rows and two ticks', () => {
     const { flow } = flowFor(TEMPLATE_LINKAGES['4-Bar']);
     const parts = flow.partGroups().flatMap((group) => group.parts);
@@ -252,6 +257,71 @@ describe('the export drawer', () => {
     // reader had not asked about.
     expect(parts.every((part) => part.key.startsWith('M1|'))).toBe(true);
     expect(new Set(parts.map((part) => part.key)).size).toBe(parts.length);
+  });
+
+  it('reaches both ends of a ram, and the drive buried inside it', () => {
+    const { flow } = flowFor(TEMPLATE_LINKAGES['Cylinder_Boom'], { forces: true });
+    const ram = flow.offeredParts().find((part) => part.label.startsWith('Cylinder '))!;
+    flow.togglePart(ram);
+    const labels = flow
+      .columnGroups('forces')
+      .flatMap((group) => group.columns)
+      .map((column) => column.label);
+
+    // A cylinder is one part to the reader and three links to the solver, and
+    // its two mounts sit on different ones — so asking about the rod alone gave
+    // the force at one end of a ram and nothing at the end it is pushing. The
+    // drive is a joint with no marker, no hitbox and no row of its own, which
+    // makes this the only place its effort can be asked for.
+    expect(labels.filter((label) => label.startsWith('Force at Joint ')).length).toBe(2);
+    expect(labels).toContain('Input force');
+  });
+
+  it('lists a slider as the one part a reader can point at', () => {
+    const { flow } = flowFor(TEMPLATE_LINKAGES['Scotch_Yoke'], { forces: true });
+    const parts = flow.offeredParts();
+
+    // A slot is a joint to the solver and nothing at all to a reader: a
+    // zero-sized marker, no hitbox, no panel. Nor is the block between them,
+    // which is a zero-length link binding one to the other.
+    expect(parts.map((part) => part.label)).toEqual([
+      'Joint A',
+      'Joint B',
+      'Joint C',
+      'Joint D',
+      'Link AB',
+      'Link CD',
+    ]);
+  });
+
+  it('gives a pin the force in its bar and the force in its slot, and no more', () => {
+    const { flow } = flowFor(TEMPLATE_LINKAGES['Slider_Crank'], { forces: true });
+    const pin = flow.offeredParts().find((part) => part.note.includes('slider'))!;
+    flow.togglePart(pin);
+    const columns = flow.columnGroups('forces').flatMap((group) => group.columns);
+
+    // Two numbers, not four. The block's force at the pin is the bar's force
+    // negated, and its force in the slot is the one thing it has of its own —
+    // so a reader is offered the bar and the slot, and nothing named after a
+    // joint or a body they have never seen.
+    expect(columns.map((column) => column.label)).toEqual([
+      'Force on Link BC',
+      'Force on the ground',
+    ]);
+    expect(columns.some((column) => /Block|Joint D/.test(column.label))).toBe(false);
+  });
+
+  it('writes a reaction once, however many of its two sides are chosen', () => {
+    const { flow, tables } = flowFor(TEMPLATE_LINKAGES['4-Bar'], { forces: true });
+    // At a pin joining two bodies the solver holds one force and its negative,
+    // so a joint's view and a body's view of it are the same column twice.
+    flow.setParts(flow.offeredParts(), true);
+    const written = flow
+      .columnGroups('forces')
+      .flatMap((group) => group.columns)
+      .map((column) => `${column.series[0].mechPart}@${column.series[0].reactionLinkId}`);
+    expect(new Set(written).size).toBe(written.length);
+    expect(new Set(tables.tables()[0].heads).size).toBe(tables.tables()[0].heads.length);
   });
 
   it('stands a sealed cylinder in the list as one part, not as its pieces', () => {
@@ -274,7 +344,7 @@ describe('the export drawer', () => {
       .flatMap((group) => group.parts)
       .find((part) => part.kind === 'link')!;
     flow.togglePart(link);
-    flow.tab = 'forces';
+    flow.step = 'forces';
     const columns = flow.columnGroups('forces').flatMap((group) => group.columns);
     expect(columns.length).toBeGreaterThan(1);
     expect(new Set(columns.map((column) => column.key)).size).toBe(columns.length);
@@ -355,7 +425,7 @@ describe('the export drawer', () => {
       .flatMap((group) => group.parts)
       .find((part) => (part.part as RealJoint).input)!;
     flow.togglePart(input);
-    flow.tab = 'forces';
+    flow.step = 'forces';
 
     const heads = tables.tables()[0].heads;
     expect(heads.some((head) => head.startsWith('Static force at'))).toBe(true);

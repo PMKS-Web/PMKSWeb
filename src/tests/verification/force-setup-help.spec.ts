@@ -97,6 +97,38 @@ describe('force analysis setup, as a fresh drawing meets it', () => {
     expect(harness.service.forceAnalysisReady()).toBe(false);
   });
 
+  it('offers to turn gravity on where doing so is the whole fix', () => {
+    // Everything the analysis needs is drawn; the only thing in the way is a
+    // switch in another panel, so this refusal is the one the setup drawer can
+    // clear on the reader's behalf.
+    const harness = createMechanismHarness();
+    const links = fourBar(harness);
+    links[1].mass = 5;
+    harness.settings.isGravity.next(false);
+    harness.service.updateMechanism();
+
+    expect(row(harness, 'A load to react against').act).toBe('gravity');
+
+    harness.settings.isGravity.next(true);
+    harness.service.updateMechanism();
+    expect(harness.service.forceAnalysisReady()).toBe(true);
+  });
+
+  it('does not offer it where it would leave the reader still blocked', () => {
+    // Gravity off over a drawing with no mass anywhere: turning it on pulls on
+    // nothing, so a button promising a fix would not deliver one. The sentence
+    // still names both halves of the way out.
+    const harness = createMechanismHarness();
+    fourBar(harness);
+    harness.settings.isGravity.next(false);
+    harness.service.updateMechanism();
+
+    const load = row(harness, 'A load to react against');
+    expect(load.act).toBeUndefined();
+    expect(load.body).toContain('Attach a force');
+    expect(load.body).toContain('gravity');
+  });
+
   it('feeds the gravity setting into the solved mechanism itself', () => {
     const on = createMechanismHarness();
     const linksOn = fourBar(on);

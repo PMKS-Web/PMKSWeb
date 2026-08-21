@@ -359,6 +359,36 @@ for (const engine of engines) {
   await waitForReady(enginePage);
   await enginePage.locator('.tabButton', { hasText: 'Kinematic' }).click();
   await enginePage.waitForTimeout(1200);
+  // Wait for the stylesheet to have reached the control, not for the clock.
+  // A range input the app has not styled yet is the platform's own 4px bar,
+  // and Firefox lays this out later than the others -- so a fixed wait
+  // measured one engine's finished work and another's default.
+  const styled = await enginePage
+    .waitForFunction(
+      () => {
+        const bar = document.querySelector('.rowScrubber');
+        return !!bar && bar.getBoundingClientRect().height > 12;
+      },
+      { timeout: 15000 }
+    )
+    .then(() => true)
+    .catch(() => false);
+  // Said out loud rather than swallowed: measuring the platform's own bar and
+  // reporting it as a painting difference is how this check lied twice.
+  record(`${engine} has the app's bar to measure, not the platform's`, styled, {
+    engine,
+    scrubber: await enginePage.evaluate(() => {
+      const bar = document.querySelector('.rowScrubber');
+      const style = bar && getComputedStyle(bar);
+      return bar
+        ? {
+            height: bar.getBoundingClientRect().height,
+            css: style.height,
+            appearance: style.appearance,
+          }
+        : 'missing';
+    }),
+  });
   const engineBar = await enginePage.locator('.rowScrubber').boundingBox();
   // Halfway along, so the shot holds both what is travelled and what is ahead.
   await enginePage.mouse.click(engineBar.x + engineBar.width / 2, engineBar.y + 10);

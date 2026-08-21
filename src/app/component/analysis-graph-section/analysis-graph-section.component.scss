@@ -151,6 +151,10 @@
   // Material gives mat-icon a 24px box whatever the glyph inside it is, so a
   // 17px glyph with a 17px line-height sat at the top of it. Centre the glyph
   // in the box the box actually is.
+  //
+  // Only its size is stated here, which is a matter of the room a graph header
+  // has. Its ink, its cursor and what it does under the pointer are every help
+  // mark's, and are said once in `blocks.common`.
   .graphHeader .graphHelp {
     flex: 0 0 auto;
     display: flex;
@@ -160,7 +164,6 @@
     height: 24px;
     font-size: 17px;
     line-height: 1;
-    color: rgba(0, 0, 0, 0.3);
     pointer-events: auto;
   }
 

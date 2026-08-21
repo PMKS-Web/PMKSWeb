@@ -808,6 +808,39 @@ record(
 );
 await page.setViewportSize({ width: 1500, height: 950 });
 
+// --- one help mark, one behaviour ------------------------------------------
+// The mark beside a field used to be a pale grey glyph that did not answer the
+// pointer and waited a full second before saying anything; the export drawer's
+// lit up and spoke at once. A reader who has learned what it means in one panel
+// has learned it in all of them.
+await page.evaluate(() => {
+  const grid = ng.getComponent(document.querySelector('app-new-grid'));
+  grid.activeObjService.updateSelectedObj(grid.mechanismSrv.joints.find((joint) => !joint.ground));
+});
+await page.waitForTimeout(900);
+const marks = await page.evaluate(() =>
+  [...document.querySelectorAll('.label-help')].map((mark) => {
+    const style = getComputedStyle(mark);
+    return `${style.color} ${style.cursor} ${style.transform}`;
+  })
+);
+record(
+  'every help mark on screen is drawn the same way',
+  marks.length > 0 && new Set(marks).size === 1,
+  marks.slice(0, 3)
+);
+
+const help = page.locator('.label-help').first();
+const restColour = await help.evaluate((mark) => getComputedStyle(mark).color);
+await help.hover();
+await page.waitForTimeout(650);
+record(
+  'and answers the pointer, then says what it is for',
+  (await help.evaluate((mark) => getComputedStyle(mark).color)) !== restColour &&
+    (await page.locator('.mat-mdc-tooltip').count()) === 1,
+  { restColour, hovered: await help.evaluate((mark) => getComputedStyle(mark).color) }
+);
+
 record('nothing threw', errors.length === 0, errors.slice(0, 3));
 await browser.close();
 

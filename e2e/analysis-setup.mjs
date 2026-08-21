@@ -73,7 +73,33 @@ record(
   text.includes('A load to react against') && !text.includes('Mechanism M1'),
   text
 );
-record('naming the way out rather than only the wall', /Attach Force/.test(text), text);
+// The wall is "nothing loads this mechanism". The way out is named in the
+// sentence either way, and here -- everything drawn, one switch in another
+// panel standing in the way -- the panel walks it for the reader.
+record('naming the way out rather than only the wall', /Turn On Gravity/.test(text), text);
+await page
+  .locator('app-analysis-setup .actionButton', { hasText: 'Turn On Gravity' })
+  .first()
+  .click();
+await page.waitForTimeout(600);
+record(
+  'and pressing it lifts the blocker it was standing under',
+  !(await drawerText()).includes('A load to react against'),
+  await drawerText()
+);
+await tab('Force').click();
+await page.waitForTimeout(800);
+// The drawer stays -- it carries the mass table, which force analysis reads
+// from -- so what says the mode was entered is the analysis itself.
+const entered = await page.evaluate(() => ({
+  tab: ng.getComponent(document.querySelector('app-new-grid')).tabService.getCurrentTab(),
+  graphs: !!document.querySelector('app-analysis-panel'),
+}));
+record(
+  'so the mode that refused the reader now opens',
+  entered.tab === 3 && entered.graphs,
+  entered
+);
 
 // --- a mechanism with nothing driving it ------------------------------------
 await open(payloads['4-Bar']);

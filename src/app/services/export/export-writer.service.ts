@@ -96,7 +96,9 @@ export class ExportWriterService {
   }
 
   async run(): Promise<boolean> {
-    const tables = this.tables.tables();
+    // Sampled in slices rather than in one go, so the page keeps drawing --
+    // the spinner on the button that started this among other things.
+    const tables = await this.tables.tablesAsync();
     if (tables.length === 0) return false;
     switch (this.flow.format) {
       case 'xlsx':
@@ -122,6 +124,38 @@ export class ExportWriterService {
       })),
       stem
     );
+  }
+
+  /**
+   * What the export will actually put in the downloads folder.
+   *
+   * The drawer says this before the reader presses Export, so it has to be the
+   * name the file lands under rather than the name it was built from: a set of
+   * pictures is an archive of its own, and one picture carries the graph's
+   * title.
+   */
+  arrivingName(): string {
+    const stem = this.flow.name();
+    if (this.flow.format === 'report') return `${stem}.pdf`;
+    if (this.flow.format === 'images') {
+      const plan = this.tables.plan();
+      const pictures = plan.reduce((total, piece) => total + piece.plots, 0);
+      if (pictures > 2) return `${stem}_graphs.zip`;
+      const machine = plan.length > 1 ? `${plan[0].name}_` : '';
+      const title = plan[0]?.titles[0];
+      return title
+        ? `${stem}_${machine}${safe(title)}.${this.flow.imageFormat}`
+        : `${stem}.${this.flow.imageFormat}`;
+    }
+    const files = this.summary().files;
+    if (files > 2 && this.flow.format !== 'xlsx') return `${stem}.zip`;
+    // Two files arrive as two downloads, each carrying the suffix that tells
+    // them apart -- so name the first of them rather than the bare stem, which
+    // promised a `results.csv` where `results_M1.csv` and `results_M2.csv`
+    // landed. How many are coming is the line underneath.
+    const suffix = files > 1 ? this.tables.plan()[0]?.suffix : undefined;
+    const named = suffix ? `${stem}_${safe(suffix)}` : stem;
+    return `${named}${this.flow.extension()}`;
   }
 
   /**
@@ -160,6 +194,12 @@ export class ExportWriterService {
   private async writeImages(tables: ExportTable[]): Promise<boolean> {
     const width = 720;
     const height = 420;
+    // Read once, before the first await. Drawing forty graphs takes long enough
+    // for a reader to change their mind about PNG or SVG, or to rename the
+    // export -- and the settings were being read afresh per picture, so half an
+    // archive came out under the old answers and half under the new.
+    const stem = this.flow.name();
+    const kind = this.flow.imageFormat;
     const logo = await logoDataUrl();
     const files: ExportFile[] = [];
     for (const table of tables) {
@@ -169,9 +209,9 @@ export class ExportWriterService {
         // them is `Position of Joint D` in both, and two entries of one name in
         // one archive is one picture that quietly replaces the other.
         const machine = tables.length > 1 ? `${table.name}_` : '';
-        const name = `${this.flow.name()}_${machine}${safe(plot.title)}`;
+        const name = `${stem}_${machine}${safe(plot.title)}`;
         files.push(
-          this.flow.imageFormat === 'svg'
+          kind === 'svg'
             ? { name: `${name}.svg`, mime: 'image/svg+xml', text: svg }
             : {
                 name: `${name}.png`,
@@ -181,7 +221,7 @@ export class ExportWriterService {
         );
       }
     }
-    this.deliver(files, `${this.flow.name()}_graphs`);
+    this.deliver(files, `${stem}_graphs`);
     return files.length > 0;
   }
 

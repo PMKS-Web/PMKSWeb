@@ -64,21 +64,22 @@
     .steps {
       display: flex;
       align-items: center;
+      // The gap does the separating, so a name never runs up against the one
+      // after it.
+      gap: 8px;
       padding-top: 12px;
     }
 
+    // As wide as its own name, not an equal quarter of the rule. Four equal
+    // shares of 380px is 95 apiece, which `2. Kinematics` overruns -- so the
+    // long name crowded the short one beside it while `4. File` sat in a third
+    // of a segment of white.
     .step {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      flex: 1 1 0;
+      flex: 1 1 auto;
       min-width: 0;
-
-      // Each step but the first is indented, so its name reads as belonging to
-      // its own bar rather than to the end of the one before.
-      & + .step .stepName {
-        padding-left: 8px;
-      }
     }
 
     .stepName {
@@ -127,51 +128,6 @@
       }
     }
 
-    .tabs {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      padding-top: 14px;
-      border-bottom: 1px solid #eceef5;
-    }
-
-    .tab {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 0 0 8px;
-      margin-bottom: -1px;
-      border: none;
-      border-bottom: 2px solid transparent;
-      background: transparent;
-      font-family: inherit;
-      font-size: 14px;
-      color: #5f6368;
-      cursor: pointer;
-
-      &.on {
-        border-bottom-color: $indigo;
-        font-weight: 500;
-        color: $indigo;
-      }
-    }
-
-    .tabCount {
-      display: inline-flex;
-      align-items: center;
-      height: 18px;
-      padding: 0 6px;
-      border-radius: 9px;
-      background: #eef0f4;
-      font-size: 11px;
-      color: #5f6368;
-    }
-
-    .tab.on .tabCount {
-      background: #e8eaf6;
-      color: $indigo;
-    }
-
     .countRow {
       display: flex;
       align-items: center;
@@ -214,6 +170,11 @@
       border: none;
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.3);
+    }
+
+    .exportBody.busy {
+      pointer-events: none;
+      opacity: 0.55;
     }
 
     .exportBody {
@@ -450,22 +411,6 @@
       font-family: inherit;
       text-align: left;
       cursor: pointer;
-    }
-
-    // The same mark every field in the app carries, at the same size and the
-    // same weight: a reader who has learned what it means anywhere has learned
-    // it here. Asks the question rather than answering it in place, because
-    // four paragraphs under four formats is a page nobody reads to choose
-    // between them.
-    .label-help {
-      flex: 0 0 auto;
-      transform: scale(0.65);
-      color: rgba(0, 0, 0, 0.3);
-      cursor: help;
-
-      &:hover {
-        color: $indigo;
-      }
     }
 
     .radio {

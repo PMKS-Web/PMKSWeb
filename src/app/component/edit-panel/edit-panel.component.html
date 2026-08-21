@@ -191,14 +191,12 @@
         >
           Slider
         </toggle-block>
-        <!-- Read-only: the carrier comes from the drop gesture, and changing it
-             is delete-and-recreate. It names the link and the joint pair so the
-             reader can find the geometry it describes. -->
-        @if (slotOnLabel) {
-          <div class="slotNote">Slot on: {{ slotOnLabel }}</div>
-        }
+        <!-- A slider with nowhere to slide, which the canvas cannot say for
+             itself: the drawing looks the same either way, and this is the one
+             thing about a slot a reader cannot see. Which link the slot is cut
+             into is drawn on that link, so it is not repeated here. -->
         @if (isDanglingSlider) {
-          <div class="slotNote slotNote--warn">
+          <div class="sliderWarning">
             This slider has nowhere to slide. Drag it onto a link to cut its slot, or ground it.
           </div>
         }
@@ -258,6 +256,26 @@
             }
           </collapsible-subseciton>
         </div>
+      }
+      <!-- The sliding body's own mass. It lives on a link nobody can select --
+           clicking a block picks the pin it rides on -- so this is the only
+           place in Edit it can be reached; before it, the mass table in the
+           force-analysis drawer was the only door, and there was no sign from
+           the joint's own panel that a slider weighed anything at all. -->
+      @if (sliderBlock) {
+        <collapsible-subseciton
+          titleLabel="Mass Settings"
+          [expanded]="sectionExpanded['JMass']"
+          (opened)="sectionExpanded['JMass'] = true"
+          (closed)="sectionExpanded['JMass'] = false"
+        >
+          <input-block
+            [formGroup]="jointForm"
+            _formControl="sliderMass"
+            tooltip="The sliding body's mass, concentrated at this pin. Gravity pulls on it, the slot has to take it, and in an in-motion analysis it is the reciprocating mass. Zero is an idealized massless slide."
+            >Slider mass</input-block
+          >
+        </collapsible-subseciton>
       }
       <collapsible-subseciton
         titleLabel="Visual Settings"

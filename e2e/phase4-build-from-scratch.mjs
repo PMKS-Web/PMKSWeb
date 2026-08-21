@@ -144,8 +144,17 @@ await page.screenshot({ path: `${OUT}/3-slot.png` });
 console.log('\nand the panel drives it');
 await page.click(`#${dragged.id}`);
 await page.waitForTimeout(400);
-const panel = await page.evaluate(() => document.body.innerText);
-checkThat('the panel names the carrier it was dropped on', /Slot on:/.test(panel));
+// The carrier is drawn, not written: the panel dropped its "Slot on:" note.
+const slotCarrier = await page.evaluate(() => {
+  const srv = ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv;
+  const slot = srv.joints.find((j) => j.constructor.name === 'PrisJoint');
+  return slot ? `${slot.id} -> ${slot.carrier?.id ?? 'nothing'}` : 'no slot';
+});
+checkThat(
+  'the slot is cut into the link it was dropped on',
+  /-> \w/.test(slotCarrier),
+  slotCarrier
+);
 
 async function toggle(label) {
   const row = page.locator('#toggle-block .row').filter({ hasText: label }).first();

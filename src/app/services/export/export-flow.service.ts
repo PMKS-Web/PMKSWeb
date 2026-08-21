@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ForceAnalysisMode } from '../../model/mechanism/force-solver';
 import { SelectedTabService, TabID } from '../../selected-tab.service';
 import { MechanismService } from '../mechanism.service';
+import { ActiveObjService } from '../active-obj.service';
 import { SettingsService } from '../settings.service';
 import { ExportCatalogService } from './export-catalog.service';
 import { ExportColumnsService } from './export-columns.service';
@@ -16,7 +17,15 @@ import {
 } from './export-model';
 
 /** Which of the three questions the drawer is asking. */
-export type ExportStep = 1 | 2 | 3;
+/**
+ * Which of the questions the drawer is asking.
+ *
+ * Named rather than numbered, because how many there are depends on the
+ * drawing: a mechanism with no force analysis set up is asked three questions
+ * and one with is asked four. A number would have to mean a different question
+ * in each case.
+ */
+export type ExportStep = 'parts' | 'kinematics' | 'forces' | 'file';
 
 /**
  * What the export drawer has been told so far.
@@ -29,13 +38,13 @@ export type ExportStep = 1 | 2 | 3;
 @Injectable({ providedIn: 'root' })
 export class ExportFlowService {
   private catalog = inject(ExportCatalogService);
+  private activeObj = inject(ActiveObjService);
   private columns = inject(ExportColumnsService);
   private mechanism = inject(MechanismService);
   private settings = inject(SettingsService);
   private tabs = inject(SelectedTabService);
 
-  step: ExportStep = 1;
-  tab: ColumnTab = 'kinematics';
+  step: ExportStep = 'parts';
   format: ExportFormat = 'csv';
   decimals: Decimals = 6;
   /** One file for everything that can share a time column, or one per part. */
@@ -78,13 +87,21 @@ export class ExportFlowService {
       this.mechanism.partitions.map((partition) => partition.id).join(','),
       this.mechanism.mechanisms.map((solved) => (solved.isMechanismValid() ? 1 : 0)).join(''),
       this.settings.forceAnalysisMode.value,
+      // What the canvas is holding, because a row says so. Rebuilt on a change
+      // of selection rather than left as it was when the drawer opened, which
+      // is how a row went on claiming to be the selected one after the reader
+      // had picked something else.
+      this.activeObj.objType,
+      this.activeObj.selectedJoint?.id,
+      this.activeObj.selectedLink?.id,
       // Units ride the column heads, so a change of them is a change of list.
       this.settings.lengthUnit.value,
       this.settings.angleUnit.value,
       this.settings.forceUnit.value,
-      // Bumped by every mutation the service funnels, which is how a change
-      // that leaves the counts alone still invalidates this.
-      this.mechanism.poseRevision,
+      // Bumped by every rebuild of the solved cycle, which is how a change
+      // that leaves the counts alone still invalidates this. Deliberately not
+      // the pose, which playback moves every frame.
+      this.mechanism.solveRevision,
       this.stamp,
     ].join('|');
   }
@@ -114,19 +131,17 @@ export class ExportFlowService {
     this.cached = undefined;
   }
 
-  /** Start again from step 1, ticking whatever is selected on the grid. */
+  /** Start again at the parts, ticking whatever is selected on the grid. */
   reset(): void {
     this.refresh();
-    this.step = 1;
-    this.tab =
-      this.forcesAvailable() && this.tabs.getCurrentTab() === TabID.FORCE ? 'forces' : 'kinematics';
+    this.step = 'parts';
     this.typedName = '';
     this.touchedColumns = false;
     this.pickedColumns.clear();
     this.pickedParts = new Set(
       this.partGroups()
         .flatMap((group) => group.parts)
-        .filter((part) => part.available && part.note.includes('on the grid'))
+        .filter((part) => part.available && part.note.includes('currently selected'))
         .map((part) => part.key)
     );
   }
@@ -177,11 +192,60 @@ export class ExportFlowService {
       .filter((part) => part.available);
   }
 
-  // --- step 2: columns ------------------------------------------------------
+  // --- the questions, and moving between them -------------------------------
 
-  /** Force columns are only worth a tab where a force analysis actually solves. */
+  /**
+   * The questions this drawing is asked, in order.
+   *
+   * Forces are a question of their own rather than a tab inside the columns:
+   * they are a different analysis of the same cycle, not a second way of
+   * looking at one — and a drawing with no force analysis set up is never asked
+   * about them at all.
+   */
+  steps(): ExportStep[] {
+    return this.forcesAvailable()
+      ? ['parts', 'kinematics', 'forces', 'file']
+      : ['parts', 'kinematics', 'file'];
+  }
+
+  /** Which of them is showing, counted from one for the rule across the top. */
+  stepNumber(step: ExportStep = this.step): number {
+    return this.steps().indexOf(step) + 1;
+  }
+
+  /** Whether a step has already been answered, and so can be gone back to. */
+  isBehind(step: ExportStep): boolean {
+    return this.stepNumber(step) < this.stepNumber();
+  }
+
+  goTo(step: ExportStep): void {
+    if (this.steps().includes(step)) this.step = step;
+  }
+
+  /** Which way each of Back and Next leads from here. */
+  private neighbour(by: 1 | -1): ExportStep | undefined {
+    const order = this.steps();
+    return order[order.indexOf(this.step) + by];
+  }
+
+  nextStep(): ExportStep | undefined {
+    return this.neighbour(1);
+  }
+
+  previousStep(): ExportStep | undefined {
+    return this.neighbour(-1);
+  }
+
+  // --- the column steps -----------------------------------------------------
+
+  /** Force columns are only worth a step where a force analysis actually solves. */
   forcesAvailable(): boolean {
     return this.lists().forces;
+  }
+
+  /** Which columns the step being shown is about. */
+  get tab(): ColumnTab {
+    return this.step === 'forces' ? 'forces' : 'kinematics';
   }
 
   columnGroups(tab: ColumnTab = this.tab): ExportColumnGroup[] {

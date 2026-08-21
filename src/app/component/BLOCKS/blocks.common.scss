@@ -57,17 +57,45 @@
       //font-weight: 200;
     }
 
+    // Left here for the blocks that nest their mark inside a `.row`; what a
+    // help mark *is* now lives in the unscoped rule at the bottom of this
+    // file, so a panel built out of something other than blocks gets the same
+    // mark rather than a paler one that does not answer the pointer.
     .label-help {
-      //margin-left: 5px;
-      transform: scale(0.65);
-      color: rgba(0, 0, 0, 0.3);
-      // Never let a wide control squeeze the icon: mat-icon clips to its box, so
-      // shrinking it cuts the glyph rather than scaling it down.
       flex: 0 0 auto;
     }
 
     .spacer {
       flex: 1 1 auto;
     }
+  }
+
+  // Every help mark in the app, wherever it hangs and whatever size it is
+  // drawn at.
+  //
+  // One ink and one answer to the pointer: it takes the accent under the cursor
+  // and a help cursor with it, so a reader learns once that this is the thing
+  // to point at. It used to be a grey glyph that did nothing at all and waited
+  // a full second before saying anything, which reads as decoration -- and the
+  // one beside a graph and the one beside a field disagreed about even that.
+  //
+  // The graph header's mark is bigger than a field's, which is a matter of the
+  // room each has; what a help mark *is* is said once, here.
+  .label-help,
+  .graphHelp {
+    color: rgba(0, 0, 0, 0.3);
+    cursor: help;
+    transition: color 0.12s ease-in-out;
+
+    &:hover {
+      color: mat.m2-get-color-from-palette($primary-palette, 500);
+    }
+  }
+
+  .label-help {
+    transform: scale(0.65);
+    // Never let a wide control squeeze the icon: mat-icon clips to its box, so
+    // shrinking it cuts the glyph rather than scaling it down.
+    flex: 0 0 auto;
   }
 }

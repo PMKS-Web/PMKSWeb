@@ -26,8 +26,11 @@
       justify-content: center;
     }
 
-    /* Use a white check mark for the selected color */
-    mat-icon {
+    /* A white check mark on the chosen swatch — and only there. Said of every
+       icon in the picker, it also painted the help mark beside the title
+       white, on a white panel, so the one field whose mark could not be seen
+       was the one that had a colour in it. */
+    .swatch mat-icon {
       color: white;
     }
   }

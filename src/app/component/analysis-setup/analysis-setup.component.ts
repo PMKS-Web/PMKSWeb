@@ -387,6 +387,20 @@ export class AnalysisSetupComponent {
     this.mechanism.onMechUpdateState.next(2);
   }
 
+  /**
+   * Turn gravity back on from here, rather than sending the reader to Settings.
+   *
+   * The same edit the settings toggle makes, by the same three steps: gravity
+   * changes what a force analysis means, so the mechanisms are rebuilt, the
+   * change is undoable, and an open force graph is asked to redraw.
+   */
+  turnGravityOn(): void {
+    if (!this.massEditable() || this.settings.isGravity.value) return;
+    this.settings.isGravity.next(true);
+    this.mechanism.updateMechanism(true);
+    this.mechanism.onMechUpdateState.next(2);
+  }
+
   private applyMass(row: MassRow, raw: string): void {
     if (!this.massEditable()) return;
     const [success, value] = this.nup.parseMassString(

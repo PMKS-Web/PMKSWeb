@@ -317,3 +317,42 @@ describe('AnalysisPanelComponent with a cylinder selected', () => {
     fixture.destroy();
   });
 });
+
+describe('AnalysisPanelComponent with a slider selected', () => {
+  it('gives a pin the force in its bar and the force in its slot', async () => {
+    const { fixture, fixtureData } = await createPanel(
+      TEMPLATE_LINKAGES['Slider_Crank'],
+      pinOfSlider(TEMPLATE_LINKAGES['Slider_Crank']),
+      TabID.FORCE
+    );
+    fixture.detectChanges();
+    const labels = fixture.componentInstance.jointForceRows().map((row) => row.label);
+
+    // A slider is one thing to a reader and three bodies to the solver. The
+    // block's force at the pin is the bar's force negated -- the same number
+    // this panel already shows under the bar's own name -- and what the block
+    // has of its own is the force in its slot, which carries the block's own
+    // weight. Measured: with the block at 1g the slot reads 0.0147N, and with
+    // it at 500g it reads 4.9N, while the force at the pin does not move.
+    expect(labels).toEqual(['Force on Link BC', 'Force on the ground']);
+    expect(labels.some((label) => /Block/.test(label))).toBe(false);
+    expect(fixtureData.service.links.length).toBeGreaterThan(0);
+  });
+
+  it('names a slot after the slider a reader can point at', async () => {
+    const { fixture } = await createPanel(TEMPLATE_LINKAGES['Scotch_Yoke'], 'CD', TabID.FORCE);
+    fixture.detectChanges();
+    const labels = fixture.componentInstance.linkForceRows().map((row) => row.label);
+
+    // The slot cut into this link is a joint with no marker, no hitbox and no
+    // name anyone has been shown.
+    expect(labels.some((label) => label.includes('the slider at'))).toBe(true);
+    expect(labels.some((label) => /Joint [EF]/.test(label))).toBe(false);
+  });
+});
+
+/** The pin of the first slider in a payload, which is what a reader clicks. */
+function pinOfSlider(payload: string): string {
+  const built = buildMechanismFixture(payload);
+  return built.service.joints.find((joint) => !!built.service.sliderFor(joint))!.id;
+}
