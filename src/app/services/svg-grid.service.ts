@@ -747,7 +747,6 @@ export class SvgGridService {
   private frameDrawing(animate: boolean): void {
     const free = this.freeRect();
     const drawn = this.measureDrawing();
-    this.lastFreeRect = free;
     if (!free) return;
     if (!drawn || !(drawn.width > 0) || !(drawn.height > 0)) {
       // Nothing drawn is still a view worth resetting: somebody who has panned
@@ -760,6 +759,7 @@ export class SvgGridService {
       );
       return;
     }
+    this.settledFree = free;
     const target = this.clampZoom(
       Math.min((free.width * FIT_FILL) / drawn.width, (free.height * FIT_FILL) / drawn.height)
     );
@@ -903,8 +903,7 @@ export class SvgGridService {
    * holding the zoom loses part of the mechanism. Somebody who has zoomed in on
    * a detail keeps their zoom through every panel they open.
    */
-  notifyChromeChanged(rescale = false): void {
-    this.settleRescale = this.settleRescale || rescale;
+  notifyChromeChanged(): void {
     if (this.settlePending) return;
     if (!this.panZoomObject || !NewGridComponent.instance) return;
     this.settlePending = true;
@@ -921,7 +920,12 @@ export class SvgGridService {
       shown && previous
         ? { x: centerOf(shown).x - centerOf(previous).x, y: centerOf(shown).y - centerOf(previous).y }
         : null;
-    const wasFramed = !!(shown && previous && fitsInside(shown, previous, OVERHANG_SLACK));
+    // Judged against where the chrome was when the view was last settled, not
+    // against where it is now: a resize is only heard once the window has
+    // already changed, so asking whether the drawing fits the rect it is about
+    // to be fitted to always answers no.
+    const before = this.settledFree ?? previous;
+    const wasFramed = !!(shown && before && fitsInside(shown, before, OVERHANG_SLACK));
     let stable = 0;
     let everMoved = false;
 
@@ -952,8 +956,8 @@ export class SvgGridService {
       const done = everMoved ? stable >= SETTLE_STABLE_FRAMES : waited > SETTLE_MIN_MS;
       if (done || waited > SETTLE_MAX_MS) {
         this.settlePending = false;
-        this.lastFreeRect = now;
-        this.finishSettle(now, drawn, wasFramed);
+        this.settledFree = now;
+        this.finishSettle({ free: now, drawn, wasFramed, offset, zoom: matrix?.a });
         return;
       }
       requestAnimationFrame(step);
@@ -961,9 +965,12 @@ export class SvgGridService {
     requestAnimationFrame(step);
   }
 
-  private lastFreeRect: Rect | null = null;
   private settlePending = false;
-  private settleRescale = false;
+  /** How much bigger the window got, for a settle that follows a resize. */
+  private settleGrowth = 1;
+  private lastWindowSize = { width: 0, height: 0 };
+  /** Where the chrome stood the last time the view was put somewhere. */
+  private settledFree: Rect | null = null;
   /** A fit asked for while the chrome was still moving, run once it stops. */
   private queuedFit: boolean | null = null;
 
@@ -973,25 +980,58 @@ export class SvgGridService {
    * A fit somebody pressed for mid-transition wins outright -- it is a fresh
    * instruction about where the view should be, and running it against a panel
    * that was still sliding is what made Reset glide twice with a pause.
+   *
+   * Otherwise the zoom is left alone. Somebody looking closely at one joint
+   * should not be zoomed out for opening a panel. The two exceptions: a window
+   * that changed size takes the view with it, so the drawing keeps the share of
+   * the canvas it had and a resize is its own undo; and a drawing that was
+   * framed and now would not fit is framed again, because that is the one case
+   * where holding the zoom loses part of the mechanism.
    */
-  private finishSettle(free: Rect | null, drawn: Rect | null, wasFramed: boolean): void {
-    const rescale = this.settleRescale;
-    this.settleRescale = false;
+  private finishSettle(settle: {
+    free: Rect | null;
+    drawn: Rect | null;
+    wasFramed: boolean;
+    offset: { x: number; y: number } | null;
+    zoom: number | undefined;
+  }): void {
+    const growth = this.settleGrowth;
+    this.settleGrowth = 1;
     const fit = this.queuedFit;
     this.queuedFit = null;
     if (fit !== null) {
       this.frameDrawing(fit);
       return;
     }
+    const { free, drawn, offset, zoom } = settle;
     if (!free || !drawn) return;
-    // A window that changed size takes the view with it, so the drawing keeps
-    // the share of the canvas it had and a resize is its own undo. A drawing
-    // that was framed and no longer fits is reframed, because that is the one
-    // case where holding the zoom loses part of the mechanism. Nothing else
-    // touches the zoom: somebody looking closely at one joint should not be
-    // zoomed out for opening a panel.
+
+    if (growth !== 1 && offset && zoom) {
+      const grown = this.clampZoom(zoom * growth);
+      const at = {
+        x: centerOf(free).x + offset.x * growth,
+        y: centerOf(free).y + offset.y * growth,
+      };
+      const landing: Rect = {
+        x: at.x - (drawn.width * grown) / 2,
+        y: at.y - (drawn.height * grown) / 2,
+        width: drawn.width * grown,
+        height: drawn.height * grown,
+      };
+      // The window's own ratio is not the free canvas's -- the chrome along the
+      // edges does not shrink with it -- so a drawing that was whole in view can
+      // still spill out of the smaller one. Somebody who was looking at the
+      // whole mechanism goes on looking at the whole mechanism.
+      if (!settle.wasFramed || fitsInside(landing, free, OVERHANG_SLACK)) {
+        this.moveViewTo(drawn, at, grown, true);
+        return;
+      }
+      this.frameDrawing(true);
+      return;
+    }
+
     const shown = this.screenBoxOf(drawn);
-    if (rescale || (wasFramed && shown && !fitsInside(shown, free, OVERHANG_SLACK))) {
+    if (settle.wasFramed && shown && !fitsInside(shown, free, OVERHANG_SLACK)) {
       this.frameDrawing(true);
     }
   }
@@ -1025,7 +1065,24 @@ export class SvgGridService {
     // loop against the same view.
     if (this.watchingChrome) return;
     this.watchingChrome = true;
-    const onResize = () => this.notifyChromeChanged(true);
+    this.lastWindowSize = { width: window.innerWidth, height: window.innerHeight };
+    const onResize = () => {
+      // Measured off the window rather than off the free rect, because by the
+      // time a resize is heard the free rect has already changed and there is
+      // nothing left to compare it against. The geometric mean of the two sides
+      // rather than the smaller of them, so shrinking a window and pulling it
+      // back out lands on the zoom it started at -- taking the smaller each way
+      // multiplies to less than one, and every round trip left the drawing a
+      // little smaller than it was found.
+      const was = this.lastWindowSize;
+      this.lastWindowSize = { width: window.innerWidth, height: window.innerHeight };
+      if (was.width > 0 && was.height > 0) {
+        this.settleGrowth *= Math.sqrt(
+          (this.lastWindowSize.width / was.width) * (this.lastWindowSize.height / was.height)
+        );
+      }
+      this.notifyChromeChanged();
+    };
     window.addEventListener('resize', onResize);
     // Late, and through the injector: the tab service reaches the mechanism,
     // which reaches back here.
