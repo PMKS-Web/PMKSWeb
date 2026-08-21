@@ -903,7 +903,7 @@ export class SvgGridService {
    * holding the zoom loses part of the mechanism. Somebody who has zoomed in on
    * a detail keeps their zoom through every panel they open.
    */
-  notifyChromeChanged(): void {
+  notifyChromeChanged(alreadyMoved = false): void {
     if (this.settlePending) return;
     if (!this.panZoomObject || !NewGridComponent.instance) return;
     this.settlePending = true;
@@ -927,7 +927,11 @@ export class SvgGridService {
     const before = this.settledFree ?? previous;
     const wasFramed = !!(shown && before && fitsInside(shown, before, OVERHANG_SLACK));
     let stable = 0;
-    let everMoved = false;
+    // A window resize is heard once the window has already changed, so the
+    // chrome has moved before this is called and there is nothing to wait for.
+    // Only a mode change needs the floor below, because Angular has not begun
+    // animating the panel by the time the mode says it changed.
+    let everMoved = alreadyMoved;
 
     const step = () => {
       const now = this.freeRect();
@@ -1081,7 +1085,7 @@ export class SvgGridService {
           (this.lastWindowSize.width / was.width) * (this.lastWindowSize.height / was.height)
         );
       }
-      this.notifyChromeChanged();
+      this.notifyChromeChanged(true);
     };
     window.addEventListener('resize', onResize);
     // Late, and through the injector: the tab service reaches the mechanism,
