@@ -70,9 +70,27 @@ describe('freeCanvasRect', () => {
     expect(free).toEqual({ x: 0, y: 0, width: 1512, height: 900 });
   });
 
-  it('falls back to the whole canvas when the chrome leaves no room', () => {
-    const free = freeCanvasRect(canvasOf(400, 900), docWith([card('left', [0, 0, 320, 900])]));
-    expect(free).toEqual({ x: 0, y: 0, width: 400, height: 900 });
+  it('gives up the axis the chrome leaves no room on, and only that one', () => {
+    // A phone-narrow window: nothing useful is left beside the panel, so the
+    // drawing goes under it -- but the strip along the top is still worth
+    // keeping clear of.
+    const free = freeCanvasRect(
+      canvasOf(400, 900),
+      docWith([card('left', [0, 0, 320, 900]), card('top', [0, 0, 400, 60])])
+    );
+    expect(free).toEqual({ x: 0, y: 60, width: 400, height: 840 });
+  });
+
+  it('keeps the horizontal framing in a window too short to frame vertically', () => {
+    const free = freeCanvasRect(
+      canvasOf(1200, 260),
+      docWith([
+        card('left', [0, 0, 278, 260]),
+        card('top', [0, 0, 1200, 60]),
+        card('bottom', [0, 160, 1200, 100]),
+      ])
+    );
+    expect(free).toEqual({ x: 278, y: 0, width: 922, height: 260 });
   });
 });
 

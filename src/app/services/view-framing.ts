@@ -20,9 +20,13 @@ export interface Rect {
 export type CanvasEdge = 'left' | 'right' | 'top' | 'bottom';
 
 /**
- * Below this the free rect is not worth respecting -- a window small enough
- * that the chrome meets in the middle is better served by drawing under it than
- * by fitting the linkage into a sliver.
+ * Below this the free rect is not worth respecting on that axis.
+ *
+ * A window small enough that the chrome meets in the middle is better served by
+ * drawing under a panel than by fitting the linkage into a sliver of what is
+ * left. Relaxed one axis at a time: a short window has plenty of room across
+ * and should keep its horizontal framing, and a phone-narrow one keeps its
+ * vertical framing for the same reason.
  */
 const MIN_FREE_SIDE = 160;
 
@@ -66,8 +70,15 @@ export function freeCanvasRect(canvas: Element, doc: Document = document): Rect 
     }
   });
 
-  const free: Rect = { x: left, y: top, width: right - left, height: bottom - top };
-  return free.width < MIN_FREE_SIDE || free.height < MIN_FREE_SIDE ? full : free;
+  if (right - left < MIN_FREE_SIDE) {
+    left = full.x;
+    right = full.x + full.width;
+  }
+  if (bottom - top < MIN_FREE_SIDE) {
+    top = full.y;
+    bottom = full.y + full.height;
+  }
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 /**
