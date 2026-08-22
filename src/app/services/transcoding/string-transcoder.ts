@@ -460,14 +460,15 @@ export class StringTranscoder extends GenericTranscoder {
     // design rather than an object the URL carries, so unlike a lock or an
     // anchor there is nothing for them to resolve against -- which is exactly
     // why they can be validated on their own numbers alone.
-    // A fourth kind of tagged reference, 'K', for a joint asked to be drawn in
-    // its own colour: 'K<joint>~<rrggbb>'. Only the joints that were asked, so
-    // a drawing where nobody highlighted anything says nothing about colour.
+    // A fourth kind of tagged reference, 'K', for a part asked to be drawn in a
+    // colour of its own: 'KJ<joint>~<family>' and 'KF<force>~<rrggbb>'. Only
+    // the parts that were asked, so a drawing where nobody chose a colour says
+    // nothing about colour.
     const trailing = [
       ...this.lockedIds,
       ...this.comAnchors,
       ...this.synthesisMarks,
-      ...this.jointColors,
+      ...this.partColors,
     ];
     if (trailing.length > 0) {
       fullString += '.' + trailing.join(',');
@@ -589,7 +590,7 @@ export class StringTranscoder extends GenericTranscoder {
       if (entry === '') continue;
       if (entry.charAt(0) === 'C') this.comAnchors.push(entry);
       else if (entry.charAt(0) === 'S') this.synthesisMarks.push(entry);
-      else if (entry.charAt(0) === 'K') this.jointColors.push(entry);
+      else if (entry.charAt(0) === 'K') this.partColors.push(entry);
       else this.lockedIds.push(entry);
     }
 
@@ -627,7 +628,7 @@ export class StringTranscoder extends GenericTranscoder {
     });
     this.validateDecodedSlotCarriers();
     this.validateDecodedLocks(jointIDs, linkIDs);
-    this.validateDecodedJointColors(jointIDs);
+    this.validateDecodedPartColors(jointIDs);
     this.forces.forEach((force) => {
       if (
         !force.id ||
@@ -687,20 +688,26 @@ export class StringTranscoder extends GenericTranscoder {
     hand-edits — the same bargain the sealed bit strikes.
     */
   /*
-    Every colour must name a joint this URL carries and a family this build
-    knows. Refused rather than dropped, for the same reason a lock reference is:
-    a URL saying something this build cannot honour would open as a different
-    drawing than the one that was shared. A family the reader does not have is
-    exactly that -- and the empty id is the default, which is never written, so
-    an entry naming it is a URL that says nothing twice.
+    Every colour must name a part this URL carries, and say something about it
+    this build understands. Refused rather than dropped, for the same reason a
+    lock reference is: a URL saying something this build cannot honour would
+    open as a different drawing than the one that was shared. A joint family the
+    reader does not have is exactly that -- and the default family's id is empty
+    and never written, so an entry naming it is a URL saying nothing twice.
     */
-  private validateDecodedJointColors(jointIDs: Set<string>): void {
-    const known = new Set(JOINT_FAMILIES.map((family) => family.id).filter((id) => id !== ''));
-    this.jointColors.forEach((entry) => {
-      const [id, family] = entry.substring(1).split('~');
-      if (!jointIDs.has(id) || !known.has(family ?? '')) {
-        throw new Error('URL colours a joint it does not carry');
-      }
+  private validateDecodedPartColors(jointIDs: Set<string>): void {
+    const families = new Set(JOINT_FAMILIES.map((family) => family.id).filter((id) => id !== ''));
+    const forceIDs = new Set(this.forces.map((force) => force.id));
+    this.partColors.forEach((entry) => {
+      const kind = entry.charAt(1);
+      const [id, value] = entry.substring(2).split('~');
+      const known =
+        kind === 'J'
+          ? jointIDs.has(id) && families.has(value ?? '')
+          : kind === 'F'
+            ? forceIDs.has(id) && /^[0-9a-fA-F]{6}$/.test(value ?? '')
+            : false;
+      if (!known) throw new Error('URL colours a part it does not carry');
     });
   }
 

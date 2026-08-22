@@ -22,6 +22,7 @@ import {
 } from './transcoding/transcoder-data';
 import { SettingsService } from './settings.service';
 import { MODEL_SCALE } from '../model/render-scale';
+import { DEFAULT_FORCE_COLOR } from '../model/joint-colors';
 import { SynthesisBuilderService } from './synthesis/synthesis-builder.service';
 import { encodeSynthesisDesign } from './synthesis/synthesis-url';
 
@@ -204,14 +205,17 @@ export class UrlGenerationService {
           )
       );
 
-      // Which joints wear a colour of their own. Only those: a drawing where
-      // nobody highlighted a pin is byte-identical to one written before this
-      // was possible.
-      encoder.setJointColors(
-        this.mechanism.joints
+      // Which parts wear a colour of their own. Only those, and only where the
+      // colour is not the one they would be drawn in anyway: a drawing where
+      // nobody chose is byte-identical to one written before this was possible.
+      encoder.setPartColors([
+        ...this.mechanism.joints
           .filter((joint) => !!joint.colorFamily)
-          .map((joint) => 'K' + joint.id + '~' + joint.colorFamily)
-      );
+          .map((joint) => 'KJ' + joint.id + '~' + joint.colorFamily),
+        ...this.mechanism.forces
+          .filter((force) => !!force.color && force.color !== DEFAULT_FORCE_COLOR)
+          .map((force) => 'KF' + force.id + '~' + force.color.replace('#', '')),
+      ]);
 
       // The synthesis design, if one is being worked on. It is not part of the
       // mechanism -- nothing here is on the grid yet -- but undo and redo are a

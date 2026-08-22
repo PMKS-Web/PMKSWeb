@@ -1,7 +1,17 @@
 import { Injectable } from '@angular/core';
-import { JointFamily, JOINT_FAMILIES } from '../model/joint-colors';
+import {
+  DEFAULT_FORCE_COLOR,
+  JointFamily,
+  JOINT_FAMILIES,
+  PART_COLORS,
+} from '../model/joint-colors';
 
-export { JOINT_FAMILIES, SELECTION_RING } from '../model/joint-colors';
+export {
+  JOINT_FAMILIES,
+  SELECTION_RING,
+  PART_COLORS,
+  DEFAULT_FORCE_COLOR,
+} from '../model/joint-colors';
 export type { JointFamily } from '../model/joint-colors';
 
 @Injectable({
@@ -16,20 +26,7 @@ export class ColorService {
     ColorService.instance = this;
   }
 
-  private linkColorOptions = [
-    '#c5cae9',
-    '#303e9f',
-    '#0d125a',
-    // '#283493',
-    // '#3948ab',
-    // '#3f50b5',
-    // '#5c6ac0',
-    // '#7986cb',
-    // '#c5cae9',
-    '#B2DFDB',
-    '#26A69A',
-    '#00695C',
-  ];
+  private linkColorOptions: string[] = [...PART_COLORS];
 
   /**
    * The families a joint can be drawn in, each a set of three.
@@ -67,7 +64,8 @@ export class ColorService {
     return (this.jointFamilies[index] ?? this.jointFamilies[0]).id;
   }
 
-  private forceColorOptions = ['#3f50b5'];
+  /** The same six the links use. A force is read against the link it acts on. */
+  private forceColorOptions: string[] = [...PART_COLORS];
 
   private linkLastColorIndex = 0;
 
@@ -103,7 +101,11 @@ export class ColorService {
   }
 
   getIndexFromForceColor(fill: string) {
-    return this.forceColorOptions.indexOf(fill);
+    // An empty colour is the default, which is one of the six -- so the picker
+    // always has exactly one swatch ticked, whether or not anybody has chosen.
+    const wanted = (fill || DEFAULT_FORCE_COLOR).toLowerCase();
+    const at = this.forceColorOptions.findIndex((option) => option.toLowerCase() === wanted);
+    return at === -1 ? this.forceColorOptions.indexOf(DEFAULT_FORCE_COLOR) : at;
   }
 
   getLinkColorFromIndex(index: number) {
@@ -111,6 +113,6 @@ export class ColorService {
   }
 
   getForceColorFromIndex(index: number) {
-    return this.forceColorOptions[index];
+    return this.forceColorOptions[index] ?? DEFAULT_FORCE_COLOR;
   }
 }

@@ -25,6 +25,15 @@ export class Force {
   private _showHighlight: boolean = false;
   /** Locked in place while editing: neither handle nor the body may be dragged. */
   public locked: boolean = false;
+  /**
+   * What this one force is drawn in, or '' for the colour they all share.
+   *
+   * From the same six the links use, because a force belongs to a link and
+   * reading a drawing means pairing them up. Per force rather than per drawing
+   * so that two loads on one linkage can be told apart -- which is the whole
+   * question a force diagram with more than one arrow in it asks.
+   */
+  public color: string = '';
   isEndSelected: boolean = false;
   isStartSelected: boolean = false;
   visualWidth: number = Force.DEFAULT_VISUAL_WIDTH;

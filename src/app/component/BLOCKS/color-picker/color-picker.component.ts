@@ -30,43 +30,28 @@ export class ColorPickerComponent implements OnChanges {
     if (link) this.selectedIndex = this.colorService.getIndexFromLinkColor(link.fill);
   }
 
-  // The index of the selected color, or -1 if none is selected
-  selectedIndex: number = 0;
-
-  /**
-   * Which swatch is showing as chosen.
-   *
-   * A joint's colour is read from the joint every time rather than remembered
-   * here: one picker serves whichever joint is selected, and clicking from one
-   * joint to the next has to move the tick with them.
-   */
+  /** One picker serves whichever part is selected, so the tick is read from it. */
   chosenIndex(): number {
     const joint = this.joint();
+    const force = this.force();
     if (this.type() === 'joint' && joint) {
       return this.colorService.getIndexFromJointFamily(joint.colorFamily);
+    }
+    if (this.type() === 'force' && force) {
+      return this.colorService.getIndexFromForceColor(force.color);
     }
     return this.selectedIndex;
   }
 
-  /**
-   * The colour a swatch wears inside its own edge, or null for a flat one.
-   *
-   * A joint family is three colours and a flat swatch could only show one of
-   * them, which would either promise a saturation the resting joint does not
-   * have or hide the difference the reader is choosing between. So each swatch
-   * is drawn the way the joint is: its resting colour, with its picked colour
-   * as a ring inside the edge.
-   */
-  ringOf(index: number): string | null {
-    if (this.type() !== 'joint') return null;
-    return this.colorService.getJointFamilies()[index]?.selected ?? null;
-  }
+  // The index of the selected color, or -1 if none is selected
+  selectedIndex: number = 0;
 
   // A method that handles the click event on a color swatch
   selectColor(index: number) {
     this.selectedIndex = index;
     const link = this.link();
     const joint = this.joint();
+    const force = this.force();
     switch (this.type()) {
       case 'link':
         if (link) {
@@ -79,8 +64,13 @@ export class ColorPickerComponent implements OnChanges {
         // empty -- so choosing it means "stop being different", and the URL
         // goes back to saying nothing about this joint.
         joint.colorFamily = this.colorService.getJointFamilyFromIndex(index);
-        // Undoable, and carried in the URL: a highlight that a shared link
-        // dropped, or that one undo wiped, would not be worth putting on.
+        // Undoable, and carried in the URL: a colour that a shared link dropped,
+        // or that one undo wiped, would not be worth putting on.
+        this.mechanism.updateMechanism(true);
+        break;
+      case 'force':
+        if (!force) break;
+        force.color = this.colorService.getForceColorFromIndex(index);
         this.mechanism.updateMechanism(true);
         break;
     }

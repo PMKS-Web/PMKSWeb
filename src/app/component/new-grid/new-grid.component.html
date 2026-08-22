@@ -1430,7 +1430,11 @@
                reads around it. At the old 0.15 object scales it was the same
                size as the joint and covered it exactly. -->
           @if (!force.local) {
-            <circle [attr.r]="forceAnchorRadius(force)" class="forceAnchor"></circle>
+            <circle
+              [attr.r]="forceAnchorRadius(force)"
+              class="forceAnchor"
+              [style.fill]="forceInkOf(force)"
+            ></circle>
           }
           <!-- Local: the welded joint's own plus. A local force is carried by
                the body rather than fixed in the world, which is the statement a
@@ -1440,6 +1444,7 @@
             <path
               [attr.d]="forceWeldMark(force)"
               class="forceAnchor"
+              [style.fill]="forceInkOf(force)"
               style="transform: rotateZ({{ force.angleRad }}rad)"
             ></path>
           }
@@ -1467,6 +1472,7 @@
         <path
           [attr.d]="force.forceLine"
           class="forceLine"
+          [style.stroke]="forceInkOf(force)"
           [attr.stroke-width]="force.visualWidth * settings.objectScale"
         ></path>
         <path
@@ -1474,7 +1480,11 @@
           stroke="transparent"
           [attr.stroke-width]="force.visualWidth * settings.objectScale + svgGrid.scaleWithZoom(10)"
         ></path>
-        <path [attr.d]="force.forceArrow" class="forceArrow" [attr.fill]="force.fill"></path>
+        <path
+          [attr.d]="force.forceArrow"
+          class="forceArrow"
+          [style.fill]="forceInkOf(force)"
+        ></path>
       </g>
       @if (activeObjService.selectedForce == force && activeObjService.objType == 'Force') {
         <ng-container>

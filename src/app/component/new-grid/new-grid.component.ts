@@ -110,7 +110,7 @@ export interface SlotStackItem {
 import introJs from 'intro.js';
 import { KeyboardShortcutsService, ShortcutId } from '../../services/keyboard-shortcuts.service';
 import { INK_FLIPS_AT, luminanceOf } from '../../model/contrast';
-import { SELECTION_RING } from '../../model/joint-colors';
+import { DEFAULT_FORCE_COLOR, SELECTION_RING } from '../../model/joint-colors';
 
 /** Which corner of the tracing underlay a resize gesture is holding. */
 type BackgroundImageCorner = 'tl' | 'tr' | 'bl' | 'br';
@@ -3599,6 +3599,19 @@ export class NewGridComponent implements OnDestroy {
     const fill = this.jointFillOf(joint);
     if (!fill || this.gridUtils.getWelded(joint)) return null;
     return luminanceOf(fill) > INK_FLIPS_AT ? '#263238' : '#eceff1';
+  }
+
+  /**
+   * The colour one force is drawn in -- line, arrowhead and anchor together.
+   *
+   * Nothing in an analysis mode where the force is scenery: a load on a body
+   * this analysis has nothing to say about is greyed with the body, and a
+   * colour somebody chose is still a louder thing than the machine being
+   * analysed.
+   */
+  forceInkOf(force: Force): string | null {
+    if (this.mechanismSrv.isPartInert(force.link)) return null;
+    return force.color || DEFAULT_FORCE_COLOR;
   }
 
   get orphanMarkInk(): string {

@@ -1,6 +1,8 @@
 import '../../model/joint';
 import { Joint, RevJoint } from '../../model/joint';
 import { Force } from '../../model/force';
+import { Coord } from '../../model/coord';
+import { DEFAULT_FORCE_COLOR } from '../../model/joint-colors';
 import { Link, RealLink } from '../../model/link';
 import { ActiveObjService } from '../active-obj.service';
 import { MechanismService } from '../mechanism.service';
@@ -11,7 +13,7 @@ import { StringTranscoder } from './string-transcoder';
 import { MODEL_SCALE } from '../../model/render-scale';
 
 /**
- * A joint drawn in a colour family of its own travels in the trailing section
+ * A part drawn in a colour of its own travels in the trailing section
  * the lock marks and the centre-of-mass anchors already share: a tagged
  * reference to an object the URL carries. Its tag is 'K', which none of the
  * others uses, and what follows is the family's id rather than a colour -- a
@@ -84,7 +86,7 @@ describe('a joint colour in the URL', () => {
     // nothing about.
     expect(body(encode({}))).not.toContain('.K');
     expect(body(encode({ B: '' }))).toBe(body(encode({})));
-    expect(body(encode({ B: 'o' }))).toBe(body(encode({})) + '.KB~o');
+    expect(body(encode({ B: 'o' }))).toBe(body(encode({})) + '.KJB~o');
   });
 
   it('sits alongside lock marks without either reading the other', () => {
@@ -95,7 +97,7 @@ describe('a joint colour in the URL', () => {
       new SettingsService()
     ).generateUrlQuery();
 
-    expect(body(encoded)).toContain('.JA,KB~b');
+    expect(body(encoded)).toContain('.JA,KJB~b');
     const opened = decode(encoded);
     expect((opened.joints.find((joint) => joint.id === 'A') as RevJoint).locked).toBe(true);
     expect(familyOf(opened, 'B')).toBe('b');
@@ -107,7 +109,7 @@ describe('a joint colour in the URL', () => {
     // not resolve would otherwise decode as a colour quietly dropped, and the
     // reader would be looking at a different drawing than the one shared.
     const decoder = new StringTranscoder();
-    expect(() => decoder.decodeURL(encode({ B: 'o' }).replace('KB~', 'KZ~'))).toThrow();
+    expect(() => decoder.decodeURL(encode({ B: 'o' }).replace('KJB~', 'KJZ~'))).toThrow();
   });
 
   it('refuses a family this build does not have', () => {
@@ -116,5 +118,61 @@ describe('a joint colour in the URL', () => {
     const decoder = new StringTranscoder();
     expect(() => decoder.decodeURL(encode({ B: 'o' }).replace('~o', '~zz'))).toThrow();
     expect(() => decoder.decodeURL(encode({ B: 'o' }).replace('~o', '~'))).toThrow();
+  });
+});
+
+describe('a force colour in the URL', () => {
+  function loaded(color: string) {
+    const parts = source({});
+    const force = new Force('F1', parts.links[0] as RealLink, new Coord(0, 0), new Coord(S, S));
+    force.color = color;
+    return { ...parts, forces: [force] };
+  }
+
+  function encodeForce(color: string): string {
+    return urlGeneratorFor(
+      { ...loaded(color), mechanismTimeStep: 0 } as unknown as MechanismService,
+      new SettingsService()
+    ).generateUrlQuery();
+  }
+
+  it('round-trips the colour onto the force it names', () => {
+    const opened = decode(encodeForce('#26A69A')) as unknown as { forces: Force[] };
+    expect(opened.forces[0].color).toBe('#26A69A');
+  });
+
+  it('says nothing about a force drawn in the colour they all share', () => {
+    // Including one that has been set to it by hand: what is written is the
+    // difference from the default, not the fact that somebody opened a picker.
+    expect(body(encodeForce(''))).not.toContain('.K');
+    expect(body(encodeForce(DEFAULT_FORCE_COLOR))).toBe(body(encodeForce('')));
+  });
+
+  it('shares the section with a joint colour without either reading the other', () => {
+    const both = loaded('#00695C');
+    both.joints[1].colorFamily = 'd';
+    const encoded = urlGeneratorFor(
+      { ...both, mechanismTimeStep: 0 } as unknown as MechanismService,
+      new SettingsService()
+    ).generateUrlQuery();
+
+    // Written exactly as the palette spells it: the link records have
+    // carried these six strings verbatim since long before this section, and a
+    // colour that changed case between them would stop matching.
+    expect(body(encoded)).toContain('.KJB~d,KFF1~00695C');
+    const opened = decode(encoded) as unknown as { joints: Joint[]; forces: Force[] };
+    expect(familyOf(opened, 'B')).toBe('d');
+    expect(opened.forces[0].color).toBe('#00695C');
+  });
+
+  it('refuses a colour on a force the URL does not carry', () => {
+    const decoder = new StringTranscoder();
+    expect(() => decoder.decodeURL(encodeForce('#26A69A').replace('KFF1~', 'KFZZ~'))).toThrow();
+    expect(() => decoder.decodeURL(encodeForce('#26A69A').replace('~26A69A', '~teal'))).toThrow();
+  });
+
+  it('refuses a tag naming neither a joint nor a force', () => {
+    const decoder = new StringTranscoder();
+    expect(() => decoder.decodeURL(encodeForce('#26A69A').replace('KFF1~', 'KXF1~'))).toThrow();
   });
 });

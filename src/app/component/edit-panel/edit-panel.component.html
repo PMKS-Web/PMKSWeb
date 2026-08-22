@@ -691,7 +691,12 @@
         (opened)="sectionExpanded['FVisual'] = true"
         (closed)="sectionExpanded['FVisual'] = false"
       >
-        <color-picker type="force" [force]="activeSrv.selectedForce">Force Color</color-picker>
+        <color-picker
+          type="force"
+          [force]="activeSrv.selectedForce"
+          tooltip="Draw this one force in its own colour, from the same six the links use. Travels with the drawing."
+          >Force Color</color-picker
+        >
       </collapsible-subseciton>
     </panel-section>
   }
