@@ -18,8 +18,6 @@
     .swatch {
       width: 28px;
       height: 28px;
-      // Reads as a swatch rather than as a coloured gap: the pale end of both
-      // palettes is within a shade or two of the panel behind it.
       // Reads as a swatch rather than as a coloured gap: the pale end of every
       // palette is within a shade or two of the panel behind it.
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);

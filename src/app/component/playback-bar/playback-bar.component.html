@@ -74,9 +74,11 @@
                    as a button it could be focused, pressed and shown as
                    selected, none of which lead anywhere. -->
               @if (row.isMechanism) {
+                <!-- The row already selects on click, so the button stops here
+                     rather than letting one press run both handlers. -->
                 <button
                   class="mechChip"
-                  (click)="selectMechanism(row)"
+                  (click)="selectMechanism(row); $event.stopPropagation()"
                   [attr.title]="'Select ' + row.id"
                 >
                   {{ row.id }}

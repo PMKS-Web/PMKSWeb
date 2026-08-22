@@ -978,20 +978,18 @@ export class SvgGridService {
   /**
    * Keep the drawing framed when the chrome around it moves.
    *
-   * Called for the two things that change the shape of the free canvas without
-   * anybody touching the view: the window being resized, and a mode change,
-   * which both widens the panel and brings the transport in or out. The drawer
-   * is deliberately not one of them -- it stands over the canvas for a moment
-   * and then goes, and a view that jumped away and back for it would be worse
-   * than one that let it overlap.
+   * Called for everything that changes the shape of the free canvas without
+   * anybody touching the view: the window being resized, a mode change -- which
+   * both widens the panel and brings the transport in or out -- and the drawer
+   * over the right of the canvas.
    *
-   * What it does is the least it can: the drawing keeps its size and its place
-   * relative to the space it is being seen in. Only if it *was* framed and now
-   * would not fit does the zoom change, because that is the only case where
-   * holding the zoom loses part of the mechanism. Somebody who has zoomed in on
-   * a detail keeps their zoom through every panel they open.
+   * What it does is the least it can. A view somebody drove to keeps its size
+   * and its place relative to the space it is being seen in; the zoom changes
+   * only where holding it would take the drawing out of sight, and is given
+   * back the moment there is room for it again. A view a fit put there stays
+   * fitted, which is what makes a drawer opening and closing symmetrical.
    */
-  notifyChromeChanged(alreadyMoved = false): void {
+  notifyChromeChanged(alreadyMoved = false, growth = 1): void {
     if (this.settlePending) return;
     if (!this.panZoomObject || !NewGridComponent.instance) return;
     this.settlePending = true;
@@ -1025,6 +1023,22 @@ export class SvgGridService {
     // drawer opening over a drawer does not lose the view under both of them.
     if (!stayFramed && !this.chosenView && matrix && offset) {
       this.chosenView = { zoom: matrix.a, offset };
+    }
+    // Grown *after* the view is taken down, never before: on the way into a
+    // resize the canvas has not moved yet, so what is captured is the view for
+    // the window that has just gone and growth is what expresses it for the
+    // window that has arrived. Applied before the capture instead, a shrink
+    // that had nothing remembered yet scaled nothing while the matching grow
+    // scaled what the shrink had since written down -- and the round trip came
+    // back a size out.
+    if (growth !== 1 && this.chosenView) {
+      this.chosenView = {
+        zoom: this.clampZoom(this.chosenView.zoom * growth),
+        offset: {
+          x: this.chosenView.offset.x * growth,
+          y: this.chosenView.offset.y * growth,
+        },
+      };
     }
     let stable = 0;
     // A window resize is heard once the window has already changed, so the
@@ -1083,7 +1097,7 @@ export class SvgGridService {
       if (done || waited > SETTLE_MAX_MS) {
         this.settlePending = false;
         this.settledFree = now;
-        this.finishSettle({ free: now, drawn, wasFramed, offset, zoom: matrix?.a });
+        this.finishSettle({ free: now, drawn, wasFramed });
         return;
       }
       requestAnimationFrame(step);
@@ -1092,8 +1106,6 @@ export class SvgGridService {
   }
 
   private settlePending = false;
-  /** How much bigger the window got, for a settle that follows a resize. */
-  private settleGrowth = 1;
   private lastWindowSize = { width: 0, height: 0 };
   /** Where the chrome stood the last time the view was put somewhere. */
   private settledFree: Rect | null = null;
@@ -1118,53 +1130,42 @@ export class SvgGridService {
     free: Rect | null;
     drawn: Rect | null;
     wasFramed: boolean;
-    offset: { x: number; y: number } | null;
-    zoom: number | undefined;
   }): void {
-    const growth = this.settleGrowth;
-    this.settleGrowth = 1;
     const fit = this.queuedFit;
     this.queuedFit = null;
     if (fit !== null) {
       this.frameDrawing(fit);
       return;
     }
-    const { free, drawn, offset, zoom } = settle;
+    const { free, drawn } = settle;
     if (!free || !drawn) return;
 
-    // A fitted view has already been kept fitted, frame by frame, on the way
-    // here; scaling it by the window's own ratio would undo that.
-    const held = this.chosenView;
-    if (growth !== 1 && held && !this.viewIsFitted) {
-      const grown = this.clampZoom(held.zoom * growth);
-      const at = {
-        x: centerOf(free).x + held.offset.x * growth,
-        y: centerOf(free).y + held.offset.y * growth,
-      };
-      const landing: Rect = {
-        x: at.x - (drawn.width * grown) / 2,
-        y: at.y - (drawn.height * grown) / 2,
-        width: drawn.width * grown,
-        height: drawn.height * grown,
-      };
-      // The window's own ratio is not the free canvas's -- the chrome along the
-      // edges does not shrink with it -- so a drawing that was whole in view can
-      // still spill out of the smaller one. Somebody who was looking at the
-      // whole mechanism goes on looking at the whole mechanism.
-      if (!settle.wasFramed || fitsInside(landing, free, OVERHANG_SLACK)) {
-        // The window took the view with it, so that is the view now: a later
-        // drawer has to give this back rather than the one from before.
-        this.chosenView = { zoom: grown, offset: { x: held.offset.x * growth, y: held.offset.y * growth } };
-        this.moveViewTo(drawn, at, grown, true);
-        return;
-      }
-      this.frameDrawing(true);
-      return;
-    }
-
+    // The tracking above has already put the view where it belongs -- at the
+    // remembered one if there is room for it, framed if there is not. All that
+    // is left is the case it cannot see: a drawing that was whole in view and
+    // no longer is, which is the one place holding the zoom loses part of the
+    // mechanism.
     const shown = this.screenBoxOf(drawn);
     if (settle.wasFramed && shown && !fitsInside(shown, free, OVERHANG_SLACK)) {
-      this.frameDrawing(true);
+      this.rescueFrame();
+    }
+  }
+
+  /**
+   * Frame the drawing without claiming anybody asked to see the whole of it.
+   *
+   * A fit that rescues a drawing the chrome was about to squeeze out of sight
+   * is the app keeping a view usable until there is room for it again, not a
+   * request. Read as a request it would take the view away for good: the first
+   * window that got smaller would end the reader's zoom, and growing the window
+   * back would frame the drawing rather than give their zoom back.
+   */
+  private rescueFrame(): void {
+    const held = this.chosenView;
+    this.frameDrawing(true);
+    if (held) {
+      this.viewIsFitted = false;
+      this.chosenView = held;
     }
   }
 
@@ -1226,21 +1227,27 @@ export class SvgGridService {
     this.watchingChrome = true;
     this.lastWindowSize = { width: window.innerWidth, height: window.innerHeight };
     const onResize = () => {
-      // Measured off the window rather than off the free rect, because by the
-      // time a resize is heard the free rect has already changed and there is
-      // nothing left to compare it against. The geometric mean of the two sides
-      // rather than the smaller of them, so shrinking a window and pulling it
-      // back out lands on the zoom it started at -- taking the smaller each way
-      // multiplies to less than one, and every round trip left the drawing a
-      // little smaller than it was found.
+      // The view somebody drove to goes with the window, so a drawing keeps the
+      // share of the canvas it had. Measured off the window rather than off the
+      // free rect, because by the time a resize is heard the free rect has
+      // already changed and there is nothing left to compare it against; and
+      // the geometric mean of the two sides rather than the smaller of them, so
+      // shrinking a window and pulling it back out lands on the zoom it started
+      // at -- taking the smaller each way multiplies to less than one, and every
+      // round trip left the drawing a little smaller than it was found.
+      //
+      // Applied to the remembered view rather than to what is on screen, so a
+      // shrink that had to frame the drawing to keep it in sight still gives
+      // the reader's own zoom back when the window grows again.
       const was = this.lastWindowSize;
       this.lastWindowSize = { width: window.innerWidth, height: window.innerHeight };
-      if (was.width > 0 && was.height > 0) {
-        this.settleGrowth *= Math.sqrt(
-          (this.lastWindowSize.width / was.width) * (this.lastWindowSize.height / was.height)
-        );
-      }
-      this.notifyChromeChanged(true);
+      const growth =
+        was.width > 0 && was.height > 0
+          ? Math.sqrt(
+              (this.lastWindowSize.width / was.width) * (this.lastWindowSize.height / was.height)
+            )
+          : 1;
+      this.notifyChromeChanged(true, growth);
     };
     window.addEventListener('resize', onResize);
     // Late, and through the injector: the tab service reaches the mechanism,
