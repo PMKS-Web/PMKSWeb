@@ -206,7 +206,7 @@ export class ContextMenuBuilderService {
     const header = {
       title: `Joint ${this.nameOf(joint)}`,
       subtitle: this.jointSubtitle(joint),
-      crossing: this.crossing(),
+      crossing: this.crossing(joint),
     };
     if (!(joint instanceof RealJoint)) return { header, groups: [] };
     if (this.tabs.isAnalysisMode()) {
@@ -490,7 +490,7 @@ export class ContextMenuBuilderService {
     const header = {
       title: sealed ? this.cylinderName(sealed) : labelForBody(link, undefined),
       subtitle: this.linkSubtitle(link, sealed),
-      crossing: this.crossing(),
+      crossing: this.crossing(link),
     };
     if (this.tabs.isAnalysisMode()) {
       return { header, groups: [{ rows: this.positionRows(handlers, undefined) }] };
@@ -659,7 +659,7 @@ export class ContextMenuBuilderService {
     const header = {
       title: `Force ${force.name || force.id}`,
       subtitle: `On ${labelForBody(force.link, undefined)} · ${force.local ? 'local' : 'global'} frame`,
-      crossing: this.crossing(),
+      crossing: this.crossing(force),
     };
     if (this.tabs.isAnalysisMode()) return { header, groups: [] };
     return {
@@ -779,7 +779,7 @@ export class ContextMenuBuilderService {
    * changed; in Edit it goes to Kinematic Analysis, and greys with the
    * readiness reason when there is nothing that can be analysed yet.
    */
-  private crossing() {
+  private crossing(part: Joint | Link | Force) {
     if (this.tabs.isAnalysisMode()) {
       return {
         icon: 'edit_outline',
@@ -787,21 +787,43 @@ export class ContextMenuBuilderService {
         action: () => this.tabs.setTab(TabID.EDIT),
       };
     }
-    const blockers = this.mechanism.blockerCount();
     return {
       icon: 'query_stats',
       material: true,
       tip: this.keys.tip('Kinematic Analysis', 'mode.kinematic'),
       action: () => this.tabs.setTab(TabID.ANALYZE),
-      refusal: this.mechanism.oneValidMechanismExists()
-        ? undefined
-        : {
-            short: 'not ready',
-            long:
-              blockers === 0
-                ? 'There is no mechanism to analyse yet.'
-                : `This mechanism has ${blockers} ${blockers === 1 ? 'thing' : 'things'} to fix before it can be analysed.`,
-          },
+      refusal: this.analysisRefusal(part),
+    };
+  }
+
+  /**
+   * Why *this part* cannot be analysed — its own machine's answer, not the
+   * drawing's.
+   *
+   * A grid can hold a four-bar that runs beside a half-drawn chain that does
+   * not, and asking "is anything here analysable" would offer the crossing
+   * from the half-drawn one on the strength of the four-bar next to it. The
+   * modes themselves would then grey that part out on arrival, which is an
+   * offer taken back after it was accepted.
+   */
+  private analysisRefusal(part: Joint | Link | Force): MenuRefusal | undefined {
+    if (this.mechanism.isPartSimulatable(part)) return undefined;
+    const readiness = this.mechanism.readinessOfPart(part);
+    if (!readiness) {
+      return {
+        short: 'not in a mechanism',
+        long: 'This part is not joined into a mechanism that can be analysed. Connect it to a grounded chain.',
+      };
+    }
+    const several = this.mechanism.partitions.length > 1;
+    const blocker = readiness.checks.find((check) => check.state === 'blocker');
+    return {
+      // Named when there is more than one machine on the grid: "not ready" on
+      // a drawing holding two of them does not say which one is meant.
+      short: several ? `${readiness.id} is not ready` : 'not ready',
+      long: blocker
+        ? `${blocker.title}. ${blocker.body}`
+        : `${several ? readiness.id : 'This mechanism'} cannot be analysed yet.`,
     };
   }
 

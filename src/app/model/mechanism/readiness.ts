@@ -144,8 +144,8 @@ export function readinessOf(
         state: 'blocker',
         title: 'Nothing drives this mechanism',
         body: candidate
-          ? `There is no time to solve against until one joint is driven. Right-click joint ${(candidate as RealJoint).name || candidate.id} and choose Add Input.`
-          : 'There is no time to solve against until one joint is driven. Right-click a grounded joint and choose Add Input.',
+          ? `There is no time to solve against until one joint is driven. Right-click joint ${(candidate as RealJoint).name || candidate.id} and switch on Driven Input.`
+          : 'There is no time to solve against until one joint is driven. Right-click a grounded joint and switch on Driven Input.',
         at: candidate,
         action: candidate ? 'Go To Joint' : undefined,
       });

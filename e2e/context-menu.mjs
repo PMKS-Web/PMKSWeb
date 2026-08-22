@@ -320,6 +320,38 @@ check(
   synthCanvas?.rows.map((one) => one.label)
 );
 
+// --------------------------------------------------- one grid, two machines
+
+/** Two four-bars side by side, each with its own drive. */
+const TWO_FOUR_BARS =
+  '?2P.Ay,1E8.K,0.1011.6A,A,0mv,0VU,0.0B,B,0e_,E6,0.0C,C,l1,WW,0.4D,D,qD,0Pk,0.6E,E,2Y_,0,0.' +
+  '0F,F,2Y_,GJ,0.0G,G,3Jt,Wc,0.4H,H,3aA,0,0..YRAB,AB,Fe,Fe,0ix,08i,c5cae9,A,B,,.' +
+  'YRBC,BC,Fe,Fe,32,NJ,303e9f,B,C,,.YRCD,CD,Fe,Fe,nd,3P,0d125a,C,D,,.' +
+  'AREF,EF,0,0,2Y_,8A,555555,E,F,,.ARFG,FG,0,0,2xQ,OS,555555,F,G,,.' +
+  'ARGH,GH,0,0,3S0,GJ,555555,G,H,,...N_L';
+
+await openMechanism(page, BASE + TWO_FOUR_BARS);
+await clearOverlay();
+const bothFine = await openOn('#joint_F');
+check(
+  'a part of a machine that runs offers the way into analysis',
+  bothFine?.cross === 'on',
+  bothFine
+);
+
+// Take the input off the second machine only.
+await openOn('#joint_E');
+await page.click('.cm-row:has(.cm-row__label:text-is("Driven Input"))');
+await page.waitForTimeout(900);
+const broken = await openOn('#joint_F');
+check('a part of a machine that cannot run does not', broken?.cross === 'off', broken);
+const stillFine = await openOn('#joint_C');
+check(
+  'while the machine beside it still does — the question is per part',
+  stillFine?.cross === 'on',
+  stillFine
+);
+
 check('nothing threw', errors.length === 0, errors.slice(0, 3));
 await browser.close();
 

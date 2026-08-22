@@ -43,9 +43,11 @@
     // of them says which one only if the card does.
     .cm-header {
       display: flex;
-      align-items: flex-start;
+      // Centred against the whole two-line block rather than hung off the
+      // title: the icon is about the part, not about its name.
+      align-items: center;
       gap: 8px;
-      padding: 10px 12px 9px 14px;
+      padding: 10px 12px 10px 14px;
     }
 
     .cm-header__names {
@@ -76,7 +78,7 @@
       justify-content: center;
       width: 26px;
       height: 26px;
-      margin: -2px -2px 0 0;
+      margin-right: -2px;
       padding: 0;
       border: none;
       border-radius: 4px;

@@ -482,6 +482,21 @@ export class MechanismService {
     return index === -1 ? undefined : this.mechanisms[index];
   }
 
+  /**
+   * The readiness of the machine this part belongs to, or nothing when it
+   * belongs to none.
+   *
+   * Per part rather than per drawing. With several machines on one grid, "is
+   * anything analysable" is the wrong question to ask about the joint under
+   * the pointer: a drawing can hold a four-bar that runs and a half-drawn
+   * chain that does not, and offering analysis from the half-drawn one is an
+   * offer the analysis modes will not honour.
+   */
+  readinessOfPart(part: Joint | Link | Force): MechanismReadiness | undefined {
+    const index = this.indexOfMechanismContaining(part);
+    return index === -1 ? undefined : this.readinessOfEachMechanism()[index];
+  }
+
   /** Can this part's own machine be simulated? Says nothing about the others. */
   isPartSimulatable(part: Joint | Link | Force): boolean {
     return this.mechanismContaining(part)?.isMechanismValid() ?? false;
@@ -2538,7 +2553,7 @@ export class MechanismService {
       return `Slider ${names} has nothing to slide along. Drag it onto a link to cut a slot, or ground it to fix its direction.`;
     }
     if (!this.joints.some((joint) => joint instanceof RealJoint && joint.input)) {
-      return 'No joint is driven. Right-click a joint and choose Add Input to say what moves the mechanism.';
+      return 'No joint is driven. Right-click a joint and switch on Driven Input to say what moves the mechanism.';
     }
     // A driven joint the actuator record cannot describe -- most often because
     // an edit added a third body to it long after Driven was switched on. The

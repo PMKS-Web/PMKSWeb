@@ -316,13 +316,31 @@ describe('the right-click menu', () => {
       expect(model.header?.crossing?.icon).toBe('edit_outline');
     });
 
-    it('crosses into analysis from Edit, greyed when there is nothing to analyse', () => {
+    it('crosses into analysis from Edit, and the canvas has nowhere to cross to', () => {
       fourBar(harness.mechanism);
-      const empty = harness.builder.build('grid', noHandlers);
-      expect(empty.header?.crossing).toBeUndefined();
-      const joint = harness.builder.build(harness.mechanism.joints[0], noHandlers);
-      // No input has been set, so the mechanism cannot run yet.
-      expect(joint.header?.crossing?.refusal?.short).toBe('not ready');
+      expect(harness.builder.build('grid', noHandlers).header?.crossing).toBeUndefined();
+    });
+
+    it('will not offer analysis of a part that is in no mechanism', () => {
+      const parts = fourBar(harness.mechanism);
+      // Nothing has been partitioned, so no part belongs to a machine yet —
+      // which is exactly the state a loose bar dropped on the grid is in.
+      const crossing = harness.builder.build(parts.a, noHandlers).header?.crossing;
+      expect(crossing?.refusal?.short).toBe('not in a mechanism');
+    });
+
+    it('asks the part which machine it is in, not the drawing', () => {
+      const parts = fourBar(harness.mechanism);
+      harness.mechanism.updateMechanism();
+      const inside = harness.builder.build(parts.a, noHandlers).header?.crossing;
+      const readiness = harness.mechanism.readinessOfPart(parts.a);
+      // Whatever this machine's state is, the crossing agrees with it rather
+      // than with whether *something* on the grid can be analysed.
+      expect(!!inside?.refusal).toBe(!harness.mechanism.isPartSimulatable(parts.a));
+      if (inside?.refusal) {
+        expect(readiness).toBeDefined();
+        expect(inside.refusal.short).toBe('not ready');
+      }
     });
 
     it('offers nothing but the positions in Synthesis', () => {
