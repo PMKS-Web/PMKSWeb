@@ -411,10 +411,14 @@ export class ContextMenuBuilderService {
         action: () => this.activeObj.updateSelectedObj(joint),
         refusal: this.mechanism.jointHasForceToGraph(joint)
           ? undefined
-          : {
+          : // "One part meets it" is only true when that is what is wrong.
+            // On a machine that cannot be analysed at all, the joint may have
+            // three bodies at it and still no graph, and telling that reader
+            // to attach something would send them to fix the wrong thing.
+            (this.analysisRefusal(joint) ?? {
               short: 'one part meets it',
               long: 'Only one part meets this joint, so there is no second body for it to react against and no force to graph.',
-            },
+            }),
       }),
     ];
   }

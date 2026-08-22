@@ -212,6 +212,23 @@ describe('the right-click menu', () => {
       expect(row(model, 'Locked')!.disabled).toBe(false);
     });
 
+    it('will not let a link deletion sweep up a locked joint', () => {
+      const parts = fourBar(harness.mechanism);
+      // O is on the crank alone, so deleting the crank would orphan it. The
+      // crank is not itself "locked" -- that needs every joint -- so the lock
+      // was being ignored by the longer route.
+      parts.o.locked = true;
+      expect(harness.mechanism.deleteRefusal(parts.crank)).toContain('locked');
+      harness.mechanism.activeObjService.updateSelectedObj(parts.crank);
+      harness.mechanism.deleteLink();
+      expect(harness.mechanism.links.some((one) => one.id === 'OA')).toBe(true);
+      expect(harness.mechanism.joints.some((one) => one.id === 'O')).toBe(true);
+      const remove = rows(harness.builder.build(parts.crank, noHandlers)).find(
+        (one) => one.destructive
+      )!;
+      expect(remove.refusal!.short).toBe('unlock first');
+    });
+
     it('refuses to attach to a locked joint for the same reason', () => {
       const parts = fourBar(harness.mechanism);
       parts.a.locked = true;
@@ -251,6 +268,28 @@ describe('the right-click menu', () => {
         parts.coupler.joints.some((other) => other.id === one.id)
       );
       expect(shared.length).toBe(0);
+    });
+
+    it('copies the body, including what makes those numbers custom', () => {
+      const parts = fourBar(harness.mechanism);
+      parts.crank.mass = 7;
+      parts.crank.massMoI = 123.456;
+      parts.crank.moiIsCustom = true;
+      parts.crank.placeCustomCoM({ x: parts.crank.CoM.x + 37, y: parts.crank.CoM.y - 21 });
+
+      harness.mechanism.duplicateLink(parts.crank);
+      const copy = harness.mechanism.links[harness.mechanism.links.length - 1] as RealLink;
+      expect(copy.mass).toBe(7);
+      expect(copy.massMoI).toBe(123.456);
+      // The flags, not just the values: without them the next rebuild treats
+      // the copy as an ordinary body and computes both back over.
+      expect(copy.moiIsCustom).toBe(true);
+      expect(copy.comIsCustom).toBe(true);
+      // And the offsets are held against joint letters, which have to be the
+      // copy's own or the point rides a bar it is not on.
+      expect(copy.comOffset?.frame).toEqual(
+        copy.joints.map((joint) => joint.id) as [string, string]
+      );
     });
 
     it('greys the row on a welded compound rather than doing nothing', () => {

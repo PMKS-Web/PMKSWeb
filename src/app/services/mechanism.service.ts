@@ -1037,8 +1037,21 @@ export class MechanismService {
    * that only looks enforced.
    */
   deleteRefusal(target: RealJoint | Link | Force): string | undefined {
-    if (!this.isLockedTarget(target as RealJoint | Link | Force)) return undefined;
-    return 'That part is locked. Unlock it before deleting it.';
+    if (this.isLockedTarget(target)) {
+      return 'That part is locked. Unlock it before deleting it.';
+    }
+    // A link is "locked" only when every one of its joints is, so a bar with
+    // one locked end is not -- and deleting it swept that end away as an
+    // orphan, which is the lock being ignored by a longer route. The cascade
+    // is part of the deletion, so the lock has to be asked of the cascade.
+    if (target instanceof Link) {
+      const held = this.jointsOrphanedByDeleting(target).filter((joint) => joint.locked);
+      if (held.length > 0) {
+        const names = held.map((joint) => joint.name || joint.id).join(', ');
+        return `Deleting this would also remove locked ${held.length === 1 ? 'joint' : 'joints'} ${names}. Unlock ${held.length === 1 ? 'it' : 'them'} first.`;
+      }
+    }
+    return undefined;
   }
 
   /** Say why, and answer whether the caller should stop. */
@@ -1175,12 +1188,31 @@ export class MechanismService {
     // copied -- two links answering to "Crank" is a drawing nobody can talk
     // about -- and neither is the lock, which is a statement about the part
     // that was settled rather than about the one just made.
+    //
+    // The *custom* flags come too, and they are the half that matters: without
+    // them the next rebuild treats the copy as an ordinary body and computes
+    // both back over -- a hand-set inertia of 123.456 was landing as 0.005
+    // before the reader had done anything. And everything the offsets are held
+    // against is a joint letter, so those letters are the source's and have to
+    // be re-read as the copy's or the point rides a bar it is not on.
+    const renamed = new Map(source.map((joint, index) => [joint.id, made[index].id]));
+    const rename = (id: string): string => renamed.get(id) ?? made[0].id;
     copy.mass = link.mass;
     copy.massMoI = link.massMoI;
+    copy.moiIsCustom = link.moiIsCustom;
     copy.fill = link.fill;
     copy.isCircle = link.isCircle;
-    copy.comAnchor = link.comAnchor;
+    copy.comIsCustom = link.comIsCustom;
+    copy.comAnchor =
+      typeof link.comAnchor === 'object' ? { joint: rename(link.comAnchor.joint) } : link.comAnchor;
     copy.comAnchorOffset = link.comAnchorOffset ? { ...link.comAnchorOffset } : undefined;
+    copy.comOffset = link.comOffset
+      ? {
+          along: link.comOffset.along,
+          across: link.comOffset.across,
+          frame: [rename(link.comOffset.frame[0]), rename(link.comOffset.frame[1])],
+        }
+      : undefined;
     made.forEach((joint) => {
       joint.links.push(copy);
       made.forEach((other) => {
