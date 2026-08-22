@@ -354,6 +354,22 @@ export class SvgGridService {
    * told apart: a view the app moved is still a view nobody chose. Public,
    * because the settings panel compensates for a unit change from its own side.
    */
+  /**
+   * Carry the remembered view across a change in the size of the window.
+   *
+   * A view somebody drove to keeps the share of the canvas it had, so it scales
+   * with the window. Nothing to do for a view a fit put there: that one is
+   * framed afresh instead, and there is nothing written down to scale.
+   */
+  private growChosenView(growth: number): void {
+    const held = this.chosenView;
+    if (growth === 1 || !held) return;
+    this.chosenView = {
+      zoom: this.clampZoom(held.zoom * growth),
+      offset: { x: held.offset.x * growth, y: held.offset.y * growth },
+    };
+  }
+
   /** Whatever the view was is now whatever the reader just made it. */
   private forgetChosenView(): void {
     this.viewIsFitted = false;
@@ -1000,7 +1016,16 @@ export class SvgGridService {
    * fitted, which is what makes a drawer opening and closing symmetrical.
    */
   notifyChromeChanged(alreadyMoved = false, growth = 1): void {
-    if (this.settlePending) return;
+    if (this.settlePending) {
+      // A resize heard while the last one is still settling still counts. The
+      // window size it was measured against has already been written down, so
+      // a ratio dropped here can never be recovered -- and a run of resize
+      // events at frame rate is the ordinary way a window gets dragged, so this
+      // is the common case rather than the corner. The settle already running
+      // reads the remembered view afresh on every frame and will follow it.
+      this.growChosenView(growth);
+      return;
+    }
     if (!this.panZoomObject || !NewGridComponent.instance) return;
     this.settlePending = true;
 
@@ -1041,15 +1066,7 @@ export class SvgGridService {
     // that had nothing remembered yet scaled nothing while the matching grow
     // scaled what the shrink had since written down -- and the round trip came
     // back a size out.
-    if (growth !== 1 && this.chosenView) {
-      this.chosenView = {
-        zoom: this.clampZoom(this.chosenView.zoom * growth),
-        offset: {
-          x: this.chosenView.offset.x * growth,
-          y: this.chosenView.offset.y * growth,
-        },
-      };
-    }
+    this.growChosenView(growth);
     let stable = 0;
     // A window resize is heard once the window has already changed, so the
     // chrome has moved before this is called and there is nothing to wait for.
