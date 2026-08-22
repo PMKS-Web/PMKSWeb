@@ -753,10 +753,10 @@ await page.mouse.click(700, 820, { button: 'right' });
 await page.waitForTimeout(500);
 check(
   'the canvas menu can clear them away from any mode',
-  (await page.locator('#contextMenu #menu-item').allInnerTexts()).some((t) =>
-    t.includes('Delete Synthesis Positions')
+  (await page.locator('#contextMenu .cm-row__label').allInnerTexts()).some((t) =>
+    /Delete \d+ Synthesis Positions?/.test(t)
   ),
-  await page.locator('#contextMenu #menu-item').allInnerTexts()
+  await page.locator('#contextMenu .cm-row__label').allInnerTexts()
 );
 await page.keyboard.press('Escape');
 const poseBar = await page.evaluate(() => {
@@ -767,10 +767,10 @@ await page.mouse.click(poseBar.x, poseBar.y, { button: 'right' });
 await page.waitForTimeout(500);
 check(
   'and one position can be taken away on its own',
-  (await page.locator('#contextMenu #menu-item').allInnerTexts()).some((t) =>
+  (await page.locator('#contextMenu .cm-row__label').allInnerTexts()).some((t) =>
     /Delete Position \d/.test(t)
   ),
-  await page.locator('#contextMenu #menu-item').allInnerTexts()
+  await page.locator('#contextMenu .cm-row__label').allInnerTexts()
 );
 await page.keyboard.press('Escape');
 

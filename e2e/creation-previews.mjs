@@ -58,12 +58,12 @@ async function draw(kind, jointId, to) {
   await page.waitForTimeout(600);
   await page.evaluate(
     (label) => {
-      const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-        node.textContent.includes(label)
+      const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+        (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === label
       );
-      item?.querySelector('button')?.click();
+      item?.click();
     },
-    kind === 'link' ? 'Attach Link' : 'Attach Cylinder'
+    kind === 'link' ? 'Link' : 'Cylinder'
   );
   await page.waitForTimeout(300);
 
@@ -102,10 +102,10 @@ await page.mouse.move(onJoint.x, onJoint.y);
 await page.mouse.click(onJoint.x, onJoint.y, { button: 'right' });
 await page.waitForTimeout(600);
 await page.evaluate(() => {
-  const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-    node.textContent.includes('Attach Link')
+  const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+    (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === 'Link'
   );
-  item?.querySelector('button')?.click();
+  item?.click();
 });
 await page.waitForTimeout(300);
 await page.mouse.move(onJoint.x - 200, onJoint.y + 160, { steps: 8 });

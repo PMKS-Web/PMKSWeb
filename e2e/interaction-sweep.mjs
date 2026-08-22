@@ -136,10 +136,9 @@ const menuFor = (kind, id) =>
       if (!target) return null;
       grid.setLastRightClick(target);
       grid.updateContextMenuItems();
-      return grid.cMenuItems.map((item) => ({
-        label: item.label,
-        disabled: !!item.disabled,
-      }));
+      return grid.cMenu.groups.flatMap((group) =>
+        group.rows.map((row) => ({ label: row.label, disabled: !!row.disabled }))
+      );
     },
     [kind, id]
   );
@@ -160,9 +159,12 @@ const fire = (kind, id, label) =>
               : mech.forces.find((f) => (f.id ?? f.name) === id);
       grid.setLastRightClick(target);
       grid.updateContextMenuItems();
-      const item = grid.cMenuItems.find((entry) => entry.label === label);
-      if (!item) return 'gone';
-      item.actionWrapper();
+      const row = grid.cMenu.groups
+        .flatMap((group) => group.rows)
+        .find((entry) => entry.label.startsWith(label));
+      if (!row) return 'gone';
+      if (row.disabled) return 'refused';
+      row.action();
       return 'fired';
     },
     [kind, id, label]

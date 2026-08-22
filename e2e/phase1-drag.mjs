@@ -495,7 +495,7 @@ await safe('a joint can be dropped onto the pin of a slider', async () => {
   const originY = box.y + box.height * 0.78;
   await page.mouse.click(originX, originY, { button: 'right' });
   await page.waitForTimeout(400);
-  await page.locator('#contextMenu #menu-item', { hasText: 'Add Link' }).first().click();
+  await page.locator('#contextMenu .cm-row', { hasText: 'Link' }).first().click();
   await page.waitForTimeout(300);
   await page.mouse.move(originX + 120, originY + 40);
   await page.waitForTimeout(200);

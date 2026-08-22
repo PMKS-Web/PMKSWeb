@@ -74,7 +74,14 @@ const readMenu = () =>
 
 const rowNamed = (menu, label) => menu?.rows.find((one) => one.label === label);
 
-/** Right-click the middle of an element, whatever transform it sits under. */
+/**
+ * Right-click a point that is actually on the element.
+ *
+ * Not simply its bounding-box centre: the left card is 250px wide and 400px in
+ * the analysis modes, and a part drawn near the left edge has its centre under
+ * that card — the click then lands on the panel and no menu opens at all,
+ * which reads as the menu being broken rather than the aim being off.
+ */
 async function openOn(selector) {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(150);
@@ -82,12 +89,59 @@ async function openOn(selector) {
     const node = document.querySelector(sel);
     if (!node) return null;
     const box = node.getBoundingClientRect();
-    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    const owns = (x, y) => {
+      const hit = document.elementFromPoint(x, y);
+      return !!hit && (hit === node || node.contains(hit) || hit.closest(sel) === node);
+    };
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    if (owns(centre.x, centre.y)) return centre;
+    for (const fx of [0.7, 0.3, 0.85, 0.15]) {
+      for (const fy of [0.5, 0.3, 0.7]) {
+        const spot = { x: box.x + box.width * fx, y: box.y + box.height * fy };
+        if (owns(spot.x, spot.y)) return spot;
+      }
+    }
+    return centre;
   }, selector);
   if (!at) return null;
   await page.mouse.click(at.x, at.y, { button: 'right' });
   await page.waitForTimeout(350);
   return readMenu();
+}
+
+/**
+ * Build the menu for a part the pointer cannot reliably land on.
+ *
+ * A force is drawn as a thin arrow: its bounding box is large but almost none
+ * of it is the stroke, so sampling points inside the box hits the canvas
+ * behind it. The gesture is covered by every other case here; what this is
+ * for is what the menu *says* about a force.
+ */
+async function openOnForce(id) {
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(150);
+  return page.evaluate((forceId) => {
+    const grid = ng.getComponent(document.querySelector('app-new-grid'));
+    const force = grid.mechanismSrv.forces.find((one) => (one.id ?? one.name) === forceId);
+    if (!force) return null;
+    grid.setLastRightClick(force);
+    const rows = grid.cMenu.groups.flatMap((group) =>
+      group.rows.map((row) => ({
+        label: row.label,
+        slot: row.refusal?.short ?? (row.checked ? 'check' : (row.hint ?? row.shortcut ?? '')),
+        on: row.checked && !row.disabled,
+        off: row.disabled,
+        destructive: row.destructive,
+      }))
+    );
+    return {
+      title: grid.cMenu.header?.title ?? null,
+      subtitle: grid.cMenu.header?.subtitle ?? null,
+      cross: grid.cMenu.header?.crossing ? 'on' : null,
+      groups: grid.cMenu.groups.map((group) => group.label).filter(Boolean),
+      rows,
+    };
+  }, id);
 }
 
 async function openAt(x, y) {
@@ -286,10 +340,32 @@ await openOn('[id="ACT"]');
 await page.click('.cm-row:has(.cm-row__label:text-is("Duplicate Link"))');
 await page.waitForTimeout(1000);
 const linksAfter = await page.$$eval('path[id]', (nodes) => nodes.map((one) => one.id));
+const copyMade = await page.evaluate((known) => {
+  const service = ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv;
+  const source = service.links.find((one) => one.id === 'ACT');
+  const copy = service.links.find((one) => !known.includes(one.id));
+  if (!copy || !source) return null;
+  const gap = Math.hypot(
+    copy.joints[0].x - source.joints[0].x,
+    copy.joints[0].y - source.joints[0].y
+  );
+  return {
+    joints: copy.joints.length,
+    sharesAJoint: copy.joints.some((one) => source.joints.some((other) => other.id === one.id)),
+    gap: Math.round(gap),
+    mass: copy.mass,
+    sourceMass: source.mass,
+  };
+}, linksBefore);
 check(
-  'Duplicate copies a three-joint link, and sets it down clear of the original',
-  linksAfter.length === linksBefore.length + 1,
-  { before: linksBefore, after: linksAfter }
+  'Duplicate copies a three-joint link, free-standing and clear of the original',
+  copyMade?.joints === 3 && copyMade?.sharesAJoint === false && (copyMade?.gap ?? 0) > 50,
+  copyMade
+);
+check(
+  'and copies the body with it, not just its outline',
+  copyMade?.mass === copyMade?.sourceMass,
+  copyMade
 );
 
 // -------------------------------------------------------- synthesis positions
@@ -334,6 +410,55 @@ check(
   'while the machine beside it still does — the question is per part',
   stillFine?.cross === 'on',
   stillFine
+);
+
+// -------------------------------------------- a slider, and a load on a bar
+
+/** An inverted slider-crank carrying a force: a floating slider and an F1. */
+const SLIDER_AND_LOAD =
+  '?2P.Ay,1E8.5,0.1011.6A,A,0,0,0.0B,B,0,Fe,0.4C,C,ku,0,0.0D,D,0RF,Oj,0.1P,P,0,Fe,0,CD,C,D..' +
+  'YRAB,AB,Fe,Fe,0,7q,c5cae9,A,B,,.YRCD,CD,Fe,Fe,9q,CN,303e9f,C,D,,.YPBP,BP,0,0,0,0,,B,P,,..' +
+  '2F1,CD,F1,0RF,Oj,0RF,95,2SG..N_M';
+
+await openMechanism(page, BASE + SLIDER_AND_LOAD);
+const sliderPin = await openOn('#joint_B');
+check(
+  'a slider pin says it is one, and its Slider switch is on',
+  /^Slider pin · /.test(sliderPin?.subtitle ?? '') && rowNamed(sliderPin, 'Slider')?.on === true,
+  sliderPin
+);
+check(
+  // Offered rather than hidden: the model has no rule against welding a slider
+  // pin, and the panel offers it, so the menu does too and the refusal comes
+  // with its reason if the fuse cannot stand.
+  'and keeps its Weld row, as the panel does',
+  rowNamed(sliderPin, 'Welded')?.off === false,
+  sliderPin?.rows.map((one) => one.label)
+);
+
+const forceTarget = await openOnForce('F1');
+check(
+  'a force menu names the frame it is in and offers the state, not a verb',
+  /frame$/.test(forceTarget?.subtitle ?? '') && !!rowNamed(forceTarget, 'Global Frame'),
+  forceTarget
+);
+check(
+  'and reversing it is a verb, under Set',
+  rowNamed(forceTarget, 'Reverse Direction')?.off === false,
+  forceTarget?.groups
+);
+
+// The floating slider's carrier is deliberately not one of its `links`, so a
+// menu that counted links called this "one part meets it" while the force
+// solver was generating a reaction against two.
+await page.keyboard.press('Escape');
+await page.click('text=Force Analysis');
+await page.waitForTimeout(900);
+const sliderForce = await openOn('#joint_B');
+check(
+  'a slider pin is not told it has no force to graph',
+  rowNamed(sliderForce, 'Graph Joint Force')?.off === false,
+  rowNamed(sliderForce, 'Graph Joint Force')
 );
 
 check('nothing threw', errors.length === 0, errors.slice(0, 3));

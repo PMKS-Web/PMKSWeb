@@ -98,26 +98,26 @@ await page.mouse.click(on.x, on.y, { button: 'right' });
 await page.waitForTimeout(600);
 
 const menu = await page.evaluate(() =>
-  [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => ({
-    label: item.textContent.trim().replace(/\s+/g, ' '),
-    disabled: item.classList.contains('disabledItem'),
+  [...document.querySelectorAll('#contextMenu .cm-row')].map((item) => ({
+    label: item.querySelector('.cm-row__label')?.textContent?.trim() ?? '',
+    disabled: item.classList.contains('cm-row--off'),
   }))
 );
-const entry = menu.find((item) => item.label === 'Attach Cylinder');
-record('a link offers Attach Cylinder', !!entry && !entry.disabled, menu);
-// Beside Attach Link, not somewhere else in the list: they are the same act.
+const entry = menu.find((item) => item.label === 'Cylinder');
+record('a link offers Cylinder, under Attach', !!entry && !entry.disabled, menu);
+// Beside Link, not somewhere else in the group: they are the same act.
 record(
-  'and offers it beside Attach Link',
-  menu.findIndex((item) => item.label === 'Attach Cylinder') ===
-    menu.findIndex((item) => item.label === 'Attach Link') + 1,
+  'and offers it beside Link',
+  menu.findIndex((item) => item.label === 'Cylinder') ===
+    menu.findIndex((item) => item.label === 'Link') + 1,
   menu.map((item) => item.label)
 );
 
 await page.evaluate(() => {
-  const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-    /Attach Cylinder/.test(node.textContent)
+  const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+    (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === 'Cylinder'
   );
-  item.querySelector('button').click();
+  item.click();
 });
 await page.waitForTimeout(400);
 await page.mouse.move(on.x + 260, on.y - 170);
@@ -181,25 +181,29 @@ await page.mouse.click(onJoint.x, onJoint.y, { button: 'right' });
 await page.waitForTimeout(600);
 
 const jointMenu = await page.evaluate(() =>
-  [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => ({
-    label: item.textContent.trim().replace(/\s+/g, ' '),
-    disabled: item.classList.contains('disabledItem'),
+  [...document.querySelectorAll('#contextMenu .cm-row')].map((item) => ({
+    label: item.querySelector('.cm-row__label')?.textContent?.trim() ?? '',
+    disabled: item.classList.contains('cm-row--off'),
   }))
 );
-const jointEntry = jointMenu.find((item) => item.label === 'Attach Cylinder');
-record('a joint offers Attach Cylinder too', !!jointEntry && !jointEntry.disabled, jointMenu);
+const jointEntry = jointMenu.find((item) => item.label === 'Cylinder');
 record(
-  'and offers it beside Attach Link there as well',
-  jointMenu.findIndex((item) => item.label === 'Attach Cylinder') ===
-    jointMenu.findIndex((item) => item.label === 'Attach Link') + 1,
+  'a joint offers Cylinder, under Attach, too',
+  !!jointEntry && !jointEntry.disabled,
+  jointMenu
+);
+record(
+  'and offers it beside Link there as well',
+  jointMenu.findIndex((item) => item.label === 'Cylinder') ===
+    jointMenu.findIndex((item) => item.label === 'Link') + 1,
   jointMenu.map((item) => item.label)
 );
 
 await page.evaluate(() => {
-  const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-    /Attach Cylinder/.test(node.textContent)
+  const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+    (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === 'Cylinder'
   );
-  item.querySelector('button').click();
+  item.click();
 });
 await page.waitForTimeout(400);
 await page.mouse.move(onJoint.x + 240, onJoint.y - 160);

@@ -1,4 +1,6 @@
-import { Component, ChangeDetectionStrategy, inject, input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, DestroyRef, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { KeyboardShortcutsService } from '../../services/keyboard-shortcuts.service';
 import { CdkMenu, CdkMenuItem, MENU_STACK } from '@angular/cdk/menu';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
@@ -34,6 +36,18 @@ export class ContextMenuComponent {
    * over a mode it no longer belongs to is the mode change half-done.
    */
   private readonly stack = inject(MENU_STACK, { optional: true });
+
+  constructor() {
+    // A shortcut acts on the selection, not on the card, and the card is a
+    // snapshot: pressing K with a joint's menu open locked the joint and left
+    // the menu showing the unlocked state, with a Delete row that was greyed
+    // for a lock that had just been set, or live for one that had. Delete did
+    // it behind the card. So any shortcut closes the card, and the next
+    // right-click builds it again from what is now true.
+    inject(KeyboardShortcutsService)
+      .pressed.pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe(() => this.stack?.closeAll());
+  }
   private contextMenu!: HTMLElement;
 
   ngAfterViewInit() {

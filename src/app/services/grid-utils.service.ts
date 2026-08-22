@@ -249,9 +249,15 @@ export class GridUtilsService {
         long: 'A weld says these bodies do not move relative to each other, and an input says they do. Remove the input first.',
       };
     }
+    // A loose joint has none at all, and telling it "only one meets here" is
+    // a sentence about a link that is not there.
+    const meeting = joint.links.length;
     return {
       short: 'needs 2 links',
-      long: 'A weld fuses the links that meet at a joint, and only one meets here.',
+      long:
+        meeting === 0
+          ? 'A weld fuses the links that meet at a joint, and this joint is on none.'
+          : 'A weld fuses the links that meet at a joint, and only one meets here.',
     };
   }
 

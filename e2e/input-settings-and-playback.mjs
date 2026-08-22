@@ -50,7 +50,7 @@ await joint.click({ force: true }).catch(() => {});
 await page.waitForTimeout(600);
 await page.screenshot({ path: `${OUT}/02-joint-selected.png` });
 
-const makeInput = page.locator('text=Add Input').first();
+const makeInput = page.locator('#contextMenu .cm-row', { hasText: 'Driven Input' }).first();
 if (await makeInput.isVisible().catch(() => false)) {
   await makeInput.scrollIntoViewIfNeeded();
   await makeInput.click();

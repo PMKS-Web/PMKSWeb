@@ -171,13 +171,13 @@ console.log('\n1. a floating slot, drawn by hand');
 await fresh();
 await capture('empty-grid');
 
-const built = await addLink({ x: 560, y: 620 }, { x: 820, y: 620 }, 'Add Link');
+const built = await addLink({ x: 560, y: 620 }, { x: 820, y: 620 }, 'Link');
 checkThat('the creation menu opens under a real right-click', built);
 let m = await model();
 checkThat('a first link exists', m.joints === 2 && m.links === 1, JSON.stringify(m));
 await capture('first-link');
 
-await addLink({ x: 820, y: 620 }, { x: 950, y: 430 }, 'Attach Link');
+await addLink({ x: 820, y: 620 }, { x: 950, y: 430 }, 'Link');
 m = await model();
 checkThat('a second link grows off it', m.joints === 3 && m.links === 2, JSON.stringify(m));
 await capture('second-link');

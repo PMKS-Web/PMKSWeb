@@ -305,6 +305,31 @@ describe('the right-click menu', () => {
     });
   });
 
+  describe('what the row promises, the model does', () => {
+    it('will not delete a locked part, whichever surface asks', () => {
+      const parts = fourBar(harness.mechanism);
+      parts.a.locked = true;
+      harness.mechanism.activeObjService.updateSelectedObj(parts.a);
+      harness.mechanism.deleteJoint();
+      // The menu greys the row; the Delete key and the panel button reach the
+      // same joint, so the rule has to live where all three can ask it.
+      expect(harness.mechanism.joints.some((one) => one.id === 'A')).toBe(true);
+      expect(harness.mechanism.deleteRefusal(parts.a)).toContain('locked');
+    });
+
+    it('names the sub-link a welded compound would lose', () => {
+      const parts = fourBar(harness.mechanism);
+      // A compound of the crank and the coupler, as welding A makes.
+      const compound = parts.coupler;
+      compound.subset = [parts.crank, parts.coupler];
+      parts.o.links = [compound];
+      // The compound has four joints, so asking only its own count says
+      // nothing is doomed -- while the two-joint leaf inside it is.
+      const doomed = harness.mechanism.linksRemovedByDeleting(parts.o).map((one) => one.id);
+      expect(doomed).toContain('OA');
+    });
+  });
+
   describe('modes', () => {
     it('offers only the view of a joint in an analysis mode', () => {
       const parts = fourBar(harness.mechanism);

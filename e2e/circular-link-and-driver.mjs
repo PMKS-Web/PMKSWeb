@@ -70,7 +70,7 @@ const menuLabels = (linkId) =>
     const grid = ng.getComponent(document.querySelector('app-new-grid'));
     grid.setLastRightClick(grid.mechanismSrv.links.find((l) => l.id === id));
     grid.updateContextMenuItems();
-    return grid.cMenuItems.map((item) => item.label);
+    return grid.cMenu.groups.flatMap((group) => group.rows).map((row) => row.label);
   }, linkId);
 
 const coupler = await page.evaluate(() => {
@@ -82,15 +82,28 @@ check('a coupler is not', coupler !== null && coupler.can === false, `link ${cou
 
 const crankMenu = await menuLabels(before.id);
 const couplerMenu = await menuLabels(coupler.id);
+// The row is a state now -- "Drawn as a Disc", ticked or not -- rather than a
+// verb whose label flipped between Make Circular and Make Bar. And it is
+// greyed with its reason on a link that cannot take one rather than hidden:
+// the menu's one availability rule is that a reader is told why.
+check('the crank is offered a disc', crankMenu.includes('Drawn as a Disc'), crankMenu.join(', '));
+const couplerDisc = await page.evaluate((id) => {
+  const grid = ng.getComponent(document.querySelector('app-new-grid'));
+  grid.setLastRightClick(grid.mechanismSrv.links.find((l) => l.id === id));
+  return grid.cMenu.groups
+    .flatMap((group) => group.rows)
+    .filter((row) => row.label === 'Drawn as a Disc')
+    .map((row) => ({ disabled: row.disabled, reason: row.refusal?.short ?? null }))[0];
+}, coupler.id);
 check(
-  'the crank is offered Make Circular',
-  crankMenu.includes('Make Circular'),
-  crankMenu.join(', ')
+  'the coupler is told why it cannot have one',
+  couplerDisc?.disabled === true && couplerDisc?.reason === 'needs a fixed pin',
+  JSON.stringify({ couplerDisc, menu: couplerMenu.join(', ') })
 );
 check(
-  'the coupler is offered nothing of the kind',
-  !couplerMenu.some((label) => label === 'Make Circular' || label === 'Make Bar'),
-  couplerMenu.join(', ')
+  'and no label in either menu flips as it is used',
+  ![...crankMenu, ...couplerMenu].some((label) => /^(Make|Add|Remove) /.test(label)),
+  [...crankMenu, ...couplerMenu].join(', ')
 );
 
 await page.evaluate((id) => {
@@ -173,7 +186,7 @@ stage = 'synthesis-poses';
 const posed = await page.evaluate(() => {
   const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
   if (!panel) return { ok: false };
-  const b = panel.synthesisBuilder;
+  const b = panel.design;
   [1, 2, 3].forEach((i) => b.isPoseDefined(i) || b.createPose(i));
   const at = [
     [-2, 1, 20],

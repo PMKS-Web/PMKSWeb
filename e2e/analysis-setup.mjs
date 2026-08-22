@@ -119,7 +119,7 @@ record(
 );
 record(
   'which names a joint that could take the job',
-  /Right-click joint [A-Z] and choose Add Input/.test(text),
+  /Right-click joint [A-Z] and switch on Driven Input/.test(text),
   text
 );
 

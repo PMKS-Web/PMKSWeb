@@ -83,7 +83,10 @@ const abort = await page.evaluate(() => {
   c.lastRightClickCoord.x = start.x;
   c.lastRightClickCoord.y = start.y;
   c.setLastRightClick('grid');
-  c.cMenuItems.find((i) => i.label === 'Add Cylinder')?.action();
+  c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.label === 'Cylinder')
+    ?.action();
   return start;
 });
 await page.mouse.move(abort.x + 90, abort.y + 40);
@@ -109,13 +112,16 @@ const gesture = await page.evaluate(() => {
   c.lastRightClickCoord.x = start.x;
   c.lastRightClickCoord.y = start.y;
   c.setLastRightClick('grid');
-  const labels = c.cMenuItems.map((i) => i.label);
-  c.cMenuItems.find((i) => i.label === 'Add Cylinder')?.action();
+  const labels = c.cMenu.groups.flatMap((g) => g.rows).map((r) => r.label);
+  c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.label === 'Cylinder')
+    ?.action();
   return { labels, start, end: { x: start.x + 320, y: start.y } };
 });
 checkThat(
-  'the grid menu offers Add Cylinder beside Add Link',
-  gesture.labels.includes('Add Cylinder'),
+  'the grid menu offers Cylinder beside Link, under Add',
+  gesture.labels.includes('Cylinder'),
   gesture.labels.join(', ')
 );
 
@@ -336,7 +342,10 @@ await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   const mount = c.mechanismSrv.joints.find((j) => j.id === 'A');
   c.setLastRightClick(mount);
-  c.cMenuItems.find((i) => i.label === 'Add Ground')?.action();
+  c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.label === 'Grounded')
+    ?.action();
 });
 await page.waitForTimeout(500);
 state = await model();
@@ -344,13 +353,17 @@ checkThat('mount A is grounded', !!byId(state, 'A').ground);
 const mountMenu = await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   c.setLastRightClick(c.mechanismSrv.joints.find((j) => j.id === 'A'));
-  return c.cMenuItems.map((i) => ({ label: i.label, disabled: i.disabled }));
+  return c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .map((r) => ({ label: r.label, disabled: r.disabled }));
 });
 checkThat(
-  'the mount menu cascades Delete and greys Slider',
-  mountMenu.some((i) => i.label === 'Delete Cylinder') &&
-    mountMenu.find((i) => i.label === 'Add Slider')?.disabled === true &&
-    !mountMenu.some((i) => i.label === 'Delete Joint'),
+  // The deletion names what it takes rather than saying only "Delete Joint",
+  // and a block is structurally off the table on a sealed part, so that row is
+  // absent rather than greyed.
+  'the mount menu names the cylinder in its Delete and offers no Slider',
+  mountMenu.some((i) => i.label.startsWith('Delete Joint and Cylinder')) &&
+    mountMenu.every((i) => i.label !== 'Slider'),
   JSON.stringify(mountMenu)
 );
 
@@ -360,14 +373,19 @@ const bodyMenu = await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   const barrel = c.mechanismSrv.links.find((l) => l.joints.some((j) => j.id === 'A'));
   c.setLastRightClick(barrel);
-  const labels = c.cMenuItems.map((i) => i.label);
-  c.cMenuItems.find((i) => i.label === 'Add Input')?.action();
+  const labels = c.cMenu.groups.flatMap((g) => g.rows).map((r) => r.label);
+  c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.label === 'Driven Input')
+    ?.action();
   return labels;
 });
 await page.waitForTimeout(500);
 checkThat(
-  'the body menu is exactly Delete Cylinder + Add Input',
-  JSON.stringify(bodyMenu) === JSON.stringify(['Delete Cylinder', 'Add Input']),
+  // No Attach group at all: a sealed assembly takes no third body. What is
+  // left is the state it can be put into and the deletion of the whole part.
+  'the body menu is exactly Driven Input, Locked and Delete Cylinder',
+  JSON.stringify(bodyMenu) === JSON.stringify(['Driven Input', 'Locked', 'Delete Cylinder']),
   bodyMenu.join(', ')
 );
 state = await model();
@@ -419,7 +437,10 @@ await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   const barrel = c.mechanismSrv.links.find((l) => l.joints.some((j) => j.id === 'A'));
   c.setLastRightClick(barrel);
-  c.cMenuItems.find((i) => i.label === 'Delete Cylinder')?.action();
+  c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .find((r) => r.label === 'Delete Cylinder')
+    ?.action();
 });
 // The action above ran via evaluate — outside Angular's zone — so nothing
 // schedules change detection. A real user reaches this through a menu click,

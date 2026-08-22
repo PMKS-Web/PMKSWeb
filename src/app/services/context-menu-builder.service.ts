@@ -337,8 +337,14 @@ export class ContextMenuBuilderService {
         })
       );
     }
-    // A slider cannot be welded: absent, not greyed.
-    if (!(joint instanceof PrisJoint) && !this.gridUtils.isAttachedToSlider(joint)) {
+    // A slider pin keeps its Weld row, enabled. The design said a slider cannot
+    // be welded and so the row should be absent; the model does not agree --
+    // `canToggleWeld` has no slider clause, and §4.1's rule is that a slider
+    // is *offered* the weld and refused with the reason if the fuse cannot
+    // stand. Hiding it put a reachable state out of reach from this surface
+    // and not from the panel, which is the disagreement this menu exists to
+    // stop.
+    if (!(joint instanceof PrisJoint)) {
       rows.push(
         new MenuRow({
           label: 'Welded',
@@ -396,7 +402,6 @@ export class ContextMenuBuilderService {
   /** In Force mode only: the joint's own force graphs, and why there are none. */
   private forceGraphRow(joint: RealJoint): MenuRow[] {
     if (this.tabs.getCurrentTab() !== TabID.FORCE) return [];
-    const meets = joint.links.length + (joint.ground ? 1 : 0);
     return [
       new MenuRow({
         label: 'Graph Joint Force',
@@ -404,13 +409,12 @@ export class ContextMenuBuilderService {
         material: true,
         alwaysAllowed: true,
         action: () => this.activeObj.updateSelectedObj(joint),
-        refusal:
-          meets > 1 || joint.input
-            ? undefined
-            : {
-                short: 'one part meets it',
-                long: 'Only one part meets this joint, so there is no second body for it to react against and no force to graph.',
-              },
+        refusal: this.mechanism.jointHasForceToGraph(joint)
+          ? undefined
+          : {
+              short: 'one part meets it',
+              long: 'Only one part meets this joint, so there is no second body for it to react against and no force to graph.',
+            },
       }),
     ];
   }
@@ -420,7 +424,7 @@ export class ContextMenuBuilderService {
     // The cascade is named, not confirmed: a cylinder's joint takes the whole
     // assembly, and an ordinary one takes any bar left with a single end. The
     // row says which, before the click rather than after it.
-    const label = sealed ? 'Delete Joint and Cylinder' : this.deleteJointLabel(joint);
+    const label = this.deleteJointLabel(joint, sealed);
     return new MenuRow({
       label,
       icon: 'remove',
@@ -431,16 +435,24 @@ export class ContextMenuBuilderService {
     });
   }
 
-  private deleteJointLabel(joint: RealJoint): string {
+  private deleteJointLabel(joint: RealJoint, sealed: Cylinder | undefined): string {
     // A slider's block is not named: it is drawn *on* this joint rather than
     // beside it, so "and the block at C" describes no second thing the reader
-    // can see going. The bars that go are the part worth saying out loud.
+    // can see going. Nor are a cylinder's own members, which the word
+    // "cylinder" already covers -- what is left is the neighbouring bar the
+    // mount was also holding, and that one the reader has to be told about.
+    const inside = new Set<string>(
+      sealed ? [sealed.barrel.id, sealed.rod.id, sealed.block.id] : []
+    );
     const doomed = this.mechanism
       .linksRemovedByDeleting(joint)
-      .filter((link) => !(link instanceof SliderBlock));
-    if (doomed.length === 0) return 'Delete Joint';
-    const named = this.bodyList(doomed);
-    return `Delete Joint and ${named}`;
+      .filter((link) => !(link instanceof SliderBlock) && !inside.has(link.id));
+    if (!sealed) {
+      return doomed.length === 0 ? 'Delete Joint' : `Delete Joint and ${this.bodyList(doomed)}`;
+    }
+    return doomed.length === 0
+      ? 'Delete Joint and Cylinder'
+      : `Delete Joint, Cylinder and ${this.bodyList(doomed)}`;
   }
 
   private jointSubtitle(joint: Joint): string {
@@ -529,7 +541,16 @@ export class ContextMenuBuilderService {
         ],
       };
     }
-    const bar = link as RealLink;
+    // A slider's block is a body in the model and not one on the drawing: it
+    // has no bar to attach to and no disc to be drawn as, and the pin sitting
+    // on top of it is what a reader can see and click. Not reachable by
+    // pointer -- the block's hitbox hands back its pin -- but the builder
+    // takes any Link, and one that throws on a shape it was handed is worse
+    // than one that says little.
+    if (!(link instanceof RealLink)) {
+      return { header, groups: [{ rows: this.positionRows(handlers, undefined) }] };
+    }
+    const bar = link;
     return {
       header,
       groups: [
@@ -640,6 +661,11 @@ export class ContextMenuBuilderService {
   }
 
   private linkSubtitle(link: Link, sealed: Cylinder | undefined): string {
+    // A slider's block has no subsets and no bar to describe.
+    if (!sealed && !(link instanceof RealLink)) {
+      const joints = link.joints.map((joint) => this.nameOf(joint)).join(', ');
+      return `Block · Joints ${joints}`;
+    }
     // Not "sealed assembly": to a reader a cylinder is one part, and how it
     // is built out of a slider and a weld underneath is not their business.
     if (sealed) {
@@ -760,13 +786,13 @@ export class ContextMenuBuilderService {
     };
   }
 
-  /** Why a locked part will not delete. Deletion is the one edit worth stopping. */
+  /**
+   * Why a locked part will not delete — the service's own rule, so the row and
+   * the Delete key refuse the same thing for the same reason.
+   */
   private lockedRefusal(target: RealJoint | RealLink | Force): MenuRefusal | undefined {
-    if (!this.mechanism.isLockedTarget(target)) return undefined;
-    return {
-      short: 'unlock first',
-      long: 'This part is locked. Unlock it before deleting it.',
-    };
+    const why = this.mechanism.deleteRefusal(target);
+    return why ? { short: 'unlock first', long: why } : undefined;
   }
 
   // ---------------------------------------------------------------- shared

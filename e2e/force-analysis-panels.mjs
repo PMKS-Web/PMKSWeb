@@ -137,10 +137,10 @@ async function attachForceToBC() {
   await page.mouse.click(on.x, on.y, { button: 'right' });
   await page.waitForTimeout(500);
   await page.evaluate(() => {
-    const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-      /Attach Force/.test(node.textContent)
+    const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+      (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === 'Force'
     );
-    item?.querySelector('button')?.click();
+    item?.click();
   });
   await page.waitForTimeout(300);
   await page.mouse.move(on.x + 110, on.y - 80, { steps: 8 });

@@ -170,10 +170,10 @@ await page.mouse.move(onBoom.x, onBoom.y);
 await page.mouse.click(onBoom.x, onBoom.y, { button: 'right' });
 await page.waitForTimeout(600);
 await page.evaluate(() => {
-  const item = [...document.querySelectorAll('#contextMenu #menu-item')].find((node) =>
-    /Attach Force/.test(node.textContent)
+  const item = [...document.querySelectorAll('#contextMenu .cm-row')].find(
+    (node) => node.querySelector('.cm-row__label')?.textContent?.trim() === 'Force'
   );
-  item?.querySelector('button')?.click();
+  item?.click();
 });
 await page.waitForTimeout(300);
 await page.mouse.move(onBoom.x + 120, onBoom.y - 90, { steps: 8 });
@@ -212,12 +212,12 @@ await page.mouse.move(onWeld.x, onWeld.y);
 await page.mouse.click(onWeld.x, onWeld.y, { button: 'right' });
 await page.waitForTimeout(600);
 const weldMenu = await page.evaluate(() =>
-  [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => ({
-    label: item.textContent.trim().replace(/\s+/g, ' '),
-    disabled: item.classList.contains('disabledItem'),
+  [...document.querySelectorAll('#contextMenu .cm-row')].map((item) => ({
+    label: item.querySelector('.cm-row__label')?.textContent?.trim() ?? '',
+    disabled: item.classList.contains('cm-row--off'),
   }))
 );
-const cylinderItem = weldMenu.find((item) => item.label === 'Attach Cylinder');
+const cylinderItem = weldMenu.find((item) => item.label === 'Cylinder');
 record(
   'a welded joint will not take a cylinder',
   !cylinderItem || cylinderItem.disabled,

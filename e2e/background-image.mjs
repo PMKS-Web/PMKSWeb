@@ -52,7 +52,9 @@ const image = () =>
 
 const menuLabels = () =>
   page.evaluate(() =>
-    [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => item.innerText.trim())
+    [...document.querySelectorAll('#contextMenu .cm-row')].map((item) =>
+      (item.querySelector('.cm-row__label')?.textContent ?? '').trim()
+    )
   );
 
 const closeMenu = async () => {
@@ -258,11 +260,11 @@ await page.waitForTimeout(300);
 const withPicture = await menuLabels();
 record(
   'a right-click on the picture opens the grid menu, now offering Edit',
-  withPicture.some((label) => label === 'Edit background image') &&
+  withPicture.some((label) => label === 'Background Image') &&
     !withPicture.some((label) => label === 'Add background image'),
   withPicture
 );
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 record(
   'that item opens the panel again',
@@ -666,7 +668,7 @@ record('an undo of the mechanism leaves the picture where it is', (await image()
 
 await page.mouse.click(emptyGrid.x, emptyGrid.y, { button: 'right' });
 await page.waitForTimeout(300);
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 await page.locator('app-edit-panel button-block', { hasText: 'Save' }).locator('button').click();
 await page.waitForTimeout(500);
@@ -701,7 +703,7 @@ await page.waitForTimeout(400);
 
 await page.mouse.click(emptyGrid.x, emptyGrid.y, { button: 'right' });
 await page.waitForTimeout(300);
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 await page.locator('app-edit-panel button-block', { hasText: 'Delete' }).locator('button').click();
 await page.waitForTimeout(500);

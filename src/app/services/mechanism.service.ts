@@ -497,6 +497,27 @@ export class MechanismService {
     return index === -1 ? undefined : this.readinessOfEachMechanism()[index];
   }
 
+  /**
+   * Whether this joint has any force to graph — the reaction index's answer,
+   * not a count of what looks like it meets here.
+   *
+   * The count is wrong for a floating slider. Its carrier is deliberately not
+   * in `joint.links` (the slider rides the bar rather than being one of its
+   * members), so counting links says one body meets a joint where the solver
+   * generates a reaction against two. The panel reads the index; so does this,
+   * or the menu greys a row the panel would have filled.
+   */
+  jointHasForceToGraph(joint: Joint): boolean {
+    if (!(joint instanceof RealJoint)) return false;
+    // A driven joint always has one: the effort that drives it.
+    if (joint.input) return true;
+    const solved = this.mechanismContaining(joint);
+    if (!solved?.isMechanismValid()) return false;
+    const mode = this.settingsService.forceAnalysisMode.value;
+    const index = solved.getForceAnalysis(mode).reactionIndex;
+    return (index.linksByJoint.get(joint.id) ?? []).length > 0;
+  }
+
   /** Can this part's own machine be simulated? Says nothing about the others. */
   isPartSimulatable(part: Joint | Link | Force): boolean {
     return this.mechanismContaining(part)?.isMechanismValid() ?? false;
@@ -859,7 +880,7 @@ export class MechanismService {
     if (this.joints.length === 0 && this.links.length === 0 && this.forces.length === 0) return;
     [...this.joints].forEach((joint) => {
       this.activeObjService.updateSelectedObj(joint);
-      this.deleteJoint(false);
+      this.deleteJoint(false, true);
     });
     this.activeObjService.updateSelectedObj(null);
     this.finishStructuralEdit(true);
@@ -1005,6 +1026,30 @@ export class MechanismService {
     this.activeObjService.fakeUpdateSelectedObj();
   }
 
+  /**
+   * Why this part cannot be deleted, or nothing.
+   *
+   * A lock is the user saying this part is settled, and deletion is the one
+   * edit worth stopping outright rather than warning about. The rule lives
+   * here rather than in the menu that shows it, because the menu is not the
+   * only way to delete something: the Delete key and the panel's own button
+   * reach the same joint, and a greyed row beside a live keystroke is a rule
+   * that only looks enforced.
+   */
+  deleteRefusal(target: RealJoint | Link | Force): string | undefined {
+    if (!this.isLockedTarget(target as RealJoint | Link | Force)) return undefined;
+    return 'That part is locked. Unlock it before deleting it.';
+  }
+
+  /** Say why, and answer whether the caller should stop. */
+  private blockedByLock(target: RealJoint | Link | Force | undefined): boolean {
+    if (!target) return false;
+    const why = this.deleteRefusal(target);
+    if (!why) return false;
+    this.notify.refusal('delete.locked', why);
+    return true;
+  }
+
   /** Whether the Lock item for this object should read as "on". */
   isLockedTarget(target: RealJoint | Link | Force): boolean {
     const marks = this.lockMarksOf(target);
@@ -1066,9 +1111,24 @@ export class MechanismService {
    * `deleteJoint` removes every link the joint sits on that has fewer than
    * three joints, because a bar with one end left is not a bar. Asked here in
    * advance, so the row can say so before the click rather than after it.
+   *
+   * A welded compound is asked leaf by leaf, because that is what the deletion
+   * does to it: the joint comes out of each sub-link it is on, and a sub-link
+   * left with a single end goes the same way a bare bar would. Asking only the
+   * compound's own joint count let the row promise `Delete Joint` and then take
+   * a leaf with it -- the compound has four joints, so nothing looked doomed,
+   * while the two-joint leaf inside it was.
    */
   linksRemovedByDeleting(joint: RealJoint): Link[] {
-    return joint.links.filter((link) => link.joints.length < 3);
+    const doomed: Link[] = [];
+    for (const link of joint.links) {
+      const parts = link instanceof RealLink && link.subset.length > 0 ? link.subset : [link];
+      for (const part of parts) {
+        if (!part.joints.some((member) => member.id === joint.id)) continue;
+        if (part.joints.length < 3) doomed.push(part);
+      }
+    }
+    return doomed;
   }
 
   /**
@@ -1108,6 +1168,19 @@ export class MechanismService {
         .join(''),
       made
     );
+    // A copy of the body, not of its outline: a bar carrying seven grams and a
+    // hand-set moment of inertia is that bar because of those numbers, and a
+    // duplicate that quietly dropped them handed back a shape with a force
+    // analysis that no longer agreed with the original. The name is not
+    // copied -- two links answering to "Crank" is a drawing nobody can talk
+    // about -- and neither is the lock, which is a statement about the part
+    // that was settled rather than about the one just made.
+    copy.mass = link.mass;
+    copy.massMoI = link.massMoI;
+    copy.fill = link.fill;
+    copy.isCircle = link.isCircle;
+    copy.comAnchor = link.comAnchor;
+    copy.comAnchorOffset = link.comAnchorOffset ? { ...link.comAnchorOffset } : undefined;
     made.forEach((joint) => {
       joint.links.push(copy);
       made.forEach((other) => {
@@ -1613,7 +1686,8 @@ export class MechanismService {
    * as one gesture passes `false`, and it owes a `finishStructuralEdit(true)`
    * of its own once the last one is gone — see `deleteMechanism`.
    */
-  deleteJoint(save: boolean = true) {
+  deleteJoint(save: boolean = true, ignoreLocks: boolean = false) {
+    if (!ignoreLocks && this.blockedByLock(this.activeObjService.selectedJoint)) return;
     // Deleting a mount (or, defensively, any member joint) of a sealed cylinder
     // takes the whole assembly with it (§ cylinder 5) — and then goes on to
     // delete the joint itself.
@@ -2054,6 +2128,7 @@ export class MechanismService {
 
   deleteForce(force: Force = this.activeObjService.selectedForce) {
     if (!force) return;
+    if (this.blockedByLock(force)) return;
     this.detachForce(force);
     this.updateMechanism(true);
     this.onMechUpdateState.next(3);
@@ -2151,6 +2226,7 @@ export class MechanismService {
 
   deleteLink() {
     const link = this.activeObjService.selectedLink;
+    if (this.blockedByLock(link)) return;
     // Deleting any member of a sealed cylinder — barrel, rod, block, or a
     // compound that swallowed one — deletes the whole assembly (§ cylinder 5).
     const sealed = this.cylinderAt(link);
