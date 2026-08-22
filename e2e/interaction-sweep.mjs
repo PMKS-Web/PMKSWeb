@@ -72,11 +72,16 @@ const signature = () =>
       .map(
         (j) =>
           `${j.id}${j.ground ? 'G' : ''}${j.input ? 'I' : ''}${j.isWelded ? 'W' : ''}` +
+          // The menu writes states as switches, so the switches have to be in
+          // the picture: a Lock or a Trace that flipped nothing would otherwise
+          // read as a control that did nothing, and one that flipped the wrong
+          // joint would not read as anything at all.
+          `${j.locked ? 'K' : ''}${j.showCurve ? 'T' : ''}` +
           `${j.constructor.name[0]}@${j.x.toFixed(2)},${j.y.toFixed(2)}`
       )
       .join('|');
     const links = mech.links
-      .map((l) => `${l.id}:${l.constructor.name[0]}:${l.fill ?? '-'}`)
+      .map((l) => `${l.id}:${l.constructor.name[0]}:${l.fill ?? '-'}${l.isCircle ? ':disc' : ''}`)
       .join('|');
     const forces = mech.forces
       .map((f) => `${f.id ?? f.name}:${f.local}:${f.startCoord.x.toFixed(1)}`)
@@ -207,8 +212,10 @@ const everySubject = () =>
 
 // Actions that begin a two-click gesture rather than finishing an edit: they are
 // *meant* to change nothing until the second click, so silence is correct.
-const GESTURES =
-  /^(Add Link|Attach Link|Add Cylinder|Attach Cylinder|Create Cylinder|Attach Force)$/;
+// Rows that arm a gesture rather than finishing an edit: the next click lands
+// the thing, so nothing has changed by the time this looks. The menu names them
+// by the bare noun under an Add or Attach heading now.
+const GESTURES = /^(Link|Cylinder|Force|Tracer Point|Background Image)$/;
 
 let clicked = 0;
 for (const id of MECHANISMS) {

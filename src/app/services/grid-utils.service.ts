@@ -988,8 +988,21 @@ export class GridUtilsService {
     return <Joint>joint.connectedJoints.find((j) => j instanceof PrisJoint);
   }
 
+  /**
+   * Turn a joint's traced path on, or off.
+   *
+   * A prismatic joint answers for itself. It used to fall through both arms of
+   * this and change nothing at all -- `containsSlider` is false of a prismatic
+   * joint, and it is not a RevJoint -- which mattered the moment the menu
+   * started offering a Trace Path row on one: a switch that flips nothing.
+   */
   toggleCurve(lastRightClick: Joint | Link | Force | String) {
-    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+    if (lastRightClick instanceof PrisJoint) {
+      lastRightClick.showCurve = !lastRightClick.showCurve;
+      return;
+    }
+    // A pin that rides a block draws its path through the block's prismatic
+    // half, so that is the flag the drawing reads.
     if (this.containsSlider(lastRightClick as RealJoint)) {
       (this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint).showCurve = !(
         lastRightClick as RealJoint
@@ -998,7 +1011,6 @@ export class GridUtilsService {
     if (lastRightClick instanceof RevJoint) {
       lastRightClick.showCurve = !lastRightClick.showCurve;
     }
-    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
   }
 
   getLinkSubset(link: Link): Link[] {
