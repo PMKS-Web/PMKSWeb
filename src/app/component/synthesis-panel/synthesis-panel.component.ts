@@ -142,10 +142,20 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
       this.poseForm.valueChanges.subscribe((value) => {
         if (this.syncing) return;
         this.syncing = true;
+        const before = new Set(this.design.getAllPoses().map((pose) => pose.id));
         this.design.updatePosesFromForm({ ...value, cor: this.corIndex() });
         this.readFromModel();
         this.syncing = false;
         this.record();
+        // A typed position can name any coordinate at all, and nobody pointed
+        // at where it landed -- so the canvas goes to it if it is not already
+        // there. Only for one that has just come into existence: editing a
+        // number on a position already on screen leaves the view alone.
+        const arrived = this.design.getAllPoses().find((pose) => !before.has(pose.id));
+        // Out of this render. Framing can resize the drawn marks, which this
+        // very render has already read, and a value that changes after it was
+        // checked is an error Angular is right to raise.
+        if (arrived) setTimeout(() => this.svgGrid.revealOnCanvas(arrived.position));
       })
     );
 

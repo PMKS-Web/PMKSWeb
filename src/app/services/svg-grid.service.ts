@@ -102,6 +102,14 @@ const MARK_TARGET_PX = 60;
 const OVERHANG_SLACK = 8;
 
 /**
+ * How far inside the free canvas a point has to be to count as on screen.
+ *
+ * A position exactly on the edge is a position half of which is not there, and
+ * the mark drawn at one is bigger than the point it stands for.
+ */
+const REVEAL_MARGIN = 48;
+
+/**
  * How long to watch the chrome before framing around where it ended up.
  *
  * A panel takes about a third of a second to glide, and the mode says it has
@@ -796,10 +804,17 @@ export class SvgGridService {
     const target = this.clampZoom(
       Math.min((free.width * FIT_FILL) / drawn.width, (free.height * FIT_FILL) / drawn.height)
     );
-    if (this.adoptScaleForDrawing(drawn)) {
-      // The marks are a different size now, so what was just measured is not
-      // what will be on screen. Frame once Angular has drawn them.
-      this.scaleToFitLinkage(animate);
+    if (this.scaleSuitedTo(drawn) !== undefined) {
+      // In a task of its own. The mark size is read by bindings that whatever
+      // led here has already checked -- a fit can be asked for from inside a
+      // form's own value change -- and writing it during that render is a value
+      // changing after it was checked. The marks are a different size
+      // afterwards, so what was just measured is not what will be on screen;
+      // the frame follows once Angular has drawn them.
+      setTimeout(() => {
+        this.adoptScaleForDrawing(drawn);
+        this.scaleToFitLinkage(animate);
+      });
       return;
     }
     this.moveViewTo(drawn, centerOf(free), target, animate);
@@ -880,19 +895,31 @@ export class SvgGridService {
    * the act is not recoverable, since every URL carries a scale whether or not
    * its author picked one, and the comparison with the default is what is left.
    */
-  private adoptScaleForDrawing(drawn: Rect): boolean {
-    if (SettingsService.objectScaleChosen) return false;
+  private scaleSuitedTo(drawn: Rect): number | undefined {
+    if (SettingsService.objectScaleChosen) return undefined;
+    // Only for a drawing with parts in it. This number is how joints, blocks
+    // and arrows are drawn, and a synthesis design has none of those -- its
+    // bars are the question rather than an answer. Sizing marks for a mechanism
+    // that does not exist yet gets it wrong twice: once now, and again when a
+    // solution is inserted and every joint comes out matching a design that was
+    // never a linkage.
+    if (this.injector.get(MechanismService).joints.length === 0) return undefined;
     const scale = this.settingsService.objectScale;
-    if (Math.abs(scale - DEFAULT_OBJECT_SCALE) > 0.5) return false;
+    if (Math.abs(scale - DEFAULT_OBJECT_SCALE) > 0.5) return undefined;
     const suits = MARK_FRACTION * Math.max(drawn.width, drawn.height);
-    if (!(suits > 0) || !Number.isFinite(suits)) return false;
+    if (!(suits > 0) || !Number.isFinite(suits)) return undefined;
     const ratio = suits / scale;
-    if (ratio < SCALE_SLACK && ratio > 1 / SCALE_SLACK) return false;
-    SettingsService._objectScale.next(Number(suits.toFixed(2)));
+    if (ratio < SCALE_SLACK && ratio > 1 / SCALE_SLACK) return undefined;
+    return Number(suits.toFixed(2));
+  }
+
+  private adoptScaleForDrawing(drawn: Rect): void {
+    const suits = this.scaleSuitedTo(drawn);
+    if (suits === undefined) return;
+    SettingsService._objectScale.next(suits);
     // A link's outline is computed once and cached, and its width is a fraction
     // of this scale, so a route that changes it has to say so.
     this.injector.get(MechanismService).applyObjectScaleChange();
-    return true;
   }
 
   /** The canvas's own top-left in client pixels, which `pan` is measured from. */
@@ -1139,6 +1166,33 @@ export class SvgGridService {
     if (settle.wasFramed && shown && !fitsInside(shown, free, OVERHANG_SLACK)) {
       this.frameDrawing(true);
     }
+  }
+
+  /**
+   * Bring a point on the drawing into view, if it is not already there.
+   *
+   * For something that arrives without anybody having pointed at it -- a
+   * synthesis position typed into the panel rather than dropped on the canvas,
+   * which can name any coordinate at all, including one off the side of the
+   * window. Nothing happens when the point is already on screen: somebody
+   * nudging a number for a thing right in front of them should not have the
+   * view move under the keystroke.
+   */
+  revealOnCanvas(at: Coord): void {
+    const free = this.freeRect();
+    const canvas = this.canvasBounds();
+    const matrix = this.drawnMatrix();
+    if (!free || !canvas || !matrix) return;
+    // The drawing layers carry the grid's own y-flip and the matrix does not:
+    // +y is up on the drawing and down on the screen.
+    const x = canvas.x + matrix.a * at.x + matrix.e;
+    const y = canvas.y + matrix.d * -at.y + matrix.f;
+    const inView =
+      x >= free.x + REVEAL_MARGIN &&
+      x <= free.x + free.width - REVEAL_MARGIN &&
+      y >= free.y + REVEAL_MARGIN &&
+      y <= free.y + free.height - REVEAL_MARGIN;
+    if (!inView) this.scaleToFitLinkage(true);
   }
 
   /** The matrix the canvas is drawn under right now, which may be a frame old. */
