@@ -798,6 +798,11 @@ export class SvgGridService {
         animate
       );
       this.viewIsFitted = true;
+    // A fit supersedes whatever the reader had driven to: they have just asked
+    // for something else. Holding the old view would let a later squeeze hand
+    // it back as though it were still theirs. `rescueFrame` puts it back where
+    // the fit was the app's idea rather than a request.
+    this.chosenView = null;
       return;
     }
     this.settledFree = free;
@@ -819,6 +824,11 @@ export class SvgGridService {
     }
     this.moveViewTo(drawn, centerOf(free), target, animate);
     this.viewIsFitted = true;
+    // A fit supersedes whatever the reader had driven to: they have just asked
+    // for something else. Holding the old view would let a later squeeze hand
+    // it back as though it were still theirs. `rescueFrame` puts it back where
+    // the fit was the app's idea rather than a request.
+    this.chosenView = null;
   }
 
   /**
