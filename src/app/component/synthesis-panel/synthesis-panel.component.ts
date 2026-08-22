@@ -100,6 +100,8 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
   private syncing = false;
+  /** Rows that had a position last time the panel read the design. */
+  private hadPose = new Set<number>();
   private frame: number | undefined;
 
   poseForm = this.fb.group(
@@ -246,24 +248,23 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
     controls['length'].setValue(this.lengthText(this.design.length), { emitEvent: false });
     for (const i of this.rows) {
       const pose = this.design.isPoseDefined(i) ? this.design.getPose(i) : undefined;
-      controls[`p${i}x`].setValue(pose ? this.lengthText(pose.position.x) : '', {
-        emitEvent: false,
-      });
-      controls[`p${i}y`].setValue(pose ? this.lengthText(pose.position.y) : '', {
-        emitEvent: false,
-      });
-      controls[`p${i}theta`].setValue(pose ? this.angleText(pose.thetaDegrees) : '', {
-        emitEvent: false,
-      });
-      // Through the control rather than the element: a reactive form owns its
-      // input's disabled state and writes it on every render, so a `disabled`
-      // attribute set beside `formControlName` is removed again the moment
-      // Angular looks at it.
-      [`p${i}x`, `p${i}y`, `p${i}theta`].forEach((name) => {
-        const control = this.poseForm.get(name)!;
-        if (pose && control.disabled) control.enable({ emitEvent: false });
-        if (!pose && control.enabled) control.disable({ emitEvent: false });
-      });
+      if (pose) {
+        controls[`p${i}x`].setValue(this.lengthText(pose.position.x), { emitEvent: false });
+        controls[`p${i}y`].setValue(this.lengthText(pose.position.y), { emitEvent: false });
+        controls[`p${i}theta`].setValue(this.angleText(pose.thetaDegrees), { emitEvent: false });
+        this.hadPose.add(i);
+        continue;
+      }
+      // A row with no position behind it is either one nobody has started or
+      // one somebody is halfway through typing, and the two look the same from
+      // here -- so it is left exactly as it is. The exception is a row that had
+      // a position a moment ago: something removed it, or an undo did, and the
+      // numbers it left behind are about a position that is gone.
+      if (this.hadPose.delete(i)) {
+        [`p${i}x`, `p${i}y`, `p${i}theta`].forEach((name) =>
+          controls[name].setValue('', { emitEvent: false })
+        );
+      }
     }
     const r = this.design.region;
     this.regionForm.setValue(
@@ -422,6 +423,19 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
     this.design.duplicateLastPose();
     this.solution.invalidate();
     this.record();
+  }
+
+  /**
+   * Typing in a row is a way of pointing at it.
+   *
+   * The nine boxes are live whether or not the position behind them exists yet,
+   * so a design can be typed out as readily as dropped on the drawing -- and
+   * the row somebody is filling in is the one the panel should be talking
+   * about. Deliberately silent about arming: the two ways in are both live at
+   * once, and choosing one is not turning the other off.
+   */
+  aimAtRow(i: number): void {
+    this.design.selectedPose = i;
   }
 
   /**

@@ -219,33 +219,50 @@ export class SynthesisBuilderService {
     this.length = maybeLength;
 
     for (let i = 1; i <= 3; i++) {
-      if (!this.isPoseDefined(i)) continue;
-
-      // if x and y are numbers, update position
+      const typed = (key: string) => (form[key] ?? '').toString().trim();
+      const xText = typed(`p${i}x`);
+      const yText = typed(`p${i}y`);
+      const thetaText = typed(`p${i}theta`);
       const [successX, maybeX] = this.nup.parseModelLengthString(
-        form[`p${i}x`]!,
+        xText,
         this.settings.lengthUnit.getValue()
       );
       const [successY, maybeY] = this.nup.parseModelLengthString(
-        form[`p${i}y`]!,
+        yText,
         this.settings.lengthUnit.getValue()
       );
-      if (!successX || !successY) {
-        console.log('invalid coord');
-        return false;
-      }
-      this.poses[i].position = new Coord(maybeX, maybeY);
-
-      // if theta is a number, update theta
       const [successTheta, maybeTheta] = this.nup.parseAngleString(
-        form[`p${i}theta`]!,
+        thetaText,
         this.settings.angleUnit.getValue()
       );
-      if (!successTheta) {
-        console.log('invalid theta');
-        return false;
+      // An empty box parses as zero, so emptiness is asked about separately:
+      // three blanks are a row nobody has started, not a position at the origin.
+      const complete = !!xText && !!yText && !!thetaText;
+      const readable = successX && successY && successTheta;
+
+      if (this.isPoseDefined(i)) {
+        // An existing position is only ever edited. A box emptied or filled with
+        // something unreadable is refused rather than applied, and the panel
+        // writes the old value back.
+        if (!complete || !readable) return false;
+        this.poses[i].position = new Coord(maybeX, maybeY);
+        this.poses[i].thetaDegrees = maybeTheta;
+        continue;
       }
-      this.poses[i].thetaDegrees = maybeTheta;
+
+      // A row being typed into is not an error until it is finished. It becomes
+      // a position on the drawing at the moment it says where and which way --
+      // which is the same moment a dropped one does, reached by the other road.
+      if (!complete || !readable) continue;
+      this.poses[i] = new SynthesisPose(
+        i,
+        new Coord(maybeX, maybeY),
+        (maybeTheta * Math.PI) / 180,
+        () => this.COR,
+        () => this.length
+      );
+      this.selectedPose = i;
+      this.armed = false;
     }
 
     // if we get here, form is valid

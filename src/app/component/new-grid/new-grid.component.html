@@ -1208,17 +1208,20 @@
             (pointerdown)="startPoseGesture($event, synthesisBuilder.selectedPose, 'rotate')"
           />
           <!-- Squared off and sitting on the axis, so it reads as a pull along
-               the bar rather than as a corner. -->
-          <rect
-            class="synthHandle"
-            cursor="ew-resize"
-            [attr.x]="box.lengthX - box.grip / 2"
-            [attr.y]="box.lengthY - box.grip / 2"
-            [attr.width]="box.grip"
-            [attr.height]="box.grip"
-            [attr.stroke-width]="svgGrid.scaleWithZoom(1.5)"
-            (pointerdown)="startPoseGesture($event, synthesisBuilder.selectedPose, 'length')"
-          />
+               the bar rather than as a corner. On the end away from the fixed
+               reference, and on both ends when the reference is the middle. -->
+          @for (pull of box.lengthGrips; track $index) {
+            <rect
+              class="synthHandle"
+              cursor="ew-resize"
+              [attr.x]="pull.x - box.grip / 2"
+              [attr.y]="pull.y - box.grip / 2"
+              [attr.width]="box.grip"
+              [attr.height]="box.grip"
+              [attr.stroke-width]="svgGrid.scaleWithZoom(1.5)"
+              (pointerdown)="startPoseGesture($event, synthesisBuilder.selectedPose, 'length')"
+            />
+          }
         </g>
       }
 

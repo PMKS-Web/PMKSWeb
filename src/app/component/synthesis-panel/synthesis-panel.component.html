@@ -136,7 +136,13 @@
           @for (i of rows; track i) {
             <!-- A row selects a position, which makes it a control. It was a
                  div with a click handler: no keyboard, no name, invisible to
-                 anything not driving a mouse. -->
+                 anything not driving a mouse.
+
+                 Clicking the row's own space arms the placer, which is what an
+                 empty row is for; clicking into one of its boxes does not, and
+                 says so by stopping there. Both ways of filling a position are
+                 live at the same time -- arming does not switch typing off, and
+                 typing does not switch arming off. -->
             <div
               class="poseRow"
               role="button"
@@ -159,6 +165,8 @@
                   placeholder="—"
                   [formControlName]="'p' + i + 'x'"
                   [attr.aria-label]="'Position ' + i + ' X'"
+                  (focus)="aimAtRow(i)"
+                  (click)="$event.stopPropagation()"
                 />
               </label>
               <span class="poseRow__axis">Y</span>
@@ -170,6 +178,8 @@
                   placeholder="—"
                   [formControlName]="'p' + i + 'y'"
                   [attr.aria-label]="'Position ' + i + ' Y'"
+                  (focus)="aimAtRow(i)"
+                  (click)="$event.stopPropagation()"
                 />
               </label>
               <span class="poseRow__axis poseRow__axis--angle">&#8894;</span>
@@ -181,6 +191,8 @@
                   placeholder="—"
                   [formControlName]="'p' + i + 'theta'"
                   [attr.aria-label]="'Position ' + i + ' angle'"
+                  (focus)="aimAtRow(i)"
+                  (click)="$event.stopPropagation()"
                 />
               </label>
               <mat-icon

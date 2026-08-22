@@ -207,12 +207,24 @@
     }
   }
 
+  // Between the machine's name and its transport. Shorter than the controls on
+  // either side, so it reads as a seam in the row rather than a wall across it.
+  .rowSeam {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 22px;
+    margin: 0 4px;
+    background: rgba(0, 0, 0, 0.12);
+  }
+
   .rowPlay {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    // Bigger than it was, and than the name beside it. This is the control that
+    // gets pressed repeatedly; it should not be the smallest thing in the row.
+    width: 36px;
+    height: 36px;
     flex: 0 0 auto;
     border: none;
     border-radius: 50%;

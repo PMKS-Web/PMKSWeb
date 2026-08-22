@@ -57,9 +57,15 @@ export interface SelectionBox {
   /** Where the turn knob sits, on its stalk above the bar. */
   knobX: number;
   knobY: number;
-  /** Where the length handle sits, on the bar's own axis at its front end. */
-  lengthX: number;
-  lengthY: number;
+  /**
+   * Where the length handles sit, on the bar's own axis.
+   *
+   * One at the end away from the fixed reference, so that pulling it lengthens
+   * the bar and leaves the reference where it was -- which is the whole promise
+   * of naming a reference. Two when the reference is the middle, because then
+   * neither end is fixed and both are equally the end to pull.
+   */
+  lengthGrips: { x: number; y: number }[];
   grip: number;
 }
 
@@ -295,10 +301,26 @@ export class SynthesisCanvasService {
       // length.
       knobX: x + w / 2,
       knobY: y + h + this.svgGrid.scaleWithZoom(30),
-      lengthX: x + w,
-      lengthY: cy,
+      lengthGrips: this.lengthGripsFor(x, w, cy),
       grip,
     };
+  }
+
+  /**
+   * Which end of the bar the length is pulled from.
+   *
+   * The end away from the fixed reference, so the reference stays put while the
+   * bar grows past it -- a grip on the reference itself would drag the one
+   * point the reader has said should not move. With the reference in the
+   * middle, the bar grows both ways whichever end is pulled, so both ends get
+   * one and neither is the odd one out.
+   */
+  private lengthGripsFor(x: number, w: number, cy: number): { x: number; y: number }[] {
+    const front = { x: x + w, y: cy };
+    const back = { x, y: cy };
+    if (this.design.COR === COR.FRONT) return [back];
+    if (this.design.COR === COR.CENTER) return [back, front];
+    return [front];
   }
 
   /**

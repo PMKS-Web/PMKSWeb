@@ -60,6 +60,16 @@
             <span class="mechChip plain" title="All mechanisms move together">{{ row.id }}</span>
           }
 
+          <!-- A seam between what the row is about and the controls that drive
+               it. The name selects a machine, which changes what the whole
+               panel is showing; the buttons beside it get pressed over and over
+               while watching one. Flush and eight pixels apart the two read as
+               one control, and a hand going for play landed on the name and
+               took the reader's open analysis away with it. -->
+          @if (row.isMechanism && row.ownPlay) {
+            <div class="rowSeam" aria-hidden="true"></div>
+          }
+
           @if (row.ownPlay) {
             <button
               class="rowPlay"
