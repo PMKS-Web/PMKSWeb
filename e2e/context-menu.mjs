@@ -43,17 +43,6 @@ const page = await browser.newPage({ viewport: { width: 1500, height: 950 } });
 const errors = [];
 page.on('pageerror', (error) => errors.push(String(error)));
 
-/**
- * The tour's overlay covers the canvas on a cold load and swallows the first
- * click at a coordinate. It is not what this suite is about.
- */
-const clearOverlay = () =>
-  page.evaluate(() =>
-    document
-      .querySelectorAll('.introjs-overlay, .introjs-tooltip, .introjs-helperLayer')
-      .forEach((node) => node.remove())
-  );
-
 /** The open menu, read as data: rows, their state, and the slot on the right. */
 const readMenu = () =>
   page.evaluate(() => {
@@ -112,7 +101,6 @@ async function openAt(x, y) {
 // ---------------------------------------------------------------- Edit mode
 
 await openMechanism(page, BASE + FOURBAR);
-await clearOverlay();
 
 const jointA = await openOn('#joint_A');
 check('a joint menu names the joint it is about', jointA?.title === 'Joint A', jointA?.title);
@@ -260,7 +248,6 @@ check(
 // ---------------------------------------------------------------- cylinder
 
 await openMechanism(page, BASE + CYLINDER);
-await clearOverlay();
 const cylinderJoint = await openOn('#joint_A');
 check(
   'a cylinder joint says which end of which cylinder it is',
@@ -294,7 +281,6 @@ check(
 // Duplicate on a link with three joints: the case that used to accept the
 // click and silently do nothing.
 await openMechanism(page, BASE + FOURBAR);
-await clearOverlay();
 const linksBefore = await page.$$eval('path[id]', (nodes) => nodes.map((one) => one.id));
 await openOn('[id="ACT"]');
 await page.click('.cm-row:has(.cm-row__label:text-is("Duplicate Link"))');
@@ -309,7 +295,6 @@ check(
 // -------------------------------------------------------- synthesis positions
 
 await openMechanism(page, BASE + POSITIONS);
-await clearOverlay();
 await page.click('text=Synthesis');
 await page.waitForTimeout(900);
 const synthCanvas = await openAt(1250, 830);
@@ -331,7 +316,6 @@ const TWO_FOUR_BARS =
   'ARGH,GH,0,0,3S0,GJ,555555,G,H,,...N_L';
 
 await openMechanism(page, BASE + TWO_FOUR_BARS);
-await clearOverlay();
 const bothFine = await openOn('#joint_F');
 check(
   'a part of a machine that runs offers the way into analysis',

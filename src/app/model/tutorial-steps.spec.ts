@@ -122,10 +122,19 @@ describe('what the card says', () => {
    * The two gestures are genuinely different controls, and the mock had step
    * one telling the student to use the wrong one three times.
    */
-  it('sends the student to Add Link first and Attach Link after', () => {
-    expect(copyFor({ step: 1 }).body).toContain('Add Link');
-    expect(copyFor({ step: 1 }).body).not.toContain('Attach Link');
-    expect(copyFor({ step: 2 }).body).toContain('Attach Link');
+  it('sends the student to Add first and Attach after', () => {
+    // The menu names the verb once, on the group, and the row below it is the
+    // bare noun -- so what the student is told to look for is the group.
+    expect(copyFor({ step: 1 }).body).toContain('under Add');
+    expect(copyFor({ step: 1 }).body).not.toContain('under Attach');
+    expect(copyFor({ step: 2 }).body).toContain('under Attach');
+  });
+
+  it('names the switches the menu actually shows', () => {
+    // Not "Add Ground" and "Add Input": those were labels that flipped as they
+    // were used, and the menu writes states as states now.
+    expect(copyFor({ step: 3, target: { id: 'A' } as never }).body).toContain('Grounded');
+    expect(copyFor({ step: 4, target: { id: 'A' } as never }).body).toContain('Driven Input');
   });
 
   it('never tells the student to add three links from the grid', () => {

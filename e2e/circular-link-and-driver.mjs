@@ -37,16 +37,9 @@ page.on('console', (m) => m.type() === 'error' && note(m.text()));
 
 const shot = (name) => page.screenshot({ path: `${SHOTS}circdrv-${name}.png` });
 
-const dismissTour = async () => {
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
-  await page.waitForTimeout(400);
-};
-
 // ---------------------------------------------------------------- circular
 await page.goto(`${BASE}/?${payloads['4-Bar']}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await dismissTour();
 
 const linkState = () =>
   page.evaluate(() => {
@@ -136,7 +129,6 @@ stage = 'share-url';
 if (shared) {
   await page.goto(`${BASE}/?${shared}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
-  await dismissTour();
   const reopened = await linkState();
   check(
     'a shared URL reopens as a disc',
@@ -168,7 +160,6 @@ await shot('2-running');
 // -------------------------------------------------------------- synthesis
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await dismissTour();
 
 // Synthesis tab, then three poses via the panel's own model.
 await page.evaluate(() => {

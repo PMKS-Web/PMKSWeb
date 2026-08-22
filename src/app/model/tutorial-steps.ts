@@ -44,8 +44,8 @@ export function endJoints(joints: Joint[]): RealJoint[] {
  * Whether the drawing holds three links that are actually joined up.
  *
  * Three separate bars are three links and are not a chain, and this is the
- * whole reason step 1 and step 2 are two steps: `Add Link` on bare grid makes
- * a free-standing bar every time, so three of them never touch. Connectivity
+ * whole reason step 1 and step 2 are two steps: Add on the bare grid makes a
+ * free-standing bar every time, so three of them never touch. Connectivity
  * is the test rather than a joint count, because a student who builds their
  * chain in a different order still built a chain.
  */
@@ -150,7 +150,7 @@ export interface TutorialCopy {
  * What the card says, given where the student is.
  *
  * Step 1 and step 2 name *different gestures*, which is the point of their
- * being two steps. `Add Link` on bare grid always makes a free-standing bar —
+ * being two steps. Add on the bare grid always makes a free-standing bar —
  * doing it three times leaves three bars that never touch — so the chain is
  * built by attaching to the far end of what is already there.
  */
@@ -164,15 +164,15 @@ export function copyFor(progress: TutorialProgress): TutorialCopy {
         // bar's far end follows the pointer between the two, and describing it
         // as "drag and release" had readers holding the button down through a
         // move that does not want it held.
-        body: 'Right-click the empty grid and choose Add Link. One end is placed where you clicked and the other follows your pointer — move to where you want it and left-click to set it.',
+        body: 'Right-click the empty grid and choose Link, under Add. One end is placed where you clicked and the other follows your pointer — move to where you want it and left-click to set it.',
         hint: 'Right-click is how everything is added in PMKS+. The panel on the left edits whatever you then select.',
         hintGlyph: 'mouse',
       };
     case 2:
       return {
         title: 'Extend it into a chain of three',
-        body: 'Right-click the joint at the far end of the bar and choose Attach Link, then left-click where the new bar should end. Do that twice, each time from the newest end, so the three links make a chain.',
-        hint: 'Add Link starts a new bar on its own. Attach Link joins one to a joint that is already there.',
+        body: 'Right-click the joint at the far end of the bar and choose Link, under Attach, then left-click where the new bar should end. Do that twice, each time from the newest end, so the three links make a chain.',
+        hint: 'On the grid the group is Add, and the new bar stands on its own. On a joint it is Attach, and the new bar joins the joint that is already there.',
         hintGlyph: 'link',
       };
     case 3: {
@@ -180,7 +180,7 @@ export function copyFor(progress: TutorialProgress): TutorialCopy {
       return {
         title: 'Ground the two end joints',
         body:
-          `Right-click joint ${target}, the ringed one, and choose Add Ground. A grounded joint is fixed to the frame.` +
+          `Right-click joint ${target}, the ringed one, and switch on Grounded. A grounded joint is fixed to the frame.` +
           (also ? ` Then do the same at joint ${also}, at the other end.` : ''),
         hint: 'A mechanism with nothing grounded floats away.',
         hintGlyph: 'push_pin',
@@ -189,7 +189,7 @@ export function copyFor(progress: TutorialProgress): TutorialCopy {
     case 4:
       return {
         title: 'Make one joint the input',
-        body: `Right-click joint ${target}, the ringed one, and choose Add Input. The input is the joint that drives the mechanism. A mechanism needs exactly one.`,
+        body: `Right-click joint ${target}, the ringed one, and switch on Driven Input. The input is the joint that drives the mechanism. A mechanism needs exactly one.`,
       };
     default:
       return {

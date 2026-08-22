@@ -68,11 +68,12 @@ let at = await stepNow();
 check('starts at step 1 of 5', at?.step === 1 && at?.of === 5, JSON.stringify(at));
 
 // The two gestures are different controls, and the first draft of this tutorial
-// told the student to use the wrong one three times: `Add Link` on bare grid
-// always makes a free-standing bar, so three of them never touch.
+// told the student to use the wrong one three times: Add on the bare grid
+// always makes a free-standing bar, so three of them never touch. The menu
+// carries the verb on the group heading, so that is what the step names.
 const body = async () => page.locator('.stepBody').innerText();
-check('step 1 asks for Add Link', (await body()).includes('Add Link'));
-check('step 1 does not ask for Attach Link', !(await body()).includes('Attach Link'));
+check('step 1 sends the student to the Add group', (await body()).includes('under Add'));
+check('step 1 does not send them to Attach', !(await body()).includes('under Attach'));
 await page.screenshot({ path: `${OUT}/02-step1.png` });
 
 // ---- doing each step for them walks the drawing forward one step ----
@@ -87,7 +88,7 @@ for (const expected of [2, 3, 4, 5]) {
   check(`Do This Step For Me reaches step ${expected}`, at?.step === expected, JSON.stringify(at));
 
   if (expected === 2) {
-    check('step 2 asks for Attach Link', (await body()).includes('Attach Link'));
+    check('step 2 sends them to the Attach group', (await body()).includes('under Attach'));
   }
   if (expected === 3) {
     check('the previous step is reported done', (await page.locator('.achieved').count()) === 1);
