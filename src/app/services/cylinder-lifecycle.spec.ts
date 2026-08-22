@@ -349,6 +349,25 @@ describe('a mount welded into a neighbouring link', () => {
     expect(still.rodFar.id).toBe(h.sealed.rodFar.id);
   });
 
+  it('will not be deleted while it is locked, by either door', () => {
+    const h = weldedMount();
+    const sealed = resolve(h)!;
+    h.service.toggleLock(sealed.barrel as never);
+    expect(h.service.isLockedTarget(sealed.barrel as never)).toBe(true);
+
+    // Straight at the part: the menu calls this with the cylinder it found.
+    h.service.deleteCylinder(resolve(h));
+    expect(sealedCylinders(h.service.joints)).toHaveLength(1);
+
+    // And through a mount, which carries its own mark rather than the part's:
+    // an unlocked mount on a locked cylinder used to take the whole part.
+    const mount = h.service.joints.find((joint) => joint.id === h.sealed.barrelFar.id)!;
+    expect(h.service.isLockedTarget(mount as never)).toBe(false);
+    h.active.updateSelectedObj(mount);
+    h.service.deleteJoint();
+    expect(sealedCylinders(h.service.joints)).toHaveLength(1);
+  });
+
   it('still cascades a delete, unwelding the mount so the neighbour survives', () => {
     const h = weldedMount();
 

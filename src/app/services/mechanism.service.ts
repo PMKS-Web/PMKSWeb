@@ -1720,6 +1720,12 @@ export class MechanismService {
    */
   deleteJoint(save: boolean = true, ignoreLocks: boolean = false) {
     if (!ignoreLocks && this.blockedByLock(this.activeObjService.selectedJoint)) return;
+    // A cylinder's own joint carries its own mark -- locking a mount pins that
+    // point and leaves the ram free to swing about it -- so an unlocked mount
+    // on a *locked* cylinder passed the test above and then took the whole
+    // locked part with it.
+    const sealedHere = this.cylinderAt(this.activeObjService.selectedJoint);
+    if (!ignoreLocks && sealedHere && this.blockedByLock(sealedHere.barrel)) return;
     // Deleting a mount (or, defensively, any member joint) of a sealed cylinder
     // takes the whole assembly with it (§ cylinder 5) — and then goes on to
     // delete the joint itself.
@@ -2966,6 +2972,10 @@ export class MechanismService {
       this.cylinderAt(this.activeObjService.selectedJoint) ??
       this.cylinderAt(this.activeObjService.selectedLink);
     if (!sealed) return;
+    // Asked here as well as on the way in: the menu calls this directly with
+    // the cylinder it found, so a guard that only sat on deleteLink was a
+    // guard with a door beside it.
+    if (this.blockedByLock(sealed.barrel)) return;
     this.deleteCylinderTopology(sealed);
     this.activeObjService.updateSelectedObj(undefined);
     this.finishStructuralEdit(true);
