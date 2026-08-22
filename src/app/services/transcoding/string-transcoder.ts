@@ -757,12 +757,20 @@ export class StringTranscoder extends GenericTranscoder {
     this.synthesisMarks.forEach((entry) => {
       const tag = entry.substring(0, 2);
       const count = expected[tag];
-      if (count === undefined && tag !== 'SO') {
+      // `SO` and `SW` both vary in length with the size of the linkage: the
+      // ids the design owns, and the place each of them was put.
+      const varies = tag === 'SO' || tag === 'SW';
+      if (count === undefined && !varies) {
         throw new Error('URL contains an unknown synthesis entry');
       }
       seen.set(tag, (seen.get(tag) ?? 0) + 1);
       const parts = entry.substring(2).split('~').slice(1);
-      const enough = tag === 'SO' ? parts.length >= 1 : parts.length === count;
+      const enough = varies ? parts.length >= 1 : parts.length === count;
+      // Two numbers to a joint, so an odd count is a truncated list and the
+      // baseline would silently belong to the wrong joints.
+      if (tag === 'SW' && parts.length % 2 !== 0) {
+        throw new Error('URL contains an incomplete synthesis entry');
+      }
       if (!enough || parts.some((part) => part === '')) {
         throw new Error('URL contains an incomplete synthesis entry');
       }
@@ -778,7 +786,7 @@ export class StringTranscoder extends GenericTranscoder {
     // One design per URL. Two headers, or two of anything that describes the
     // design as a whole, means the section was assembled by something other
     // than this app, and there is no sensible way to choose between them.
-    (['SD', 'SR', 'SO'] as const).forEach((tag) => {
+    (['SD', 'SR', 'SO', 'SW'] as const).forEach((tag) => {
       if ((seen.get(tag) ?? 0) > 1) {
         throw new Error('URL repeats a synthesis entry');
       }

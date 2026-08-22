@@ -134,9 +134,14 @@
           </ng-container>
 
           @for (i of rows; track i) {
-            <!-- A row selects a position, which makes it a control. It was a
-                 div with a click handler: no keyboard, no name, invisible to
-                 anything not driving a mouse.
+<!-- The row is a container, not a control. It was given
+                 role="button" so it could be reached by keyboard, which made it
+                 a button wrapping two textboxes and another button -- a shape
+                 no assistive technology can make sense of, and whose Space
+                 handler swallowed the nested button's own activation. The
+                 numbered chip is the control instead: one real button, with
+                 nothing inside it. Clicking anywhere on the row still selects,
+                 for the mouse.
 
                  Clicking the row's own space arms the placer, which is what an
                  empty row is for; clicking into one of its boxes does not, and
@@ -145,17 +150,20 @@
                  typing does not switch arming off. -->
             <div
               class="poseRow"
-              role="button"
-              tabindex="0"
-              [attr.aria-pressed]="isSelectedRow(i)"
-              [attr.aria-label]="isPlaced(i) ? 'Select position ' + i : 'Place position ' + i"
               [class.poseRow--sel]="isSelectedRow(i)"
               [class.poseRow--empty]="!isPlaced(i)"
               (click)="selectRow(i)"
-              (keydown.enter)="selectRow(i)"
-              (keydown.space)="selectRow(i); $event.preventDefault()"
             >
-              <span class="poseRow__n" [class.poseRow__n--placed]="isPlaced(i)">{{ i }}</span>
+              <button
+                type="button"
+                class="poseRow__n"
+                [class.poseRow__n--placed]="isPlaced(i)"
+                [attr.aria-pressed]="isSelectedRow(i)"
+                [attr.aria-label]="isPlaced(i) ? 'Select position ' + i : 'Place position ' + i"
+                (click)="selectRow(i); $event.stopPropagation()"
+              >
+                {{ i }}
+              </button>
               <span class="poseRow__axis">X</span>
               <label class="field field--num">
                 <input

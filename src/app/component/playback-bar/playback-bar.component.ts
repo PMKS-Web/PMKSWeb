@@ -27,6 +27,21 @@ const BOTTOM_OFFSET = 38;
 /** The one gap the chrome keeps between any two cards. */
 const CARD_GAP = 12;
 
+/**
+ * What the input does when it reaches the end of its track.
+ *
+ * Two facts, not a good one and a bad one, so both are drawn in the same grey:
+ * a crank comes round again, a ram turns back. On the combined row one of these
+ * stands for every machine that behaves that way, which is why the words are
+ * carried rather than derived from a flag at the point of drawing.
+ */
+export interface CycleEnd {
+  /** `loop` for a machine that comes round again, `swap_horiz` for one that turns back. */
+  glyph: string;
+  /** "Loops", "Reverses" -- or, on the combined row, "M1, M2 reverse". */
+  text: string;
+}
+
 /** One line in the transport: a machine, or all of them together. */
 export interface PlaybackRow {
   id: string;
@@ -55,6 +70,11 @@ export interface PlaybackRow {
   playing: boolean;
   /** Whether this line carries a play button of its own. */
   ownPlay: boolean;
+  /**
+   * What happens at the end of the cycle: one entry for a machine, and for the
+   * combined row one per behaviour present among the machines it stands for.
+   */
+  ends: CycleEnd[];
   period: number;
 }
 
@@ -222,7 +242,21 @@ export class PlaybackBarComponent implements OnInit, AfterViewInit, OnDestroy {
         candidate.mechanism.cyclePeriod > longest.mechanism.cyclePeriod ? candidate : longest
       );
       const alone = runnable.length === 1;
-      return [this.rowFor(lead.index, true, false, alone ? undefined : 'All')];
+      if (alone) {
+        return [this.rowFor(lead.index, true, false)];
+      }
+      // Synced, the row stands for every machine at once, so what happens at
+      // the end of the cycle is said about the group rather than about the one
+      // machine the handle happens to follow.
+      return [
+        this.rowFor(
+          lead.index,
+          true,
+          false,
+          'All',
+          this.combinedEnds(runnable.map((r) => r.index))
+        ),
+      ];
     }
 
     return runnable.map(({ index }, position) =>
@@ -230,12 +264,18 @@ export class PlaybackBarComponent implements OnInit, AfterViewInit, OnDestroy {
     );
   }
 
-  private rowFor(index: number, master: boolean, ownPlay: boolean, name?: string): PlaybackRow {
+  private rowFor(
+    index: number,
+    master: boolean,
+    ownPlay: boolean,
+    name?: string,
+    ends?: CycleEnd[]
+  ): PlaybackRow {
     const mechanism = this.mechanism.mechanisms[index];
     const seconds = this.mechanism.secondsOf(index);
     const combined = name !== undefined;
     return {
-      id: name ?? this.mechanism.partitions[index]?.id ?? `M${index + 1}`,
+      id: name ?? this.nameOf(index),
       index: combined ? -1 : index,
       leader: index,
       isMechanism: !combined,
@@ -253,6 +293,7 @@ export class PlaybackBarComponent implements OnInit, AfterViewInit, OnDestroy {
       note: combined ? '' : this.noteFor(index),
       playing: this.mechanism.isMechanismPlaying(index),
       ownPlay,
+      ends: ends ?? [this.endOf(index)],
       period: mechanism.cyclePeriod || 1,
     };
   }
@@ -354,6 +395,53 @@ export class PlaybackBarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mechanism.seekMechanismTo(index, along);
   }
 
+  /** What the machine is called, everywhere the transport has to name it. */
+  private nameOf(index: number): string {
+    return this.mechanism.partitions[index]?.id ?? `M${index + 1}`;
+  }
+
+  /**
+   * What this machine does when its handle reaches the end of the track.
+   *
+   * The row said where the input was and which way it was going, and nothing at
+   * all about either end of the track -- so a handle that jumped back to the
+   * start and a handle that turned round and came back looked the same until
+   * you watched one happen.
+   */
+  private endOf(index: number): CycleEnd {
+    return this.endWords(!this.isReciprocating(this.mechanism.mechanisms[index]));
+  }
+
+  private endWords(loops: boolean): CycleEnd {
+    return { glyph: loops ? 'loop' : 'swap_horiz', text: loops ? 'Loops' : 'Reverses' };
+  }
+
+  /**
+   * The same fact about several machines at once.
+   *
+   * Grouped by behaviour rather than listed per machine: what the reader wants
+   * from the combined row is how many kinds of ending there are, and with one
+   * kind the names are noise -- the row is already called All.
+   */
+  private combinedEnds(indices: number[]): CycleEnd[] {
+    const groups = new Map<boolean, string[]>();
+    indices.forEach((index) => {
+      const loops = !this.isReciprocating(this.mechanism.mechanisms[index]);
+      groups.set(loops, [...(groups.get(loops) ?? []), this.nameOf(index)]);
+    });
+    if (groups.size === 1) {
+      return [this.endWords([...groups.keys()][0])];
+    }
+    return [...groups].map(([loops, names]) => {
+      // One machine is the subject of a singular verb, several of a plural one.
+      const verb = loops ? 'loop' : 'reverse';
+      return {
+        glyph: this.endWords(loops).glyph,
+        text: `${names.join(', ')} ${names.length === 1 ? verb + 's' : verb}`,
+      };
+    });
+  }
+
   /**
    * Out-and-back rather than round and round.
    *
@@ -398,6 +486,31 @@ export class PlaybackBarComponent implements OnInit, AfterViewInit, OnDestroy {
     // drawing standing still.
     this.mechanism.setAllPlaying(!this.mechanism.isPlaying);
     this.settings.animating.next(this.mechanism.mechanismTimeStep !== 0);
+  }
+
+  /**
+   * Whether there is anything to come back from.
+   *
+   * A machine at the start of its cycle is already showing the pose it was
+   * drawn in, and a button that does nothing when pressed is worse than one
+   * that says so.
+   */
+  get canStop(): boolean {
+    return this.canPlay && !this.mechanism.isAtStartPose();
+  }
+
+  /**
+   * Back to the pose the mechanism was drawn in.
+   *
+   * Eased rather than cut, and by whichever way round is shorter for each
+   * machine: a linkage that teleports reads as the drawing breaking, where the
+   * same move played over a fifth of a second reads as playback ending.
+   */
+  stop(): void {
+    if (!this.canPlay) return;
+    this.mechanism.setAllPlaying(false);
+    this.settings.animating.next(false);
+    this.mechanism.easeToStart();
   }
 
   cycleSpeed(): void {

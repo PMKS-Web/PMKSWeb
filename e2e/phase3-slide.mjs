@@ -39,21 +39,6 @@ async function shot(page, name) {
   await page.screenshot({ path: path.join(screenshotDir, `${runPrefix}-${name}`) });
 }
 
-async function dismissIntro(page) {
-  const visible = await page
-    .locator('.introjs-tooltip, .introjs-overlay')
-    .first()
-    .isVisible()
-    .catch(() => false);
-  if (!visible) return;
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(async () => page.keyboard.press('Escape'));
-  await page.waitForTimeout(350);
-}
-
 /** Joint positions in model coordinates, not screen pixels. */
 async function jointState(page) {
   return await page.evaluate(() =>
@@ -85,7 +70,6 @@ page.on('pageerror', (error) => consoleErrors.push(String(error)));
 try {
   await page.goto(baseUrl + '?' + SCOTCH_YOKE, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
-  await dismissIntro(page);
 
   const start = await jointState(page);
   record('the Slide URL decodes into all six joints', start.length === 6, {

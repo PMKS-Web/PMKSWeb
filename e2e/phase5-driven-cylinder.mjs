@@ -43,7 +43,6 @@ mkdirSync(OUT, { recursive: true });
 
 await page.goto(BASE + '/' + boomQuery(), { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
 await page.waitForTimeout(300);
 
 /** What the running app thinks it is holding. */

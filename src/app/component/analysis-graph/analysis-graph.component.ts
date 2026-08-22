@@ -28,7 +28,11 @@ import {
   ApexYAxis,
 } from 'apexcharts';
 import { KinematicsSolver } from 'src/app/model/mechanism/kinematic-solver';
-import { ANALYSIS_SERIES_COLORS, formatAnalysisValue } from 'src/app/model/analysis-series';
+import {
+  ANALYSIS_SERIES_COLORS,
+  angularScale,
+  formatAnalysisValue,
+} from 'src/app/model/analysis-series';
 export { ANALYSIS_SERIES_COLORS };
 import { ForceAnalysisMode } from 'src/app/model/mechanism/force-solver';
 import { Mechanism } from 'src/app/model/mechanism/mechanism';
@@ -697,6 +701,21 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
     this.subscriptions.unsubscribe();
   }
 
+  /**
+   * Put an angular series into the unit the axis beside it is lettered in.
+   *
+   * In place, and to the four decimals this has always shown: the conversion
+   * itself now lives with the model, so the file the export writes and the
+   * curve drawn here cannot end up in different units.
+   */
+  private scaleAngles(series: number[], mechProp: string): void {
+    const scale = angularScale(mechProp, this.settingsService.angleUnit.getValue());
+    if (scale === 1) return;
+    for (let i = 0; i < series.length; i++) {
+      series[i] = Number((series[i] * scale).toFixed(4));
+    }
+  }
+
   getUnitStr(unit: LengthUnit | AngleUnit): string {
     switch (unit) {
       case AngleUnit.RADIAN:
@@ -868,13 +887,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             yAxisTitle = 'Position ' + posAngUnit;
             [datum] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
             var series: number[] = datum[0];
-            if (this.settingsService.angleUnit.getValue() == AngleUnit.RADIAN) {
-              for (let i = 0; i < series.length; i++) {
-                series[i] = Number(
-                  this.nup.convertAngle(series[i], AngleUnit.DEGREE, AngleUnit.RADIAN).toFixed(4)
-                );
-              }
-            }
+            this.scaleAngles(series, 'Angular Link Pos');
             seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
@@ -882,13 +895,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             yAxisTitle = 'Velocity ' + velAngUnit;
             [datum] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
             var series: number[] = datum[0];
-            if (this.settingsService.angleUnit.getValue() == AngleUnit.DEGREE) {
-              for (let i = 0; i < series.length; i++) {
-                series[i] = Number(
-                  this.nup.convertAngle(series[i], AngleUnit.RADIAN, AngleUnit.DEGREE).toFixed(4)
-                );
-              }
-            }
+            this.scaleAngles(series, 'Angular Link Vel');
             seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;
@@ -896,13 +903,7 @@ export class AnalysisGraphComponent implements OnInit, AfterViewInit, OnDestroy,
             yAxisTitle = 'Acceleration ' + accAngUnit;
             [datum] = this.determineAnalysis(analysis, analysisType, mechProp, mechPart);
             var series: number[] = datum[0];
-            if (this.settingsService.angleUnit.getValue() == AngleUnit.DEGREE) {
-              for (let i = 0; i < series.length; i++) {
-                series[i] = Number(
-                  this.nup.convertAngle(series[i], AngleUnit.RADIAN, AngleUnit.DEGREE).toFixed(4)
-                );
-              }
-            }
+            this.scaleAngles(series, 'Angular Link Acc');
             seriesData.push({ name: 'Z', type: 'line', data: series });
             this.numberOfSeries = 1;
             break;

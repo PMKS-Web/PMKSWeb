@@ -66,27 +66,6 @@ const say = (kind, id, text, options) =>
     { kind, id, text, options }
   );
 
-/**
- * Send the welcome tour away.
- *
- * Its overlay swallows clicks, so a suite that presses anything has to get past
- * it first -- and so does a reader, which is why it is dismissed rather than
- * clicked through.
- */
-const closeTour = async () => {
-  await page
-    .locator('.introjs-skipbutton, .introjs-tooltip .introjs-skipbutton')
-    .first()
-    .click({ timeout: 3000 })
-    .catch(() => {});
-  await page.evaluate(() => {
-    document
-      .querySelectorAll('.introjs-overlay, .introjs-tooltipReferenceLayer, .introjs-helperLayer')
-      .forEach((node) => node.remove());
-  });
-  await page.waitForTimeout(200);
-};
-
 const showing = () => page.locator('.notification').count();
 const clear = async () => {
   await page.evaluate(() =>
@@ -98,7 +77,6 @@ const clear = async () => {
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('app-new-grid svg', { timeout: 30000 });
 await waitForReady(page);
-await closeTour();
 await watch();
 
 // ---- the four kinds are told apart on screen -------------------------------
@@ -227,7 +205,6 @@ record('pressing it does the thing, and takes the message away', ran.done && ran
 // empty grid has nothing to fit to -- the same as the Reset View button.
 await page.goto(`${BASE}/?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await closeTour();
 await watch();
 
 await page.evaluate(() => {
@@ -313,7 +290,6 @@ const joints = () =>
 // separate fault and not this suite's business.
 await page.goto(`${BASE}/?${FOUR_BAR}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await closeTour();
 await watch();
 
 const jointX = () =>

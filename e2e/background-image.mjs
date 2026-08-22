@@ -31,14 +31,6 @@ const record = (what, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${what}${ok ? '' : ' — ' + JSON.stringify(detail)}`);
 };
 
-const closeTour = async () => {
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) {
-    await skip.click({ force: true });
-    await page.waitForTimeout(300);
-  }
-};
-
 const image = () =>
   page.evaluate(() => {
     const el = document.querySelector('#backgroundImageHolder image');
@@ -60,7 +52,9 @@ const image = () =>
 
 const menuLabels = () =>
   page.evaluate(() =>
-    [...document.querySelectorAll('#contextMenu #menu-item')].map((item) => item.innerText.trim())
+    [...document.querySelectorAll('#contextMenu .cm-row')].map((item) =>
+      (item.querySelector('.cm-row__label')?.textContent ?? '').trim()
+    )
   );
 
 const closeMenu = async () => {
@@ -107,7 +101,6 @@ const pngBuffer = async () => {
 
 await page.goto(`${BASE}/?${FOUR_BAR}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await waitForReady(page);
-await closeTour();
 await page.waitForTimeout(400);
 
 const emptyGrid = { x: 1150, y: 720 };
@@ -267,11 +260,11 @@ await page.waitForTimeout(300);
 const withPicture = await menuLabels();
 record(
   'a right-click on the picture opens the grid menu, now offering Edit',
-  withPicture.some((label) => label === 'Edit background image') &&
+  withPicture.some((label) => label === 'Background Image') &&
     !withPicture.some((label) => label === 'Add background image'),
   withPicture
 );
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 record(
   'that item opens the panel again',
@@ -675,7 +668,7 @@ record('an undo of the mechanism leaves the picture where it is', (await image()
 
 await page.mouse.click(emptyGrid.x, emptyGrid.y, { button: 'right' });
 await page.waitForTimeout(300);
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 await page.locator('app-edit-panel button-block', { hasText: 'Save' }).locator('button').click();
 await page.waitForTimeout(500);
@@ -710,7 +703,7 @@ await page.waitForTimeout(400);
 
 await page.mouse.click(emptyGrid.x, emptyGrid.y, { button: 'right' });
 await page.waitForTimeout(300);
-await page.locator('#contextMenu #menu-item', { hasText: 'Edit background image' }).first().click();
+await page.locator('#contextMenu .cm-row', { hasText: 'Background Image' }).first().click();
 await page.waitForTimeout(400);
 await page.locator('app-edit-panel button-block', { hasText: 'Delete' }).locator('button').click();
 await page.waitForTimeout(500);

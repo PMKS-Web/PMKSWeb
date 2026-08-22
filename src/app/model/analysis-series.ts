@@ -1,3 +1,5 @@
+import { AngleUnit } from './unit-enums';
+
 /**
  * The colour of each analysis series, in one place.
  *
@@ -27,4 +29,27 @@ export function formatAnalysisValue(value: number): string {
   if (!Number.isFinite(value)) return '';
   if (value === 0) return '0.00';
   return Math.abs(value) < 0.005 ? Number(value.toPrecision(2)).toString() : value.toFixed(2);
+}
+
+/**
+ * What an angular series has to be multiplied by to be in the unit it is labelled with.
+ *
+ * The solver does not hand these out in one unit. A link's angle is converted
+ * to degrees as it is recorded; its angular velocity and acceleration are left
+ * in radians, because that is what the equations are written in. So the panel
+ * has always converted one or the other on its way to the screen, depending on
+ * which unit the reader has chosen — and an export that skipped it wrote
+ * radians per second under a head saying degrees per second.
+ *
+ * Stated once, here, because a graph and a file of the same series that
+ * disagree are worse than either being wrong on its own.
+ */
+export function angularScale(mechProp: string, unit: AngleUnit): number {
+  if (mechProp === 'Angular Link Pos') {
+    return unit === AngleUnit.RADIAN ? Math.PI / 180 : 1;
+  }
+  if (mechProp === 'Angular Link Vel' || mechProp === 'Angular Link Acc') {
+    return unit === AngleUnit.DEGREE ? 180 / Math.PI : 1;
+  }
+  return 1;
 }

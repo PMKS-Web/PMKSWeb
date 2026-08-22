@@ -9,6 +9,7 @@ import { SynthesisBuilderService } from '../synthesis/synthesis-builder.service'
 import { applySynthesisDesign } from '../synthesis/synthesis-url';
 import { COR } from '../synthesis/synthesis-util';
 import { designFor, urlGeneratorFor } from '../../../test-utils/url-encoding';
+import { Checksum } from './checksum';
 import { StringTranscoder } from './string-transcoder';
 
 /**
@@ -177,8 +178,13 @@ describe('a synthesis design in the URL', () => {
 
   it('refuses a design that describes itself twice', () => {
     const url = encode(worked());
-    const doubled = url.replace(/(SD~[^,]+)/, '$1,$1');
-    expect(() => decodeInto(doubled)).toThrow();
+    // Doubled, and then given the checksum that length deserves. The checksum
+    // is the first thing decode looks at, so without this the URL was rejected
+    // for being the wrong length and `toThrow()` passed on an error that would
+    // still be raised with the duplicate rule deleted.
+    const body = url.slice(0, -1).replace(/(SD~[^,]+)/, '$1,$1');
+    const doubled = body + new Checksum().generateChecksum(body.length);
+    expect(() => decodeInto(doubled)).toThrowError(/repeats a synthesis entry/);
   });
 
   it('refuses an entry it does not recognise', () => {

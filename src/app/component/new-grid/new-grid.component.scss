@@ -17,6 +17,35 @@
     opacity: 0.3;
   }
 
+  // The tutorial's pointer at one joint. Amber, because every other mark a
+  // joint carries here is about what the joint *is* -- ground, input, lock --
+  // and this one is about what to do next. Two rings rather than one, so it
+  // reads as a target rather than as a halo the joint has grown.
+  //
+  // Stroke widths are in model units like everything else on this canvas, so
+  // they are given as a fraction of the joint they surround rather than in
+  // pixels: a pixel here is whatever the current zoom says it is.
+  .tutorialRing {
+    circle {
+      fill: none;
+      stroke: #ffca28;
+      vector-effect: non-scaling-stroke;
+    }
+
+    // A constant width on screen rather than in model units: this is a pointer
+    // at a joint, not a part of the drawing, so it should not thin out as the
+    // student zooms out of the mechanism it is pointing at.
+    .ringOuter {
+      stroke-width: 2;
+      opacity: 0.35;
+    }
+
+    .ringInner {
+      stroke-width: 2.5;
+      opacity: 0.6;
+    }
+  }
+
   // The grid is a background, and reads as one: two greys a shade apart, the
   // minor one barely there, and the axes the only line on it with any weight.
   // Both were black at a hairline width, which is a grey the browser chooses
@@ -123,6 +152,22 @@
   // which, not enough to be mistaken for a selection.
   .link-hovered {
     stroke: mat.m2-get-color-from-palette($accent-palette, 200);
+  }
+
+  // Pointed at from a list that names one part. Stronger than the whole-machine
+  // hover above, because it has to answer "which of these eleven pins" across
+  // the width of the window: the tint alone was a change a reader had to hunt
+  // for. Elevated as well as filled, so it lifts off whatever it overlaps.
+  .joint-pointed {
+    filter: url(#elevation-3);
+    fill: mat.m2-get-color-from-palette($accent-palette, 400);
+    stroke: #3f51b5;
+    stroke-width: 0.06;
+  }
+
+  .link-pointed {
+    stroke: mat.m2-get-color-from-palette($accent-palette, 400);
+    filter: url(#elevation-2);
   }
 
   // The grab-me ring around the selected link's CoM mark: dashed so it reads
@@ -288,6 +333,19 @@
   .synthPosePin {
     fill: #ffecb2;
     stroke: rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+  }
+
+  // The pins' letters, which the panel refers to by name. Haloed rather than
+  // boxed: they sit over whatever the drawing has behind them, and a box that
+  // size beside every pin would be more chrome than linkage.
+  .synthPreviewTag {
+    fill: rgba(0, 0, 0, 0.72);
+    stroke: #fff;
+    stroke-width: 3;
+    paint-order: stroke;
+    font-family: Roboto, sans-serif;
+    font-weight: 500;
     pointer-events: none;
   }
 

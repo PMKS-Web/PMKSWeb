@@ -48,8 +48,6 @@ for (const engine of [chromium, webkit]) {
   const page = await browser.newPage({ viewport: { width: 1500, height: 950 } });
   await page.goto(`${BASE}/?${payloads['4-Bar']}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
   await page.waitForTimeout(900);
   await page.evaluate(() => {
     const grid = ng.getComponent(document.querySelector('app-new-grid'));

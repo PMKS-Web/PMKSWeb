@@ -758,7 +758,8 @@
           <path
             class="cylinder-selected"
             [class.link-selected]="isBodySelected(cyl)"
-            [class.link-hovered]="!isBodySelected(cyl)"
+            [class.link-pointed]="!isBodySelected(cyl) && isBodyPointedAt(cyl)"
+            [class.link-hovered]="!isBodySelected(cyl) && !isBodyPointedAt(cyl)"
             pointer-events="none"
             [attr.d]="cylinderSilhouette(cyl)"
             fill="none"
@@ -865,6 +866,16 @@
           style="overflow: visible"
           [attr.cursor]="mechanismSrv.isJointLockedVisual(joint) ? 'not-allowed' : 'move'"
         >
+          <!-- The tutorial's ring: two amber circles round the joint the card is
+               naming, so "the ringed one" is unambiguous even on a drawing with
+               a dozen joints. Outside the effect group and unclickable, because
+               it is a pointer rather than a part. -->
+          @if (isTutorialTarget(joint)) {
+            <g class="tutorialRing" pointer-events="none">
+              <circle [attr.r]="settings.objectScale * 0.5" cx="0" cy="0" class="ringOuter" />
+              <circle [attr.r]="settings.objectScale * 0.35" cx="0" cy="0" class="ringInner" />
+            </g>
+          }
           <!-- Grouped so a refused or completed drop can animate the whole joint -->
           <g [class]="jointEffectClass(joint)">
             <!-- Hitbox -->
@@ -1081,6 +1092,26 @@
             [attr.stroke-width]="svgGrid.scaleWithZoom(1.4)"
           />
         }
+        <!-- Named, because the panel names them. "Driven from Pin A", "Ground
+             A–D", "Coupler B–C" -- every one of those letters was a reference
+             to something the drawing never wrote down, so the reader had no way
+             to tell which pin or which bar was meant. Drawn whatever the
+             show-ids setting says: the panel is talking about them either way. -->
+        <g id="synthesisPreviewTags">
+          @for (jt of synthCanvas.previewJoints(); track jt.id) {
+            <text
+              class="synthPreviewTag"
+              [attr.transform]="
+                'translate(' + jt.x + ',' + jt.y + ') scale(1,-1)'
+              "
+              [attr.x]="svgGrid.scaleWithZoom(11)"
+              [attr.y]="svgGrid.scaleWithZoom(-9)"
+              [style.font-size.px]="svgGrid.scaleWithZoom(13)"
+            >
+              {{ jt.id }}
+            </text>
+          }
+        </g>
       </g>
       }
 
@@ -2033,5 +2064,5 @@
 
 <!--    {{humanReadableString(settings.globalUnit.getValue())}}-->
 <ng-template #context_menu>
-  <app-context-menu [menuItems]="cMenuItems"> </app-context-menu>
+  <app-context-menu [model]="cMenu"></app-context-menu>
 </ng-template>

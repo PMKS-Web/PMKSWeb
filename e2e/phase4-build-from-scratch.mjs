@@ -65,7 +65,7 @@ await page.waitForTimeout(400);
  * pointer movement rather than from the click's own coordinates, so a click
  * without the move lands the joint wherever the pointer was last seen.
  */
-async function addLinkFrom(from, to, label = 'Add Link') {
+async function addLinkFrom(from, to, label = 'Link') {
   await page.mouse.move(from.x, from.y);
   await page.mouse.click(from.x, from.y, { button: 'right' });
   await page.waitForTimeout(450);
@@ -100,7 +100,7 @@ await page.screenshot({ path: `${OUT}/1-first-link.png` });
 // From the joint just placed, so the two links share it. The grid's menu says
 // "Add Link"; a joint's says "Attach Link", which is the same gesture starting
 // from something rather than from nothing.
-await addLinkFrom({ x: 760, y: 560 }, { x: 880, y: 380 }, 'Attach Link');
+await addLinkFrom({ x: 760, y: 560 }, { x: 880, y: 380 }, 'Link');
 const second = await counts();
 checkThat(
   'a second link grows off the first',
@@ -144,8 +144,17 @@ await page.screenshot({ path: `${OUT}/3-slot.png` });
 console.log('\nand the panel drives it');
 await page.click(`#${dragged.id}`);
 await page.waitForTimeout(400);
-const panel = await page.evaluate(() => document.body.innerText);
-checkThat('the panel names the carrier it was dropped on', /Slot on:/.test(panel));
+// The carrier is drawn, not written: the panel dropped its "Slot on:" note.
+const slotCarrier = await page.evaluate(() => {
+  const srv = ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv;
+  const slot = srv.joints.find((j) => j.constructor.name === 'PrisJoint');
+  return slot ? `${slot.id} -> ${slot.carrier?.id ?? 'nothing'}` : 'no slot';
+});
+checkThat(
+  'the slot is cut into the link it was dropped on',
+  /-> \w/.test(slotCarrier),
+  slotCarrier
+);
 
 async function toggle(label) {
   const row = page.locator('#toggle-block .row').filter({ hasText: label }).first();

@@ -245,27 +245,6 @@ page.on('console', (m) => {
 });
 page.on('pageerror', (e) => consoleErrors.push('pageerror: ' + String(e).slice(0, 220)));
 
-async function dismissOverlays() {
-  if (
-    await page
-      .locator('.introjs-tooltip')
-      .first()
-      .isVisible()
-      .catch(() => false)
-  ) {
-    await page
-      .locator('.introjs-skipbutton')
-      .first()
-      .click({ force: true })
-      .catch(() => {});
-    await page.waitForTimeout(400);
-  }
-  if ((await page.locator('mat-dialog-container').count()) > 0) {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-  }
-}
-
 /** Whatever the app itself knows about the loaded mechanism. */
 const readMechanism = () =>
   page.evaluate(() => {
@@ -397,7 +376,6 @@ for (const id of IDS) {
       timeout: 60000,
     });
     await waitForReady(page);
-    await dismissOverlays();
 
     const mech = await readMechanism();
     check('payload decodes into a mechanism', !mech.error, mech.error);

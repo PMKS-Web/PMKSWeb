@@ -119,4 +119,41 @@ describe('sizing the driver dyad for a synthesised four-bar', () => {
     const collapsed = driverDyadFor(pivot, [new Coord(0, 0), new Coord(0, 0)]);
     expect('refusal' in collapsed).toBe(true);
   });
+
+  it('builds the swings between the overtravel clamp and the ceiling', () => {
+    // The ceiling is 170°, and overtravel adds 8% of the span to it. Clamping
+    // that addition to what is left under the ceiling used to produce exactly
+    // the ceiling, which the check then refused -- so everything above
+    // 170/1.08 = 157.4° was turned away, including this 160° swing that the
+    // construction handles perfectly well.
+    const wide = unwrap(driverDyadFor(pivot, [0, 80, 160].map(pinAt)));
+
+    const shortest = wide.couplerLength - wide.crankLength;
+    const longest = wide.couplerLength + wide.crankLength;
+    for (const pose of [0, 80, 160]) {
+      expect(reachTo(wide, pose)).toBeGreaterThanOrEqual(shortest);
+      expect(reachTo(wide, pose)).toBeLessThanOrEqual(longest);
+    }
+    // And it still runs the whole way one way, which is the thing a driver is
+    // for: the ground is placed past the far end of the arc, so the reach
+    // falls from the first pose to the last without turning back.
+    let previous = reachTo(wide, 0);
+    for (let angle = 1; angle <= 160; angle += 1) {
+      const next = reachTo(wide, angle);
+      expect(next).toBeLessThan(previous);
+      previous = next;
+    }
+  });
+
+  it('refuses poses that stand still for standing still, not for turning', () => {
+    // Every pose at one angle leaves the whole circle empty. Measured modulo a
+    // turn that read as no gap at all, so the arc came back as a full turn and
+    // the reader was told the input had to swing 360°.
+    const still = driverDyadFor(pivot, [20, 20, 20].map(pinAt));
+    expect('refusal' in still).toBe(true);
+    if ('refusal' in still) {
+      expect(still.refusal).toContain('no motion');
+      expect(still.refusal).not.toContain('360');
+    }
+  });
 });

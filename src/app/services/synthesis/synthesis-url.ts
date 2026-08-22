@@ -16,6 +16,7 @@ import { COR, SynthesisPose } from './synthesis-util';
  *   SP~[x]~[y]~[angle]                one position, in the order they were placed
  *   SR~[x]~[y]~[width]~[height]       the ground-pivot region, only when required
  *   SO~[id]~[id]...                   the joints this design put on the grid
+ *   SW~[x]~[y]~[x]~[y]...             where it put each of them, in that order
  *
  * Numbers are base-N to three decimals, like every other number in this format,
  * and lengths are in the user's own units -- the internal world is MODEL_SCALE
@@ -58,7 +59,8 @@ export function encodeSynthesisDesign(design: SynthesisBuilderService): string[]
     design.endsOnly &&
     !design.allowDefect &&
     !design.constrain &&
-    design.ownedJointIds.length === 0;
+    design.ownedJointIds.length === 0 &&
+    !design.ownershipPartial;
   if (untouched) return [];
 
   const marks = [
@@ -72,7 +74,7 @@ export function encodeSynthesisDesign(design: SynthesisBuilderService): string[]
         design.allowDefect,
         design.constrain,
         design.stage === 'working',
-        false,
+        design.ownershipPartial,
         false,
       ]),
   ];
@@ -88,10 +90,17 @@ export function encodeSynthesisDesign(design: SynthesisBuilderService): string[]
     marks.push('SR~' + length(r.x) + '~' + length(r.y) + '~' + length(r.w) + '~' + length(r.h));
   }
 
-  // What this design owns on the grid, so undo and a reload both come back
-  // holding it. Ids are letters, which nothing here needs to encode.
+  // What this design owns on the grid, and where it put each of them, so undo
+  // and a reload both come back holding it and knowing whether it has been
+  // moved since. Ids are letters, which nothing here needs to encode.
   if (design.ownedJointIds.length) {
     marks.push('SO~' + design.ownedJointIds.join('~'));
+    // The baseline rides in its own entry rather than beside the ids: an id is
+    // a letter and a number is base-N over an alphabet that includes letters,
+    // so one entry holding both cannot be read back without guessing.
+    if (design.ownedAt.length === design.ownedJointIds.length) {
+      marks.push('SW~' + design.ownedAt.map((at) => length(at.x) + '~' + length(at.y)).join('~'));
+    }
   }
 
   return marks;
@@ -114,7 +123,10 @@ export function applySynthesisDesign(marks: string[], design: SynthesisBuilderSe
   }
 
   const [lengthText, referenceText, flagsText] = header.substring(3).split('~');
-  const [endsOnly, allowDefect, constrain, working] = FlagPacker.unpack(flagsText, FLAGS);
+  const [endsOnly, allowDefect, constrain, working, ownershipPartial] = FlagPacker.unpack(
+    flagsText,
+    FLAGS
+  );
 
   design.applyDecoded({
     length: unlength(lengthText),
@@ -136,5 +148,19 @@ export function applySynthesisDesign(marks: string[], design: SynthesisBuilderSe
       return { x: unlength(x), y: unlength(y), w: unlength(w), h: unlength(h) };
     })(),
     ownedJointIds: (marks.find((mark) => mark.startsWith('SO~')) ?? '').split('~').slice(1),
+    ownedAt: (() => {
+      const entry = marks.find((mark) => mark.startsWith('SW~'));
+      if (!entry) return [];
+      const parts = entry.substring(3).split('~');
+      const out: { x: number; y: number }[] = [];
+      for (let i = 0; i + 1 < parts.length; i += 2) {
+        out.push({ x: unlength(parts[i]), y: unlength(parts[i + 1]) });
+      }
+      return out;
+    })(),
+    // Whether some of what this design put on the grid has since been taken
+    // away. The ids alone cannot say so after a reload -- the missing ones get
+    // dropped, and a shortened list looks exactly like a shorter linkage.
+    ownershipPartial,
   });
 }

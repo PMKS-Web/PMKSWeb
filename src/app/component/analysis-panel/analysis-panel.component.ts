@@ -25,6 +25,14 @@ export interface ForceAnalysisRow {
   jointName: string;
   linkId: string;
   linkName: string;
+  /**
+   * What to head this graph with.
+   *
+   * Carried rather than composed at the template, because a slider does not
+   * read as either of the two names: a pin's second reaction is the force in
+   * its slot, and it belongs to the thing the slot is cut into.
+   */
+  label: string;
 }
 
 @Component({
@@ -256,6 +264,35 @@ export class AnalysisPanelComponent {
     return body ? this.mechanismService.bodyLabel(body) : linkId;
   }
 
+  /**
+   * One reaction a joint carries, named for what is on the other side of it.
+   *
+   * A slider's block is not one of them. It is a zero-length link between the
+   * pin and its slot, so the force between the pin and the block is the force
+   * between the pin and the bar, negated -- already on this panel under the
+   * bar's own name. What the block has of its own is the force in the slot,
+   * which is what sizes a slide and is reachable from nowhere else.
+   */
+  private jointRow(jointId: string, linkId: string): ForceAnalysisRow {
+    const slider = this.mechanismService.slotReactionOf(this.jointById(jointId));
+    if (slider && slider.block.id === linkId) {
+      return {
+        jointId: slider.slot.id,
+        jointName: this.jointName(slider.slot.id),
+        linkId,
+        linkName: slider.on,
+        label: `Force on ${slider.on}`,
+      };
+    }
+    return {
+      jointId,
+      jointName: this.jointName(jointId),
+      linkId,
+      linkName: this.linkName(linkId),
+      label: `Force on ${this.linkName(linkId)}`,
+    };
+  }
+
   private jointName(jointId: string): string {
     return this.mechanismService.joints.find((joint) => joint.id === jointId)?.name ?? jointId;
   }
@@ -276,21 +313,23 @@ export class AnalysisPanelComponent {
     if (index && partId) {
       rows =
         kind === 'joint'
-          ? (index.linksByJoint.get(partId) ?? []).map((linkId) => ({
-              jointId: partId,
-              jointName: this.jointName(partId),
-              linkId,
-              linkName: this.linkName(linkId),
-            }))
+          ? (index.linksByJoint.get(partId) ?? []).map((linkId) => this.jointRow(partId, linkId))
           : this.bodyMemberIds(partId).flatMap((memberId) =>
-              (index.jointsByLink.get(memberId) ?? []).map((jointId) => ({
-                jointId,
-                jointName: this.jointName(jointId),
-                // The member that actually meets this joint, not the body the
-                // reader selected: it is what the reaction is asked of.
-                linkId: memberId,
-                linkName: this.linkName(memberId),
-              }))
+              (index.jointsByLink.get(memberId) ?? []).map((jointId) => {
+                // A slot is named after the slider it belongs to: it has no
+                // marker of its own and no name a reader has ever seen.
+                const where =
+                  this.mechanismService.slotName(jointId) ?? `Joint ${this.jointName(jointId)}`;
+                return {
+                  jointId,
+                  jointName: this.jointName(jointId),
+                  // The member that actually meets this joint, not the body the
+                  // reader selected: it is what the reaction is asked of.
+                  linkId: memberId,
+                  linkName: this.linkName(memberId),
+                  label: `Force at ${where}`,
+                };
+              })
             );
       rows.sort((a, b) =>
         kind === 'joint'

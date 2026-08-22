@@ -6,6 +6,13 @@
 // looking at a screenshot is how it drifted the first time.
 @mixin css($theme) {
   $primary-palette: map.get(mat.m2-get-color-config($theme), 'primary');
+  // How far the handle has come, and what is still ahead of it. Said once,
+  // because the two engines each want their own pseudo-element for the track.
+  // The part ahead of the handle sits as far below the selected row's fill as
+  // that fill sits below white, so the bar reads on a chosen row as clearly as
+  // it does on a plain one. The mock's own grey was the platform's, and it
+  // disappeared into the highlight.
+  $track: linear-gradient(to right, #3f51b5 0 var(--along, 0%), #d5d7e0 var(--along, 0%) 100%);
 
   // Right-aligned in every mode, so the view controls at its right-hand end sit
   // in exactly the same place whatever mode is open. They used to be pushed
@@ -44,18 +51,24 @@
     box-shadow: var(--card-shadow);
   }
 
+  // The card's own padding is now 4px rather than 12: a row is a surface of its
+  // own that has to be able to reach the card's edge, and the 12px optical
+  // inset the contents used to get is made up again inside it (4 card + 4 row
+  // + 4 head). Radii nest by the same rule -- outer = inner + padding.
   .scrubCard {
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 7px;
-    padding: 9px 12px;
+    gap: 4px;
+    padding: 4px;
     min-height: 60px;
     background: var(--card-surface);
     border-radius: var(--card-radius);
     pointer-events: auto;
-    flex: 0 1 470px;
+    // Wider than it was: the line above the handle now carries the end-of-cycle
+    // reading as well as the name, the direction and the two numbers.
+    flex: 0 1 520px;
     min-width: 250px;
     box-sizing: border-box;
     box-shadow: var(--card-shadow);
@@ -88,6 +101,10 @@
     }
   }
 
+  // A rounded square rather than a disc, and the *same* rounded square as the
+  // speed button beside it and the view controls along the strip: every
+  // 40px button on this chrome takes one corner, so the one that is filled
+  // reads as the loud one of a set rather than as a shape of its own.
   .playButton {
     display: flex;
     align-items: center;
@@ -95,7 +112,7 @@
     width: 40px;
     height: 40px;
     border: none;
-    border-radius: 50%;
+    border-radius: 6px;
     background: #d5d7e0;
     color: #fff;
     cursor: pointer;
@@ -114,6 +131,39 @@
       height: 26px;
       font-size: 26px;
       line-height: 26px;
+    }
+  }
+
+  // The same button as the speed control on its other side: forty square, one
+  // corner, no fill until it is pointed at. Play is the only filled thing in
+  // the cluster, which is what makes it the one you press.
+  .stopButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #5f6368;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    &:disabled {
+      color: #c8cad3;
+      cursor: default;
+    }
+
+    mat-icon {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      line-height: 20px;
     }
   }
 
@@ -154,158 +204,280 @@
     }
   }
 
+  // One machine, on two lines: everything to read on the first, the handle with
+  // the card's whole width under it on the second. The row is a surface of its
+  // own, which is what carries the selection -- no rail, no outline, nothing
+  // drawn around the controls, and so nothing that a control can cross.
   .mechRow {
     display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  // The way to select a machine, and the only one outside the canvas -- so it
-  // has to read as a control rather than as a label that happens to react.
-  // Outlined in the app's own blue, with a caret to say there is something
-  // behind it, and filled once it is the machine being looked at.
-  .mechChip {
-    display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    height: 40px;
-    min-width: 44px;
-    padding: 0 10px;
-    flex: 0 0 auto;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: mat.m2-get-color-from-palette($primary-palette, 500);
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    // A name, not a word to be dragged over. Selecting it paints the highlight
-    // across a filled chip and leaves it looking like a fourth state.
-    user-select: none;
+    gap: 3px;
+    padding: 3px 4px;
+    // Nested by the card's rule: outer radius = inner + the padding between.
+    border-radius: calc(var(--card-radius) - 4px);
+    // A single row is the card's whole content, so its fill is the card's.
+    flex: 1 1 auto;
+    transition: background 0.12s ease;
 
-    &:hover {
-      background: rgba(0, 0, 0, 0.04);
-    }
-
-    &.selected {
-      background: mat.m2-get-color-from-palette($primary-palette, 500);
-      border-color: mat.m2-get-color-from-palette($primary-palette, 500);
-      color: #fff;
-    }
-
-    // The combined row stands for every machine at once, so there is no single
-    // thing for it to select.
-    &.plain {
-      font-size: 13px;
-      cursor: default;
-      color: #5f6368;
+    &.selectable {
+      cursor: pointer;
 
       &:hover {
-        background: transparent;
+        background: #eceef5;
+      }
+
+      // A shade darker, and that is the whole of it. Nothing added, nothing
+      // moved -- not even the name's weight, which would reflow the line it
+      // leads for a state the surface under it already says.
+      &.selected {
+        background: #e9ebf3;
       }
     }
   }
 
-  // Between the machine's name and its transport. Shorter than the controls on
-  // either side, so it reads as a seam in the row rather than a wall across it.
-  .rowSeam {
-    flex: 0 0 auto;
-    width: 1px;
-    height: 22px;
-    margin: 0 4px;
-    background: rgba(0, 0, 0, 0.12);
-  }
-
-  .rowPlay {
+  // Two spacings, as the mock has them: 8px between the things to read, and
+  // 6px between that whole group and the buttons -- which sit against the
+  // row's own padding rather than a second inset inside the line.
+  .rowHead {
     display: flex;
     align-items: center;
-    justify-content: center;
-    // Bigger than it was, and than the name beside it. This is the control that
-    // gets pressed repeatedly; it should not be the smallest thing in the row.
-    width: 36px;
-    height: 36px;
-    flex: 0 0 auto;
-    border: none;
-    border-radius: 50%;
-    background: #d5d7e0;
-    color: #fff;
-    cursor: pointer;
-    padding: 0;
-
-    &.live {
-      background: #5c6bc0;
-    }
-
-    mat-icon {
-      width: 20px;
-      height: 20px;
-      font-size: 20px;
-      line-height: 20px;
-    }
+    gap: 6px;
+    height: 22px;
+    overflow: hidden;
   }
 
-  .rowBody {
+  .rowLabel {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    align-items: center;
+    gap: 8px;
     flex: 1 1 auto;
     min-width: 0;
-    height: 40px;
-    gap: 2px;
-  }
-
-  // The track sits in a 22px well with the input pinned 9px down it, so the
-  // handle centres on the line rather than on the row.
-  .trackWell {
-    position: relative;
     height: 22px;
+    padding: 0 4px;
+    overflow: hidden;
   }
 
-  .rowScrubber {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 9px;
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-    height: 4px;
-    accent-color: #3f51b5;
+  // The way to select a machine, and the only one outside the canvas. It no
+  // longer has to look like a control on its own: the row it names is the
+  // control, so the name is just the name, in the app's own blue.
+  .mechChip {
+    display: flex;
+    align-items: center;
+    height: 22px;
+    padding: 0;
+    flex: 0 0 auto;
+    border: none;
+    background: transparent;
+    color: mat.m2-get-color-from-palette($primary-palette, 500);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
+    // A name, not a word to be dragged over. Selecting it paints the highlight
+    // across the row and leaves it looking like a second state.
+    user-select: none;
 
-    &:disabled {
+    // The combined row stands for every machine at once, so there is no single
+    // thing for it to select.
+    &.plain {
       cursor: default;
+      color: #5f6368;
     }
   }
 
-  .rowLabels {
-    display: flex;
-    align-items: center;
-    gap: 9px;
+  // Which way the input is going right now, and what it does when it gets to
+  // the end of the track. The second is grey in both readings: coming round
+  // again and turning back are two facts, not a good one and a bad one.
+  .rowNote {
+    flex: 0 1 auto;
+    min-width: 0;
     font-size: 11px;
     color: rgba(0, 0, 0, 0.5);
     white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rowEnd {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 4px;
+    font-size: 11px;
+    color: #5f6368;
+    white-space: nowrap;
+    overflow: hidden;
+
+    mat-icon {
+      width: 13px;
+      height: 13px;
+      flex: 0 0 auto;
+      font-size: 13px;
+      line-height: 13px;
+      color: #9aa0a6;
+    }
+  }
+
+  // A fixed width holding the two numbers hard against the buttons, so a value
+  // gaining a digit or a minus sign cannot move anything beside it.
+  .rowReadout {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: auto;
+    flex: 0 0 108px;
+    gap: 9px;
+    white-space: nowrap;
+  }
+
+  // The combined row names no machine and shows no position, so there is
+  // nothing for the column to line up with.
+  .mechRow.combined .rowReadout {
+    flex: 0 0 auto;
   }
 
   // Where the input is, then how long it has been going. The position leads
-  // because it is what the handle above it means.
+  // because it is what the handle below it means.
   .rowPosition {
-    min-width: 52px;
     font-size: 11px;
     font-weight: 500;
     color: #2c2c2c;
   }
 
   .rowTime {
-    min-width: 46px;
     font-size: 11px;
     color: rgba(0, 0, 0, 0.5);
   }
 
-  .rowNote {
-    color: rgba(0, 0, 0, 0.45);
+  // Inside the row's padding rather than on its edge, at the same 22px as the
+  // line they sit on, so no button ever crosses the selected surface.
+  .rowPlay,
+  .dirButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  // Playing is the row's own doing, so its button carries the app's blue; the
+  // direction is a property of the drawing, so its button stays grey.
+  .rowPlay {
+    color: mat.m2-get-color-from-palette($primary-palette, 500);
+
+    mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+    }
+  }
+
+  .dirButton {
+    color: #5f6368;
+
+    mat-icon {
+      width: 15px;
+      height: 15px;
+      font-size: 15px;
+      line-height: 15px;
+    }
+  }
+
+  // The track sits in a 16px well with the input pinned 6px down it, so the
+  // handle centres on the line rather than on the row. The well is inset the
+  // same 4px the label group is, so the handle starts under the name.
+  .trackWell {
+    position: relative;
+    height: 16px;
+    margin: 0 4px;
+  }
+
+  // Drawn rather than themed, and drawn to look like what the platform was
+  // drawing. Left to the browser, `accent-color` colours the travelled part
+  // and the handle but the track keeps a 1px rim -- a grey line above and
+  // below the bar, a border round the one control here that has one. Taking
+  // the painting means saying the rest ourselves: the bar's thickness, the
+  // capsule handle macOS drew, and how far along it sits, which is the same
+  // number the handle itself is bound to.
+  //
+  // It also settles a difference. The native slider is the platform's, so the
+  // same page did not look the same on two machines; this one does.
+  .rowScrubber {
+    position: absolute;
+    left: 0;
+    right: 0;
+    // The handle is taller than the bar and taller than the well it sits in --
+    // 20px in 16px, as the mock has it, overhanging into the row's own padding
+    // rather than making the row taller. The element holds the handle, so it
+    // is the handle's height, hung so that its middle lands on the well's.
+    top: -2px;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    height: 20px;
+    padding: 0;
+    border: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+
+    &::-webkit-slider-runnable-track {
+      height: 8px;
+      border: none;
+      border-radius: 4px;
+      background: $track;
+    }
+
+    &::-moz-range-track {
+      height: 8px;
+      border: none;
+      border-radius: 4px;
+      background: $track;
+    }
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      box-sizing: border-box;
+      width: 24px;
+      height: 20px;
+      // Centred on the 8px bar rather than on the element.
+      margin-top: -6px;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+      cursor: inherit;
+    }
+
+    &::-moz-range-thumb {
+      box-sizing: border-box;
+      width: 24px;
+      height: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+      cursor: inherit;
+    }
+
+    &:disabled {
+      cursor: default;
+    }
   }
 
   // A phone cannot hold three cards across one line. The cluster wraps, the
@@ -327,32 +499,6 @@
       flex: 1 1 100%;
       min-width: 0;
       order: 3;
-    }
-  }
-
-  .dirButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 auto;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: #5f6368;
-    cursor: pointer;
-    padding: 0;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.04);
-    }
-
-    mat-icon {
-      width: 18px;
-      height: 18px;
-      font-size: 18px;
-      line-height: 18px;
     }
   }
 }

@@ -51,11 +51,6 @@ page.on('pageerror', (error) => errors.push(String(error)));
 const load = async (payload) => {
   await page.goto(`${BASE}/${payload ? '?' + payload : ''}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page).catch(() => undefined);
-  await page.evaluate(() =>
-    document
-      .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-      .forEach((node) => node.remove())
-  );
   await page.waitForTimeout(500);
 };
 
@@ -241,29 +236,22 @@ record('turning a line off leaves the panel where it was', Math.abs(after - befo
 });
 
 // --- Export Data ------------------------------------------------------------
+// The corner card opens the export drawer rather than writing a file on the
+// spot; what the drawer then does is `e2e/export-flow.mjs`.
 await load(payloads['4-Bar']);
 await page.locator('.tabButton', { hasText: 'Kinematic' }).click({ force: true });
 await page.waitForTimeout(700);
 record(
-  'nothing selected, there is nothing to export',
-  await page.locator('.historyCard button').first().isDisabled(),
+  'with a solved mechanism there is something to export, selection or not',
+  !(await page.locator('.historyCard button').first().isDisabled()),
   {}
 );
-await page.locator('#joint_B').first().click({ force: true });
-await page.waitForTimeout(700);
-const download = page.waitForEvent('download', { timeout: 8000 }).catch(() => null);
 await page.locator('.historyCard button').first().click();
-const file = await download;
-record('and with a joint selected it writes a file', !!file, file && file.suggestedFilename());
-if (file) {
-  const path = await file.path();
-  const csv = readFileSync(path, 'utf8').trim().split('\n');
-  record(
-    'one time column and a column per series, one row per sample',
-    csv[0].startsWith('Time (seconds),') && csv[0].split(',').length === 9 && csv.length > 100,
-    { head: csv[0], rows: csv.length }
-  );
-}
+await page.waitForTimeout(700);
+record(
+  'and the corner card opens the drawer that asks what to write',
+  (await page.locator('app-export-panel').count()) === 1
+);
 
 // --- three machines at once -------------------------------------------------
 await load(THREE_MACHINES);
@@ -819,6 +807,39 @@ record(
   scrolled
 );
 await page.setViewportSize({ width: 1500, height: 950 });
+
+// --- one help mark, one behaviour ------------------------------------------
+// The mark beside a field used to be a pale grey glyph that did not answer the
+// pointer and waited a full second before saying anything; the export drawer's
+// lit up and spoke at once. A reader who has learned what it means in one panel
+// has learned it in all of them.
+await page.evaluate(() => {
+  const grid = ng.getComponent(document.querySelector('app-new-grid'));
+  grid.activeObjService.updateSelectedObj(grid.mechanismSrv.joints.find((joint) => !joint.ground));
+});
+await page.waitForTimeout(900);
+const marks = await page.evaluate(() =>
+  [...document.querySelectorAll('.label-help')].map((mark) => {
+    const style = getComputedStyle(mark);
+    return `${style.color} ${style.cursor} ${style.transform}`;
+  })
+);
+record(
+  'every help mark on screen is drawn the same way',
+  marks.length > 0 && new Set(marks).size === 1,
+  marks.slice(0, 3)
+);
+
+const help = page.locator('.label-help').first();
+const restColour = await help.evaluate((mark) => getComputedStyle(mark).color);
+await help.hover();
+await page.waitForTimeout(650);
+record(
+  'and answers the pointer, then says what it is for',
+  (await help.evaluate((mark) => getComputedStyle(mark).color)) !== restColour &&
+    (await page.locator('.mat-mdc-tooltip').count()) === 1,
+  { restColour, hovered: await help.evaluate((mark) => getComputedStyle(mark).color) }
+);
 
 record('nothing threw', errors.length === 0, errors.slice(0, 3));
 await browser.close();

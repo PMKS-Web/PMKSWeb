@@ -60,6 +60,80 @@ record(
   await page.locator('.scrubCard').innerText()
 );
 
+// --- the transport's own block is a rounded square --------------------------
+const playShape = await page.evaluate(() => {
+  const button = document.querySelector('.playButton');
+  const style = getComputedStyle(button);
+  return {
+    radius: style.borderRadius,
+    width: Math.round(button.getBoundingClientRect().width),
+  };
+});
+// --- back to where the mechanism was drawn ----------------------------------
+// Every other mode shows the start pose, so a reader who has watched a cycle
+// needs a way back to it that is not "scrub until the numbers read zero".
+await page.locator('.playButton').click();
+await page.waitForTimeout(1200);
+await page.locator('.playButton').click();
+await page.waitForTimeout(300);
+const moved = await page.evaluate(() =>
+  ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv.currentTimeSeconds()
+);
+record('a played cycle leaves the mechanism away from its start', moved > 0.05, { moved });
+record(
+  'and the stop button beside play offers the way back',
+  !(await page.locator('.stopButton').isDisabled())
+);
+await page.locator('.stopButton').click();
+await page.waitForTimeout(1200);
+const home = await page.evaluate(() =>
+  ng.getComponent(document.querySelector('app-new-grid')).mechanismSrv.currentTimeSeconds()
+);
+record('which takes it there', home === 0, { home });
+record('and then has nothing left to do', await page.locator('.stopButton').isDisabled());
+
+record(
+  'the play button is a rounded square, not a disc',
+  !playShape.radius.includes('%') && parseFloat(playShape.radius) < playShape.width / 2,
+  playShape
+);
+
+// One corner for the whole chrome: play, stop, speed and every view control
+// are the same size button on the same strip, and three radii between them
+// read as three unrelated controls that happen to sit together.
+const corners = await page.evaluate(() =>
+  ['.playButton', '.stopButton', '.speedButton', '.viewButton'].map((selector) => {
+    const button = document.querySelector(selector);
+    return button ? getComputedStyle(button).borderRadius : null;
+  })
+);
+record(
+  'and every button on the chrome takes the same corner',
+  new Set(corners).size === 1,
+  corners
+);
+
+// Play is the only filled thing in the cluster, which is what makes it the
+// one you press; stop is the same quiet button as the speed control beside it.
+record(
+  'and play is the only filled one of them',
+  await page.evaluate(() => {
+    const fill = (selector) => getComputedStyle(document.querySelector(selector)).backgroundColor;
+    const clear = (paint) => paint === 'rgba(0, 0, 0, 0)' || paint === 'transparent';
+    return !clear(fill('.playButton')) && clear(fill('.stopButton')) && clear(fill('.speedButton'));
+  })
+);
+
+// Same size, not merely the same shape: three buttons in a row at three widths
+// read as three unrelated controls.
+const sizes = await page.evaluate(() =>
+  ['.playButton', '.stopButton', '.speedButton', '.viewButton'].map((selector) => {
+    const box = document.querySelector(selector)?.getBoundingClientRect();
+    return box ? `${Math.round(box.width)}x${Math.round(box.height)}` : null;
+  })
+);
+record('and every one of them is the same size', new Set(sizes).size === 1, sizes);
+
 // --- the highlight lands on the mode that was chosen ------------------------
 const highlight = await page.evaluate(() => {
   const pill = document.querySelector('.activeTabPill');

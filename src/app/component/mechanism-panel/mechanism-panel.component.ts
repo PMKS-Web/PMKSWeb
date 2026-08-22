@@ -139,9 +139,15 @@ export class MechanismPanelComponent {
     // The joints go one at a time, but the gesture is a single press: none of
     // them saves, and the removal is minted as one undo entry below. Otherwise
     // restoring the mechanism would cost one undo per joint it happened to have.
+    // Locks are passed by here, as they are when the whole drawing is cleared:
+    // "Delete this mechanism" is a wholesale act aimed at the machine rather
+    // than at one of its parts. Left guarded, the loop deleted every unlocked
+    // joint and stopped at the locked ones, leaving a half-machine of orphans
+    // behind -- a worse outcome than either honouring the locks or ignoring
+    // them.
     [...partition.ownJoints].forEach((joint) => {
       this.activeObj.updateSelectedObj(joint);
-      this.mechanism.deleteJoint(false);
+      this.mechanism.deleteJoint(false, true);
     });
     this.activeObj.updateSelectedObj(null);
     this.mechanism.finishStructuralEdit(true);

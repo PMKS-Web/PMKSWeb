@@ -113,22 +113,6 @@ async function clickFirst(page, candidates, label) {
   return false;
 }
 
-async function dismissIntro(page) {
-  const intro = page.locator('.introjs-tooltip, .introjs-overlay').first();
-  if (await intro.isVisible().catch(() => false)) {
-    const closeButton = page
-      .locator('.introjs-skipbutton, .introjs-tooltipbuttons [role=button]')
-      .first();
-    if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click({ force: true });
-    } else {
-      await page.keyboard.press('Escape');
-    }
-    await page.waitForTimeout(500);
-    events.push({ action: 'dismiss-intro' });
-  }
-}
-
 async function clickByText(page, re, label) {
   const loc = page.locator('button,[role=button],a', { hasText: re }).first();
   if (await loc.isVisible().catch(() => false)) {
@@ -168,7 +152,7 @@ async function checkLayout(page, label) {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
       innerWidth,
-      visibleModal: !!document.querySelector('.mat-mdc-dialog-container, .introjs-tooltip'),
+      visibleModal: !!document.querySelector('.mat-mdc-dialog-container'),
       dofNaN: !!service && service.mechanisms.some((mechanism) => Number.isNaN(mechanism.dof)),
     };
   }, label);
@@ -243,7 +227,6 @@ await safeStep('initial load', async () => {
   await waitForReady(page);
   await shot(page, '01-initial-load.png');
   await checkLayout(page, 'first load with intro');
-  await dismissIntro(page);
   await shot(page, '01b-after-intro-dismissed.png');
   await checkLayout(page, 'empty project');
 });
@@ -309,7 +292,6 @@ await safeStep('load verification mechanism from shared URL', async () => {
     timeout: 60000,
   });
   await waitForReady(page);
-  await dismissIntro(page);
   await shot(page, '03b-verification-mechanism.png');
   await checkLayout(page, 'verification mechanism');
   snapshots.push(await appSnapshot(page, 'verification mechanism'));
@@ -367,7 +349,6 @@ await safeStep('mobile viewport smoke', async () => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await dismissIntro(page);
   await shot(page, '08-mobile-load.png');
   await checkLayout(page, 'mobile');
   snapshots.push(await appSnapshot(page, 'mobile'));

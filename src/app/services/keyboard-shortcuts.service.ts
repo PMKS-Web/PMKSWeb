@@ -233,6 +233,8 @@ export class KeyboardShortcutsService {
     // A key pressed into a text field belongs to that field: Delete means
     // delete a character there, and Undo means undo the typing.
     if (this.typingInAField(event)) return;
+    // And Space or Enter on something that answers them itself belongs to it.
+    if (this.targetAnswersKey(event)) return;
     // And a key pressed while something stands over the canvas belongs to that
     // thing, or to nothing. These are the canvas's keys: with the Templates
     // dialog open, Delete was removing the selected joint behind it, out of
@@ -255,15 +257,15 @@ export class KeyboardShortcutsService {
   }
 
   /**
-   * Whether the canvas is covered: a modal dialog, or the guided tour.
+   * Whether the canvas is covered by a conversation of its own.
    *
-   * Both take the whole screen and both are their own conversation. The tour
-   * is not a dialog and so is not in the dialog's own list -- it is asked
-   * about by the overlay it lays over the page.
+   * Only dialogs now. It used to also ask after the intro.js overlay, which
+   * dimmed the whole page; the tutorial that replaced it is a drawer page
+   * beside the canvas rather than over it, and the shortcuts stay live because
+   * the student is meant to be using them on the drawing while it is open.
    */
   private somethingIsOver(): boolean {
-    if (this.dialog.openDialogs.length > 0) return true;
-    return !!document.querySelector('.introjs-overlay, .introjs-tooltip');
+    return this.dialog.openDialogs.length > 0;
   }
 
   /** Whether the keystroke was aimed at somewhere text is being entered. */
@@ -275,5 +277,28 @@ export class KeyboardShortcutsService {
     // keyboard the whole time it has focus -- letters jump to an option, and
     // the digits that pick a mode here are letters to it.
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+  }
+
+  /**
+   * Whether the focused thing answers this key by being what it is.
+   *
+   * A button is activated by Space and by Enter -- that is not a shortcut
+   * anybody assigned, it is what a button is. This service answered Space
+   * wherever it was pressed and called `preventDefault` on the way, which took
+   * that activation away from every button in the app: reachable by keyboard,
+   * focusable, outlined, and inert when pressed. Nothing noticed for as long as
+   * nobody tried to drive the app without a mouse.
+   *
+   * Only these two keys, and only for the things that natively consume them, so
+   * every other shortcut still works with a button focused.
+   */
+  private targetAnswersKey(event: KeyboardEvent): boolean {
+    if (event.key !== ' ' && event.key !== 'Spacebar' && event.key !== 'Enter') return false;
+    const target = event.target as HTMLElement | null;
+    if (!target) return false;
+    const tag = target.tagName;
+    if (tag === 'BUTTON' || tag === 'SUMMARY') return true;
+    if (tag === 'A' && target.hasAttribute('href')) return true;
+    return target.getAttribute('role') === 'button';
   }
 }

@@ -5,7 +5,7 @@ import { SvgGridService } from '../svg-grid.service';
 import { ColorService } from '../color.service';
 import { SynthesisBuilderService } from './synthesis-builder.service';
 import { SynthesisSolutionService } from './synthesis-solution.service';
-import { solveFourBar } from './synthesis-candidates';
+import { solveFourBar, endLetters } from './synthesis-candidates';
 import { COR } from './synthesis-util';
 
 /** A bar drawn on the grid: two pins, a fill, and what it is called. */
@@ -371,7 +371,11 @@ export class SynthesisCanvasService {
    * be clicked, which is a worse way to learn that than being told.
    */
   private previewing(): boolean {
-    return !this.solution.inserted;
+    // Or the drawing holds a different answer than the one being looked at.
+    // Suppressing on `inserted` alone meant that after inserting A, choosing B
+    // left A standing solid on the grid while the panel said B and offered to
+    // replace it -- so B went in having never been shown.
+    return !this.solution.inserted || this.solution.needsReinsert();
   }
 
   /** The chosen candidate, drawn where the preview has been scrubbed to. */
@@ -405,16 +409,21 @@ export class SynthesisCanvasService {
   previewJoints(): PreviewJoint[] {
     const solved = this.previewing() ? this.solution.previewPose() : null;
     if (!solved) return [];
+    // The letters these pins will be built under, which follow the pins rather
+    // than the fields: reading from the far pin puts pin D in the field called
+    // A, and labelling by the field renamed half the linkage every time the
+    // drive end changed.
+    const letter = this.solution.previewLetters();
     const out: PreviewJoint[] = [
-      { id: 'A', x: solved.A.x, y: solved.A.y },
-      { id: 'B', x: solved.B.x, y: solved.B.y },
-      { id: 'C', x: solved.C.x, y: solved.C.y },
-      { id: 'D', x: solved.D.x, y: solved.D.y },
+      { id: letter.A, x: solved.A.x, y: solved.A.y },
+      { id: letter.B, x: solved.B.x, y: solved.B.y },
+      { id: letter.C, x: solved.C.x, y: solved.C.y },
+      { id: letter.D, x: solved.D.x, y: solved.D.y },
     ];
     const dyad = this.solution.dyad();
     if (dyad && solved.elbow) {
-      out.push({ id: 'E', x: dyad.ground.x, y: dyad.ground.y });
-      out.push({ id: 'F', x: solved.elbow.x, y: solved.elbow.y });
+      out.push({ id: letter.E, x: dyad.ground.x, y: dyad.ground.y });
+      out.push({ id: letter.F, x: solved.elbow.x, y: solved.elbow.y });
     }
     return out;
   }
@@ -433,11 +442,12 @@ export class SynthesisCanvasService {
     const solved = this.previewing() ? this.solution.previewPose() : null;
     if (!solved) return [];
     const dyad = this.solution.dyad();
+    const letter = this.solution.previewLetters();
     const out: PreviewJoint[] = [
-      { id: 'A', x: solved.A.x, y: solved.A.y, input: !dyad },
-      { id: 'D', x: solved.D.x, y: solved.D.y, input: false },
+      { id: letter.A, x: solved.A.x, y: solved.A.y, input: !dyad },
+      { id: letter.D, x: solved.D.x, y: solved.D.y, input: false },
     ];
-    if (dyad) out.push({ id: 'E', x: dyad.ground.x, y: dyad.ground.y, input: true });
+    if (dyad) out.push({ id: letter.E, x: dyad.ground.x, y: dyad.ground.y, input: true });
     return out;
   }
 

@@ -44,11 +44,6 @@ page.on('console', (message) => {
 const payload = payloads[template] ?? (template === 'empty' ? '' : template);
 await page.goto(`${BASE}/${payload ? '?' + payload : ''}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page).catch(() => undefined);
-await page.evaluate(() =>
-  document
-    .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-    .forEach((node) => node.remove())
-);
 await page.waitForTimeout(600);
 
 for (const step of steps) {

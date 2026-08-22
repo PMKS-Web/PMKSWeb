@@ -32,8 +32,12 @@
 
   .closeDrawer {
     position: absolute;
-    // The card starts one shadow-room inside the frame and then spends 5px on
-    // its accent bar, and stands one card-inset off the frame's right edge.
+    // Measured from the page box rather than from the frame, because the frame
+    // may be holding the tutorial's card above this one -- and a button placed
+    // against the frame then lands in the tutorial's corner rather than this
+    // page's. The page box starts at the frame's own origin when it is alone,
+    // so the numbers are unchanged: one shadow-room in, 5px of accent bar, and
+    // one card-inset off the right edge.
     top: nav.$shadow-room + 5px + $close-air;
     right: nav.$card-inset + $close-air;
     // Above the sticky heads it shares a line with, which are also 2. A tie
@@ -124,12 +128,20 @@
     //
     // Plus the shadow room, because that clearance is measured to where the
     // *card* stops and this frame holds the card that much inside it.
+    // Measured against the window rather than against the page. They are the
+    // same number until something else makes the document taller than the
+    // viewport, at which point `100%` grows with it and the drawer is free to
+    // run off the bottom of the screen.
     max-height: calc(
-      100% -
+      100dvh -
         #{nav.$top-strip-height} - var(--view-controls-clearance, #{nav.$view-controls-clearance}) +
         #{nav.$shadow-room}
     );
+    // A column, because the tutorial's card stacks above whichever page is
+    // open rather than replacing it. With one child this is what a row did
+    // anyway; with two, a row put them side by side in a drawer one card wide.
     display: flex;
+    flex-direction: column;
     z-index: 9;
 
     // As wide as the view controls it stands over, which the view controls
@@ -143,6 +155,16 @@
 
     &.wide {
       width: calc(500px + #{nav.$shadow-room} + #{nav.$card-inset});
+    }
+
+    // Wider than the view controls, and narrower than the table pages: an
+    // export row is a checkbox, a part's name and what is notable about it, and
+    // at the drawer's usual width the third of those was always ellipsed away.
+    // Named for the page rather than after its card: the export card is
+    // `.exportCard`, and a frame sharing a class with the card it holds was
+    // drawing a second background, corner, shadow and accent bar around it.
+    &.exportPage {
+      width: calc(380px + #{nav.$shadow-room} + #{nav.$card-inset});
     }
   }
 
@@ -168,6 +190,44 @@
     min-height: 0;
   }
 
+  // The page box is what the close button is measured against.
+  #rightPanel > .drawerPage {
+    position: relative;
+  }
+
+  // The tutorial keeps its own height and the page below gives way when the two
+  // together are taller than the drawer.
+  //
+  // Between them, one $card-inset -- the same gap the drawer keeps from the top
+  // strip above it and from the view controls below it, so the column reads as
+  // evenly spaced rather than as two cards that happen to be near each other.
+  // Both need the id, or `#rightPanel > div` outweighs them and each card keeps
+  // a full $shadow-room, which is more than twice the gap.
+  #rightPanel > .tutorialSlot {
+    flex: 0 0 auto;
+  }
+
+  #rightPanel > .tutorialSlot + div {
+    // Both cards keep the shadow room every card in this frame gets, and the
+    // overlap is taken back here, so what shows between them is one
+    // $card-inset -- the gap the drawer already keeps from the strip above and
+    // the view controls below.
+    //
+    // A margin rather than less padding. Taking the room away instead leaves
+    // the tutorial's bottom shadow nowhere to fall, and when the tutorial is
+    // the only card in the drawer its bottom edge lands exactly on the frame's,
+    // which scrolls -- so the shadow is clipped off square.
+    margin-top: nav.$card-inset - nav.$shadow-room * 2;
+
+    // Its own height, not whatever is left over. As a growing-and-shrinking
+    // flex item it gave way to the tutorial above it until there was nothing
+    // left: on a short window the export page collapsed to its title and its
+    // first line, with the parts list and Next simply unreachable. Sized to its
+    // content, the two cards together overflow the frame instead, and the frame
+    // already scrolls.
+    flex: 0 0 auto;
+  }
+
   // Hand the drawer's height down to the card, which is what scrolls -- the
   // same chain the left-hand panels use to keep their own title in place. Each
   // step needs `min-height: 0`, or a flex item refuses to shrink below its
@@ -179,6 +239,7 @@
   // button went with the content -- gone from the corner while the half of it
   // still showing went on taking the click.
   app-analysis-setup,
+  app-export-panel,
   app-settings-panel,
   app-help-panel {
     display: flex;

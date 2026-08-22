@@ -72,11 +72,16 @@ const signature = () =>
       .map(
         (j) =>
           `${j.id}${j.ground ? 'G' : ''}${j.input ? 'I' : ''}${j.isWelded ? 'W' : ''}` +
+          // The menu writes states as switches, so the switches have to be in
+          // the picture: a Lock or a Trace that flipped nothing would otherwise
+          // read as a control that did nothing, and one that flipped the wrong
+          // joint would not read as anything at all.
+          `${j.locked ? 'K' : ''}${j.showCurve ? 'T' : ''}` +
           `${j.constructor.name[0]}@${j.x.toFixed(2)},${j.y.toFixed(2)}`
       )
       .join('|');
     const links = mech.links
-      .map((l) => `${l.id}:${l.constructor.name[0]}:${l.fill ?? '-'}`)
+      .map((l) => `${l.id}:${l.constructor.name[0]}:${l.fill ?? '-'}${l.isCircle ? ':disc' : ''}`)
       .join('|');
     const forces = mech.forces
       .map((f) => `${f.id ?? f.name}:${f.local}:${f.startCoord.x.toFixed(1)}`)
@@ -136,10 +141,9 @@ const menuFor = (kind, id) =>
       if (!target) return null;
       grid.setLastRightClick(target);
       grid.updateContextMenuItems();
-      return grid.cMenuItems.map((item) => ({
-        label: item.label,
-        disabled: !!item.disabled,
-      }));
+      return grid.cMenu.groups.flatMap((group) =>
+        group.rows.map((row) => ({ label: row.label, disabled: !!row.disabled }))
+      );
     },
     [kind, id]
   );
@@ -160,9 +164,12 @@ const fire = (kind, id, label) =>
               : mech.forces.find((f) => (f.id ?? f.name) === id);
       grid.setLastRightClick(target);
       grid.updateContextMenuItems();
-      const item = grid.cMenuItems.find((entry) => entry.label === label);
-      if (!item) return 'gone';
-      item.actionWrapper();
+      const row = grid.cMenu.groups
+        .flatMap((group) => group.rows)
+        .find((entry) => entry.label.startsWith(label));
+      if (!row) return 'gone';
+      if (row.disabled) return 'refused';
+      row.action();
       return 'fired';
     },
     [kind, id, label]
@@ -205,8 +212,10 @@ const everySubject = () =>
 
 // Actions that begin a two-click gesture rather than finishing an edit: they are
 // *meant* to change nothing until the second click, so silence is correct.
-const GESTURES =
-  /^(Add Link|Attach Link|Add Cylinder|Attach Cylinder|Create Cylinder|Attach Force)$/;
+// Rows that arm a gesture rather than finishing an edit: the next click lands
+// the thing, so nothing has changed by the time this looks. The menu names them
+// by the bare noun under an Add or Attach heading now.
+const GESTURES = /^(Link|Cylinder|Force|Tracer Point|Background Image)$/;
 
 let clicked = 0;
 for (const id of MECHANISMS) {

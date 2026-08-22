@@ -46,8 +46,6 @@ page.on('pageerror', (error) => errors.push(String(error)));
 const openForce = async (name) => {
   await page.goto(`${BASE}/?${payloads[name]}`, { waitUntil: 'domcontentloaded' });
   await waitForReady(page);
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
   await page.waitForTimeout(700);
   await page.evaluate(() =>
     ng.getComponent(document.querySelector('app-new-grid')).tabService.setTab(3)
@@ -144,7 +142,15 @@ record('and reads exactly what the buried joint reads', onThePart === onTheJoint
 });
 
 // --- The legend holds its columns whatever the numbers read ------------------
+// Watched on a kinematic graph, not a force one: a static reaction can hold
+// one formatted value all the way round the cycle, which starves the "numbers
+// really do change" check of its premise. The position of the crank pin
+// cannot hold still -- moving is what it is for.
 await openForce('Slider_Crank');
+await page.evaluate(() =>
+  ng.getComponent(document.querySelector('app-new-grid')).tabService.setTab(2)
+);
+await page.waitForTimeout(600);
 await select('B');
 const legendAt = () =>
   page.evaluate(() => {

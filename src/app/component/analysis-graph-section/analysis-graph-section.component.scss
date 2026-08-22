@@ -92,7 +92,12 @@
     font-family: inherit;
     font-size: inherit;
     color: inherit;
-    padding: 0;
+    // The hover hitbox every entry wears, interactive or not: the padding and
+    // the margin cancel, so the text sits where it would with neither -- but
+    // only if every entry wears both. Worn only by the open card's switches,
+    // it shifted their columns four pixels left of the closed cards'.
+    padding: 1px 4px;
+    margin: -1px -4px;
     // Every digit the same width, so the text does not shuffle inside its own
     // column either.
     font-variant-numeric: tabular-nums;
@@ -105,8 +110,6 @@
   // Open, each entry is the switch for its own line.
   .graphPreview.interactive .previewSeries {
     cursor: pointer;
-    padding: 1px 4px;
-    margin: -1px -4px;
     border-radius: 4px;
 
     &:hover {
@@ -148,6 +151,10 @@
   // Material gives mat-icon a 24px box whatever the glyph inside it is, so a
   // 17px glyph with a 17px line-height sat at the top of it. Centre the glyph
   // in the box the box actually is.
+  //
+  // Only its size is stated here, which is a matter of the room a graph header
+  // has. Its ink, its cursor and what it does under the pointer are every help
+  // mark's, and are said once in `blocks.common`.
   .graphHeader .graphHelp {
     flex: 0 0 auto;
     display: flex;
@@ -157,7 +164,6 @@
     height: 24px;
     font-size: 17px;
     line-height: 1;
-    color: rgba(0, 0, 0, 0.3);
     pointer-events: auto;
   }
 

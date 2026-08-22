@@ -55,9 +55,37 @@ the canvas needs to show it.
 | Fusing bodies | **Weld** / **Unweld** | `Weld Joint`, `Unweld Joint`, `Un-weld All` |
 | Removing anything | **Delete** | `Delete Joint`, `Delete Link`, `Delete Cylinder` |
 
-`Make` survives in exactly one place — `Make Force Global` / `Make Force Local`
-— because that pair is a switch between two states rather than the presence or
-absence of one. Do not reach for it anywhere else.
+`Make` is gone. It survived in one place — `Make Force Global` / `Make Force
+Local` — precisely because that pair was a switch between two states rather
+than the presence or absence of one, and the right-click menu now writes states
+as states: the row is `Global Frame`, ticked or not. Do not reach for `Make`
+anywhere.
+
+### Verbs, and the switches that are not verbs
+
+The rule above is for **controls that do something**. A control that *describes
+a state the object is already in* is named after the state and carries a tick,
+so no label rewrites itself as it is used:
+
+| A verb, because it acts | A state, because it describes |
+| --- | --- |
+| `Attach Link`, `Delete Joint`, `Reverse Direction` | `Grounded`, `Driven Input`, `Slider`, `Welded`, `Locked`, `Trace Path`, `Global Frame`, `Drawn as a Disc` |
+
+The Edit panel's toggles already worked this way; the right-click menu followed
+in the context-menu redesign, which is why `Add Ground` / `Remove Ground` no
+longer appear there. On a menu whose group heading already carries the verb —
+`ADD` on the bare grid, `ATTACH` on a part — the rows below it are bare nouns
+(`Link`, `Cylinder`, `Tracer Point`), because the heading has said the verb
+once and repeating it down five rows says nothing new.
+
+### Refusals wear their reason
+
+A control a reader could reasonably expect is **greyed with the reason beside
+it**, in three or four lower-case words — `needs 2 links`, `it is driven`,
+`unlock first` — with the model's own longer sentence on hover. A control that
+is *structurally* impossible for that kind of object is **absent**, because a
+row that can never be used on any joint of this kind is noise rather than
+information. Nothing is clickable and then refused by a snackbar.
 
 **Delete means the thing you named goes**, along with anything that cannot
 stand without it. `Delete Cylinder` on one of a cylinder's joints deletes the

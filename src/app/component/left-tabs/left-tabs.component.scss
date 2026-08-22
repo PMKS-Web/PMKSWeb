@@ -62,6 +62,140 @@
     gap: 12px;
   }
 
+  // The tutorial's offer, and the line it leaves behind. Below the panel's own
+  // hints and under a rule, so it reads as an option rather than as the thing
+  // the panel is for -- a student who never presses it has still been told
+  // about right-click.
+  .offer {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+
+    > mat-icon {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      line-height: 20px;
+      color: mat.m2-get-color-from-palette($primary-palette, 500);
+    }
+  }
+
+  .offerText {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .offerTitle {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .offerWhy {
+    margin: 3px 0 0;
+    font-size: 13px;
+    line-height: 19px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  // Start, and the way to say no. The offer is a question, and a question with
+  // only one answer keeps getting asked.
+  .offerButtons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 11px;
+  }
+
+  .offerDismiss {
+    height: 32px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .offerButton {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 4px;
+    background: mat.m2-get-color-from-palette($primary-palette, 500);
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  // The same line as a card of its own, for when the panel above it is showing
+  // a selected part rather than its empty state.
+  .resumeCard {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    // No margin of its own: the wrapper around these cards already spaces them,
+    // and the frame's own note warns that a margin here is what once pushed a
+    // card past the bottom of a frame capped at its own height and cut the
+    // shadow off. Ten pixels, the same as every other pair of cards in this
+    // column.
+    padding: 12px 15px;
+    border: none;
+    border-radius: var(--border-radius);
+    background: var(--card-surface);
+    box-shadow: var(--card-shadow);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 19px;
+    text-align: left;
+    color: mat.m2-get-color-from-palette($primary-palette, 500);
+    cursor: pointer;
+
+    mat-icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+    }
+  }
+
+  .resumeLine {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 19px;
+    text-align: left;
+    color: mat.m2-get-color-from-palette($primary-palette, 500);
+    cursor: pointer;
+
+    mat-icon {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 19px;
+    }
+  }
+
   .helpHint {
     display: flex;
     gap: 10px;

@@ -23,7 +23,6 @@ export class SynthesisBuilderService {
 
   // whether the mechanism has been modified since last synthesis
   // if so, when switching back to edit mode, save state
-  public modifiedMechanism: boolean = false;
 
   /**
    * Which screen of Synthesis the reader is on.
@@ -84,6 +83,30 @@ export class SynthesisBuilderService {
    * duplicate of the linkage already on the grid.
    */
   public ownedJointIds: string[] = [];
+
+  /**
+   * Whether some of what this design put on the grid has since gone.
+   *
+   * A missing owned joint is what tells `ownership` the linkage has been cut
+   * into, and the ids alone stop being able to say so the moment they are
+   * written down: a reload drops the ids of joints that are not there, and a
+   * shortened list is indistinguishable from a smaller linkage. Worse, keeping
+   * the missing ids instead would claim whatever new joint next takes that
+   * letter. So the fact is carried on its own, and rides in the URL with the
+   * rest of the design.
+   */
+  public ownershipPartial = false;
+
+  /**
+   * Where each of those joints was put, in the order the ids are held.
+   *
+   * The baseline for "has this been moved by hand", and it has to be written
+   * down for the same reason the ids are. Kept in memory only, it vanished on
+   * reload and every owned linkage read as untouched -- so a joint the reader
+   * had dragged somewhere was quietly dragged back by the next Replace, and
+   * the warning that exists to stop exactly that never appeared.
+   */
+  public ownedAt: { x: number; y: number }[] = [];
 
   public region = {
     x: -6 * MODEL_SCALE,
@@ -410,6 +433,8 @@ export class SynthesisBuilderService {
     this.allowDefect = false;
     this.constrain = false;
     this.ownedJointIds = [];
+    this.ownedAt = [];
+    this.ownershipPartial = false;
     this.valueChanges.next(true);
   }
 
@@ -430,6 +455,8 @@ export class SynthesisBuilderService {
     poses: { at: Coord; thetaDegrees: number }[];
     region?: { x: number; y: number; w: number; h: number };
     ownedJointIds: string[];
+    ownedAt?: { x: number; y: number }[];
+    ownershipPartial?: boolean;
   }): void {
     this._COR = decoded.reference;
     this._length = decoded.length > 0 ? decoded.length : 5 * MODEL_SCALE;
@@ -440,6 +467,8 @@ export class SynthesisBuilderService {
     this.armed = false;
     this.regionDraw = false;
     this.ownedJointIds = decoded.ownedJointIds;
+    this.ownedAt = decoded.ownedAt ?? [];
+    this.ownershipPartial = !!decoded.ownershipPartial;
     if (decoded.region) this.region = decoded.region;
 
     this.poses = {};

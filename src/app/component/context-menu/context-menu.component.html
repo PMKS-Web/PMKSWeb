@@ -1,16 +1,76 @@
-<div id="contextMenu" class="fade-in-out" cdkMenu>
-  @for (menuItem of menuItems(); track menuItem) {
-    <div>
-      <div
-        id="menu-item"
-        cdkMenuItem
-        (cdkMenuItemTriggered)="menuItem.actionWrapper()"
-        class="{{ menuItem.disabled ? 'disabledItem' : '' }}"
-        [cdkMenuItemDisabled]="menuItem.disabled"
-      >
-        <mat-icon svgIcon="{{ menuItem.icon }}"></mat-icon>
-        <button>{{ menuItem.label }}</button>
+<div id="contextMenu" class="fade-in-out" [class.cm-empty]="empty()" cdkMenu>
+  @if (model().header; as header) {
+    <div class="cm-header">
+      <div class="cm-header__names">
+        <div class="cm-header__title">{{ header.title }}</div>
+        <div class="cm-header__subtitle">{{ header.subtitle }}</div>
       </div>
+      <!-- The way into the other mode, as one icon: a row of its own would cost
+           height on every menu, and this costs none. -->
+      @if (header.crossing; as crossing) {
+        <button
+          type="button"
+          class="cm-cross"
+          [class.cm-cross--off]="!!crossing.refusal"
+          [attr.aria-label]="crossing.tip"
+          [matTooltip]="crossing.refusal?.long ?? crossing.tip"
+          matTooltipPosition="left"
+          [matTooltipShowDelay]="500"
+          (click)="cross(crossing)"
+        >
+          @if (crossing.material) {
+            <mat-icon>{{ crossing.icon }}</mat-icon>
+          } @else {
+            <mat-icon [svgIcon]="crossing.icon"></mat-icon>
+          }
+        </button>
+      }
     </div>
+  }
+
+  @for (group of model().groups; track $index) {
+    @if (group.rows.length > 0) {
+      <div class="cm-group">
+        @if (group.label) {
+          <div class="cm-group__label">{{ group.label }}</div>
+        }
+        <!-- The tooltip waits half a second: running the pointer down the list
+             otherwise flashes a chip per row, which is what made it jumpy. -->
+        @for (row of group.rows; track row) {
+          <div
+            class="cm-row"
+            cdkMenuItem
+            [class.cm-row--off]="row.disabled"
+            [class.cm-row--on]="row.checked && !row.disabled"
+            [class.cm-row--destructive]="row.destructive"
+            [cdkMenuItemDisabled]="row.disabled"
+            [matTooltip]="row.hoverText"
+            [matTooltipDisabled]="!row.hoverText"
+            matTooltipPosition="below"
+            [matTooltipShowDelay]="500"
+            (cdkMenuItemTriggered)="run(row)"
+          >
+            @if (row.material) {
+              <mat-icon>{{ row.icon }}</mat-icon>
+            } @else {
+              <mat-icon [svgIcon]="row.icon"></mat-icon>
+            }
+            <span class="cm-row__label">{{ row.label }}</span>
+            <!-- One slot on the right, and one thing in it: the reason when the
+                 row is greyed, a count where one says something, the key
+                 otherwise. -->
+            @if (row.refusal) {
+              <span class="cm-row__reason">{{ row.refusal.short }}</span>
+            } @else if (row.checked) {
+              <mat-icon class="cm-row__check">check</mat-icon>
+            } @else if (row.hint) {
+              <span class="cm-row__hint">{{ row.hint }}</span>
+            } @else if (row.shortcut) {
+              <span class="cm-row__key">{{ row.shortcut }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
   }
 </div>

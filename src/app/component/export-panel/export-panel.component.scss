@@ -1,0 +1,639 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+@mixin css($theme) {
+  $color-config: mat.m2-get-color-config($theme);
+  $primary-palette: map.get($color-config, 'primary');
+  $indigo: mat.m2-get-color-from-palette($primary-palette, 500);
+  $indigo-light: mat.m2-get-color-from-palette($primary-palette, 400);
+
+  // Its own card, like every other drawer page: one card per panel, never a
+  // card inside a card. Three bands rather than one scrolling column -- the
+  // question and the decisions stay put, and only the list moves.
+  .exportCard {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--card-surface);
+    border-top: 5px solid $indigo;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    isolation: isolate;
+    // Something is above, out of sight. Read off the body rather than set on it,
+    // because the band that casts the shadow is not the one that scrolls.
+    &:has(.exportBody.scrolled) .exportHead {
+      box-shadow: 0 3px 6px -3px rgba(0, 0, 0, 0.35);
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+    .exportHead {
+      flex: 0 0 auto;
+      padding: 8px 15px 0;
+      background: var(--card-surface);
+      // Nothing yet: the shadow only means "there is more above", so it is drawn
+      // when the list underneath has actually been scrolled.
+      box-shadow: 0 3px 6px -3px rgba(0, 0, 0, 0);
+      transition: box-shadow 0.15s ease-in-out;
+      z-index: 3;
+    }
+
+    .exportTitle {
+      // Clear of the drawer's close button, which shares this line.
+      padding-right: 40px;
+      font-size: 20px;
+      line-height: 32px;
+      font-weight: 500;
+      letter-spacing: 0.0125em;
+      color: rgba(0, 0, 0, 0.87);
+    }
+
+    .exportLead {
+      margin: 0;
+      font-size: 14px;
+      line-height: 18px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      // The gap does the separating, so a name never runs up against the one
+      // after it.
+      gap: 8px;
+      padding-top: 12px;
+    }
+
+    // As wide as its own name, not an equal quarter of the rule. Four equal
+    // shares of 380px is 95 apiece, which `2. Kinematics` overruns -- so the
+    // long name crowded the short one beside it while `4. File` sat in a third
+    // of a segment of white.
+    .step {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .stepName {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.45);
+      padding: 0;
+      white-space: nowrap;
+
+      &.current {
+        font-weight: 500;
+        color: $indigo;
+      }
+
+      // A step already answered is the way back to it; one not reached yet is
+      // not, because there is nothing there to answer.
+      &.done {
+        color: $indigo;
+        cursor: pointer;
+      }
+
+      mat-icon {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+        line-height: 14px;
+      }
+    }
+
+    .stepBar {
+      height: 3px;
+      border-radius: 2px;
+      background: #eceef5;
+
+      &.current {
+        background: $indigo;
+      }
+
+      &.done {
+        background: #c5cae9;
+      }
+    }
+
+    .countRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 0 10px;
+    }
+
+    .count {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .linkButton {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: $indigo;
+      cursor: pointer;
+      padding: 0;
+
+      &.small {
+        font-size: 12px;
+      }
+    }
+
+    // Drawn rather than typed: a middot at this size renders as a ring in some
+    // faces and takes the ink of whatever it sits between.
+    //
+    // Named for this panel, and saying `border: none` out loud. It was called
+    // `.dot`, which the mass table's legend also calls its own marks -- so this
+    // one came out as a grey pip inside that legend's lavender ring, and the
+    // two ends of the same row disagreed about what a dot looks like.
+    .pickSep {
+      flex: 0 0 auto;
+      width: 3px;
+      height: 3px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .exportBody.busy {
+      pointer-events: none;
+      opacity: 0.55;
+    }
+
+    .exportBody {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 8px;
+    }
+
+    // The machine whose rows are passing, named while they pass.
+    .mechHead {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 15px;
+      background: var(--card-surface);
+    }
+
+    .mechName {
+      font-size: 14px;
+      font-weight: 500;
+      color: #2c2c2c;
+    }
+
+    .mechNote {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.45);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rows {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pickRow {
+      display: flex;
+      align-items: center;
+      // Said out loud, because a button's own alignment is not a flex row's:
+      // left to itself the browser centres the name between the box and the note.
+      justify-content: flex-start;
+      gap: 12px;
+      width: 100%;
+      padding: 7px 15px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        background: #f4f5f9;
+      }
+
+      // The part the reader picked on the canvas, so the list opens at the
+      // thing they were already looking at.
+      &.onGrid {
+        background: #fff8e1;
+
+        &:hover:not(:disabled) {
+          background: #fff3cd;
+        }
+      }
+
+      // Nothing to give, so nothing to tick: greyed rather than hidden, because
+      // a reader looking for Joint A should find out why it is not on offer.
+      &.off {
+        cursor: default;
+
+        .rowName,
+        .rowNote {
+          color: rgba(0, 0, 0, 0.38);
+        }
+      }
+    }
+
+    .box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(0, 0, 0, 0.54);
+      border-radius: 2px;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+      color: #fff;
+
+      &.ticked {
+        border-color: $indigo;
+        background: $indigo;
+      }
+
+      mat-icon {
+        width: 15px;
+        height: 15px;
+        font-size: 15px;
+        line-height: 15px;
+      }
+    }
+
+    .pickRow.off .box {
+      border-color: rgba(0, 0, 0, 0.2);
+      background: #f4f4f7;
+    }
+
+    .rowName {
+      font-size: 14px;
+      color: #2c2c2c;
+    }
+
+    .rowNote {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.45);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rowUnit {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.45);
+      // A fixed column, so the units line up down the list however wide the
+      // components beside them turn out to be.
+      flex: 0 0 auto;
+      min-width: 46px;
+      text-align: right;
+    }
+
+    // What the row writes, in the ink of a fact rather than of a label.
+    .rowComponents {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .groupTitle {
+      padding: 10px 15px 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2c2c2c;
+    }
+
+    .settingRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 2px 15px;
+
+      &.spaced {
+        margin-top: 6px;
+        padding-top: 12px;
+        border-top: 1px solid #eceef5;
+      }
+    }
+
+    .settingName {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.6);
+      flex: 0 0 auto;
+    }
+
+    .hint {
+      margin: 2px 15px 0;
+      font-size: 12px;
+      line-height: 16px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+
+    .empty {
+      margin: 10px 15px;
+      font-size: 13px;
+      line-height: 18px;
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    .segmented {
+      display: flex;
+      height: 30px;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+
+      button {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        border: none;
+        background: #fff;
+        color: #2c2c2c;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+
+        & + button {
+          border-left: 1px solid rgba(0, 0, 0, 0.12);
+        }
+
+        &.on {
+          background: $indigo-light;
+          color: #fff;
+        }
+      }
+    }
+
+    .formatBlock {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 14px 15px 0;
+    }
+
+    .formatRow {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .formatPick {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 10px;
+      flex: 1 1 auto;
+      padding: 5px 0;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .radio {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      border: 2px solid rgba(0, 0, 0, 0.54);
+      border-radius: 50%;
+      box-sizing: border-box;
+      flex: 0 0 auto;
+
+      &.on {
+        border-color: $indigo;
+        background: $indigo;
+      }
+    }
+
+    .pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .formatText {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .formatName {
+      font-size: 14px;
+      color: #2c2c2c;
+    }
+
+    .formatNote {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.55);
+    }
+
+    .settingBlock {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 0;
+      margin-top: 4px;
+      border-top: 1px solid #eceef5;
+    }
+
+    .nameField {
+      height: 30px;
+      width: 170px;
+      padding: 0 8px;
+      border: none;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.42);
+      border-radius: 4px 4px 0 0;
+      background: #f0f1f5;
+      box-sizing: border-box;
+      font-family: inherit;
+      font-size: 14px;
+      color: #2c2c2c;
+
+      &:focus {
+        outline: none;
+        border-bottom-color: $indigo;
+      }
+    }
+
+    .extension {
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.55);
+    }
+
+    .summaryCard {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 4px 15px 12px;
+      padding: 10px 12px;
+      background: #f7f8fc;
+      border-radius: 5px;
+    }
+
+    .summaryGlyph {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 22px;
+      font-size: 22px;
+      line-height: 22px;
+      color: #5f6368;
+    }
+
+    .summaryText {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .summaryName {
+      font-size: 13px;
+      font-weight: 500;
+      color: #2c2c2c;
+    }
+
+    .summaryNote {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.55);
+      font-variant-numeric: tabular-nums;
+    }
+
+    // Its own band above the footer, so these read as belonging to the whole
+    // list rather than to the last group in it.
+    .componentsBar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 15px;
+      border-top: 1px solid #eceef5;
+    }
+
+    .barRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    // Both labels have to fit beside their control on a 380px drawer, and
+    // `Static (Equilibrium)` beside `In-motion (Dynamic)` will not do it at the
+    // size the rest of the panel's controls are set in.
+    .segmented.tight button {
+      padding: 0 7px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .exportFoot {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 15px;
+      border-top: 1px solid #eceef5;
+      background: #fafbfd;
+    }
+
+    .footNote {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .backButton {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: $indigo;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(63, 81, 181, 0.08);
+      }
+    }
+
+    .nextButton {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 36px;
+      padding: 0 18px;
+      border: none;
+      border-radius: 4px;
+      background: $indigo;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+
+      &:disabled {
+        background: #d5d7e0;
+        color: rgba(0, 0, 0, 0.38);
+        cursor: default;
+      }
+    }
+
+    // Turning while the cycle is sampled and the file is written. A ring rather
+    // than a bar: it says "still going" without pretending to know how far
+    // along a job whose length nobody has measured is.
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: exportSpin 0.7s linear infinite;
+    }
+
+    @keyframes exportSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .backButton mat-icon,
+    .nextButton mat-icon {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+      line-height: 18px;
+    }
+  }
+}

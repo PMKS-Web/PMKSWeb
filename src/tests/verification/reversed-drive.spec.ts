@@ -71,4 +71,19 @@ describe('Reversing the drive', () => {
     // curves it already had, which are now the wrong sign.
     expect(broadcasts).toContain(2);
   });
+
+  it('tells the export the solution has changed under it, too', () => {
+    // A graph notices the new cycle because it holds the object and the object
+    // was replaced. The export's sampled tables are cached against a counter
+    // instead -- and reversing installs a solved mechanism without going
+    // through `updateMechanism`, so the counter stood still and an export
+    // taken after a reversal served the rates from before it, every angular
+    // velocity carrying the sign it had just been turned round from.
+    const harness = loadFourBar();
+    const before = harness.service.solveRevision;
+
+    harness.service.reverseDrive(0);
+
+    expect(harness.service.solveRevision).toBeGreaterThan(before);
+  });
 });

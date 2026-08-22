@@ -103,21 +103,27 @@ export class SelectedTabService {
     // looking like the app is stuck between two places.
     RightPanelComponent.closeSetupUnlessFor(this.getCurrentTab());
 
-    // Replaces the old stop button: leaving Analyze is what rewinds the
-    // mechanism, so the other modes always act on the pose at time 0.
+    // Leaving Analyze rewinds the mechanism, so the other modes always act on
+    // the pose at time 0. The transport's stop button does the same thing
+    // without leaving, for a reader who wants the drawn pose back and wants to
+    // stay where they are.
     if (this.isAnalysisMode(previousTab) && !this.isAnalysisMode()) {
       this.mechanism.easeToStart();
       this.settings.animating.next(false);
     }
 
-    if (this.getCurrentTab() === TabID.SYNTHESIZE) {
-      // reset flag
-      this.synthesis.modifiedMechanism = false;
-    } else if (previousTab === TabID.SYNTHESIZE && this.getCurrentTab() === TabID.EDIT) {
-      // save mechanism state if modified in synthesis tab
-      this.mechanism.save();
-      // reset flag
-      this.synthesis.modifiedMechanism = false;
-    }
+    /*
+      Leaving Synthesis no longer saves.
+
+      It used to, because the old mode built onto the grid as the reader typed
+      and nothing else was going to write that down. The redesign only ever
+      touches the drawing through Insert, Undo-insert and Delete, and each of
+      those saves for itself -- so this wrote a second, identical entry on the
+      way out, and the first Undo after inserting appeared to do nothing at all
+      because it stepped back onto the same state.
+
+      The flag that was supposed to gate it had not been set by anything for as
+      long as the redesign has existed, and is gone with it.
+    */
   }
 }

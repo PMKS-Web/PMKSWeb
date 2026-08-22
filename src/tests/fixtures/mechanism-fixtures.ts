@@ -72,6 +72,10 @@ export function buildMechanismFixture(payload: string): MechanismFixture {
     // are all well-proportioned, so the default answer is "nothing to say".
     // A spec that wants the warning rendered overrides it.
     cylinderReachWarning: () => undefined,
+    // Implemented, from the same function the service calls: what counts as a
+    // cylinder decides which parts a panel offers and which it folds away, so
+    // a stub here could make a drawer look right about a machine it had wrong.
+    sealedStructures: () => sealedCylinderStructures(service.joints),
     // This one is not stubbed but implemented, because a panel that changes
     // what it shows for a cylinder has to be tested against a real one. It is
     // the same resolution the service does, over the same joints.
@@ -126,6 +130,24 @@ export function buildMechanismFixture(payload: string): MechanismFixture {
   service.mechanismContaining = MechanismService.prototype.mechanismContaining.bind(service);
   service.partitionContaining = MechanismService.prototype.partitionContaining.bind(service);
   service.driveSpeedOf = MechanismService.prototype.driveSpeedOf.bind(service);
+  // Which part the canvas is holding, borrowed rather than restated. The
+  // panels ask this to mark the row a reader has already picked, and a copy
+  // here could disagree with the canvas about what "selected" means -- a
+  // cylinder in particular, which answers for all of its pieces.
+  (service as { activeObjService: ActiveObjService }).activeObjService = active;
+  // The slot a pin rides in, from the same lookup the service does: what a
+  // panel calls a slider, and which reactions belong to it, both hang off this.
+  (service as unknown as Record<string, unknown>)['sliderOf'] = (
+    MechanismService.prototype as unknown as Record<string, (joint: Joint | undefined) => unknown>
+  )['sliderOf'].bind(service);
+  service.sliderFor = MechanismService.prototype.sliderFor.bind(service);
+  // What a slider's reactions are called, from the same rule the panels and the
+  // export both read: a slot has no name a reader has been shown, so both name
+  // it after the pin, and a copy here could let the two drift apart.
+  service.slotReactionOf = MechanismService.prototype.slotReactionOf.bind(service);
+  service.slotName = MechanismService.prototype.slotName.bind(service);
+  service.isSelectedJoint = MechanismService.prototype.isSelectedJoint.bind(service);
+  service.isSelectedBody = MechanismService.prototype.isSelectedBody.bind(service);
 
   return { active, mechanism, service, settings };
 }

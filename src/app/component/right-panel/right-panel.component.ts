@@ -12,7 +12,10 @@ import { SettingsService } from '../../services/settings.service';
 import { Arc, Line } from '../../model/line';
 import { Coord } from '../../model/coord';
 import { SvgGridService } from '../../services/svg-grid.service';
+import { TutorialService } from '../../services/tutorial.service';
 import { AnalysisSetupComponent } from '../analysis-setup/analysis-setup.component';
+import { ExportPanelComponent } from '../export-panel/export-panel.component';
+import { TutorialPanelComponent } from '../tutorial-panel/tutorial-panel.component';
 import { SettingsPanelComponent } from '../settings-panel/settings-panel.component';
 import { EquationPanelComponent } from '../equation-panel/equation-panel.component';
 import { HelpPanelComponent } from '../help-panel/help-panel.component';
@@ -60,6 +63,8 @@ import { MatIcon } from '@angular/material/icon';
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     AnalysisSetupComponent,
+    ExportPanelComponent,
+    TutorialPanelComponent,
     SettingsPanelComponent,
     EquationPanelComponent,
     HelpPanelComponent,
@@ -75,6 +80,31 @@ export class RightPanelComponent implements DoCheck {
   mechanismService = inject(MechanismService);
   settingsService = inject(SettingsService);
   svgService = inject(SvgGridService);
+  private tutorial = inject(TutorialService);
+
+  /**
+   * The tutorial asks to be shown rather than reaching in and setting the tab.
+   *
+   * A service that imported this component to open it would close the loop
+   * this component's own page has already opened -- the tutorial page injects
+   * the service -- so the request travels the other way.
+   */
+  /**
+   * Whether the tutorial's card is showing above whatever page is open.
+   *
+   * It is pinned rather than paged: a student following a step has to be able
+   * to open Settings or Export without the thing they are following being put
+   * away, so it is not one of the numbered pages and does not take the drawer
+   * from one.
+   */
+  tutorialShowing(): boolean {
+    return this.tutorial.started && !this.tutorial.exited;
+  }
+
+  /** The frame stands open for a page, for the tutorial, or for both. */
+  frameOpen(): boolean {
+    return RightPanelComponent.isOpen || this.tutorialShowing();
+  }
 
   private analytics: AnalyticsService = inject(AnalyticsService);
 
@@ -93,6 +123,12 @@ export class RightPanelComponent implements DoCheck {
    */
   static readonly KINEMATIC_SETUP_TAB = 5;
   static readonly FORCE_SETUP_TAB = 6;
+  /**
+   * Export Data, which is a drawer rather than a dialog for the same reason the
+   * setups are: the canvas stays visible, so ticking a part is done next to the
+   * drawing it is a part of.
+   */
+  static readonly EXPORT_TAB = 7;
   turnOnDebugger() {
     this.settingsService.isGridDebugOn = !this.settingsService.isGridDebugOn;
   }
@@ -160,6 +196,11 @@ export class RightPanelComponent implements DoCheck {
       this.shownShape = shape;
       CHROME_MOVED.next();
     }
+    // The Edit panel's resume line is offered only when the card is not up, and
+    // a closed drawer still *renders* the page it was last showing -- it parks
+    // off the edge rather than being torn down -- so the card cannot answer
+    // this from its own lifecycle.
+    this.tutorial.onScreen = this.tutorialShowing();
     if (RightPanelComponent.attentionCount !== this.shownAttention && !this.attention) {
       this.shownAttention = RightPanelComponent.attentionCount;
       this.attention = true;
@@ -169,6 +210,11 @@ export class RightPanelComponent implements DoCheck {
 
   /** Shut the drawer, whichever one is open. */
   close(): void {
+    RightPanelComponent.dismiss();
+  }
+
+  /** Shut the drawer from outside it, the mirror of `insistOn`. */
+  static dismiss(): void {
     RightPanelComponent.isOpen = false;
   }
 
@@ -200,6 +246,12 @@ export class RightPanelComponent implements DoCheck {
     if (this.openTab === RightPanelComponent.KINEMATIC_SETUP_TAB && this.openTab !== wanted) {
       this.isOpen = false;
     }
+    // Export is an analysis-mode command: there is nothing to take away from a
+    // mechanism being drawn, and the drawer's own lists come from a solved
+    // cycle that Edit is about to change.
+    if (this.openTab === RightPanelComponent.EXPORT_TAB && wanted === -1) {
+      this.isOpen = false;
+    }
   }
 
   getOpenTab() {
@@ -209,6 +261,16 @@ export class RightPanelComponent implements DoCheck {
   /** Two of these pages hold a table rather than a panel, and need the room. */
   isWidePage(): boolean {
     return this.getOpenTab() === 2 || this.getOpenTab() === 4;
+  }
+
+  /**
+   * The export drawer is wider than the view controls it stands over.
+   *
+   * Its rows are a checkbox, a part's name and what is notable about it, and at
+   * the drawer's usual width the third of those was always ellipsed away.
+   */
+  isExportPage(): boolean {
+    return this.getOpenTab() === RightPanelComponent.EXPORT_TAB;
   }
 
   getIsOpen() {

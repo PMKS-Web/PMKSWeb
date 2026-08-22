@@ -2,19 +2,17 @@
 @use '@angular/material' as mat;
 
 @mixin css($theme) {
-  // Get the color config from the theme.
   $color-config: mat.m2-get-color-config($theme);
-  // Get the primary color palette from the color-config.
   $typography-config: mat.m2-get-typography-config($theme);
   $primary-palette: map.get($color-config, 'primary');
-  $accent-palette: map.get($color-config, 'accent');
-  $background: map.get($theme, background);
-  $foreground: map.get($theme, foreground);
+  $primary: mat.m2-get-color-from-palette($primary-palette, 500);
 
   .fade-in-out {
     opacity: 0;
     transition: 0.15s ease-in-out;
     scale: 0.5;
+    // Overwritten from the component once the card has been placed, so the
+    // grow reads right in whichever corner the pointer put it.
     transform-origin: top left;
   }
 
@@ -23,57 +21,202 @@
     scale: 1;
   }
 
+  #contextMenu.cm-empty {
+    display: none;
+  }
+
   #contextMenu {
     pointer-events: all !important;
-    @include mat.elevation(5);
+    // Raised from 5: this card stands over a mechanism that may be running,
+    // and it is opaque white rather than translucent for the same reason.
+    @include mat.elevation(16);
     display: inline-flex;
     flex-direction: column;
-    background-color: white;
-    padding: 5px 0;
+    min-width: 224px;
+    max-width: 320px;
+    padding: 0 0 4px;
+    background-color: #ffffff;
     border-radius: var(--border-radius);
+    user-select: none;
 
-    .disabledItem {
-      opacity: 0.5;
-      pointer-events: none;
+    // Who the menu is about. Named, because "Delete Joint" on a canvas of nine
+    // of them says which one only if the card does.
+    .cm-header {
+      display: flex;
+      // Centred against the whole two-line block rather than hung off the
+      // title: the icon is about the part, not about its name.
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px 10px 14px;
     }
 
-    #menu-item {
+    .cm-header__names {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cm-header__title {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.87);
+      line-height: 18px;
+    }
+
+    .cm-header__subtitle {
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.54);
+      line-height: 15px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cm-cross {
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      margin-right: -2px;
+      padding: 0;
+      border: none;
+      border-radius: 4px;
+      background: transparent;
+      color: rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+
+      &:hover {
+        background-color: #eeeeee;
+      }
+
+      mat-icon {
+        width: 19px;
+        height: 19px;
+        font-size: 19px;
+        line-height: 19px;
+      }
+    }
+
+    // The readiness refusal rides the icon rather than costing a row.
+    .cm-cross--off {
+      color: rgba(0, 0, 0, 0.26);
+      cursor: default;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+
+    // One rung of the ladder. They never reorder, so Delete is always last.
+    .cm-group {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      padding-top: 2px;
+    }
+
+    .cm-group__label {
+      padding: 6px 14px 3px;
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.42);
+    }
+
+    .cm-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      height: 30px;
+      padding: 0 14px;
+      cursor: pointer;
+      color: rgba(0, 0, 0, 0.87);
+      @include mat.m2-typography-level($typography-config, 'subtitle-2');
+      font-size: 13.5px;
+      font-weight: 400;
+
       &:focus {
         outline: none;
       }
 
-      //&:hover {
-      //  background-color: #eeeeee;
-      //}
-
-      //If hover but not disabled
-      &:hover:not(.disabledItem) {
-        background-color: #eeeeee;
-      }
-
-      padding: 0 5px;
-
-      cursor: pointer;
-      border: none;
-      align-items: center;
-      user-select: none;
-      display: flex;
-      flex-direction: row;
-
-      button {
-        user-select: none;
-        cursor: pointer;
-        border: none;
-        background-color: transparent;
-        padding: 0;
-        margin-left: 5px;
-        margin-right: 20px;
-        @include mat.m2-typography-level($typography-config, 'subtitle-2');
+      &:hover {
+        background-color: #f1f3f4;
       }
 
       mat-icon {
-        padding: 2px;
-        //scale: 0.75;
+        flex: none;
+        width: 18px;
+        height: 18px;
+        font-size: 18px;
+        line-height: 18px;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    .cm-row__label {
+      flex: 1;
+      white-space: nowrap;
+    }
+
+    // The state a switch names, on: tinted, and ticked in the same slot the
+    // reason and the key use, so the right edge always says one thing.
+    .cm-row--on {
+      background-color: rgba(63, 81, 181, 0.08);
+
+      mat-icon {
+        color: $primary;
+      }
+    }
+
+    .cm-row__check {
+      flex: none;
+      color: $primary;
+    }
+
+    .cm-row__hint,
+    .cm-row__key,
+    .cm-row__reason {
+      flex: none;
+      padding-left: 10px;
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.38);
+      white-space: nowrap;
+    }
+
+    // Greyed, with the reason beside it. Never clickable-and-then-refused.
+    .cm-row--off {
+      color: rgba(0, 0, 0, 0.32);
+      cursor: default;
+
+      &:hover {
+        background-color: transparent;
+      }
+
+      mat-icon {
+        color: rgba(0, 0, 0, 0.24);
+      }
+
+      .cm-row__reason {
+        color: rgba(0, 0, 0, 0.36);
+      }
+    }
+
+    // The footer. Alone under a rule, and always the last row.
+    .cm-row--destructive {
+      color: #d32f2f;
+
+      mat-icon {
+        color: #d32f2f;
+      }
+    }
+
+    .cm-row--destructive.cm-row--off {
+      color: rgba(0, 0, 0, 0.32);
+
+      mat-icon {
+        color: rgba(0, 0, 0, 0.24);
       }
     }
   }

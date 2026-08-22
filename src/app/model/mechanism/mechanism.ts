@@ -368,6 +368,9 @@ export class Mechanism {
     return 3 * (N - 1) - 2 * J1 - J2;
   }
 
+  /** One refinement per build, and never again after its fallback re-solve. */
+  private refineAttempted = false;
+
   private findFullMovementPos(inputAngVel: number, revoluteStep: number = Math.PI / 180) {
     // The loop below flips inputAngVel at each reversal; a re-solve has to
     // start from the speed that was asked for, not the one the loop ended on.
@@ -621,13 +624,13 @@ export class Mechanism {
     // tables are stated at exactly that spacing.
     if (
       this.sampling === 'adaptive' &&
+      !this.refineAttempted &&
       revoluteInput &&
       // Only when the crank spacing is what this mechanism moves by: a driven
       // pin steps by its own field, so re-solving it with a finer crank
       // spacing repeats the identical arc under a 58-times-faster clock.
       PositionSolver.stepsByRevoluteSampleStep &&
-      reversals >= 2 &&
-      revoluteStep === Math.PI / 180
+      reversals >= 2
     ) {
       const samples = this._joints.length - 1;
       const TARGET_SAMPLES = 360;
@@ -636,24 +639,25 @@ export class Mechanism {
       // solved position is held to.
       const FINEST = Math.PI / 180 / 64;
       if (samples > 0 && samples < TARGET_SAMPLES * (2 / 3)) {
+        this.refineAttempted = true;
         const refined = Math.max((revoluteStep * samples) / TARGET_SAMPLES, FINEST);
-        // The coarse cycle is kept in hand, because the fine one is not
-        // guaranteed to be the same cycle: a limit is wherever the solver
+        // The editable pose and what the caller derived from it, because a
+        // failed attempt rewinds all the way to here. The fine pass is not
+        // guaranteed to walk the same cycle: a limit is wherever the solver
         // failed, and a failure at one degree is sometimes a fold too sharp
         // for that seed rather than a place the linkage cannot pass. A finer
         // step walks through such a fold and out into arc the coarse pass
         // never saw -- the honest response to which is not to wander until
         // the frame cap calls the whole mechanism broken, but to keep the
         // cycle that did close.
-        const coarse = {
-          joints: this._joints.slice(),
-          links: this._links.slice(),
-          forces: this._forces.slice(),
-          timeNum: this._timeNum.slice(),
-          speeds: this._inputAngularVelocities.slice(),
+        const start = {
+          joints: this._joints[0],
+          links: this._links[0],
+          forces: this._forces[0],
           // setMechanismInvalid clears the loops with the frames, and the
           // loops were found by the caller before any of this began.
           loops: this._requiredLoops.slice(),
+          speed: this._inputAngularVelocities[0],
         };
         this._joints.length = 1;
         this._links.length = 1;
@@ -667,18 +671,23 @@ export class Mechanism {
         this._inputAngularVelocities.length = 1;
         this.findFullMovementPos(requestedAngVel, refined);
         if (!this.mechanismValid) {
-          this._joints = coarse.joints;
-          this._links = coarse.links;
-          this._forces = coarse.forces;
-          this._timeNum = coarse.timeNum;
-          this._inputAngularVelocities = coarse.speeds;
-          this._requiredLoops = coarse.loops;
+          // Walk the coarse arc again rather than pasting its frames back.
+          // Restoring arrays alone left the position solver's statics -- the
+          // joint map, the motion history, the force anchors -- describing the
+          // pose the abandoned fine pass died in, and everything that runs
+          // after a build reads those statics. A re-solve of twenty-odd
+          // samples is cheap, deterministic, and leaves the solver in exactly
+          // the state the coarse pass always left it in.
+          this._joints = [start.joints];
+          this._links = [start.links];
+          this._forces = [start.forces];
+          this._timeNum = [];
+          this._inputAngularVelocities = [start.speed];
+          this._requiredLoops = start.loops;
           this.mechanismValid = true;
           this._failure = undefined;
           this._cycleGap = undefined;
-          // The abandoned pass also leaves its spacing in the solver's
-          // static, where the drive-state capture that follows would read it.
-          PositionSolver.revoluteSampleStep = revoluteStep;
+          this.findFullMovementPos(requestedAngVel);
         }
         return;
       }

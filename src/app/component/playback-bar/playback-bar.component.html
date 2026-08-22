@@ -1,4 +1,4 @@
-<div data-canvas-inset="bottom" class="playbackRow">
+<div class="playbackRow">
   <!-- In and out from the bottom edge, the way a transport arrives. The view
        controls beside it never move: they say what you can see, which is a
        question every mode has, so they belong in the same corner in all of
@@ -27,6 +27,20 @@
       >
         <mat-icon>{{ playing ? 'pause' : 'play_arrow' }}</mat-icon>
       </button>
+      <!-- Back to the pose the mechanism was drawn in, which is the one every
+           other mode shows. Beside the play button rather than in the row of
+           readings: it is the other half of the same question. -->
+      <button
+        class="stopButton"
+        (click)="stop()"
+        [disabled]="!canStop"
+        matTooltip="Back to the start pose"
+        matTooltipPosition="above"
+        matTooltipShowDelay="600"
+        aria-label="Back to the start pose"
+      >
+        <mat-icon>stop</mat-icon>
+      </button>
     </div>
 
     <div class="scrubCard" @riseFromBottom>
@@ -40,87 +54,118 @@
       }
 
       @for (row of rows; track row.id) {
-        <div class="mechRow">
-          <!-- A machine's name is the way to select it. The combined row is not
-               a machine, so its name is a label rather than a control: as a
-               button it could be focused, pressed and shown as selected, none
-               of which lead anywhere. -->
-          @if (row.isMechanism) {
-            <button
-              class="mechChip"
-              [class.selected]="isSelected(row)"
-              (click)="selectMechanism(row)"
-              (mouseenter)="hoverMechanism(row, true)"
-              (mouseleave)="hoverMechanism(row, false)"
-              [attr.title]="'Select ' + row.id"
-            >
-              {{ row.id }}
-            </button>
-          } @else {
-            <span class="mechChip plain" title="All mechanisms move together">{{ row.id }}</span>
-          }
-
-          <!-- A seam between what the row is about and the controls that drive
-               it. The name selects a machine, which changes what the whole
-               panel is showing; the buttons beside it get pressed over and over
-               while watching one. Flush and eight pixels apart the two read as
-               one control, and a hand going for play landed on the name and
-               took the reader's open analysis away with it. -->
-          @if (row.isMechanism && row.ownPlay) {
-            <div class="rowSeam" aria-hidden="true"></div>
-          }
-
-          @if (row.ownPlay) {
-            <button
-              class="rowPlay"
-              [class.live]="canPlay"
-              (click)="toggleRow(row)"
-              [title]="shortcuts.tip('Play / pause', 'playback.toggle')"
-              [attr.aria-label]="row.playing ? 'Pause ' + row.id : 'Play ' + row.id"
-            >
-              <mat-icon>{{ row.playing ? 'pause' : 'play_arrow' }}</mat-icon>
-            </button>
-          }
-
-          <div class="rowBody">
-            <div class="trackWell">
-              <input
-                class="rowScrubber"
-                [id]="row.master ? 'slider' : null"
-                type="range"
-                min="0"
-                max="1000"
-                [value]="row.scrub"
-                [disabled]="!canPlay"
-                (mousedown)="onScrubDown(row)"
-                (mouseup)="onScrubUp(row)"
-                (input)="scrubRow(row, $event)"
-              />
-            </div>
-            <div class="rowLabels">
-              <!-- Where the input is, and how long it has been going. Read
-                   only: the handle is how you move it, and a typed time is a
-                   question about a coordinate the transport no longer uses. -->
-              @if (row.position) {
-                <span class="rowPosition" [id]="row.master ? 'playbackPosition' : null">{{
-                  row.position
+        <!-- The row's own surface carries the selection, so nothing has to be
+             drawn around the controls and no button ever crosses the state.
+             Everything to read sits on the first line; the handle gets the
+             card's whole width underneath it. -->
+        <div
+          class="mechRow"
+          [class.selectable]="row.isMechanism"
+          [class.combined]="!row.isMechanism"
+          [class.selected]="isSelected(row)"
+          (click)="selectMechanism(row)"
+          (mouseenter)="hoverMechanism(row, true)"
+          (mouseleave)="hoverMechanism(row, false)"
+        >
+          <div class="rowHead">
+            <div class="rowLabel">
+              <!-- A machine's name is the way to select it. The combined row is
+                   not a machine, so its name is a label rather than a control:
+                   as a button it could be focused, pressed and shown as
+                   selected, none of which lead anywhere. -->
+              @if (row.isMechanism) {
+                <button
+                  class="mechChip"
+                  (click)="selectMechanism(row)"
+                  [attr.title]="'Select ' + row.id"
+                >
+                  {{ row.id }}
+                </button>
+              } @else {
+                <span class="mechChip plain" title="All mechanisms move together">{{
+                  row.id
                 }}</span>
               }
-              <span class="rowTime" [id]="row.master ? 'playbackTime' : null">{{ row.time }}</span>
-              <span class="rowNote">{{ row.note }}</span>
+
+              @if (row.note) {
+                <span class="rowNote">{{ row.note }}</span>
+              }
+
+              <!-- What the handle does when it gets to the end of the track.
+                   Grey in both readings: coming round again and turning back
+                   are two facts, not a good one and a bad one. -->
+              @for (end of row.ends; track end.text) {
+                <span class="rowEnd">
+                  <mat-icon>{{ end.glyph }}</mat-icon>
+                  {{ end.text }}
+                </span>
+              }
+
+              <!-- Where the input is, and how long it has been going. Read
+                   only: the handle is how you move it, and a typed time is a
+                   question about a coordinate the transport no longer uses. A
+                   fixed width, so a value going negative or gaining a digit
+                   cannot shift the buttons beside it. -->
+              <span class="rowReadout">
+                @if (row.position) {
+                  <span class="rowPosition" [id]="row.master ? 'playbackPosition' : null">{{
+                    row.position
+                  }}</span>
+                }
+                <span class="rowTime" [id]="row.master ? 'playbackTime' : null">{{
+                  row.time
+                }}</span>
+              </span>
             </div>
+
+            <!-- The transport stops the click here rather than letting it reach
+                 the row. The row's whole surface selects the machine, which
+                 changes what the panel is showing -- open analysis and all --
+                 and these two are what a reader presses over and over while
+                 watching one machine run. Sharing a hitbox with the selector
+                 meant every play and every reversal took their place away. -->
+            @if (row.ownPlay) {
+              <button
+                class="rowPlay"
+                [class.live]="canPlay"
+                (click)="toggleRow(row); $event.stopPropagation()"
+                [title]="shortcuts.tip('Play / pause', 'playback.toggle')"
+                [attr.aria-label]="row.playing ? 'Pause ' + row.id : 'Play ' + row.id"
+              >
+                <mat-icon>{{ row.playing ? 'pause' : 'play_arrow' }}</mat-icon>
+              </button>
+            }
+
+            @if (row.isMechanism) {
+              <button
+                class="dirButton"
+                (click)="flipDirection(row); $event.stopPropagation()"
+                title="Input direction"
+                [attr.aria-label]="'Reverse ' + row.id"
+              >
+                <mat-icon>{{ row.clockwise ? 'rotate_right' : 'rotate_left' }}</mat-icon>
+              </button>
+            }
           </div>
 
-          @if (row.isMechanism) {
-            <button
-              class="dirButton"
-              (click)="flipDirection(row)"
-              title="Input direction"
-              [attr.aria-label]="'Reverse ' + row.id"
-            >
-              <mat-icon>{{ row.clockwise ? 'rotate_right' : 'rotate_left' }}</mat-icon>
-            </button>
-          }
+          <div class="trackWell">
+            <!-- The handle likewise: moving one machine along its own travel is
+                 watching it, not picking it. -->
+            <input
+              class="rowScrubber"
+              (click)="$event.stopPropagation()"
+              [id]="row.master ? 'slider' : null"
+              type="range"
+              min="0"
+              max="1000"
+              [value]="row.scrub"
+              [style.--along.%]="row.scrub / 10"
+              [disabled]="!canPlay"
+              (mousedown)="onScrubDown(row)"
+              (mouseup)="onScrubUp(row)"
+              (input)="scrubRow(row, $event)"
+            />
+          </div>
         </div>
       }
     </div>

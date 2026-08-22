@@ -164,7 +164,7 @@
         }
         @for (row of jointForceRows(); track row.linkId) {
           <app-analysis-graph-section
-            label="Force on {{ row.linkName }}"
+            [label]="row.label"
             help="The reaction that link carries at this joint"
             analysis="force"
             [analysisType]="forceAnalysisMode()"
@@ -300,7 +300,7 @@
         }
         @for (row of linkForceRows(); track row.jointId) {
           <app-analysis-graph-section
-            label="Force at Joint {{ row.jointName }}"
+            [label]="row.label"
             help="The reaction this link carries at that joint"
             analysis="force"
             [analysisType]="forceAnalysisMode()"

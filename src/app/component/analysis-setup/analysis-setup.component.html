@@ -138,6 +138,13 @@
                     }}</span>
                   </div>
                   <p class="checkText">{{ requirement.body }}</p>
+                  <!-- Only where the panel can carry the fix out itself, and
+                       only where the reader is allowed to edit: the sentence
+                       above names the way out in either case, so a button that
+                       cannot be pressed would add nothing but a dead control. -->
+                  @if (requirement.act === 'gravity' && massEditable()) {
+                    <button class="actionButton" (click)="turnGravityOn()">Turn On Gravity</button>
+                  }
                 </div>
               </div>
             }

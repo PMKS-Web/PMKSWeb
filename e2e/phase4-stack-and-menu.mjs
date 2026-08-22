@@ -134,7 +134,9 @@ const menu = await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));
   const joint = c.mechanismSrv.joints.find((j) => j.id === 'F');
   c.setLastRightClick(joint);
-  return c.cMenuItems.map((i) => ({ label: i.label ?? i.name ?? '?', disabled: i.disabled }));
+  return c.cMenu.groups
+    .flatMap((g) => g.rows)
+    .map((r) => ({ label: r.label, disabled: r.disabled }));
 });
 const item = (text) => menu.find((m) => String(m.label).includes(text));
 check(
@@ -158,7 +160,9 @@ const menuE = await page.evaluate(() => {
   const joint = c.mechanismSrv.joints.find((j) => j.id === 'E');
   c.setLastRightClick(joint);
   return {
-    items: c.cMenuItems.map((i) => ({ label: i.label ?? '?', disabled: i.disabled })),
+    items: c.cMenu.groups
+      .flatMap((g) => g.rows)
+      .map((r) => ({ label: r.label, disabled: r.disabled })),
     links: joint.links.length,
     weldControlDisabled: (() => {
       const panel = document.querySelector('app-edit-panel');

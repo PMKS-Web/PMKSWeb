@@ -35,14 +35,6 @@ const record = (what, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${what}${ok ? '' : ' — ' + JSON.stringify(detail)}`);
 };
 
-const closeTour = async () => {
-  const skip = page.locator('.introjs-skipbutton').first();
-  if (await skip.isVisible().catch(() => false)) {
-    await skip.click({ force: true });
-    await page.waitForTimeout(300);
-  }
-};
-
 const grid = () => `ng.getComponent(document.querySelector('app-new-grid'))`;
 
 const jointOnScreen = (id) =>
@@ -72,7 +64,6 @@ const dragBy = async (from, dx, dy, steps = 10) => {
 
 await page.goto(`${BASE}/?${FOUR_BAR}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await waitForReady(page);
-await closeTour();
 await page.waitForTimeout(400);
 
 // --- Lock a link from the service, as the menu item does -------------------
@@ -283,7 +274,6 @@ record(
 
 await page.goto(`${BASE}/?${INVERTED_SLIDER_CRANK}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-await closeTour();
 await page.waitForTimeout(400);
 await page.evaluate(() => {
   const c = ng.getComponent(document.querySelector('app-new-grid'));

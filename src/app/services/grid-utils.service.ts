@@ -225,6 +225,43 @@ export class GridUtilsService {
   }
 
   /**
+   * Why Weld is greyed on this joint, short and long.
+   *
+   * The branches of `canToggleWeld`, read back out. The control and its reason
+   * come from one place so a menu cannot grey a row it has no explanation for,
+   * or explain one it left enabled.
+   */
+  weldRefusal(joint: Joint): { short: string; long: string } | undefined {
+    if (this.canToggleWeld(joint)) return undefined;
+    if (!(joint instanceof RealJoint)) {
+      return { short: 'not a joint', long: 'Only a joint can be welded.' };
+    }
+    const sealed = this.mechanismSrv.cylinderAt(joint);
+    if (sealed && (joint.id === sealed.barrelFar.id || joint.id === sealed.rodFar.id)) {
+      return {
+        short: 'part is sealed',
+        long: 'A cylinder is one sealed part, so its joints cannot be fused into a neighbouring body. Attach a link here instead.',
+      };
+    }
+    if (joint.input) {
+      return {
+        short: 'it is driven',
+        long: 'A weld says these bodies do not move relative to each other, and an input says they do. Remove the input first.',
+      };
+    }
+    // A loose joint has none at all, and telling it "only one meets here" is
+    // a sentence about a link that is not there.
+    const meeting = joint.links.length;
+    return {
+      short: 'needs 2 links',
+      long:
+        meeting === 0
+          ? 'A weld fuses the links that meet at a joint, and this joint is on none.'
+          : 'A weld fuses the links that meet at a joint, and only one meets here.',
+    };
+  }
+
+  /**
    * The joints the current Lock marks hold still. Derived fresh each time —
    * the mechanism is small and the closure is cheap — so every asker (the
    * drag gates, the canvas paint, the panel) reads the same answer with no
@@ -951,8 +988,21 @@ export class GridUtilsService {
     return <Joint>joint.connectedJoints.find((j) => j instanceof PrisJoint);
   }
 
+  /**
+   * Turn a joint's traced path on, or off.
+   *
+   * A prismatic joint answers for itself. It used to fall through both arms of
+   * this and change nothing at all -- `containsSlider` is false of a prismatic
+   * joint, and it is not a RevJoint -- which mattered the moment the menu
+   * started offering a Trace Path row on one: a switch that flips nothing.
+   */
   toggleCurve(lastRightClick: Joint | Link | Force | String) {
-    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
+    if (lastRightClick instanceof PrisJoint) {
+      lastRightClick.showCurve = !lastRightClick.showCurve;
+      return;
+    }
+    // A pin that rides a block draws its path through the block's prismatic
+    // half, so that is the flag the drawing reads.
     if (this.containsSlider(lastRightClick as RealJoint)) {
       (this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint).showCurve = !(
         lastRightClick as RealJoint
@@ -961,7 +1011,6 @@ export class GridUtilsService {
     if (lastRightClick instanceof RevJoint) {
       lastRightClick.showCurve = !lastRightClick.showCurve;
     }
-    console.log(this.getSliderJoint(lastRightClick as RealJoint)! as PrisJoint);
   }
 
   getLinkSubset(link: Link): Link[] {

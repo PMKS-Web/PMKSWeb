@@ -93,11 +93,13 @@ export function driverDyadFor(pivot: Coord, drivenPin: Coord[]): DriverDyadResul
     return { refusal: 'These poses need no motion at the input, so there is nothing to drive.' };
   }
 
-  // Overtravel first, then the ceiling: a swing that only breaches it once the
-  // margin is added is still buildable, just without the full margin.
-  const margin = Math.min((span * OVERTRAVEL) / 2, Math.max(0, (WIDEST_SWING - span) / 2));
-  const swing = span + 2 * margin;
-  if (swing >= WIDEST_SWING) {
+  // The ceiling is on the arc the poses themselves ask for. Overtravel is
+  // added after it and clamped to what is left, which is what makes the
+  // clamping safe -- asked of the swing instead, the two fought: any span wide
+  // enough for the clamp to bite came out at exactly WIDEST_SWING and was
+  // refused by the very next line, so the real ceiling stood at 170/1.08, and
+  // a 160° swing well inside the documented limit was turned away.
+  if (span >= WIDEST_SWING) {
     return {
       refusal:
         `The input has to swing ${Math.round((span * 180) / Math.PI)}° between these poses, ` +
@@ -105,6 +107,8 @@ export function driverDyadFor(pivot: Coord, drivenPin: Coord[]): DriverDyadResul
         'to the others, or swapping which pin drives, brings it back in reach.',
     };
   }
+  const margin = Math.min((span * OVERTRAVEL) / 2, (WIDEST_SWING - span) / 2);
+  const swing = span + 2 * margin;
 
   const from = start - margin;
   const to = start + span + margin;
@@ -186,17 +190,33 @@ function distance(a: Coord, b: Coord): number {
  * The shortest arc holding every angle: found as the complement of the widest
  * empty gap between neighbours, which is the one stretch nothing has to cross.
  */
-function smallestArcContaining(angles: number[]): { start: number; span: number } {
+/**
+ * The shortest arc that contains every one of the given directions.
+ *
+ * Found by looking for the widest gap between them and taking what is left:
+ * the answer wraps, so it cannot be had from the smallest and largest values.
+ * Angles in radians; the arc runs from `start` for `span`.
+ */
+export function smallestArcContaining(angles: number[]): { start: number; span: number } {
   const sorted = angles.map((angle) => ((angle % TAU) + TAU) % TAU).sort((a, b) => a - b);
   let widest = -1;
   let after = 0;
-  for (let i = 0; i < sorted.length; i++) {
-    const next = sorted[(i + 1) % sorted.length];
-    const gap = (((next - sorted[i]) % TAU) + TAU) % TAU;
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    const gap = sorted[i + 1] - sorted[i];
     if (gap > widest) {
       widest = gap;
-      after = (i + 1) % sorted.length;
+      after = i + 1;
     }
+  }
+  // The wrap from the last angle back to the first, measured directly rather
+  // than modulo a turn: poses that all sit at one angle leave the whole circle
+  // empty, and a modulo reads that as no gap at all -- which came back as an
+  // arc of a full turn, and refused three identical poses for asking the input
+  // to swing 360° instead of for asking it to stand still.
+  const wrap = TAU - (sorted[sorted.length - 1] - sorted[0]);
+  if (wrap > widest) {
+    widest = wrap;
+    after = 0;
   }
   return { start: sorted[after], span: TAU - widest };
 }

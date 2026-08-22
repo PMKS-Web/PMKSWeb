@@ -16,6 +16,7 @@ import {
   meet,
   rankCandidates,
   solveFourBar,
+  endLetters,
 } from './synthesis-candidates';
 
 /**
@@ -83,11 +84,25 @@ export class SynthesisSolutionService {
    *
    * The one thing that cannot be derived from the drawing: whether the linkage
    * on the grid is still the one synthesis produced, or one the reader has
-   * since moved by hand. Held in memory only -- after a reload there is nothing
-   * to compare against, and the honest default there is to assume nothing has
-   * been touched rather than to nag about an edit that may never have happened.
+   * since moved by hand.
+   *
+   * It used to be held in memory only, on the reasoning that after a reload
+   * there was nothing to compare against and the honest default was to assume
+   * nothing had been touched. That default was not honest, it was expensive:
+   * assuming nothing had been touched meant Replace deleted whatever had been,
+   * without the warning that exists for it. Move a joint, share the link, open
+   * it, press Replace, and the joint went back where synthesis had put it. So
+   * it is written down with the ids, and read back off the design.
    */
-  private writtenAt = new Map<string, { x: number; y: number }>();
+  private get writtenAt(): Map<string, { x: number; y: number }> {
+    const at = this.design.ownedAt;
+    return new Map(
+      this.design.ownedJointIds
+        .map((id, index) => [id, at[index]] as const)
+        .filter((pair): pair is readonly [string, { x: number; y: number }] => !!pair[1])
+        .map(([id, place]) => [id, place])
+    );
+  }
 
   private cacheKey = '';
   private cached: FourBarCandidate[] = [];
@@ -243,13 +258,36 @@ export class SynthesisSolutionService {
   driven(cand: FourBarCandidate | null = this.chosen()): FourBarCandidate | null {
     if (!cand) return null;
     if (!this.driveOnFarPin) return cand;
+    /*
+      Read from the far pin, and remembered.
+
+      `drivenFromFarPin` re-assesses the swapped linkage, which walks a whole
+      revolution a degree at a time -- seven hundred solves. That was done on
+      every call, and the calls are not few: drawing the coupler's path asks
+      for this once per sample, two hundred and forty times, on every animation
+      frame. Driving from Pin D therefore cost something like a hundred and
+      seventy thousand solves a frame, which is as slow as it sounds. Driving
+      from Pin A never noticed, because that path returns the candidate
+      untouched.
+    */
+    const key = cand.key + ':' + this.design.searchKey();
+    const remembered = this.swapped.get(key);
+    if (remembered) return remembered;
     const swapped = drivenFromFarPin(cand);
     swapped.name = cand.name;
     swapped.branch = cand.branch;
     swapped.key = cand.key;
     swapped.pair = cand.pair;
+    // Keyed by candidate rather than holding only the last one. Hovering a
+    // card asks for that candidate while the picked one is still being drawn,
+    // and a single slot let the two evict each other on every pass -- the same
+    // seven hundred solves the cache exists to avoid, just less often.
+    if (this.swapped.size > 64) this.swapped.clear();
+    this.swapped.set(key, swapped);
     return swapped;
   }
+
+  private swapped = new Map<string, FourBarCandidate>();
 
   /**
    * Why a driver cannot be fitted to the current solution, or nothing.
@@ -450,6 +488,15 @@ export class SynthesisSolutionService {
     return solveFourBar(cand, phase, cand.sign);
   }
 
+  /** Where the linkage sits when it is drawn: position 1, in whatever turns. */
+  startPhase(): number {
+    const cand = this.driven();
+    if (!cand) return 0;
+    const dyad = this.dyad();
+    if (dyad) return this.driverAngleAt(cand, dyad, cand.thetas[0]) ?? 0;
+    return cand.thetas[0];
+  }
+
   /** Where each position falls along whatever is being turned. */
   positionPhases(): (number | null)[] {
     const cand = this.driven();
@@ -506,11 +553,69 @@ export class SynthesisSolutionService {
 
   // --- committing to the drawing -----------------------------------------
 
+  /**
+   * The letters this design's pins will be built under.
+   *
+   * Asked by the preview as well as by insert, so that what is drawn beside a
+   * pin is what that pin ends up called. Labelling the preview A-D and letting
+   * insert take the next free letters agreed only on an empty grid: beside one
+   * loose joint the preview said D-C-B-A over pins that arrived as E-D-C-B.
+   */
+  previewLetters(cand: FourBarCandidate | null = this.driven()): {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+    E: string;
+    F: string;
+  } {
+    /*
+      Counted against the grid as insert will find it, not as it stands.
+
+      Insert takes a replaceable linkage of ours away before it builds, so its
+      four or six ids come free -- and counting them as taken meant a
+      replacement preview promised E-J over pins that arrived as A-F. The same
+      arithmetic renamed the labels out from under a linkage the moment it was
+      inserted, because its own new ids were suddenly occupied. Survivors of a
+      linkage that has been cut into are a different matter: those stay, so
+      their ids stay taken.
+    */
+    const held = this.ownership();
+    const freed = held === 'ours' || held === 'edited' ? this.design.ownedJointIds : [];
+    const key = this.lettersKey(freed);
+    if (this.lettersAt !== key) {
+      this.lettersAt = key;
+      this.letters = this.nextLetters(6, freed);
+    }
+    const letters = this.letters;
+    const slot: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+    const mark = endLetters(cand);
+    return {
+      A: letters[slot[mark.A]],
+      B: letters[slot[mark.B]],
+      C: letters[slot[mark.C]],
+      D: letters[slot[mark.D]],
+      E: letters[4],
+      F: letters[5],
+    };
+  }
+
+  /**
+   * What the six letters depend on: who is on the grid, and what is coming off
+   * it. Cheap enough to build every frame, which handing out six ids -- six
+   * scans of the joint list -- is not.
+   */
+  private lettersKey(freed: string[]): string {
+    return this.mechanismSrv.joints.map((joint) => joint.id).join(',') + '|' + freed.join(',');
+  }
+  private lettersAt = '\u0000';
+  private letters: string[] = [];
+
   /** As many ids as asked for, none of which anything on the grid is using. */
-  private nextLetters(count: number): string[] {
+  private nextLetters(count: number, freed: string[] = []): string[] {
     const taken: string[] = [];
     for (let i = 0; i < count; i++) {
-      taken.push(this.mechanismSrv.determineNextLetter(taken));
+      taken.push(this.mechanismSrv.determineNextLetter(taken, freed));
     }
     return taken;
   }
@@ -536,7 +641,22 @@ export class SynthesisSolutionService {
     if (ids.size === 0) return 'none';
     const owned = this.mechanismSrv.joints.filter((joint) => ids.has(joint.id));
     if (owned.length === 0) return 'none';
-    if (owned.length !== ids.size) return 'entangled';
+    if (owned.length !== ids.size) {
+      /*
+        Latched the moment it is noticed, not only when a URL is read back.
+
+        Ids are handed out again after a deletion. Delete one of ours and draw
+        a joint, and that joint takes the letter we just lost -- so the count
+        comes back up, every id is present again, and the linkage reads as
+        wholly ours with somebody else's joint standing in it. A later replace
+        would take that joint away without asking. Once cut into, cut into.
+      */
+      this.design.ownershipPartial = true;
+      return 'entangled';
+    }
+    // Or it was cut into earlier: the ids that survived look complete on their
+    // own, and only the flag remembers that they are not all of them.
+    if (this.design.ownershipPartial) return 'entangled';
     // A joint of ours pinned to a joint that is not ours means the two machines
     // have been joined. Taking ours back would either leave a link hanging off
     // nothing or cut into a machine that was never ours to touch.
@@ -544,9 +664,18 @@ export class SynthesisSolutionService {
       (joint as RealJoint).connectedJoints?.some((other) => !ids.has(other.id))
     );
     if (joinedOutward) return 'entangled';
-    if (this.writtenAt.size === 0) return 'ours';
+    /*
+      No baseline is "ask", not "help yourself".
+
+      Every insert writes one, so the only way to be without it is a URL from
+      before this was written down -- and the answer that costs nothing is to
+      ask before replacing. The answer that used to be given, that the linkage
+      must be untouched, cost the reader whatever they had moved.
+    */
+    const baseline = this.writtenAt;
+    if (baseline.size === 0) return 'edited';
     const moved = owned.some((joint) => {
-      const was = this.writtenAt.get(joint.id);
+      const was = baseline.get(joint.id);
       return !was || Math.hypot(joint.x - was.x, joint.y - was.y) > MOVED_BY_HAND;
     });
     return moved ? 'edited' : 'ours';
@@ -576,8 +705,18 @@ export class SynthesisSolutionService {
     // writes them. Anything else on the grid under our ids means a different
     // answer is standing there.
     const wanted = [solved.A, solved.B, solved.C, solved.D];
+    // The driver's two pins as well, when there is one. Comparing the four-bar
+    // alone meant fitting a driver to an inserted four-bar -- or taking one off
+    // an inserted six-bar -- left the panel saying "Inserted into grid" over a
+    // drawing that no longer held what was being looked at, and the preview
+    // stayed hidden because it agreed.
+    const dyad = this.dyad();
+    if (dyad) {
+      const elbow = meet(dyad.ground, dyad.crankLength, solved.B, dyad.couplerLength);
+      if (elbow) wanted.push(dyad.ground, elbow[0]);
+    }
     const ids = this.design.ownedJointIds;
-    if (owned.size < wanted.length) return true;
+    if (owned.size !== wanted.length || ids.length !== wanted.length) return true;
     return wanted.some((point, i) => {
       const joint = owned.get(ids[i]);
       return !joint || Math.hypot(joint.x - point.x, joint.y - point.y) > MOVED_BY_HAND;
@@ -587,7 +726,8 @@ export class SynthesisSolutionService {
   /** Stop claiming the linkage on the grid, without removing it. */
   releaseOwnership(): void {
     this.design.ownedJointIds = [];
-    this.writtenAt.clear();
+    this.design.ownedAt = [];
+    this.design.ownershipPartial = false;
     this.changed.next();
   }
 
@@ -616,7 +756,10 @@ export class SynthesisSolutionService {
     else if (held !== 'none') this.removeOwned();
 
     const dyad = this.dyad();
-    const [idA, idB, idC, idD, idE, idF] = this.nextLetters(6);
+    // The same letters the preview has been showing beside these pins.
+    const { A: idA, B: idB, C: idC, D: idD, E: idE, F: idF } = this.previewLetters(cand);
+    /** A link is named by its ends in alphabetical order, as everywhere else. */
+    const linkId = (one: string, two: string): string => [one, two].sort().join('');
     // With a driver on the linkage neither ground pin is the input at all; the
     // motor sits on the driver's own ground and turns the whole train.
     const drivenDirectly = !dyad;
@@ -631,11 +774,11 @@ export class SynthesisSolutionService {
     jointC.connectedJoints.push(jointB, jointD);
     jointD.connectedJoints.push(jointC);
 
-    const crank = new RealLink(idA + idB, [jointA, jointB]);
+    const crank = new RealLink(linkId(idA, idB), [jointA, jointB]);
     crank.fill = this.colors.getLinkColorFromIndex(0);
-    const coupler = new RealLink(idB + idC, [jointB, jointC]);
+    const coupler = new RealLink(linkId(idB, idC), [jointB, jointC]);
     coupler.fill = this.colors.getLinkColorFromIndex(1);
-    const rocker = new RealLink(idC + idD, [jointC, jointD]);
+    const rocker = new RealLink(linkId(idC, idD), [jointC, jointD]);
     rocker.fill = this.colors.getLinkColorFromIndex(0);
 
     jointA.links.push(crank);
@@ -657,9 +800,9 @@ export class SynthesisSolutionService {
         knee.connectedJoints.push(motor, jointB);
         jointB.connectedJoints.push(knee);
 
-        const driverCrank = new RealLink(idE + idF, [motor, knee]);
+        const driverCrank = new RealLink(linkId(idE, idF), [motor, knee]);
         driverCrank.fill = this.colors.getLinkColorFromIndex(2);
-        const driverCoupler = new RealLink(idF + idB, [knee, jointB]);
+        const driverCoupler = new RealLink(linkId(idF, idB), [knee, jointB]);
         driverCoupler.fill = this.colors.getLinkColorFromIndex(3);
 
         motor.links.push(driverCrank);
@@ -679,9 +822,14 @@ export class SynthesisSolutionService {
     this.mechanismSrv.mergeToJoints(joints);
     this.mechanismSrv.mergeToLinks(links);
     this.design.ownedJointIds = joints.map((joint) => joint.id);
-    this.writtenAt = new Map(joints.map((joint) => [joint.id, { x: joint.x, y: joint.y }]));
+    this.design.ownedAt = joints.map((joint) => ({ x: joint.x, y: joint.y }));
+    this.design.ownershipPartial = false;
     this.playing = false;
-    this.mechanismSrv.mechanismTimeStep = 0;
+    // Eased rather than snapped: the drawing may be parked anywhere in its
+    // cycle, and dropping it onto its start pose between one frame and the next
+    // reads as the linkage jumping rather than as it going home. The same
+    // easing leaving an analysis mode uses.
+    this.mechanismSrv.easeToStart();
     this.mechanismSrv.updateMechanism(true);
     this.changed.next();
     return 'done';
@@ -708,7 +856,8 @@ export class SynthesisSolutionService {
     this.mechanismSrv.links = this.mechanismSrv.links.filter((link) => !goneLinks.has(link.id));
     this.mechanismSrv.joints = this.mechanismSrv.joints.filter((joint) => !ids.has(joint.id));
     this.design.ownedJointIds = [];
-    this.writtenAt.clear();
+    this.design.ownedAt = [];
+    this.design.ownershipPartial = false;
   }
 
   /**

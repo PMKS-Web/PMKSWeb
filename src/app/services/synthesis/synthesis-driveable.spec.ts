@@ -122,15 +122,38 @@ describe('every solution offered can be driven through what it claims', () => {
         length: LENGTH,
         endsOnly: false,
       });
-      candidates
-        .filter((c) => c.defectFree)
-        .forEach((cand) => {
-          const { closest, brokeAt } = drive(cand);
-          expect(brokeAt).toBeNull();
-          closest.forEach((d) => expect(d).toBeLessThan(POSE_TOLERANCE));
-        });
+      const offered = candidates.filter((c) => c.defectFree);
+      walked.set(design.name, offered.length);
+      offered.forEach((cand) => {
+        const { closest, brokeAt } = drive(cand);
+        expect(brokeAt).toBeNull();
+        closest.forEach((d) => expect(d).toBeLessThan(POSE_TOLERANCE));
+      });
     });
   }
+
+  /**
+   * What each named design actually offered, so that walking nothing cannot
+   * read as walking everything.
+   *
+   * Three of the six offer nothing, and each for its own reason: a tight turn
+   * reaches all three on twenty-eight candidates and every one of them binds,
+   * a long reach admits no construction at all, and doubling back stays on one
+   * assembly for none. Those are answers, not gaps -- but a test that walks an
+   * empty list passes without doing anything, so the ones that do offer
+   * something have to be seen to.
+   */
+  const walked = new Map<string, number>();
+
+  it('and the named designs between them gave it something to walk', () => {
+    expect(walked.size).toBe(designs.length);
+    // Each of the three that has an answer, not just the total and not just
+    // one of them: any of the others regressing to zero would turn its own
+    // walk into a test of nothing while the total stayed comfortably positive.
+    ['a gentle sweep', 'a small angle change', 'a near reversal'].forEach((name) =>
+      expect(walked.get(name)).toBeGreaterThan(0)
+    );
+  });
 
   it('never claims a position the crank cannot turn to', () => {
     const { candidates } = enumerateCandidates({
@@ -194,6 +217,59 @@ describe('every solution offered can be driven through what it claims', () => {
     }
     return worst;
   }
+
+  /**
+   * The shortest arc containing three directions, worked out independently.
+   *
+   * Sorted, then the widest gap between neighbours removed: what is left is the
+   * arc, and it is not in general the span between the smallest and the largest.
+   */
+  function shortestArc(anglesDeg: number[]): { from: number; to: number } {
+    const sorted = anglesDeg.map((a) => ((a % 360) + 360) % 360).sort((a, b) => a - b);
+    let widest = -1;
+    let after = 0;
+    sorted.forEach((angle, i) => {
+      const next = sorted[(i + 1) % sorted.length];
+      const gap = (((next - angle) % 360) + 360) % 360;
+      if (gap > widest) {
+        widest = gap;
+        after = (i + 1) % sorted.length;
+      }
+    });
+    return { from: sorted[after], to: sorted[after] + (360 - widest) };
+  }
+
+  it('measures over the shortest travel between the positions, not the long way round', () => {
+    const next = rng(20260821);
+    const wrong: string[] = [];
+    for (let n = 0; n < 300; n++) {
+      const poses = [0, 1, 2].map(() =>
+        pose(next() * 24 - 12, next() * 24 - 12, next() * 360 - 180)
+      );
+      const { candidates } = enumerateCandidates({
+        poses,
+        length: LENGTH,
+        endsOnly: next() < 0.5,
+      });
+      candidates
+        .filter((c) => c.range.full)
+        .forEach((c) => {
+          // On a crank that turns fully the arc wraps, so the smallest and
+          // largest of the three angles can name the long way round -- which is
+          // travel the linkage never makes between the positions, and judging
+          // it there rejects good candidates and accepts binding ones.
+          const arc = shortestArc(c.thetas);
+          const span = c.stroke.to - c.stroke.from;
+          const expected = arc.to - arc.from + 10;
+          if (Math.abs(span - expected) > 0.5) {
+            wrong.push(
+              `design ${n} ${c.key}: measured over ${span.toFixed(1)}°, shortest is ${expected.toFixed(1)}°`
+            );
+          }
+        });
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+  });
 
   it('reports a transmission angle that a dense independent measure agrees with', () => {
     const next = rng(20260821);

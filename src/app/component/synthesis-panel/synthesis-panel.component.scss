@@ -521,12 +521,6 @@ $red: #e53935;
       display: flex;
       align-items: center;
 
-      /* It answers the keyboard now, so it has to show when it has focus. */
-      &:focus-visible {
-        outline: 2px solid $indigo;
-        outline-offset: 1px;
-      }
-
       /* Tighter than the panel's usual 5px: the row carries nine things and
          the space belongs to the fields. */
       gap: 4px;
@@ -547,6 +541,16 @@ $red: #e53935;
         align-items: center;
         justify-content: center;
         height: 18px;
+        border: 0;
+        padding: 0;
+        font-family: inherit;
+        cursor: pointer;
+
+        &:focus-visible {
+          outline: 2px solid $indigo;
+          outline-offset: 2px;
+        }
+
         border-radius: 10px;
         background: #dfe1e8;
         color: rgba(0, 0, 0, 0.45);

@@ -42,6 +42,15 @@ function pose(x: number, y: number, degrees: number): PosePoint {
  */
 const MOTION: PosePoint[] = [pose(0, 0, 0), pose(4, 2, 25), pose(7, 7, 50)];
 
+/**
+ * A motion whose four-bars close at all three positions and seize doing it.
+ *
+ * Every candidate this produces reaches all three, and every one of them binds
+ * -- which makes it the corpus for the half of `defectFree` that MOTION cannot
+ * exercise, because nothing in MOTION binds at all.
+ */
+const BINDING_MOTION: PosePoint[] = [pose(0, 0, 0), pose(1, 3, 55), pose(-2, 5, 110)];
+
 function distance(a: Coord, b: Coord): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
@@ -102,16 +111,35 @@ describe('enumerateCandidates', () => {
     });
   });
 
-  it('calls a candidate defect-free exactly when all three are on one assembly', () => {
+  it('calls a candidate defect-free when all three are on one assembly and it does not bind', () => {
     const { candidates } = enumerateCandidates({
       poses: MOTION,
       length: LENGTH,
-      endsOnly: true,
+      endsOnly: false,
     });
     candidates.forEach((c) => {
-      expect(c.defectFree).toBe(c.onBranchCount === 3);
+      // Both halves of the rule. Stating it as `onBranchCount === 3` alone was
+      // true of this corpus only because nothing in it bound, so the half that
+      // rejects a linkage for seizing up was never being checked.
+      expect(c.defectFree).toBe(c.onBranchCount === 3 && !c.binds);
       expect(c.onBranchCount).toBe(c.onBranch.filter(Boolean).length);
     });
+  });
+
+  it('and turns down one that reaches all three but seizes on the way', () => {
+    const { candidates } = enumerateCandidates({
+      poses: BINDING_MOTION,
+      length: LENGTH,
+      endsOnly: false,
+    });
+    // Stating the rule against MOTION alone left half of it untested: nothing
+    // there binds, so `onBranchCount === 3` and the real rule agreed on every
+    // candidate and the `!binds` term could have been deleted without a test
+    // noticing. Here all three are reached and every one of them binds.
+    const reachesAll = candidates.filter((c) => c.onBranchCount === 3);
+    expect(reachesAll.length).toBeGreaterThan(0);
+    expect(reachesAll.every((c) => c.binds)).toBe(true);
+    expect(reachesAll.some((c) => c.defectFree)).toBe(false);
   });
 
   it('the crank and rocker are the radii the construction solved for', () => {
@@ -184,7 +212,9 @@ describe('rankCandidates', () => {
     const ranked = rankCandidates(candidates);
     expect(ranked.length).toBeGreaterThan(0);
     expect(ranked.length).toBeLessThanOrEqual(8);
-    expect(ranked[0].name).toBe('A');
+    // The whole sequence. Asking only whether the first is A is satisfied by
+    // every one of them being A, which is not an order.
+    expect(ranked.map((c) => c.name).join('')).toBe('ABCDEFGH'.slice(0, ranked.length));
     ranked.forEach((c, i) => {
       if (i === 0) return;
       const before = ranked[i - 1];

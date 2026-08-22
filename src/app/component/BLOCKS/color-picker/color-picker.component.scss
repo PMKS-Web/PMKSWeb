@@ -31,6 +31,10 @@
       justify-content: center;
     }
 
-    /* The tick's colour is chosen per swatch, in the component. */
+    /* The tick's colour is chosen per swatch, in the component: white vanishes
+       on the pale end of both palettes, and on all four joint swatches. There
+       is deliberately no rule here at all -- said of every icon in the picker
+       it painted the help mark beside the title white too, on a white panel,
+       so the one field whose mark could not be seen was the one about colour. */
   }
 }

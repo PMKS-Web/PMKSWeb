@@ -101,22 +101,17 @@
   text-wrap: pretty;
 }
 
-// Read-only notes under the Slider toggle: what the slot is cut into, and what
-// its angle is measured from. Not controls -- the carrier comes from the drop
-// gesture, and changing it is delete-and-recreate.
-.slotNote {
+// The one thing under the Slider toggle worth saying in words: a slider with
+// no link to slide on. What the slot is cut into, and what its angle is
+// measured from, are both drawn on the canvas and used to be said here too.
+.sliderWarning {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
-  background: #f0f1f5;
+  background: #ffebee;
+  color: #b3261e;
   border-radius: 4px;
   padding: 6px 8px;
   margin: 0 0 8px;
   text-wrap: pretty;
-}
-
-.slotNote--warn {
-  background: #ffebee;
-  color: #b3261e;
 }
 
 // The cylinder-skin override (§2.7). A view preference rather than mechanism

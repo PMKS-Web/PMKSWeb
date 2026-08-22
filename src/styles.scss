@@ -63,3 +63,16 @@ p {
 input {
   margin: 0;
 }
+
+/* A tooltip that carries a paragraph rather than a phrase. Material renders
+   these into an overlay at the end of the document, so the only place that can
+   reach one is here. */
+.exportTip {
+  max-width: 320px !important;
+}
+
+.exportTip .mdc-tooltip__surface {
+  max-width: 320px !important;
+  text-align: left;
+  line-height: 16px;
+}

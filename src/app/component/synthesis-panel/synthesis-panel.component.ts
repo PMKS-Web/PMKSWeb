@@ -52,6 +52,9 @@ interface CandidateCard {
   metric: string;
 }
 
+/** The one message whose answers act on this panel after it has been raised. */
+const REPLACE_WARNING = 'synthesis.replace-edited';
+
 const HELP = {
   length:
     'The length of the end-effector link — the part whose three positions you are designing for. ' +
@@ -207,8 +210,18 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.gone = true;
+    // Take the replace warning with us: its buttons act on this panel, and left
+    // on screen they were still clickable after it was gone.
+    this.notify.live
+      .filter((one) => one.id === REPLACE_WARNING)
+      .forEach((one) => this.notify.dismiss(one.key));
     this.subs.forEach((s) => s.unsubscribe());
     if (this.frame) cancelAnimationFrame(this.frame);
+    // Stop any wind-back, and stop what it was going to do afterwards: a commit
+    // that lands after the panel is gone acts on a drawing nobody is looking at.
+    this.windingBack = false;
+    if (this.windBackFrame) cancelAnimationFrame(this.windBackFrame);
     // Leaving the tab hands the wheel back whatever state placing was left in.
     this.svgGrid.setWheelZoomEnabled(true);
   }
@@ -389,8 +402,35 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
     return this.design.armed ? 'Cancel' : 'Add position ' + this.nextPositionNumber;
   }
 
+  /**
+   * Arm or disarm placing, fitting the scale on the way in.
+   *
+   * Every route to arming comes through here. Object scale is what parts are
+   * drawn at, and it was being fitted on the first click -- after the ghost had
+   * already been drawn at the old one, so the click appeared to grow the
+   * position. Fitting it here happens before the ghost first appears; putting
+   * it in the button's own handler missed the other way in, which is clicking
+   * an empty position row.
+   *
+   * Only on a drawing with nothing in it: the scale is global, and resizing
+   * someone's work because a position is about to be placed is a change nobody
+   * asked for.
+   */
+  private arm(armed: boolean): void {
+    // Joints as well as links. A joint on its own belongs to no link, so a
+    // drawing holding nothing but loose joints counted as empty -- and fitting
+    // the scale to the zoom resized them under the reader, which is the one
+    // thing this was supposed to avoid doing to existing work.
+    const drawingIsEmpty =
+      this.mechanismSrv.links.length === 0 && this.mechanismSrv.joints.length === 0;
+    if (armed && drawingIsEmpty && !this.design.getAllPoses().length) {
+      this.svgGrid.updateObjectScale();
+    }
+    this.design.setArmed(armed);
+  }
+
   toggleArmed(): void {
-    this.design.setArmed(!this.design.armed);
+    this.arm(!this.design.armed);
   }
 
   get canDuplicate(): boolean {
@@ -416,8 +456,9 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
       this.design.selectedPose = i;
       this.design.setArmed(false);
     } else {
-      // An empty row is the one place a reader looks to fill it in.
-      this.design.setArmed(true);
+      // An empty row is the one place a reader looks to fill it in -- so it is
+      // a way of arming, and has to prepare the same way the button does.
+      this.arm(true);
     }
   }
 
@@ -855,9 +896,14 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
   }
 
   pinOptions(): { label: string; far: boolean; active: boolean }[] {
+    // Named by the letters those two pins are drawn under. `chosen()` rather
+    // than `driven()`: this asks which end to read the linkage from, so it has
+    // to name the ends of the unswapped one, and the far pin is the one that
+    // is called D whichever end is currently driving.
+    const e = this.solution.previewLetters(this.solution.chosen());
     return [
-      { label: 'Pin A', far: false, active: !this.solution.driveOnFarPin },
-      { label: 'Pin D', far: true, active: this.solution.driveOnFarPin },
+      { label: `Pin ${e.A}`, far: false, active: !this.solution.driveOnFarPin },
+      { label: `Pin ${e.D}`, far: true, active: this.solution.driveOnFarPin },
     ];
   }
 
@@ -900,20 +946,31 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
   dimensionRows(): { label: string; value: string }[] {
     const c = this.solution.driven();
     if (!c) return [];
+    // Every bar named by the pins at its ends, and every one of those letters
+    // drawn on the linkage beside it. Two of these named their pins and two
+    // did not, so half the list pointed at something on the grid and half
+    // asked the reader to work out which bar was meant.
+    // Named by the letters actually drawn beside those pins. Driving from the
+    // far pin reads the same linkage from the other end, and naming the bars
+    // after the fields rather than the pins renamed all four of them.
+    const e = this.solution.previewLetters(c);
     const rows = [
-      { label: 'Ground link A–D', value: this.lengthText(c.g) },
-      { label: 'Input crank', value: this.lengthText(c.r1) },
-      { label: 'Coupler B–C', value: this.lengthText(c.d) },
-      { label: 'Output rocker', value: this.lengthText(c.r2) },
+      { label: `Crank ${e.A}–${e.B}`, value: this.lengthText(c.r1) },
+      { label: `Coupler ${e.B}–${e.C}`, value: this.lengthText(c.d) },
+      { label: `Rocker ${e.C}–${e.D}`, value: this.lengthText(c.r2) },
+      { label: `Ground ${e.A}–${e.D}`, value: this.lengthText(c.g) },
       {
         label: 'Coupler pinned',
-        value: describeCouplerPins(c, this.design.length) + ' ' + this.lengthUnit,
+        value: describeCouplerPins(c, this.design.length, this.lengthUnit),
       },
     ];
     const dyad = this.solution.dyad();
     if (dyad) {
-      rows.push({ label: 'Driver crank', value: this.lengthText(dyad.crankLength) });
-      rows.push({ label: 'Driver coupler', value: this.lengthText(dyad.couplerLength) });
+      rows.push({ label: `Driver crank ${e.E}–${e.F}`, value: this.lengthText(dyad.crankLength) });
+      rows.push({
+        label: `Driver coupler ${e.F}–${e.B}`,
+        value: this.lengthText(dyad.couplerLength),
+      });
     }
     return rows;
   }
@@ -1008,9 +1065,13 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
     const cand = this.solution.driven();
     if (!cand) return '';
     const range = this.solution.drivenRange();
+    // Which crank is turning, because with a driver fitted it is not the
+    // four-bar's: naming it "crank rotation" beside a six-bar left the reader
+    // to guess which of the two the transport was scrubbing.
+    const crank = this.solution.dyad() ? 'driver crank' : 'crank';
     return range.full
-      ? 'full crank rotation'
-      : `rocks through ${Math.round(range.to - range.from)}°`;
+      ? `full ${crank} rotation`
+      : `${crank} rocks through ${Math.round(range.to - range.from)}°`;
   }
 
   // --- committing ----------------------------------------------------------
@@ -1037,22 +1098,135 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
     return this.solution.inserted && !this.solution.needsReinsert();
   }
 
+  /**
+   * Wind the preview back to where the linkage starts, then do something.
+   *
+   * The preview can be parked anywhere in its cycle, and what gets built is
+   * always the start pose -- so committing from halfway round replaced the
+   * linkage on screen with a differently-posed one between two frames, which
+   * reads as a jump rather than as the thing being put down. It goes home
+   * first, at the same 220ms the app eases everything else home at.
+   */
+  private windBackThen(then: () => void): void {
+    const cand = this.solution.driven();
+    const home = this.solution.startPhase();
+    if (!cand || this.solution.phase === null || Math.abs(this.solution.phase - home) < 0.5) {
+      this.solution.phase = null;
+      then();
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.solution.phase = null;
+      then();
+      return;
+    }
+    this.solution.playing = false;
+    const from = this.solution.phase;
+    /*
+      The short way round.
+
+      On a crank that turns fully, home can be a degree ahead and three hundred
+      and fifty-nine behind, and interpolating the raw numbers took the long
+      way: pressing Insert near the end of the cycle spun the linkage almost a
+      whole revolution backwards to get somewhere it was nearly at. The app's
+      own easeToStart picks the shorter direction for the same reason.
+    */
+    let delta = home - from;
+    if (this.solution.drivenRange().full) {
+      // Into (-180, 180]: at exactly half a turn both ways are the same length,
+      // and forwards is the one that matches which way the crank was going.
+      while (delta > 180) delta -= 360;
+      while (delta <= -180) delta += 360;
+    }
+    const started = performance.now();
+    const DURATION = 220;
+    const step = () => {
+      // The panel can be left while this is running -- and was: a press, a
+      // switch to Edit, and the commit landed afterwards, onto a drawing the
+      // reader had moved on from.
+      if (!this.windingBack) return;
+      const t = Math.min(1, (performance.now() - started) / DURATION);
+      // Ease out, so it settles rather than stopping dead.
+      const eased = 1 - (1 - t) * (1 - t);
+      this.solution.phase = from + delta * eased;
+      this.solution.changed.next();
+      if (t < 1) {
+        this.windBackFrame = requestAnimationFrame(step);
+        return;
+      }
+      this.windingBack = false;
+      this.windBackFrame = undefined;
+      this.solution.phase = null;
+      then();
+    };
+    this.windingBack = true;
+    this.windBackFrame = requestAnimationFrame(step);
+  }
+
+  /** Whether this panel has been left, so nothing deferred acts on it. */
+  private gone = false;
+
+  /** Whether a wind-back is running, so a second press cannot start another. */
+  private windingBack = false;
+  private windBackFrame: number | undefined;
+
+  /**
+   * What is about to be built, as one string.
+   *
+   * Insert defers by 220ms to wind the preview home, and used to work out what
+   * to build only once it got there -- so choosing a different card during
+   * those 220ms built that one instead, from a press that was aimed at the one
+   * before it. Nothing else on the panel takes that long to act, so there is
+   * no reason for the reader to expect the press to still be in flight.
+   */
+  private commitKey(): string {
+    return [
+      this.solution.chosen()?.key ?? '',
+      this.solution.driveOnFarPin,
+      !!this.solution.dyad(),
+      this.design.searchKey(),
+    ].join('|');
+  }
+
   insert(force = false): void {
+    // One commit per press. Each press used to start its own wind-back, so a
+    // double-press committed twice -- rebuilding the linkage, and writing two
+    // entries into the history for one intention.
+    if (this.windingBack) return;
+    // Only the first press winds back; the retries from the warning below are
+    // already home.
+    if (!force && this.solution.phase !== null) {
+      const pressedOn = this.commitKey();
+      this.windBackThen(() => {
+        // Changing the choice mid-flight cancels the press rather than
+        // redirecting it: the reader has just said they want to look at
+        // something else, and building either one from here would be building
+        // something they did not ask for.
+        if (this.commitKey() !== pressedOn) return;
+        this.insert(force);
+      });
+      return;
+    }
     const outcome = this.solution.insert(force);
     if (outcome === 'edited') {
       // Not a refusal and not a silent overwrite. The reader moved those joints
       // by hand, and only they know whether that work still matters -- so the
       // two things they could mean are on the message.
       this.notify.warning(
-        'synthesis.replace-edited',
+        REPLACE_WARNING,
         `${this.solutionName} would replace the linkage on the grid, and it has been moved by ` +
           `hand since Synthesis put it there. Those changes would be lost.`,
         {
+          // Guarded as well as dismissed on the way out. The message outlives
+          // the press that raised it by design -- it waits to be answered --
+          // but its answers act on this panel, and a panel that has been left
+          // is not one to act on.
           actions: [
-            { label: 'Replace it', run: () => this.insert(true) },
+            { label: 'Replace it', run: () => !this.gone && this.insert(true) },
             {
               label: 'Keep it, insert a new one',
               run: () => {
+                if (this.gone) return;
                 this.solution.releaseOwnership();
                 this.insert();
               },
@@ -1062,7 +1236,10 @@ export class SynthesisPanelComponent implements OnInit, OnDestroy {
       );
       return;
     }
-    if (outcome === 'done') this.record();
+    // No `record()` here. Inserting rebuilds the mechanism through
+    // `updateMechanism(true)`, and the `true` is a save -- so recording again
+    // wrote two entries for one press, and one Undo left the linkage on the
+    // grid because it only stepped back over the second of them.
   }
 
   undoInsert(): void {

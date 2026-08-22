@@ -32,8 +32,6 @@ page.on('pageerror', (error) => errors.push(String(error)));
 
 await page.goto(`${BASE}/?${payloads['4-Bar']}`, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-const skip = page.locator('.introjs-skipbutton').first();
-if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
 await page.waitForTimeout(500);
 
 /** The joint's centre on screen: the canvas places from where the mouse is. */

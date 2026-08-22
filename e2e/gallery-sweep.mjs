@@ -65,8 +65,6 @@ async function open(url) {
     }
   }
   await page.waitForTimeout(600);
-  await page.evaluate(() => document.querySelector('.introjs-skipbutton')?.click());
-  await page.waitForTimeout(200);
 }
 
 const results = [];

@@ -50,8 +50,6 @@ const grid = (fn) =>
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitForReady(page);
-const skip = page.locator('.introjs-skipbutton').first();
-if (await skip.isVisible().catch(() => false)) await skip.click({ force: true });
 await page.locator('.tabButton', { hasText: 'Synthesis' }).click();
 await page.waitForTimeout(700);
 
@@ -157,6 +155,31 @@ check(
     (await page.locator('.poseRow input').count()) === 9
 );
 
+// Arming from an empty row, before the suite arms from the button: both are
+// advertised as ways to place a position, and only the button used to prepare
+// the scale, so a ghost armed from the row was drawn at the old one. Left
+// disarmed, which is the state the next step expects.
+check(
+  'an empty position row arms placing, and fits the scale as the button does',
+  await (async () => {
+    await page.evaluate(() => {
+      const grid = ng.getComponent(document.querySelector('app-new-grid'));
+      grid.settings.objectScale = 140;
+    });
+    await page.waitForTimeout(200);
+    await page.locator('#synthesisPanel .poseRow__n').first().click();
+    await page.waitForTimeout(300);
+    const armed = await panel('(p) => p.design.armed');
+    const fitted = await page.evaluate(() => {
+      const grid = ng.getComponent(document.querySelector('app-new-grid'));
+      return Math.abs(grid.settings.objectScale - 60 / grid.svgGrid.getZoom()) < 0.02;
+    });
+    await panel('(p) => p.design.setArmed(false)');
+    await page.waitForTimeout(200);
+    return armed && fitted;
+  })()
+);
+
 // Typing is the other way in, and it is live at the same time as the placer
 // rather than instead of it: a row becomes a position at the moment it says
 // where and which way, which is the same moment a dropped one does.
@@ -194,6 +217,7 @@ check(
   check('and it can be taken off again', (await panel('(p) => p.design.getAllPoses().length')) === 0);
 }
 
+
 await page.locator('#synthesisPanel .pill', { hasText: 'Add position' }).click();
 await page.waitForTimeout(250);
 await page.mouse.move(900, 560);
@@ -202,6 +226,16 @@ const angleBefore = await panel('(p) => p.design.placeAngleDeg');
 await page.mouse.wheel(0, -120);
 await page.waitForTimeout(200);
 const angleAfter = await panel('(p) => p.design.placeAngleDeg');
+check(
+  'the ghost is drawn at the size the position will be, not resized by the click',
+  await page.evaluate(() => {
+    // Object scale decides how big parts are drawn, and it used to be fitted on
+    // the first click -- so the ghost was drawn small and the position it
+    // turned into was drawn large, which looked like clicking had grown it.
+    const ghost = document.querySelector('.synthGhost path');
+    return !!ghost && ghost.getBoundingClientRect().width > 20;
+  })
+);
 check('the wheel turns the position that is about to be dropped', angleAfter !== angleBefore, {
   angleBefore,
   angleAfter,
@@ -371,11 +405,19 @@ check(
 );
 check(
   'drawn broken, because it is still only an offer',
-  await page.evaluate(() =>
-    [...document.querySelectorAll('#synthesisPreview path.synthBar')].every(
-      (bar) => bar.classList.contains('synthBar--proposed') && bar.getAttribute('stroke-dasharray')
-    )
-  )
+  await page.evaluate(() => {
+    const bars = [...document.querySelectorAll('#synthesisPreview path.synthBar')];
+    // Rendered at all, first. Asking only whether every bar is dashed is a
+    // question an empty canvas answers yes to, so losing the class -- or the
+    // paths -- would have read as a pass.
+    return (
+      bars.length >= 3 &&
+      bars.every(
+        (bar) =>
+          bar.classList.contains('synthBar--proposed') && bar.getAttribute('stroke-dasharray')
+      )
+    );
+  })
 );
 check(
   'but still nothing has been added to the drawing',
@@ -470,6 +512,97 @@ if (driver.dyad) {
 }
 
 check(
+  'every pin the panel names by letter is lettered on the drawing',
+  await page.evaluate(() => {
+    const drawn = new Set(
+      [...document.querySelectorAll('#synthesisPreviewTags .synthPreviewTag')].map((t) =>
+        t.textContent.trim()
+      )
+    );
+    const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
+    // Every letter the panel uses -- "Pin A", "Ground A–D", "Coupler B–C" --
+    // has to name something the reader can find on the grid.
+    const named = new Set();
+    panel.pinOptions().forEach((o) => (o.label.match(/[A-F]/g) ?? []).forEach((l) => named.add(l)));
+    panel
+      .dimensionRows()
+      .forEach((r) => (r.label.match(/\b[A-F]\b/g) ?? []).forEach((l) => named.add(l)));
+    return [...named].every((letter) => drawn.has(letter));
+  })
+);
+check(
+  'and a length given in words still puts its unit beside the number',
+  await panel(`(p) => {
+    const rows = p.dimensionRows();
+    // Every length carries a unit, and none of them carries it at the end of a
+    // phrase. Rejecting only the phrase let "no unit anywhere" through, which
+    // is the more obvious way for this to be wrong.
+    const lengths = rows.filter((r) => /\\d/.test(r.value) && r.label !== 'Coupler pinned');
+    return (
+      lengths.length > 0 &&
+      lengths.every((r) => / (cm|m|in)$/.test(r.value)) &&
+      !rows.some((r) => /[a-z]{3,} (cm|m|in)$/.test(r.value))
+    );
+  }`)
+);
+check(
+  'Space activates a focused button, as Space does',
+  await (async () => {
+    // A real key press on a real button, judged by whether the button did its
+    // job. The old check dispatched a synthetic event and asked only whether
+    // anything called preventDefault on it -- which a synthetic event proves
+    // nothing about, since it cannot trigger the native activation the global
+    // shortcut was suppressing in the first place.
+    const toggle = page.locator('#synthesisPanel .panel-header__toggle').first();
+    if (!(await toggle.count())) return false;
+    const openState = () =>
+      page.evaluate(
+        () =>
+          !!document
+            .querySelector('#synthesisPanel .panel-header__toggle mat-icon')
+            ?.classList.contains('rotate180')
+      );
+    const before = await openState();
+    await toggle.focus();
+    await page.keyboard.press(' ');
+    await page.waitForTimeout(350);
+    const after = await openState();
+    // Put the section back the way it was found.
+    await page.keyboard.press(' ');
+    await page.waitForTimeout(350);
+    const restored = await openState();
+    return after !== before && restored === before;
+  })()
+);
+check(
+  'driving from the far pin is no slower to draw than driving from the near one',
+  await page.evaluate(() => {
+    const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
+    const grid = ng.getComponent(document.querySelector('app-new-grid'));
+    const held = panel.solution.driveOnFarPin;
+    const timeIt = () => {
+      const range = panel.solution.drivenRange();
+      const started = performance.now();
+      for (let k = 0; k < 20; k++) {
+        panel.solution.phase = range.from + ((range.to - range.from) * k) / 20;
+        grid.synthCanvas.previewLinks();
+        grid.synthCanvas.couplerTrace();
+      }
+      panel.solution.phase = null;
+      return performance.now() - started;
+    };
+    panel.solution.setDriveOnFarPin(false);
+    const near = timeIt();
+    panel.solution.setDriveOnFarPin(true);
+    const far = timeIt();
+    panel.solution.setDriveOnFarPin(held);
+    // Reading the linkage from the far pin re-assesses it, which walks a whole
+    // revolution. Done per call, that was hundreds of thousands of solves a
+    // frame and the preview crawled.
+    return far < Math.max(60, near * 4);
+  })
+);
+check(
   'a driver is only offered when it can turn a whole revolution',
   await page.evaluate(() => {
     const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
@@ -483,10 +616,13 @@ check(
       const fitted = !!panel.solution.dyad();
       panel.solution.driverWanted = held;
       // Offered, sized, and yet unable to complete a turn is the combination
-      // that breaks the "one full turn" promise the panel makes.
-      if (!refused && fitted && !range.full) bad.push(candidate.key);
+      // that breaks the "one full turn" promise the panel makes. So is offered
+      // and not sized at all: the panel raised no objection and then produced
+      // no driver, which leaves the switch on over a linkage that has none.
+      if (!refused && fitted && !range.full) bad.push(candidate.key + ' jams');
+      if (!refused && !fitted) bad.push(candidate.key + ' offered but unsized');
     }
-    return bad.length === 0;
+    return panel.solution.candidates().length > 0 && bad.length === 0;
   })
 );
 check(
@@ -498,7 +634,9 @@ check(
         ? { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) }
         : null;
     });
-    if (!bar) return true;
+    // No bar to drag is a broken check, not a passing one -- and the gesture
+    // has to be seen to start, or "it ended" is true of a drag that never was.
+    if (!bar) return false;
     // Remember where it was: this drag deliberately ends over the panel, and a
     // position parked under the panel is one nothing later can right-click.
     const before = await panel(
@@ -506,10 +644,13 @@ check(
     );
     await page.mouse.move(bar.x, bar.y);
     await page.mouse.down();
+    await page.mouse.move(bar.x - 40, bar.y + 40, { steps: 4 });
+    const began = await grid('(g) => !!g.synthCanvas.dragging');
     await page.mouse.move(200, 500, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(400);
-    const ended = await grid('(g) => !g.synthCanvas.dragging && !g.synthSolution.interactive');
+    const ended =
+      began && (await grid('(g) => !g.synthCanvas.dragging && !g.synthSolution.interactive'));
     await page.evaluate((was) => {
       const design = ng.getComponent(document.querySelector('app-synthesis-panel')).design;
       JSON.parse(was).forEach(([x, y, theta], index) => {
@@ -524,16 +665,40 @@ check(
   })()
 );
 check(
-  'a driver that cannot be fitted is greyed rather than merely explained',
-  await page.evaluate(() => {
-    const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
-    const row = [...document.querySelectorAll('#synthesisPanel .row')].find((r) =>
-      r.textContent.includes('Add driver')
-    );
-    const button = row.querySelector('.switch');
-    // Whichever way this design falls, the switch's state must match the fact.
-    return button.disabled === !!panel.driverRefusal;
-  })
+  'the driver switch agrees with the panel on every candidate and both drive ends',
+  await (async () => {
+    /*
+      Named for what it establishes, which is agreement across this design --
+      not the greying, because this design never refuses a driver and so never
+      turns the switch off. It was called "a driver that cannot be fitted is
+      greyed" while comparing two values that were both false on every sample.
+      A design that does refuse is checked at the end of this file, where one
+      is built for the purpose.
+    */
+    const seen = await page.evaluate(() => {
+      const panel = ng.getComponent(document.querySelector('app-synthesis-panel'));
+      const row = [...document.querySelectorAll('#synthesisPanel .row')].find((r) =>
+        r.textContent.includes('Add driver')
+      );
+      if (!row) return null;
+      const button = row.querySelector('.switch');
+      if (!button) return null;
+      const held = panel.solution.driveOnFarPin;
+      const out = { agreed: true, enabled: 0, disabled: 0 };
+      for (const candidate of panel.solution.candidates()) {
+        panel.solution.pick(candidate.key);
+        for (const far of [false, true]) {
+          panel.solution.setDriveOnFarPin(far);
+          const refused = !!panel.driverRefusal;
+          if (button.disabled !== refused) out.agreed = false;
+          refused ? out.disabled++ : out.enabled++;
+        }
+      }
+      panel.solution.setDriveOnFarPin(held);
+      return out;
+    });
+    return !!seen && seen.agreed && seen.enabled > 0;
+  })()
 );
 check(
   'a driver is either fitted or refused in words',
@@ -627,10 +792,10 @@ await page.mouse.click(700, 820, { button: 'right' });
 await page.waitForTimeout(500);
 check(
   'the canvas menu can clear them away from any mode',
-  (await page.locator('#contextMenu #menu-item').allInnerTexts()).some((t) =>
-    t.includes('Delete Synthesis Positions')
+  (await page.locator('#contextMenu .cm-row__label').allInnerTexts()).some((t) =>
+    /Delete \d+ Synthesis Positions?/.test(t)
   ),
-  await page.locator('#contextMenu #menu-item').allInnerTexts()
+  await page.locator('#contextMenu .cm-row__label').allInnerTexts()
 );
 await page.keyboard.press('Escape');
 const poseBar = await page.evaluate(() => {
@@ -641,10 +806,10 @@ await page.mouse.click(poseBar.x, poseBar.y, { button: 'right' });
 await page.waitForTimeout(500);
 check(
   'and one position can be taken away on its own',
-  (await page.locator('#contextMenu #menu-item').allInnerTexts()).some((t) =>
+  (await page.locator('#contextMenu .cm-row__label').allInnerTexts()).some((t) =>
     /Delete Position \d/.test(t)
   ),
-  await page.locator('#contextMenu #menu-item').allInnerTexts()
+  await page.locator('#contextMenu .cm-row__label').allInnerTexts()
 );
 await page.keyboard.press('Escape');
 
@@ -728,10 +893,53 @@ check(
 );
 check(
   'the gallery keeps its three columns when it is opened out',
-  await page.evaluate(() => {
-    const gallery = document.querySelector('#synthesisPanel .gallery');
-    return !gallery || getComputedStyle(gallery).gridTemplateColumns.split(' ').length !== 2;
-  })
+  await (async () => {
+    // Opened out, which is the only state the claim is about. The old check
+    // never opened it, asked whether the closed gallery's columns were "not
+    // two", and passed because a flex row has no columns at all -- so the one
+    // thing it was named for was the one thing it did not look at.
+    const more = page.locator('#synthesisPanel .linkBtn').first();
+    if (!(await more.count())) return false;
+    await more.click();
+    await page.waitForTimeout(250);
+    const opened = await page.evaluate(() => {
+      const gallery = document.querySelector('#synthesisPanel .gallery--all');
+      if (!gallery) return null;
+      return getComputedStyle(gallery).gridTemplateColumns.split(/\s+/).filter(Boolean).length;
+    });
+    await more.click();
+    await page.waitForTimeout(250);
+    return opened === 3;
+  })()
+);
+check(
+  'a flurry of presses on Insert commits once, and one Undo takes it back',
+  await (async () => {
+    await panel(`(p) => {
+      const range = p.solution.drivenRange();
+      p.solution.setPhase(range.from + (range.to - range.from) * 0.6);
+      window.__inserts = 0;
+      const real = p.solution.insert.bind(p.solution);
+      p.solution.insert = (...args) => { window.__inserts += 1; return real(...args); };
+    }`);
+    const button = page.locator('#synthesisPanel .cta--insert');
+    await button.click();
+    await button.click({ force: true });
+    await button.click({ force: true });
+    await page.waitForTimeout(1200);
+    const committed = await page.evaluate(() => window.__inserts);
+    // And measured where it actually shows: one press must be one step of
+    // history. Counting calls missed that inserting saved twice -- once through
+    // the rebuild and once again afterwards -- so a single Undo stepped back
+    // over the second save and left the linkage on the grid.
+    const joints = await grid('(g) => g.mechanismSrv.joints.length');
+    await page.evaluate(() => ng.getComponent(document.querySelector('app-top-bar')).undo());
+    await page.waitForTimeout(1200);
+    const afterOneUndo = await grid('(g) => g.mechanismSrv.joints.length');
+    await panel('(p) => { p.solution.releaseOwnership(); }');
+    await page.waitForTimeout(300);
+    return committed === 1 && joints > 0 && afterOneUndo === 0;
+  })()
 );
 check('and Undo takes exactly it back', (await grid('(g) => g.mechanismSrv.joints.length')) === 0);
 check('leaving the design alone', (await panel('(p) => p.design.getAllPoses().length')) === 3);
@@ -778,6 +986,734 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(900);
 check('and Redo takes it away again', (await panel('(p) => p.design.getAllPoses().length')) === 2);
+
+/*
+  The four things the fifth review found, each on its own page.
+
+  They run last and in isolation because every one of them is about state --
+  what is on the grid, what has been chosen, what is mid-flight -- and a check
+  that leaves any of that behind is a check that breaks the next one. That has
+  happened twice in this file already.
+*/
+
+const SOLVED =
+  BASE + '/?2P.VC,1E8.5,0.1011....N_.SD~1uT~1~8,SP~01lk~g_~1z0,SP~DT~1e5~087a,SP~59p~0I0~0OBHJ';
+
+/** A page showing that design with its solutions already worked out. */
+async function solvedPage() {
+  const p = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  p.on('pageerror', (error) => errors.push(String(error)));
+  await p.goto(SOLVED, { waitUntil: 'domcontentloaded' });
+  await waitForReady(p);
+  // The app does not open on Synthesis, and a design in the URL does not send
+  // it there either. The tour's overlay eats the click if it is still up.
+  await p.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await p.waitForTimeout(700);
+  await p.locator('#synthesisPanel .cta', { hasText: 'Generate solutions' }).click();
+  await p.waitForFunction(
+    () => !ng.getComponent(document.querySelector('app-synthesis-panel')).solution.generating,
+    null,
+    { timeout: 20000 }
+  );
+  return p;
+}
+
+/** Asks the grid, which outlives the panel when the reader leaves Synthesis. */
+const askGrid = (p, fn) =>
+  p.evaluate(
+    (body) => new Function('grid', body)(ng.getComponent(document.querySelector('app-new-grid'))),
+    `return (${fn})(grid);`
+  );
+
+const ask = (p, fn) =>
+  p.evaluate(
+    (body) =>
+      new Function('panel', 'grid', body)(
+        ng.getComponent(document.querySelector('app-synthesis-panel')),
+        ng.getComponent(document.querySelector('app-new-grid'))
+      ),
+    `return (${fn})(panel, grid);`
+  );
+
+{
+  // A pin keeps its name when you change which end drives it. The ground pins
+  // are the ones to ask: they are the two the control names, and unlike the
+  // coupler pins they do not move when the linkage is re-posed.
+  const p = await solvedPage();
+  const groundsAt = () =>
+    ask(
+      p,
+      `(panel, grid) =>
+        JSON.stringify(
+          grid.synthCanvas
+            .previewGrounds()
+            .filter((j) => j.id === 'A' || j.id === 'D')
+            .sort((a, b) => (a.id < b.id ? -1 : 1))
+            .map((j) => [j.id, Math.round(j.x), Math.round(j.y)])
+        )`
+    );
+  await ask(p, '(panel) => panel.solution.setDriveOnFarPin(false)');
+  await p.waitForTimeout(250);
+  const near = await groundsAt();
+  await ask(p, '(panel) => panel.solution.setDriveOnFarPin(true)');
+  await p.waitForTimeout(400);
+  const far = await groundsAt();
+  check('the letter on a pin does not move when the other end drives', near === far, {
+    near,
+    far,
+  });
+  check(
+    'and the motor moves to the pin the control names',
+    await ask(
+      p,
+      `(panel, grid) => {
+        const input = grid.synthCanvas.previewGrounds().find((j) => j.input);
+        return !!input && input.id === 'D';
+      }`
+    )
+  );
+  await p.close();
+}
+
+{
+  // Insert one, then look at another: the panel offers to replace, so the one
+  // being offered has to be the one on screen.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      const all = panel.solution.candidates();
+      if (all.length < 2) return { few: all.length };
+      panel.solution.pick(all[0].key);
+      panel.insert();
+      const afterInsert = grid.synthCanvas.previewLinks().length;
+      panel.solution.pick(all[1].key);
+      return {
+        few: 0,
+        afterInsert,
+        afterChoosingAnother: grid.synthCanvas.previewLinks().length,
+        offersToReplace: panel.primaryLabel === 'Replace on grid',
+      };
+    }`
+  );
+  check(
+    'the one on the grid stops being previewed, and a different choice starts being',
+    outcome.few === 0 &&
+      outcome.afterInsert === 0 &&
+      outcome.afterChoosingAnother > 0 &&
+      outcome.offersToReplace,
+    outcome
+  );
+  await p.close();
+}
+
+{
+  // Insert waits 220ms to wind the preview home. Choosing something else
+  // during that time is a change of mind, not a redirection of the press.
+  const p = await solvedPage();
+  const setup = await ask(
+    p,
+    `(panel) => {
+      const all = panel.solution.candidates();
+      if (all.length < 2) return { few: all.length };
+      panel.solution.pick(all[0].key);
+      const range = panel.solution.drivenRange();
+      panel.solution.setPhase(range.from + (range.to - range.from) * 0.6);
+      panel.insert();
+      return { few: 0, second: all[1].key, joints: panel.mechanismSrv.joints.length };
+    }`
+  );
+  if (setup.few === 0) {
+    await p.waitForTimeout(40);
+    await ask(p, `(panel) => panel.solution.pick(${JSON.stringify(setup.second)})`);
+    await p.waitForTimeout(600);
+  }
+  const after = await ask(p, '(panel) => panel.mechanismSrv.joints.length');
+  check(
+    'changing the choice mid-press cancels it rather than building the new one',
+    setup.few === 0 && setup.joints === 0 && after === 0,
+    { setup, after }
+  );
+  await p.close();
+}
+
+{
+  // And the letters go onto the grid with the pins. Naming the preview
+  // honestly is only half of it: what gets built has to agree with what was
+  // shown, or the fix has moved the mismatch rather than removed it.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      panel.solution.setDriveOnFarPin(true);
+      const shown = grid.synthCanvas
+        .previewGrounds()
+        .map((j) => [j.id, Math.round(j.x), Math.round(j.y), !!j.input]);
+      panel.solution.insert();
+      const built = panel.mechanismSrv.joints.map((j) => [
+        j.id.toUpperCase(),
+        Math.round(j.x),
+        Math.round(j.y),
+      ]);
+      const at = (x, y) =>
+        built.find((b) => Math.abs(b[1] - x) < 2 && Math.abs(b[2] - y) < 2)?.[0] ?? null;
+      return {
+        // An empty list satisfies every(), and satisfying it is what this
+        // check was reporting as agreement.
+        agrees: shown.length >= 2 && shown.every(([id, x, y]) => at(x, y) === id),
+        shown,
+        built,
+        links: panel.mechanismSrv.links.map((l) => l.id),
+      };
+    }`
+  );
+  check('the letters the preview showed are the letters that get built', outcome.agrees, outcome);
+  check(
+    'and every link is still named by its ends in order',
+    outcome.links.length > 0 &&
+      outcome.links.every((id) => [...id].join('') === [...id].sort().join('')),
+    outcome.links
+  );
+  await p.close();
+}
+
+{
+  // And beside work that is already there, where A-D are taken and the pins
+  // have to be drawn under whatever letters are actually free. Labelling the
+  // preview A-D regardless meant it promised D/C/B/A over pins that arrived
+  // as E/D/C/B -- every one of the four renamed between being shown and being
+  // built.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      grid.mechanismSrv.mergeToJoints([grid.mechanismSrv.createRevJoint('0', '0')]);
+      grid.mechanismSrv.updateMechanism();
+      panel.solution.setDriveOnFarPin(true);
+      const shown = grid.synthCanvas
+        .previewJoints()
+        .map((j) => [j.id, Math.round(j.x), Math.round(j.y)]);
+      panel.solution.insert();
+      const built = panel.mechanismSrv.joints.map((j) => [j.id, Math.round(j.x), Math.round(j.y)]);
+      const at = (x, y) =>
+        built.find((b) => Math.abs(b[1] - x) < 2 && Math.abs(b[2] - y) < 2)?.[0] ?? null;
+      return {
+        shown,
+        built,
+        agrees: shown.length >= 4 && shown.every(([id, x, y]) => at(x, y) === id),
+        usedLaterLetters: shown.some(([id]) => id > 'D'),
+      };
+    }`
+  );
+  check(
+    'and they still agree when the letters have to start after existing work',
+    outcome.agrees && outcome.usedLaterLetters,
+    outcome
+  );
+  await p.close();
+}
+
+{
+  // Loose joints are geometry too. Fitting the scale to the zoom resizes
+  // whatever is already drawn, so "empty" has to mean empty.
+  const p = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  p.on('pageerror', (error) => errors.push(String(error)));
+  await p.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitForReady(p);
+  await p.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await p.waitForTimeout(700);
+  await p.locator('#synthesisPanel .kindCard--on').click();
+  await p.waitForTimeout(200);
+  const before = await ask(
+    p,
+    `(panel, grid) => {
+      grid.mechanismSrv.mergeToJoints([grid.mechanismSrv.createRevJoint('0', '0')]);
+      grid.mechanismSrv.updateMechanism();
+      grid.settings.objectScale = 140;
+      return { scale: grid.settings.objectScale, joints: grid.mechanismSrv.joints.length };
+    }`
+  );
+  await p.waitForTimeout(200);
+  await p.locator('#synthesisPanel .poseRow__n').first().click();
+  await p.waitForTimeout(300);
+  const after = await ask(p, '(panel, grid) => grid.settings.objectScale');
+  check(
+    'arming leaves the scale alone when the drawing holds a loose joint',
+    before.joints === 1 && after === 140,
+    { before, after }
+  );
+  await p.close();
+}
+
+{
+  // Fitting a driver changes what would be built, so the drawing no longer
+  // holds what is being looked at -- and the preview has to come back to show
+  // the difference.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      panel.solution.driverWanted = false;
+      panel.solution.insert();
+      const asFourBar = {
+        joints: panel.mechanismSrv.joints.length,
+        stale: panel.solution.needsReinsert(),
+        preview: grid.synthCanvas.previewLinks().length,
+      };
+      panel.solution.toggleDriver();
+      const withDriver = {
+        dyad: !!panel.solution.dyad(),
+        stale: panel.solution.needsReinsert(),
+        preview: grid.synthCanvas.previewLinks().length,
+        label: panel.primaryLabel,
+      };
+      return { asFourBar, withDriver };
+    }`
+  );
+  check(
+    'adding a driver to an inserted four-bar is a change the panel notices',
+    outcome.asFourBar.joints === 4 &&
+      outcome.asFourBar.stale === false &&
+      outcome.asFourBar.preview === 0 &&
+      outcome.withDriver.dyad === true &&
+      outcome.withDriver.stale === true &&
+      outcome.withDriver.preview > 0 &&
+      outcome.withDriver.label === 'Replace on grid',
+    outcome
+  );
+  await p.close();
+}
+
+{
+  // Inserting saves once. Leaving for Edit used to save again, identically,
+  // so the first Undo stepped onto the state it was already in.
+  const p = await solvedPage();
+  await ask(p, '(panel) => panel.solution.insert()');
+  await p.waitForTimeout(500);
+  const afterInsert = await askGrid(p, '(g) => g.mechanismSrv.joints.length');
+  await p.locator('.tabButton', { hasText: 'Edit' }).click();
+  await p.waitForTimeout(600);
+  await p.evaluate(() => ng.getComponent(document.querySelector('app-top-bar')).undo());
+  await p.waitForTimeout(900);
+  // Asked of the grid: the panel is gone, which is the whole point of the check.
+  const afterUndo = await askGrid(p, '(g) => g.mechanismSrv.joints.length');
+  check(
+    'one Undo takes the linkage back even after leaving Synthesis',
+    afterInsert > 0 && afterUndo === 0,
+    { afterInsert, afterUndo }
+  );
+  await p.close();
+}
+
+{
+  // A design that put four joints on the grid and has since lost one has been
+  // cut into, and a reload must not forget that: the joints that survived are
+  // the reader's now, and replacing them without asking loses their work.
+  const p = await solvedPage();
+  const before = await ask(
+    p,
+    `(panel) => {
+      panel.solution.insert();
+      const ids = panel.design.ownedJointIds.slice();
+      // Through the app's own delete, which works on the selection.
+      const victim = panel.mechanismSrv.joints.find((j) => j.id === ids[1]);
+      panel.mechanismSrv.activeObjService.updateSelectedObj(victim);
+      panel.mechanismSrv.deleteJoint(true);
+      return { ids, ownership: panel.solution.ownership() };
+    }`
+  );
+  const link = await p.evaluate(() =>
+    ng.getComponent(document.querySelector('app-top-bar')).urlGeneration.generateUrlQuery()
+  );
+  const reloaded = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  reloaded.on('pageerror', (error) => errors.push(String(error)));
+  await reloaded.goto(BASE + '/?' + link, { waitUntil: 'domcontentloaded' });
+  await waitForReady(reloaded);
+  await reloaded.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await reloaded.waitForTimeout(700);
+  const after = await ask(reloaded, '(panel) => panel.solution.ownership()');
+  check(
+    'a linkage cut into before the link was written is still cut into after it is opened',
+    before.ownership === 'entangled' && after === 'entangled',
+    { before, after }
+  );
+  await reloaded.close();
+  await p.close();
+}
+
+{
+  // Replacing, which is where the letters went wrong last time. Insert takes
+  // the old linkage away before it builds, so the ids it was holding come back
+  // -- and counting them as taken made the preview promise E-J over pins that
+  // arrived as A-F. Also checked straight after an insert, where the same
+  // arithmetic used to rename the labels off the linkage they describe.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      panel.solution.driverWanted = false;
+      panel.solution.insert();
+      const afterFirst = grid.synthCanvas.previewJoints().map((j) => j.id);
+      const onGrid = panel.design.ownedJointIds.slice();
+      const labelledAfterInsert = panel.dimensionRows().map((r) => r.label);
+      // Now ask for a driver, which makes this a replacement.
+      panel.solution.toggleDriver();
+      const promised = grid.synthCanvas.previewJoints().map((j) => j.id);
+      panel.solution.insert();
+      const built = panel.design.ownedJointIds.slice();
+      return { onGrid, afterFirst, labelledAfterInsert, promised, built };
+    }`
+  );
+  check(
+    'a replacement is built under the letters it was shown under',
+    outcome.promised.length === 6 &&
+      outcome.built.length === 6 &&
+      outcome.promised.join(',') === outcome.built.join(','),
+    outcome
+  );
+  check(
+    'and the labels do not rename themselves the moment a linkage is inserted',
+    outcome.onGrid.length === 4 &&
+      outcome.labelledAfterInsert.some((l) => l.includes(outcome.onGrid[0])) &&
+      outcome.labelledAfterInsert.some((l) => l.includes(outcome.onGrid[3])),
+    { onGrid: outcome.onGrid, labels: outcome.labelledAfterInsert }
+  );
+  await p.close();
+}
+
+{
+  // Ids come round again. Delete one of ours and draw a joint, and the new
+  // joint takes the letter we just lost -- so the count comes back up, every
+  // id is present, and the linkage would read as wholly ours with somebody
+  // else's joint standing in it. A later replace would take that joint away
+  // without asking, so being cut into has to stick.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel, grid) => {
+      panel.solution.driverWanted = false;
+      panel.solution.insert();
+      const ids = panel.design.ownedJointIds.slice();
+      const victim = panel.mechanismSrv.joints.find((j) => j.id === ids[3]);
+      panel.mechanismSrv.activeObjService.updateSelectedObj(victim);
+      panel.mechanismSrv.deleteJoint(true);
+      const cutInto = panel.solution.ownership();
+      // A joint of the reader's own, which takes the freed letter back.
+      const replacement = grid.mechanismSrv.createRevJoint('3', '3');
+      grid.mechanismSrv.mergeToJoints([replacement]);
+      grid.mechanismSrv.updateMechanism(true);
+      const afterwards = panel.solution.ownership();
+      const was = { id: replacement.id, x: replacement.x, y: replacement.y };
+      // And then actually replace, which is the moment the reader's joint
+      // would be taken away. Reporting "still entangled" and stopping there
+      // left the deletion itself untested.
+      panel.solution.insert(true);
+      // By where it is, not by what it is called. Removing it frees its letter
+      // and the very next insert hands that letter straight back out, so a
+      // joint called D exists either way -- somewhere else, belonging to
+      // somebody else. Asking only for the name reported the deletion as a
+      // survival.
+      const survivor = panel.mechanismSrv.joints.find(
+        (j) => Math.hypot(j.x - was.x, j.y - was.y) < 1
+      );
+      return {
+        ids,
+        cutInto,
+        reusedTheLetter: replacement.id === ids[3],
+        afterwards,
+        was,
+        survivedTheReplace: !!survivor,
+        survivorId: survivor ? survivor.id : null,
+      };
+    }`
+  );
+  check(
+    'a joint that takes back a deleted id does not become ours to delete',
+    outcome.cutInto === 'entangled' &&
+      outcome.reusedTheLetter &&
+      outcome.afterwards === 'entangled' &&
+      outcome.survivedTheReplace,
+    outcome
+  );
+  await p.close();
+}
+
+{
+  /*
+    A design that really does refuse a driver, so the greyed switch is tested
+    against both answers.
+
+    The sweep earlier in this file only ever meets designs that accept one, so
+    it can say the switch agrees with the panel without ever seeing the switch
+    turned off -- removing the binding would not have failed it. These three
+    positions need the input to swing more than half a turn between them, which
+    is the refusal `driverDyadFor` exists to give.
+  */
+  const p = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  p.on('pageerror', (error) => errors.push(String(error)));
+  await p.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitForReady(p);
+  await p.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await p.waitForTimeout(600);
+  await p.locator('#synthesisPanel .kindCard--on').click();
+  await p.waitForTimeout(400);
+  await ask(
+    p,
+    `(panel) => {
+      const S = 200;
+      [[0, 0, 0], [1, 2, 5], [2, 4, 60]].forEach(([x, y]) =>
+        panel.design.placePose({ x: x * S, y: y * S, applyMatrix() {} })
+      );
+      [0, 5, 60].forEach((t, i) => (panel.design.getPose(i + 1).thetaDegrees = t));
+      panel.design.valueChanges.next(true);
+    }`
+  );
+  await p.waitForTimeout(300);
+  await p.locator('#synthesisPanel .cta', { hasText: 'Generate solutions' }).click();
+  await p.waitForFunction(
+    () => !ng.getComponent(document.querySelector('app-synthesis-panel')).solution.generating,
+    null,
+    { timeout: 20000 }
+  );
+  const present = await ask(
+    p,
+    `(panel) => {
+      const wanted = panel.solution.candidates().find((c) => c.key === '0:1:-1');
+      if (!wanted) return { missing: panel.solution.candidates().map((c) => c.key) };
+      panel.solution.pick(wanted.key);
+      return {};
+    }`
+  );
+  // Read after Angular has drawn it: asking in the same turn as the change
+  // reports the switch as it was before, which is how this first "found" a
+  // binding that was never broken.
+  const read = () =>
+    ask(
+      p,
+      `(panel) => {
+        const row = [...document.querySelectorAll('#synthesisPanel .row')].find((r) =>
+          r.textContent.includes('Add driver')
+        );
+        const button = row && row.querySelector('.switch');
+        return { refused: !!panel.driverRefusal, disabled: !!(button && button.disabled) };
+      }`
+    );
+  await ask(p, '(panel) => panel.solution.setDriveOnFarPin(true)');
+  await p.waitForTimeout(400);
+  const far = await read();
+  await ask(p, '(panel) => panel.solution.setDriveOnFarPin(false)');
+  await p.waitForTimeout(400);
+  const near = await read();
+  const outcome = { ...present, far, near };
+  check(
+    'the switch is actually greyed on a design whose driver is refused',
+    !outcome.missing &&
+      outcome.far.refused &&
+      outcome.far.disabled &&
+      !outcome.near.refused &&
+      !outcome.near.disabled,
+    outcome
+  );
+  await p.close();
+}
+
+{
+  /*
+    A joint moved by hand stays moved, across a shared link.
+
+    The record of where insert put each joint was held in memory, so opening a
+    link produced a design that believed nothing had been touched -- and
+    Replace put the moved joint back where synthesis had wanted it, silently,
+    because "untouched" is the one state that needs no warning. Nothing in the
+    session that made the link is available to check this: it has to survive
+    the URL.
+  */
+  const p = await solvedPage();
+  const moved = await ask(
+    p,
+    `(panel) => {
+      panel.solution.driverWanted = false;
+      panel.solution.insert();
+      const ids = panel.design.ownedJointIds.slice();
+      const joint = panel.mechanismSrv.joints.find((j) => j.id === ids[1]);
+      joint.x += 900;
+      joint.y -= 700;
+      panel.mechanismSrv.updateMechanism(true);
+      return { ids, at: [Math.round(joint.x), Math.round(joint.y)], says: panel.solution.ownership() };
+    }`
+  );
+  const link = await p.evaluate(() =>
+    ng.getComponent(document.querySelector('app-top-bar')).urlGeneration.generateUrlQuery()
+  );
+  const opened = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  opened.on('pageerror', (error) => errors.push(String(error)));
+  await opened.goto(BASE + '/?' + link, { waitUntil: 'domcontentloaded' });
+  await waitForReady(opened);
+  await opened.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await opened.waitForTimeout(700);
+  // A reopened link has the design but not the search, and Insert with nothing
+  // chosen refuses for that reason rather than the one being tested.
+  await opened.locator('#synthesisPanel .cta', { hasText: 'Generate solutions' }).click();
+  await opened.waitForFunction(
+    () => !ng.getComponent(document.querySelector('app-synthesis-panel')).solution.generating,
+    null,
+    { timeout: 20000 }
+  );
+  const after = await ask(
+    opened,
+    `(panel) => {
+      const ids = panel.design.ownedJointIds.slice();
+      const joint = panel.mechanismSrv.joints.find((j) => j.id === ids[1]);
+      return {
+        says: panel.solution.ownership(),
+        at: joint ? [Math.round(joint.x), Math.round(joint.y)] : null,
+        // 'edited' is the answer that makes Insert ask first rather than act.
+        wouldAsk: panel.solution.insert() === 'edited',
+        stillThere: (() => {
+          const now = panel.mechanismSrv.joints.find((j) => j.id === ids[1]);
+          return now ? [Math.round(now.x), Math.round(now.y)] : null;
+        })(),
+      };
+    }`
+  );
+  check(
+    'a joint moved by hand is still known to have been moved after a reload',
+    moved.says === 'edited' &&
+      after.says === 'edited' &&
+      after.wouldAsk &&
+      JSON.stringify(after.at) === JSON.stringify(moved.at) &&
+      JSON.stringify(after.stillThere) === JSON.stringify(moved.at),
+    { moved, after }
+  );
+  await opened.close();
+  await p.close();
+}
+
+{
+  /*
+    The other half of the same fact, and the half that tells the two apart.
+
+    Without a baseline the safest answer to "has this been moved" is "ask" --
+    which is what an unmoved linkage would also get, so a design that has
+    forgotten everything looks exactly like one that remembers a move. This is
+    the case that separates them: nothing was touched, so nothing should be
+    asked.
+  */
+  const p = await solvedPage();
+  await ask(p, '(panel) => { panel.solution.driverWanted = false; panel.solution.insert(); }');
+  await p.waitForTimeout(400);
+  const link = await p.evaluate(() =>
+    ng.getComponent(document.querySelector('app-top-bar')).urlGeneration.generateUrlQuery()
+  );
+  await p.close();
+  const opened = await browser.newPage({ viewport: { width: 1500, height: 950 } });
+  opened.on('pageerror', (error) => errors.push(String(error)));
+  await opened.goto(BASE + '/?' + link, { waitUntil: 'domcontentloaded' });
+  await waitForReady(opened);
+  await opened.locator('.tabButton', { hasText: 'Synthesis' }).click();
+  await opened.waitForTimeout(700);
+  await opened.locator('#synthesisPanel .cta', { hasText: 'Generate solutions' }).click();
+  await opened.waitForFunction(
+    () => !ng.getComponent(document.querySelector('app-synthesis-panel')).solution.generating,
+    null,
+    { timeout: 20000 }
+  );
+  const untouched = await ask(
+    opened,
+    `(panel) => ({
+      says: panel.solution.ownership(),
+      replacedWithoutAsking: panel.solution.insert() === 'done',
+    })`
+  );
+  check(
+    'a linkage nobody touched is still known to be untouched after a reload',
+    untouched.says === 'ours' && untouched.replacedWithoutAsking,
+    untouched
+  );
+  await opened.close();
+}
+
+{
+  // Insert one, replace it with another, undo. What comes back is the first
+  // linkage exactly as it was written, so it is ours and not an edit -- which
+  // it could not be while the baseline described whatever had been inserted
+  // most recently rather than what is actually on the grid.
+  const p = await solvedPage();
+  const outcome = await ask(
+    p,
+    `(panel) => {
+      panel.solution.driverWanted = false;
+      panel.solution.insert();
+      const first = panel.design.ownedJointIds.slice();
+      panel.solution.toggleDriver();
+      panel.solution.insert();
+      return { first, second: panel.design.ownedJointIds.slice() };
+    }`
+  );
+  await p.evaluate(() => ng.getComponent(document.querySelector('app-top-bar')).undo());
+  await p.waitForTimeout(900);
+  const restored = await ask(p, '(panel) => panel.solution.ownership()');
+  check(
+    'undoing a replacement gives back a linkage that is ours, not one that looks edited',
+    outcome.first.length === 4 && outcome.second.length === 6 && restored === 'ours',
+    { ...outcome, restored }
+  );
+  await p.close();
+}
+
+{
+  /*
+    The switch offered instead of a second card has to do the second card's job.
+
+    Collapsing Open and Crossed into one solution is only right if the control
+    that replaced the extra card actually reaches the other assembly -- and the
+    check that they are not two cards says nothing about that. Run on a
+    construction that really has both: on one where the second assembly cannot
+    be built, the switch is correctly stuck, which would prove nothing either
+    way.
+  */
+  const p = await solvedPage();
+  const picked = await ask(
+    p,
+    `(panel) => {
+      // With defects allowed, which is a setting the panel offers. Held to the
+      // strict list, this design's constructions each have one assembly that
+      // can be built, so the switch is correctly stuck and proves nothing.
+      panel.design.allowDefect = true;
+      panel.solution.changed.next();
+      const both = panel.solution
+        .candidates()
+        .find((c) => panel.solution.allAssemblies().filter((a) => a.pair === c.pair).length === 2);
+      if (!both) return null;
+      panel.solution.pick(both.key);
+      return both.key;
+    }`
+  );
+  await p.waitForTimeout(400);
+  const row = p
+    .locator('#synthesisPanel .row', { hasText: 'Assembly branch' })
+    .locator('.seg__opt');
+  const labels = () =>
+    ask(p, '(panel) => JSON.stringify(panel.branchOptions().map((o) => [o.label, o.active]))');
+  const before = picked ? await labels() : null;
+  let moved = null;
+  let restored = null;
+  if (picked && (await row.count()) === 2) {
+    const off = (await row.nth(0).getAttribute('class')).includes('--on') ? 1 : 0;
+    await row.nth(off).click();
+    await p.waitForTimeout(400);
+    moved = await labels();
+    await row.nth(off === 1 ? 0 : 1).click();
+    await p.waitForTimeout(400);
+    restored = await labels();
+  }
+  check(
+    'the Open/Crossed switch reaches the assembly it replaced a card for',
+    !!picked && (await row.count()) === 2 && moved !== before && restored === before,
+    { picked, before, moved, restored }
+  );
+  await p.close();
+}
 
 check('nothing threw', errors.length === 0, errors.slice(0, 3));
 await browser.close();

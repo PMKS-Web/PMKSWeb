@@ -144,8 +144,8 @@ export function readinessOf(
         state: 'blocker',
         title: 'Nothing drives this mechanism',
         body: candidate
-          ? `There is no time to solve against until one joint is driven. Right-click joint ${(candidate as RealJoint).name || candidate.id} and choose Add Input.`
-          : 'There is no time to solve against until one joint is driven. Right-click a grounded joint and choose Add Input.',
+          ? `There is no time to solve against until one joint is driven. Right-click joint ${(candidate as RealJoint).name || candidate.id} and switch on Driven Input.`
+          : 'There is no time to solve against until one joint is driven. Right-click a grounded joint and switch on Driven Input.',
         at: candidate,
         action: candidate ? 'Go To Joint' : undefined,
       });
@@ -299,6 +299,15 @@ export interface ForceRequirement {
   title: string;
   /** Met: what is true. Unmet: what is missing, and how to supply it. */
   body: string;
+  /**
+   * A fix the panel can carry out itself, where there is one.
+   *
+   * Turning gravity back on is the only one so far, and only where it settles
+   * the matter on its own. The other ways out of an unloaded drawing -- attach
+   * a force, give a body mass -- are a gesture on the canvas and a row in the
+   * table directly below, and a button here would stand in for neither.
+   */
+  act?: 'gravity';
 }
 
 export interface UnassignedReport {

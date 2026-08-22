@@ -8,9 +8,10 @@
  * changes the mode, the left panel follows it, the sliding highlight lands on
  * the mode you actually chose, each analysis mode carries a chip saying whether
  * it can be entered, the transport belongs to the analysis modes alone, and
- * leaving an analysis mode still rewinds the mechanism (there is no stop
- * button). The removed chrome is asserted absent, because a selector that
- * matches nothing passes every test written against it.
+ * leaving an analysis mode still rewinds the mechanism — as does the stop
+ * button beside play, for a reader who wants the drawn pose without leaving.
+ * The removed chrome is asserted absent, because a selector that matches
+ * nothing passes every test written against it.
  *
  *   PMKS_BASE_URL=<origin> node e2e/left-nav-modes.mjs
  */
@@ -86,19 +87,11 @@ const highlighted = () =>
 try {
   await page.goto(`${baseUrl}?${fourBar}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  await page
-    .locator('.introjs-skipbutton')
-    .first()
-    .click({ force: true })
-    .catch(() => {});
-  // And take the overlay away if it outlived the click: it swallows pointer
-  // events over the whole page, so a later tab click waits for a layer that is
-  // never going anywhere.
-  await page.evaluate(() =>
-    document
-      .querySelectorAll('.introjs-overlay,.introjs-helperLayer,.introjs-tooltipReferenceLayer')
-      .forEach((node) => node.remove())
-  );
+  // Nothing to dismiss any more. The intro.js overlay this used to skip past
+  // is gone, replaced by the tutorial drawer, which never covers the canvas and
+  // only opens when it is asked for -- see e2e/tutorial.mjs. The unguarded
+  // click that used to be here now waits out its full timeout on an element
+  // that will never exist.
   await page.waitForTimeout(400);
 
   // --- the rail and the file toolbar are gone, not merely restyled -----------
@@ -173,9 +166,12 @@ try {
     kinematicHighlight
   );
   record('the transport appears', (await page.locator('.playButton').count()) === 1);
+  // Back, and asked for: leaving the mode rewinds the mechanism, but a reader
+  // who wants the drawn pose *without* leaving analysis had no way to it but
+  // to scrub until the clock read zero.
   record(
-    'stop button is gone',
-    (await page.locator('app-playback-bar mat-icon', { hasText: 'stop' }).count()) === 0
+    'with a stop button beside play, for the pose the mechanism was drawn in',
+    (await page.locator('.transportCard .stopButton').count()) === 1
   );
 
   // The scrubber is a plain range input now, laid out across the card.

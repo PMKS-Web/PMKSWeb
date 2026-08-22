@@ -1,90 +1,102 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { animate, state, style, transition, trigger } from '@angular/animations';
-import { NewGridComponent } from '../new-grid/new-grid.component';
-import { CdkMenu, CdkMenuItem } from '@angular/cdk/menu';
+import { Component, ChangeDetectionStrategy, DestroyRef, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { KeyboardShortcutsService } from '../../services/keyboard-shortcuts.service';
+import { CdkMenu, CdkMenuItem, MENU_STACK } from '@angular/cdk/menu';
 import { MatIcon } from '@angular/material/icon';
+import { MatTooltip } from '@angular/material/tooltip';
+import {
+  ContextMenuModel,
+  MenuCrossing,
+  MenuRow,
+  lastContextMenuPointer,
+  menuIsEmpty,
+} from './menu-model';
 
-export class cMenuItem {
-  public label: string = 'none';
-  public action: Function = () => {
-    console.error('Not implemented');
-  };
-  public icon: string = 'none';
-  public disabled: boolean = false;
-  /**
-   * Whether this item works away from the start pose.
-   *
-   * Almost nothing does: editing a mechanism that is parked mid-cycle would
-   * write the pose it is standing in back into the drawing. The exceptions are
-   * items that do not touch the mechanism at all -- the synthesis positions are
-   * a note about what it was designed for, not a part of it, and there is no
-   * reason a reader watching the motion cannot clear them away.
-   */
-  public alwaysAllowed: boolean = false;
-
-  constructor(
-    _label: string,
-    _action: Function,
-    _icon: string,
-    _disabled: boolean = false,
-    _alwaysAllowed: boolean = false
-  ) {
-    this.label = _label;
-    this.action = _action;
-    this.icon = _icon;
-    this.disabled = _disabled;
-    this.alwaysAllowed = _alwaysAllowed;
-  }
-
-  actionWrapper() {
-    // Silently, like every other guard on editing away from the start pose: the
-    // transport says where the mechanism is parked, and it said the wrong thing
-    // anyway -- the test here is the timestep, and the message it showed was
-    // the one about the animation running, which it need not be.
-    if (!this.alwaysAllowed && NewGridComponent.instance.mechanismSrv.mechanismTimeStep !== 0) {
-      return;
-    }
-    this.action();
-  }
-}
-
+/**
+ * The right-click menu.
+ *
+ * A dumb renderer: every decision about what a row says, whether it can be
+ * used and why not is made by `ContextMenuBuilderService`, which reads those
+ * answers out of the model that enforces them. This lays them out.
+ */
 @Component({
   selector: 'app-context-menu',
-  animations: [
-    trigger('openClose', [
-      state(
-        'open',
-        style({
-          opacity: 1,
-          transform: 'scale(1)',
-        })
-      ),
-      state(
-        'closed',
-        style({
-          opacity: 0,
-          transform: 'scale(0.5)',
-        })
-      ),
-      transition('closed => open', [animate('0.2s ease-out')]),
-      transition('open => closed', [animate('0.2s ease-in')]),
-    ]),
-  ],
   templateUrl: './context-menu.component.html',
   styleUrls: ['./context-menu.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [CdkMenu, CdkMenuItem, MatIcon],
+  imports: [CdkMenu, CdkMenuItem, MatIcon, MatTooltip],
 })
 export class ContextMenuComponent {
-  readonly menuItems = input<cMenuItem[]>([]);
-  private contextMenu!: HTMLElement;
+  readonly model = input<ContextMenuModel>({ groups: [] });
+  /**
+   * The stack the CDK opened this card on.
+   *
+   * A row is a `cdkMenuItem` and closes the card by itself; the crossing icon
+   * is a plain button in the header, so it has to say so. A menu left standing
+   * over a mode it no longer belongs to is the mode change half-done.
+   */
+  private readonly stack = inject(MENU_STACK, { optional: true });
 
-  constructor() {}
+  constructor() {
+    // A shortcut acts on the selection, not on the card, and the card is a
+    // snapshot: pressing K with a joint's menu open locked the joint and left
+    // the menu showing the unlocked state, with a Delete row that was greyed
+    // for a lock that had just been set, or live for one that had. Delete did
+    // it behind the card. So any shortcut closes the card, and the next
+    // right-click builds it again from what is now true.
+    inject(KeyboardShortcutsService)
+      .pressed.pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe(() => this.stack?.closeAll());
+  }
+  private contextMenu!: HTMLElement;
 
   ngAfterViewInit() {
     this.contextMenu = document.querySelector('#contextMenu') as HTMLElement;
+    // Measured in the same tick the card is revealed, not in ngAfterViewInit:
+    // the overlay has not been moved to the pointer yet at that point, so the
+    // rect read there is the card sitting at the origin.
     setTimeout(() => {
+      this.growFromThePointer();
       this.contextMenu.classList.add('show');
     }, 1);
+  }
+
+  /**
+   * Start the scale-and-fade at the corner the pointer is in.
+   *
+   * The CDK flips the card at an edge, and a card that flips up and left while
+   * growing down and right from its top-left reads as sliding into place from
+   * somewhere else. Measured rather than predicted: whichever side of the
+   * pointer the card actually landed on is the side it grows from.
+   */
+  private growFromThePointer(): void {
+    const at = lastContextMenuPointer();
+    const box = this.contextMenu.getBoundingClientRect();
+    const across = box.left + box.width / 2 > at.x ? 'left' : 'right';
+    const down = box.top + box.height / 2 > at.y ? 'top' : 'bottom';
+    this.contextMenu.style.transformOrigin = `${down} ${across}`;
+  }
+
+  /**
+   * Nothing to say, so nothing to show.
+   *
+   * The CDK opens the card on every right-click; a target with no rows and no
+   * name would otherwise leave a blank white sliver on the canvas.
+   */
+  empty(): boolean {
+    const model = this.model();
+    return !model.header && menuIsEmpty(model);
+  }
+
+  /** Greyed is greyed: a row that says why it cannot be used does not act. */
+  run(row: MenuRow): void {
+    if (row.disabled) return;
+    row.action();
+  }
+
+  cross(crossing: MenuCrossing): void {
+    if (crossing.refusal) return;
+    crossing.action();
+    this.stack?.closeAll();
   }
 }

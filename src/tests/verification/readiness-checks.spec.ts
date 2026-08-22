@@ -120,7 +120,7 @@ describe('why a mechanism will not run', () => {
     // answer rather than a place to start looking.
     expect(check.at).toBeDefined();
     expect(check.action).toBe('Go To Joint');
-    expect(check.body).toMatch(/Right-click joint [A-Z] and choose Add Input/);
+    expect(check.body).toMatch(/Right-click joint [A-Z] and switch on Driven Input/);
   });
 
   it('names the slider when one has nothing to slide along', () => {

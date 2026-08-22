@@ -1,0 +1,183 @@
+<!-- Two faces of one page: the step being worked on, and the result. They are
+     never both true, so the drawer holds one card either way. -->
+@if (!tutorial.done) {
+  <div class="tutorialCard" [class.settling]="tutorial.settling">
+    <button class="closeCard" (click)="close()" aria-label="Close tutorial" title="Close">
+      <mat-icon>close</mat-icon>
+    </button>
+    <div class="cardTitle">Tutorial</div>
+    <p class="cardLead">{{ lead }}</p>
+
+    <!-- The measure, and the way back through it. Each segment is the step it
+         stands for, so a student who wants to re-read step two presses step
+         two rather than the back arrow twice. -->
+    <div class="stepBars">
+      <button
+        class="stepArrow"
+        (click)="tutorial.goBack()"
+        [disabled]="!tutorial.canGoBack()"
+        aria-label="Previous step"
+        title="Previous step"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      @for (bar of bars; track $index) {
+        <button
+          class="stepBar"
+          [class.done]="bar.done"
+          [class.here]="bar.here"
+          [disabled]="!bar.reachable"
+          (click)="tutorial.goToStep($index + 1)"
+          [attr.aria-label]="'Step ' + ($index + 1)"
+        ></button>
+      }
+      <button
+        class="stepArrow"
+        (click)="tutorial.goForward()"
+        [disabled]="!tutorial.canGoForward()"
+        aria-label="Next step"
+        title="Next step"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
+    <!-- Keyed on the step, so moving between them is a movement rather than a
+         repaint, and the direction of travel is the direction it slides. -->
+    <div class="stepBody" [@stepSwap]="tutorial.viewedStep">
+      @if (tutorial.viewedProgress().achieved; as achieved) {
+        <div class="achieved">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ achieved }}</span>
+        </div>
+      }
+
+      <div class="stepTitle">
+        <span>{{ tutorial.copy().title }}</span>
+        @if (tutorial.viewingCompleted()) {
+          <mat-icon class="stepTick" [class.justNow]="tutorial.settling">check_circle</mat-icon>
+        }
+      </div>
+      <p class="stepText">{{ tutorial.copy().body }}</p>
+
+      @if (tutorial.copy().hint; as hint) {
+        <div class="hint">
+          <mat-icon>{{ tutorial.copy().hintGlyph }}</mat-icon>
+          <span>{{ hint }}</span>
+        </div>
+      }
+
+      <!-- The one lesson about the app rather than about linkages, and it is a
+           quotation: the chip says this whether or not the tutorial is running,
+           so from here on it answers "why can't I?" on its own. -->
+      @if (showsChipHint) {
+        <div class="hint chipHint">
+          <span class="chip">{{ chipText }}</span>
+          <span>
+            is the Kinematic Analysis chip counting this step. Click it whenever a mode will not run
+            and it lists what is missing.
+          </span>
+        </div>
+      }
+    </div>
+
+    <div class="cardRule"></div>
+    <div class="cardActions">
+      <!-- Offered only where there is something outstanding to offer. On a step
+           already behind the student it would be a button to do something that
+           is done. -->
+      @if (!tutorial.viewingCompleted()) {
+        <button class="doItButton" (click)="doStepForMe()">Do This Step For Me</button>
+      } @else {
+        <span class="doneNote">{{ tutorial.settling ? 'Done' : 'Already done' }}</span>
+      }
+      @if (tutorial.canGoForward()) {
+        <button class="nextButton" (click)="tutorial.goForward()">
+          Next step<mat-icon>chevron_right</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="tutorialCard doneCard">
+    <div class="doneHead">
+      <mat-icon class="doneMark">check_circle</mat-icon>
+      <span class="doneTitle">Tutorial complete</span>
+    </div>
+
+    @if (tutorial.reading; as reading) {
+      <p class="doneLine">
+        You built a four-bar and read joint {{ reading.joint }} at
+        <strong>{{ reading.magnitude }} {{ reading.unit }}</strong
+        >, {{ reading.time }} into the cycle.
+      </p>
+    }
+
+    <div class="cardRule"></div>
+    <div class="doorsHeading">What next</div>
+
+    <!-- Each row is the control it names, not a description of where to find
+         it: the tutorial ends by handing the student to the app. -->
+    <div class="doors">
+      <button class="door" (click)="openExport()">
+        <mat-icon>download</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Export Data</span>
+          <span class="doorWhy">
+            Every timestep of position, velocity and acceleration, as a file you can attach to a
+            report.
+          </span>
+        </span>
+      </button>
+      <button class="door" (click)="shareProject()">
+        <mat-icon>link</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Share Project</span>
+          <span class="doorWhy">
+            A link that opens this exact mechanism. It is how a professor hands one out, and how you
+            hand one in.
+          </span>
+        </span>
+      </button>
+      <button class="door" (click)="openTemplates()">
+        <mat-icon>apps</mat-icon>
+        <span class="doorText">
+          <span class="doorName">Templates</span>
+          <span class="doorWhy">
+            Worked mechanisms to take apart: a Watt six-bar, a scotch yoke, a Jansen leg, a
+            pumpjack.
+          </span>
+        </span>
+      </button>
+    </div>
+
+    <!-- One way out of a finished tutorial, not two. The card used to carry an
+         × of its own here as well as this button, which put two of them in the
+         same corner: this one and the drawer's. -->
+    <div class="cardActions doneActions">
+      <button class="primaryButton" (click)="close()">Close</button>
+      <button class="quietButton" (click)="restart()">Run Tutorial Again</button>
+    </div>
+  </div>
+}
+
+<!-- Running it again clears the grid, which is the one thing the tutorial does
+     that cannot be shrugged off. Closing it costs nothing and says so in a
+     snackbar instead; this asks, because there is work to lose. -->
+<ng-template #confirmRestart>
+  <div class="modal">
+    <h1 mat-dialog-title>Start the tutorial again?</h1>
+    <div mat-dialog-content>
+      <p>
+        This clears the grid and begins from step one, so the mechanism you have built will be
+        deleted. Undo will bring it back.
+      </p>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button mat-dialog-close>Keep my mechanism</button>
+      <button mat-button cdkFocusInitial [mat-dialog-close]="'restart'">
+        Clear and start again
+      </button>
+    </div>
+  </div>
+</ng-template>
